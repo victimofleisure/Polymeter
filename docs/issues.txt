@@ -1,0 +1,23 @@
+open	close	type	description	rev	user
+03/22/18	03/25/18	done	tempo change while playing		
+03/22/18	03/25/18	done	PPQ change; only while stopped for now		
+03/22/18	03/25/18	done	add velocity to test app		
+03/22/18	03/26/18	done	add document read/write		
+03/22/18	03/26/18	done	add undo		
+03/25/18	03/26/18	done	prevent PPQ change while playing		
+03/22/18	03/27/18	done	test critical section in callback; no discernable impact		
+03/25/18	03/27/18	done	select MIDI device; options dialog		
+03/25/18	03/27/18	done	specify latency; options dialog		
+03/25/18	03/27/18	done	track names		
+03/22/18		todo	data architecture		
+03/22/18		todo	controller tracks; many subtasks		
+03/22/18		todo	velocity editing		
+03/22/18		todo	UI design; real track view; many subtasks		
+03/22/18		todo	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
+03/22/18		todo	app architecture; are Bongo, Jock and Stencil all going to live in one app, or what?		
+03/22/18		todo	PPQ change should optionally update Quant, Offset and Swing values		
+03/25/18		todo	drag reorder tracks		
+03/25/18		todo	insert or delete beats, shifting following beats as needed		
+03/25/18		todo	insert or delete tracks		
+03/25/18		todo	export MIDI file		
+03/25/18		todo	variable track size; must prevent track's length from exceeding its size		
