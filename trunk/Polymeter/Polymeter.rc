@@ -1,0 +1,780 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#ifndef APSTUDIO_INVOKED
+#include "targetver.h"
+#endif
+#include "afxres.h"
+#include "verrsrc.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#ifndef APSTUDIO_INVOKED\r\n"
+    "#include ""targetver.h""\r\n"
+    "#endif\r\n"
+    "#include ""afxres.h""\r\n"
+    "#include ""verrsrc.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#include ""res\\Polymeter.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""      // Standard components\r\n"
+    "#if !defined(_AFXDLL)\r\n"
+    "#include ""afxprint.rc""        // printing/print preview resources\r\n"
+    "#include ""afxribbon.rc""        // MFC ribbon and control bar resources\r\n"
+    "#endif\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\Polymeter.ico"
+IDR_PolymeterTYPE       ICON                    "res\\PolymeterDoc.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
+IDR_MAINFRAME_256       BITMAP                  "res\\Toolbar256.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Toolbar
+//
+
+IDR_MAINFRAME TOOLBAR 16, 15
+BEGIN
+    BUTTON      ID_FILE_NEW
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_FILE_SAVE
+    SEPARATOR
+    BUTTON      ID_EDIT_CUT
+    BUTTON      ID_EDIT_COPY
+    BUTTON      ID_EDIT_PASTE
+    SEPARATOR
+    BUTTON      ID_EDIT_UNDO
+    BUTTON      ID_EDIT_REDO
+    SEPARATOR
+    BUTTON      ID_FILE_PRINT
+    SEPARATOR
+    BUTTON      ID_VIEW_PLAY
+    BUTTON      ID_VIEW_PAUSE
+    SEPARATOR
+    BUTTON      ID_APP_ABOUT
+END
+
+IDR_MAINFRAME_256 TOOLBAR 16, 15
+BEGIN
+    BUTTON      ID_FILE_NEW
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_FILE_SAVE
+    SEPARATOR
+    BUTTON      ID_EDIT_CUT
+    BUTTON      ID_EDIT_COPY
+    BUTTON      ID_EDIT_PASTE
+    SEPARATOR
+    BUTTON      ID_EDIT_UNDO
+    BUTTON      ID_EDIT_REDO
+    SEPARATOR
+    BUTTON      ID_FILE_PRINT
+    SEPARATOR
+    BUTTON      ID_VIEW_PLAY
+    BUTTON      ID_VIEW_PAUSE
+    SEPARATOR
+    BUTTON      ID_APP_ABOUT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINFRAME MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM "&Close",                      ID_FILE_CLOSE
+        MENUITEM SEPARATOR
+        MENUITEM "Recent File",                 ID_FILE_MRU_FILE1, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&View"
+    BEGIN
+        POPUP "&Toolbars and Docking Windows"
+        BEGIN
+            MENUITEM "<placeholder>",               ID_VIEW_TOOLBAR
+        END
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        POPUP "&Application Look"
+        BEGIN
+            MENUITEM "Windows &2000",               ID_VIEW_APPLOOK_WIN_2000
+            MENUITEM "Office &XP",                  ID_VIEW_APPLOOK_OFF_XP
+            MENUITEM "&Windows XP",                 ID_VIEW_APPLOOK_WIN_XP
+            MENUITEM "Office 200&3",                ID_VIEW_APPLOOK_OFF_2003
+            MENUITEM "Visual Studio 200&5",         ID_VIEW_APPLOOK_VS_2005
+            MENUITEM "Visual Studio 200&8",         ID_VIEW_APPLOOK_VS_2008
+            POPUP "Office 200&7"
+            BEGIN
+                MENUITEM "&Blue Style",                 ID_VIEW_APPLOOK_OFF_2007_BLUE
+                MENUITEM "B&lack Style",                ID_VIEW_APPLOOK_OFF_2007_BLACK
+                MENUITEM "&Silver Style",               ID_VIEW_APPLOOK_OFF_2007_SILVER
+                MENUITEM "&Aqua Style",                 ID_VIEW_APPLOOK_OFF_2007_AQUA
+            END
+        END
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About Polymeter...",         ID_APP_ABOUT
+    END
+END
+
+IDR_PolymeterTYPE MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM "&Close",                      ID_FILE_CLOSE
+        MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
+        MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
+        MENUITEM SEPARATOR
+        MENUITEM "&Export...",                  ID_FILE_EXPORT
+        MENUITEM SEPARATOR
+        MENUITEM "Recent File",                 ID_FILE_MRU_FILE1
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Undo",                       ID_EDIT_UNDO
+        MENUITEM "&Redo",                       ID_EDIT_REDO
+        MENUITEM SEPARATOR
+        MENUITEM "Cu&t",                        ID_EDIT_CUT
+        MENUITEM "&Copy",                       ID_EDIT_COPY
+        MENUITEM "&Paste",                      ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "&Insert",                     ID_EDIT_INSERT
+        MENUITEM "&Delete",                     ID_EDIT_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM "Select &All",                 ID_EDIT_SELECT_ALL
+    END
+    POPUP "&View"
+    BEGIN
+        POPUP "&Toolbars and Docking Windows"
+        BEGIN
+            MENUITEM "<placeholder>",               ID_VIEW_TOOLBAR
+        END
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        POPUP "&Application Look"
+        BEGIN
+            MENUITEM "Windows &2000",               ID_VIEW_APPLOOK_WIN_2000
+            MENUITEM "Office &XP",                  ID_VIEW_APPLOOK_OFF_XP
+            MENUITEM "&Windows XP",                 ID_VIEW_APPLOOK_WIN_XP
+            MENUITEM "Office 200&3",                ID_VIEW_APPLOOK_OFF_2003
+            MENUITEM "Visual Studio 200&5",         ID_VIEW_APPLOOK_VS_2005
+            MENUITEM "Visual Studio 200&8",         ID_VIEW_APPLOOK_VS_2008
+            POPUP "Office 200&7"
+            BEGIN
+                MENUITEM "&Blue Style",                 ID_VIEW_APPLOOK_OFF_2007_BLUE
+                MENUITEM "B&lack Style",                ID_VIEW_APPLOOK_OFF_2007_BLACK
+                MENUITEM "&Silver Style",               ID_VIEW_APPLOOK_OFF_2007_SILVER
+                MENUITEM "&Aqua Style",                 ID_VIEW_APPLOOK_OFF_2007_AQUA
+            END
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Play",                       ID_VIEW_PLAY
+        MENUITEM "Pa&use",                      ID_VIEW_PAUSE
+        MENUITEM "&Go To Position...",          ID_VIEW_GO_TO_POSITION
+    END
+    POPUP "&Tools"
+    BEGIN
+        MENUITEM "&Options...",                 ID_TOOLS_OPTIONS
+        MENUITEM "&Statistics...",              ID_TOOLS_STATISTICS
+    END
+    POPUP "&Window"
+    BEGIN
+        MENUITEM "&New Window",                 ID_WINDOW_NEW
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About Polymeter...",         ID_APP_ABOUT
+        MENUITEM "Polymeter on the &Web",       ID_APP_HOME_PAGE
+        MENUITEM "Check for &Updates...",       ID_APP_CHECK_FOR_UPDATES
+    END
+END
+
+IDR_POPUP_EDIT MENU
+BEGIN
+    POPUP "Edit"
+    BEGIN
+        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
+        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
+        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "&Insert",                     ID_EDIT_INSERT
+        MENUITEM "&Delete",                     ID_EDIT_DELETE
+    END
+END
+
+IDR_HELP_MENU MENU
+BEGIN
+    MENUITEM "&About Polymeter...",         ID_APP_ABOUT
+END
+
+IDR_THEME_MENU MENU
+BEGIN
+    MENUITEM "Office 2007 (&Blue Style)",   ID_VIEW_APPLOOK_OFF_2007_BLUE
+    MENUITEM "Office 2007 (B&lack Style)",  ID_VIEW_APPLOOK_OFF_2007_BLACK
+    MENUITEM "Office 2007 (&Silver Style)", ID_VIEW_APPLOOK_OFF_2007_SILVER
+    MENUITEM "Office 2007 (&Aqua Style)",   ID_VIEW_APPLOOK_OFF_2007_AQUA
+    MENUITEM "Win&dows 7",                  ID_VIEW_APPLOOK_WINDOWS_7
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_MAINFRAME ACCELERATORS
+BEGIN
+    "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL, NOINVERT
+    "X",            ID_EDIT_CUT,            VIRTKEY, CONTROL, NOINVERT
+    VK_DELETE,      ID_EDIT_DELETE,         VIRTKEY, NOINVERT
+    VK_INSERT,      ID_EDIT_INSERT,         VIRTKEY, NOINVERT
+    "V",            ID_EDIT_PASTE,          VIRTKEY, CONTROL, NOINVERT
+    "Y",            ID_EDIT_REDO,           VIRTKEY, CONTROL, NOINVERT
+    "A",            ID_EDIT_SELECT_ALL,     VIRTKEY, CONTROL, NOINVERT
+    "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL, NOINVERT
+    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL, NOINVERT
+    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
+    "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL, NOINVERT
+    VK_F6,          ID_NEXT_PANE,           VIRTKEY, NOINVERT
+    VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT, NOINVERT
+    "O",            ID_TOOLS_OPTIONS,       VIRTKEY, SHIFT, CONTROL, NOINVERT
+    VK_OEM_2,       ID_VIEW_GO_TO_POSITION, VIRTKEY, CONTROL, NOINVERT
+    VK_SPACE,       ID_VIEW_PLAY,           VIRTKEY, CONTROL, NOINVERT
+    "E",            ID_FILE_EXPORT,         VIRTKEY, CONTROL, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_POLYMETER_FORM DIALOGEX 0, 0, 320, 200
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+END
+
+IDD_TRACK DIALOGEX 0, 0, 411, 14
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Static",IDC_TRK_NUMBER,5,1,16,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_TRK_Name,23,1,50,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TRK_Channel,77,1,35,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TRK_Note,116,1,35,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TRK_Length,155,1,35,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TRK_Quant,194,1,35,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TRK_Offset,233,1,35,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TRK_Swing,272,1,35,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TRK_Velocity,311,1,35,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TRK_Duration,350,1,35,12,ES_AUTOHSCROLL
+    CONTROL         "",IDC_TRK_Mute,"Button",BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP,389,1,18,12
+END
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 240, 100
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About Polymeter"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    ICON            IDR_MAINFRAME,IDC_STATIC,7,7,20,20
+    LTEXT           "Polymeter 0.0",IDC_ABOUT_VERSION,40,7,135,8,SS_NOPREFIX
+    LTEXT           "Copyleft 2018 Chris Korda",IDC_STATIC,40,20,135,8
+    DEFPUSHBUTTON   "OK",IDOK,183,7,50,14,WS_GROUP
+    EDITTEXT        IDC_ABOUT_LICENSE,7,38,226,55,ES_MULTILINE | ES_READONLY | WS_VSCROLL
+END
+
+IDD_MASTER DIALOGEX 0, 0, 170, 31
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_SYSMENU
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Tempo:",IDC_STATIC,6,3,27,8
+    LTEXT           "Output Device:",IDC_STATIC,53,3,49,8
+    EDITTEXT        IDC_MASTER_TEMPO,6,13,40,14,ES_AUTOHSCROLL
+    COMBOBOX        IDC_MASTER_OUT_DEVICE,53,13,96,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_OPTIONS DIALOGEX 0, 0, 311, 227
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Options"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_OPTIONS_GRID,"MfcPropertyGrid",WS_TABSTOP | 0x100,7,7,297,193
+    DEFPUSHBUTTON   "OK",IDOK,199,206,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,254,206,50,14
+    PUSHBUTTON      "&Reset All",IDC_OPTIONS_RESET_ALL,7,206,50,14
+END
+
+IDD_PROGRESS DIALOG 0, 0, 186, 49
+STYLE DS_SETFONT | DS_MODALFRAME | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Progress"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "Progress",IDC_PROGRESS,"msctls_progress32",PBS_SMOOTH | WS_BORDER,7,7,172,14
+    PUSHBUTTON      "Cancel",IDCANCEL,67,28,50,14
+    RTEXT           "",IDC_PROGRESS_PERCENT,139,27,40,15,SS_CENTERIMAGE
+END
+
+IDD_GO_TO_POS DIALOGEX 0, 0, 118, 47
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Go To Position"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_GO_TO_POS_EDIT,7,7,104,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,7,26,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,61,26,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,0,0,1
+ PRODUCTVERSION 0,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName", "Anal Software"
+            VALUE "FileDescription", "Polymeter"
+            VALUE "FileVersion", "0.0.0.1"
+            VALUE "InternalName", "Polymeter.exe"
+            VALUE "LegalCopyright", "Copyleft 2018 Chris Korda"
+            VALUE "OriginalFilename", "Polymeter.exe"
+            VALUE "ProductName", "Polymeter"
+            VALUE "ProductVersion", "0.0.0.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_POLYMETER_FORM, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 313
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 193
+    END
+
+    IDD_TRACK, DIALOG
+    BEGIN
+        RIGHTMARGIN, 409
+    END
+
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 233
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 93
+    END
+
+    IDD_MASTER, DIALOG
+    BEGIN
+    END
+
+    IDD_OPTIONS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 304
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 220
+    END
+
+    IDD_PROGRESS, DIALOG
+    BEGIN
+    END
+
+    IDD_GO_TO_POS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 111
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 40
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_OPTIONS DLGINIT
+BEGIN
+    IDC_OPTIONS_GRID, 0x37c, 414, 0
+0x4d3c, 0x4346, 0x7250, 0x706f, 0x7265, 0x7974, 0x7247, 0x6469, 0x485f, 
+0x6165, 0x6564, 0x4372, 0x7274, 0x3e6c, 0x5254, 0x4555, 0x2f3c, 0x464d, 
+0x5043, 0x6f72, 0x6570, 0x7472, 0x4779, 0x6972, 0x5f64, 0x6548, 0x6461, 
+0x7265, 0x7443, 0x6c72, 0x3c3e, 0x464d, 0x5043, 0x6f72, 0x6570, 0x7472, 
+0x4779, 0x6972, 0x5f64, 0x6544, 0x6373, 0x6972, 0x7470, 0x6f69, 0x416e, 
+0x6572, 0x3e61, 0x4146, 0x534c, 0x3c45, 0x4d2f, 0x4346, 0x7250, 0x706f, 
+0x7265, 0x7974, 0x7247, 0x6469, 0x445f, 0x7365, 0x7263, 0x7069, 0x6974, 
+0x6e6f, 0x7241, 0x6165, 0x3c3e, 0x464d, 0x5043, 0x6f72, 0x6570, 0x7472, 
+0x4779, 0x6972, 0x5f64, 0x6c41, 0x6870, 0x6261, 0x7465, 0x6369, 0x6f4d, 
+0x6564, 0x463e, 0x4c41, 0x4553, 0x2f3c, 0x464d, 0x5043, 0x6f72, 0x6570, 
+0x7472, 0x4779, 0x6972, 0x5f64, 0x6c41, 0x6870, 0x6261, 0x7465, 0x6369, 
+0x6f4d, 0x6564, 0x3c3e, 0x464d, 0x5043, 0x6f72, 0x6570, 0x7472, 0x4779, 
+0x6972, 0x5f64, 0x6f4d, 0x6964, 0x6966, 0x6465, 0x7250, 0x706f, 0x7265, 
+0x6974, 0x7365, 0x463e, 0x4c41, 0x4553, 0x2f3c, 0x464d, 0x5043, 0x6f72, 
+0x6570, 0x7472, 0x4779, 0x6972, 0x5f64, 0x6f4d, 0x6964, 0x6966, 0x6465, 
+0x7250, 0x706f, 0x7265, 0x6974, 0x7365, 0x3c3e, 0x464d, 0x5043, 0x6f72, 
+0x6570, 0x7472, 0x4779, 0x6972, 0x5f64, 0x5356, 0x6f44, 0x4e74, 0x7465, 
+0x6f4c, 0x6b6f, 0x543e, 0x5552, 0x3c45, 0x4d2f, 0x4346, 0x7250, 0x706f, 
+0x7265, 0x7974, 0x7247, 0x6469, 0x565f, 0x4453, 0x746f, 0x654e, 0x4c74, 
+0x6f6f, 0x3e6b, 0x4d3c, 0x4346, 0x7250, 0x706f, 0x7265, 0x7974, 0x7247, 
+0x6469, 0x445f, 0x7365, 0x7263, 0x7069, 0x6974, 0x6e6f, 0x6f52, 0x7377, 
+0x303e, 0x2f3c, 0x464d, 0x5043, 0x6f72, 0x6570, 0x7472, 0x4779, 0x6972, 
+0x5f64, 0x6544, 0x6373, 0x6972, 0x7470, 0x6f69, 0x526e, 0x776f, 0x3e73, 
+
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_CURSOR_DRAG_MULTI   CURSOR                  "res\\dragmulti.cur"
+IDC_CURSOR_DRAG_SINGLE  CURSOR                  "res\\dragsingle.cur"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_APP_LICENSE         "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.  You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA."
+    IDS_APP_UNKNOWN_SYSTEM_ERROR "Unknown system error %d (0x%X)"
+    IDS_CKUP_CANT_GET_ADDR  "Can't get address '%1'.\n%2"
+    IDS_CKUP_CANT_LOAD_DLL  "Can't load library '%1'.\n%2"
+    IDS_DOC_BAD_FORMAT      "'%1' has an invalid format."
+    IDS_DOC_NEWER_VERSION   "'%1' is from a newer document version. Some of its features may not be supported."
+    IDS_EDIT_CUT            "Cut"
+    IDS_EDIT_DELETE         "Delete"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_EDIT_INSERT         "Insert"
+    IDS_EDIT_MENU           "Edit"
+    IDS_EDIT_MOVE           "Move"
+    IDS_EDIT_PASTE          "Paste"
+    IDS_EDIT_REDO_FMT       "&Redo %s"
+    IDS_EDIT_UNDO_FMT       "&Undo %s"
+    IDS_EXPORT              "Export"
+    IDS_EXPORT_EMPTY        "Nothing to export."
+    IDS_EXPORT_ERROR        "Error during export."
+    IDS_EXPORT_FILE_FILTER  "MIDI Files (*.mid)|*.mid|All Files (*.*)|*.*||"
+    IDS_EXPORT_TOO_MANY_TRACKS "Too many tracks."
+    IDS_HLINK_CANT_LAUNCH   "Can't launch browser."
+    IDS_OPT_DESC_bAutoCheckUpdates 
+                            "Automatically check for newer version of app during startup"
+    IDS_OPT_DESC_bViewHighlightCurPos 
+                            "Highlight current position within each track"
+    IDS_OPT_DESC_iMidiOutputDevice "Select output MIDI device"
+    IDS_OPT_DESC_nMidiBufferSize "Size of MIDI event buffer, in bytes"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_OPT_DESC_nMidiLatency "Desired MIDI latency, in milliseconds"
+    IDS_OPT_DESC_nViewUpdateFreq 
+                            "Frequency at which view is updated, in Hertz"
+    IDS_OPT_GROUP_GENERAL   "General"
+    IDS_OPT_GROUP_MIDI      "MIDI"
+    IDS_OPT_GROUP_VIEW      "View"
+    IDS_OPT_NAME_bAutoCheckUpdates "Automatically Check for Updates"
+    IDS_OPT_NAME_bViewHighlightCurPos "Highlight Current Position"
+    IDS_OPT_NAME_iMidiOutputDevice "Output Device"
+    IDS_OPT_NAME_nMidiBufferSize "Buffer Size"
+    IDS_OPT_NAME_nMidiLatency "Latency"
+    IDS_OPT_NAME_nViewUpdateFreq "Update Frequency"
+    IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
+    IDS_PDR_DESC_nTimeDiv   "Time division, in pulses per quarter note"
+    IDS_PDR_GROUP_MASTER    "Master"
+    IDS_PDR_NAME_fTempo     "Tempo"
+    IDS_PDR_NAME_nTimeDiv   "PPQ"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_PROPERTIES_BAR      "Properties"
+    IDS_PROPS_MORE_COLORS   "More Colors..."
+    IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
+    IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format"
+    IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
+    IDS_SEQ_MIDI_ERROR      "MIDI error %d."
+    IDS_STATUS_PANE1        "Pane 1"
+    IDS_STATUS_PANE2        "Pane 2"
+    IDS_TOOLBAR_CUSTOMIZE   "Customize..."
+    IDS_TOOLBAR_STANDARD    "Standard"
+    IDS_TRK_BEAT            "Beat"
+    IDS_TRK_Channel         "Channel"
+    IDS_TRK_Duration        "Duration"
+    IDS_TRK_Length          "Length"
+    IDS_TRK_Mute            "Mute"
+    IDS_TRK_Name            "Name"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_TRK_Note            "Note"
+    IDS_TRK_Offset          "Offset"
+    IDS_TRK_Quant           "Quant"
+    IDS_TRK_Swing           "Swing"
+    IDS_TRK_Velocity        "Velocity"
+    IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
+END
+
+STRINGTABLE
+BEGIN
+    IDR_MAINFRAME           "Polymeter"
+    IDR_PolymeterTYPE       "\nPolymeter\nPolymeter\nPolymeter Files (*.pym)\n.pym\nPolymeter.Document\nPolymeter.Document"
+END
+
+STRINGTABLE
+BEGIN
+    ID_APP_CHECK_FOR_UPDATES "Check for a newer version\nCheck for Updates"
+    ID_APP_HOME_PAGE        "Go to the Polymeter home page\nHome Page"
+    ID_EDIT_DELETE          "Delete the selection\nDelete"
+    ID_EDIT_INSERT          "Insert a new item\nInsert"
+    ID_FILE_EXPORT          "Export MIDI file\nExport"
+    ID_INDICATOR_SONG_POS   "000000000.000"
+    ID_TOOLS_OPTIONS        "Edit options\nOptions"
+    ID_TOOLS_STATISTICS     "Display sequencer statistics\nStatistics"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_CUSTOMIZE       " "
+    ID_VIEW_GO_TO_POSITION  "Go to specified position within song\nGo To Position"
+    ID_VIEW_PAUSE           "Pause or continue playback\nPause"
+    ID_VIEW_PLAY            "Start or stop playback\nPlay"
+    ID_WINDOW_MANAGER       "&Windows..."
+END
+
+STRINGTABLE
+BEGIN
+    AFX_IDS_APP_TITLE       "Polymeter"
+    AFX_IDS_IDLEMESSAGE     "Ready"
+END
+
+STRINGTABLE
+BEGIN
+    ID_INDICATOR_EXT        "EXT"
+    ID_INDICATOR_CAPS       "CAP"
+    ID_INDICATOR_NUM        "NUM"
+    ID_INDICATOR_SCRL       "SCRL"
+    ID_INDICATOR_OVR        "OVR"
+    ID_INDICATOR_REC        "REC"
+END
+
+STRINGTABLE
+BEGIN
+    ID_FILE_NEW             "Create a new document\nNew"
+    ID_FILE_OPEN            "Open an existing document\nOpen"
+    ID_FILE_CLOSE           "Close the active document\nClose"
+    ID_FILE_SAVE            "Save the active document\nSave"
+    ID_FILE_SAVE_AS         "Save the active document with a new name\nSave As"
+END
+
+STRINGTABLE
+BEGIN
+    ID_APP_ABOUT            "Display program information, version number and copyright\nAbout"
+    ID_APP_EXIT             "Quit the application; prompts to save documents\nExit"
+END
+
+STRINGTABLE
+BEGIN
+    ID_FILE_MRU_FILE1       "Open this document"
+    ID_FILE_MRU_FILE2       "Open this document"
+    ID_FILE_MRU_FILE3       "Open this document"
+    ID_FILE_MRU_FILE4       "Open this document"
+    ID_FILE_MRU_FILE5       "Open this document"
+    ID_FILE_MRU_FILE6       "Open this document"
+    ID_FILE_MRU_FILE7       "Open this document"
+    ID_FILE_MRU_FILE8       "Open this document"
+    ID_FILE_MRU_FILE9       "Open this document"
+    ID_FILE_MRU_FILE10      "Open this document"
+    ID_FILE_MRU_FILE11      "Open this document"
+    ID_FILE_MRU_FILE12      "Open this document"
+    ID_FILE_MRU_FILE13      "Open this document"
+    ID_FILE_MRU_FILE14      "Open this document"
+    ID_FILE_MRU_FILE15      "Open this document"
+    ID_FILE_MRU_FILE16      "Open this document"
+END
+
+STRINGTABLE
+BEGIN
+    ID_NEXT_PANE            "Switch to the next window pane\nNext Pane"
+    ID_PREV_PANE            "Switch back to the previous window pane\nPrevious Pane"
+END
+
+STRINGTABLE
+BEGIN
+    ID_WINDOW_NEW           "Open another window for the active document\nNew Window"
+    ID_WINDOW_ARRANGE       "Arrange icons at the bottom of the window\nArrange Icons"
+    ID_WINDOW_CASCADE       "Arrange windows so they overlap\nCascade Windows"
+    ID_WINDOW_TILE_HORZ     "Arrange windows as non-overlapping tiles\nTile Windows"
+    ID_WINDOW_TILE_VERT     "Arrange windows as non-overlapping tiles\nTile Windows"
+    ID_WINDOW_SPLIT         "Split the active window into panes\nSplit"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_CLEAR           "Erase the selection\nErase"
+    ID_EDIT_CLEAR_ALL       "Erase everything\nErase All"
+    ID_EDIT_COPY            "Copy the selection and put it on the Clipboard\nCopy"
+    ID_EDIT_CUT             "Cut the selection and put it on the Clipboard\nCut"
+    ID_EDIT_FIND            "Find the specified text\nFind"
+    ID_EDIT_PASTE           "Insert Clipboard contents\nPaste"
+    ID_EDIT_REPEAT          "Repeat the last action\nRepeat"
+    ID_EDIT_REPLACE         "Replace specific text with different text\nReplace"
+    ID_EDIT_SELECT_ALL      "Select the entire document\nSelect All"
+    ID_EDIT_UNDO            "Undo the last action\nUndo"
+    ID_EDIT_REDO            "Redo the previously undone action\nRedo"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_STATUS_BAR      "Show or hide the status bar\nToggle Status Bar"
+END
+
+STRINGTABLE
+BEGIN
+    AFX_IDS_SCSIZE          "Change the window size"
+    AFX_IDS_SCMOVE          "Change the window position"
+    AFX_IDS_SCMINIMIZE      "Reduce the window to an icon"
+    AFX_IDS_SCMAXIMIZE      "Enlarge the window to full size"
+    AFX_IDS_SCNEXTWINDOW    "Switch to the next document window"
+    AFX_IDS_SCPREVWINDOW    "Switch to the previous document window"
+    AFX_IDS_SCCLOSE         "Close the active window and prompts to save the documents"
+END
+
+STRINGTABLE
+BEGIN
+    AFX_IDS_SCRESTORE       "Restore the window to normal size"
+    AFX_IDS_SCTASKLIST      "Activate Task List"
+    AFX_IDS_MDICHILD        "Activate this window"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE 9, 1
+#include "res\Polymeter.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"      // Standard components
+#if !defined(_AFXDLL)
+#include "afxprint.rc"        // printing/print preview resources
+#include "afxribbon.rc"        // MFC ribbon and control bar resources
+#endif
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

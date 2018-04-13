@@ -1,0 +1,127 @@
+// Copyleft 2018 Chris Korda
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 2 of the License, or any later version.
+/*
+        chris korda
+ 
+		revision history:
+		rev		date	comments
+        00      23mar18	initial version
+
+*/
+
+// MainFrm.h : interface of the CMainFrame class
+//
+
+#pragma once
+
+#include "PropertiesBar.h"
+
+class CPolymeterView;
+class CPolymeterDoc;
+
+class CMainFrame : public CMDIFrameWndEx
+{
+	DECLARE_DYNAMIC(CMainFrame)
+public:
+	CMainFrame();
+
+// Constants
+	enum {
+		VIEW_TIMER_ID = 1789,
+	};
+	enum {	// status bar panes
+		SBP_HINT,
+		SBP_SONG_POS,
+		STATUS_BAR_PANES
+	};
+
+// Attributes
+public:
+	HACCEL	GetAccelTable() const;
+	CMFCStatusBar&	GetStatusBar();
+	CPolymeterView	*GetActiveMDIView();
+	CPolymeterDoc	*GetActiveMDIDoc();
+	bool	PropertiesBarHasFocus() const;
+
+// Operations
+public:
+	void	OnActivateView(CView *pView);
+	void	OnUpdate(CView* pSender, LPARAM lHint = 0, CObject* pHint = NULL);
+	void	UpdateSongPosition();
+
+// Overrides
+public:
+	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+	virtual BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL);
+
+// Implementation
+public:
+	virtual ~CMainFrame();
+#ifdef _DEBUG
+	virtual void AssertValid() const;
+	virtual void Dump(CDumpContext& dc) const;
+#endif
+
+protected:  // control bar embedded members
+	CMFCMenuBar       m_wndMenuBar;
+	CMFCToolBar       m_wndToolBar;
+	CMFCStatusBar     m_wndStatusBar;
+	CMFCToolBarImages m_UserImages;
+	CPropertiesBar	  m_wndPropertiesBar;
+
+// Data members
+	CPolymeterView	*m_pActiveView;		// pointer to active view, or NULL if none
+	bool	m_bInMsgBox;				// true if displaying message box
+	CString	m_sSongPos;					// song position string
+
+// Helpers
+	BOOL	CreateDockingWindows();
+	void	SetDockingWindowIcons(BOOL bHiColorIcons);
+	void	ApplyOptions();
+	bool	CheckForUpdates(bool Explicit);
+	static	UINT	CheckForUpdatesThreadFunc(LPVOID Param);
+	void	SetViewTimer(bool bEnable);
+
+// Generated message map functions
+protected:
+	DECLARE_MESSAGE_MAP()
+	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void OnWindowManager();
+	afx_msg void OnViewCustomize();
+	afx_msg LRESULT OnToolbarCreateNew(WPARAM wp, LPARAM lp);
+	afx_msg void OnApplicationLook(UINT id);
+	afx_msg void OnUpdateApplicationLook(CCmdUI* pCmdUI);
+	afx_msg void OnUpdateIndicatorSongPos(CCmdUI* pCmdUI);
+	afx_msg LRESULT OnAfterTaskbarActivate(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT	OnHandleDlgKey(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnPropertyChange(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnPropertySelect(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnToolsOptions();
+	afx_msg void OnAppCheckForUpdates();
+	afx_msg LRESULT	OnDelayedCreate(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT	OnMidiError(WPARAM wParam, LPARAM lParam);
+};
+
+inline HACCEL CMainFrame::GetAccelTable() const
+{
+	return(m_hAccelTable);
+}
+
+inline CMFCStatusBar& CMainFrame::GetStatusBar()
+{
+	return m_wndStatusBar;
+}
+
+inline CPolymeterView *CMainFrame::GetActiveMDIView()
+{
+	return(m_pActiveView);
+}
+
+inline bool CMainFrame::PropertiesBarHasFocus() const
+{
+	HWND	hFocusWnd = ::GetFocus();
+	return ::IsChild(m_wndPropertiesBar.m_hWnd, hFocusWnd) != 0;
+}

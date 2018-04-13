@@ -1,0 +1,35 @@
+// Copyleft 2018 Chris Korda
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 2 of the License, or any later version.
+/*
+        chris korda
+ 
+		revision history:
+		rev		date	comments
+        00      12apr18	initial version
+
+*/
+
+#pragma once
+
+// CGoToPosDlg dialog
+
+class CGoToPosDlg : public CDialog
+{
+	DECLARE_DYNAMIC(CGoToPosDlg)
+
+public:
+	CGoToPosDlg(CWnd* pParent = NULL);   // standard constructor
+	virtual ~CGoToPosDlg();
+
+// Dialog Data
+	enum { IDD = IDD_GO_TO_POS };
+
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+
+	DECLARE_MESSAGE_MAP()
+public:
+	CString m_sPos;
+};
