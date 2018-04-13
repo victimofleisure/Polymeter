@@ -20,7 +20,7 @@
 
 #define SEQ_DUMP_EVENTS 0
 
-class CSequencer : public CTrackBase {
+class CSequencer : public WObject, public CTrackBase {
 public:
 // Construction
 	CSequencer();
@@ -182,10 +182,18 @@ protected:
 	bool	WriteTempo(double fTempo);
 	int		GetCallbackLength(int nLatency) const;
 	void	UpdateCallbackLength();
+	bool	ExportImpl(LPCTSTR pszPath, int nDuration);
 #if SEQ_DUMP_EVENTS
 	void	AddDumpEvent(const CMidiEventArray& arrEvt, int nEvents);
 	void	DumpEvents(LPCTSTR pszPath);
 #endif	// SEQ_DUMP_EVENTS
+	friend class CSequencerReader;
+};
+
+class CSequencerReader : public CSequencer {
+public:
+	CSequencerReader(CSequencer& Seq);
+	virtual ~CSequencerReader();
 };
 
 inline CSequencer::CEvent::CEvent(DWORD dwTime, DWORD dwEvent)

@@ -26,7 +26,7 @@
 #include "MainFrm.h"
 #include "DocIter.h"
 #include "UndoCodes.h"
-#include "GoToPosDlg.h"
+#include "GoToPositionDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -75,7 +75,7 @@ void CPolymeterView::OnInitialUpdate()
 	// don't call base class because it calls OnUpdate and update is deferred for performance reasons
 //	CFormView::OnInitialUpdate();
 //	ResizeParentToFit();
-	GetDocument()->ApplyOptions();
+	GetDocument()->ApplyOptions(NULL);
 }
 
 void CPolymeterView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
@@ -107,6 +107,9 @@ void CPolymeterView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
 			m_arrTrackDlg[pPropHint->m_iTrack]->UpdateBeat(pPropHint->m_iProp);	// m_iProp is beat index
 		}
+		break;
+	case CPolymeterDoc::HINT_SONG_POS:
+		UpdateSongPosition();
 		break;
 	default:
 		UpdateAllTracks();
@@ -508,6 +511,24 @@ void CPolymeterView::SetSongPosition(LONGLONG nPos)
 	}
 }
 
+void CPolymeterView::ResetSongPosition()
+{
+	int	nTracks = m_arrTrackDlg.GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
+		m_arrTrackDlg[iTrack]->SetHotBeat(-1);	// reset hot beat
+}
+
+void CPolymeterView::UpdateSongPosition()
+{
+	if (theApp.m_Options.m_bViewShowCurPos) {
+		LONGLONG	nPos;
+		if (GetDocument()->m_Seq.GetPosition(nPos))
+			SetSongPosition(nPos);
+	} else {
+		ResetSongPosition();
+	}
+}
+
 void CPolymeterView::OnRButtonUp(UINT /* nFlags */, CPoint point)
 {
 	ClientToScreen(&point);
@@ -832,7 +853,7 @@ void CPolymeterView::OnUpdateViewPause(CCmdUI *pCmdUI)
 void CPolymeterView::OnViewGoToPosition()
 {
 	CPolymeterDoc	*pDoc = GetDocument();
-	CGoToPosDlg	dlg;
+	CGoToPositionDlg	dlg;
 	dlg.m_sPos = pDoc->m_sGoToPosition;
 	if (dlg.DoModal() == IDOK) {
 		pDoc->m_sGoToPosition = dlg.m_sPos;

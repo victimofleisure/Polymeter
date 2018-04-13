@@ -79,7 +79,7 @@ protected:  // control bar embedded members
 // Helpers
 	BOOL	CreateDockingWindows();
 	void	SetDockingWindowIcons(BOOL bHiColorIcons);
-	void	ApplyOptions();
+	void	ApplyOptions(const COptions *pPrevOptions);
 	bool	CheckForUpdates(bool Explicit);
 	static	UINT	CheckForUpdatesThreadFunc(LPVOID Param);
 	void	SetViewTimer(bool bEnable);

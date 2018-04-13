@@ -27,7 +27,7 @@ PROPDEF(	MIDI,		NONE,		ENUM,		int,		iMidiOutputDevice,		0,			0,			0,			NULL,		0)
 PROPDEF(	MIDI,		NONE,		VAR,		int,		nMidiLatency,			10,			1,			1000,		NULL,		0)
 PROPDEF(	MIDI,		NONE,		VAR,		int,		nMidiBufferSize,		4096,		1,			USHRT_MAX,	NULL,		0)
 PROPDEF(	VIEW,		NONE,		VAR,		float,		nViewUpdateFreq,		20.0f,		1.0f,		60.0f,		NULL,		0)
-PROPDEF(	VIEW,		NONE,		VAR,		bool,		bViewHighlightCurPos,	0,			0,			0,			NULL,		0)
+PROPDEF(	VIEW,		NONE,		VAR,		bool,		bViewShowCurPos,		0,			0,			0,			NULL,		0)
 PROPDEF(	GENERAL,	NONE,		VAR,		bool,		bAutoCheckUpdates,		1,			0,			0,			NULL,		0)
 
 #undef PROPDEF

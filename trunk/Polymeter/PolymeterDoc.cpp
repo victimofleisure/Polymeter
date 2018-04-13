@@ -32,6 +32,7 @@
 #include "FocusEdit.h"
 #include "MidiWrap.h"
 #include "PathStr.h"
+#include "ExportDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -51,6 +52,8 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_TRACK_EVENT_COUNT	_T("nEvents")
 #define RK_TRACK_EVENT_USED		_T("nUsed")
 #define RK_TRACK_EVENT_DATA		_T("arrEvent")
+
+#define RK_EXPORT_DURATION	_T("nExportDuration")
 
 // define null title IDs for undo codes that have dynamic titles
 #define IDS_EDIT_TRACK_PROP			0
@@ -100,8 +103,9 @@ void CPolymeterDoc::PreCloseFrame(CFrameWnd* pFrame )
 	CDocument::PreCloseFrame(pFrame);
 }
 
-void CPolymeterDoc::ApplyOptions()
+void CPolymeterDoc::ApplyOptions(const COptions *pPrevOptions)
 {
+	UNREFERENCED_PARAMETER(pPrevOptions);
 	m_Seq.SetOutputDevice(theApp.m_Options.m_iMidiOutputDevice);
 	m_Seq.SetLatency(theApp.m_Options.m_nMidiLatency);
 	m_Seq.SetBufferSize(theApp.m_Options.m_nMidiBufferSize);
@@ -400,6 +404,22 @@ CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 	return sTitle;
 }
 
+void CPolymeterDoc::SecsToTime(int nSecs, CString& sTime)
+{
+	sTime.Format(_T("%d:%02d:%02d"), nSecs / 3600, nSecs % 3600 / 60, nSecs % 60);
+}
+
+int CPolymeterDoc::TimeToSecs(LPCTSTR pszTime)
+{
+	static const int PLACES = 3;	// hours, minutes, seconds
+	int	ip[PLACES], op[PLACES];	// input and output place arrays
+	ZeroMemory(op, sizeof(op));
+	int	nPlaces = _stscanf_s(pszTime, _T("%d%*[: ]%d%*[: ]%d"), &ip[0], &ip[1], &ip[2]);
+	if (nPlaces >= 0)
+		CopyMemory(&op[PLACES - nPlaces], ip, nPlaces * sizeof(int));
+	return(op[0] * 3600 + op[1] * 60 + op[2]);
+}
+
 #ifdef SHARED_HANDLERS
 
 // Support for thumbnails
@@ -476,7 +496,7 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_COMMAND(ID_EDIT_REDO, OnEditRedo)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_REDO, OnUpdateEditRedo)
 	ON_COMMAND(ID_TOOLS_STATISTICS, OnToolsStatistics)
-	ON_COMMAND(ID_FILE_EXPORT, &CPolymeterDoc::OnFileExport)
+	ON_COMMAND(ID_FILE_EXPORT, OnFileExport)
 END_MESSAGE_MAP()
 
 // CPolymeterDoc commands
@@ -517,10 +537,9 @@ BOOL CPolymeterDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
 void CPolymeterDoc::OnFileExport()
 {
-	int nDuration = 60;	//@@@ seconds; make accessible!
 	int	nUsedTracks = m_Seq.GetUsedTrackCount(true);	// exclude muted tracks
 	if (!nUsedTracks) {	// if no tracks to export
-		AfxMessageBox(IDS_EXPORT_EMPTY);
+		AfxMessageBox(IDS_EXPORT_EMPTY_FILE);
 		return;
 	}
 	if (nUsedTracks > USHRT_MAX) {	// if too many tracks for MIDI file
@@ -534,9 +553,15 @@ void CPolymeterDoc::OnFileExport()
 	CString	sDlgTitle(LPCTSTR(IDS_EXPORT));
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
-		CWaitCursor	wc;
-		if (!m_Seq.Export(fd.GetPathName(), nDuration)) {
-			AfxMessageBox(IDS_EXPORT_ERROR);
+		const int	nDefaultDuration = 60;	// seconds
+		CExportDlg	dlg;
+		dlg.m_nDuration = theApp.GetProfileInt(REG_SETTINGS, RK_EXPORT_DURATION, nDefaultDuration);
+		if (dlg.DoModal() == IDOK) {
+			theApp.WriteProfileInt(REG_SETTINGS, RK_EXPORT_DURATION, dlg.m_nDuration);
+			CWaitCursor	wc;
+			if (!m_Seq.Export(fd.GetPathName(), dlg.m_nDuration)) {
+				AfxMessageBox(IDS_EXPORT_ERROR);
+			}
 		}
 	}
 }

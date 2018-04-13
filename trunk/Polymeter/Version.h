@@ -8,7 +8,7 @@
 		revision history:
 		rev		date	comments
 		00		23mar18	0.0.00.000
-		00		12apr18	0.0.00.001
+		00		13apr18	0.0.00.001
 
 		DON'T FORGET TO CHANGE VERSION RESOURCE
 

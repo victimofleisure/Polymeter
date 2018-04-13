@@ -55,6 +55,8 @@ public:
 	void	Drop(int iDropPos);
 	void	EndDrag();
 	void	EnsureSelectionVisible();
+	void	UpdateSongPosition();
+	void	ResetSongPosition();
 
 // Overrides
 public:

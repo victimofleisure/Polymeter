@@ -214,7 +214,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	// improves the usability of the taskbar because the document name is visible with the thumbnail.
 	ModifyStyle(0, FWS_PREFIXTITLE);
 
-	ApplyOptions();
+	ApplyOptions(NULL);
 	PostMessage(UWM_DELAYEDCREATE);
 
 	return 0;
@@ -262,16 +262,24 @@ BOOL CMainFrame::CreateDockingWindows()
 	return TRUE;
 }
 
-void CMainFrame::ApplyOptions()
+void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 {
 	CAllDocIter	iter;
 	CPolymeterDoc	*pDoc;
 	while ((pDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
-		pDoc->ApplyOptions();
+		pDoc->ApplyOptions(pPrevOptions);
 	}
 	pDoc = GetActiveMDIDoc();
-	if (pDoc != NULL && pDoc->m_Seq.IsPlaying())
-		SetViewTimer(true);
+	if (pDoc != NULL) {
+		if (pPrevOptions != NULL) {
+			if (theApp.m_Options.m_nViewUpdateFreq != pPrevOptions->m_nViewUpdateFreq) {
+				if (pDoc->m_Seq.IsPlaying())
+					SetViewTimer(true);
+			}
+			if (theApp.m_Options.m_bViewShowCurPos != pPrevOptions->m_bViewShowCurPos)
+				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_SONG_POS);
+		}
+	}
 }
 
 void CMainFrame::SetViewTimer(bool bEnable)
@@ -352,6 +360,9 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		case CPolymeterDoc::HINT_MASTER_PROP:
 			m_wndPropertiesBar.SetProperties(*pDoc);	// update properties bar
 			break;
+		case CPolymeterDoc::HINT_SONG_POS:
+			UpdateSongPosition();
+			break;
 		default:
 			m_wndPropertiesBar.SetProperties(*pDoc);	// update properties bar
 		}
@@ -373,7 +384,7 @@ void CMainFrame::UpdateSongPosition()
 	if (pDoc->m_Seq.GetPosition(nPos)) {	// if valid song position
 		pDoc->m_Seq.ConvertPositionToString(nPos, m_sSongPos);
 		m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);
-		if (theApp.m_Options.m_bViewHighlightCurPos) {
+		if (theApp.m_Options.m_bViewShowCurPos) {
 			pView->SetSongPosition(nPos);
 		}
 	}
@@ -703,9 +714,10 @@ void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 
 void CMainFrame::OnToolsOptions()
 {
+	COptions	m_optsPrev(theApp.m_Options);
 	COptionsDlg	dlg;
 	if (dlg.DoModal() == IDOK) {
-		ApplyOptions();
+		ApplyOptions(&m_optsPrev);
 	}
 }
 

@@ -11,27 +11,27 @@
 
 */
 
-// GoToPosDlg.cpp : implementation file
+// GoToPositionDlg.cpp : implementation file
 //
 
 #include "stdafx.h"
 #include "resource.h"
-#include "GoToPosDlg.h"
+#include "GoToPositionDlg.h"
 
-// CGoToPosDlg dialog
+// CGoToPositionDlg dialog
 
-IMPLEMENT_DYNAMIC(CGoToPosDlg, CDialog)
+IMPLEMENT_DYNAMIC(CGoToPositionDlg, CDialog)
 
-CGoToPosDlg::CGoToPosDlg(CWnd* pParent /*=NULL*/)
+CGoToPositionDlg::CGoToPositionDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(IDD, pParent)
 {
 }
 
-CGoToPosDlg::~CGoToPosDlg()
+CGoToPositionDlg::~CGoToPositionDlg()
 {
 }
 
-void CGoToPosDlg::DoDataExchange(CDataExchange* pDX)
+void CGoToPositionDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	if (pDX->m_bSaveAndValidate) {
@@ -41,7 +41,7 @@ void CGoToPosDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_GO_TO_POS_EDIT, m_sPos);
 }
 
-BEGIN_MESSAGE_MAP(CGoToPosDlg, CDialog)
+BEGIN_MESSAGE_MAP(CGoToPositionDlg, CDialog)
 END_MESSAGE_MAP()
 
-// CGoToPosDlg message handlers
+// CGoToPositionDlg message handlers

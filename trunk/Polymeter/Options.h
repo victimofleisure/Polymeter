@@ -39,7 +39,7 @@ public:
 // Data members
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) type m_##name;
 	#include "OptionsDef.h"
-	CStringArray	m_arrMidiOutDevName;	// array of MIDI output device names
+	CStringArrayEx	m_arrMidiOutDevName;	// array of MIDI output device names
 
 // Overrides
 	virtual	int		GetGroupCount() const;

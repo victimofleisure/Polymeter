@@ -198,10 +198,13 @@
     <ClInclude Include="ColoredButton.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GoToPosDlg.h">
+    <ClInclude Include="MidiFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MidiFile.h">
+    <ClInclude Include="ExportDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GoToPositionDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -320,10 +323,13 @@
     <ClCompile Include="ColoredButton.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GoToPosDlg.cpp">
+    <ClCompile Include="MidiFile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MidiFile.cpp">
+    <ClCompile Include="ExportDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GoToPositionDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

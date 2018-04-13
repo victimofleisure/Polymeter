@@ -197,9 +197,10 @@
     <ClInclude Include="CritSec.h" />
     <ClInclude Include="DLLWrap.h" />
     <ClInclude Include="DocIter.h" />
+    <ClInclude Include="ExportDlg.h" />
     <ClInclude Include="FocusEdit.h" />
     <ClInclude Include="Globals.h" />
-    <ClInclude Include="GoToPosDlg.h" />
+    <ClInclude Include="GoToPositionDlg.h" />
     <ClInclude Include="Hyperlink.h" />
     <ClInclude Include="IniFile.h" />
     <ClInclude Include="MainFrm.h" />
@@ -260,8 +261,9 @@
     <ClCompile Include="ColoredButton.cpp" />
     <ClCompile Include="DLLWrap.cpp" />
     <ClCompile Include="DocIter.cpp" />
+    <ClCompile Include="ExportDlg.cpp" />
     <ClCompile Include="FocusEdit.cpp" />
-    <ClCompile Include="GoToPosDlg.cpp" />
+    <ClCompile Include="GoToPositionDlg.cpp" />
     <ClCompile Include="Hyperlink.cpp" />
     <ClCompile Include="IniFile.cpp" />
     <ClCompile Include="MainFrm.cpp" />

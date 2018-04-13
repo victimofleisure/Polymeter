@@ -32,7 +32,7 @@ const int CTrackDlg::m_arrPropCapId[PROPS] = {
 };
 
 CTrackDlg::CTrackDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CTrackDlg::IDD, pParent)
+	: CDialog(IDD, pParent)
 {
 	m_iTrack = 0;
 	m_iHotBeat = -1;
@@ -390,7 +390,7 @@ void CTrackDlg::OnPaint()
 			CRect	rBtn(rBeat);
 			rBtn.DeflateRect(1, 1);	// exclude frame
 			int	nMask = pDoc->m_Seq.GetEvent(m_iTrack, iBeat);
-			if (theApp.m_Options.m_bViewHighlightCurPos) {
+			if (theApp.m_Options.m_bViewShowCurPos) {
 				if (iBeat == m_iHotBeat)
 					nMask |= BTF_HOT;
 				if (bMute)

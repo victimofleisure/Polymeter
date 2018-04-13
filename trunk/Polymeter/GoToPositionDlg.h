@@ -13,18 +13,18 @@
 
 #pragma once
 
-// CGoToPosDlg dialog
+// CGoToPositionDlg dialog
 
-class CGoToPosDlg : public CDialog
+class CGoToPositionDlg : public CDialog
 {
-	DECLARE_DYNAMIC(CGoToPosDlg)
+	DECLARE_DYNAMIC(CGoToPositionDlg)
 
 public:
-	CGoToPosDlg(CWnd* pParent = NULL);   // standard constructor
-	virtual ~CGoToPosDlg();
+	CGoToPositionDlg(CWnd* pParent = NULL);   // standard constructor
+	virtual ~CGoToPositionDlg();
 
 // Dialog Data
-	enum { IDD = IDD_GO_TO_POS };
+	enum { IDD = IDD_GO_TO_POSITION };
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support

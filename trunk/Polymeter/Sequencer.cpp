@@ -49,7 +49,7 @@ CSequencer::~CSequencer()
 
 void CSequencer::OnMidiError(MMRESULT nResult)
 {
-	printf("MIDI error %d\n", nResult);
+	UNREFERENCED_PARAMETER(nResult);
 }
 
 bool CSequencer::GetPosition(MMTIME& time, UINT wType)
@@ -547,8 +547,9 @@ bool CSequencer::OutputMidiBuffer()
 	return true;
 }
 
-bool CSequencer::Export(LPCTSTR pszPath, int nDuration)
+bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 {
+	// note that this method may throw CFileException (from CMidiFile)
 	if (nDuration <= 0)	// if invalid duration (in seconds)
 		return false;	// avoid divide by zero
 	CIntArrayEx	arrUsedTrack;
@@ -556,57 +557,65 @@ bool CSequencer::Export(LPCTSTR pszPath, int nDuration)
 	int	nUsedTracks = arrUsedTrack.GetSize();
 	if (!nUsedTracks || nUsedTracks > USHRT_MAX)	// if no tracks, or too many tracks
 		return false;
-	CMidiFile	fMidi(pszPath, CFile::modeCreate | CFile::modeWrite);
+	CMidiFile	fMidi(pszPath, CFile::modeCreate | CFile::modeWrite);	// create MIDI file
 	USHORT	uTracks = static_cast<USHORT>(nUsedTracks);
 	USHORT	uTimeDiv = static_cast<USHORT>(m_nTimeDiv);
-	fMidi.WriteHeader(uTracks, uTimeDiv, m_fTempo);
-	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
+	fMidi.WriteHeader(uTracks, uTimeDiv, m_fTempo);	// write MIDI file header
 	const int	nChunkDuration = 1000;	// desired chunk duration, in milliseconds
 	int	nChunkLen = GetCallbackLength(nChunkDuration);	// convert chunk duration to ticks
 	int	nChunks = (nDuration * 1000 - 1) / nChunkDuration + 1;	// number of chunks, rounded up
-	int	nPrevCBLen = m_nCBLen;	// save callback length member; restore on exit
 	m_nCBLen = nChunkLen;	// set callback length member; used in AddTrackEvents
-	bool	bIsPaused = m_bIsPaused;	// save pause state
-	Pause(true);	// pause playback to avoid time overruns in OutputMidiBuffer
-	TRY {
-		for (int iUsed = 0; iUsed < nUsedTracks; iUsed++) {	// for each non-empty track
-			int	iTrack = arrUsedTrack[iUsed];	// get track index
-			int	nCBTime = 0;
-			int	nPadTime = 0;
-			CMidiEventArray arrMidiEvt;
-			for (int iChunk = 0; iChunk < nChunks; iChunk++) {	// for each time chunk
-				m_arrEvent.FastRemoveAll();	// empty event array
-				AddTrackEvents(iTrack, nCBTime);	// get track's events for this chunk
-				AddNoteOffs(nCBTime, nCBTime + nChunkLen);	// add note offs for this chunk
-				int	nEvents = m_arrEvent.GetSize();
-				if (nEvents) {	// if any events to output
-					// convert event times (relative to start of callback period) to delta times
-					int	nPrevTime = -nPadTime;
-					for (int iEvt = 0; iEvt < nEvents; iEvt++) {	// for each event
-						const CEvent&	evt = m_arrEvent[iEvt];
-						MIDI_EVENT	midiEvt;
-						midiEvt.DeltaT = evt.m_dwTime - nPrevTime;	// convert to delta time
-						midiEvt.Msg = evt.m_dwEvent;
-						arrMidiEvt.Add(midiEvt);
-						nPrevTime = evt.m_dwTime;
-					}
-					nPadTime = nChunkLen - m_arrEvent[nEvents - 1].m_dwTime;
-				} else	// no events to output
-					nPadTime += nChunkLen;
-				nCBTime += nChunkLen;
-			}
-			fMidi.WriteTrack(arrMidiEvt);	// write can throw
+	for (int iUsed = 0; iUsed < nUsedTracks; iUsed++) {	// for each non-empty track
+		int	iTrack = arrUsedTrack[iUsed];	// get track index
+		int	nCBTime = 0;
+		int	nPadTime = 0;
+		CMidiEventArray arrMidiEvt;
+		for (int iChunk = 0; iChunk < nChunks; iChunk++) {	// for each time chunk
+			m_arrEvent.FastRemoveAll();	// empty event array
+			AddTrackEvents(iTrack, nCBTime);	// get track's events for this chunk
+			AddNoteOffs(nCBTime, nCBTime + nChunkLen);	// add note offs for this chunk
+			int	nEvents = m_arrEvent.GetSize();
+			if (nEvents) {	// if any events to output
+				// convert event times (relative to start of callback period) to delta times
+				int	nPrevTime = -nPadTime;
+				for (int iEvt = 0; iEvt < nEvents; iEvt++) {	// for each event
+					const CEvent&	evt = m_arrEvent[iEvt];
+					MIDI_EVENT	midiEvt;
+					midiEvt.DeltaT = evt.m_dwTime - nPrevTime;	// convert to delta time
+					midiEvt.Msg = evt.m_dwEvent;
+					arrMidiEvt.Add(midiEvt);
+					nPrevTime = evt.m_dwTime;
+				}
+				nPadTime = nChunkLen - m_arrEvent[nEvents - 1].m_dwTime;
+			} else	// no events to output
+				nPadTime += nChunkLen;
+			nCBTime += nChunkLen;
 		}
+		fMidi.WriteTrack(arrMidiEvt);	// write track to MIDI file
 	}
-	CATCH(CException, e) {
-		m_nCBLen = nPrevCBLen;	// restore callback length
-		Pause(bIsPaused);	// unpause playback
-		THROW_LAST();	// rethrow exception
-	}
-	END_CATCH
-	m_nCBLen = nPrevCBLen;	// restore callback length
-	Pause(bIsPaused);	// unpause playback
 	return true;
+}
+
+bool CSequencer::Export(LPCTSTR pszPath, int nDuration)
+{
+	CSequencerReader	seq(*this);	// give export its own sequencer instance
+	return seq.ExportImpl(pszPath, nDuration);
+}
+
+CSequencerReader::CSequencerReader(CSequencer& seq)
+{
+	// attach our track array to sequencer's track array; risky but OK so long as
+	// our instance is destroyed before sequencer, and never modifies track array
+	m_arrTrack.Attach(seq.m_arrTrack.GetData(), seq.m_arrTrack.GetSize());
+	m_fTempo = seq.m_fTempo;
+	m_nTimeDiv = seq.m_nTimeDiv;
+}
+
+CSequencerReader::~CSequencerReader()
+{
+	CTrack	*pTrack;
+	W64INT	nSize;
+	m_arrTrack.Detach(pTrack, nSize);	// detach our track array from sequencer's
 }
 
 void CSequencer::CopyTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const

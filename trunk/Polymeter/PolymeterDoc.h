@@ -41,6 +41,7 @@ public:
 		HINT_BEAT,				// beat edit; pHint is CPropHint
 		HINT_MASTER_PROP,		// master property edit
 		HINT_PLAY,				// start or stop playback
+		HINT_SONG_POS,			// song position change
 		HINTS
 	};
 
@@ -75,7 +76,10 @@ public:
 public:
 	void	ReadProperties(LPCTSTR szPath);
 	void	WriteProperties(LPCTSTR szPath) const;
-	void	ApplyOptions();
+	void	ApplyOptions(const COptions *pPrevOptions);
+	static	void	SecsToTime(int nSecs, CString& sTime);
+	static	int		TimeToSecs(LPCTSTR pszTime);
+
 
 // Overrides
 public:
