@@ -36,6 +36,14 @@
 <TD>user</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>04/12/18</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>changing highlight current position option doesn't update view</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>03/25/18</TD>
 <TD>done</TD>
@@ -116,6 +124,94 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>03/30/18</TD>
+<TD>done</TD>
+<TD>drag reorder tracks</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>03/30/18</TD>
+<TD>done</TD>
+<TD>insert or delete tracks</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>03/30/18</TD>
+<TD>done</TD>
+<TD>undo test</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>04/01/18</TD>
+<TD>done</TD>
+<TD>icon</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>04/02/18</TD>
+<TD>done</TD>
+<TD>check for updates</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>04/09/18</TD>
+<TD>done</TD>
+<TD>duration offset</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>04/10/18</TD>
+<TD>done</TD>
+<TD>optionally show current position within each track</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>04/11/18</TD>
+<TD>done</TD>
+<TD>multi-track property editing</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>04/12/18</TD>
+<TD>done</TD>
+<TD>go to position, both while stopped and while playing</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>04/12/18</TD>
+<TD>done</TD>
+<TD>negative song position</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>animated visualization</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
@@ -127,7 +223,7 @@
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>controller tracks; many subtasks</TD>
+<TD>controller tracks</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -143,7 +239,7 @@
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>UI design; real track view; many subtasks</TD>
+<TD>UI design; real track view</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -159,7 +255,7 @@
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>app architecture; are Bongo, Jock and Stencil all going to live in one app, or what?</TD>
+<TD>app architecture; Bongo, Jock and Stencil all in one app? Different views of same document?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -175,7 +271,7 @@
 <TD>03/25/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>drag reorder tracks</TD>
+<TD>insert or delete beats, shifting following beats</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -183,7 +279,7 @@
 <TD>03/25/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>insert or delete beats, shifting following beats as needed</TD>
+<TD>rotate track's beats left or right</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -191,7 +287,7 @@
 <TD>03/25/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>insert or delete tracks</TD>
+<TD>playback can be slow to start, due to device open delay; keep device open all the time?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -199,7 +295,7 @@
 <TD>03/25/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>export MIDI file</TD>
+<TD>initial bank and patch for each channel; volume and pan too?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -207,7 +303,63 @@
 <TD>03/25/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>variable track size; must prevent track's length from exceeding its size</TD>
+<TD>make beat width proportional to track's quantization; complicates drawing and scrolling, requires zoom</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>unlimited track length; beat array size should always be track length; complicates undoing length edit</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>right button selection of tracks or beats; drag selection of multiple items</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/09/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>undoing track value or beat edit should ensure track is visible</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/11/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>live patch changes (and other events) via interlocked ring buffer</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/12/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>beat positions are hard to identify; optional tooltip?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/12/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>beat captions should be quarter notes, not sixteenths, and should be centered on beat boundaries</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>&nbsp;</TD>
+<TD>WIP</TD>
+<TD>export MIDI file; duration?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
