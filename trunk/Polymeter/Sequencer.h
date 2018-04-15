@@ -89,8 +89,8 @@ public:
 	void	SetMute(int iTrack, bool bMute);
 	BYTE	GetEvent(int iTrack, int iEvent) const;
 	void	SetEvent(int iTrack, int iEvent, BYTE nVal);
-	int		GetSize(int iTrack) const;
-	void	SetSize(int iTrack, int nSize);
+	void	GetEvents(int iTrack, CByteArrayEx& arrEvent) const;
+	void	SetEvents(int iTrack, const CByteArrayEx& arrEvent);
 	void	GetTrackProperty(int iTrack, int iProp, CComVariant& var) const;
 	void	SetTrackProperty(int iTrack, int iProp, const CComVariant& var);
 	int		GetUsedTrackCount(bool bExcludeMuted = false) const;
@@ -319,7 +319,7 @@ inline int CSequencer::GetQuant(int iTrack) const
 
 inline int CSequencer::GetLength(int iTrack) const
 {
-	return m_arrTrack[iTrack].m_nLength;
+	return m_arrTrack[iTrack].m_arrEvent.GetSize();
 }
 
 inline int CSequencer::GetOffset(int iTrack) const
@@ -342,17 +342,17 @@ inline int CSequencer::GetDuration(int iTrack) const
 	return m_arrTrack[iTrack].m_nDuration;
 }
 
-inline BYTE CSequencer::GetEvent(int iTrack, int iEvent) const
-{
-	return m_arrTrack[iTrack].m_arrEvent[iEvent];
-}
-
 inline bool CSequencer::GetMute(int iTrack) const
 {
 	return m_arrTrack[iTrack].m_bMute;
 }
 
-inline int CSequencer::GetSize(int iTrack) const
+inline BYTE CSequencer::GetEvent(int iTrack, int iEvent) const
 {
-	return m_arrTrack[iTrack].m_arrEvent.GetSize();
+	return m_arrTrack[iTrack].m_arrEvent[iEvent];
+}
+
+inline void CSequencer::GetEvents(int iTrack, CByteArrayEx& arrEvent) const
+{
+	arrEvent = m_arrTrack[iTrack].m_arrEvent;
 }

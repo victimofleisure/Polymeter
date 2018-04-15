@@ -39,8 +39,8 @@ public:
 	int		GetSelectionMark() const;
 	void	SetSelectionMark(int iTrack);
 	CSize	GetTrackDlgSize() const;
-	CSize	GetBeatSize() const;
-	int		GetFirstBeatX() const;
+	CSize	GetStepSize() const;
+	int		GetFirstStepX() const;
 	void	SetSongPosition(LONGLONG nPos);
 
 // Operations
@@ -66,6 +66,7 @@ protected:
 	virtual void OnInitialUpdate(); // called first time after construct
 	virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	virtual void OnDraw(CDC* pDC);
 
 // Implementation
 public:
@@ -85,8 +86,9 @@ protected:
 	enum {
 		SCROLL_TIMER_ID = 2001,
 		SCROLL_TIMER_PERIOD = 50,
-		BEAT_SIZE_OFFSET = 2,
-		BEAT_RIGHT_MARGIN = 8,
+		STEP_SIZE_OFFSET = 2,
+		STEP_RIGHT_MARGIN = 8,
+		CAPTION_VERT_MARGIN = 5,
 	};
 
 // Member data
@@ -96,7 +98,6 @@ protected:
 	CSize	m_szTrackDlg;		// size of track dialog
 	CSize	m_szTrackMargin;	// track margins
 	CStatic	m_arrPropCap[PROPS];	// array of property captions
-	CStatic	m_arrBeatCap[INIT_BEATS];	// array of beat captions
 	bool	m_bPendingSelect;	// true if selection is pending
 	int		m_iSelMark;			// track index of selection anchor
 	int		m_nDragState;		// drag state; see enum above
@@ -105,8 +106,9 @@ protected:
 	CIntArrayEx	m_arrSelection;	// indices of selected tracks
 	W64UINT	m_nScrollTimer;		// if non-zero, timer instance for scrolling
 	int		m_nScrollDelta;		// scroll by this amount per timer tick
-	int		m_nFirstBeatX;		// x-position of first beat in client coords
-	CSize	m_szBeat;			// size of beat
+	int		m_nFirstStepX;		// x-position of first step in client coords
+	int		m_nCaptionHeight;	// height of caption text in client coords
+	CSize	m_szStep;			// size of step in client coords
 
 // Helpers
 	bool	CreateTracks();
@@ -152,8 +154,9 @@ protected:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnViewPause();
 	afx_msg void OnUpdateViewPause(CCmdUI *pCmdUI);
-public:
 	afx_msg void OnViewGoToPosition();
+	afx_msg void OnToolsTimeToRepeat();
+	afx_msg void OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI);
 };
 
 #ifndef _DEBUG  // debug version in PolymeterView.cpp
@@ -191,12 +194,12 @@ inline CSize CPolymeterView::GetTrackDlgSize() const
 	return m_szTrackDlg;
 }
 
-inline CSize CPolymeterView::GetBeatSize() const
+inline CSize CPolymeterView::GetStepSize() const
 {
-	return m_szBeat;
+	return m_szStep;
 }
 
-inline int CPolymeterView::GetFirstBeatX() const
+inline int CPolymeterView::GetFirstStepX() const
 {
-	return m_nFirstBeatX;
+	return m_nFirstStepX;
 }

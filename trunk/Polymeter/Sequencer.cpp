@@ -111,7 +111,7 @@ void CSequencer::SetPosition(int nTicks)
 
 void CSequencer::SetTempo(double fTempo)
 {
-	ASSERT(fTempo > 0 && fTempo < 500);
+	ASSERT(fTempo > 0);
 	if (m_bIsPlaying) {	// if playing
 		WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
 		m_fTempo = fTempo;
@@ -187,7 +187,8 @@ void CSequencer::SetQuant(int iTrack, int nQuant)
 void CSequencer::SetLength(int iTrack, int nLength)
 {
 	ASSERT(nLength > 0);
-	m_arrTrack[iTrack].m_nLength = nLength;
+	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
+	m_arrTrack[iTrack].m_arrEvent.SetSize(nLength);
 }
 
 void CSequencer::SetOffset(int iTrack, int nOffset)
@@ -220,10 +221,10 @@ void CSequencer::SetEvent(int iTrack, int iEvent, BYTE nVal)
 	m_arrTrack[iTrack].m_arrEvent[iEvent] = nVal;
 }
 
-void CSequencer::SetSize(int iTrack, int nSize)
+void CSequencer::SetEvents(int iTrack, const CByteArrayEx& arrEvent)
 {
 	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	m_arrTrack[iTrack].m_arrEvent.SetSize(nSize);
+	m_arrTrack[iTrack].m_arrEvent = arrEvent;
 }
 
 void CSequencer::GetTrackProperty(int iTrack, int iProp, CComVariant& var) const
@@ -405,7 +406,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 {
 	CTrack&	trk = m_arrTrack[iTrack];
 	int	nOffset = trk.m_nOffset;	// cache these values for thread safety
-	int	nLength = trk.m_nLength;
+	int	nLength = trk.m_arrEvent.GetSize();
 	int	nQuant = trk.m_nQuant;
 	int	nSwing = trk.m_nSwing;
 	nSwing = CLAMP(nSwing, 1 - nQuant, nQuant - 1);	// limit swing within quant
@@ -421,7 +422,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 	if (iEvt < 0)	// if negative event index
 		iEvt += nLength;	// wrap event index
 	nEvtTime = -nEvtTime;	// start far enough back to discard up to two events
-	bool	bIsOdd = false;	// starting on even beat by definition
+	bool	bIsOdd = false;	// starting on even step, due to pair of quants logic
 	while (nEvtTime < m_nCBLen) {	// while event time within callback period
 		if (nEvtTime >= 0) {	// discard already played events
 			if (trk.m_arrEvent[iEvt]) {
@@ -431,9 +432,9 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 				evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, trk.m_nNote, nVel);
 				m_arrEvent.InsertSorted(evt);
 				int	nDuration = nQuant + trk.m_nDuration;	// add duration offset
-				if (bIsOdd)	// if odd beat
+				if (bIsOdd)	// if odd step
 					nDuration -= nSwing;	// subtract swing from duration
-				else	// even beat
+				else	// even step
 					nDuration += nSwing;	// add swing to duration
 				nDuration = max(nDuration, 1);	// keep duration above zero
 				evt.m_dwTime = nCBStart + nEvtTime + nDuration;	// absolute time
@@ -445,11 +446,11 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 		if (iEvt >= nLength)	// if track length reached
 			iEvt -= nLength;	// wrap to start of track
 		nEvtTime += nQuant;	// advance event time by track's time quant
-		if (bIsOdd)	// if odd beat
+		if (bIsOdd)	// if odd step
 			nEvtTime -= nSwing;	// subtract swing from event time
-		else	// even beat
+		else	// even step
 			nEvtTime += nSwing;	// add swing to event time
-		bIsOdd ^= 1;	// toggle odd beat flag
+		bIsOdd ^= 1;	// toggle odd step flag
 	}
 }
 

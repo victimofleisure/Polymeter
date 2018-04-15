@@ -1,3 +1,15 @@
+// Copyleft 2018 Chris Korda
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 2 of the License, or any later version.
+/*
+        chris korda
+ 
+		revision history:
+		rev		date	comments
+        00		23mar18	initial version
+
+*/
 
 // stdafx.cpp : source file that includes just the standard includes
 // Polymeter.pch will be the pre-compiled header
@@ -36,6 +48,25 @@ CString FormatSystemError(DWORD ErrorCode)
 	} else	// format failed
 		sError.Format(IDS_APP_UNKNOWN_SYSTEM_ERROR, ErrorCode, ErrorCode);
 	return(sError);
+}
+
+bool FormatNumberCommas(LPCTSTR pszSrc, CString& sDst, int nPrecision)
+{
+	USES_CONVERSION;
+	WCHAR	szDecimal[4];
+	WCHAR	szThousand[4];
+	if (!GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL, szDecimal, _countof(szDecimal)))
+		return false;
+	if (!GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, szThousand, _countof(szThousand)))
+		return false;
+	NUMBERFMTW	fmt = {nPrecision, 0, 3, szDecimal, szThousand};
+	int	nLen = GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, T2CW(pszSrc), &fmt, NULL, 0);
+	CStringW	sBuf;
+	LPWSTR	pBuf = sBuf.GetBuffer(nLen);
+	GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, T2CW(pszSrc), &fmt, pBuf, nLen);
+	sBuf.ReleaseBuffer();
+	sDst = sBuf;
+	return true;
 }
 
 CString	GetLastErrorString()

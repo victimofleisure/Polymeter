@@ -237,16 +237,15 @@ AFX_INLINE W64INT CArrayEx<TYPE, ARG_TYPE>::BinarySearch(ARG_TYPE val)
 template<class TYPE, class ARG_TYPE>
 AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::InsertSorted(ARG_TYPE val)
 {
-	W64INT	nSize = m_nSize;
 	W64INT	iInsert = 0;
-	if (nSize) {
+	if (m_nSize) {	// optimize initial insertion
 		W64INT	iStart = 0;
-		W64INT	iEnd = nSize - 1;
-		if (val <= GetAt(0))
+		W64INT	iEnd = m_nSize - 1;
+		if (val <= GetAt(0))	// optimize insertion at start
 			iInsert = 0;
-		else if (val >= GetAt(iEnd))
-			iInsert = nSize;
-		else {
+		else if (val >= GetAt(iEnd))	// optimize insertion at end
+			iInsert = m_nSize;
+		else {	// general case
 			while (iStart <= iEnd) {
 				W64INT	iMid = (iStart + iEnd) / 2;
 				if (GetAt(iMid) <= val)

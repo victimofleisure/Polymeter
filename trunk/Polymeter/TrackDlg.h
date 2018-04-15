@@ -41,17 +41,17 @@ public:
 	void	SetTrackIndex(int iTrack);
 	bool	IsSelected() const;
 	static	int		GetPropertyCaptionId(int iProp);
-	int		GetHotBeat() const;
-	void	SetHotBeat(int iBeat);
-	void	GetBeatRect(int iBeat, CRect& rBeat);
-	void	GetBeatsRect(CRect& rBeat);
+	int		GetHotStep() const;
+	void	SetHotStep(int iStep);
+	void	GetStepRect(int iStep, CRect& rStep);
+	void	GetStepsRect(CRect& rStep);
 	COLORREF	GetBkColor();
 
 // Operations
 	void	UpdateDoc(int iProp);
 	void	Update();
 	void	UpdateProp(int iProp, bool bGotoCtrl = true);
-	void	UpdateBeat(int iBeat);
+	void	UpdateStep(int iStep);
 	void	Select(bool bEnable);
 	int		HitTest(CPoint point);
 
@@ -64,13 +64,13 @@ protected:
 	CStatic		m_Number;
 	CEdit		m_Name;
 	#define TRACKDEF(type, prefix, name, defval, offset) CNumEdit m_##name;
-	#define TRACKDEF_INT		// restrict to integers
+	#define TRACKDEF_INT		// for integer track properties only
 	#include "TrackDef.h"		// generate definitions of track numeric edit controls
 	CColoredButton	m_Mute;
 
 // Member data
 	int		m_iTrack;			// track's index in track list
-	int		m_iHotBeat;			// index of hot beat, or -1 if none
+	int		m_iHotStep;			// index of hot step, or -1 if none
 	bool	m_bIsSelected;		// true if track is selected
 
 // Helpers
@@ -122,7 +122,7 @@ inline int CTrackDlg::GetPropertyCaptionId(int iProp)
 	return m_arrPropCapId[iProp];
 }
 
-inline int CTrackDlg::GetHotBeat() const
+inline int CTrackDlg::GetHotStep() const
 {
-	return m_iHotBeat;
+	return m_iHotStep;
 }

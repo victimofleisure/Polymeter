@@ -19,8 +19,10 @@ TRACKDEF(	CString,	s,		Name,		_T(""),		0		)	// track name
 #endif
 TRACKDEF(	int,		n,		Channel,	9,			1		)	// channel number
 TRACKDEF(	int,		n,		Note,		64,			0		)	// note number
-TRACKDEF(	int,		n,		Length,		INIT_BEATS,	0		)	// loop length in beats
-TRACKDEF(	int,		n,		Quant,		30,			0		)	// value of a beat in ticks
+#ifndef TRACKDEF_EXCLUDE_LENGTH
+TRACKDEF(	int,		n,		Length,		INIT_STEPS,	0		)	// loop length in steps
+#endif
+TRACKDEF(	int,		n,		Quant,		30,			0		)	// length of a step in ticks
 TRACKDEF(	int,		n,		Offset,		0,			0		)	// track offset in ticks
 TRACKDEF(	int,		n,		Swing,		0,			0		)	// swing in ticks
 TRACKDEF(	int,		n,		Velocity,	0,			0		)	// note velocity offset
@@ -31,5 +33,6 @@ TRACKDEF(	bool,		b,		Mute,		false,		0		)	// true if muted
 
 #undef TRACKDEF
 #undef TRACKDEF_INT
+#undef TRACKDEF_EXCLUDE_LENGTH
 
 #endif

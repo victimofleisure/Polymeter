@@ -49,16 +49,15 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_FILE_VERSION	_T("nFileVersion")
 
 #define RK_TRACK_COUNT	_T("nTracks")
-#define RK_TRACK_EVENT_COUNT	_T("nEvents")
-#define RK_TRACK_EVENT_USED		_T("nUsed")
-#define RK_TRACK_EVENT_DATA		_T("arrEvent")
+#define RK_TRACK_LENGTH	_T("nLength")
+#define RK_TRACK_EVENT_ARRAY	_T("arrEvent")
 
 #define RK_EXPORT_DURATION	_T("nExportDuration")
 
 // define null title IDs for undo codes that have dynamic titles
 #define IDS_EDIT_TRACK_PROP			0
 #define IDS_EDIT_MULTI_TRACK_PROP	0
-#define IDS_EDIT_TRACK_BEAT			0
+#define IDS_EDIT_TRACK_STEP			0
 #define IDS_EDIT_MASTER_PROP		0
 
 const int CPolymeterDoc::m_nUndoTitleId[UNDO_CODES] = {
@@ -159,14 +158,13 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 		CString	sTrkID;
 		sTrkID.Format(_T("Track%d"), iTrack);
 		#define TRACKDEF(type, prefix, name, defval, offset) RdReg(sTrkID, _T(#prefix)_T(#name), trk.m_##prefix##name);
+		#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 		#include "TrackDef.h"		// generate code to read track properties
-		DWORD	nEvts = 0;
-		RdReg(sTrkID, RK_TRACK_EVENT_COUNT, nEvts);
-		DWORD	nUsed = 0;
-		RdReg(sTrkID, RK_TRACK_EVENT_USED, nUsed);
-		trk.m_arrEvent.SetSize(nEvts);
-		ZeroMemory(trk.m_arrEvent.GetData(), nEvts);
-		CPersist::GetBinary(sTrkID, RK_TRACK_EVENT_DATA, trk.m_arrEvent.GetData(), &nUsed); 
+		int	nLength = theApp.GetProfileInt(sTrkID, RK_TRACK_LENGTH, INIT_STEPS);
+		trk.m_arrEvent.SetSize(nLength);
+		ZeroMemory(trk.m_arrEvent.GetData(), nLength);	// clear in case SetSize didn't
+		DWORD	nUsed = nLength;
+		CPersist::GetBinary(sTrkID, RK_TRACK_EVENT_ARRAY, trk.m_arrEvent.GetData(), &nUsed); 
 		m_Seq.SetTrack(iTrack, trk);
 	}
 }
@@ -190,12 +188,11 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 		CString	sTrkID;
 		sTrkID.Format(_T("Track%d"), iTrack);
 		#define TRACKDEF(type, prefix, name, defval, offset) WrReg(sTrkID, _T(#prefix)_T(#name), trk.m_##prefix##name);
+		#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 		#include "TrackDef.h"		// generate code to write track properties
-		int	nEvts = trk.m_arrEvent.GetSize();
-		WrReg(sTrkID, RK_TRACK_EVENT_COUNT, nEvts);
+		theApp.WriteProfileInt(sTrkID, RK_TRACK_LENGTH, trk.m_arrEvent.GetSize());
 		int	nUsed = trk.GetUsedEventCount();
-		WrReg(sTrkID, RK_TRACK_EVENT_USED, nUsed);
-		CPersist::WriteBinary(sTrkID, RK_TRACK_EVENT_DATA, trk.m_arrEvent.GetData(), nUsed); 
+		CPersist::WriteBinary(sTrkID, RK_TRACK_EVENT_ARRAY, trk.m_arrEvent.GetData(), nUsed); 
 	}
 }
 
@@ -206,17 +203,25 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		{
 			int	iTrack = LOWORD(State.GetCtrlID());
 			int	iProp = HIWORD(State.GetCtrlID());
-			switch (iProp) {
-			#define TRACKDEF(type, prefix, name, defval, offset) \
-			case PROP_##name:	\
-				{	\
-					type val(m_Seq.Get##name(iTrack));	\
-					State.SetVal(val);	\
-				}	\
-				break;
-			#include "TrackDef.h"		// generate code to save track properties
-			default:
-				NODEFAULTCASE;
+			if (iProp == PROP_Length) {	// if track length
+				CRefPtr<CUndoEvents>	pInfo;
+				pInfo.CreateObj();
+				m_Seq.GetEvents(iTrack, pInfo->m_arrEvent);
+				State.SetObj(pInfo);
+			} else {	// not track length
+				switch (iProp) {
+				#define TRACKDEF(type, prefix, name, defval, offset) \
+				case PROP_##name:	\
+					{	\
+						type val(m_Seq.Get##name(iTrack));	\
+						State.SetVal(val);	\
+					}	\
+					break;
+				#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
+				#include "TrackDef.h"		// generate code to save track properties
+				default:
+					NODEFAULTCASE;
+				}
 			}
 		}
 		break;
@@ -228,26 +233,46 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 				CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
 				pView->GetSelection(arrSelection);	// get selection from view
 			} else {	// undoing or redoing; view selection may have changed, so don't rely on it
-				const CUndoMultiTrackPropEdit	*pInfo = static_cast<CUndoMultiTrackPropEdit*>(State.GetObj());
-				arrSelection = pInfo->m_arrSelection;	//  reuse our state's original selection
+				const CIntArrayEx	*pSelection;
+				if (iProp == PROP_Length) {	// if track length
+					const CUndoMultiEvents	*pInfo = static_cast<CUndoMultiEvents*>(State.GetObj());
+					pSelection = &pInfo->m_arrSelection;
+				} else {	// not track length
+					const CUndoMultiTrackProp	*pInfo = static_cast<CUndoMultiTrackProp*>(State.GetObj());
+					pSelection = &pInfo->m_arrSelection;
+				}
+				arrSelection = *pSelection;	// reuse our state's original selection
 			}
-			CRefPtr<CUndoMultiTrackPropEdit>	pInfo;
-			pInfo.CreateObj();
-			pInfo->m_arrSelection = arrSelection;
-			int	nSels = arrSelection.GetSize();
-			pInfo->m_arrVal.SetSize(nSels);
-			for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-				int	iTrack = pInfo->m_arrSelection[iSel];
-				m_Seq.GetTrackProperty(iTrack, iProp, pInfo->m_arrVal[iSel]);
+			if (iProp == PROP_Length) {	// if track length
+				CRefPtr<CUndoMultiEvents>	pInfo;
+				pInfo.CreateObj();
+				pInfo->m_arrSelection = arrSelection;
+				int	nSels = arrSelection.GetSize();
+				pInfo->m_arrEvent.SetSize(nSels);
+				for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+					int	iTrack = arrSelection[iSel];
+					m_Seq.GetEvents(iTrack, pInfo->m_arrEvent[iSel]);
+				}
+				State.SetObj(pInfo);
+			} else {	// not track length
+				CRefPtr<CUndoMultiTrackProp>	pInfo;
+				pInfo.CreateObj();
+				pInfo->m_arrSelection = arrSelection;
+				int	nSels = arrSelection.GetSize();
+				pInfo->m_arrVal.SetSize(nSels);
+				for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+					int	iTrack = arrSelection[iSel];
+					m_Seq.GetTrackProperty(iTrack, iProp, pInfo->m_arrVal[iSel]);
+				}
+				State.SetObj(pInfo);
 			}
-			State.SetObj(pInfo);
 		}
 		break;
-	case UCODE_TRACK_BEAT:
+	case UCODE_TRACK_STEP:
 		{
 			int	iTrack = LOWORD(State.GetCtrlID());
-			int	iBeat = HIWORD(State.GetCtrlID());
-			State.m_Val.p.x.c.al = m_Seq.GetEvent(iTrack, iBeat);
+			int	iStep = HIWORD(State.GetCtrlID());
+			State.m_Val.p.x.c.al = m_Seq.GetEvent(iTrack, iStep);
 		}
 		break;
 	case UCODE_MASTER_PROP:
@@ -290,18 +315,24 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		{
 			int	iTrack = LOWORD(State.GetCtrlID());
 			int	iProp = HIWORD(State.GetCtrlID());
-			switch (iProp) {
-			#define TRACKDEF(type, prefix, name, defval, offset) \
-			case PROP_##name:	\
-				{	\
-					type val;	\
-					State.GetVal(val);	\
-					m_Seq.Set##name(iTrack, val);	\
-				}	\
-				break;
-			#include "TrackDef.h"		// generate code to restore track properties
-			default:
-				NODEFAULTCASE;
+			if (iProp == PROP_Length) {	// if track length
+				CUndoEvents	*pInfo = static_cast<CUndoEvents *>(State.GetObj());
+				m_Seq.SetEvents(iTrack, pInfo->m_arrEvent);
+			} else {	// not track length
+				switch (iProp) {
+				#define TRACKDEF(type, prefix, name, defval, offset) \
+				case PROP_##name:	\
+					{	\
+						type val;	\
+						State.GetVal(val);	\
+						m_Seq.Set##name(iTrack, val);	\
+					}	\
+					break;
+				#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
+				#include "TrackDef.h"		// generate code to restore track properties
+				default:
+					NODEFAULTCASE;
+				}
 			}
 			CPropHint	hint(iTrack, iProp);
 			UpdateAllViews(NULL, HINT_TRACK_PROP, &hint);
@@ -310,23 +341,35 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_MULTI_TRACK_PROP:
 		{
 			int	iProp = State.GetCtrlID();
-			const CUndoMultiTrackPropEdit	*pInfo = static_cast<CUndoMultiTrackPropEdit*>(State.GetObj());
-			int	nSels = pInfo->m_arrSelection.GetSize();
-			for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-				int	iTrack = pInfo->m_arrSelection[iSel];
-				m_Seq.SetTrackProperty(iTrack, iProp, pInfo->m_arrVal[iSel]);
+			const CIntArrayEx	*pSelection;
+			if (iProp == PROP_Length) {	// if track length
+				const CUndoMultiEvents	*pInfo = static_cast<CUndoMultiEvents*>(State.GetObj());
+				int	nSels = pInfo->m_arrSelection.GetSize();
+				for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+					int	iTrack = pInfo->m_arrSelection[iSel];
+					m_Seq.SetEvents(iTrack, pInfo->m_arrEvent[iSel]);
+				}
+				pSelection = &pInfo->m_arrSelection;
+			} else {	// not track length
+				const CUndoMultiTrackProp	*pInfo = static_cast<CUndoMultiTrackProp*>(State.GetObj());
+				int	nSels = pInfo->m_arrSelection.GetSize();
+				for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+					int	iTrack = pInfo->m_arrSelection[iSel];
+					m_Seq.SetTrackProperty(iTrack, iProp, pInfo->m_arrVal[iSel]);
+				}
+				pSelection = &pInfo->m_arrSelection;
 			}
-			CMultiTrackPropHint	hint(pInfo->m_arrSelection, iProp);
+			CMultiTrackPropHint	hint(*pSelection, iProp);
 			UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
 		}
 		break;
-	case UCODE_TRACK_BEAT:
+	case UCODE_TRACK_STEP:
 		{
 			int	iTrack = LOWORD(State.GetCtrlID());
-			int	iBeat = HIWORD(State.GetCtrlID());
-			m_Seq.SetEvent(iTrack, iBeat, State.m_Val.p.x.c.al);
-			CPropHint	hint(iTrack, iBeat);
-			UpdateAllViews(NULL, HINT_BEAT, &hint);
+			int	iStep = HIWORD(State.GetCtrlID());
+			m_Seq.SetEvent(iTrack, iStep, State.m_Val.p.x.c.al);
+			CPropHint	hint(iTrack, iStep);
+			UpdateAllViews(NULL, HINT_STEP, &hint);
 		}
 		break;
 	case UCODE_MASTER_PROP:
@@ -392,8 +435,8 @@ CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 			sTitle.LoadString(CTrackDlg::GetPropertyCaptionId(iProp));
 		}
 		break;
-	case UCODE_TRACK_BEAT:
-		sTitle.LoadString(IDS_TRK_BEAT);
+	case UCODE_TRACK_STEP:
+		sTitle.LoadString(IDS_TRK_STEP);
 		break;
 	case UCODE_MASTER_PROP:
 		sTitle = GetPropertyName(State.GetCtrlID());

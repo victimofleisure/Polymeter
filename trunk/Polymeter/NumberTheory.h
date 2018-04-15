@@ -7,9 +7,17 @@
  
 		revision history:
 		rev		date	comments
-		00		23mar18	0.0.00.000
-		00		14apr18	0.0.00.001
-
-		DON'T FORGET TO CHANGE VERSION RESOURCE
+        00      14apr18	initial version
 
 */
+
+#pragma once
+
+class CNumberTheory {
+public:
+	static	ULONGLONG	GreatestCommonDivisor(ULONGLONG u, ULONGLONG v);
+	static	ULONGLONG	LeastCommonMultiple(ULONGLONG u, ULONGLONG v);
+	static	ULONGLONG	GreatestPrimeFactor(ULONGLONG n);
+};
+
+

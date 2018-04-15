@@ -35,13 +35,13 @@ CTrackDlg::CTrackDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(IDD, pParent)
 {
 	m_iTrack = 0;
-	m_iHotBeat = -1;
+	m_iHotStep = -1;
 	m_bIsSelected = false;
 	const UINT	nNumEditFlags = CNumEdit::DF_INT | CNumEdit::DF_SPIN;
 	#define TRACKDEF(type, prefix, name, defval, offset) m_##name.SetFormat(nNumEditFlags);
-	#define TRACKDEF_INT		// restrict to integers
+	#define TRACKDEF_INT		// for integer track properties only
 	#include "TrackDef.h"		// generate code to configure numeric edit controls
-	m_Length.SetRange(1, INIT_BEATS);
+	m_Length.SetRange(1, MAX_STEPS);
 	m_Quant.SetRange(1, SHRT_MAX);
 	m_Channel.SetRange(1, 16);
 	m_Note.SetRange(0, 127);
@@ -88,7 +88,7 @@ void CTrackDlg::UpdateDoc(int iProp)
 		case PROP_##name:	\
 			seq.Set##name(iTrack, m_##name.GetIntVal() - offset);	\
 			break;
-	#define TRACKDEF_INT	// restrict to integers
+	#define TRACKDEF_INT	// for integer track properties only
 	#include "TrackDef.h"	// generate code to retrieve values of numeric edit controls
 	case PROP_Mute:
 		seq.SetMute(iTrack, m_Mute.GetCheck() != 0);
@@ -114,7 +114,7 @@ void CTrackDlg::UpdateProp(int iProp, bool bGotoCtrl)
 			m_##name.SetVal(seq.Get##name(iTrack) + offset);	\
 			pGotoCtrl = &m_##name;	\
 			break;
-	#define TRACKDEF_INT	// restrict to integers
+	#define TRACKDEF_INT	// for integer track properties only
 	#include "TrackDef.h"	// generate code to set values of numeric edit control
 	case PROP_Mute:
 		m_Mute.SetCheck(seq.GetMute(iTrack));
@@ -136,53 +136,53 @@ void CTrackDlg::Update()
 	CSequencer&	seq = pDoc->m_Seq;
 	m_Name.SetWindowText(seq.GetName(iTrack));
 	#define TRACKDEF(type, prefix, name, defval, offset) m_##name.SetVal(seq.Get##name(iTrack) + offset);
-	#define TRACKDEF_INT		// restrict to integers
+	#define TRACKDEF_INT		// for integer track properties only
 	#include "TrackDef.h"		// generate code to update numeric edit controls
 	m_Mute.SetCheck(seq.GetMute(iTrack));
 	OnLengthChange();
 }
 
-void CTrackDlg::GetBeatRect(int iBeat, CRect& rBeat)
+void CTrackDlg::GetStepRect(int iStep, CRect& rStep)
 {
 	CPolymeterView	*pView = GetView();
-	CSize	szBeat(pView->GetBeatSize());
-	int	nFirstBeatX = pView->GetFirstBeatX();
-	rBeat = CRect(CPoint(nFirstBeatX + iBeat * szBeat.cx, 0), szBeat);
+	CSize	szStep(pView->GetStepSize());
+	int	nFirstStepX = pView->GetFirstStepX();
+	rStep = CRect(CPoint(nFirstStepX + iStep * szStep.cx, 0), szStep);
 }
 
-void CTrackDlg::GetBeatsRect(CRect& rBeat)
+void CTrackDlg::GetStepsRect(CRect& rStep)
 {
 	CPolymeterView	*pView = GetView();
-	CSize	szBeat(pView->GetBeatSize());
-	int	nFirstBeatX = pView->GetFirstBeatX();
-	rBeat = CRect(CPoint(nFirstBeatX, 0), CSize(szBeat.cx * INIT_BEATS, szBeat.cy));
+	CSize	szStep(pView->GetStepSize());
+	int	nFirstStepX = pView->GetFirstStepX();
+	rStep = CRect(CPoint(nFirstStepX, 0), CSize(szStep.cx * MAX_STEPS, szStep.cy));
 }
 
 int CTrackDlg::HitTest(CPoint point)
 {
 	CPolymeterView	*pView;
 	CPolymeterDoc	*pDoc = GetDoc(pView);
-	int	nFirstBeatX = pView->GetFirstBeatX();
-	CSize	szBeat(pView->GetBeatSize());
-	int	x = point.x - nFirstBeatX;
-	int	nBeatsWidth = pDoc->m_Seq.GetLength(m_iTrack) * szBeat.cx;
-	if (x >= 0 && x < nBeatsWidth)
-		return x / szBeat.cx;
+	int	nFirstStepX = pView->GetFirstStepX();
+	CSize	szStep(pView->GetStepSize());
+	int	x = point.x - nFirstStepX;
+	int	nStepsWidth = pDoc->m_Seq.GetLength(m_iTrack) * szStep.cx;
+	if (x >= 0 && x < nStepsWidth)
+		return x / szStep.cx;
 	return -1;
 }
 
-void CTrackDlg::UpdateBeat(int iBeat)
+void CTrackDlg::UpdateStep(int iStep)
 {
-	CRect	rBeat;
-	GetBeatRect(iBeat, rBeat);
-	InvalidateRect(rBeat);
+	CRect	rStep;
+	GetStepRect(iStep, rStep);
+	InvalidateRect(rStep);
 }
 
 void CTrackDlg::OnLengthChange()
 {
-	CRect	rBeats;
-	GetBeatsRect(rBeats);
-	InvalidateRect(rBeats);
+	CRect	rSteps;
+	GetStepsRect(rSteps);
+	InvalidateRect(rSteps);
 }
 
 void CTrackDlg::OnTrackPropEdit(int iProp)
@@ -244,15 +244,15 @@ COLORREF CTrackDlg::GetBkColor()
 	return clr;
 }
 
-void CTrackDlg::SetHotBeat(int iBeat)
+void CTrackDlg::SetHotStep(int iStep)
 {
-	if (iBeat == m_iHotBeat)	// if unchanged
+	if (iStep == m_iHotStep)	// if unchanged
 		return;		// nothing to do
-	if (m_iHotBeat >= 0)	// if previous hot beat valid
-		UpdateBeat(m_iHotBeat);
-	m_iHotBeat = iBeat;
-	if (iBeat >= 0)	// if new hot beat valid
-		UpdateBeat(iBeat);
+	if (m_iHotStep >= 0)	// if previous hot step valid
+		UpdateStep(m_iHotStep);
+	m_iHotStep = iStep;
+	if (iStep >= 0)	// if new hot step valid
+		UpdateStep(iStep);
 }
 
 void CTrackDlg::DoDataExchange(CDataExchange* pDX)
@@ -267,7 +267,7 @@ void CTrackDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CTrackDlg, CDialog)
 	#define TRACKDEF(type, prefix, name, defval, offset) ON_NOTIFY(NEN_CHANGED, IDC_TRK_##name, OnChanged##name)
-	#define TRACKDEF_INT		// restrict to integers
+	#define TRACKDEF_INT		// for integer track properties only
 	#include "TrackDef.h"		// generate message map entries for numeric edit controls
 	ON_EN_KILLFOCUS(IDC_TRK_Name, OnKillfocusName)
 	ON_CONTROL(BN_CLICKED, IDC_TRK_Mute, OnClickedMute)
@@ -348,12 +348,12 @@ BOOL CTrackDlg::OnEraseBkgnd(CDC* pDC)
 
 void CTrackDlg::OnPaint()
 {
-	enum {	// beat flags
+	enum {	// step flags
 		BTF_ON		= 0x01,
 		BTF_HOT		= 0x02,
 		BTF_MUTE	= 0x04,
 	};
-	static const COLORREF clrBeat[] = {
+	static const COLORREF clrStep[] = {
 		RGB(255, 255, 255),		// off
 		RGB(0, 0, 0),			// on
 		RGB(160, 255, 160),		// off + hot
@@ -368,58 +368,58 @@ void CTrackDlg::OnPaint()
 	dc.GetClipBox(rClip);
 	CPolymeterView	*pView;
 	CPolymeterDoc	*pDoc = GetDoc(pView);
-	int	nFirstBeatX = pView->GetFirstBeatX();
-	CSize	szBeat(pView->GetBeatSize());
+	int	nFirstStepX = pView->GetFirstStepX();
+	CSize	szStep(pView->GetStepSize());
 	int	nLength = pDoc->m_Seq.GetLength(m_iTrack);
 	bool	bMute = pDoc->m_Seq.GetMute(m_iTrack);
-	CRect	rBeats(CPoint(nFirstBeatX, 0), CSize(szBeat.cx * nLength, szBeat.cy));
-	CRect	rClipBeats;
-	if (rClipBeats.IntersectRect(rClip, rBeats)) {	// if clip box intersects beats
-		int	iFirstBeat = (rClipBeats.left - nFirstBeatX) / szBeat.cx;
-		int	iLastBeat = (rClipBeats.right - 1 - nFirstBeatX) / szBeat.cx;
+	CRect	rSteps(CPoint(nFirstStepX, 0), CSize(szStep.cx * nLength, szStep.cy));
+	CRect	rClipSteps;
+	if (rClipSteps.IntersectRect(rClip, rSteps)) {	// if clip box intersects steps
+		int	iFirstStep = (rClipSteps.left - nFirstStepX) / szStep.cx;
+		int	iLastStep = (rClipSteps.right - 1 - nFirstStepX) / szStep.cx;
 		HGDIOBJ	hPrevBrush = dc.SelectObject(GetStockObject(DC_BRUSH));
 		HGDIOBJ	hPrevPen = dc.SelectObject(GetStockObject(DC_PEN));
 		COLORREF	clrOutline = GetSysColor(COLOR_BTNSHADOW);
 		dc.SetDCPenColor(clrOutline);
 		CBrush	brBkgnd(GetBkColor());
-		int	x = nFirstBeatX + iFirstBeat * szBeat.cx;
-		for (int iBeat = iFirstBeat; iBeat <= iLastBeat; iBeat++) {	// for each invalid beat
-			CRect	rBeat(CPoint(x, 0), szBeat);
+		int	x = nFirstStepX + iFirstStep * szStep.cx;
+		for (int iStep = iFirstStep; iStep <= iLastStep; iStep++) {	// for each invalid step
+			CRect	rStep(CPoint(x, 0), szStep);
 			CRect	rTemp;
-			dc.FrameRect(rBeat, &brBkgnd);
-			CRect	rBtn(rBeat);
+			dc.FrameRect(rStep, &brBkgnd);
+			CRect	rBtn(rStep);
 			rBtn.DeflateRect(1, 1);	// exclude frame
-			int	nMask = pDoc->m_Seq.GetEvent(m_iTrack, iBeat);
+			int	nMask = pDoc->m_Seq.GetEvent(m_iTrack, iStep);
 			if (theApp.m_Options.m_bViewShowCurPos) {
-				if (iBeat == m_iHotBeat)
+				if (iStep == m_iHotStep)
 					nMask |= BTF_HOT;
 				if (bMute)
 					nMask |= BTF_MUTE;
 			}
-			dc.SetDCBrushColor(clrBeat[nMask]);
+			dc.SetDCBrushColor(clrStep[nMask]);
 			dc.Rectangle(rBtn);
-			x += szBeat.cx;
+			x += szStep.cx;
 		}
 		dc.SelectObject(hPrevBrush);
 		dc.SelectObject(hPrevPen);
 	}
-	dc.ExcludeClipRect(rBeats);	// exclude beats from clipping region
+	dc.ExcludeClipRect(rSteps);	// exclude steps from clipping region
 	dc.FillSolidRect(rClip, GetBkColor());	// erase remaining background
 }
 
 void CTrackDlg::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	int	iBeat = HitTest(point);
-	if (iBeat >= 0) {	// if on a beat
-		UpdateBeat(iBeat);
+	int	iStep = HitTest(point);
+	if (iStep >= 0) {	// if on a step
+		UpdateStep(iStep);
 		CPolymeterView	*pView;
 		CPolymeterDoc	*pDoc = GetDoc(pView);
-		pDoc->NotifyUndoableEdit(MAKELONG(m_iTrack, iBeat), UCODE_TRACK_BEAT);
+		pDoc->NotifyUndoableEdit(MAKELONG(m_iTrack, iStep), UCODE_TRACK_STEP);
 		pDoc->SetModifiedFlag();
-		pDoc->m_Seq.SetEvent(m_iTrack, iBeat, pDoc->m_Seq.GetEvent(m_iTrack, iBeat) ^ 1);
-		CPolymeterDoc::CPropHint	hint(m_iTrack, iBeat);
-		GetDoc()->UpdateAllViews(pView, CPolymeterDoc::HINT_BEAT, &hint);
-	} else {	// not on a beat
+		pDoc->m_Seq.SetEvent(m_iTrack, iStep, pDoc->m_Seq.GetEvent(m_iTrack, iStep) ^ 1);
+		CPolymeterDoc::CPropHint	hint(m_iTrack, iStep);
+		GetDoc()->UpdateAllViews(pView, CPolymeterDoc::HINT_STEP, &hint);
+	} else {	// not on a step
 		CRect	rTrackNum;
 		m_Number.GetWindowRect(rTrackNum);
 		ScreenToClient(rTrackNum);
@@ -432,8 +432,8 @@ void CTrackDlg::OnLButtonDown(UINT nFlags, CPoint point)
 
 void CTrackDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
-	int	iBeat = HitTest(point);
-	if (iBeat >= 0) {	// if on a beat
+	int	iStep = HitTest(point);
+	if (iStep >= 0) {	// if on a step
 		OnLButtonDown(nFlags, point);
 		return;
 	}

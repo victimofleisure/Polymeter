@@ -27,6 +27,7 @@
 #include "DocIter.h"
 #include "UndoCodes.h"
 #include "GoToPositionDlg.h"
+#include "NumberTheory.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -52,8 +53,9 @@ CPolymeterView::CPolymeterView()
 	m_hDragCursor = 0;
 	m_nScrollTimer = 0;
 	m_nScrollDelta = 0;
-	m_nFirstBeatX = 0;
-	m_szBeat = CSize(0, 0);
+	m_nFirstStepX = 0;
+	m_nCaptionHeight = 0;
+	m_szStep = CSize(0, 0);
 }
 
 CPolymeterView::~CPolymeterView()
@@ -102,10 +104,10 @@ void CPolymeterView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			}
 		}
 		break;
-	case CPolymeterDoc::HINT_BEAT:
+	case CPolymeterDoc::HINT_STEP:
 		{
 			CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
-			m_arrTrackDlg[pPropHint->m_iTrack]->UpdateBeat(pPropHint->m_iProp);	// m_iProp is beat index
+			m_arrTrackDlg[pPropHint->m_iTrack]->UpdateStep(pPropHint->m_iProp);	// m_iProp is step index
 		}
 		break;
 	case CPolymeterDoc::HINT_SONG_POS:
@@ -181,13 +183,6 @@ bool CPolymeterView::CreateCaptions()
 			return 0;
 		m_arrPropCap[iProp].SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
 	}
-	for (int iBeat = 0; iBeat < INIT_BEATS; iBeat++) {
-		CString	s;
-		s.Format(_T("%d"), iBeat + 1);
-		if (!m_arrBeatCap[iBeat].Create(s, WS_CHILD | WS_VISIBLE | SS_CENTER, CRect(0, 0, 0, 0), this))
-			return 0;
-		m_arrBeatCap[iBeat].SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
-	}
 	return true;
 }
 
@@ -220,8 +215,6 @@ void CPolymeterView::RepositionCaptions()
 		return;
 	CWindowDC	dc(this);
 	dc.SelectStockObject(DEFAULT_GUI_FONT);
-	CSize	szText = dc.GetTextExtent(_T("X"));
-	int	nCapVMargin = 5;
 	int	nCapY = 0;
 	CWnd	*pWnd = m_arrTrackDlg[0]->GetDlgItem(IDC_TRK_Name);
 	for (int iProp = 0; iProp < PROPS; iProp++) {
@@ -237,14 +230,9 @@ void CPolymeterView::RepositionCaptions()
 			rWnd.right = rWnd.left + 40;	// kludge for mute button
 		}
 		if (!iProp)
-			nCapY = rWnd.top - szText.cy - nCapVMargin;
-		m_arrPropCap[iProp].MoveWindow(rWnd.left, nCapY, rWnd.Width(), szText.cy);
+			nCapY = rWnd.top - m_nCaptionHeight - CAPTION_VERT_MARGIN;
+		m_arrPropCap[iProp].MoveWindow(rWnd.left, nCapY, rWnd.Width(), m_nCaptionHeight);
 		pWnd = pWnd->GetNextWindow();
-	}
-	int	x = m_nFirstBeatX - GetScrollPosition().x;
-	for (int iBeat = 0; iBeat < INIT_BEATS; iBeat++) {
-		m_arrBeatCap[iBeat].MoveWindow(x, nCapY, m_szBeat.cx, szText.cy);
-		x += m_szBeat.cx;
 	}
 }
 
@@ -351,23 +339,23 @@ int CPolymeterView::GetDropPos(CPoint point) const
 void CPolymeterView::Drop(int iDropPos)
 {
 	CPolymeterDoc	*pDoc = GetDocument();
-	CIntArrayEx	arrSel;
-	GetSelection(arrSel);
-	int	nSels = arrSel.GetSize();
+	CIntArrayEx	arrSelection;
+	GetSelection(arrSelection);
+	int	nSels = arrSelection.GetSize();
 	ASSERT(nSels > 0);	// at least one track must be selected
 	// if multiple selection, or single selection and track is actually moving
 	if (nSels == 1 && (iDropPos == m_iSelMark || iDropPos == m_iSelMark + 1))
 		return;	// nothing to do
 	int	nSelsBelowDrop = 0;
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		if (arrSel[iSel] < iDropPos)	// if track's index is below drop position
+		if (arrSelection[iSel] < iDropPos)	// if track's index is below drop position
 			nSelsBelowDrop++;
 	}
 	iDropPos -= nSelsBelowDrop;	// compensate for deletions below drop position
 	pDoc->NotifyUndoableEdit(iDropPos, UCODE_MOVE);
 	CTrackArray	arrTrack;
-	pDoc->m_Seq.CopyTracks(arrSel, arrTrack);
-	pDoc->m_Seq.DeleteTracks(arrSel);
+	pDoc->m_Seq.CopyTracks(arrSelection, arrTrack);
+	pDoc->m_Seq.DeleteTracks(arrSelection);
 	pDoc->m_Seq.InsertTracks(iDropPos, arrTrack);
 	SelectRange(iDropPos, nSels);
 	pDoc->UpdateAllViews(NULL);
@@ -507,7 +495,7 @@ void CPolymeterView::SetSongPosition(LONGLONG nPos)
 		int	iEvt = iQuant % nLength;
 		if (iEvt < 0)
 			iEvt += nLength;
-		m_arrTrackDlg[iTrack]->SetHotBeat(iEvt);
+		m_arrTrackDlg[iTrack]->SetHotStep(iEvt);
 	}
 }
 
@@ -515,7 +503,7 @@ void CPolymeterView::ResetSongPosition()
 {
 	int	nTracks = m_arrTrackDlg.GetSize();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
-		m_arrTrackDlg[iTrack]->SetHotBeat(-1);	// reset hot beat
+		m_arrTrackDlg[iTrack]->SetHotStep(-1);	// reset hot step
 }
 
 void CPolymeterView::UpdateSongPosition()
@@ -590,7 +578,9 @@ BEGIN_MESSAGE_MAP(CPolymeterView, CFormView)
 	ON_WM_TIMER()
 	ON_COMMAND(ID_VIEW_PAUSE, OnViewPause)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_PAUSE, OnUpdateViewPause)
-	ON_COMMAND(ID_VIEW_GO_TO_POSITION, &CPolymeterView::OnViewGoToPosition)
+	ON_COMMAND(ID_VIEW_GO_TO_POSITION, OnViewGoToPosition)
+	ON_COMMAND(ID_TOOLS_TIME_TO_REPEAT, OnToolsTimeToRepeat)
+	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIME_TO_REPEAT, OnUpdateToolsTimeToRepeat)
 END_MESSAGE_MAP()
 
 // CPolymeterView message handlers
@@ -606,9 +596,14 @@ int CPolymeterView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	trk.GetWindowRect(rTrackDlg);
 	trk.DestroyWindow();
 	m_szTrackDlg = rTrackDlg.Size();
-	m_nFirstBeatX = m_szTrackDlg.cx;
-	m_szBeat = CSize(m_szTrackDlg.cy - BEAT_SIZE_OFFSET, m_szTrackDlg.cy);
-	m_szTrackDlg.cx += m_szBeat.cx * INIT_BEATS + BEAT_RIGHT_MARGIN;
+	m_nFirstStepX = m_szTrackDlg.cx;
+	m_szStep = CSize(m_szTrackDlg.cy - STEP_SIZE_OFFSET, m_szTrackDlg.cy);
+	m_szTrackDlg.cx += m_szStep.cx * MAX_STEPS + STEP_RIGHT_MARGIN;
+	CWindowDC	dc(this);
+	dc.SelectObject(GetStockObject(DEFAULT_GUI_FONT));
+	TEXTMETRIC	tm;
+	dc.GetTextMetrics(&tm);
+	m_nCaptionHeight = tm.tmHeight;
 	PostMessage(UWM_DELAYEDCREATE);
 
 	return 0;
@@ -642,6 +637,32 @@ LRESULT CPolymeterView::OnDelayedCreate(WPARAM wParam, LPARAM lParam)
 	OnUpdate(NULL, 0, NULL);
 	theApp.GetMainFrame()->UpdateSongPosition();
 	return 0;
+}
+
+void CPolymeterView::OnDraw(CDC* pDC)
+{
+	CRect	rClip;
+	pDC->GetClipBox(rClip);
+	int	nStepWidth = m_szStep.cx;
+	HGDIOBJ	hPrevFont = pDC->SelectObject(GetStockObject(DEFAULT_GUI_FONT));
+	const int	STATIC_CAPTION_VERT_MARGIN = 2;
+	int	y = m_szTrackMargin.cy - CAPTION_VERT_MARGIN - m_nCaptionHeight + STATIC_CAPTION_VERT_MARGIN;
+	CRect	rStepCaps(CPoint(m_nFirstStepX, y), CSize(MAX_STEPS * nStepWidth, m_nCaptionHeight));
+	CRect	rIntersect;
+	if (rIntersect.IntersectRect(rStepCaps, rClip)) {	// if any step captions intersect clip box
+		int	nStartStep = (rIntersect.left - m_nFirstStepX) / nStepWidth;
+		int	nEndStep = (rIntersect.right - 1 - m_nFirstStepX) / nStepWidth;
+		int	x = m_nFirstStepX + nStepWidth * nStartStep + nStepWidth / 2;
+		int	nPrevTextAlign = pDC->SetTextAlign(TA_CENTER | TA_TOP);
+		CString	sStep;
+		for (int iStep = nStartStep; iStep <= nEndStep; iStep++) {	// for each step
+			sStep.Format(_T("%d"), iStep + 1);
+			pDC->TextOut(x, y, sStep);
+			x += nStepWidth;
+		}
+		pDC->SetTextAlign(nPrevTextAlign);
+	}
+	pDC->SelectObject(hPrevFont);
 }
 
 void CPolymeterView::OnViewPlay()
@@ -863,4 +884,53 @@ void CPolymeterView::OnViewGoToPosition()
 			theApp.GetMainFrame()->UpdateSongPosition();
 		}
 	}
+}
+
+void CPolymeterView::OnToolsTimeToRepeat()
+{
+	CIntArrayEx	arrSelection;
+	GetSelection(arrSelection);
+	int	nSels = arrSelection.GetSize();
+	if (!nSels)	// if empty selection
+		return;
+	const CSequencer&	seq = GetDocument()->m_Seq;
+	int	nTimeDiv = seq.GetTimeDivision();
+	CArrayEx<ULONGLONG, ULONGLONG>	arrDuration;
+	arrDuration.Add(nTimeDiv);	// avoids fractions when LCM result is converted from ticks back to beats
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = arrSelection[iSel];
+		ULONGLONG	nDuration = seq.GetLength(iTrack) * seq.GetQuant(iTrack);	// track duration in ticks
+		if (arrDuration.BinarySearch(nDuration) < 0)	// eliminate duplicates to avoid needless LCM
+			arrDuration.InsertSorted(nDuration);	// ascending sort may improve LCM performance
+	}
+	CWaitCursor	wc;	// LCM can take a while
+	int	nDurs = arrDuration.GetSize();
+	ULONGLONG	nLCM = arrDuration[0];
+	for (int iDur = 1; iDur < nDurs; iDur++) {	// for each track duration
+		nLCM = CNumberTheory::LeastCommonMultiple(nLCM, arrDuration[iDur]);
+	}
+	ULONGLONG	nBeats = nLCM / nTimeDiv;	// convert ticks to beats; no remainder, see comment above
+	ULONGLONG	nGPF = CNumberTheory::GreatestPrimeFactor(nBeats);
+	CTimeSpan	ts = round64(nBeats / (seq.GetTempo() / 60));	// convert beats to time in seconds
+	CString	sBeats, sGPF;
+	sBeats.Format(_T("%llu"), nBeats);
+	FormatNumberCommas(sBeats, sBeats);
+	sGPF.Format(_T("%llu"), nGPF);
+	FormatNumberCommas(sGPF, sGPF);
+	CString	sTime(ts.Format(_T("%H:%M:%S")));	// convert time in seconds to string
+	LONGLONG	nDays = ts.GetDays();
+	if (nDays) {	// if one or more days
+		CString	sDays;
+		sDays.Format(_T("%lld"), ts.GetDays());
+		FormatNumberCommas(sDays, sDays);
+		sTime.Insert(0, sDays + ' ' + LDS(IDS_TIME_TO_REPEAT_DAYS) + _T(" + "));
+	}
+	CString	sMsg;
+	sMsg.Format(IDS_TIME_TO_REPEAT_FMT, sBeats, sTime, sGPF);
+	AfxMessageBox(sMsg, MB_ICONINFORMATION);
+}
+
+void CPolymeterView::OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(GetSelectedCount());
 }

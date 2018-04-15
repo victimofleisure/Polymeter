@@ -38,7 +38,7 @@ public:
 		HINT_NONE,				// no hint
 		HINT_TRACK_PROP,		// track property edit; pHint is CPropHint
 		HINT_MULTI_TRACK_PROP,	// multiple tracks property edit; pHint is CMultiTrackPropHint
-		HINT_BEAT,				// beat edit; pHint is CPropHint
+		HINT_STEP,				// step edit; pHint is CPropHint, m_iProp is step index
 		HINT_MASTER_PROP,		// master property edit
 		HINT_PLAY,				// start or stop playback
 		HINT_SONG_POS,			// song position change
@@ -80,7 +80,6 @@ public:
 	static	void	SecsToTime(int nSecs, CString& sTime);
 	static	int		TimeToSecs(LPCTSTR pszTime);
 
-
 // Overrides
 public:
 	virtual BOOL OnNewDocument();
@@ -108,14 +107,23 @@ protected:
 		CIntArrayEx	m_arrSelection;	// selection array
 		int		m_nSelMark;			// selection mark
 	};
-	class CUndoMultiTrackPropEdit : public CRefObj {
+	class CUndoMultiTrackProp : public CRefObj {
 	public:
 		CIntArrayEx	m_arrSelection;	// indices of selected tracks
 		CVariantArray	m_arrVal;	// property values for selected tracks
 	};
+	class CUndoEvents : public CRefObj {
+	public:
+		CByteArrayEx	m_arrEvent;		// array of events
+	};
+	class CUndoMultiEvents : public CRefObj {
+	public:
+		CIntArrayEx	m_arrSelection;	// indices of selected tracks
+		CArrayEx<CByteArrayEx, CByteArrayEx&>	m_arrEvent;		// array of events for each track
+	};
 
 // Constants
-	static const int	m_nUndoTitleId[];
+	static const int	m_nUndoTitleId[];	// array of string resource IDs for undo titles
 
 // Overrides
 	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);

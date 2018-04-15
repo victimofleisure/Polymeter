@@ -48,9 +48,9 @@ protected:
 // Helpers
 	int		GetRandomItem() const;
 	int		GetRandomInsertPos() const;
-	bool	GetRandomSelection(CIntArrayEx& arrSel) const;
-	bool	MakeRandomSelection(CIntArrayEx& arrSel) const;
+	bool	GetRandomSelection(CIntArrayEx& arrSelection) const;
+	bool	MakeRandomSelection(CIntArrayEx& arrSelection) const;
 	void	MakeRandomTrackProperty(int iTrack, int iProp, CComVariant& var);
-	CString	PrintSelection(CIntArrayEx& arrSel) const;
+	CString	PrintSelection(CIntArrayEx& arrSelection) const;
 	static	int IntArraySortCompare(const void *arg1, const void *arg2);
 };

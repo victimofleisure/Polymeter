@@ -23,7 +23,8 @@ public:
 		PROPS,
 	};
 	enum {
-		INIT_BEATS = 32,
+		MAX_STEPS = 256,			// maximum number of steps
+		INIT_STEPS = 32,			// initial number of steps
 	};
 };
 
@@ -32,6 +33,7 @@ public:
 	CTrack();
 	CTrack(bool bInit);
 	#define TRACKDEF(type, prefix, name, defval, offset) type m_##prefix##name;
+	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 	#include "TrackDef.h"		// generate definitions of track property member vars
 	CByteArrayEx	m_arrEvent;	// array of events
 	int		GetUsedEventCount() const;

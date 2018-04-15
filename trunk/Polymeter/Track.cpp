@@ -17,8 +17,9 @@
 void CTrack::SetDefaults()
 {
 	#define TRACKDEF(type, prefix, name, defval, offset) m_##prefix##name = defval;
+	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 	#include "TrackDef.h"		// generate code to initialize track properties
-	m_arrEvent.SetSize(INIT_BEATS);
+	m_arrEvent.SetSize(INIT_STEPS);
 }
 
 int CTrack::GetUsedEventCount() const

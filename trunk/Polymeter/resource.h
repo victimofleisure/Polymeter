@@ -64,20 +64,22 @@
 #define IDS_SEQ_MIDI_ERROR              246
 #define IDS_STATUS_PANE1                247
 #define IDS_STATUS_PANE2                248
-#define IDS_TOOLBAR_CUSTOMIZE           249
-#define IDS_TOOLBAR_STANDARD            250
-#define IDS_TRK_BEAT                    251
-#define IDS_TRK_Channel                 252
-#define IDS_TRK_Duration                253
-#define IDS_TRK_Length                  254
-#define IDS_TRK_Mute                    255
-#define IDS_TRK_Name                    256
-#define IDS_TRK_Note                    257
-#define IDS_TRK_Offset                  258
-#define IDS_TRK_Quant                   259
-#define IDS_TRK_Swing                   260
-#define IDS_TRK_Velocity                261
-#define IDP_OLE_INIT_FAILED             262
+#define IDS_TIME_TO_REPEAT_DAYS         249
+#define IDS_TIME_TO_REPEAT_FMT          250
+#define IDS_TOOLBAR_CUSTOMIZE           251
+#define IDS_TOOLBAR_STANDARD            252
+#define IDS_TRK_Channel                 253
+#define IDS_TRK_Duration                254
+#define IDS_TRK_Length                  255
+#define IDS_TRK_Mute                    256
+#define IDS_TRK_Name                    257
+#define IDS_TRK_Note                    258
+#define IDS_TRK_Offset                  259
+#define IDS_TRK_Quant                   260
+#define IDS_TRK_STEP                    261
+#define IDS_TRK_Swing                   262
+#define IDS_TRK_Velocity                263
+#define IDP_OLE_INIT_FAILED             264
 #define IDC_ABOUT_LICENSE               1001
 #define IDC_ABOUT_VERSION               1002
 #define IDC_CURSOR_DRAG_MULTI           1003
@@ -109,30 +111,31 @@
 #define ID_INDICATOR_SONG_POS           32776
 #define ID_TOOLS_OPTIONS                32777
 #define ID_TOOLS_STATISTICS             32778
-#define ID_VIEW_APPLOOK_OFF_2003        32779
-#define ID_VIEW_APPLOOK_OFF_2007_AQUA   32780
-#define ID_VIEW_APPLOOK_OFF_2007_BLACK  32781
-#define ID_VIEW_APPLOOK_OFF_2007_BLUE   32782
-#define ID_VIEW_APPLOOK_OFF_2007_SILVER 32783
-#define ID_VIEW_APPLOOK_OFF_XP          32784
-#define ID_VIEW_APPLOOK_VS_2005         32785
-#define ID_VIEW_APPLOOK_VS_2008         32786
-#define ID_VIEW_APPLOOK_WINDOWS_7       32787
-#define ID_VIEW_APPLOOK_WIN_2000        32788
-#define ID_VIEW_APPLOOK_WIN_XP          32789
-#define ID_VIEW_CUSTOMIZE               32790
-#define ID_VIEW_GO_TO_POSITION          32791
-#define ID_VIEW_PAUSE                   32792
-#define ID_VIEW_PLAY                    32793
-#define ID_WINDOW_MANAGER               32794
+#define ID_TOOLS_TIME_TO_REPEAT         32779
+#define ID_VIEW_APPLOOK_OFF_2003        32780
+#define ID_VIEW_APPLOOK_OFF_2007_AQUA   32781
+#define ID_VIEW_APPLOOK_OFF_2007_BLACK  32782
+#define ID_VIEW_APPLOOK_OFF_2007_BLUE   32783
+#define ID_VIEW_APPLOOK_OFF_2007_SILVER 32784
+#define ID_VIEW_APPLOOK_OFF_XP          32785
+#define ID_VIEW_APPLOOK_VS_2005         32786
+#define ID_VIEW_APPLOOK_VS_2008         32787
+#define ID_VIEW_APPLOOK_WINDOWS_7       32788
+#define ID_VIEW_APPLOOK_WIN_2000        32789
+#define ID_VIEW_APPLOOK_WIN_XP          32790
+#define ID_VIEW_CUSTOMIZE               32791
+#define ID_VIEW_GO_TO_POSITION          32792
+#define ID_VIEW_PAUSE                   32793
+#define ID_VIEW_PLAY                    32794
+#define ID_WINDOW_MANAGER               32795
 
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                1
-#define _APS_NEXT_RESOURCE_VALUE        263
-#define _APS_NEXT_COMMAND_VALUE         32795
+#define _APS_NEXT_RESOURCE_VALUE        265
+#define _APS_NEXT_COMMAND_VALUE         32796
 #define _APS_NEXT_CONTROL_VALUE         1024
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

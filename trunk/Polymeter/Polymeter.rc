@@ -172,6 +172,10 @@ BEGIN
             END
         END
     END
+    POPUP "&Tools"
+    BEGIN
+        MENUITEM "&Options...",                 ID_TOOLS_OPTIONS
+    END
     POPUP "&Help"
     BEGIN
         MENUITEM "&About Polymeter...",         ID_APP_ABOUT
@@ -238,8 +242,10 @@ BEGIN
     END
     POPUP "&Tools"
     BEGIN
+        MENUITEM "&Statistics",                 ID_TOOLS_STATISTICS
+        MENUITEM "Time to &Repeat",             ID_TOOLS_TIME_TO_REPEAT
+        MENUITEM SEPARATOR
         MENUITEM "&Options...",                 ID_TOOLS_OPTIONS
-        MENUITEM "&Statistics...",              ID_TOOLS_STATISTICS
     END
     POPUP "&Window"
     BEGIN
@@ -582,8 +588,7 @@ BEGIN
     IDS_HLINK_CANT_LAUNCH   "Can't launch browser."
     IDS_OPT_DESC_bAutoCheckUpdates 
                             "Automatically check for newer version of app during startup"
-    IDS_OPT_DESC_bViewShowCurPos 
-                            "Indicate current position within each track"
+    IDS_OPT_DESC_bViewShowCurPos "Indicate current position within each track"
     IDS_OPT_DESC_iMidiOutputDevice "Select output MIDI device"
 END
 
@@ -619,21 +624,23 @@ BEGIN
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
     IDS_STATUS_PANE1        "Pane 1"
     IDS_STATUS_PANE2        "Pane 2"
+    IDS_TIME_TO_REPEAT_DAYS "days"
+    IDS_TIME_TO_REPEAT_FMT  "%s beats\n%s\nGreatest prime factor is %s"
     IDS_TOOLBAR_CUSTOMIZE   "Customize..."
     IDS_TOOLBAR_STANDARD    "Standard"
-    IDS_TRK_BEAT            "Beat"
     IDS_TRK_Channel         "Channel"
     IDS_TRK_Duration        "Duration"
     IDS_TRK_Length          "Length"
-    IDS_TRK_Mute            "Mute"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_Mute            "Mute"
     IDS_TRK_Name            "Name"
     IDS_TRK_Note            "Note"
     IDS_TRK_Offset          "Offset"
     IDS_TRK_Quant           "Quant"
+    IDS_TRK_STEP            "Step"
     IDS_TRK_Swing           "Swing"
     IDS_TRK_Velocity        "Velocity"
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
@@ -654,7 +661,8 @@ BEGIN
     ID_FILE_EXPORT          "Export MIDI file\nExport"
     ID_INDICATOR_SONG_POS   "000000000.000"
     ID_TOOLS_OPTIONS        "Edit options\nOptions"
-    ID_TOOLS_STATISTICS     "Display sequencer statistics\nStatistics"
+    ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
+    ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for selected tracks to repeat\nTime to Repeat"
 END
 
 STRINGTABLE
