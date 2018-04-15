@@ -57,9 +57,6 @@ enum {	// application-wide user window messages, based on WP_APP
 CString FormatSystemError(DWORD ErrorCode);
 CString	GetLastErrorString();
 
-// ck: wrapper for formatting numbers with commas
-bool FormatNumberCommas(LPCTSTR pszSrc, CString& sDst, int nPrecision = 0);
-
 // ck: workaround for Aero animated progress bar's absurd lag
 void SetTimelyProgressPos(CProgressCtrl& Progress, int nPos);
 
@@ -69,6 +66,7 @@ bool CopyStringToClipboard(HWND m_hWnd, const CString& strData);
 
 void EnableChildWindows(CWnd& Wnd, bool Enable, bool Deep = TRUE);
 void UpdateMenu(CWnd *pWnd, CMenu *pMenu);
+bool FormatNumberCommas(LPCTSTR pszSrc, CString& sDst, int nPrecision = 0);
 
 // data validation method to flunk a control
 void DDV_Fail(CDataExchange* pDX, int nIDC);

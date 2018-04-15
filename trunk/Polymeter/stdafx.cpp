@@ -50,25 +50,6 @@ CString FormatSystemError(DWORD ErrorCode)
 	return(sError);
 }
 
-bool FormatNumberCommas(LPCTSTR pszSrc, CString& sDst, int nPrecision)
-{
-	USES_CONVERSION;
-	WCHAR	szDecimal[4];
-	WCHAR	szThousand[4];
-	if (!GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL, szDecimal, _countof(szDecimal)))
-		return false;
-	if (!GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, szThousand, _countof(szThousand)))
-		return false;
-	NUMBERFMTW	fmt = {nPrecision, 0, 3, szDecimal, szThousand};
-	int	nLen = GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, T2CW(pszSrc), &fmt, NULL, 0);
-	CStringW	sBuf;
-	LPWSTR	pBuf = sBuf.GetBuffer(nLen);
-	GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, T2CW(pszSrc), &fmt, pBuf, nLen);
-	sBuf.ReleaseBuffer();
-	sDst = sBuf;
-	return true;
-}
-
 CString	GetLastErrorString()
 {
 	return(FormatSystemError(GetLastError()));
@@ -166,3 +147,22 @@ void UpdateMenu(CWnd *pWnd, CMenu *pMenu)
 	}
 }
 
+bool FormatNumberCommas(LPCTSTR pszSrc, CString& sDst, int nPrecision)
+{
+	USES_CONVERSION;
+	WCHAR	szDecimal[4];
+	WCHAR	szThousand[4];
+	if (!GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL, szDecimal, _countof(szDecimal)))
+		return false;
+	if (!GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, szThousand, _countof(szThousand)))
+		return false;
+	NUMBERFMTW	fmt = {nPrecision, 0, 3, szDecimal, szThousand};
+	int	nLen = GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, T2CW(pszSrc), &fmt, NULL, 0);
+	CStringW	sBuf;
+	LPWSTR	pBuf = sBuf.GetBuffer(nLen);
+	if (!GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, T2CW(pszSrc), &fmt, pBuf, nLen))
+		return false;
+	sBuf.ReleaseBuffer();
+	sDst = sBuf;
+	return true;
+}
