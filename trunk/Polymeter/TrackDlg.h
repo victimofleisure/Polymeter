@@ -57,7 +57,7 @@ public:
 
 protected:
 // Constants
-	static const int	m_arrPropCapId[PROPS];	// string resource IDs of property captions
+	static const int	m_arrPropCapId[PROPERTIES];	// string resource IDs of property captions
 
 // Dialog data
 	enum { IDD = IDD_TRACK };

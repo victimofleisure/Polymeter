@@ -51,6 +51,7 @@ protected:
 	bool	GetRandomSelection(CIntArrayEx& arrSelection) const;
 	bool	MakeRandomSelection(CIntArrayEx& arrSelection) const;
 	void	MakeRandomTrackProperty(int iTrack, int iProp, CComVariant& var);
+	void	MakeRandomMasterProperty(int iProp, CComVariant& var);
 	CString	PrintSelection(CIntArrayEx& arrSelection) const;
 	static	int IntArraySortCompare(const void *arg1, const void *arg2);
 };

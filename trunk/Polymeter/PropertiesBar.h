@@ -35,7 +35,6 @@ public:
 
 protected:
 // Types
-// Types
 	class CMyPropertiesGridCtrl : public CPropertiesGridCtrl {
 	public:
 		virtual void OnPropertyChanged(CMFCPropertyGridProperty* pProp) const;

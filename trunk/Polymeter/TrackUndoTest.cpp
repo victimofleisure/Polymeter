@@ -48,6 +48,8 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_INSERT,				1},
 	{UCODE_DELETE,				1},
 	{UCODE_MOVE,				2},
+	{UCODE_CHANNEL_PROP,		0.1f},
+	{UCODE_MASTER_PROP,			0.1f},
 };
 
 CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
@@ -138,6 +140,26 @@ void CTrackUndoTest::MakeRandomTrackProperty(int iTrack, int iProp, CComVariant&
 	}
 }
 
+void CTrackUndoTest::MakeRandomMasterProperty(int iProp, CComVariant& var)
+{
+	switch (iProp) {
+	case CMasterProps::PROP_fTempo:
+		{
+			double	fTempo = Random(100) + 100;
+			var = fTempo;
+		}
+		break;
+	case CMasterProps::PROP_nTimeDiv:
+		{
+			int	nTimeDiv = Random(CMasterProps::TIME_DIVS);
+			var = nTimeDiv;
+		}
+		break;
+	default:
+		NODEFAULTCASE;
+	}
+}
+
 CString	CTrackUndoTest::PrintSelection(CIntArrayEx& arrSelection) const
 {
 	CString	str;
@@ -179,7 +201,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			int	iTrack = GetRandomItem();
 			if (iTrack < 0)
 				return(DISABLED);
-			int	iProp = Random(PROPS);
+			int	iProp = Random(PROPERTIES);
 			CComVariant	var;
 			MakeRandomTrackProperty(iTrack, iProp, var);
 			m_pDoc->NotifyUndoableEdit(MAKELONG(iTrack, iProp), UCODE_TRACK_PROP);
@@ -194,7 +216,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (!MakeRandomSelection(arrSelection))
 				return(DISABLED);
 			m_pView->SetSelection(arrSelection);
-			int	iProp = Random(PROPS);
+			int	iProp = Random(PROPERTIES);
 			m_pDoc->NotifyUndoableEdit(iProp, UCODE_MULTI_TRACK_PROP);
 			int	nSels = arrSelection.GetSize();
 			CComVariant	var;
@@ -203,7 +225,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 				MakeRandomTrackProperty(iTrack, iProp, var);
 				m_pDoc->m_Seq.SetTrackProperty(iTrack, iProp, var);
 			}
-			CPolymeterDoc::CMultiTrackPropHint	hint(arrSelection, iProp);
+			CPolymeterDoc::CMultiItemPropHint	hint(arrSelection, iProp);
 			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_TRACK_PROP, &hint);
 		}
 		break;
@@ -286,6 +308,30 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			int	iInsPos = GetRandomInsertPos();
 			m_pView->Drop(iInsPos);
 			PRINTF(_T("%s %s %d\n"), sUndoTitle, PrintSelection(arrSelection), iInsPos);
+		}
+		break;
+	case UCODE_CHANNEL_PROP:
+		{
+			int	iChan = Random(MIDI_CHANNELS);
+			int	iProp = Random(CChannel::PROPERTIES);
+			int	nVal = Random(MIDI_NOTES + 1) - 1;
+			m_pDoc->NotifyUndoableEdit(MAKELONG(iChan, iProp), UCODE_CHANNEL_PROP);
+			m_pDoc->m_arrChannel[iChan].SetProperty(iProp, nVal);
+			CPolymeterDoc::CPropHint	hint(iChan, iProp);
+			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_CHANNEL_PROP, &hint);
+			PRINTF(_T("%s %d %d\n"), sUndoTitle, iChan, iProp);
+		}
+		break;
+	case UCODE_MASTER_PROP:
+		{
+			int	iProp = Random(CMasterProps::PROPERTIES);
+			m_pDoc->NotifyUndoableEdit(iProp, UCODE_MASTER_PROP);
+			CComVariant	var;
+			MakeRandomMasterProperty(iProp, var);
+			m_pDoc->SetProperty(iProp, var);
+			CPolymeterDoc::CPropHint	hint(0, iProp);
+			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MASTER_PROP, &hint);
+			PRINTF(_T("%s %d\n"), sUndoTitle, iProp);
 		}
 		break;
 	default:

@@ -19,8 +19,8 @@ class CTrackBase {
 public:
 	enum {	// track properties
 		#define TRACKDEF(type, prefix, name, defval, offset) PROP_##name,
-		#include "TrackDef.h"		// generate enumeration of track properties
-		PROPS,
+		#include "TrackDef.h"		// generate enumeration
+		PROPERTIES,
 	};
 	enum {
 		MAX_STEPS = 256,			// maximum number of steps
@@ -50,4 +50,6 @@ inline CTrack::CTrack(bool bInit)
 	SetDefaults();
 }
 
-typedef CArrayEx<CTrack, CTrack&> CTrackArray;
+class CTrackArray : public CArrayEx<CTrack, CTrack&> {
+public:
+};

@@ -45,20 +45,22 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define FILE_ID			_T("Polymeter")
 #define	FILE_VERSION	0
 
-#define RK_FILE_ID		_T("sFileID")
-#define RK_FILE_VERSION	_T("nFileVersion")
+#define RK_FILE_ID		_T("FileID")
+#define RK_FILE_VERSION	_T("FileVersion")
 
-#define RK_TRACK_COUNT	_T("nTracks")
-#define RK_TRACK_LENGTH	_T("nLength")
-#define RK_TRACK_EVENT_ARRAY	_T("arrEvent")
+#define RK_TRACK_COUNT	_T("Tracks")
+#define RK_TRACK_LENGTH	_T("Length")
+#define RK_TRACK_EVENT	_T("Event")
+#define RK_MASTER		_T("Master")
 
-#define RK_EXPORT_DURATION	_T("nExportDuration")
+#define RK_EXPORT_DURATION	_T("ExportDuration")
 
 // define null title IDs for undo codes that have dynamic titles
 #define IDS_EDIT_TRACK_PROP			0
 #define IDS_EDIT_MULTI_TRACK_PROP	0
 #define IDS_EDIT_TRACK_STEP			0
 #define IDS_EDIT_MASTER_PROP		0
+#define IDS_EDIT_CHANNEL_PROP		0
 
 const int CPolymeterDoc::m_nUndoTitleId[UNDO_CODES] = {
 	#define UCODE_DEF(name) IDS_EDIT_##name,
@@ -72,6 +74,7 @@ CPolymeterDoc::CPolymeterDoc()
 	m_nFileVersion = FILE_VERSION;
 	m_UndoMgr.SetRoot(this);
 	SetUndoManager(&m_UndoMgr);
+	InitChannelArray();
 }
 
 CPolymeterDoc::~CPolymeterDoc()
@@ -110,6 +113,13 @@ void CPolymeterDoc::ApplyOptions(const COptions *pPrevOptions)
 	m_Seq.SetBufferSize(theApp.m_Options.m_nMidiBufferSize);
 }
 
+void CPolymeterDoc::InitChannelArray()
+{
+	CChannel	chanDefault(true);	// init to default values
+	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++)	// for each channel
+		m_arrChannel[iChan] = chanDefault;	// set to default values
+}
+
 // CPolymeterDoc serialization
 
 void CPolymeterDoc::Serialize(CArchive& ar)
@@ -130,43 +140,44 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 	f.Open(szPath, CFile::modeRead);
 	CString	sFileID;
 	RdReg(RK_FILE_ID, sFileID);
-	if (sFileID != FILE_ID) {
+	if (sFileID != FILE_ID) {	// if unexpected file ID
 		CString	msg;
 		AfxFormatString1(msg, IDS_DOC_BAD_FORMAT, szPath);
 		AfxMessageBox(msg);
-		AfxThrowUserException();
+		AfxThrowUserException();	// fatal error
 	}
 	RdReg(RK_FILE_VERSION, m_nFileVersion);
-	if (m_nFileVersion > FILE_VERSION) {
+	if (m_nFileVersion > FILE_VERSION) {	// if file is from a later version
 		CString	msg;
 		AfxFormatString1(msg, IDS_DOC_NEWER_VERSION, szPath);
 		AfxMessageBox(msg);
 	}
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
 		if (PT_##proptype == PT_ENUM) \
-			ReadEnum(REG_SETTINGS, _T(#name), m_##name, itemname, items); \
+			ReadEnum(RK_MASTER, _T(#name), m_##name, itemname, items); \
 		else \
-			RdReg(_T(#name), m_##name);
-	#include "MasterPropsDef.h"
+			RdReg(RK_MASTER, _T(#name), m_##name);
+	#include "MasterPropsDef.h"	// generate code to read master properties
 	m_Seq.SetTempo(m_fTempo);
 	m_Seq.SetTimeDivision(CMasterProps::GetTimeDivisionTicks(m_nTimeDiv));
 	int	nTracks = 0;
 	RdReg(RK_TRACK_COUNT, nTracks);
+	ASSERT(!m_Seq.GetTrackCount());	// track array should be empty for proper initialization
 	m_Seq.SetTrackCount(nTracks);
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		CTrack	trk(true);	// initialize to defaults
 		CString	sTrkID;
 		sTrkID.Format(_T("Track%d"), iTrack);
-		#define TRACKDEF(type, prefix, name, defval, offset) RdReg(sTrkID, _T(#prefix)_T(#name), trk.m_##prefix##name);
+		#define TRACKDEF(type, prefix, name, defval, offset) RdReg(sTrkID, _T(#name), trk.m_##prefix##name);
 		#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 		#include "TrackDef.h"		// generate code to read track properties
 		int	nLength = theApp.GetProfileInt(sTrkID, RK_TRACK_LENGTH, INIT_STEPS);
 		trk.m_arrEvent.SetSize(nLength);
-		ZeroMemory(trk.m_arrEvent.GetData(), nLength);	// clear in case SetSize didn't
 		DWORD	nUsed = nLength;
-		CPersist::GetBinary(sTrkID, RK_TRACK_EVENT_ARRAY, trk.m_arrEvent.GetData(), &nUsed); 
+		CPersist::GetBinary(sTrkID, RK_TRACK_EVENT, trk.m_arrEvent.GetData(), &nUsed); 
 		m_Seq.SetTrack(iTrack, trk);
 	}
+	m_arrChannel.Read();	// read channels
 }
 
 void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
@@ -177,23 +188,24 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 	WrReg(RK_FILE_VERSION, FILE_VERSION);
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
 		if (PT_##proptype == PT_ENUM) \
-			WriteEnum(REG_SETTINGS, _T(#name), m_##name, itemname, items); \
+			WriteEnum(RK_MASTER, _T(#name), m_##name, itemname, items); \
 		else \
-			WrReg(_T(#name), m_##name);
-	#include "MasterPropsDef.h"
+			WrReg(RK_MASTER, _T(#name), m_##name);
+	#include "MasterPropsDef.h"	// generate code to write master properties
 	int	nTracks = m_Seq.GetTrackCount();
 	WrReg(RK_TRACK_COUNT, nTracks);
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		const CTrack&	trk = m_Seq.GetTrack(iTrack);
 		CString	sTrkID;
 		sTrkID.Format(_T("Track%d"), iTrack);
-		#define TRACKDEF(type, prefix, name, defval, offset) WrReg(sTrkID, _T(#prefix)_T(#name), trk.m_##prefix##name);
+		#define TRACKDEF(type, prefix, name, defval, offset) WrReg(sTrkID, _T(#name), trk.m_##prefix##name);
 		#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 		#include "TrackDef.h"		// generate code to write track properties
 		theApp.WriteProfileInt(sTrkID, RK_TRACK_LENGTH, trk.m_arrEvent.GetSize());
 		int	nUsed = trk.GetUsedEventCount();
-		CPersist::WriteBinary(sTrkID, RK_TRACK_EVENT_ARRAY, trk.m_arrEvent.GetData(), nUsed); 
+		CPersist::WriteBinary(sTrkID, RK_TRACK_EVENT, trk.m_arrEvent.GetData(), nUsed); 
 	}
+	m_arrChannel.Write();	// write channels
 }
 
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
@@ -305,6 +317,13 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 			}
 		}
 		break;
+	case UCODE_CHANNEL_PROP:
+		{
+			int	iChan = LOWORD(State.GetCtrlID());
+			int	iProp = HIWORD(State.GetCtrlID());
+			State.m_Val.p.x.i = m_arrChannel[iChan].GetProperty(iProp);
+		}
+		break;
 	}
 }
 
@@ -359,7 +378,7 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 				}
 				pSelection = &pInfo->m_arrSelection;
 			}
-			CMultiTrackPropHint	hint(*pSelection, iProp);
+			CMultiItemPropHint	hint(*pSelection, iProp);
 			UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
 		}
 		break;
@@ -400,7 +419,7 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 				if (State.GetCode() == UCODE_MOVE)
 					m_Seq.DeleteTracks(State.GetCtrlID(), pClipboard->m_arrTrack.GetSize());
 				m_Seq.InsertTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack);
-				UpdateAllViews(NULL);
+				UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
 				CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
 				pView->SetSelection(pClipboard->m_arrSelection);
 				pView->SetSelectionMark(pClipboard->m_nSelMark);
@@ -409,7 +428,7 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 				m_Seq.DeleteTracks(pClipboard->m_arrSelection);
 				if (State.GetCode() == UCODE_MOVE)
 					m_Seq.InsertTracks(State.GetCtrlID(), pClipboard->m_arrTrack);
-				UpdateAllViews(NULL);
+				UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
 				CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
 				if (State.GetCode() == UCODE_MOVE) {
 					int	iTrack = State.GetCtrlID();
@@ -419,6 +438,15 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 				} else
 					pView->Deselect();
 			}
+		}
+		break;
+	case UCODE_CHANNEL_PROP:
+		{
+			int	iChan = LOWORD(State.GetCtrlID());
+			int	iProp = HIWORD(State.GetCtrlID());
+			m_arrChannel[iChan].SetProperty(iProp, State.m_Val.p.x.i);
+			CPropHint	hint(iChan, iProp);
+			UpdateAllViews(NULL, HINT_CHANNEL_PROP, &hint);
 		}
 		break;
 	}
@@ -441,6 +469,12 @@ CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 	case UCODE_MASTER_PROP:
 		sTitle = GetPropertyName(State.GetCtrlID());
 		break;
+	case UCODE_CHANNEL_PROP:
+		{
+			int	iProp = HIWORD(State.GetCtrlID());
+			sTitle = CChannelsBar::GetPropertyName(iProp);
+		}
+		break;
 	default:
 		sTitle.LoadString(m_nUndoTitleId[State.GetCode()]);
 	}
@@ -461,6 +495,19 @@ int CPolymeterDoc::TimeToSecs(LPCTSTR pszTime)
 	if (nPlaces >= 0)
 		CopyMemory(&op[PLACES - nPlaces], ip, nPlaces * sizeof(int));
 	return(op[0] * 3600 + op[1] * 60 + op[2]);
+}
+
+void CPolymeterDoc::UpdateChannelEvents()
+{
+	CDWordArrayEx	arrEvent;
+	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {
+		for (int iProp = 0; iProp < CChannel::PROPERTIES; iProp++) {
+			DWORD	dwEvent = m_arrChannel.GetMidiEvent(iChan, iProp);
+			if (dwEvent)
+				arrEvent.Add(dwEvent);
+		}
+	}
+	m_Seq.SetInitialEvents(arrEvent);
 }
 
 #ifdef SHARED_HANDLERS

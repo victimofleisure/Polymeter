@@ -17,6 +17,7 @@
 #pragma once
 
 #include "PropertiesBar.h"
+#include "ChannelsBar.h"
 
 class CPolymeterView;
 class CPolymeterDoc;
@@ -70,6 +71,7 @@ protected:  // control bar embedded members
 	CMFCStatusBar     m_wndStatusBar;
 	CMFCToolBarImages m_UserImages;
 	CPropertiesBar	  m_wndPropertiesBar;
+	CChannelsBar	  m_wndChannelsBar;
 
 // Data members
 	CPolymeterView	*m_pActiveView;		// pointer to active view, or NULL if none

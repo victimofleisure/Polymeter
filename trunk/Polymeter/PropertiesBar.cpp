@@ -23,7 +23,7 @@ static char THIS_FILE[]=__FILE__;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
-// CResourceViewBar
+// CPropertiesBar
 
 #define RK_PROPERTIES_BAR _T("PropertiesBar\\")
 #define RK_EXPAND _T("Expand")
@@ -79,6 +79,9 @@ void CPropertiesBar::CMyPropertiesGridCtrl::OnChangeSelection(CMFCPropertyGridPr
 	AfxGetMainWnd()->SendMessage(UWM_PROPERTY_SELECT, iProp, reinterpret_cast<LPARAM>(GetParent()));
 }
 
+/////////////////////////////////////////////////////////////////////////////
+// CPropertiesBar message map
+
 BEGIN_MESSAGE_MAP(CPropertiesBar, CDockablePane)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
@@ -93,7 +96,7 @@ BEGIN_MESSAGE_MAP(CPropertiesBar, CDockablePane)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
-// CResourceViewBar message handlers
+// CPropertiesBar message handlers
 
 void CPropertiesBar::AdjustLayout()
 {

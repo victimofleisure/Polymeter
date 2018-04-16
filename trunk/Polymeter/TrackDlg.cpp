@@ -26,7 +26,7 @@
 
 IMPLEMENT_DYNAMIC(CTrackDlg, CDialog)
 
-const int CTrackDlg::m_arrPropCapId[PROPS] = {
+const int CTrackDlg::m_arrPropCapId[PROPERTIES] = {
 	#define TRACKDEF(type, prefix, name, defval, offset) IDS_TRK_##name,
 	#include "TrackDef.h"		// generate track property caption resource IDs
 };
@@ -202,7 +202,7 @@ void CTrackDlg::OnTrackPropEdit(int iProp)
 			if (iTrack != m_iTrack)	// if not source track
 				pDoc->m_Seq.SetTrackProperty(iTrack, iProp, var);
 		}
-		CPolymeterDoc::CMultiTrackPropHint	hint(arrSelection, iProp);
+		CPolymeterDoc::CMultiItemPropHint	hint(arrSelection, iProp);
 		GetDoc()->UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_TRACK_PROP, &hint);
 	} else {	// single track edit
 		UINT	nUndoFlags;
@@ -368,10 +368,12 @@ void CTrackDlg::OnPaint()
 	dc.GetClipBox(rClip);
 	CPolymeterView	*pView;
 	CPolymeterDoc	*pDoc = GetDoc(pView);
-	int	nFirstStepX = pView->GetFirstStepX();
-	CSize	szStep(pView->GetStepSize());
+	if (m_iTrack >= pDoc->m_Seq.GetTrackCount())	// if our sequencer track is missing
+		return;	// degenerate case
 	int	nLength = pDoc->m_Seq.GetLength(m_iTrack);
 	bool	bMute = pDoc->m_Seq.GetMute(m_iTrack);
+	int	nFirstStepX = pView->GetFirstStepX();
+	CSize	szStep(pView->GetStepSize());
 	CRect	rSteps(CPoint(nFirstStepX, 0), CSize(szStep.cx * nLength, szStep.cy));
 	CRect	rClipSteps;
 	if (rClipSteps.IntersectRect(rClip, rSteps)) {	// if clip box intersects steps
@@ -447,6 +449,8 @@ void CTrackDlg::OnKillfocusName()
 	CString	sName;
 	m_Name.GetWindowText(sName);
 	CSequencer&	seq = pDoc->m_Seq;
+	if (m_iTrack >= pDoc->m_Seq.GetTrackCount())	// if our sequencer track is missing
+		return;	// degenerate case
 	if (sName != seq.GetName(m_iTrack))	// if name changed
 		OnTrackPropEdit(PROP_Name);
 }

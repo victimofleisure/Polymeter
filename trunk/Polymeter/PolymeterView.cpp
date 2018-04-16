@@ -84,18 +84,24 @@ void CPolymeterView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
 //	printf("CPolymeterView::OnUpdate %x %d %x\n", pSender, lHint, pHint);
 	switch (lHint) {
+	case CPolymeterDoc::HINT_NONE:
+	case CPolymeterDoc::HINT_TRACK_ARRAY:
+		UpdateAllTracks();
+		break;
 	case CPolymeterDoc::HINT_TRACK_PROP:
 		{
-			CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
-			if (pPropHint->m_iProp >= 0)	// if property specified
-				m_arrTrackDlg[pPropHint->m_iTrack]->UpdateProp(pPropHint->m_iProp);
+			const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+			int	iTrack = pPropHint->m_iItem;
+			int	iProp = pPropHint->m_iProp;
+			if (iProp >= 0)	// if property specified
+				m_arrTrackDlg[iTrack]->UpdateProp(iProp);
 			else	// update all properties
-				m_arrTrackDlg[pPropHint->m_iTrack]->Update();
+				m_arrTrackDlg[iTrack]->Update();
 		}
 		break;
 	case CPolymeterDoc::HINT_MULTI_TRACK_PROP:
 		{
-			CPolymeterDoc::CMultiTrackPropHint *pPropHint = static_cast<CPolymeterDoc::CMultiTrackPropHint *>(pHint);
+			const CPolymeterDoc::CMultiItemPropHint *pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
 			int	nSels = pPropHint->m_arrSelection.GetSize();
 			int	iProp = pPropHint->m_iProp;
 			for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
@@ -106,15 +112,16 @@ void CPolymeterView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		break;
 	case CPolymeterDoc::HINT_STEP:
 		{
-			CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
-			m_arrTrackDlg[pPropHint->m_iTrack]->UpdateStep(pPropHint->m_iProp);	// m_iProp is step index
+			const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+			int	iTrack = pPropHint->m_iItem;
+			int	iStep = pPropHint->m_iProp;	// m_iProp is step index
+			m_arrTrackDlg[iTrack]->UpdateStep(iStep);
 		}
 		break;
+	case CPolymeterDoc::HINT_PLAY:
 	case CPolymeterDoc::HINT_SONG_POS:
 		UpdateSongPosition();
 		break;
-	default:
-		UpdateAllTracks();
 	}
 	theApp.GetMainFrame()->OnUpdate(pSender, lHint, pHint);	// notify main frame
 }
@@ -178,7 +185,7 @@ bool CPolymeterView::CreateTrack(int iTrack)
 
 bool CPolymeterView::CreateCaptions()
 {
-	for (int iProp = 0; iProp < PROPS; iProp++) {
+	for (int iProp = 0; iProp < PROPERTIES; iProp++) {
 		if (!m_arrPropCap[iProp].Create(LDS(CTrackDlg::GetPropertyCaptionId(iProp)), WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), this))
 			return 0;
 		m_arrPropCap[iProp].SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
@@ -217,7 +224,7 @@ void CPolymeterView::RepositionCaptions()
 	dc.SelectStockObject(DEFAULT_GUI_FONT);
 	int	nCapY = 0;
 	CWnd	*pWnd = m_arrTrackDlg[0]->GetDlgItem(IDC_TRK_Name);
-	for (int iProp = 0; iProp < PROPS; iProp++) {
+	for (int iProp = 0; iProp < PROPERTIES; iProp++) {
 		CRect	rWnd, rSpin;
 		pWnd->GetWindowRect(rWnd);
 		ScreenToClient(rWnd);
@@ -358,7 +365,7 @@ void CPolymeterView::Drop(int iDropPos)
 	pDoc->m_Seq.DeleteTracks(arrSelection);
 	pDoc->m_Seq.InsertTracks(iDropPos, arrTrack);
 	SelectRange(iDropPos, nSels);
-	pDoc->UpdateAllViews(NULL);
+	pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
 	pDoc->SetModifiedFlag();
 }
 
@@ -377,7 +384,7 @@ void CPolymeterView::DeleteTracks(bool bCopyToClipboard)
 		pDoc->m_Seq.CopyTracks(arrSelection, theApp.m_arrTrackClipboard);
 	pDoc->m_Seq.DeleteTracks(arrSelection);
 	Deselect();
-	pDoc->UpdateAllViews(NULL);
+	pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
 	pDoc->SetModifiedFlag();
 }
 
@@ -678,6 +685,7 @@ void CPolymeterView::OnViewPlay()
 				break;
 			}
 		}
+		pDoc->UpdateChannelEvents();	// queue channel events to be output at start of playback
 	}
 	pDoc->m_Seq.Play(bIsPlaying);
 	theApp.GetMainFrame()->OnUpdate(NULL, CPolymeterDoc::HINT_PLAY);
@@ -804,7 +812,7 @@ void CPolymeterView::OnEditPaste()
 		iInsPos = GetTrackCount();
 	pDoc->m_Seq.InsertTracks(iInsPos, theApp.m_arrTrackClipboard);
 	pDoc->SetModifiedFlag();
-	pDoc->UpdateAllViews(NULL);
+	pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
 	SelectRange(iInsPos, theApp.m_arrTrackClipboard.GetSize());
 	pDoc->NotifyUndoableEdit(0, UCODE_PASTE);
 }
@@ -834,7 +842,7 @@ void CPolymeterView::OnEditInsert()
 		iInsPos = GetTrackCount();
 	pDoc->m_Seq.InsertTracks(iInsPos);
 	pDoc->SetModifiedFlag();
-	pDoc->UpdateAllViews(NULL);
+	pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
 	SelectOnly(iInsPos);
 	pDoc->NotifyUndoableEdit(0, UCODE_INSERT);
 }

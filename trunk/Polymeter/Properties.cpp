@@ -9,6 +9,7 @@
 		rev		date	comments
         00      23mar17	initial version
 		01		03nov17	add subgroup
+		02		16apr18	add get/set property
 		
 */
 
@@ -146,4 +147,16 @@ int CProperties::FindOption(LPCTSTR szOption, const CProperties::OPTION_INFO *pO
 			return iOption;
 	}
 	return -1;	// option string not found
+}
+
+void CProperties::GetProperty(int iProp, CComVariant& var) const
+{
+	UNREFERENCED_PARAMETER(iProp);
+	UNREFERENCED_PARAMETER(var);
+}
+
+void CProperties::SetProperty(int iProp, const CComVariant& var)
+{
+	UNREFERENCED_PARAMETER(iProp);
+	UNREFERENCED_PARAMETER(var);
 }

@@ -7,9 +7,17 @@
  
 		revision history:
 		rev		date	comments
-		00		23mar18	0.0.00.000
-		00		16apr18	0.0.00.001
-
-		DON'T FORGET TO CHANGE VERSION RESOURCE
-
+        00		15apr18	initial version
+		
 */
+
+#ifdef CHANNELDEF_NUMBER
+CHANNELDEF(Number,	LVCFMT_LEFT,	30	)
+#endif
+CHANNELDEF(Bank,		LVCFMT_RIGHT,	60	)
+CHANNELDEF(Patch,	LVCFMT_RIGHT,	60	)
+CHANNELDEF(Volume,	LVCFMT_RIGHT,	60	)
+CHANNELDEF(Pan,		LVCFMT_RIGHT,	60	)
+
+#undef CHANNELDEF
+#undef CHANNELDEF_NUMBER

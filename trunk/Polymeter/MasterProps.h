@@ -30,12 +30,12 @@ public:
 // Constants
 	enum {	// groups
 		#define GROUPDEF(name) GROUP_##name,
-		#include "MasterPropsDef.h"
+		#include "MasterPropsDef.h"	// generate enumeratation 
 		GROUPS
 	};
 	enum {	// time divisions
 		#define TIMEDIVDEF(name) TIME_DIV_##name,
-		#include "MasterPropsDef.h"
+		#include "MasterPropsDef.h"	// generate enumeratation 
 		TIME_DIVS
 	};
 	static const OPTION_INFO	m_Group[GROUPS];		// group name options
@@ -43,7 +43,7 @@ public:
 	static const int m_arrTimeDivTicks[TIME_DIVS];		// time division values in ticks
 	enum {	// properties
 		#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) PROP_##name,
-		#include "MasterPropsDef.h"
+		#include "MasterPropsDef.h"	// generate enumeratation 
 		PROPERTIES
 	};
 	static const PROPERTY_INFO	m_Info[PROPERTIES];	// fixed info for each property
@@ -53,7 +53,7 @@ public:
 
 // Data members
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) type m_##name;
-	#include "MasterPropsDef.h"
+	#include "MasterPropsDef.h"	// generate member variable definitions
 
 // Overrides
 	virtual	int		GetGroupCount() const;
@@ -64,6 +64,8 @@ public:
 	virtual	CString	GetGroupName(int iGroup) const;
 	virtual	int		GetSubgroupCount(int iGroup) const;
 	virtual	CString	GetSubgroupName(int iGroup, int iSubgroup) const;
+	virtual	void	GetProperty(int iProp, CComVariant& var) const;
+	virtual	void	SetProperty(int iProp, const CComVariant& var);
 
 // Attributes
 

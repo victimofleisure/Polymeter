@@ -67,6 +67,7 @@ enum {	// application looks; alpha order to match corresponding resource IDs
 enum {	// docking bar IDs; don't change, else bar placement won't be restored
 	ID_APP_CONTROL_BAR_FIRST = AFX_IDW_CONTROLBAR_FIRST + 40,
 	ID_BAR_PROPERTIES,
+	ID_BAR_CHANNELS,
 };
 
 #define ID_VIEW_APPLOOK_FIRST ID_VIEW_APPLOOK_OFF_2003
@@ -155,6 +156,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	}
 	m_wndPropertiesBar.EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_wndPropertiesBar);
+	m_wndChannelsBar.EnableDocking(CBRS_ALIGN_ANY);
+	DockPane(&m_wndChannelsBar);
 
 	// enable Visual Studio 2005 style docking window behavior
 	CDockingManager::SetDockingMode(DT_SMART);
@@ -258,6 +261,13 @@ BOOL CMainFrame::CreateDockingWindows()
 		TRACE0("Failed to create properties bar\n");
 		return FALSE; // failed to create
 	}
+	sTitle.LoadString(IDS_CHANNELS_BAR);
+	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
+	if (!m_wndChannelsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_CHANNELS, dwStyle))
+	{
+		TRACE0("Failed to create channels bar\n");
+		return FALSE; // failed to create
+	}
 	SetDockingWindowIcons(theApp.m_bHiColorIcons);
 	return TRUE;
 }
@@ -357,21 +367,39 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
 	if (pDoc != NULL) {
 		switch (lHint) {
-		case CPolymeterDoc::HINT_MASTER_PROP:
+		case CPolymeterDoc::HINT_NONE:
 			m_wndPropertiesBar.SetProperties(*pDoc);	// update properties bar
+			m_wndChannelsBar.Update();	// update channels bar
+			break;
+		case CPolymeterDoc::HINT_MASTER_PROP:
+			if (pSender != reinterpret_cast<CView *>(&m_wndPropertiesBar)) {	// if sender isn't properties bar
+				m_wndPropertiesBar.SetProperties(*pDoc);	// update properties bar
+			}
 			break;
 		case CPolymeterDoc::HINT_SONG_POS:
 			UpdateSongPosition();
 			break;
-		default:
-			m_wndPropertiesBar.SetProperties(*pDoc);	// update properties bar
+		case CPolymeterDoc::HINT_CHANNEL_PROP:
+			{
+				const CPolymeterDoc::CPropHint	*pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+				int	iChan = pPropHint->m_iItem;
+				int	iProp = pPropHint->m_iProp;
+				if (pSender != reinterpret_cast<CView *>(&m_wndChannelsBar)) {	// if sender isn't channels bar
+					m_wndChannelsBar.Update(iChan, iProp);	// update channels bar
+				}
+				DWORD	dwEvent = pDoc->m_arrChannel.GetMidiEvent(iChan, iProp);
+				if (dwEvent && pDoc->m_Seq.IsOpen())	// if event to send and output device is open
+					pDoc->m_Seq.OutputLiveEvent(dwEvent);
+			}
+			break;
 		}
 		bool	bIsPlaying = pDoc->m_Seq.IsPlaying();
 		m_wndPropertiesBar.Enable(CMasterProps::PROP_nTimeDiv, !bIsPlaying);
 		SetViewTimer(bIsPlaying);
 	} else {	// no active document
-		CMasterProps	props;
-		m_wndPropertiesBar.SetProperties(props);
+		CMasterProps	props;	// default properties
+		m_wndPropertiesBar.SetProperties(props);	// update properties bar
+		m_wndChannelsBar.Update();	// update channels bar
 		SetViewTimer(false);
 	}
 }
@@ -644,8 +672,7 @@ LRESULT	CMainFrame::OnHandleDlgKey(WPARAM wParam, LPARAM lParam)
 void CMainFrame::OnUpdateIndicatorSongPos(CCmdUI* pCmdUI)
 {
 	pCmdUI->Enable(m_pActiveView != NULL);
-	if (m_pActiveView != NULL) {
-	} else {
+	if (m_pActiveView == NULL) {
 		pCmdUI->SetText(_T(""));
 	}
 }
@@ -657,7 +684,6 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 	if (pDoc != NULL) {
 		int	iProp = INT64TO32(wParam);
 		pDoc->NotifyUndoableEdit(iProp, UCODE_MASTER_PROP);
-		pDoc->SetModifiedFlag();
 		m_wndPropertiesBar.GetProperties(*pDoc);
 		switch (iProp) {
 		case CMasterProps::PROP_fTempo:

@@ -39,6 +39,7 @@ CSequencer::CSequencer()
 	m_bIsStopping = false;
 	m_bIsTempoChange = false;
 	m_bIsPositionChange = false;
+	m_qLiveEvent.Create(MIDI_CHANNELS);
 	ZeroMemory(&m_stats, sizeof(m_stats));
 }
 
@@ -303,30 +304,16 @@ bool CSequencer::Play(bool bEnable)
 			hdr.dwBufferLength = m_nBufferSize * sizeof(MIDI_STREAM_EVENT);
 			CHECK(midiOutPrepareHeader((HMIDIOUT)m_hStrm, &hdr, sizeof(MIDIHDR)));	// prepare buffer
 		}
-#if 1
 		CMidiEventStream&	arrEvt = m_arrMidiEvent[0];
-		arrEvt[0].dwDeltaTime = m_nCBLen;
-		arrEvt[0].dwEvent = MEVT_NOP << 24;
-		int	nEvents = 1;
-#else
-		static const DWORD arrInitMsg[] = {
-			MakeMidiMsg(PATCH, 0, 16, 0),
-			MakeMidiMsg(CONTROL, 0, REVERB_LEVEL, 0),
-			MakeMidiMsg(CONTROL, 0, CHORUS_LEVEL, 0),
-			MakeMidiMsg(CONTROL, 0, VOLUME, 127),
-			MakeMidiMsg(CONTROL, 9, REVERB_LEVEL, 0),
-			MakeMidiMsg(CONTROL, 9, CHORUS_LEVEL, 0),
-		};
-		CMidiEventStream&	arrEvt = m_arrMidiEvent[0];
-		const int	nInitMsgs = _countof(arrInitMsg);
-		for (int iMsg = 0; iMsg < nInitMsgs; iMsg++) {
-			arrEvt[iMsg].dwDeltaTime = 0;
-			arrEvt[iMsg].dwEvent = arrInitMsg[iMsg];
+		const int	nInitEvents = m_arrInitEvent.GetSize();
+		for (int iEvent = 0; iEvent < nInitEvents; iEvent++) {
+			arrEvt[iEvent].dwDeltaTime = 0;
+			arrEvt[iEvent].dwEvent = m_arrInitEvent[iEvent];
 		}
-		arrEvt[nInitMsgs].dwDeltaTime = m_nCBLen;
-		arrEvt[nInitMsgs].dwEvent = MEVT_NOP << 24;
-		int	nEvents = nInitMsgs + 1;
-#endif
+		int	nEvents = nInitEvents;
+		arrEvt[nEvents].dwDeltaTime = m_nCBLen;
+		arrEvt[nEvents].dwEvent = MEVT_NOP << 24;
+		nEvents++;
 #if SEQ_DUMP_EVENTS
 		m_arrDumpEvent.RemoveAll();
 		AddDumpEvent(m_arrMidiEvent[0], nEvents);
@@ -490,6 +477,11 @@ bool CSequencer::OutputMidiBuffer()
 			}
 			m_arrNoteOff.FastRemoveAll();	// empty note off array
 		}
+		DWORD	dwLiveEvent;
+		while (m_qLiveEvent.Pop(dwLiveEvent)) {	// while live events remain to be played
+			CEvent	evtLive(0, dwLiveEvent);	// at callback start time
+			m_arrEvent.Add(evtLive);	// add live event
+		}
 		nCBStart = m_nCBTime;
 		nCBEnd = nCBStart + m_nCBLen;
 		m_nCBTime = nCBEnd;	// advance callback time by one period
@@ -617,6 +609,14 @@ CSequencerReader::~CSequencerReader()
 	CTrack	*pTrack;
 	W64INT	nSize;
 	m_arrTrack.Detach(pTrack, nSize);	// detach our track array from sequencer's
+}
+
+bool CSequencer::OutputLiveEvent(DWORD dwEvent)
+{
+	ASSERT(IsOpen());	// device must be open
+	if (!IsOpen())
+		return false;
+	return m_qLiveEvent.Push(dwEvent);	// fails if queue is full
 }
 
 void CSequencer::CopyTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const

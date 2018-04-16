@@ -97,7 +97,7 @@ protected:
 	CTrackDlgArray	m_arrTrackDlg;		// array of track dialogs
 	CSize	m_szTrackDlg;		// size of track dialog
 	CSize	m_szTrackMargin;	// track margins
-	CStatic	m_arrPropCap[PROPS];	// array of property captions
+	CStatic	m_arrPropCap[PROPERTIES];	// array of property captions
 	bool	m_bPendingSelect;	// true if selection is pending
 	int		m_iSelMark;			// track index of selection anchor
 	int		m_nDragState;		// drag state; see enum above

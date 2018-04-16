@@ -14,13 +14,13 @@
 // PolymeterDoc.h : interface of the CPolymeterDoc class
 //
 
-
 #pragma once
 
 #include "Sequencer.h"
 #include "TrackDlg.h"
 #include "MasterProps.h"
 #include "Undoable.h"
+#include "Channel.h"
 
 class CPolymeterDoc : public CDocument, public CMasterProps, public CUndoable, public CTrackBase
 {
@@ -37,11 +37,13 @@ public:
 	enum {	// update hints
 		HINT_NONE,				// no hint
 		HINT_TRACK_PROP,		// track property edit; pHint is CPropHint
-		HINT_MULTI_TRACK_PROP,	// multiple tracks property edit; pHint is CMultiTrackPropHint
+		HINT_MULTI_TRACK_PROP,	// multiple tracks property edit; pHint is CMultiItemPropHint
+		HINT_TRACK_ARRAY,		// inserting, deleting or reordering tracks
 		HINT_STEP,				// step edit; pHint is CPropHint, m_iProp is step index
 		HINT_MASTER_PROP,		// master property edit
 		HINT_PLAY,				// start or stop playback
 		HINT_SONG_POS,			// song position change
+		HINT_CHANNEL_PROP,		// channel edit; pHint is CPropHint
 		HINTS
 	};
 
@@ -53,16 +55,16 @@ public:
 	class CPropHint : public CObject {
 	public:
 		CPropHint() {}
-		CPropHint(int iTrack, int iProp) : m_iTrack(iTrack), m_iProp(iProp) {}
-		int		m_iTrack;	// track index
+		CPropHint(int iItem, int iProp) : m_iItem(iItem), m_iProp(iProp) {}
+		int		m_iItem;	// item index
 		int		m_iProp;	// property index, or -1 for all
 	};
-	class CMultiTrackPropHint : public CObject {
+	class CMultiItemPropHint : public CObject {
 	public:
-		CMultiTrackPropHint() {}
-		CMultiTrackPropHint(const CIntArrayEx& arrSelection, int iProp) 
+		CMultiItemPropHint() {}
+		CMultiItemPropHint(const CIntArrayEx& arrSelection, int iProp) 
 			: m_arrSelection(arrSelection), m_iProp(iProp) {}
-		CIntArrayEx	m_arrSelection;	// indices of selected tracks
+		CIntArrayEx	m_arrSelection;	// indices of selected items
 		int		m_iProp;	// property index
 	};
 
@@ -71,6 +73,7 @@ public:
 	int		m_nFileVersion;		// file version number
 	CUndoManager	m_UndoMgr;	// undo manager
 	CString	m_sGoToPosition;	// previous go to position string
+	CChannelArray	m_arrChannel;	// array of channels
 
 // Operations
 public:
@@ -79,6 +82,8 @@ public:
 	void	ApplyOptions(const COptions *pPrevOptions);
 	static	void	SecsToTime(int nSecs, CString& sTime);
 	static	int		TimeToSecs(LPCTSTR pszTime);
+	void	InitChannelArray();
+	void	UpdateChannelEvents();
 
 // Overrides
 public:

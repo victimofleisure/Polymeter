@@ -17,6 +17,7 @@
 #include "Track.h"
 #include "Midi.h"
 #include "CritSec.h"
+#include "ILockRingBuf.h"
 
 #define SEQ_DUMP_EVENTS 0
 
@@ -63,6 +64,8 @@ public:
 	int		GetBufferSize() const;
 	void	SetBufferSize(int nEvents);
 	void	GetStatistics(STATS& stats) const;
+	void	GetInitialEvents(CDWordArrayEx& arrEvent) const;
+	void	SetInitialEvents(const CDWordArrayEx& arrEvent);
 	int		GetTrackCount() const;
 	void	SetTrackCount(int nTracks);
 	const CTrack&	GetTrack(int iTrack) const;
@@ -101,6 +104,7 @@ public:
 	bool	Pause(bool bEnable);
 	void	Abort();
 	bool	Export(LPCTSTR pszPath, int nDuration);
+	bool	OutputLiveEvent(DWORD dwEvent);
 	void	CopyTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const;
 	void	InsertTracks(int iTrack, int nCount = 1);
 	void	InsertTrack(int iTrack, CTrack& track);
@@ -165,6 +169,8 @@ protected:
 	CMidiEventStream	m_arrMidiEvent[BUFFERS];	// array of MIDI event stream buffers
 	CEventArray	m_arrEvent;			// array of track events
 	CEventArray	m_arrNoteOff;		// array of pending note off events
+	CDWordArrayEx	m_arrInitEvent;	// array of events to output at start of playback
+	CILockRingBuf<DWORD>	m_qLiveEvent;	// thread-safe queue of live events to be output
 	WCritSec	m_csCallback;		// critical section for serializing access to callback shared state
 #if SEQ_DUMP_EVENTS
 	CArrayEx<CMidiEventArray, CMidiEventArray&>	m_arrDumpEvent;	// for debug only
@@ -285,6 +291,16 @@ inline int CSequencer::GetBufferSize() const
 inline void CSequencer::GetStatistics(STATS& stats) const
 {
 	stats = m_stats;
+}
+
+inline void CSequencer::GetInitialEvents(CDWordArrayEx& arrEvent) const
+{
+	arrEvent = m_arrInitEvent;
+}
+
+inline void CSequencer::SetInitialEvents(const CDWordArrayEx& arrEvent)
+{
+	m_arrInitEvent = arrEvent;
 }
 
 inline int CSequencer::GetTrackCount() const

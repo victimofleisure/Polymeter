@@ -20,30 +20,30 @@
 
 const CProperties::OPTION_INFO CMasterProps::m_Group[GROUPS] = {
 	#define GROUPDEF(name) {_T(#name), IDS_PDR_GROUP_##name}, 
-	#include "MasterPropsDef.h"
+	#include "MasterPropsDef.h"	// generate group name options
 };
 
 const CProperties::OPTION_INFO CMasterProps::m_TimeDiv[TIME_DIVS] = {
 	#define TIMEDIVDEF(name) {_T(#name), 0}, 
-	#include "MasterPropsDef.h"
+	#include "MasterPropsDef.h"	// generate time division options
 };
 
 const int CMasterProps::m_arrTimeDivTicks[TIME_DIVS] = {
 	#define TIMEDIVDEF(name) name,
-	#include "MasterPropsDef.h"
+	#include "MasterPropsDef.h"	// generate time division tick values
 };
 
 const CProperties::PROPERTY_INFO CMasterProps::m_Info[PROPERTIES] = {
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
 		{_T(#name), IDS_PDR_NAME_##name, IDS_PDR_DESC_##name, offsetof(CMasterProps, m_##name), \
 		sizeof(type), &typeid(type), GROUP_##group, SUBGROUP_##subgroup, PT_##proptype, items, itemname, minval, maxval},
-	#include "MasterPropsDef.h"
+	#include "MasterPropsDef.h"	// generate property info
 };
 
 CMasterProps::CMasterProps()
 {
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) m_##name = initval;
-	#include "MasterPropsDef.h"
+	#include "MasterPropsDef.h"	// generate code to initialize properties
 }
 
 int CMasterProps::GetGroupCount() const
@@ -67,14 +67,14 @@ void CMasterProps::GetVariants(CVariantArray& Var) const
 	Var.SetSize(PROPERTIES);
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
 		Var[PROP_##name] = CComVariant(m_##name);
-	#include "MasterPropsDef.h"
+	#include "MasterPropsDef.h"	// generate code to get members from variant array
 }
 
 void CMasterProps::SetVariants(const CVariantArray& Var)
 {
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
 		GetVariant(Var[PROP_##name], m_##name);
-	#include "MasterPropsDef.h"
+	#include "MasterPropsDef.h"	// generate code to set members from variant array
 }
 
 CString CMasterProps::GetGroupName(int iGroup) const
@@ -108,3 +108,24 @@ int CMasterProps::FindProperty(LPCTSTR szInternalName)
 	return -1;
 }
 
+void CMasterProps::GetProperty(int iProp, CComVariant& var) const
+{
+	switch (iProp) {
+	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
+		case PROP_##name: var = CComVariant(m_##name); break;
+	#include "MasterPropsDef.h"	// generate code to get members from variant
+	default:
+		NODEFAULTCASE;
+	}
+}
+
+void CMasterProps::SetProperty(int iProp, const CComVariant& var)
+{
+	switch (iProp) {
+	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
+		case PROP_##name: GetVariant(var, m_##name); break;
+	#include "MasterPropsDef.h"	// generate code to set members from variant
+	default:
+		NODEFAULTCASE;
+	}
+}
