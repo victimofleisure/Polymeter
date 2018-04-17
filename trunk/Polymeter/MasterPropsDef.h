@@ -13,7 +13,7 @@
 
 #ifdef GROUPDEF
 
-GROUPDEF(	MASTER	)
+GROUPDEF(	Master	)
 
 #undef GROUPDEF
 #endif
@@ -21,8 +21,8 @@ GROUPDEF(	MASTER	)
 #ifdef PROPDEF
 
 //			group		subgroup	proptype	type		name				initval			minval		maxval		itemname	items
-PROPDEF(	MASTER,		NONE,		VAR,		double,		fTempo,				120,			1.0,		500.0,		NULL,		0)
-PROPDEF(	MASTER,		NONE,		ENUM,		int,		nTimeDiv,			TIME_DIV_120,	0,			0,			m_TimeDiv,	_countof(m_TimeDiv))
+PROPDEF(	Master,		NONE,		VAR,		double,		fTempo,				120,			1.0,		500.0,		NULL,		0)
+PROPDEF(	Master,		NONE,		ENUM,		int,		nTimeDiv,			TIME_DIV_120,	0,			0,			m_TimeDiv,	_countof(m_TimeDiv))
 
 #undef PROPDEF
 #endif

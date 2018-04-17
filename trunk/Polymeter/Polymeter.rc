@@ -608,9 +608,9 @@ BEGIN
     IDS_OPT_DESC_nMidiLatency "Desired MIDI latency, in milliseconds"
     IDS_OPT_DESC_nViewUpdateFreq 
                             "Frequency at which view is updated, in Hertz"
-    IDS_OPT_GROUP_GENERAL   "General"
-    IDS_OPT_GROUP_MIDI      "MIDI"
-    IDS_OPT_GROUP_VIEW      "View"
+    IDS_OPT_GROUP_General   "General"
+    IDS_OPT_GROUP_Midi      "MIDI"
+    IDS_OPT_GROUP_View      "View"
     IDS_OPT_NAME_bAutoCheckUpdates "Automatically Check for Updates"
 END
 
@@ -625,13 +625,13 @@ BEGIN
     IDS_OPT_NAME_nViewUpdateFreq "Update Frequency"
     IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
     IDS_PDR_DESC_nTimeDiv   "Time division, in pulses per quarter note"
-    IDS_PDR_GROUP_MASTER    "Master"
+    IDS_PDR_GROUP_Master    "Master"
     IDS_PDR_NAME_fTempo     "Tempo"
     IDS_PDR_NAME_nTimeDiv   "PPQ"
     IDS_PROPERTIES_BAR      "Properties"
     IDS_PROPS_MORE_COLORS   "More Colors..."
     IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
-    IDS_SEQERR_BAD_DEVICE   "Invalid MIDI device selection."
+    IDS_SEQERR_BAD_OUTPUT_DEVICE   "Invalid MIDI output device selection."
 END
 
 STRINGTABLE

@@ -287,7 +287,7 @@ bool CSequencer::Play(bool bEnable)
 		return true;	// nothing to do
 	if (bEnable) {	// if playing
 		if (m_iOutputDevice < 0) {	// if negative device index
-			OnMidiError(SEQERR_BAD_DEVICE);
+			OnMidiError(SEQERR_BAD_OUTPUT_DEVICE);
 			return false;
 		}
 		ZeroMemory(&m_stats, sizeof(m_stats));

@@ -16,11 +16,12 @@
 #include "MidiDevices.h"
 #include "MidiWrap.h"
 
-#define RK_MIDI_OPTIONS			_T("Options\\MIDI")
+#define RK_MIDI_OPTIONS			_T("Options\\Midi")
 #define RK_INPUT_DEVICE_NAME	_T("sInputDeviceName")
 #define RK_INPUT_DEVICE_ID		_T("sInputDeviceID")
 #define RK_OUTPUT_DEVICE_NAME	_T("sOutputDeviceName")
 #define RK_OUTPUT_DEVICE_ID		_T("sOutputDeviceID")
+#define RK_INIT_NULL			_T("<null>")
 
 CMidiDevices::CMidiDevices()
 {
@@ -33,7 +34,7 @@ void CMidiDevices::SetInput(int iIn)
 	if (IsValidInput(iIn))
 		m_iIn = iIn;
 	else
-		iIn = -1;
+		m_iIn = -1;
 }
 
 void CMidiDevices::SetOutput(int iOut)
@@ -41,7 +42,7 @@ void CMidiDevices::SetOutput(int iOut)
 	if (IsValidOutput(iOut))
 		m_iOut = iOut;
 	else
-		iOut = -1;
+		m_iOut = -1;
 }
 
 CString CMidiDevices::GetInputName(int iIn) const
@@ -103,15 +104,60 @@ void CMidiDevices::Dump()
 	}
 }
 
-int CMidiDevices::CDeviceInfoArray::Find(const CString& sName, const CString& sID) const
+int CMidiDevices::CDeviceInfoArray::Find(CString sName, CString sID) const
 {
 	int	nDevs = GetSize();
 	for (int iDev = 0; iDev < nDevs; iDev++) {	// for each device
 		const CDeviceInfo&	info = GetAt(iDev);
-		if (info.m_sName == sName && info.m_sID == sID)	// if name and ID match caller's
+		if (info.m_sName == sName && info.m_sID == sID)	// if name and ID match
 			return iDev;
 	}
 	return -1;
+}
+
+int CMidiDevices::CDeviceInfoArray::Find(CString sName) const
+{
+	int	nDevs = GetSize();
+	for (int iDev = 0; iDev < nDevs; iDev++) {	// for each device
+		if (GetAt(iDev).m_sName == sName)	// if name matches
+			return iDev;
+	}
+	return -1;
+}
+
+int CMidiDevices::CDeviceInfoArray::GetNameCount(CString sName) const
+{
+	int	nMatches = 0;
+	int	nDevs = GetSize();
+	for (int iDev = 0; iDev < nDevs; iDev++) {	// for each device
+		if (GetAt(iDev).m_sName == sName)	// if names match
+			nMatches++;	// bump match count
+	}
+	return(nMatches);
+}
+
+int CMidiDevices::CDeviceInfoArray::Find(CString sName, CString sID, const CDeviceInfoArray& arrPrev) const
+{
+	int	iDev = Find(sName, sID);
+	if (iDev < 0) {
+		if (GetNameCount(sName) == 1 &&  arrPrev.GetNameCount(sName) == 1) {
+			iDev = Find(sName);
+		}
+	}
+	return iDev;
+}
+
+void CMidiDevices::OnDeviceChange()
+{
+	CString	sInName(GetInputName());
+	CString	sInID(GetInputID());
+	CString	sOutName(GetOutputName());
+	CString	sOutID(GetOutputID());
+	CMidiDevices	devsPrev(*this);	// copy devices
+	Update();	// update devices to agree with hardware
+	m_iIn = m_arrIn.Find(sInName, sInID, devsPrev.m_arrIn);
+	m_iOut = m_arrOut.Find(sOutName, sOutID, devsPrev.m_arrOut);
+	printf("in=%d out=%d\n", m_iIn, m_iOut);//@@@
 }
 
 void CMidiDevices::Read()
@@ -121,8 +167,13 @@ void CMidiDevices::Read()
 	CString	sInID(theApp.GetProfileString(RK_MIDI_OPTIONS, RK_INPUT_DEVICE_ID));
 	m_iIn = m_arrIn.Find(sInName, sInID);
 	CString	sOutName(theApp.GetProfileString(RK_MIDI_OPTIONS, RK_OUTPUT_DEVICE_NAME));
-	CString	sOutID(theApp.GetProfileString(RK_MIDI_OPTIONS, RK_OUTPUT_DEVICE_ID));
+	CString	sOutID(theApp.GetProfileString(RK_MIDI_OPTIONS, RK_OUTPUT_DEVICE_ID, RK_INIT_NULL));	// init to special value
 	m_iOut = m_arrOut.Find(sOutName, sOutID);
+	if (m_iOut < 0) {	// if output device not found
+		// if output ID's registry key didn't exist, and there's at least one output device
+		if (sOutID == RK_INIT_NULL && GetOutputCount() > 0)
+			m_iOut = 0;	// assume this is our maiden voyage and default to first output device
+	}
 }
 
 void CMidiDevices::Write()

@@ -274,13 +274,9 @@ BOOL CMainFrame::CreateDockingWindows()
 
 void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 {
-	if (pPrevOptions == NULL || theApp.m_Options.m_iMidiInputDevice != pPrevOptions->m_iMidiInputDevice) {
-		theApp.m_midiDevs.SetInput(theApp.m_Options.m_iMidiInputDevice - 1);
-		theApp.OpenMidiInputDevice(theApp.m_midiDevs.GetInput() >= 0);
-	}
-	if (pPrevOptions == NULL || theApp.m_Options.m_iMidiOutputDevice != pPrevOptions->m_iMidiOutputDevice) {
-		theApp.m_midiDevs.SetOutput(theApp.m_Options.m_iMidiOutputDevice - 1);
-	}
+	theApp.m_midiDevs.SetInput(theApp.m_Options.m_iMidiInputDevice - 1);
+	theApp.m_midiDevs.SetOutput(theApp.m_Options.m_iMidiOutputDevice - 1);
+	theApp.OpenMidiInputDevice(theApp.m_midiDevs.GetInput() >= 0);
 	CAllDocIter	iter;
 	CPolymeterDoc	*pDoc;
 	while ((pDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
@@ -756,6 +752,7 @@ LRESULT	CMainFrame::OnDeviceNodeChange(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
+	theApp.m_midiDevs.OnDeviceChange();
 	return(0);
 }
 

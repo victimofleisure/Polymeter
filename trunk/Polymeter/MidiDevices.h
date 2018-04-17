@@ -43,6 +43,7 @@ public:
 	void	Read();
 	void	Write();
 	void	Dump();
+	void	OnDeviceChange();
 
 protected:
 // Types
@@ -53,7 +54,10 @@ protected:
 	};
 	class CDeviceInfoArray : public CArrayEx<CDeviceInfo, CDeviceInfo&> {
 	public:
-		int		Find(const CString& sName, const CString& sID) const;
+		int		Find(CString sName, CString sID) const;
+		int		Find(CString sName) const;
+		int		GetNameCount(CString sName) const;
+		int		Find(CString sName, CString sID, const CDeviceInfoArray& arrPrev) const;
 	};
 
 // Member data
