@@ -69,9 +69,13 @@ DWORD CChannelArray::GetMidiEvent(int iChan, int iProp) const
 {
 	const CChannel&	chan = (*this)[iChan];
 	switch (iProp) {
-	case CChannel::PROP_Bank:
-		if (chan.m_nVolume >= 0)
-			return MakeMidiMsg(CONTROL, iChan, BANK_SELECT, chan.m_nVolume);
+	case CChannel::PROP_BankMSB:
+		if (chan.m_nBankMSB >= 0)
+			return MakeMidiMsg(CONTROL, iChan, BANK_SELECT, chan.m_nBankMSB);
+		break;
+	case CChannel::PROP_BankLSB:
+		if (chan.m_nBankLSB >= 0)
+			return MakeMidiMsg(CONTROL, iChan, BANK_SELECT_LSB, chan.m_nBankLSB);
 		break;
 	case CChannel::PROP_Patch:
 		if (chan.m_nPatch >= 0)

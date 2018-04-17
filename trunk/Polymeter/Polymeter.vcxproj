@@ -215,6 +215,7 @@
     <ClInclude Include="MasterPropsDef.h" />
     <ClInclude Include="Midi.h" />
     <ClInclude Include="MidiCtrlrDef.h" />
+    <ClInclude Include="MidiDevices.h" />
     <ClInclude Include="MidiFile.h" />
     <ClInclude Include="MidiWrap.h" />
     <ClInclude Include="NumberTheory.h" />
@@ -284,6 +285,7 @@
     <ClCompile Include="ListCtrlExSel.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="MasterProps.cpp" />
+    <ClCompile Include="MidiDevices.cpp" />
     <ClCompile Include="MidiFile.cpp" />
     <ClCompile Include="MidiWrap.cpp" />
     <ClCompile Include="NumberTheory.cpp" />

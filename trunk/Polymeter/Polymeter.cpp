@@ -37,6 +37,8 @@
 
 #define HOME_PAGE_URL _T("http://polymeter.sourceforge.io")
 
+#define CHECK_MIDI(x) { MMRESULT nResult = x; if (MIDI_FAILED(nResult)) { OnMidiError(nResult); return false; } }
+
 // CPolymeterApp construction
 
 CPolymeterApp::CPolymeterApp()
@@ -49,6 +51,7 @@ CPolymeterApp::CPolymeterApp()
 
 	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance
+	m_bInMsgBox = false;
 }
 
 // The one and only CPolymeterApp object
@@ -101,7 +104,9 @@ BOOL CPolymeterApp::InitInstance()
 	LoadStdProfileSettings(4);  // Load standard INI file options (including MRU)
 
 	m_Options.ReadProperties();	// get options from registry
-	m_Options.UpdateMidiDeviceList();
+
+	m_midiDevs.Read();	// get MIDI devices from registry
+	m_Options.UpdateMidiDevices();	// copy MIDI devices to options
 
 	InitContextMenuManager();
 
@@ -161,6 +166,8 @@ BOOL CPolymeterApp::InitInstance()
 int CPolymeterApp::ExitInstance()
 {
 	m_Options.WriteProperties();	// save options to registry
+
+	m_midiDevs.Write();	// save MIDI device state to registry
 
 	//TODO: handle additional resources you may have added
 	AfxOleTerm(FALSE);
@@ -369,6 +376,66 @@ void CPolymeterApp::LoadCustomState()
 
 void CPolymeterApp::SaveCustomState()
 {
+}
+
+bool CPolymeterApp::OpenMidiInputDevice(bool bEnable)
+{
+	bool	bIsOpen = IsMidiInputDeviceOpen();
+	if (bEnable == bIsOpen)	// if already in requested state
+		return true;	// nothing to do
+	if (bEnable) {	// if opening device
+		int	iMidiInDev = m_midiDevs.GetInput();
+		if (iMidiInDev < 0)
+			return false;
+		CHECK_MIDI(m_midiIn.Open(iMidiInDev, reinterpret_cast<W64UINT>(MidiInProc), reinterpret_cast<W64UINT>(this), CALLBACK_FUNCTION));
+		CHECK_MIDI(m_midiIn.Start());
+	} else {	// closing device
+		CHECK_MIDI(m_midiIn.Stop());
+		CHECK_MIDI(m_midiIn.Close());
+	}
+	return true;
+}
+
+void CALLBACK CPolymeterApp::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2)
+{
+	UNREFERENCED_PARAMETER(hMidiIn);
+	UNREFERENCED_PARAMETER(dwInstance);
+	UNREFERENCED_PARAMETER(dwParam2);	// will need this for timestamp
+	_tprintf(_T("MidiInProc %d %d\n"), GetCurrentThreadId(), ::GetThreadPriority(GetCurrentThread()));
+	switch (wMsg) {
+	case MIM_DATA:
+		{
+//			_tprintf(_T("%x %d\n"), dwParam1, dwParam2);
+			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+			if (pDoc != NULL && pDoc->m_Seq.IsOpen()) {
+				DWORD	dwEvent = static_cast<DWORD>(dwParam1);
+				if (theApp.m_Options.m_bMidiThru)	// if MIDI thru enabled
+					pDoc->m_Seq.OutputLiveEvent(dwEvent);	// output event
+			}
+		}
+		break;
+	}
+}
+
+void CPolymeterApp::OnMidiError(MMRESULT nResult)
+{
+	static const int nSeqErrorId[] = {
+		#define SEQERRDEF(name) IDS_SEQERR_##name,
+		#include "SequencerErrors.h"
+	};
+	if (!m_bInMsgBox) {	// if not already displaying message box
+		m_bInMsgBox = true;	// set reentry guard
+		CString	sError;
+		if (nResult > CSequencer::SEQERR_FIRST && nResult < CSequencer::SEQERR_LAST) {
+			int	iSeqErr = static_cast<int>(nResult) - (CSequencer::SEQERR_FIRST + 1);
+			sError.LoadString(nSeqErrorId[iSeqErr]);
+		} else {
+			sError.Format(LDS(IDS_SEQ_MIDI_ERROR), nResult);
+			sError += '\n' + CMidiOut::GetErrorString(nResult);
+		}
+		AfxMessageBox(sError);
+		m_bInMsgBox = false;	// clear reentry guard
+	}
 }
 
 // CPolymeterApp message map

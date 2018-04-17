@@ -75,7 +75,6 @@ protected:  // control bar embedded members
 
 // Data members
 	CPolymeterView	*m_pActiveView;		// pointer to active view, or NULL if none
-	bool	m_bInMsgBox;				// true if displaying message box
 	CString	m_sSongPos;					// song position string
 
 // Helpers
@@ -105,6 +104,8 @@ protected:
 	afx_msg void OnAppCheckForUpdates();
 	afx_msg LRESULT	OnDelayedCreate(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT	OnMidiError(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT	OnDeviceNodeChange(WPARAM wParam, LPARAM lParam);
+	afx_msg BOOL OnDeviceChange(UINT nEventType, W64ULONG dwData);
 };
 
 inline HACCEL CMainFrame::GetAccelTable() const

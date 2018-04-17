@@ -243,6 +243,9 @@
     <ClInclude Include="RingBuf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MidiDevices.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Polymeter.cpp">
@@ -390,6 +393,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Channel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MidiDevices.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

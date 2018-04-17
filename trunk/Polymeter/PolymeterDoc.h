@@ -84,6 +84,7 @@ public:
 	static	int		TimeToSecs(LPCTSTR pszTime);
 	void	InitChannelArray();
 	void	UpdateChannelEvents();
+	void	OutputChannelEvent(int iChan, int iProp);
 
 // Overrides
 public:
@@ -109,19 +110,19 @@ protected:
 	class CUndoClipboard : public CRefObj {
 	public:
 		CTrackArray	m_arrTrack;		// array of tracks
-		CIntArrayEx	m_arrSelection;	// selection array
+		CIntArrayEx	m_arrSelection;	// indices of selected tracks
 		int		m_nSelMark;			// selection mark
 	};
-	class CUndoMultiTrackProp : public CRefObj {
+	class CUndoMultiItemProp : public CRefObj {
 	public:
-		CIntArrayEx	m_arrSelection;	// indices of selected tracks
-		CVariantArray	m_arrVal;	// property values for selected tracks
+		CIntArrayEx	m_arrSelection;	// indices of selected items
+		CVariantArray	m_arrVal;	// variant property values for selected items
 	};
 	class CUndoEvents : public CRefObj {
 	public:
 		CByteArrayEx	m_arrEvent;		// array of events
 	};
-	class CUndoMultiEvents : public CRefObj {
+	class CUndoMultiItemEvents : public CRefObj {
 	public:
 		CIntArrayEx	m_arrSelection;	// indices of selected tracks
 		CArrayEx<CByteArrayEx, CByteArrayEx&>	m_arrEvent;		// array of events for each track
@@ -137,6 +138,18 @@ protected:
 	virtual	void	RestoreUndoState(const CUndoState& State);
 
 // Helpers
+	void	SaveTrackProperty(int iTrack, int iProp, CUndoState& State) const;
+	void	RestoreTrackProperty(int iTrack, int iProp, const CUndoState& State);
+	void	SaveMultiTrackProperty(const CIntArrayEx& arrSelection, int iProp, CUndoState& State) const;
+	void	RestoreMultiTrackProperty(CIntArrayEx& parrSelection, int iProp, const CUndoState& State);
+	void	SaveTrackEvents(int iTrack, CUndoState& State) const;
+	void	RestoreTrackEvents(int iTrack, const CUndoState& State);
+	void	SaveMultiTrackEvents(const CIntArrayEx& arrSelection, CUndoState& State) const;
+	void	RestoreMultiTrackEvents(CIntArrayEx& arrSelection, const CUndoState& State);
+	void	SaveClipboard(CUndoState& State) const;
+	void	RestoreClipboard(const CUndoState& State);
+	void	SaveMasterProperty(int iProp, CUndoState& State) const;
+	void	RestoreMasterProperty(int iProp, const CUndoState& State);
 
 #ifdef SHARED_HANDLERS
 	// Helper function that sets search content for a Search Handler

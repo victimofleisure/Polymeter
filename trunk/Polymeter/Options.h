@@ -36,10 +36,14 @@ public:
 	static const OPTION_INFO	m_Group[GROUPS];	// group names
 	static const PROPERTY_INFO	m_Info[PROPERTIES];	// fixed info for each property
 
-// Data members
+// Operations
+	void	ReadProperties();
+	void	WriteProperties() const;
+	void	UpdateMidiDevices();
+
+// Public data
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) type m_##name;
 	#include "OptionsDef.h"
-	CStringArrayEx	m_arrMidiOutDevName;	// array of MIDI output device names
 
 // Overrides
 	virtual	int		GetGroupCount() const;
@@ -50,9 +54,4 @@ public:
 	virtual	CString	GetGroupName(int iGroup) const;
 	virtual	int		GetOptionCount(int iProp) const;
 	virtual	CString	GetOptionName(int iProp, int iOption) const;
-
-// Helpers
-	void	ReadProperties();
-	void	WriteProperties() const;
-	void	UpdateMidiDeviceList();
 };

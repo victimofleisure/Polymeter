@@ -50,6 +50,9 @@ BOOL COptionsDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	theApp.m_midiDevs.Update();	// temporary measure until device change is properly handled
+	theApp.m_Options.UpdateMidiDevices();
+
 	CRect	rc;
 	GetClientRect(rc);
 	HDITEM hdItem;
@@ -59,7 +62,6 @@ BOOL COptionsDlg::OnInitDialog()
 	m_Grid.EnableDescriptionArea();
 	m_Grid.EnableHeaderCtrl(FALSE);
 	m_Grid.SetDescriptionRows(2);
-	theApp.m_Options.UpdateMidiDeviceList();
 	m_Grid.InitPropList(theApp.m_Options);
 	m_Grid.RestoreGroupExpansion(RK_EXPAND);
 	m_Grid.SetProperties(theApp.m_Options);

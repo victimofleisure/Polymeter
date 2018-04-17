@@ -12,7 +12,7 @@
 */
 
 #include "stdafx.h"
-#include "resource.h"
+#include "Polymeter.h"
 #include "RegTempl.h"
 #include "Options.h"
 #include "VariantHelper.h"
@@ -76,38 +76,56 @@ CString COptions::GetGroupName(int iGroup) const
 
 int COptions::GetOptionCount(int iProp) const
 {
-	if (iProp == PROP_iMidiOutputDevice) {
-		return INT64TO32(m_arrMidiOutDevName.GetSize());
+	switch (iProp) {
+	case PROP_iMidiInputDevice:
+		return theApp.m_midiDevs.GetInputCount() + 1;	// add one for none option
+	case PROP_iMidiOutputDevice:
+		return theApp.m_midiDevs.GetOutputCount() + 1;	// add one for none option
+	default:
+		return CProperties::GetOptionCount(iProp);
 	}
-	return CProperties::GetOptionCount(iProp);
 }
 
 CString	COptions::GetOptionName(int iProp, int iOption) const
 {
-	if (iProp == PROP_iMidiOutputDevice) {
-		return m_arrMidiOutDevName[iOption];
+	switch (iProp) {
+	case PROP_iMidiInputDevice:
+		{
+			CString	sName(theApp.m_midiDevs.GetInputName(iOption - 1));	// convert to zero-origin
+			if (sName.IsEmpty())
+				sName.LoadString(IDS_NONE);
+			return sName;
+		}
+	case PROP_iMidiOutputDevice:
+		{
+			CString	sName(theApp.m_midiDevs.GetOutputName(iOption - 1));	// convert to zero-origin
+			if (sName.IsEmpty())
+				sName.LoadString(IDS_NONE);
+			return sName;
+		}
+	default:
+		return CProperties::GetOptionName(iProp, iOption);
 	}
-	return CProperties::GetOptionName(iProp, iOption);
 }
 
 void COptions::ReadProperties()
 {
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
 		RdReg(_T("Options\\")_T(#group), _T(#name), m_##name);
-	#include "OptionsDef.h"
+	#define OPTS_EXCLUDE_MIDI_DEVICES	// MIDI devices are handled in app
+	#include "OptionsDef.h"	// generate code to read properties
 }
 
 void COptions::WriteProperties() const
 {
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
 		WrReg(_T("Options\\")_T(#group), _T(#name), m_##name);
-	#include "OptionsDef.h"
+	#define OPTS_EXCLUDE_MIDI_DEVICES	//  MIDI devices are handled in app
+	#include "OptionsDef.h"	// generate code to read properties
 }
 
-void COptions::UpdateMidiDeviceList()
+void COptions::UpdateMidiDevices()
 {
-	CMidiOut::GetDeviceNames(m_arrMidiOutDevName);
-	int	nDevs = INT64TO32(m_arrMidiOutDevName.GetSize());
-	if (m_iMidiOutputDevice >= nDevs)	// if output device index is out of range
-		m_iMidiOutputDevice = 0;	// revert to default device
+	m_iMidiInputDevice = theApp.m_midiDevs.GetInput() + 1;	// add one for none option
+	m_iMidiOutputDevice = theApp.m_midiDevs.GetOutput() + 1;	// add one for none option
 }

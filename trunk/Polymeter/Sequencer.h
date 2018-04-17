@@ -48,8 +48,8 @@ public:
 	bool	IsOpen() const;
 	bool	IsPlaying() const;
 	bool	IsPaused() const;
-	UINT	GetOutputDevice() const;
-	void	SetOutputDevice(UINT iOutputDevice);
+	int		GetOutputDevice() const;
+	void	SetOutputDevice(int iOutputDevice);
 	bool	GetPosition(LONGLONG& nTicks);
 	void	SetPosition(int nTicks);
 	bool	GetPosition(MMTIME& time, UINT wType = TIME_TICKS);
@@ -150,7 +150,7 @@ protected:
 	HMIDISTRM	m_hStrm;			// MIDI stream handle
 	MIDIHDR	m_arrMsgHdr[BUFFERS];	// array of MIDI message headers
 	double	m_fTempo;				// tempo, in beats per minute
-	UINT	m_iOutputDevice;		// index of output MIDI device
+	int		m_iOutputDevice;		// index of output MIDI device
 	int		m_nTimeDiv;				// time division, in pulses per quarter note
 	int		m_nCBTime;				// time at start of next callback, in ticks
 	int		m_nCBLen;				// length of a callback period, in ticks
@@ -253,7 +253,7 @@ inline bool CSequencer::IsPaused() const
 	return m_bIsPaused;
 }
 
-inline UINT CSequencer::GetOutputDevice() const
+inline int CSequencer::GetOutputDevice() const
 {
 	return m_iOutputDevice;
 }

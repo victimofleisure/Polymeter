@@ -14,6 +14,7 @@
 		04		15jan18	in InitPropList, handle multi-word subgroup names
 		05		10apr18	add runtime class macros
 		06		10apr18	in InitPropList's file case, handle ANSI string case
+		07		16apr18	in ValidateItemData, use dynamic downcast
 
 */
 
@@ -35,9 +36,12 @@ BOOL CValidPropertyGridCtrl::ValidateItemData(CMFCPropertyGridProperty* pProp)
 	ASSERT_VALID(pProp);
 	if (pProp->IsKindOf(RUNTIME_CLASS(CMFCPropertyGridColorProperty)))	// if color property
 		return true;	// special case, ignore it
-	CValidPropertyGridProperty	*pMyProp = STATIC_DOWNCAST(CValidPropertyGridProperty, pProp);
-	m_bIsDataValidated = true;
-	return pMyProp->ValidateData();
+	CValidPropertyGridProperty	*pMyProp = DYNAMIC_DOWNCAST(CValidPropertyGridProperty, pProp);
+	if (pMyProp != NULL) {	// if property supports validation
+		m_bIsDataValidated = true;
+		return pMyProp->ValidateData();
+	} else
+		return true;
 }
 
 BOOL CValidPropertyGridCtrl::EndEditItem(BOOL bUpdateData)

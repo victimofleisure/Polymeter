@@ -51,6 +51,7 @@ enum {	// application-wide user window messages, based on WP_APP
 	UWM_PROPERTY_CHANGE,		// wParam: iProp, lParam: CWnd*
 	UWM_PROPERTY_SELECT,		// wParam: iProp or -1 if none, lParam: CWnd*
 	UWM_MIDI_ERROR,				// wParam: error code, lParam: CDocument*
+	UWM_DEVICENODECHANGE,		// wParam: none, lParam: none
 };
 
 // ck: wrapper for formatting system errors

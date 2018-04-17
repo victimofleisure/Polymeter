@@ -39,7 +39,7 @@ CSequencer::CSequencer()
 	m_bIsStopping = false;
 	m_bIsTempoChange = false;
 	m_bIsPositionChange = false;
-	m_qLiveEvent.Create(MIDI_CHANNELS);
+	m_qLiveEvent.Create(DEF_BUFFER_SIZE);
 	ZeroMemory(&m_stats, sizeof(m_stats));
 }
 
@@ -78,7 +78,7 @@ bool CSequencer::WriteTempo(double fTempo)
 	return true;
 }
 
-void CSequencer::SetOutputDevice(UINT iOutputDevice)
+void CSequencer::SetOutputDevice(int iOutputDevice)
 {
 	m_iOutputDevice = iOutputDevice;
 }
@@ -286,6 +286,10 @@ bool CSequencer::Play(bool bEnable)
 	if (bEnable == m_bIsPlaying)	// if already in requested state
 		return true;	// nothing to do
 	if (bEnable) {	// if playing
+		if (m_iOutputDevice < 0) {	// if negative device index
+			OnMidiError(SEQERR_BAD_DEVICE);
+			return false;
+		}
 		ZeroMemory(&m_stats, sizeof(m_stats));
 		m_stats.fCBTimeMin = DBL_MAX;
 		UpdateCallbackLength();
@@ -295,14 +299,16 @@ bool CSequencer::Play(bool bEnable)
 		m_bIsStopping = false;
 		m_bIsTempoChange = false;
 		m_bIsPositionChange = false;
-		CHECK(midiStreamOpen(&m_hStrm, &m_iOutputDevice, 1, W64UINT(MidiOutProc), W64UINT(this), CALLBACK_FUNCTION));
+		UINT	uDevice = m_iOutputDevice;
+		CHECK(midiStreamOpen(&m_hStrm, &uDevice, 1, reinterpret_cast<W64UINT>(MidiOutProc), 
+			reinterpret_cast<W64UINT>(this), CALLBACK_FUNCTION));
 		ZeroMemory(&m_arrMsgHdr, sizeof(m_arrMsgHdr));
 		for (int iBuf = 0; iBuf < BUFFERS; iBuf++) {	// for each buffer
 			MIDIHDR&	hdr = m_arrMsgHdr[iBuf];
 			m_arrMidiEvent[iBuf].SetSize(m_nBufferSize);
 			hdr.lpData = reinterpret_cast<char *>(m_arrMidiEvent[iBuf].GetData());
 			hdr.dwBufferLength = m_nBufferSize * sizeof(MIDI_STREAM_EVENT);
-			CHECK(midiOutPrepareHeader((HMIDIOUT)m_hStrm, &hdr, sizeof(MIDIHDR)));	// prepare buffer
+			CHECK(midiOutPrepareHeader(reinterpret_cast<HMIDIOUT>(m_hStrm), &hdr, sizeof(MIDIHDR)));	// prepare buffer
 		}
 		CMidiEventStream&	arrEvt = m_arrMidiEvent[0];
 		const int	nInitEvents = m_arrInitEvent.GetSize();
@@ -331,7 +337,7 @@ bool CSequencer::Play(bool bEnable)
 		m_bIsStopping = true;	// signal callback to stop outputting events
 		CHECK(midiStreamStop(m_hStrm));	// stop playback
 		for (int iBuf = 0; iBuf < BUFFERS; iBuf++) {	// for each buffer, unprepare buffer
-			CHECK(midiOutUnprepareHeader((HMIDIOUT)m_hStrm, &m_arrMsgHdr[iBuf], sizeof(MIDIHDR)));
+			CHECK(midiOutUnprepareHeader(reinterpret_cast<HMIDIOUT>(m_hStrm), &m_arrMsgHdr[iBuf], sizeof(MIDIHDR)));
 		}
 		CHECK(midiStreamClose(m_hStrm));	// close stream
 		m_hStrm = NULL;

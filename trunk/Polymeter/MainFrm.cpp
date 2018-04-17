@@ -26,6 +26,7 @@
 #include "PathStr.h"
 #include "DllWrap.h"
 #include "MidiWrap.h"
+#include "dbt.h"	// for device change types
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -80,7 +81,6 @@ CMainFrame::CMainFrame()
 	// TODO: add member initialization code here
 	theApp.m_nAppLook = theApp.GetInt(_T("ApplicationLook"), APPLOOK_VS_2008);
 	m_pActiveView = NULL;
-	m_bInMsgBox = false;
 }
 
 CMainFrame::~CMainFrame()
@@ -274,6 +274,13 @@ BOOL CMainFrame::CreateDockingWindows()
 
 void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 {
+	if (pPrevOptions == NULL || theApp.m_Options.m_iMidiInputDevice != pPrevOptions->m_iMidiInputDevice) {
+		theApp.m_midiDevs.SetInput(theApp.m_Options.m_iMidiInputDevice - 1);
+		theApp.OpenMidiInputDevice(theApp.m_midiDevs.GetInput() >= 0);
+	}
+	if (pPrevOptions == NULL || theApp.m_Options.m_iMidiOutputDevice != pPrevOptions->m_iMidiOutputDevice) {
+		theApp.m_midiDevs.SetOutput(theApp.m_Options.m_iMidiOutputDevice - 1);
+	}
 	CAllDocIter	iter;
 	CPolymeterDoc	*pDoc;
 	while ((pDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
@@ -294,11 +301,11 @@ void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 
 void CMainFrame::SetViewTimer(bool bEnable)
 {
-	if (bEnable) {
+	if (bEnable) {	// if starting timer
 		ASSERT(theApp.m_Options.m_nViewUpdateFreq);	// else divide by zero
 		int	nPeriod = round(1000.0 / theApp.m_Options.m_nViewUpdateFreq);
 		SetTimer(VIEW_TIMER_ID, nPeriod, NULL);
-	} else
+	} else	// stopping timer
 		KillTimer(VIEW_TIMER_ID);
 }
 
@@ -387,9 +394,7 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				if (pSender != reinterpret_cast<CView *>(&m_wndChannelsBar)) {	// if sender isn't channels bar
 					m_wndChannelsBar.Update(iChan, iProp);	// update channels bar
 				}
-				DWORD	dwEvent = pDoc->m_arrChannel.GetMidiEvent(iChan, iProp);
-				if (dwEvent && pDoc->m_Seq.IsOpen())	// if event to send and output device is open
-					pDoc->m_Seq.OutputLiveEvent(dwEvent);
+				pDoc->OutputChannelEvent(iChan, iProp);
 			}
 			break;
 		}
@@ -518,6 +523,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_COMMAND(ID_APP_CHECK_FOR_UPDATES, OnAppCheckForUpdates)
 	ON_MESSAGE(UWM_DELAYEDCREATE, OnDelayedCreate)
 	ON_MESSAGE(UWM_MIDI_ERROR, OnMidiError)
+	ON_MESSAGE(UWM_DEVICENODECHANGE, OnDeviceNodeChange)
+	ON_WM_DEVICECHANGE()
 END_MESSAGE_MAP()
 
 // CMainFrame message handlers
@@ -708,25 +715,8 @@ LRESULT CMainFrame::OnPropertySelect(WPARAM wParam, LPARAM lParam)
 
 LRESULT	CMainFrame::OnMidiError(WPARAM wParam, LPARAM lParam)
 {
-	static const int nSeqErrorId[] = {
-		#define SEQERRDEF(name) IDS_SEQERR_##name,
-		#include "SequencerErrors.h"
-	};
 	UNREFERENCED_PARAMETER(lParam);
-	if (!m_bInMsgBox) {
-		m_bInMsgBox = true;
-		CString	sError;
-		if (wParam > CSequencer::SEQERR_FIRST && wParam < CSequencer::SEQERR_LAST) {
-			int	iSeqErr = static_cast<int>(wParam) - (CSequencer::SEQERR_FIRST + 1);
-			sError.LoadString(nSeqErrorId[iSeqErr]);
-		} else {
-			MMRESULT	nResult = static_cast<MMRESULT>(wParam);
-			sError.Format(LDS(IDS_SEQ_MIDI_ERROR), nResult);
-			sError += '\n' + CMidiOut::GetErrorString(nResult);
-		}
-		AfxMessageBox(sError);
-		m_bInMsgBox = false;
-	}
+	theApp.OnMidiError(static_cast<MMRESULT>(wParam));
 	return 0;
 }
 
@@ -760,4 +750,22 @@ void CMainFrame::OnAppCheckForUpdates()
 {
 	CWaitCursor	wc;
 	CheckForUpdates(TRUE);	// explicit check
+}
+
+LRESULT	CMainFrame::OnDeviceNodeChange(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	return(0);
+}
+
+BOOL CMainFrame::OnDeviceChange(UINT nEventType, W64ULONG dwData)
+{
+//	_tprintf(_T("OnDeviceChange %x %x\n"), nEventType, dwData);
+	BOOL	retc = CFrameWnd::OnDeviceChange(nEventType, dwData);
+	if (nEventType == DBT_DEVNODES_CHANGED) {
+		// use post so device change completes before our handler runs
+		PostMessage(UWM_DEVICENODECHANGE);
+	}
+	return retc;	// true to allow device change
 }

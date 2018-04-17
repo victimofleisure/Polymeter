@@ -108,7 +108,7 @@ void CPolymeterDoc::PreCloseFrame(CFrameWnd* pFrame )
 void CPolymeterDoc::ApplyOptions(const COptions *pPrevOptions)
 {
 	UNREFERENCED_PARAMETER(pPrevOptions);
-	m_Seq.SetOutputDevice(theApp.m_Options.m_iMidiOutputDevice);
+	m_Seq.SetOutputDevice(theApp.m_midiDevs.GetOutput());
 	m_Seq.SetLatency(theApp.m_Options.m_nMidiLatency);
 	m_Seq.SetBufferSize(theApp.m_Options.m_nMidiBufferSize);
 }
@@ -208,6 +208,174 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 	m_arrChannel.Write();	// write channels
 }
 
+void CPolymeterDoc::SaveTrackProperty(int iTrack, int iProp, CUndoState& State) const
+{
+	switch (iProp) {
+	#define TRACKDEF(type, prefix, name, defval, offset) \
+	case PROP_##name:	\
+		{	\
+			type val(m_Seq.Get##name(iTrack));	\
+			State.SetVal(val);	\
+		}	\
+		break;
+	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
+	#include "TrackDef.h"		// generate code to save track properties
+	default:
+		NODEFAULTCASE;
+	}
+}
+
+void CPolymeterDoc::RestoreTrackProperty(int iTrack, int iProp, const CUndoState& State)
+{
+	switch (iProp) {
+	#define TRACKDEF(type, prefix, name, defval, offset) \
+	case PROP_##name:	\
+		{	\
+			type val;	\
+			State.GetVal(val);	\
+			m_Seq.Set##name(iTrack, val);	\
+		}	\
+		break;
+	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
+	#include "TrackDef.h"		// generate code to restore track properties
+	default:
+		NODEFAULTCASE;
+	}
+}
+
+void CPolymeterDoc::SaveMultiTrackProperty(const CIntArrayEx& arrSelection, int iProp, CUndoState& State) const
+{
+	CRefPtr<CUndoMultiItemProp>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrSelection = arrSelection;
+	int	nSels = arrSelection.GetSize();
+	pInfo->m_arrVal.SetSize(nSels);
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = arrSelection[iSel];
+		m_Seq.GetTrackProperty(iTrack, iProp, pInfo->m_arrVal[iSel]);
+	}
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreMultiTrackProperty(CIntArrayEx& arrSelection, int iProp, const CUndoState& State)
+{
+	const CUndoMultiItemProp	*pInfo = static_cast<CUndoMultiItemProp*>(State.GetObj());
+	int	nSels = pInfo->m_arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = pInfo->m_arrSelection[iSel];
+		m_Seq.SetTrackProperty(iTrack, iProp, pInfo->m_arrVal[iSel]);
+	}
+	arrSelection = pInfo->m_arrSelection;
+}
+
+void CPolymeterDoc::SaveTrackEvents(int iTrack, CUndoState& State) const
+{
+	CRefPtr<CUndoEvents>	pInfo;
+	pInfo.CreateObj();
+	m_Seq.GetEvents(iTrack, pInfo->m_arrEvent);
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreTrackEvents(int iTrack, const CUndoState& State)
+{
+	CUndoEvents	*pInfo = static_cast<CUndoEvents *>(State.GetObj());
+	m_Seq.SetEvents(iTrack, pInfo->m_arrEvent);
+}
+
+void CPolymeterDoc::SaveMultiTrackEvents(const CIntArrayEx& arrSelection, CUndoState& State) const
+{
+	CRefPtr<CUndoMultiItemEvents>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrSelection = arrSelection;
+	int	nSels = arrSelection.GetSize();
+	pInfo->m_arrEvent.SetSize(nSels);
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = arrSelection[iSel];
+		m_Seq.GetEvents(iTrack, pInfo->m_arrEvent[iSel]);
+	}
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreMultiTrackEvents(CIntArrayEx& arrSelection, const CUndoState& State)
+{
+	const CUndoMultiItemEvents	*pInfo = static_cast<CUndoMultiItemEvents*>(State.GetObj());
+	int	nSels = pInfo->m_arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = pInfo->m_arrSelection[iSel];
+		m_Seq.SetEvents(iTrack, pInfo->m_arrEvent[iSel]);
+	}
+	arrSelection = pInfo->m_arrSelection;
+}
+
+void CPolymeterDoc::SaveClipboard(CUndoState& State) const
+{
+	if (UndoMgrIsIdle()) {	// if initial state
+		CRefPtr<CUndoClipboard>	pClipboard;
+		pClipboard.CreateObj();
+		CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
+		pView->GetSelection(pClipboard->m_arrSelection);
+		m_Seq.CopyTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack); 
+		pClipboard->m_nSelMark = pView->GetSelectionMark();
+		State.SetObj(pClipboard);
+		switch (State.GetCode()) {
+		case UCODE_CUT:
+		case UCODE_DELETE:
+		case UCODE_MOVE:
+			State.m_Val.p.x.i = CUndoManager::UA_UNDO;	// undo inserts, redo deletes
+			break;
+		default:
+			State.m_Val.p.x.i = CUndoManager::UA_REDO;	// undo deletes, redo inserts
+		}
+	}
+}
+
+void CPolymeterDoc::RestoreClipboard(const CUndoState& State)
+{
+	CUndoClipboard	*pClipboard = static_cast<CUndoClipboard *>(State.GetObj());
+	if (GetUndoAction() == State.m_Val.p.x.i) {	// if inserting
+		if (State.GetCode() == UCODE_MOVE)
+			m_Seq.DeleteTracks(State.GetCtrlID(), pClipboard->m_arrTrack.GetSize());
+		m_Seq.InsertTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack);
+		UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
+		CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
+		pView->SetSelection(pClipboard->m_arrSelection);
+		pView->SetSelectionMark(pClipboard->m_nSelMark);
+		pView->EnsureSelectionVisible();
+	} else {	// deleting
+		m_Seq.DeleteTracks(pClipboard->m_arrSelection);
+		if (State.GetCode() == UCODE_MOVE)
+			m_Seq.InsertTracks(State.GetCtrlID(), pClipboard->m_arrTrack);
+		UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
+		CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
+		if (State.GetCode() == UCODE_MOVE) {
+			int	iTrack = State.GetCtrlID();
+			pView->SelectRange(iTrack, pClipboard->m_arrTrack.GetSize());
+			pView->SetSelectionMark(iTrack);
+			pView->EnsureSelectionVisible();
+		} else
+			pView->Deselect();
+	}
+}
+
+void CPolymeterDoc::SaveMasterProperty(int iProp, CUndoState& State) const
+{
+	GetValue(iProp, &State.m_Val, sizeof(State.m_Val));
+}
+
+void CPolymeterDoc::RestoreMasterProperty(int iProp, const CUndoState& State)
+{
+	SetValue(iProp, &State.m_Val, sizeof(State.m_Val));
+	switch (iProp) {
+	case CMasterProps::PROP_fTempo:
+		m_Seq.SetTempo(m_fTempo);
+		break;
+	case CMasterProps::PROP_nTimeDiv:
+		// convert time division preset index to time division value in ticks
+		m_Seq.SetTimeDivision(GetTimeDivisionTicks(m_nTimeDiv));
+		break;
+	}
+}
+
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
 {
 	switch (State.GetCode()) {
@@ -216,24 +384,9 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 			int	iTrack = LOWORD(State.GetCtrlID());
 			int	iProp = HIWORD(State.GetCtrlID());
 			if (iProp == PROP_Length) {	// if track length
-				CRefPtr<CUndoEvents>	pInfo;
-				pInfo.CreateObj();
-				m_Seq.GetEvents(iTrack, pInfo->m_arrEvent);
-				State.SetObj(pInfo);
+				SaveTrackEvents(iTrack, State);
 			} else {	// not track length
-				switch (iProp) {
-				#define TRACKDEF(type, prefix, name, defval, offset) \
-				case PROP_##name:	\
-					{	\
-						type val(m_Seq.Get##name(iTrack));	\
-						State.SetVal(val);	\
-					}	\
-					break;
-				#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
-				#include "TrackDef.h"		// generate code to save track properties
-				default:
-					NODEFAULTCASE;
-				}
+				SaveTrackProperty(iTrack, iProp, State);
 			}
 		}
 		break;
@@ -244,39 +397,19 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 			if (State.IsEmpty()) {	// if initial state
 				CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
 				pView->GetSelection(arrSelection);	// get selection from view
-			} else {	// undoing or redoing; view selection may have changed, so don't rely on it
-				const CIntArrayEx	*pSelection;
+			} else {	// undoing or redoing; selection may have changed, so don't rely on it
 				if (iProp == PROP_Length) {	// if track length
-					const CUndoMultiEvents	*pInfo = static_cast<CUndoMultiEvents*>(State.GetObj());
-					pSelection = &pInfo->m_arrSelection;
+					const CUndoMultiItemEvents	*pInfo = static_cast<CUndoMultiItemEvents*>(State.GetObj());
+					arrSelection = pInfo->m_arrSelection;	// use edit's original selection
 				} else {	// not track length
-					const CUndoMultiTrackProp	*pInfo = static_cast<CUndoMultiTrackProp*>(State.GetObj());
-					pSelection = &pInfo->m_arrSelection;
+					const CUndoMultiItemProp	*pInfo = static_cast<CUndoMultiItemProp*>(State.GetObj());
+					arrSelection = pInfo->m_arrSelection;	// use edit's original selection
 				}
-				arrSelection = *pSelection;	// reuse our state's original selection
 			}
 			if (iProp == PROP_Length) {	// if track length
-				CRefPtr<CUndoMultiEvents>	pInfo;
-				pInfo.CreateObj();
-				pInfo->m_arrSelection = arrSelection;
-				int	nSels = arrSelection.GetSize();
-				pInfo->m_arrEvent.SetSize(nSels);
-				for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-					int	iTrack = arrSelection[iSel];
-					m_Seq.GetEvents(iTrack, pInfo->m_arrEvent[iSel]);
-				}
-				State.SetObj(pInfo);
+				SaveMultiTrackEvents(arrSelection, State);
 			} else {	// not track length
-				CRefPtr<CUndoMultiTrackProp>	pInfo;
-				pInfo.CreateObj();
-				pInfo->m_arrSelection = arrSelection;
-				int	nSels = arrSelection.GetSize();
-				pInfo->m_arrVal.SetSize(nSels);
-				for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-					int	iTrack = arrSelection[iSel];
-					m_Seq.GetTrackProperty(iTrack, iProp, pInfo->m_arrVal[iSel]);
-				}
-				State.SetObj(pInfo);
+				SaveMultiTrackProperty(arrSelection, iProp, State);
 			}
 		}
 		break;
@@ -290,7 +423,7 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 	case UCODE_MASTER_PROP:
 		{
 			int	iProp = State.GetCtrlID();
-			GetValue(iProp, &State.m_Val, sizeof(State.m_Val));
+			SaveMasterProperty(iProp, State);
 		}
 		break;
 	case UCODE_CUT:
@@ -298,24 +431,7 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 	case UCODE_INSERT:
 	case UCODE_DELETE:
 	case UCODE_MOVE:
-		if (UndoMgrIsIdle()) {	// if initial state
-			CRefPtr<CUndoClipboard>	pClipboard;
-			pClipboard.CreateObj();
-			CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
-			pView->GetSelection(pClipboard->m_arrSelection);
-			m_Seq.CopyTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack); 
-			pClipboard->m_nSelMark = pView->GetSelectionMark();
-			State.SetObj(pClipboard);
-			switch (State.GetCode()) {
-			case UCODE_CUT:
-			case UCODE_DELETE:
-			case UCODE_MOVE:
-				State.m_Val.p.x.i = CUndoManager::UA_UNDO;	// undo inserts, redo deletes
-				break;
-			default:
-				State.m_Val.p.x.i = CUndoManager::UA_REDO;	// undo deletes, redo inserts
-			}
-		}
+		SaveClipboard(State);
 		break;
 	case UCODE_CHANNEL_PROP:
 		{
@@ -335,23 +451,9 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 			int	iTrack = LOWORD(State.GetCtrlID());
 			int	iProp = HIWORD(State.GetCtrlID());
 			if (iProp == PROP_Length) {	// if track length
-				CUndoEvents	*pInfo = static_cast<CUndoEvents *>(State.GetObj());
-				m_Seq.SetEvents(iTrack, pInfo->m_arrEvent);
+				RestoreTrackEvents(iTrack, State);
 			} else {	// not track length
-				switch (iProp) {
-				#define TRACKDEF(type, prefix, name, defval, offset) \
-				case PROP_##name:	\
-					{	\
-						type val;	\
-						State.GetVal(val);	\
-						m_Seq.Set##name(iTrack, val);	\
-					}	\
-					break;
-				#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
-				#include "TrackDef.h"		// generate code to restore track properties
-				default:
-					NODEFAULTCASE;
-				}
+				RestoreTrackProperty(iTrack, iProp, State);
 			}
 			CPropHint	hint(iTrack, iProp);
 			UpdateAllViews(NULL, HINT_TRACK_PROP, &hint);
@@ -360,25 +462,13 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_MULTI_TRACK_PROP:
 		{
 			int	iProp = State.GetCtrlID();
-			const CIntArrayEx	*pSelection;
+			CIntArrayEx	arrSelection;
 			if (iProp == PROP_Length) {	// if track length
-				const CUndoMultiEvents	*pInfo = static_cast<CUndoMultiEvents*>(State.GetObj());
-				int	nSels = pInfo->m_arrSelection.GetSize();
-				for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-					int	iTrack = pInfo->m_arrSelection[iSel];
-					m_Seq.SetEvents(iTrack, pInfo->m_arrEvent[iSel]);
-				}
-				pSelection = &pInfo->m_arrSelection;
+				RestoreMultiTrackEvents(arrSelection, State);
 			} else {	// not track length
-				const CUndoMultiTrackProp	*pInfo = static_cast<CUndoMultiTrackProp*>(State.GetObj());
-				int	nSels = pInfo->m_arrSelection.GetSize();
-				for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-					int	iTrack = pInfo->m_arrSelection[iSel];
-					m_Seq.SetTrackProperty(iTrack, iProp, pInfo->m_arrVal[iSel]);
-				}
-				pSelection = &pInfo->m_arrSelection;
+				RestoreMultiTrackProperty(arrSelection, iProp, State);
 			}
-			CMultiItemPropHint	hint(*pSelection, iProp);
+			CMultiItemPropHint	hint(arrSelection, iProp);
 			UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
 		}
 		break;
@@ -394,16 +484,7 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_MASTER_PROP:
 		{
 			int	iProp = State.GetCtrlID();
-			SetValue(iProp, &State.m_Val, sizeof(State.m_Val));
-			switch (iProp) {
-			case CMasterProps::PROP_fTempo:
-				m_Seq.SetTempo(m_fTempo);
-				break;
-			case CMasterProps::PROP_nTimeDiv:
-				// convert time division preset index to time division value in ticks
-				m_Seq.SetTimeDivision(GetTimeDivisionTicks(m_nTimeDiv));
-				break;
-			}
+			RestoreMasterProperty(iProp, State);
 			CPropHint	hint(0, iProp);
 			UpdateAllViews(NULL, HINT_MASTER_PROP, &hint);
 		}
@@ -413,32 +494,7 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_INSERT:
 	case UCODE_DELETE:
 	case UCODE_MOVE:
-		{
-			CUndoClipboard	*pClipboard = static_cast<CUndoClipboard *>(State.GetObj());
-			if (GetUndoAction() == State.m_Val.p.x.i) {	// if inserting
-				if (State.GetCode() == UCODE_MOVE)
-					m_Seq.DeleteTracks(State.GetCtrlID(), pClipboard->m_arrTrack.GetSize());
-				m_Seq.InsertTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack);
-				UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
-				CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
-				pView->SetSelection(pClipboard->m_arrSelection);
-				pView->SetSelectionMark(pClipboard->m_nSelMark);
-				pView->EnsureSelectionVisible();
-			} else {	// deleting
-				m_Seq.DeleteTracks(pClipboard->m_arrSelection);
-				if (State.GetCode() == UCODE_MOVE)
-					m_Seq.InsertTracks(State.GetCtrlID(), pClipboard->m_arrTrack);
-				UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
-				CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
-				if (State.GetCode() == UCODE_MOVE) {
-					int	iTrack = State.GetCtrlID();
-					pView->SelectRange(iTrack, pClipboard->m_arrTrack.GetSize());
-					pView->SetSelectionMark(iTrack);
-					pView->EnsureSelectionVisible();
-				} else
-					pView->Deselect();
-			}
-		}
+		RestoreClipboard(State);
 		break;
 	case UCODE_CHANNEL_PROP:
 		{
@@ -508,6 +564,31 @@ void CPolymeterDoc::UpdateChannelEvents()
 		}
 	}
 	m_Seq.SetInitialEvents(arrEvent);
+}
+
+void CPolymeterDoc::OutputChannelEvent(int iChan, int iProp)
+{
+	if (m_Seq.IsOpen()) {	// if output device is open
+		DWORD	dwEvent = m_arrChannel.GetMidiEvent(iChan, iProp);
+		if (dwEvent) {	// if event is specified
+			m_Seq.OutputLiveEvent(dwEvent);	// output event
+			switch (iProp) {
+			case CChannel::PROP_BankMSB:	// if event was bank MSB
+				dwEvent = m_arrChannel.GetMidiEvent(iChan, CChannel::PROP_BankLSB);
+				if (dwEvent)	// if bank LSB is specified
+					m_Seq.OutputLiveEvent(dwEvent);	// also output bank LSB
+				dwEvent = m_arrChannel.GetMidiEvent(iChan, CChannel::PROP_Patch);
+				if (dwEvent)	// if patch is specified
+					m_Seq.OutputLiveEvent(dwEvent);	// also output patch
+				break;
+			case CChannel::PROP_BankLSB:	// if event was bank LSB
+				dwEvent = m_arrChannel.GetMidiEvent(iChan, CChannel::PROP_Patch);
+				if (dwEvent)	// if patch is specified
+					m_Seq.OutputLiveEvent(dwEvent);	// also output patch
+				break;
+			}
+		}
+	}
 }
 
 #ifdef SHARED_HANDLERS

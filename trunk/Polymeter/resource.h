@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by Polymeter.rc
 //
 #define IDR_MAINFRAME                   101
@@ -18,7 +18,7 @@
 #define IDS_APP_LICENSE                 200
 #define IDS_APP_UNKNOWN_SYSTEM_ERROR    201
 #define IDS_CHANNELS_BAR                202
-#define IDS_CHANNEL_COL_Bank            203
+#define IDS_CHANNEL_COL_BankMSB         203
 #define IDS_CHANNEL_COL_Number          204
 #define IDS_CHANNEL_COL_Pan             205
 #define IDS_CHANNEL_COL_Patch           206
@@ -42,50 +42,57 @@
 #define IDS_EXPORT_FILE_FILTER          224
 #define IDS_EXPORT_TOO_MANY_TRACKS      225
 #define IDS_HLINK_CANT_LAUNCH           226
-#define IDS_OPT_DESC_bAutoCheckUpdates  227
-#define IDS_OPT_DESC_bViewShowCurPos    228
-#define IDS_OPT_DESC_iMidiOutputDevice  229
-#define IDS_OPT_DESC_nMidiBufferSize    230
-#define IDS_OPT_DESC_nMidiLatency       231
-#define IDS_OPT_DESC_nViewUpdateFreq    232
-#define IDS_OPT_GROUP_GENERAL           233
-#define IDS_OPT_GROUP_MIDI              234
-#define IDS_OPT_GROUP_VIEW              235
-#define IDS_OPT_NAME_bAutoCheckUpdates  236
-#define IDS_OPT_NAME_bViewShowCurPos    237
-#define IDS_OPT_NAME_iMidiOutputDevice  238
-#define IDS_OPT_NAME_nMidiBufferSize    239
-#define IDS_OPT_NAME_nMidiLatency       240
-#define IDS_OPT_NAME_nViewUpdateFreq    241
-#define IDS_PDR_DESC_fTempo             242
-#define IDS_PDR_DESC_nTimeDiv           243
-#define IDS_PDR_GROUP_MASTER            244
-#define IDS_PDR_NAME_fTempo             245
-#define IDS_PDR_NAME_nTimeDiv           246
-#define IDS_PROPERTIES_BAR              247
-#define IDS_PROPS_MORE_COLORS           248
-#define IDS_RESET_ALL_OPTIONS           249
-#define IDS_SEQERR_BAD_TIME_FORMAT      250
-#define IDS_SEQERR_BUFFER_OVERRUN       251
-#define IDS_SEQ_MIDI_ERROR              252
-#define IDS_STATUS_PANE1                253
-#define IDS_STATUS_PANE2                254
-#define IDS_TIME_TO_REPEAT_DAYS         255
-#define IDS_TIME_TO_REPEAT_FMT          256
-#define IDS_TOOLBAR_CUSTOMIZE           257
-#define IDS_TOOLBAR_STANDARD            258
-#define IDS_TRK_Channel                 259
-#define IDS_TRK_Duration                260
-#define IDS_TRK_Length                  261
-#define IDS_TRK_Mute                    262
-#define IDS_TRK_Name                    263
-#define IDS_TRK_Note                    264
-#define IDS_TRK_Offset                  265
-#define IDS_TRK_Quant                   266
-#define IDS_TRK_STEP                    267
-#define IDS_TRK_Swing                   268
-#define IDS_TRK_Velocity                269
-#define IDP_OLE_INIT_FAILED             270
+#define IDS_NONE                        227
+#define IDS_OPT_DESC_bAutoCheckUpdates  228
+#define IDS_OPT_DESC_bMidiThru          229
+#define IDS_OPT_DESC_bViewShowCurPos    230
+#define IDS_OPT_DESC_iMidiInputDevice   231
+#define IDS_OPT_DESC_iMidiOutputDevice  232
+#define IDS_OPT_DESC_nMidiBufferSize    233
+#define IDS_OPT_DESC_nMidiLatency       234
+#define IDS_OPT_DESC_nViewUpdateFreq    235
+#define IDS_OPT_GROUP_GENERAL           236
+#define IDS_OPT_GROUP_MIDI              237
+#define IDS_OPT_GROUP_VIEW              238
+#define IDS_OPT_NAME_bAutoCheckUpdates  239
+#define IDS_OPT_NAME_bMidiThru          240
+#define IDS_OPT_NAME_bViewShowCurPos    241
+#define IDS_OPT_NAME_iMidiInputDevice   242
+#define IDS_OPT_NAME_iMidiOutputDevice  243
+#define IDS_OPT_NAME_nMidiBufferSize    244
+#define IDS_OPT_NAME_nMidiLatency       245
+#define IDS_OPT_NAME_nViewUpdateFreq    246
+#define IDS_PDR_DESC_fTempo             247
+#define IDS_PDR_DESC_nTimeDiv           248
+#define IDS_PDR_GROUP_MASTER            249
+#define IDS_PDR_NAME_fTempo             250
+#define IDS_PDR_NAME_nTimeDiv           251
+#define IDS_PROPERTIES_BAR              252
+#define IDS_PROPS_MORE_COLORS           253
+#define IDS_RESET_ALL_OPTIONS           254
+#define IDS_SEQERR_BAD_DEVICE           255
+#define IDS_SEQERR_BAD_TIME_FORMAT      256
+#define IDS_SEQERR_BUFFER_OVERRUN       257
+#define IDS_SEQ_MIDI_ERROR              258
+#define IDS_STATUS_PANE1                259
+#define IDS_STATUS_PANE2                260
+#define IDS_TIME_TO_REPEAT_DAYS         261
+#define IDS_TIME_TO_REPEAT_FMT          262
+#define IDS_TOOLBAR_CUSTOMIZE           263
+#define IDS_TOOLBAR_STANDARD            264
+#define IDS_TRK_Channel                 265
+#define IDS_TRK_Duration                266
+#define IDS_TRK_Length                  267
+#define IDS_TRK_Mute                    268
+#define IDS_TRK_Name                    269
+#define IDS_TRK_Note                    270
+#define IDS_TRK_Offset                  271
+#define IDS_TRK_Quant                   272
+#define IDS_TRK_STEP                    273
+#define IDS_TRK_Swing                   274
+#define IDS_TRK_Velocity                275
+#define IDP_OLE_INIT_FAILED             276
+#define IDS_CHANNEL_COL_BankLSB         277
 #define IDC_ABOUT_LICENSE               1001
 #define IDC_ABOUT_VERSION               1002
 #define IDC_CURSOR_DRAG_MULTI           1003
@@ -136,11 +143,11 @@
 #define ID_WINDOW_MANAGER               32795
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_3D_CONTROLS                1
-#define _APS_NEXT_RESOURCE_VALUE        271
+#define _APS_3D_CONTROLS                     1
+#define _APS_NEXT_RESOURCE_VALUE        277
 #define _APS_NEXT_COMMAND_VALUE         32796
 #define _APS_NEXT_CONTROL_VALUE         1024
 #define _APS_NEXT_SYMED_VALUE           101
