@@ -32,6 +32,7 @@
 #include "Hyperlink.h"
 #include "DocIter.h"
 #include "OptionsDlg.h"
+#include "SaveObj.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -392,7 +393,7 @@ void CPolymeterApp::OnMidiError(MMRESULT nResult)
 		#include "SequencerErrors.h"
 	};
 	if (!m_bInMsgBox) {	// if not already displaying message box
-		m_bInMsgBox = true;	// set reentry guard
+		CSaveObj<bool>	save(m_bInMsgBox, true);	// save and set reentry guard
 		CString	sError;
 		if (nResult > CSequencer::SEQERR_FIRST && nResult < CSequencer::SEQERR_LAST) {
 			int	iSeqErr = static_cast<int>(nResult) - (CSequencer::SEQERR_FIRST + 1);
@@ -402,7 +403,6 @@ void CPolymeterApp::OnMidiError(MMRESULT nResult)
 			sError += '\n' + CMidiOut::GetErrorString(nResult);
 		}
 		AfxMessageBox(sError);
-		m_bInMsgBox = false;	// clear reentry guard
 	}
 }
 
@@ -442,15 +442,15 @@ void CPolymeterApp::ResetMidiInputDevice()
 
 void CPolymeterApp::OnDeviceChange()
 {
-	if (!m_bInMsgBox) {
-		m_bInMsgBox = true;
+	if (!m_bInMsgBox) {	// if not already displaying message box
+		CSaveObj<bool>	save(m_bInMsgBox, true);	// save and set reentry guard
 		UINT	nChangeMask;
-		if (m_midiDevs.OnDeviceChange(nChangeMask)) {	// if device change successful
-			if (nChangeMask & CMidiDevices::DTM_INPUT) {	// if input device changed
+		if (m_midiDevs.OnDeviceChange(nChangeMask)) {	// if MIDI device change successful
+			if (nChangeMask & CMidiDevices::CM_INPUT) {	// if MIDI input device changed
 				ResetMidiInputDevice();
 				OpenMidiInputDevice(true);
 			}
-			if (nChangeMask & CMidiDevices::DTM_OUTPUT) {	// if output device changed
+			if (nChangeMask & CMidiDevices::CM_OUTPUT) {	// if MIDI output device changed
 				CAllDocIter	iter;	// iterate all documents
 				CPolymeterDoc	*pDoc;
 				while ((pDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
@@ -459,13 +459,12 @@ void CPolymeterApp::OnDeviceChange()
 				}
 			}
 		}
-		CWnd	*pWnd = m_pMainWnd->GetLastActivePopup();
-		if (pWnd != NULL) {
-			COptionsDlg	*pOptionsDlg = DYNAMIC_DOWNCAST(COptionsDlg, pWnd);
+		if (nChangeMask & CMidiDevices::CM_CHANGE) {	// if MIDI device state changed
+			CWnd	*pPopupWnd = m_pMainWnd->GetLastActivePopup();
+			COptionsDlg	*pOptionsDlg = DYNAMIC_DOWNCAST(COptionsDlg, pPopupWnd);
 			if (pOptionsDlg != NULL)	// if options dialog is active
-				pOptionsDlg->UpdateMidiDevices();	// update its MIDI device combos
+				pOptionsDlg->UpdateMidiDevices();	// update dialog's MIDI device combos
 		}
-		m_bInMsgBox = false;
 	}
 }
 

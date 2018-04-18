@@ -26,9 +26,10 @@ public:
 		OUTPUT,
 		DEVICE_TYPES
 	};
-	enum {	// device type mask bits
-		DTM_INPUT	= (1 << INPUT),
-		DTM_OUTPUT	= (1 << OUTPUT),
+	enum {	// change mask bits
+		CM_INPUT	= (1 << INPUT),			// input device index changed
+		CM_OUTPUT	= (1 << OUTPUT),		// output device index changed
+		CM_CHANGE	= (1 << DEVICE_TYPES),	// device enumeration changed
 	};
 
 // Attributes
@@ -48,32 +49,47 @@ public:
 	void	Write();
 	void	Dump();
 	bool	OnDeviceChange(UINT& nChangeMask);
-	bool	OnDeviceChange(const CMidiDevices& devsPrev, UINT& nChangeMask);
+	bool	operator==(const CMidiDevices& devs) const;
+	bool	operator!=(const CMidiDevices& devs) const;
 
 protected:
 // Types
 	class CDevice {
 	public:
+	// Construction
 		CDevice();
 		CDevice(CString sName, CString sID);
+
+	// Member data
 		CString	m_sName;	// device name
 		CString	m_sID;		// device identifier
+
+	// Operations
+		bool	operator==(const CDevice& dev) const;
+		bool	operator!=(const CDevice& dev) const;
 	};
 	class CDeviceArray : public CArrayEx<CDevice, CDevice&> {
 	public:
+	// Construction
 		CDeviceArray();
 
+	// Attributes
 		bool	IsValid(int iDev) const;
 		int		GetIdx() const;
 		void	SetIdx(int iDev);
 		CString	GetName(int iDev) const;
 		CString	GetID(int iDev) const;
+
+	// Operations
 		int		Find(CString sName, CString sID) const;
 		int		Find(CString sName) const;
 		int		Find(const CDeviceArray& arrDev) const;
 		int		GetNameCount(CString sName) const;
+		bool	operator==(const CDeviceArray& arrDev) const;
+		bool	operator!=(const CDeviceArray& arrDev) const;
 
 	protected:
+	// Member data
 		int		m_iDev;		// device index
 	};
 
@@ -85,6 +101,9 @@ protected:
 	static const LPCTSTR	m_rkDevName[DEVICE_TYPES];		// device name registry keys
 	static const LPCTSTR	m_rkDevID[DEVICE_TYPES];		// device ID registry keys
 	static const int		m_nDevCaption[DEVICE_TYPES];	// device type captions
+
+// Helpers
+	bool	OnDeviceChange(const CMidiDevices& devsPrev, UINT& nChangeMask);
 };
 
 inline bool CMidiDevices::IsEmpty(int iType) const

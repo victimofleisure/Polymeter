@@ -96,6 +96,20 @@ void CMidiDevices::Dump()
 	}
 }
 
+bool CMidiDevices::operator==(const CMidiDevices& devs) const
+{
+	for (int iType = 0; iType < DEVICE_TYPES; iType++) {	// for each device type
+		if (devs.m_arrDev[iType] != m_arrDev[iType])	// if device arrays are unequal
+			return false;
+	}
+	return true;
+}
+
+bool CMidiDevices::operator!=(const CMidiDevices& devs) const
+{
+	return !operator==(devs);
+}
+
 bool CMidiDevices::OnDeviceChange(const CMidiDevices& devsPrev, UINT& nChangeMask)
 {
 	nChangeMask = 0;
@@ -125,7 +139,10 @@ bool CMidiDevices::OnDeviceChange(UINT& nChangeMask)
 {
 	// take a snapshot of current device state and use it as previous state
 	CMidiDevices	devsPrev(*this);
-	return OnDeviceChange(devsPrev, nChangeMask);
+	bool	bResult = OnDeviceChange(devsPrev, nChangeMask);
+	if (*this != devsPrev)	// if device state changed
+		nChangeMask |= CM_CHANGE;	// indicate change
+	return bResult;
 }
 
 CMidiDevices::CDevice::CDevice()
@@ -134,6 +151,16 @@ CMidiDevices::CDevice::CDevice()
 
 CMidiDevices::CDevice::CDevice(CString sName, CString sID) : m_sName(sName), m_sID(sID)
 {
+}
+
+bool CMidiDevices::CDevice::operator==(const CDevice& dev) const
+{
+	return dev.m_sName == m_sName && dev.m_sID == m_sID; 
+}
+
+bool CMidiDevices::CDevice::operator!=(const CDevice& dev) const
+{
+	return !operator==(dev);
 }
 
 CMidiDevices::CDeviceArray::CDeviceArray()
@@ -216,5 +243,17 @@ int CMidiDevices::CDeviceArray::GetNameCount(CString sName) const
 		if (GetAt(iDev).m_sName == sName)	// if names match
 			nMatches++;	// bump match count
 	}
-	return(nMatches);
+	return(nMatches);	// return match count
+}
+
+bool CMidiDevices::CDeviceArray::operator==(const CDeviceArray& arrDev) const
+{
+	if (m_iDev != arrDev.m_iDev)	// if device indices are unequal
+		return false;
+	return CArrayEx::operator==(arrDev);	// compare device arrays
+}
+
+bool CMidiDevices::CDeviceArray::operator!=(const CDeviceArray& arrDev) const
+{
+	return !operator==(arrDev);
 }

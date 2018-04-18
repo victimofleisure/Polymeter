@@ -246,6 +246,9 @@
     <ClInclude Include="MidiDevices.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SaveObj.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Polymeter.cpp">
