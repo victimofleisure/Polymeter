@@ -30,6 +30,7 @@
 #include "FocusEdit.h"
 #include "PathStr.h"
 #include "Hyperlink.h"
+#include "DocIter.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -105,9 +106,6 @@ BOOL CPolymeterApp::InitInstance()
 
 	m_Options.ReadProperties();	// get options from registry
 
-	m_midiDevs.Read();	// get MIDI devices from registry
-	m_Options.UpdateMidiDevices();	// copy MIDI devices to options
-
 	InitContextMenuManager();
 
 	InitKeyboardManager();
@@ -115,7 +113,7 @@ BOOL CPolymeterApp::InitInstance()
 	InitTooltipManager();
 	CMFCToolTipInfo ttParams;
 	ttParams.m_bVislManagerTheme = TRUE;
-	theApp.GetTooltipManager()->SetTooltipParams(AFX_TOOLTIP_TYPE_ALL,
+	GetTooltipManager()->SetTooltipParams(AFX_TOOLTIP_TYPE_ALL,
 		RUNTIME_CLASS(CMFCToolTipCtrl), &ttParams);
 
 	// Register the application's document templates.  Document templates
@@ -186,7 +184,7 @@ CMainFrame* CPolymeterApp::GetMainFrame() const // non-debug version is inline
 bool CPolymeterApp::HandleDlgKeyMsg(MSG* pMsg)
 {
 	static const LPCSTR	EditBoxCtrlKeys = "ACHVX";	// Z reserved for app undo
-	CMainFrame	*pMain = theApp.GetMainFrame();
+	CMainFrame	*pMain = GetMainFrame();
 	ASSERT(pMain != NULL);	// main frame must exist
 	switch (pMsg->message) {
 	case WM_KEYDOWN:
@@ -237,6 +235,14 @@ bool CPolymeterApp::HandleDlgKeyMsg(MSG* pMsg)
 		break;
 	}
 	return(FALSE);	// continue dispatching
+}
+
+void CPolymeterApp::ApplyOptions(const COptions *pPrevOptions)
+{
+	m_midiDevs.SetIdx(CMidiDevices::INPUT, m_Options.m_Midi_iInputDevice - 1);
+	m_midiDevs.SetIdx(CMidiDevices::OUTPUT, m_Options.m_Midi_iOutputDevice - 1);
+	if (pPrevOptions != NULL)	// if during OnCreate, defer to delayed creation handler
+		OpenMidiInputDevice(m_midiDevs.GetIdx(CMidiDevices::INPUT) >= 0);
 }
 
 bool CPolymeterApp::GetTempPath(CString& Path)
@@ -378,45 +384,6 @@ void CPolymeterApp::SaveCustomState()
 {
 }
 
-bool CPolymeterApp::OpenMidiInputDevice(bool bEnable)
-{
-	bool	bIsOpen = IsMidiInputDeviceOpen();
-	if (bEnable == bIsOpen)	// if already in requested state
-		return true;	// nothing to do
-	if (bEnable) {	// if opening device
-		int	iMidiInDev = m_midiDevs.GetInput();
-		if (iMidiInDev < 0)
-			return false;
-		CHECK_MIDI(m_midiIn.Open(iMidiInDev, reinterpret_cast<W64UINT>(MidiInProc), reinterpret_cast<W64UINT>(this), CALLBACK_FUNCTION));
-		CHECK_MIDI(m_midiIn.Start());
-	} else {	// closing device
-		CHECK_MIDI(m_midiIn.Stop());
-		CHECK_MIDI(m_midiIn.Close());
-	}
-	return true;
-}
-
-void CALLBACK CPolymeterApp::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2)
-{
-	UNREFERENCED_PARAMETER(hMidiIn);
-	UNREFERENCED_PARAMETER(dwInstance);
-	UNREFERENCED_PARAMETER(dwParam2);	// will need this for timestamp
-	_tprintf(_T("MidiInProc %d %d\n"), GetCurrentThreadId(), ::GetThreadPriority(GetCurrentThread()));
-	switch (wMsg) {
-	case MIM_DATA:
-		{
-//			_tprintf(_T("%x %d\n"), dwParam1, dwParam2);
-			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-			if (pDoc != NULL && pDoc->m_Seq.IsOpen()) {
-				DWORD	dwEvent = static_cast<DWORD>(dwParam1);
-				if (theApp.m_Options.m_bMidiThru)	// if MIDI thru enabled
-					pDoc->m_Seq.OutputLiveEvent(dwEvent);	// output event
-			}
-		}
-		break;
-	}
-}
-
 void CPolymeterApp::OnMidiError(MMRESULT nResult)
 {
 	static const int nSeqErrorId[] = {
@@ -435,6 +402,84 @@ void CPolymeterApp::OnMidiError(MMRESULT nResult)
 		}
 		AfxMessageBox(sError);
 		m_bInMsgBox = false;	// clear reentry guard
+	}
+}
+
+void CPolymeterApp::MidiInit()
+{
+	m_midiDevs.Read();	// get MIDI devices from registry
+	m_Options.UpdateMidiDevices();	// copy MIDI devices to options
+	OpenMidiInputDevice(m_midiDevs.GetIdx(CMidiDevices::INPUT) >= 0);
+	CAllDocIter	iter;	// iterate all documents
+	CPolymeterDoc	*pDoc;
+	while ((pDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
+		pDoc->m_Seq.SetOutputDevice(m_midiDevs.GetIdx(CMidiDevices::OUTPUT));
+	}
+}
+
+bool CPolymeterApp::OpenMidiInputDevice(bool bEnable)
+{
+	bool	bIsOpen = IsMidiInputDeviceOpen();
+	if (bEnable == bIsOpen)	// if already in requested state
+		return true;	// nothing to do
+	if (bEnable) {	// if opening device
+		int	iMidiInDev = m_midiDevs.GetIdx(CMidiDevices::INPUT);
+		if (iMidiInDev < 0)
+			return false;
+		CHECK_MIDI(m_midiIn.Open(iMidiInDev, reinterpret_cast<W64UINT>(MidiInProc), reinterpret_cast<W64UINT>(this), CALLBACK_FUNCTION));
+		CHECK_MIDI(m_midiIn.Start());
+	} else {	// closing device
+		CHECK_MIDI(m_midiIn.Close());
+	}
+	return true;
+}
+
+void CPolymeterApp::ResetMidiInputDevice()
+{
+	m_midiIn.Close();
+}
+
+void CPolymeterApp::OnDeviceChange()
+{
+	if (!m_bInMsgBox) {
+		m_bInMsgBox = true;
+		UINT	nChangeMask;
+		if (m_midiDevs.OnDeviceChange(nChangeMask)) {	// if device change successful
+			if (nChangeMask & CMidiDevices::DTM_INPUT) {	// if input device changed
+				ResetMidiInputDevice();
+				OpenMidiInputDevice(true);
+			}
+			if (nChangeMask & CMidiDevices::DTM_OUTPUT) {	// if output device changed
+				CAllDocIter	iter;	// iterate all documents
+				CPolymeterDoc	*pDoc;
+				while ((pDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
+					pDoc->m_Seq.SetOutputDevice(m_midiDevs.GetIdx(CMidiDevices::OUTPUT));
+					pDoc->m_Seq.Abort();	// abort playback regardless
+				}
+			}
+		}
+		m_bInMsgBox = false;
+	}
+}
+
+void CALLBACK CPolymeterApp::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2)
+{
+	UNREFERENCED_PARAMETER(hMidiIn);
+	UNREFERENCED_PARAMETER(dwInstance);
+	UNREFERENCED_PARAMETER(dwParam2);	// will need this for timestamp
+//	_tprintf(_T("MidiInProc %d %d\n"), GetCurrentThreadId(), ::GetThreadPriority(GetCurrentThread()));
+	switch (wMsg) {
+	case MIM_DATA:
+		{
+//			_tprintf(_T("%x %d\n"), dwParam1, dwParam2);
+			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+			if (pDoc != NULL && pDoc->m_Seq.IsOpen()) {
+				DWORD	dwEvent = static_cast<DWORD>(dwParam1);
+				if (theApp.m_Options.m_Midi_bThru)	// if MIDI thru enabled
+					pDoc->m_Seq.OutputLiveEvent(dwEvent);	// output event
+			}
+		}
+		break;
 	}
 }
 

@@ -29,7 +29,7 @@ public:
 		GROUPS
 	};
 	enum {	// properties
-		#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) PROP_##name,
+		#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) PROP_##group##_##name,
 		#include "OptionsDef.h"
 		PROPERTIES
 	};
@@ -42,7 +42,7 @@ public:
 	void	UpdateMidiDevices();
 
 // Public data
-	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) type m_##name;
+	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) type m_##group##_##name;
 	#include "OptionsDef.h"
 
 // Overrides

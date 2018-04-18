@@ -274,10 +274,8 @@ BOOL CMainFrame::CreateDockingWindows()
 
 void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 {
-	theApp.m_midiDevs.SetInput(theApp.m_Options.m_iMidiInputDevice - 1);
-	theApp.m_midiDevs.SetOutput(theApp.m_Options.m_iMidiOutputDevice - 1);
-	theApp.OpenMidiInputDevice(theApp.m_midiDevs.GetInput() >= 0);
-	CAllDocIter	iter;
+	theApp.ApplyOptions(pPrevOptions);
+	CAllDocIter	iter;	// iterate all documents
 	CPolymeterDoc	*pDoc;
 	while ((pDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
 		pDoc->ApplyOptions(pPrevOptions);
@@ -285,11 +283,11 @@ void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 	pDoc = GetActiveMDIDoc();
 	if (pDoc != NULL) {
 		if (pPrevOptions != NULL) {
-			if (theApp.m_Options.m_nViewUpdateFreq != pPrevOptions->m_nViewUpdateFreq) {
+			if (theApp.m_Options.m_View_nUpdateFreq != pPrevOptions->m_View_nUpdateFreq) {
 				if (pDoc->m_Seq.IsPlaying())
 					SetViewTimer(true);
 			}
-			if (theApp.m_Options.m_bViewShowCurPos != pPrevOptions->m_bViewShowCurPos)
+			if (theApp.m_Options.m_View_bShowCurPos != pPrevOptions->m_View_bShowCurPos)
 				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_SONG_POS);
 		}
 	}
@@ -298,8 +296,8 @@ void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 void CMainFrame::SetViewTimer(bool bEnable)
 {
 	if (bEnable) {	// if starting timer
-		ASSERT(theApp.m_Options.m_nViewUpdateFreq);	// else divide by zero
-		int	nPeriod = round(1000.0 / theApp.m_Options.m_nViewUpdateFreq);
+		ASSERT(theApp.m_Options.m_View_nUpdateFreq);	// else divide by zero
+		int	nPeriod = round(1000.0 / theApp.m_Options.m_View_nUpdateFreq);
 		SetTimer(VIEW_TIMER_ID, nPeriod, NULL);
 	} else	// stopping timer
 		KillTimer(VIEW_TIMER_ID);
@@ -413,7 +411,7 @@ void CMainFrame::UpdateSongPosition()
 	if (pDoc->m_Seq.GetPosition(nPos)) {	// if valid song position
 		pDoc->m_Seq.ConvertPositionToString(nPos, m_sSongPos);
 		m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);
-		if (theApp.m_Options.m_bViewShowCurPos) {
+		if (theApp.m_Options.m_View_bShowCurPos) {
 			pView->SetSongPosition(nPos);
 		}
 	}
@@ -737,7 +735,8 @@ LRESULT	CMainFrame::OnDelayedCreate(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
-	if (theApp.m_Options.m_bAutoCheckUpdates)	// if automatically checking for updates
+	theApp.MidiInit();	// initialize MIDI devices
+	if (theApp.m_Options.m_General_bCheckForUpdates)	// if automatically checking for updates
 		AfxBeginThread(CheckForUpdatesThreadFunc, this);	// launch thread to check
 	return(0);
 }
@@ -752,7 +751,7 @@ LRESULT	CMainFrame::OnDeviceNodeChange(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
-	theApp.m_midiDevs.OnDeviceChange();
+	theApp.OnDeviceChange();
 	return(0);
 }
 

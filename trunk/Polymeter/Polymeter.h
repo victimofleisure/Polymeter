@@ -53,8 +53,12 @@ public:
 
 // Operations
 	bool	HandleDlgKeyMsg(MSG* pMsg);
-	bool	OpenMidiInputDevice(bool bEnable);
+	void	ApplyOptions(const COptions *pPrevOptions);
 	void	OnMidiError(MMRESULT nResult);
+	void	MidiInit();
+	bool	OpenMidiInputDevice(bool bEnable);
+	void	ResetMidiInputDevice();
+	void	OnDeviceChange();
 
 // Overrides
 	virtual BOOL InitInstance();

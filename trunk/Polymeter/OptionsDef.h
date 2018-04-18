@@ -22,17 +22,17 @@ GROUPDEF(	General		)
 
 #ifdef PROPDEF
 
-//			group		subgroup	proptype	type		name					initval		minval		maxval		itemname	items
+//			group		subgroup	proptype	type		name				initval		minval		maxval		itemname	items
 #ifndef OPTS_EXCLUDE_MIDI_DEVICES
-PROPDEF(	Midi,		NONE,		ENUM,		int,		iMidiInputDevice,		0,			0,			0,			NULL,		0)
-PROPDEF(	Midi,		NONE,		ENUM,		int,		iMidiOutputDevice,		0,			0,			0,			NULL,		0)
+PROPDEF(	Midi,		NONE,		ENUM,		int,		iInputDevice,		0,			0,			0,			NULL,		0)
+PROPDEF(	Midi,		NONE,		ENUM,		int,		iOutputDevice,		0,			0,			0,			NULL,		0)
 #endif
-PROPDEF(	Midi,		NONE,		VAR,		int,		nMidiLatency,			10,			1,			1000,		NULL,		0)
-PROPDEF(	Midi,		NONE,		VAR,		int,		nMidiBufferSize,		4096,		1,			USHRT_MAX,	NULL,		0)
-PROPDEF(	Midi,		NONE,		VAR,		bool,		bMidiThru,				1,			0,			0,			NULL,		0)
-PROPDEF(	View,		NONE,		VAR,		float,		nViewUpdateFreq,		20.0f,		1.0f,		60.0f,		NULL,		0)
-PROPDEF(	View,		NONE,		VAR,		bool,		bViewShowCurPos,		0,			0,			0,			NULL,		0)
-PROPDEF(	General,	NONE,		VAR,		bool,		bAutoCheckUpdates,		1,			0,			0,			NULL,		0)
+PROPDEF(	Midi,		NONE,		VAR,		int,		nLatency,			10,			1,			1000,		NULL,		0)
+PROPDEF(	Midi,		NONE,		VAR,		int,		nBufferSize,		4096,		1,			USHRT_MAX,	NULL,		0)
+PROPDEF(	Midi,		NONE,		VAR,		bool,		bThru,				1,			0,			0,			NULL,		0)
+PROPDEF(	View,		NONE,		VAR,		float,		nUpdateFreq,		20.0f,		1.0f,		60.0f,		NULL,		0)
+PROPDEF(	View,		NONE,		VAR,		bool,		bShowCurPos,		0,			0,			0,			NULL,		0)
+PROPDEF(	General,	NONE,		VAR,		bool,		bCheckForUpdates,	1,			0,			0,			NULL,		0)
 
 #undef PROPDEF
 #undef OPTS_EXCLUDE_MIDI_DEVICES

@@ -392,7 +392,7 @@ void CTrackDlg::OnPaint()
 			CRect	rBtn(rStep);
 			rBtn.DeflateRect(1, 1);	// exclude frame
 			int	nMask = pDoc->m_Seq.GetEvent(m_iTrack, iStep);
-			if (theApp.m_Options.m_bViewShowCurPos) {
+			if (theApp.m_Options.m_View_bShowCurPos) {
 				if (iStep == m_iHotStep)
 					nMask |= BTF_HOT;
 				if (bMute)

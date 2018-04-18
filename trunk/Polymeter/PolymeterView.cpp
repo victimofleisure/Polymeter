@@ -515,7 +515,7 @@ void CPolymeterView::ResetSongPosition()
 
 void CPolymeterView::UpdateSongPosition()
 {
-	if (theApp.m_Options.m_bViewShowCurPos) {
+	if (theApp.m_Options.m_View_bShowCurPos) {
 		LONGLONG	nPos;
 		if (GetDocument()->m_Seq.GetPosition(nPos))
 			SetSongPosition(nPos);
@@ -677,7 +677,11 @@ void CPolymeterView::OnViewPlay()
 	CPolymeterDoc	*pDoc = GetDocument();
 	bool	bIsPlaying = !pDoc->m_Seq.IsPlaying();
 	if (bIsPlaying) {	// if starting playback
-		CAllDocIter	iter;
+		if (pDoc->m_Seq.GetOutputDevice() < 0) {	// if no output MIDI device selected
+			AfxMessageBox(IDS_MIDI_NO_OUTPUT_DEVICE);
+			return;
+		}
+		CAllDocIter	iter;	// iterate all documents
 		CPolymeterDoc	*pOtherDoc;
 		while ((pOtherDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
 			if (pOtherDoc != pDoc && pOtherDoc->m_Seq.IsPlaying()) {	// if another document is playing

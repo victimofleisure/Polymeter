@@ -108,9 +108,9 @@ void CPolymeterDoc::PreCloseFrame(CFrameWnd* pFrame )
 void CPolymeterDoc::ApplyOptions(const COptions *pPrevOptions)
 {
 	UNREFERENCED_PARAMETER(pPrevOptions);
-	m_Seq.SetOutputDevice(theApp.m_midiDevs.GetOutput());
-	m_Seq.SetLatency(theApp.m_Options.m_nMidiLatency);
-	m_Seq.SetBufferSize(theApp.m_Options.m_nMidiBufferSize);
+	m_Seq.SetOutputDevice(theApp.m_midiDevs.GetIdx(CMidiDevices::OUTPUT));
+	m_Seq.SetLatency(theApp.m_Options.m_Midi_nLatency);
+	m_Seq.SetBufferSize(theApp.m_Options.m_Midi_nBufferSize);
 }
 
 void CPolymeterDoc::InitChannelArray()

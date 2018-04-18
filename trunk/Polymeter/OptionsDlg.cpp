@@ -50,7 +50,6 @@ BOOL COptionsDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	theApp.m_midiDevs.Update();	// temporary measure until device change is properly handled
 	theApp.m_Options.UpdateMidiDevices();
 
 	CRect	rc;

@@ -20,100 +20,114 @@ public:
 // Construction
 	CMidiDevices();
 
+// Constants
+	enum {	// device types
+		INPUT,
+		OUTPUT,
+		DEVICE_TYPES
+	};
+	enum {	// device type mask bits
+		DTM_INPUT	= (1 << INPUT),
+		DTM_OUTPUT	= (1 << OUTPUT),
+	};
+
 // Attributes
-	int		GetInput() const;
-	int		GetOutput() const;
-	void	SetInput(int iIn);
-	void	SetOutput(int iOut);
-	CString	GetInputName() const;
-	CString	GetOutputName() const;
-	CString	GetInputID() const;
-	CString	GetOutputID() const;
-	int		GetInputCount() const;
-	int		GetOutputCount() const;
-	bool	IsValidInput(int iIn) const;
-	bool	IsValidOutput(int iOut) const;
-	CString	GetInputName(int iIn) const;
-	CString	GetOutputName(int iOut) const;
-	CString	GetInputID(int iIn) const;
-	CString	GetOutputID(int iOut) const;
+	bool	IsEmpty(int iType) const;
+	int		GetIdx(int iType) const;
+	void	SetIdx(int iType, int iDev);
+	int		GetCount(int iType) const;
+	CString	GetName(int iType) const;
+	CString	GetID(int iType) const;
+	bool	IsValid(int iType, int iDev) const;
+	CString	GetName(int iType, int iDev) const;
+	CString	GetID(int iType, int iDev) const;
 
 // Operations
 	void	Update();
 	void	Read();
 	void	Write();
 	void	Dump();
-	void	OnDeviceChange();
+	bool	OnDeviceChange(UINT& nChangeMask);
+	bool	OnDeviceChange(const CMidiDevices& devsPrev, UINT& nChangeMask);
 
 protected:
 // Types
-	class CDeviceInfo {
+	class CDevice {
 	public:
+		CDevice();
+		CDevice(CString sName, CString sID);
 		CString	m_sName;	// device name
 		CString	m_sID;		// device identifier
 	};
-	class CDeviceInfoArray : public CArrayEx<CDeviceInfo, CDeviceInfo&> {
+	class CDeviceArray : public CArrayEx<CDevice, CDevice&> {
 	public:
+		CDeviceArray();
+
+		bool	IsValid(int iDev) const;
+		int		GetIdx() const;
+		void	SetIdx(int iDev);
+		CString	GetName(int iDev) const;
+		CString	GetID(int iDev) const;
 		int		Find(CString sName, CString sID) const;
 		int		Find(CString sName) const;
+		int		Find(const CDeviceArray& arrDev) const;
 		int		GetNameCount(CString sName) const;
-		int		Find(CString sName, CString sID, const CDeviceInfoArray& arrPrev) const;
+
+	protected:
+		int		m_iDev;		// device index
 	};
 
+protected:
 // Member data
-	CDeviceInfoArray	m_arrIn;	// array of MIDI input devices
-	CDeviceInfoArray	m_arrOut;	// array of MIDI output devices
-	int		m_iIn;		// index of MIDI input device, or -1 if none
-	int		m_iOut;		// index of MIDI output device, or -1 if none;
+	CDeviceArray	m_arrDev[DEVICE_TYPES];		// array of device arrays
+
+// Constants
+	static const LPCTSTR	m_rkDevName[DEVICE_TYPES];		// device name registry keys
+	static const LPCTSTR	m_rkDevID[DEVICE_TYPES];		// device ID registry keys
+	static const int		m_nDevCaption[DEVICE_TYPES];	// device type captions
 };
 
-inline int CMidiDevices::GetInput() const
+inline bool CMidiDevices::IsEmpty(int iType) const
 {
-	return m_iIn;
+	return GetIdx(iType) < 0;
 }
 
-inline int CMidiDevices::GetOutput() const
+inline int CMidiDevices::GetIdx(int iType) const
 {
-	return m_iOut;
+	return m_arrDev[iType].GetIdx();
 }
 
-inline CString CMidiDevices::GetInputName() const
+inline void CMidiDevices::SetIdx(int iType, int iDev)
 {
-	return GetInputName(m_iIn);
+	m_arrDev[iType].SetIdx(iDev);
 }
 
-inline CString CMidiDevices::GetOutputName() const
+inline int CMidiDevices::GetCount(int iType) const
 {
-	return GetOutputName(m_iOut);
+	return m_arrDev[iType].GetSize();
 }
 
-inline CString CMidiDevices::GetInputID() const
+inline CString CMidiDevices::GetName(int iType) const
 {
-	return GetInputID(m_iIn);
+	return GetName(iType, GetIdx(iType));
 }
 
-inline CString CMidiDevices::GetOutputID() const
+inline CString CMidiDevices::GetID(int iType) const
 {
-	return GetOutputID(m_iOut);
+	return GetID(iType, GetIdx(iType));
 }
 
-inline int CMidiDevices::GetInputCount() const
+inline bool CMidiDevices::IsValid(int iType, int iDev) const
 {
-	return m_arrIn.GetSize();
+	return m_arrDev[iType].IsValid(iDev);
 }
 
-inline int CMidiDevices::GetOutputCount() const
+inline CString CMidiDevices::GetName(int iType, int iDev) const
 {
-	return m_arrOut.GetSize();
+	return m_arrDev[iType].GetName(iDev);
 }
 
-inline bool CMidiDevices::IsValidInput(int iIn) const
+inline CString CMidiDevices::GetID(int iType, int iDev) const
 {
-	return iIn >= 0 && iIn < GetInputCount();
+	return m_arrDev[iType].GetID(iDev);
 }
-
-inline bool CMidiDevices::IsValidOutput(int iOut) const
-{
-	return iOut >= 0 && iOut < GetOutputCount();
-}
-
