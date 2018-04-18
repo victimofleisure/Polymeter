@@ -31,6 +31,7 @@
 #include "PathStr.h"
 #include "Hyperlink.h"
 #include "DocIter.h"
+#include "OptionsDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -457,6 +458,12 @@ void CPolymeterApp::OnDeviceChange()
 					pDoc->m_Seq.Abort();	// abort playback regardless
 				}
 			}
+		}
+		CWnd	*pWnd = m_pMainWnd->GetLastActivePopup();
+		if (pWnd != NULL) {
+			COptionsDlg	*pOptionsDlg = DYNAMIC_DOWNCAST(COptionsDlg, pWnd);
+			if (pOptionsDlg != NULL)	// if options dialog is active
+				pOptionsDlg->UpdateMidiDevices();	// update its MIDI device combos
 		}
 		m_bInMsgBox = false;
 	}

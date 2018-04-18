@@ -43,15 +43,15 @@ typedef CArrayEx<char, char> CCharArray;
 
 enum {	// application-wide user window messages, based on WP_APP
 	UWM_FIRST = WM_APP,
-	UWM_HANDLEDLGKEY,			// wParam: MSG pointer, lParam: none
-	UWM_MODELESSDESTROY,		// wParam: CDialog*, lParam: none
+	UWM_HANDLE_DLG_KEY,			// wParam: MSG pointer, lParam: none
+	UWM_MODELESS_DESTROY,		// wParam: CDialog*, lParam: none
 	UWM_DEFERRED_UPDATE,		// wParam: none, lParam: none
 	UWM_DEFERRED_SIZING,		// wParam: none, lParam: none
-	UWM_DELAYEDCREATE,			// wParam: none, lParam: none
+	UWM_DELAYED_CREATE,			// wParam: none, lParam: none
 	UWM_PROPERTY_CHANGE,		// wParam: iProp, lParam: CWnd*
 	UWM_PROPERTY_SELECT,		// wParam: iProp or -1 if none, lParam: CWnd*
 	UWM_MIDI_ERROR,				// wParam: error code, lParam: CDocument*
-	UWM_DEVICENODECHANGE,		// wParam: none, lParam: none
+	UWM_DEVICE_NODE_CHANGE,		// wParam: none, lParam: none
 };
 
 // ck: wrapper for formatting system errors

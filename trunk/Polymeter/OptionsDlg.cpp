@@ -17,6 +17,7 @@
 #include "stdafx.h"
 #include "Polymeter.h"
 #include "OptionsDlg.h"
+#include "dbt.h"	// for device change types
 
 // COptionsDlg dialog
 
@@ -31,6 +32,19 @@ COptionsDlg::COptionsDlg(CWnd* pParent /*=NULL*/)
 
 COptionsDlg::~COptionsDlg()
 {
+}
+
+void COptionsDlg::UpdateMidiDevices()
+{
+	const CProperties&		Props = theApp.m_Options;
+	for (int iType = 0; iType < CMidiDevices::DEVICE_TYPES; iType++) {
+		int	iProp = COptions::PROP_Midi_iInputDevice + iType;
+		m_Grid.UpdateOptions(Props, iProp);
+		int	iOption = theApp.m_midiDevs.GetIdx(iType) + 1;	// skip none option
+		CString	sName(Props.GetOptionName(iProp, iOption));	
+		CMFCPropertyGridProperty	*pProp = m_Grid.GetValueProperty(iProp);
+		pProp->SetValue(sName);
+	}
 }
 
 void COptionsDlg::DoDataExchange(CDataExchange* pDX)

@@ -564,7 +564,7 @@ BEGIN_MESSAGE_MAP(CPolymeterView, CFormView)
 	ON_WM_RBUTTONUP()
 	ON_WM_CREATE()
 	ON_WM_SIZE()
-	ON_MESSAGE(UWM_DELAYEDCREATE, OnDelayedCreate)
+	ON_MESSAGE(UWM_DELAYED_CREATE, OnDelayedCreate)
 	ON_COMMAND(ID_VIEW_PLAY, OnViewPlay)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_PLAY, OnUpdateViewPlay)
 	ON_MESSAGE(CTrackDlg::UWM_SELECT, OnTrackSelect)
@@ -611,7 +611,7 @@ int CPolymeterView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	TEXTMETRIC	tm;
 	dc.GetTextMetrics(&tm);
 	m_nCaptionHeight = tm.tmHeight;
-	PostMessage(UWM_DELAYEDCREATE);
+	PostMessage(UWM_DELAYED_CREATE);
 
 	return 0;
 }
@@ -624,7 +624,7 @@ BOOL CPolymeterView::PreTranslateMessage(MSG* pMsg)
 			return TRUE;
 		}
 		//  give main frame a try
-		if (AfxGetMainWnd()->SendMessage(UWM_HANDLEDLGKEY, reinterpret_cast<WPARAM>(pMsg)))
+		if (AfxGetMainWnd()->SendMessage(UWM_HANDLE_DLG_KEY, reinterpret_cast<WPARAM>(pMsg)))
 			return TRUE;	// key was handled so don't process further
 	}
 	return CFormView::PreTranslateMessage(pMsg);

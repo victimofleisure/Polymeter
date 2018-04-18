@@ -26,6 +26,8 @@ public:
 	COptionsDlg(CWnd* pParent = NULL);   // standard constructor
 	virtual ~COptionsDlg();
 
+	void	UpdateMidiDevices();
+
 protected:
 // Dialog Data
 	enum { IDD = IDD_OPTIONS };

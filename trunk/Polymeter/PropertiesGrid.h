@@ -11,6 +11,7 @@
 		01		03nov17	remove group array; add subitem expansion
 		02		26mar18	add Enable and IsEnabled
 		03		10apr18	add runtime class macros
+		04		18apr18	add GetValueProperty and UpdateOptions
 
 */
 
@@ -91,9 +92,11 @@ public:
 	void	SetCurSelIdx(int iProp);
 	bool	IsEnabled(int iProp) const;
 	void	Enable(int iProp, bool bEnable);
+	CMFCPropertyGridProperty*	GetValueProperty(int iProp);
 
 // Operations
 	void	InitPropList(const CProperties& Props);
+	void	UpdateOptions(const CProperties& Props, int iProp);
 
 protected:
 // Types
@@ -111,4 +114,9 @@ inline bool CPropertiesGridCtrl::IsEnabled(int iProp) const
 inline void CPropertiesGridCtrl::Enable(int iProp, bool bEnable)
 {
 	m_arrProp[iProp]->Enable(bEnable);
+}
+
+inline CMFCPropertyGridProperty* CPropertiesGridCtrl::GetValueProperty(int iProp)
+{
+	return m_arrProp[iProp];
 }

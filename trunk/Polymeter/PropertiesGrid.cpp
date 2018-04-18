@@ -15,6 +15,7 @@
 		05		10apr18	add runtime class macros
 		06		10apr18	in InitPropList's file case, handle ANSI string case
 		07		16apr18	in ValidateItemData, use dynamic downcast
+		08		18apr18	add UpdateOptions
 
 */
 
@@ -489,4 +490,13 @@ void CPropertiesGridCtrl::SetCurSelIdx(int iProp)
 	else
 		pProp = NULL;
 	SetCurSel(pProp);
+}
+
+void CPropertiesGridCtrl::UpdateOptions(const CProperties& Props, int iProp)
+{
+	CMFCPropertyGridProperty	*pProp = m_arrProp[iProp];
+	pProp->RemoveAllOptions();
+	int	nOptions = Props.GetOptionCount(iProp);
+	for (int iOption = 0; iOption < nOptions; iOption++)	// for each option
+		VERIFY(pProp->AddOption(Props.GetOptionName(iProp, iOption)));
 }

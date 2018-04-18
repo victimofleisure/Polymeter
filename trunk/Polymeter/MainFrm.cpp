@@ -218,7 +218,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	ModifyStyle(0, FWS_PREFIXTITLE);
 
 	ApplyOptions(NULL);
-	PostMessage(UWM_DELAYEDCREATE);
+	PostMessage(UWM_DELAYED_CREATE);
 
 	return 0;
 }
@@ -509,15 +509,15 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_VIEW_APPLOOK_FIRST, ID_VIEW_APPLOOK_LAST, OnUpdateApplicationLook)
 	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SONG_POS, OnUpdateIndicatorSongPos)
 	ON_REGISTERED_MESSAGE(AFX_WM_AFTER_TASKBAR_ACTIVATE, OnAfterTaskbarActivate)
-	ON_MESSAGE(UWM_HANDLEDLGKEY, OnHandleDlgKey)
+	ON_MESSAGE(UWM_HANDLE_DLG_KEY, OnHandleDlgKey)
 	ON_MESSAGE(UWM_PROPERTY_CHANGE, OnPropertyChange)
 	ON_MESSAGE(UWM_PROPERTY_SELECT, OnPropertySelect)
 	ON_WM_TIMER()
 	ON_COMMAND(ID_TOOLS_OPTIONS, OnToolsOptions)
 	ON_COMMAND(ID_APP_CHECK_FOR_UPDATES, OnAppCheckForUpdates)
-	ON_MESSAGE(UWM_DELAYEDCREATE, OnDelayedCreate)
+	ON_MESSAGE(UWM_DELAYED_CREATE, OnDelayedCreate)
 	ON_MESSAGE(UWM_MIDI_ERROR, OnMidiError)
-	ON_MESSAGE(UWM_DEVICENODECHANGE, OnDeviceNodeChange)
+	ON_MESSAGE(UWM_DEVICE_NODE_CHANGE, OnDeviceNodeChange)
 	ON_WM_DEVICECHANGE()
 END_MESSAGE_MAP()
 
@@ -761,7 +761,7 @@ BOOL CMainFrame::OnDeviceChange(UINT nEventType, W64ULONG dwData)
 	BOOL	retc = CFrameWnd::OnDeviceChange(nEventType, dwData);
 	if (nEventType == DBT_DEVNODES_CHANGED) {
 		// use post so device change completes before our handler runs
-		PostMessage(UWM_DEVICENODECHANGE);
+		PostMessage(UWM_DEVICE_NODE_CHANGE);
 	}
 	return retc;	// true to allow device change
 }
