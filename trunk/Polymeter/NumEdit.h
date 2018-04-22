@@ -12,6 +12,7 @@
 		02		28jan08	support Unicode
 		03		29jan08	in SetFormat, add static cast to fix warning
 		04		19sep13	add spin control format
+		05		19apr18	move spin control creation to helper
 
         numeric edit control
  
@@ -111,6 +112,7 @@ protected:
 	void	SetText();
 	void	GetText();
 	void	Notify(int NotifyMask = NTF_ALL);
+	void	CreateSpinCtrl();
 };
 
 inline double CNumEdit::GetVal() const

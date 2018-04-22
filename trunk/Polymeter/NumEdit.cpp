@@ -16,6 +16,8 @@
 		06		19sep13	add spin control format
 		07		17oct13	in PreTranslateMessage, don't change focus
 		08		18feb14	add OnEnable to invalidate spin control
+		09		19apr18	in AddSpin, set modify flag
+		10		19apr18	move spin control creation to helper
 
         numeric edit control
  
@@ -95,6 +97,7 @@ void CNumEdit::AddSpin(double Delta)
 	if (m_HaveRange)
 		m_Val = CLAMP(m_Val, m_MinVal, m_MaxVal);
 	SetText();
+	SetModify();
 	Notify();
 }
 
@@ -157,6 +160,19 @@ void CNumEdit::SetRange(double MinVal, double MaxVal)
 	m_HaveRange = TRUE;
 }
 
+void CNumEdit::CreateSpinCtrl()
+{
+	ASSERT(m_Spin == NULL);
+	m_Spin = new CNumSpin;
+	UINT	style = WS_CHILD | WS_VISIBLE | UDS_ALIGNRIGHT | UDS_ARROWKEYS;
+	UINT	IDC_SPIN_OFFSET = 0x4000;
+	UINT	nID = GetDlgCtrlID() + IDC_SPIN_OFFSET;
+	if (!m_Spin->Create(style, CRect(0, 0, 0, 0), GetParent(), nID))
+		AfxThrowResourceException();
+	m_Spin->SetWindowPos(this, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);	// set Z order
+	m_Spin->SetBuddy(this);
+}
+
 BEGIN_MESSAGE_MAP(CNumEdit, CEdit)
 	//{{AFX_MSG_MAP(CNumEdit)
 	ON_CONTROL_REFLECT_EX(EN_KILLFOCUS, OnKillfocus)
@@ -200,16 +216,8 @@ void CNumEdit::PreSubclassWindow()
 {
 	SetVal(m_Val);
 	CEdit::PreSubclassWindow();
-	if (m_Format & DF_SPIN) {	// if spin control requested
-		m_Spin = new CNumSpin;
-		UINT	style = WS_CHILD | WS_VISIBLE | UDS_ALIGNRIGHT | UDS_ARROWKEYS;
-		UINT	IDC_SPIN_OFFSET = 0x4000;
-		UINT	nID = GetDlgCtrlID() + IDC_SPIN_OFFSET;
-		if (!m_Spin->Create(style, CRect(0, 0, 0, 0), GetParent(), nID))
-			AfxThrowResourceException();
-		m_Spin->SetWindowPos(this, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-		m_Spin->SetBuddy(this);
-	}
+	if (m_Format & DF_SPIN)	// if spin control requested
+		CreateSpinCtrl();
 }
 
 void CNumEdit::OnEnable(BOOL bEnable) 

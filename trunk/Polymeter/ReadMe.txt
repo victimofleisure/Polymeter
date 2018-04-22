@@ -85,11 +85,11 @@ PolymeterDoc.h, PolymeterDoc.cpp - the document
     add your special document data and to implement file saving and loading
     (via CPolymeterDoc::Serialize).
     The Document will have the following strings:
-        File extension:      pym
+        File extension:      plm
         File type ID:        Polymeter.Document
         Main frame caption:  Polymeter
         Doc type name:       Polymeter
-        Filter name:         Polymeter Files (*.pym)
+        Filter name:         Polymeter Files (*.plm)
         File new short name: Polymeter
         File type long name: Polymeter.Document
 

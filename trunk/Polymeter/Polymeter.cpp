@@ -66,9 +66,9 @@ CPolymeterApp theApp;
 
 BOOL CPolymeterApp::InitInstance()
 {
-//@@@#ifdef _DEBUG
+#ifdef _DEBUG
 	Win32Console::Create();
-//#endif
+#endif
 	// InitCommonControlsEx() is required on Windows XP if an application
 	// manifest specifies use of ComCtl32.dll version 6 or later to enable
 	// visual styles.  Otherwise, any window creation will fail.

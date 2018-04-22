@@ -12,6 +12,8 @@
 		02		31may14	add OnItemChange
 		03		17nov14	in PreTranslateMessage, let tab edit first subitem
 		04		04apr15	use base class column count accessor
+		05		19apr18	in OnParentNotify, use subitem rect for CEdit-derived controls
+		06		19apr18	if scroll notification from our child control, don't end edit
 
 		grid control
  
@@ -214,9 +216,14 @@ void CGridCtrl::OnParentNotify(UINT message, LPARAM lParam)
 				CPoint	pt;
 				POINTSTOPOINT(pt, lParam);
 				CRect	rEdit;
-				m_EditCtrl->GetWindowRect(rEdit);
-				ScreenToClient(rEdit);
-				if (!rEdit.PtInRect(pt))	// if clicked outside of edit rect
+				if (m_EditCtrl->IsKindOf(RUNTIME_CLASS(CEdit))) {	// if editing control is CEdit-derived
+					// use subitem rect because it includes spin button control if any
+					GetSubItemRect(m_EditRow, m_EditCol, LVIR_BOUNDS, rEdit);
+				} else {	// not an edit control; control may be bigger than subitem, e.g. combo box
+					m_EditCtrl->GetWindowRect(rEdit);	// use child control's rect
+					ScreenToClient(rEdit);
+				}
+				if (!rEdit.PtInRect(pt))	// if clicked outside of edit control
 					EndEdit();
 			}
 			break;
@@ -229,13 +236,15 @@ void CGridCtrl::OnParentNotify(UINT message, LPARAM lParam)
 
 void CGridCtrl::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar) 
 {
-	EndEdit();
+	if (!IsChild(pScrollBar))	// if notifier isn't our child control (such as spin button)
+		EndEdit();
 	CDragVirtualListCtrl::OnHScroll(nSBCode, nPos, pScrollBar);
 }
 
 void CGridCtrl::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar) 
 {
-	EndEdit();
+	if (!IsChild(pScrollBar))	// if notifier isn't our child control (such as spin button)
+		EndEdit();
 	CDragVirtualListCtrl::OnVScroll(nSBCode, nPos, pScrollBar);
 }
 

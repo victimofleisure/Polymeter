@@ -4,7 +4,7 @@ REGEDIT
 ;   registered in your InitInstance automatically with a call to
 ;   CWinApp::RegisterShellFileTypes and COleObjectFactory::UpdateRegistryAll.
 
-HKEY_CLASSES_ROOT\.pym = Polymeter.Document
+HKEY_CLASSES_ROOT\.plm = Polymeter.Document
 HKEY_CLASSES_ROOT\Polymeter.Document\shell\open\command = Polymeter.EXE %1
 HKEY_CLASSES_ROOT\Polymeter.Document\shell\open\ddeexec = [open("%1")]
 HKEY_CLASSES_ROOT\Polymeter.Document\shell\open\ddeexec\application = Polymeter

@@ -17,6 +17,7 @@
 #include "MainFrm.h"
 #include "PolymeterDoc.h"
 #include "UndoCodes.h"
+#include "PopupNumEdit.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -41,18 +42,57 @@ CChannelsBar::~CChannelsBar()
 {
 }
 
+class CPopupIntEdit : public CPopupNumEdit {	// this belongs somewhere else
+public:
+	virtual void ValToStr(CString& Str);
+	virtual void StrToVal(LPCTSTR Str);
+};
+	
+void CPopupIntEdit::ValToStr(CString& Str)
+{
+	if (m_Val < 0)
+		Str.Empty();
+	else
+		CPopupNumEdit::ValToStr(Str);
+}
+
+void CPopupIntEdit::StrToVal(LPCTSTR Str)
+{
+	if (!_tcslen(Str))
+		m_Val = -1;
+	else
+		CPopupNumEdit::StrToVal(Str);
+}
+
 CWnd *CChannelsBar::CChannelsGridCtrl::CreateEditCtrl(LPCTSTR Text, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
-	return CGridCtrl::CreateEditCtrl(Text, dwStyle, rect, pParentWnd, nID);
+	UNREFERENCED_PARAMETER(pParentWnd);
+	CPopupIntEdit	*pEdit = new CPopupIntEdit;
+	pEdit->SetFormat(CNumEdit::DF_INT | CNumEdit::DF_SPIN);
+	pEdit->SetRange(-1, 127);
+	if (!pEdit->Create(dwStyle, rect, this, nID)) {
+		delete pEdit;
+		return(NULL);
+	}
+	int nVal;
+	if (_tcslen(Text))
+		nVal = _ttoi(Text);
+	else
+		nVal = -1;
+	pEdit->SetVal(nVal);
+	pEdit->SetSel(0, -1);	// select entire text
+	return(pEdit);
 }
 
 void CChannelsBar::CChannelsGridCtrl::OnItemChange(LPCTSTR Text)
 {
+	UNREFERENCED_PARAMETER(Text);
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL) {
 		int	iChan = m_EditRow;
 		int	iProp = m_EditCol - 1;	// skip number column
-		int	nVal = _ttoi(Text);
+		CPopupNumEdit	*pNumEdit = STATIC_DOWNCAST(CPopupNumEdit, m_EditCtrl);
+		int	nVal = pNumEdit->GetIntVal();
 		if (nVal != pDoc->m_arrChannel[iChan].GetProperty(iProp)) {	// if property really changed
 			pDoc->NotifyUndoableEdit(MAKELONG(iChan, iProp), UCODE_CHANNEL_PROP);
 			pDoc->m_arrChannel[iChan].SetProperty(iProp, nVal);
@@ -156,7 +196,10 @@ void CChannelsBar::OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 			break;
 		default:
 			int	nVal = pChan->GetProperty(item.iSubItem - 1);	// skip number column
-			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), nVal); 
+			if (nVal >= 0)
+				_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), nVal); 
+			else
+				_tcscpy_s(item.pszText, item.cchTextMax, _T(""));
 		}
 	}
 }

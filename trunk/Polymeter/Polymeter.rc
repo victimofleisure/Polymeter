@@ -414,8 +414,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,0,0,1
- PRODUCTVERSION 0,0,0,1
+ FILEVERSION 0,0,0,43
+ PRODUCTVERSION 0,0,0,43
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -432,12 +432,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Anal Software"
             VALUE "FileDescription", "Polymeter"
-            VALUE "FileVersion", "0.0.0.1"
+            VALUE "FileVersion", "0.0.0.43"
             VALUE "InternalName", "Polymeter.exe"
             VALUE "LegalCopyright", "Copyleft 2018 Chris Korda"
             VALUE "OriginalFilename", "Polymeter.exe"
             VALUE "ProductName", "Polymeter"
-            VALUE "ProductVersion", "0.0.0.1"
+            VALUE "ProductVersion", "0.0.0.43"
         END
     END
     BLOCK "VarFileInfo"
@@ -600,6 +600,7 @@ BEGIN
     IDS_HLINK_CANT_LAUNCH   "Can't launch browser."
     IDS_MIDI_DEVICES_MISSING "MIDI devices are missing."
     IDS_MIDI_INPUT          "Input"
+    IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
     IDS_MIDI_OUTPUT         "Output"
     IDS_NONE                "<None>"
     IDS_OPT_DESC_General_bCheckForUpdates 
@@ -611,12 +612,12 @@ BEGIN
     IDS_OPT_DESC_Midi_nLatency "Desired MIDI latency, in milliseconds"
     IDS_OPT_DESC_View_bShowCurPos 
                             "Indicate current position within each track"
-    IDS_OPT_DESC_View_nUpdateFreq 
-                            "Frequency at which view is updated, in Hertz"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_View_nUpdateFreq 
+                            "Frequency at which view is updated, in Hertz"
     IDS_OPT_GROUP_General   "General"
     IDS_OPT_GROUP_Midi      "MIDI"
     IDS_OPT_GROUP_View      "View"
@@ -632,15 +633,14 @@ BEGIN
     IDS_PDR_DESC_nTimeDiv   "Time division, in pulses per quarter note"
     IDS_PDR_GROUP_Master    "Master"
     IDS_PDR_NAME_fTempo     "Tempo"
-    IDS_PDR_NAME_nTimeDiv   "PPQ"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_NAME_nTimeDiv   "PPQ"
     IDS_PROPERTIES_BAR      "Properties"
     IDS_PROPS_MORE_COLORS   "More Colors..."
     IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
-    IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
     IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format"
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
@@ -671,7 +671,7 @@ END
 STRINGTABLE
 BEGIN
     IDR_MAINFRAME           "Polymeter"
-    IDR_PolymeterTYPE       "\nPolymeter\nPolymeter\nPolymeter Files (*.pym)\n.pym\nPolymeter.Document\nPolymeter.Document"
+    IDR_PolymeterTYPE       "\nPolymeter\nPolymeter\nPolymeter Files (*.plm)\n.plm\nPolymeter.Document\nPolymeter.Document"
 END
 
 STRINGTABLE

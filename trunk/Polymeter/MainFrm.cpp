@@ -418,9 +418,9 @@ void CMainFrame::UpdateSongPosition()
 }
 
 #ifdef _WIN64
-#define RK_UNINSTALL _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{@@@}")
+#define RK_UNINSTALL _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{B18FD079-013F-41D1-95D8-FEE34A4BEC8A}")
 #else // x86
-#define RK_UNINSTALL _T("SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{@@@}")
+#define RK_UNINSTALL _T("SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{0C9FC2D8-0E07-4DEA-A384-A9BF1E267258}")
 #endif
 
 bool CMainFrame::CheckForUpdates(bool Explicit)

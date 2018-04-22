@@ -231,6 +231,7 @@
     <ClInclude Include="PolymeterView.h" />
     <ClInclude Include="PopupCombo.h" />
     <ClInclude Include="PopupEdit.h" />
+    <ClInclude Include="PopupNumEdit.h" />
     <ClInclude Include="ProgressDlg.h" />
     <ClInclude Include="Properties.h" />
     <ClInclude Include="PropertiesBar.h" />
@@ -301,6 +302,7 @@
     <ClCompile Include="PolymeterView.cpp" />
     <ClCompile Include="PopupCombo.cpp" />
     <ClCompile Include="PopupEdit.cpp" />
+    <ClCompile Include="PopupNumEdit.cpp" />
     <ClCompile Include="ProgressDlg.cpp" />
     <ClCompile Include="Properties.cpp" />
     <ClCompile Include="PropertiesBar.cpp" />
