@@ -1,25 +1,31 @@
 open	close	type	description	rev	user
-04/12/18		bug	changing highlight current position option doesn't update view		
-03/22/18	03/25/18	done	tempo change while playing		
-03/22/18	03/25/18	done	PPQ change; only while stopped for now		
-03/22/18	03/25/18	done	add velocity to test app		
-03/22/18	03/26/18	done	add document read/write		
-03/22/18	03/26/18	done	add undo		
-03/25/18	03/26/18	done	prevent PPQ change while playing		
-03/22/18	03/27/18	done	test critical section in callback; no discernable impact		
-03/25/18	03/27/18	done	select MIDI device; options dialog		
-03/25/18	03/27/18	done	specify latency; options dialog		
-03/25/18	03/27/18	done	track names		
-03/25/18	03/30/18	done	drag reorder tracks		
-03/25/18	03/30/18	done	insert or delete tracks		
-03/25/18	03/30/18	done	undo test		
-03/25/18	04/01/18	done	icon		
-03/25/18	04/02/18	done	check for updates		
-03/25/18	04/09/18	done	duration offset		
-03/25/18	04/10/18	done	optionally show current position within each track		
-03/25/18	04/11/18	done	multi-track property editing		
-03/25/18	04/12/18	done	go to position, both while stopped and while playing		
-03/25/18	04/12/18	done	negative song position		
+03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
+03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
+03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
+03/22/18	03/26/18	done	add document read/write	0.0.00.043	
+03/22/18	03/26/18	done	add undo	0.0.00.043	
+03/25/18	03/26/18	done	prevent PPQ change while playing	0.0.00.043	
+03/22/18	03/27/18	done	test critical section in callback; no discernable impact	0.0.00.043	
+03/25/18	03/27/18	done	select MIDI device; options dialog	0.0.00.043	
+03/25/18	03/27/18	done	specify latency; options dialog	0.0.00.043	
+03/25/18	03/27/18	done	track names	0.0.00.043	
+03/25/18	03/30/18	done	drag reorder tracks	0.0.00.043	
+03/25/18	03/30/18	done	insert or delete tracks	0.0.00.043	
+03/25/18	03/30/18	done	undo test	0.0.00.043	
+03/25/18	04/01/18	done	icon	0.0.00.043	
+03/25/18	04/02/18	done	check for updates	0.0.00.043	
+03/25/18	04/09/18	done	duration offset	0.0.00.043	
+03/25/18	04/10/18	done	optionally show current position within each track	0.0.00.043	
+03/25/18	04/11/18	done	multi-track property editing	0.0.00.043	
+03/25/18	04/12/18	done	go to position, both while stopped and while playing	0.0.00.043	
+03/25/18	04/12/18	done	negative song position	0.0.00.043	
+03/25/18	04/13/18	done	export MIDI file	0.0.00.043	
+04/13/18	04/14/18	done	time to repeat; compute how long it takes for selected tracks to repeat, in beats and time	0.0.00.043	
+03/25/18	04/16/18	done	channels bar; one row per channel with columns for bank, patch, volume, and pan	0.0.00.043	
+04/15/18	04/16/18	done	input MIDI device; optionally pass input events through to output device via sequencer	0.0.00.043	
+04/17/18	04/17/18	done	handle MIDI device changes	0.0.00.043	
+04/17/18	04/18/18	done	if MIDI device change occurs while options dialog is active, dialog's device drop lists should update	0.0.00.043	
+04/16/18	04/19/18	done	grid control must support numeric edit with spin control	0.0.00.043	
 03/25/18		hold	animated visualization		
 03/22/18		todo	data architecture		
 03/22/18		todo	controller tracks		
@@ -28,15 +34,17 @@ open	close	type	description	rev	user
 03/22/18		todo	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		todo	app architecture; Bongo, Jock and Stencil all in one app? Different views of same document?		
 03/22/18		todo	PPQ change should optionally update Quant, Offset and Swing values		
-03/25/18		todo	insert or delete beats, shifting following beats		
-03/25/18		todo	rotate track's beats left or right		
-03/25/18		todo	playback can be slow to start, due to device open delay; keep device open all the time?		
-03/25/18		todo	initial bank and patch for each channel; volume and pan too?		
+03/25/18		todo	insert or delete beat, shifting following beats, for one or more tracks (use track length undo handling)		
+03/25/18		todo	rotate track's beats left or right, for one or more tracks		
+03/25/18		todo	editing commands (copy, cut, paste) for beats; rectangular selection of beats		
+03/25/18		todo	playback can be slow to start, due to device open delay; keep output device open all the time?		
 03/25/18		todo	make beat width proportional to track's quantization; complicates drawing and scrolling, requires zoom		
-03/25/18		todo	unlimited track length; beat array size should always be track length; complicates undoing length edit		
+03/25/18		todo	unlimited track length; sequencer supports it, but view doesn't (beat captions, scroll width)		
 03/25/18		todo	right button selection of tracks or beats; drag selection of multiple items		
+03/25/18		todo	record live arrangment; at least track mute/unmute, maybe other things too		
+03/25/18		todo	edit arrangement on timeline, similar to Stencil		
 04/09/18		todo	undoing track value or beat edit should ensure track is visible		
-04/11/18		todo	live patch changes (and other events) via interlocked ring buffer		
-04/12/18		todo	beat positions are hard to identify; optional tooltip?		
+04/12/18		todo	beat positions are hard to identify; optional tooltip? Vertical lines?		
 04/12/18		todo	beat captions should be quarter notes, not sixteenths, and should be centered on beat boundaries		
-03/25/18		WIP	export MIDI file; duration?		
+04/15/18		todo	MIDI mapping of all parameters, with manual assignment and learn mode		
+04/16/18		todo	in note edit controls, show MIDI notes instead of numbers		
