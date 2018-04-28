@@ -13,7 +13,7 @@
 		03		08mar04	in NotifyEdit, ctor isn't called when array shrinks
 		04		12mar04	if coalescing, remove states above current position
 		05		29sep04	cancel edit must update titles
-		06		19mar05	bump m_Edits regardless of number of undo levels
+		06		19mar05	bump m_nEdits regardless of number of undo levels
         07      22nov06 rename strings to start with IDS_
         08      25nov06 use CArrayishList instead of CList
 		09		23nov07	support Unicode
@@ -26,6 +26,7 @@
 		16		01may14	widen CtrlID and Code to 32-bit
 		17		07may15	in DumpState, use address format for object pointer
 		18		23jun15	in SwapState, save to temporary in case restore throws
+		19		25apr18	standardize names
 
         undoable edit interface
  
@@ -42,142 +43,142 @@
 #define	UNDO_DUMP_STATE(Tag, Pos)
 #endif
 
-CUndoManager::CUndoManager(CUndoable *Root) :
-	m_Root(Root)
+CUndoManager::CUndoManager(CUndoable *pRoot) :
+	m_pRoot(pRoot)
 {
-	m_CanUndo = FALSE;
-	m_CanRedo = FALSE;
-	m_Pos = 0;
-	m_Levels = INT_MAX;
-	m_Edits = 0;
-	m_Action = UA_NONE;
+	m_bCanUndo = FALSE;
+	m_bCanRedo = FALSE;
+	m_iPos = 0;
+	m_nLevels = INT_MAX;
+	m_nEdits = 0;
+	m_nAction = UA_NONE;
 }
 
 CUndoManager::~CUndoManager()
 {
 }
 
-inline CString CUndoManager::GetTitle(int Pos)
+inline CString CUndoManager::GetTitle(int iPos)
 {
-	return(m_Root->GetUndoTitle(m_List[Pos]));
+	return(m_pRoot->GetUndoTitle(m_arrState[iPos]));
 }
 
 int CUndoManager::FindUndoable() const
 {
-	int	pos = m_Pos;
-	while (pos > 0) {
-		pos--;
-		if (m_List[pos].IsSignificant())
-			return(pos);
+	int	iPos = m_iPos;
+	while (iPos > 0) {
+		iPos--;
+		if (m_arrState[iPos].IsSignificant())
+			return(iPos);
 	}
 	return(-1);
 }
 
 int CUndoManager::FindRedoable() const
 {
-	int	pos = m_Pos;
-	while (pos < GetSize()) {
-		if (m_List[pos].IsSignificant())
-			return(pos);
-		pos++;
+	int	iPos = m_iPos;
+	while (iPos < GetSize()) {
+		if (m_arrState[iPos].IsSignificant())
+			return(iPos);
+		iPos++;
 	}
 	return(-1);
 }
 
 void CUndoManager::Undo()
 {
-	int	PrevUndo = FindUndoable();
-	if (PrevUndo >= 0) {
+	int	iPrevUndo = FindUndoable();
+	if (iPrevUndo >= 0) {
 		// undo previous significant edit, and all insignificant edits back to it
-		m_Action = UA_UNDO;
-		for (int i = m_Pos - 1; i >= PrevUndo; i--) {
-			UNDO_DUMP_STATE(_T("Undo"), i);
-			SwapState(i);
+		m_nAction = UA_UNDO;
+		for (int iState = m_iPos - 1; iState >= iPrevUndo; iState--) {
+			UNDO_DUMP_STATE(_T("Undo"), iState);
+			SwapState(iState);
 			if (IsIdle())
 				return;	// edits discarded
 		}
-		m_Pos = PrevUndo;
+		m_iPos = iPrevUndo;
 		UpdateTitles();
-		m_Action = UA_NONE;
+		m_nAction = UA_NONE;
 	}
 }
 
 void CUndoManager::Redo()
 {
-	int	NextRedo = FindRedoable();
-	if (NextRedo >= 0) {
+	int	iNextRedo = FindRedoable();
+	if (iNextRedo >= 0) {
 		// redo next significant edit, and all insignificant edits up to it
-		m_Action = UA_REDO;
-		for (int i = m_Pos; i <= NextRedo; i++) {
-			UNDO_DUMP_STATE(_T("Redo"), i);
-			SwapState(i);
+		m_nAction = UA_REDO;
+		for (int iState = m_iPos; iState <= iNextRedo; iState++) {
+			UNDO_DUMP_STATE(_T("Redo"), iState);
+			SwapState(iState);
 			if (IsIdle())
 				return;	// edits discarded
 		}
-		m_Pos = NextRedo + 1;
+		m_iPos = iNextRedo + 1;
 		UpdateTitles();
-		m_Action = UA_NONE;
+		m_nAction = UA_NONE;
 	}
 }
 
 void CUndoManager::UndoNoRedo()
 {
 	Undo();
-	m_List.SetSize(m_Pos);
+	m_arrState.SetSize(m_iPos);
 	UpdateTitles();
 }
 
-void CUndoManager::SwapState(int Pos)
+void CUndoManager::SwapState(int iPos)
 {
-	ASSERT(Pos >= 0 && Pos < GetSize());
-	CUndoState	PrevState = m_List[Pos];
-	CUndoable	*uap = m_Root;
+	ASSERT(iPos >= 0 && iPos < GetSize());
+	CUndoState	PrevState = m_arrState[iPos];
+	CUndoable	*uap = m_pRoot;
 	CUndoState	NewState(PrevState);	// initialize temporary
 	uap->SaveUndoState(NewState);	// save to temporary in case restore throws
 	uap->RestoreUndoState(PrevState);
-	m_List[Pos] = NewState;
+	m_arrState[iPos] = NewState;
 #if UNDO_NATTER
 	if (uap == NULL)
 		_tprintf(_T("Can't find instance.\n"));
 #endif
 }
 
-void CUndoManager::NotifyEdit(int CtrlID, int Code, UINT Flags)
+void CUndoManager::NotifyEdit(int nCtrlID, int nCode, UINT nFlags)
 {
-	ASSERT(CtrlID != UNDO_CTRL_ID_INSIGNIFICANT);	// reserved control ID
+	ASSERT(nCtrlID != UNDO_CTRL_ID_INSIGNIFICANT);	// reserved control ID
 	if (IsIdle()) {
-		// do insignificance test first; can modify CtrlID
-		if (Flags & CUndoable::UE_INSIGNIFICANT)
-			CtrlID = UNDO_CTRL_ID_INSIGNIFICANT;
+		// do insignificance test first; can modify nCtrlID
+		if (nFlags & CUndoable::UE_INSIGNIFICANT)
+			nCtrlID = UNDO_CTRL_ID_INSIGNIFICANT;
 		else {
-			if (!m_Edits++)			// if first modification
+			if (!m_nEdits++)			// if first modification
 				OnModify(TRUE);		// call derived handler
 		}
 		// if coalesce requested and notifier's key matches top of stack
-		if ((Flags & CUndoable::UE_COALESCE) && m_Pos 
-		&& m_List[m_Pos - 1].IsMatch(CtrlID, Code)) {
-			if (GetSize() > m_Pos) {	// don't resize array needlessly
-				m_List.SetSize(m_Pos);	// remove states above current position
+		if ((nFlags & CUndoable::UE_COALESCE) && m_iPos 
+		&& m_arrState[m_iPos - 1].IsMatch(nCtrlID, nCode)) {
+			if (GetSize() > m_iPos) {	// don't resize array needlessly
+				m_arrState.SetSize(m_iPos);	// remove states above current position
 				UpdateTitles();
 			}
 			return;
 		}
-		if (m_Levels <= 0)
+		if (m_nLevels <= 0)
 			return;
-		if (m_Pos >= m_Levels) {	// if stack size at limit
-			m_List.RemoveAt(0);	// remove bottom state
-			m_Pos--;
+		if (m_iPos >= m_nLevels) {	// if stack size at limit
+			m_arrState.RemoveAt(0);	// remove bottom state
+			m_iPos--;
 		}
-		m_List.SetSize(m_Pos);	// array shrinks if we've undone
+		m_arrState.SetSize(m_iPos);	// array shrinks if we've undone
 		CUndoState	us;
 		us.m_Val.i64 = 0;
-		us.m_CtrlID = CtrlID;
-		us.m_Code = Code;
-		m_List.Add(us);
-		CUndoState	*usp = &m_List[m_Pos];
-		m_Root->SaveUndoState(*usp);
-		UNDO_DUMP_STATE(_T("Notify"), m_Pos);
-		m_Pos++;
+		us.m_nCtrlID = nCtrlID;
+		us.m_nCode = nCode;
+		m_arrState.Add(us);
+		CUndoState	*pState = &m_arrState[m_iPos];
+		m_pRoot->SaveUndoState(*pState);
+		UNDO_DUMP_STATE(_T("Notify"), m_iPos);
+		m_iPos++;
 		UpdateTitles();
 	} else {
 #if UNDO_NATTER
@@ -186,25 +187,25 @@ void CUndoManager::NotifyEdit(int CtrlID, int Code, UINT Flags)
 	}
 }
 
-void CUndoManager::CancelEdit(int CtrlID, int Code)
+void CUndoManager::CancelEdit(int nCtrlID, int nCode)
 {
 #if UNDO_NATTER
-	_tprintf(_T("CancelEdit CtrlID=%d Code=%d\n"), CtrlID, Code);
+	_tprintf(_T("CancelEdit CtrlID=%d Code=%d\n"), nCtrlID, nCode);
 #endif
-	int	i;
-	for (i = m_Pos - 1; i >= 0; i--) {
-		if (m_List[i].IsMatch(CtrlID, Code))
+	int	iState;
+	for (iState = m_iPos - 1; iState >= 0; iState--) {
+		if (m_arrState[iState].IsMatch(nCtrlID, nCode))
 			break;
 	}
-	if (i >= 0) {
-		m_List.RemoveAt(i);
-		m_Pos--;
-		if (!--m_Edits)			// if last modification
+	if (iState >= 0) {
+		m_arrState.RemoveAt(iState);
+		m_iPos--;
+		if (!--m_nEdits)			// if last modification
 			OnModify(FALSE);	// call derived handler
 		UpdateTitles();
 	}
 #if UNDO_NATTER
-	if (i < 0)
+	if (iState < 0)
 		_tprintf(_T("Can't cancel edit.\n"));
 #endif
 }
@@ -214,36 +215,36 @@ void CUndoManager::DiscardAllEdits()
 #if UNDO_NATTER
 	_tprintf(_T("DiscardAllEdits\n"));
 #endif
-	m_List.SetSize(0);
-	m_CanUndo = FALSE;
-	m_CanRedo = FALSE;
-	m_Pos = 0;
-	m_Edits = 0;
-	m_Action = UA_NONE;
+	m_arrState.SetSize(0);
+	m_bCanUndo = FALSE;
+	m_bCanRedo = FALSE;
+	m_iPos = 0;
+	m_nEdits = 0;
+	m_nAction = UA_NONE;
 	OnModify(FALSE);	// call derived handler
 	UpdateTitles();
 }
 
-void CUndoManager::DumpState(LPCTSTR Tag, int Pos)
+void CUndoManager::DumpState(LPCTSTR pszTag, int iPos)
 {
-	_tprintf(_T("%s '%s' Pos=%d %s Obj=%p\n"), Tag, GetTitle(Pos), Pos, 
-		m_List[Pos].DumpState(), m_List[Pos].GetObj());
+	_tprintf(_T("%s '%s' Pos=%d %s Obj=%p\n"), pszTag, GetTitle(iPos), iPos, 
+		m_arrState[iPos].DumpState(), m_arrState[iPos].GetObj());
 }
 
 void CUndoManager::UpdateTitles()
 {
-	int	PrevUndo = FindUndoable();
-	m_CanUndo = PrevUndo >= 0;
-	if (m_CanUndo)
-		m_UndoTitle = GetTitle(PrevUndo);
+	int	iPrevUndo = FindUndoable();
+	m_bCanUndo = iPrevUndo >= 0;
+	if (m_bCanUndo)
+		m_sUndoTitle = GetTitle(iPrevUndo);
 	else
-		m_UndoTitle.Empty();
-	int	NextRedo = FindRedoable();
-	m_CanRedo = NextRedo >= 0;
-	if (m_CanRedo)
-		m_RedoTitle = GetTitle(NextRedo);
+		m_sUndoTitle.Empty();
+	int	iNextRedo = FindRedoable();
+	m_bCanRedo = iNextRedo >= 0;
+	if (m_bCanRedo)
+		m_sRedoTitle = GetTitle(iNextRedo);
 	else
-		m_RedoTitle.Empty();
+		m_sRedoTitle.Empty();
 	OnUpdateTitles();
 }
 
@@ -252,26 +253,26 @@ void CUndoManager::SetLevels(int Levels)
 	if (Levels < 0)
 		Levels = INT_MAX;
 	if (Levels < GetSize()) {	// if shrinking history
-		if (m_Pos < Levels)	// if undo depth is below new size
+		if (m_iPos < Levels)	// if undo depth is below new size
 			DiscardAllEdits();	// history can't be saved
 		else {	// trim excess history from the bottom
 			int	Excess = GetSize() - Levels;
-			m_List.RemoveAt(0, Excess);
-			m_Pos = max(m_Pos - Excess, 0);
+			m_arrState.RemoveAt(0, Excess);
+			m_iPos = max(m_iPos - Excess, 0);
 		}
 	}
-	m_Levels = Levels;
+	m_nLevels = Levels;
 }
 
-void CUndoManager::SetPos(int Pos)
+void CUndoManager::SetPos(int iPos)
 {
-	ASSERT(Pos >= 0 && Pos <= GetSize());
-	int	Start = m_Pos;
-	if (Pos == Start)
+	ASSERT(iPos >= 0 && iPos <= GetSize());
+	int	iStart = m_iPos;
+	if (iPos == iStart)
 		return;	// nothing to do
-	int	steps = abs(Pos - Start);
-	bool	undoing = Pos < Start;
-	for (int iStep = 0; iStep < steps; iStep++) {
+	int	nSteps = abs(iPos - iStart);
+	bool	undoing = iPos < iStart;
+	for (int iStep = 0; iStep < nSteps; iStep++) {
 		if (undoing)
 			Undo();
 		else
@@ -279,9 +280,9 @@ void CUndoManager::SetPos(int Pos)
 	}
 }
 
-void CUndoManager::OnModify(bool Modified)
+void CUndoManager::OnModify(bool bModified)
 {
-	UNREFERENCED_PARAMETER(Modified);
+	UNREFERENCED_PARAMETER(bModified);
 }
 
 void CUndoManager::OnUpdateTitles()

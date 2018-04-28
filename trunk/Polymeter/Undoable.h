@@ -12,6 +12,7 @@
 		02		18mar08	remove key support
 		03		28may10	add CtrlID to notify and cancel
 		04		01may14	widen CtrlID and Code to 32-bit
+		05		25apr18	standardize names
 
         undoable edit interface
  
@@ -36,17 +37,17 @@ public:
 
 // Attributes
 	CUndoManager	*GetUndoManager() const;
-	void	SetUndoManager(CUndoManager *Mgr);
+	void	SetUndoManager(CUndoManager *pMgr);
 	CUndoable	*GetUndoHandler() const;
-	void	SetUndoHandler(CUndoable *Handler);
+	void	SetUndoHandler(CUndoable *pHandler);
 	int		GetUndoAction() const;
 	bool	UndoMgrIsIdle() const;
 	bool	IsUndoing() const;
 	bool	IsRedoing() const;
 
 // Operations
-	void	NotifyUndoableEdit(int CtrlID, int Code, UINT Flags = 0);
-	void	CancelUndoableEdit(int CtrlID, int Code);
+	void	NotifyUndoableEdit(int nCtrlID, int nCode, UINT nFlags = 0);
+	void	CancelUndoableEdit(int nCtrlID, int nCode);
 	void	ClearUndoHistory();
 
 // Overridables
@@ -69,19 +70,19 @@ inline CUndoManager *CUndoable::GetUndoManager() const
 	return(m_UndoManager);
 }
 
-inline void CUndoable::SetUndoManager(CUndoManager *Mgr)
+inline void CUndoable::SetUndoManager(CUndoManager *pMgr)
 {
-	m_UndoManager = Mgr;
+	m_UndoManager = pMgr;
 }
 
-inline void CUndoable::NotifyUndoableEdit(int CtrlID, int Code, UINT Flags)
+inline void CUndoable::NotifyUndoableEdit(int nCtrlID, int nCode, UINT nFlags)
 {
-	m_UndoManager->NotifyEdit(CtrlID, Code, Flags);
+	m_UndoManager->NotifyEdit(nCtrlID, nCode, nFlags);
 }
 
-inline void CUndoable::CancelUndoableEdit(int CtrlID, int Code)
+inline void CUndoable::CancelUndoableEdit(int nCtrlID, int nCode)
 {
-	m_UndoManager->CancelEdit(CtrlID, Code);
+	m_UndoManager->CancelEdit(nCtrlID, nCode);
 }
 
 inline int CUndoable::GetUndoAction() const

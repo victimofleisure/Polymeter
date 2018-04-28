@@ -14,6 +14,10 @@
 		04		04apr15	use base class column count accessor
 		05		19apr18	in OnParentNotify, use subitem rect for CEdit-derived controls
 		06		19apr18	if scroll notification from our child control, don't end edit
+		07		24apr18	standardize names
+		08		25apr18	handle up and down arrow keys only if control key is down
+		09		25apr18	in EditSubItem, don't modify selection
+		10		27apr18	handle reordered columns
 
 		grid control
  
@@ -39,78 +43,84 @@ IMPLEMENT_DYNAMIC(CGridCtrl, CDragVirtualListCtrl);
 
 CGridCtrl::CGridCtrl()
 {
-	m_EditCtrl = NULL;
-	m_EditRow = 0;
-	m_EditCol = 0;
+	m_pEditCtrl = NULL;
+	m_iEditRow = 0;
+	m_iEditCol = 0;
 }
 
 CGridCtrl::~CGridCtrl()
 {
 }
 
-bool CGridCtrl::EditSubitem(int Row, int Col)
+bool CGridCtrl::EditSubitem(int iRow, int iCol)
 {
-	ASSERT(Row >= 0 && Row < GetItemCount());	// validate row
-	ASSERT(Col >= 1 && Col < GetColumnCount());	// subitems only
+	ASSERT(iRow >= 0 && iRow < GetItemCount());	// validate row
+	ASSERT(iCol >= 1 && iCol < GetColumnCount());	// subitems only
 	EndEdit();	// end previous edit if any
-	EnsureVisible(Row, FALSE);	// make sure specified row is fully visible
-	POSITION	pos = GetFirstSelectedItemPosition();
-	int	StateMask = LVIS_FOCUSED | LVIS_SELECTED;
-	while (pos != NULL)	// deselect all items
-		SetItemState(GetNextSelectedItem(pos), 0, StateMask);
-	SetItemState(Row, StateMask, StateMask);	// select specified row
-	SetSelectionMark(Row);	// set selection mark too
+	EnsureVisible(iRow, FALSE);	// make sure specified row is fully visible
 	CRect	rSubitem;
-	GetSubItemRect(Row, Col, LVIR_BOUNDS, rSubitem);	// get subitem rect
+	GetSubItemRect(iRow, iCol, LVIR_BOUNDS, rSubitem);	// get subitem rect
 	// clip siblings is mandatory, else edit control overwrites header control
 	UINT	style = WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS;
-	m_EditRow = Row;	// update our indices first so create can access them
-	m_EditCol = Col;
-	CString	text(GetItemText(Row, Col));	// get subitem text
-	m_EditCtrl = CreateEditCtrl(text, style, rSubitem, this, 0);
-	if (m_EditCtrl == NULL)
+	m_iEditRow = iRow;	// update our indices first so create can access them
+	m_iEditCol = iCol;
+	CString	text(GetItemText(iRow, iCol));	// get subitem text
+	m_pEditCtrl = CreateEditCtrl(text, style, rSubitem, this, 0);
+	if (m_pEditCtrl == NULL)
 		return(FALSE);
-	ASSERT(IsWindow(m_EditCtrl->m_hWnd));
+	ASSERT(IsWindow(m_pEditCtrl->m_hWnd));
 	return(TRUE);
 }
 
 void CGridCtrl::EndEdit()
 {
 	if (IsEditing())
-		m_EditCtrl->SendMessage(CPopupEdit::UWM_END_EDIT);
+		m_pEditCtrl->SendMessage(CPopupEdit::UWM_END_EDIT);
 }
 
 void CGridCtrl::CancelEdit()
 {
 	if (IsEditing())
-		m_EditCtrl->SendMessage(CPopupEdit::UWM_END_EDIT, TRUE);	// cancel edit
+		m_pEditCtrl->SendMessage(CPopupEdit::UWM_END_EDIT, TRUE);	// cancel edit
 }
 
-void CGridCtrl::GotoSubitem(int DeltaRow, int DeltaCol)
+void CGridCtrl::GotoSubitem(int nDeltaRow, int nDeltaCol)
 {
-	ASSERT(abs(DeltaRow) <= 1);	// valid delta range is [-1..1]
-	ASSERT(abs(DeltaCol) <= 1);
+	ASSERT(abs(nDeltaRow) <= 1);	// valid delta range is [-1..1]
+	ASSERT(abs(nDeltaCol) <= 1);
 	ASSERT(IsEditing());
-	int	cols = GetColumnCount();
-	int	col = m_EditCol + DeltaCol;
-	if (col >= cols) {	// if after last column
-		col = 1;	// wrap to first column
-		DeltaRow = 1;	// next row
-	} else if (col < 1) {	// if before first column
-		col = cols - 1;	// wrap to last column
-		DeltaRow = -1;	// previous row
+	int	nCols = GetColumnCount();
+	int	iCol = m_iEditCol;
+	CIntArrayEx	arrOrder;
+	if (GetColumnOrder(arrOrder)) {	// get column order array
+		if (arrOrder[iCol] != iCol) {	// if item and column differ
+			int	iNewCol = INT64TO32(arrOrder.Find(iCol));	// find column's item
+			ASSERT(iNewCol >= 0);	// should always be found
+			if (iNewCol >= 0)	// if item found
+				iCol = iNewCol;	// convert item to column
+		}
 	}
-	int	rows = GetItemCount();
-	int	row = m_EditRow + DeltaRow;
-	if (row >= rows) {	// if after last row
-		row = 0;	// wrap to first row
-	} else if (row < 0) {	// if before first row
-		row = rows - 1;	// wrap to last row
+	iCol += nDeltaCol;	// offset column
+	if (iCol >= nCols) {	// if after last column
+		iCol = 1;	// wrap to first column
+		nDeltaRow = 1;	// next row
+	} else if (iCol < 1) {	// if before first column
+		iCol = nCols - 1;	// wrap to last column
+		nDeltaRow = -1;	// previous row
 	}
-	EditSubitem(row, col);
+	if (arrOrder.GetSize())	// if column order array valid
+		iCol = arrOrder[iCol];	// convert column back to item
+	int	nRows = GetItemCount();
+	int	iRow = m_iEditRow + nDeltaRow;	// offset row
+	if (iRow >= nRows) {	// if after last row
+		iRow = 0;	// wrap to first row
+	} else if (iRow < 0) {	// if before first row
+		iRow = nRows - 1;	// wrap to last row
+	}
+	EditSubitem(iRow, iCol);
 }
 
-CWnd *CGridCtrl::CreateEditCtrl(LPCTSTR Text, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
+CWnd *CGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
 	UNREFERENCED_PARAMETER(pParentWnd);
 	CPopupEdit	*pEdit = new CPopupEdit;
@@ -118,14 +128,14 @@ CWnd *CGridCtrl::CreateEditCtrl(LPCTSTR Text, DWORD dwStyle, const RECT& rect, C
 		delete pEdit;
 		return(NULL);
 	}
-	pEdit->SetWindowText(Text);
+	pEdit->SetWindowText(pszText);
 	pEdit->SetSel(0, -1);	// select entire text
 	return(pEdit);
 }
 
-void CGridCtrl::OnItemChange(LPCTSTR Text)
+void CGridCtrl::OnItemChange(LPCTSTR pszText)
 {
-	SetItemText(m_EditRow, m_EditCol, Text);
+	SetItemText(m_iEditRow, m_iEditCol, pszText);
 }
 
 BEGIN_MESSAGE_MAP(CGridCtrl, CDragVirtualListCtrl)
@@ -166,21 +176,21 @@ BOOL CGridCtrl::PreTranslateMessage(MSG* pMsg)
 		if (pMsg->message == WM_KEYDOWN) {
 			switch (pMsg->wParam) {
 			case VK_UP:
-				if (DYNAMIC_DOWNCAST(CEdit, m_EditCtrl) != NULL) {	// if control is CEdit
+				if (GetKeyState(VK_CONTROL) & GKS_DOWN) {	// if control key down
 					GotoSubitem(-1, 0);
 					return(TRUE);
 				}
 				break;
 			case VK_DOWN:
-				if (DYNAMIC_DOWNCAST(CEdit, m_EditCtrl) != NULL) {	// if control is CEdit
+				if (GetKeyState(VK_CONTROL) & GKS_DOWN) {	// if control key down
 					GotoSubitem(1, 0);
 					return(TRUE);
 				}
 				break;
 			case VK_TAB:
 				{
-					int	DeltaCol = (GetKeyState(VK_SHIFT) & GKS_DOWN) ? -1 : 1;
-					GotoSubitem(0, DeltaCol);
+					int	nDeltaCol = (GetKeyState(VK_SHIFT) & GKS_DOWN) ? -1 : 1;
+					GotoSubitem(0, nDeltaCol);
 				}
 				return(TRUE);
 			case VK_RETURN:
@@ -197,7 +207,11 @@ BOOL CGridCtrl::PreTranslateMessage(MSG* pMsg)
 		&& GetColumnCount() > 1) {	// and at least one subitem
 			int	iRow = GetSelectionMark();
 			if (iRow >= 0) {	// if current row valid
-				EditSubitem(iRow, 1);	// edit row's first subitem
+				int	iCol = 1;
+				CIntArrayEx	arrOrder;
+				if (GetColumnOrder(arrOrder))
+					iCol = arrOrder[iCol];
+				EditSubitem(iRow, iCol);	// edit row's first subitem
 				return(TRUE);
 			}
 		}
@@ -216,11 +230,11 @@ void CGridCtrl::OnParentNotify(UINT message, LPARAM lParam)
 				CPoint	pt;
 				POINTSTOPOINT(pt, lParam);
 				CRect	rEdit;
-				if (m_EditCtrl->IsKindOf(RUNTIME_CLASS(CEdit))) {	// if editing control is CEdit-derived
+				if (m_pEditCtrl->IsKindOf(RUNTIME_CLASS(CEdit))) {	// if editing control is CEdit-derived
 					// use subitem rect because it includes spin button control if any
-					GetSubItemRect(m_EditRow, m_EditCol, LVIR_BOUNDS, rEdit);
+					GetSubItemRect(m_iEditRow, m_iEditCol, LVIR_BOUNDS, rEdit);
 				} else {	// not an edit control; control may be bigger than subitem, e.g. combo box
-					m_EditCtrl->GetWindowRect(rEdit);	// use child control's rect
+					m_pEditCtrl->GetWindowRect(rEdit);	// use child control's rect
 					ScreenToClient(rEdit);
 				}
 				if (!rEdit.PtInRect(pt))	// if clicked outside of edit control
@@ -228,7 +242,7 @@ void CGridCtrl::OnParentNotify(UINT message, LPARAM lParam)
 			}
 			break;
 		case WM_DESTROY:
-			m_EditCtrl = NULL;
+			m_pEditCtrl = NULL;
 			break;
 		}
 	}

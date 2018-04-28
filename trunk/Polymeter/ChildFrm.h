@@ -30,6 +30,7 @@ public:
 
 // Overrides
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
 
 // Implementation
 public:
@@ -38,6 +39,15 @@ public:
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
 #endif
+	virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
+
+	CSplitterWndEx	m_wndSplitter;
+
+	enum {	// panes
+		PANE_TRACK,
+		PANE_STEP,
+		PANES
+	};
 
 // Generated message map functions
 protected:

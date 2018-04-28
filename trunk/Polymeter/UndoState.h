@@ -20,6 +20,7 @@
 		10		30mar18	overload constructor
 		11		09apr18	add value accessors
 		12		10apr18	remove pack pragma to fix CRefString alignment bug
+		13		25apr18	standardize names
 
         undo state container
  
@@ -93,12 +94,12 @@ public:
 // Attributes
 	int		GetCtrlID() const;
 	int		GetCode() const;
-	bool	IsMatch(int CtrlID, int Code) const;
+	bool	IsMatch(int nCtrlID, int nCode) const;
 	bool	IsSignificant() const;
 
 // Construction
 	CUndoState();
-	CUndoState(int CtrlID, int Code);
+	CUndoState(int nCtrlID, int nCode);
 
 // Operations
 	CString	DumpState() const;
@@ -106,9 +107,9 @@ public:
 
 private:
 // Member data
-	int		m_CtrlID;	// ID of notifying control; UNDO_CTRL_ID_INSIGNIFICANT
+	int		m_nCtrlID;	// ID of notifying control; UNDO_CTRL_ID_INSIGNIFICANT
 						// is reserved for flagging insignificant edits
-	int		m_Code;		// edit function code
+	int		m_nCode;	// edit function code
 
 // Helpers
 	friend CUndoManager;
@@ -118,30 +119,30 @@ inline CUndoState::CUndoState()
 {
 }
 
-inline CUndoState::CUndoState(int CtrlID, int Code)
+inline CUndoState::CUndoState(int nCtrlID, int nCode)
 {
-	m_CtrlID = CtrlID;
-	m_Code = Code;
+	m_nCtrlID = nCtrlID;
+	m_nCode = nCode;
 }
 
 inline int CUndoState::GetCtrlID() const
 {
-	return(m_CtrlID);
+	return(m_nCtrlID);
 }
 
 inline int CUndoState::GetCode() const
 {
-	return(m_Code);
+	return(m_nCode);
 }
 
-inline bool CUndoState::IsMatch(int CtrlID, int Code) const
+inline bool CUndoState::IsMatch(int nCtrlID, int nCode) const
 {
-	return(CtrlID == m_CtrlID && Code == m_Code);
+	return(nCtrlID == m_nCtrlID && nCode == m_nCode);
 }
 
 inline bool CUndoState::IsSignificant() const
 {
-	return(m_CtrlID != UNDO_CTRL_ID_INSIGNIFICANT);
+	return(m_nCtrlID != UNDO_CTRL_ID_INSIGNIFICANT);
 }
 
 inline void CUndoState::Empty()

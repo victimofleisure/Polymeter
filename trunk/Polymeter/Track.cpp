@@ -31,3 +31,25 @@ int CTrack::GetUsedEventCount() const
 	}
 	return 0;	// no events used
 }
+
+template<class T> int CTrack::Compare(const T& a, const T& b)
+{
+	if (a < b)
+		return -1;
+	if (a > b)
+		return 1;
+	return 0;
+}
+
+int CTrack::CompareProperty(int iProp, const CTrack& track) const
+{
+	switch (iProp) {
+	#define TRACKDEF(type, prefix, name, defval, offset) case PROP_##name: \
+		return Compare(m_##prefix##name, track.m_##prefix##name);
+	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
+	#include "TrackDef.h"		// generate code to compare track properties
+	case PROP_Length:
+		return Compare(m_arrEvent.GetSize(), track.m_arrEvent.GetSize());
+	}
+	return 0;
+}

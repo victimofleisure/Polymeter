@@ -24,12 +24,15 @@ public:
 // Attributes
 public:
 	static	CString	GetPropertyName(int iProp);
+	void	GetSelection(CIntArrayEx& arrSelection) const;
+	void	SetSelection(const CIntArrayEx& arrSelection);
 
 // Operations
 public:
 	void	Update();
 	void	Update(int iChan);
 	void	Update(int iChan, int iProp);
+	void	Update(const CIntArrayEx& arrSelection, int iProp);
 
 // Implementation
 public:
@@ -39,8 +42,8 @@ protected:
 // Types
 	class CChannelsGridCtrl : public CGridCtrl {
 	public:
-		virtual	CWnd*	CreateEditCtrl(LPCTSTR Text, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
-		virtual	void	OnItemChange(LPCTSTR Text);
+		virtual	CWnd*	CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
+		virtual	void	OnItemChange(LPCTSTR pszText);
 	};
 
 // Constants
@@ -56,7 +59,7 @@ protected:
 	static const CGridCtrl::COL_INFO	m_arrColInfo[COLUMNS];
 
 // Member data
-	CChannelsGridCtrl	m_Grid;		// grid control
+	CChannelsGridCtrl	m_grid;		// grid control
 
 // Helpers
 
@@ -68,3 +71,13 @@ protected:
 	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
 };
+
+inline void CChannelsBar::GetSelection(CIntArrayEx& arrSelection) const
+{
+	m_grid.GetSelection(arrSelection);
+}
+
+inline void CChannelsBar::SetSelection(const CIntArrayEx& arrSelection)
+{
+	m_grid.SetSelection(arrSelection);
+}

@@ -20,6 +20,7 @@
 		10		22nov13	in PreTranslateMessage, do base class if not dragging
 		11		12jun14	add drag enable
 		12		04apr15	add GetCompensatedDropPos
+		13		24apr18	standardize names
 
         virtual list control with drag reordering
  
@@ -45,56 +46,56 @@ IMPLEMENT_DYNAMIC(CDragVirtualListCtrl, CListCtrlExSel);
 
 CDragVirtualListCtrl::CDragVirtualListCtrl()
 {
-	m_DragEnable = TRUE;
-	m_Dragging = FALSE;
-	m_TrackDropPos = FALSE;
-	m_ScrollDelta = 0;
-	m_ScrollTimer = 0;
-	m_DropPos = 0;
+	m_bDragEnable = TRUE;
+	m_bDragging = FALSE;
+	m_bTrackDropPos = FALSE;
+	m_nScrollDelta = 0;
+	m_nScrollTimer = 0;
+	m_iDropPos = 0;
 }
 
 CDragVirtualListCtrl::~CDragVirtualListCtrl()
 {
 }
 
-void CDragVirtualListCtrl::AutoScroll(const CPoint& Cursor)
+void CDragVirtualListCtrl::AutoScroll(const CPoint& point)
 {
 	if (GetItemCount() > GetCountPerPage()) {	// if view is scrollable
-		CRect	cr, ir, hr;
-		GetClientRect(cr);
-		GetHeaderCtrl()->GetClientRect(hr);
-		cr.top += hr.Height() - 1;	// top scroll boundary is bottom of header
-		GetItemRect(0, ir, LVIR_BOUNDS);
-		int	Offset = ir.Height() / 2;	// vertical scrolling is quantized to lines
-		if (Cursor.y < cr.top)	// if cursor is above top boundary
-			m_ScrollDelta = Cursor.y - cr.top - Offset;	// start scrolling up
-		else if (Cursor.y >= cr.bottom)	// if cursor is below bottom boundary
-			m_ScrollDelta = Cursor.y - cr.bottom + Offset;	// start scrolling down
+		CRect	rc, rItem, rHdr;
+		GetClientRect(rc);
+		GetHeaderCtrl()->GetClientRect(rHdr);
+		rc.top += rHdr.Height() - 1;	// top scroll boundary is bottom of header
+		GetItemRect(0, rItem, LVIR_BOUNDS);
+		int	Offset = rItem.Height() / 2;	// vertical scrolling is quantized to lines
+		if (point.y < rc.top)	// if cursor is above top boundary
+			m_nScrollDelta = point.y - rc.top - Offset;	// start scrolling up
+		else if (point.y >= rc.bottom)	// if cursor is below bottom boundary
+			m_nScrollDelta = point.y - rc.bottom + Offset;	// start scrolling down
 		else
-			m_ScrollDelta = 0;	// stop scrolling
+			m_nScrollDelta = 0;	// stop scrolling
 	} else
-		m_ScrollDelta = 0;
-	if (m_ScrollDelta && !m_ScrollTimer)
-		m_ScrollTimer = SetTimer(TIMER_ID, SCROLL_DELAY, NULL);
+		m_nScrollDelta = 0;
+	if (m_nScrollDelta && !m_nScrollTimer)
+		m_nScrollTimer = SetTimer(TIMER_ID, SCROLL_DELAY, NULL);
 }
 
 void CDragVirtualListCtrl::UpdateCursor(CPoint point)
 {
 	if (ChildWindowFromPoint(point) == this) {
-		int	CursorID;
+		int	nCursorID;
 		if (GetSelectedCount() > 1)
-			CursorID = IDC_CURSOR_DRAG_MULTI;
+			nCursorID = IDC_CURSOR_DRAG_MULTI;
 		else
-			CursorID = IDC_CURSOR_DRAG_SINGLE;
-		SetCursor(AfxGetApp()->LoadCursor(CursorID));
+			nCursorID = IDC_CURSOR_DRAG_SINGLE;
+		SetCursor(AfxGetApp()->LoadCursor(nCursorID));
 	} else
  		SetCursor(LoadCursor(NULL, IDC_NO));
 }
 
 void CDragVirtualListCtrl::CancelDrag()
 {
-	if (m_Dragging) {
-		m_Dragging = FALSE;
+	if (m_bDragging) {
+		m_bDragging = FALSE;
 		int	iItem = GetSelectionMark();
 		if (iItem >= 0)	// re-focus selection mark
 			SetItemState(iItem, LVIS_FOCUSED, LVIS_FOCUSED);
@@ -102,29 +103,29 @@ void CDragVirtualListCtrl::CancelDrag()
 	}
 }
 
-bool CDragVirtualListCtrl::CompensateDropPos(int& DropPos) const
+bool CDragVirtualListCtrl::CompensateDropPos(int& iDropPos) const
 {
-	int	iPos = DropPos;
-	CIntArrayEx	sel;
-	GetSelection(sel);
-	int	nSels = sel.GetSize();
-	if (!(nSels > 1 || (nSels == 1 && iPos != sel[0])))
+	int	iPos = iDropPos;
+	CIntArrayEx	arrSel;
+	GetSelection(arrSel);
+	int	nSels = arrSel.GetSize();
+	if (!(nSels > 1 || (nSels == 1 && iPos != arrSel[0])))
 		return(FALSE);	// nothing changed
 	// reverse iterate for stability
 	for (int iSel = nSels - 1; iSel >= 0; iSel--) {	// for each selected item
-		if (sel[iSel] < iPos)	// if below drop position
+		if (arrSel[iSel] < iPos)	// if below drop position
 			iPos--;	// compensate drop position
 	}
-	DropPos = max(iPos, 0);	// keep it positive
+	iDropPos = max(iPos, 0);	// keep it positive
 	return(TRUE);
 }
 
 int CDragVirtualListCtrl::GetCompensatedDropPos() const
 {
-	int	iPos = GetDropPos();
-	if (!CompensateDropPos(iPos))
+	int	iDropPos = GetDropPos();
+	if (!CompensateDropPos(iDropPos))
 		return(-1);	// nothing changed
-	return(iPos);
+	return(iDropPos);
 }
 
 BEGIN_MESSAGE_MAP(CDragVirtualListCtrl, CListCtrlExSel)
@@ -141,13 +142,13 @@ END_MESSAGE_MAP()
 
 BOOL CDragVirtualListCtrl::OnBegindrag(NMHDR* pNMHDR, LRESULT* pResult) 
 {
-	if (m_DragEnable) {	// if drag enabled
+	if (m_bDragEnable) {	// if drag enabled
 		NM_LISTVIEW* pNMListView = (NM_LISTVIEW*)pNMHDR;
-		m_Dragging = TRUE;
+		m_bDragging = TRUE;
 		SetCapture();
 		UpdateCursor(pNMListView->ptAction);
-		m_DropPos = -1;
-		if (m_TrackDropPos)
+		m_iDropPos = -1;
+		if (m_bTrackDropPos)
 			SetFocus();
 	}
 	*pResult = 0;
@@ -158,18 +159,18 @@ void CDragVirtualListCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	CListCtrlExSel::OnLButtonUp(nFlags, point);
 	// NOTE that only report view is supported
-	if (m_Dragging) {
-		m_Dragging = FALSE;
+	if (m_bDragging) {
+		m_bDragging = FALSE;
 		ReleaseCapture();
-		UINT	flags;
-		int	iItem = HitTest(point, &flags);
+		UINT	nHitFlags;
+		int	iItem = HitTest(point, &nHitFlags);
 		if (iItem < 0) {
-			if (flags & LVHT_ABOVE)
+			if (nHitFlags & LVHT_ABOVE)
 				iItem = 0;
 			else	// assume end of list
 				iItem = GetItemCount();	// this works, amazingly
 		}
-		m_DropPos = iItem;	// update drop position member
+		m_iDropPos = iItem;	// update drop position member
 		// notify the parent window
 		NMLISTVIEW	lvh;
 		ZeroMemory(&lvh, sizeof(lvh));
@@ -177,25 +178,25 @@ void CDragVirtualListCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 		lvh.hdr.idFrom = GetDlgCtrlID();
 		lvh.hdr.code = ULVN_REORDER;
 		GetParent()->SendMessage(WM_NOTIFY, lvh.hdr.idFrom, long(&lvh));
-		KillTimer(m_ScrollTimer);
-		m_ScrollTimer = 0;
+		KillTimer(m_nScrollTimer);
+		m_nScrollTimer = 0;
 		EnsureVisible(min(iItem, GetItemCount() - 1), FALSE);
 	}
 }
 
 void CDragVirtualListCtrl::OnMouseMove(UINT nFlags, CPoint point) 
 {
-	if (m_Dragging) {
+	if (m_bDragging) {
 		UpdateCursor(point);
 		AutoScroll(point);
-		if (m_TrackDropPos) {
+		if (m_bTrackDropPos) {
 			int	iItem = HitTest(point);
-			if (iItem != m_DropPos) {
-				if (m_DropPos >= 0)
-					SetItemState(m_DropPos, 0, LVIS_FOCUSED);
+			if (iItem != m_iDropPos) {
+				if (m_iDropPos >= 0)
+					SetItemState(m_iDropPos, 0, LVIS_FOCUSED);
 				if (iItem >= 0)
 					SetItemState(iItem, LVIS_FOCUSED, LVIS_FOCUSED);
-				m_DropPos = iItem;
+				m_iDropPos = iItem;
 			}
 		}
 	}
@@ -205,8 +206,8 @@ void CDragVirtualListCtrl::OnMouseMove(UINT nFlags, CPoint point)
 void CDragVirtualListCtrl::OnTimer(W64UINT nIDEvent) 
 {
 	if (nIDEvent == TIMER_ID) {
-		if (m_ScrollDelta)
-			Scroll(CSize(0, m_ScrollDelta));
+		if (m_nScrollDelta)
+			Scroll(CSize(0, m_nScrollDelta));
 	} else
 		CListCtrlExSel::OnTimer(nIDEvent);
 }
@@ -214,7 +215,7 @@ void CDragVirtualListCtrl::OnTimer(W64UINT nIDEvent)
 BOOL CDragVirtualListCtrl::PreTranslateMessage(MSG* pMsg) 
 {
 	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_ESCAPE) {
-		if (m_Dragging) {
+		if (m_bDragging) {
 			CancelDrag();
 			return(TRUE);
 		}

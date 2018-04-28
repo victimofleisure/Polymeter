@@ -10,17 +10,14 @@
         00      23sep13	initial version
 		01		31may14	add OnItemChange
 		02		12may15	remove unused update pos message
+		03		24apr18	standardize names
 
 		grid control
  
 */
 
-#if !defined(AFX_GRIDCTRL_H__80FB53E2_FA82_4D1F_A010_1D430E50700E__INCLUDED_)
-#define AFX_GRIDCTRL_H__80FB53E2_FA82_4D1F_A010_1D430E50700E__INCLUDED_
-
-#if _MSC_VER > 1000
 #pragma once
-#endif // _MSC_VER > 1000
+
 // GridCtrl.h : header file
 //
 
@@ -42,7 +39,7 @@ public:
 
 // Operations
 public:
-	bool	EditSubitem(int Row, int Col);
+	bool	EditSubitem(int iRow, int iCol);
 	void	EndEdit();
 	void	CancelEdit();
 
@@ -72,26 +69,24 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 // Data members
-	CWnd	*m_EditCtrl;		// popup control for subitem editing
-	int		m_EditRow;			// row index of subitem being edited
-	int		m_EditCol;			// column index of subitem being edited
+	CWnd	*m_pEditCtrl;		// popup control for subitem editing
+	int		m_iEditRow;			// row index of subitem being edited
+	int		m_iEditCol;			// column index of subitem being edited
 
 // Overrideables
-	virtual	CWnd	*CreateEditCtrl(LPCTSTR Text, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
-	virtual	void	OnItemChange(LPCTSTR Text);
+	virtual	CWnd	*CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
+	virtual	void	OnItemChange(LPCTSTR pszText);
 
 // Helpers
-	void	GotoSubitem(int DeltaRow, int DeltaCol);
+	void	GotoSubitem(int nDeltaRow, int nDeltaCol);
 };
 
 inline bool CGridCtrl::IsEditing() const
 {
-	return(m_EditCtrl != NULL);
+	return(m_pEditCtrl != NULL);
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_GRIDCTRL_H__80FB53E2_FA82_4D1F_A010_1D430E50700E__INCLUDED_)

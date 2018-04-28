@@ -14,6 +14,7 @@
 		04		23mar15	add RedrawSubItem
 		05		24mar15	add column order methods
 		06		04apr15	add GetInsertPos
+		07		24apr18	standardize names
 
 		extended selection list control
  
@@ -46,11 +47,11 @@ CListCtrlExSel::~CListCtrlExSel()
 {
 }
 
-void CListCtrlExSel::CreateColumns(const COL_INFO *ColInfo, int Columns)
+void CListCtrlExSel::CreateColumns(const COL_INFO *pColInfo, int nColumns)
 {
-	for (int iCol = 0; iCol < Columns; iCol++) {	// for each column
-		const COL_INFO&	info = ColInfo[iCol];
-		InsertColumn(iCol, LDS(info.TitleID), info.Align, info.Width);
+	for (int iCol = 0; iCol < nColumns; iCol++) {	// for each column
+		const COL_INFO&	info = pColInfo[iCol];
+		InsertColumn(iCol, LDS(info.nTitleID), info.nAlign, info.nWidth);
 	}
 }
 
@@ -62,54 +63,54 @@ int CListCtrlExSel::GetSelection() const
 	return(GetNextSelectedItem(pos));
 }
 
-void CListCtrlExSel::GetSelection(CIntArrayEx& Sel) const
+void CListCtrlExSel::GetSelection(CIntArrayEx& arrSel) const
 {
-	int	sels = GetSelectedCount();
-	Sel.SetSize(sels);
+	int	nSels = GetSelectedCount();
+	arrSel.SetSize(nSels);
 	POSITION	pos = GetFirstSelectedItemPosition();
-	for (int iSel = 0; iSel < sels; iSel++)
-		Sel[iSel] = GetNextSelectedItem(pos);
+	for (int iSel = 0; iSel < nSels; iSel++)
+		arrSel[iSel] = GetNextSelectedItem(pos);
 }
 
-void CListCtrlExSel::SetSelection(const CIntArrayEx& Sel)
+void CListCtrlExSel::SetSelection(const CIntArrayEx& arrSel)
 {
 	Deselect();
-	int	sels = Sel.GetSize();
-	for (int iSel = 0; iSel < sels; iSel++)
-		Select(Sel[iSel]);
+	int	nSels = arrSel.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++)
+		Select(arrSel[iSel]);
 }
 
-void CListCtrlExSel::SetSelected(int ItemIdx, bool Enable)
+void CListCtrlExSel::SetSelected(int iItem, bool bEnable)
 {
-	SetItemState(ItemIdx, Enable ? LVIS_SELECTED : 0, LVIS_SELECTED);
+	SetItemState(iItem, bEnable ? LVIS_SELECTED : 0, LVIS_SELECTED);
 }
 
-void CListCtrlExSel::Select(int ItemIdx)
+void CListCtrlExSel::Select(int iItem)
 {
 	int	StateMask = LVIS_FOCUSED | LVIS_SELECTED;
-	SetItemState(ItemIdx, StateMask, StateMask);
-	SetSelectionMark(ItemIdx);
+	SetItemState(iItem, StateMask, StateMask);
+	SetSelectionMark(iItem);
 }
 
-void CListCtrlExSel::SelectOnly(int ItemIdx)
+void CListCtrlExSel::SelectOnly(int iItem)
 {
 	Deselect();
-	Select(ItemIdx);
+	Select(iItem);
 }
 
-void CListCtrlExSel::SelectRange(int FirstItemIdx, int Items)
+void CListCtrlExSel::SelectRange(int iFirstItem, int nItems)
 {
 	Deselect();
-	int	iEnd = FirstItemIdx + Items;
-	for (int iItem = FirstItemIdx; iItem < iEnd; iItem++)
+	int	iEnd = iFirstItem + nItems;
+	for (int iItem = iFirstItem; iItem < iEnd; iItem++)
 		Select(iItem);
 }
 
 void CListCtrlExSel::SelectAll()
 {
-	int	items = GetItemCount();
+	int	nItems = GetItemCount();
 	int	StateMask = LVIS_FOCUSED | LVIS_SELECTED;
-	for (int iItem = 0; iItem < items; iItem++)
+	for (int iItem = 0; iItem < nItems; iItem++)
 		SetItemState(iItem, StateMask, StateMask);
 }
 
@@ -129,114 +130,114 @@ int CListCtrlExSel::GetInsertPos() const
 	return(GetItemCount());
 }
 
-void CListCtrlExSel::GetColumnWidths(CIntArrayEx& Width)
+void CListCtrlExSel::GetColumnWidths(CIntArrayEx& arrWidth)
 {
-	int	cols = GetColumnCount();
-	if (cols < 0)	// if error
+	int	nCols = GetColumnCount();
+	if (nCols < 0)	// if error
 		return;
-	Width.SetSize(cols);
-	for (int iCol = 0; iCol < cols; iCol++)
-		Width[iCol] = GetColumnWidth(iCol);
+	arrWidth.SetSize(nCols);
+	for (int iCol = 0; iCol < nCols; iCol++)
+		arrWidth[iCol] = GetColumnWidth(iCol);
 }
 
-void CListCtrlExSel::SetColumnWidths(const CIntArrayEx& Width)
+void CListCtrlExSel::SetColumnWidths(const CIntArrayEx& arrWidth)
 {
-	int	cols = min(GetColumnCount(), Width.GetSize());
-	for (int iCol = 0; iCol < cols; iCol++)
-		SetColumnWidth(iCol, Width[iCol]);
+	int	nCols = min(GetColumnCount(), arrWidth.GetSize());
+	for (int iCol = 0; iCol < nCols; iCol++)
+		SetColumnWidth(iCol, arrWidth[iCol]);
 }
 
-bool CListCtrlExSel::SaveColumnWidths(LPCTSTR Section, LPCTSTR Key)
+bool CListCtrlExSel::SaveColumnWidths(LPCTSTR pszSection, LPCTSTR pszKey)
 {
-	CIntArrayEx	width;
-	GetColumnWidths(width);
-	DWORD	size = width.GetSize() * sizeof(int);
-	return(CPersist::WriteBinary(Section, Key, width.GetData(), size) != 0);
+	CIntArrayEx	arrWidth;
+	GetColumnWidths(arrWidth);
+	DWORD	nSize = arrWidth.GetSize() * sizeof(int);
+	return(CPersist::WriteBinary(pszSection, pszKey, arrWidth.GetData(), nSize) != 0);
 }
 
-bool CListCtrlExSel::LoadColumnWidths(LPCTSTR Section, LPCTSTR Key)
+bool CListCtrlExSel::LoadColumnWidths(LPCTSTR pszSection, LPCTSTR pszKey)
 {
-	int	cols = GetColumnCount();
-	if (cols < 0)	// if error
+	int	nCols = GetColumnCount();
+	if (nCols < 0)	// if error
 		return(FALSE);
-	CIntArrayEx	width;
-	if (!LoadArray(Section, Key, width, cols))
+	CIntArrayEx	arrWidth;
+	if (!LoadArray(pszSection, pszKey, arrWidth, nCols))
 		return(FALSE);
-	SetColumnWidths(width);
+	SetColumnWidths(arrWidth);
 	return(TRUE);
 }
 
-void CListCtrlExSel::ResetColumnWidths(const COL_INFO *ColInfo, int Columns)
+void CListCtrlExSel::ResetColumnWidths(const COL_INFO *pColInfo, int nColumns)
 {
-	ASSERT(Columns == GetColumnCount());
-	CIntArrayEx	width;
-	width.SetSize(Columns);
-	for (int iCol = 0; iCol < Columns; iCol++)
-		width[iCol] = ColInfo[iCol].Width;
-	SetColumnWidths(width);
+	ASSERT(nColumns == GetColumnCount());
+	CIntArrayEx	arrWidth;
+	arrWidth.SetSize(nColumns);
+	for (int iCol = 0; iCol < nColumns; iCol++)
+		arrWidth[iCol] = pColInfo[iCol].nWidth;
+	SetColumnWidths(arrWidth);
 }
 
-bool CListCtrlExSel::GetColumnOrder(CIntArrayEx& Order)
+bool CListCtrlExSel::GetColumnOrder(CIntArrayEx& arrOrder)
 {
-	int	cols = GetColumnCount();
-	if (cols < 0)	// if error
+	int	nCols = GetColumnCount();
+	if (nCols < 0)	// if error
 		return(FALSE);
-	Order.SetSize(cols);
-	return(GetColumnOrderArray(Order.GetData(), cols) != 0);
+	arrOrder.SetSize(nCols);
+	return(GetColumnOrderArray(arrOrder.GetData(), nCols) != 0);
 }
 
-bool CListCtrlExSel::SetColumnOrder(const CIntArrayEx& Order)
+bool CListCtrlExSel::SetColumnOrder(const CIntArrayEx& arrOrder)
 {
-	int	cols = min(GetColumnCount(), Order.GetSize());
-	return(SetColumnOrderArray(cols, const_cast<int *>(Order.GetData())) != 0);
+	int	nCols = min(GetColumnCount(), arrOrder.GetSize());
+	return(SetColumnOrderArray(nCols, const_cast<int *>(arrOrder.GetData())) != 0);
 }
 
-bool CListCtrlExSel::SaveColumnOrder(LPCTSTR Section, LPCTSTR Key)
+bool CListCtrlExSel::SaveColumnOrder(LPCTSTR pszSection, LPCTSTR pszKey)
 {
-	CIntArrayEx	width;
-	GetColumnOrder(width);
-	DWORD	size = width.GetSize() * sizeof(int);
-	return(CPersist::WriteBinary(Section, Key, width.GetData(), size) != 0);
+	CIntArrayEx	arrOrder;
+	GetColumnOrder(arrOrder);
+	DWORD	nSize = arrOrder.GetSize() * sizeof(int);
+	return(CPersist::WriteBinary(pszSection, pszKey, arrOrder.GetData(), nSize) != 0);
 }
 
-bool CListCtrlExSel::LoadColumnOrder(LPCTSTR Section, LPCTSTR Key)
+bool CListCtrlExSel::LoadColumnOrder(LPCTSTR pszSection, LPCTSTR pszKey)
 {
-	int	cols = GetColumnCount();
-	if (cols < 0)	// if error
+	int	nCols = GetColumnCount();
+	if (nCols < 0)	// if error
 		return(FALSE);
-	CIntArrayEx	order;
-	if (!LoadArray(Section, Key, order, cols))
+	CIntArrayEx	arrOrder;
+	if (!LoadArray(pszSection, pszKey, arrOrder, nCols))
 		return(FALSE);
-	return(SetColumnOrder(order));
+	return(SetColumnOrder(arrOrder));
 }
 
 bool CListCtrlExSel::ResetColumnOrder()
 {
-	int	cols = GetColumnCount();
-	if (cols < 0)	// if error
+	int	nCols = GetColumnCount();
+	if (nCols < 0)	// if error
 		return(FALSE);
-	CIntArrayEx	order;
-	order.SetSize(cols);
-	for (int iCol = 0; iCol < cols; iCol++)
-		order[iCol] = iCol;
-	return(SetColumnOrder(order));
+	CIntArrayEx	arrOrder;
+	arrOrder.SetSize(nCols);
+	for (int iCol = 0; iCol < nCols; iCol++)
+		arrOrder[iCol] = iCol;
+	return(SetColumnOrder(arrOrder));
 }
 
-bool CListCtrlExSel::LoadArray(LPCTSTR Section, LPCTSTR Key, CIntArrayEx& Array, int Elems)
+bool CListCtrlExSel::LoadArray(LPCTSTR pszSection, LPCTSTR pszKey, CIntArrayEx& Array, int nElems)
 {
-	Array.SetSize(Elems);
-	DWORD	ExpectedSize = Elems * sizeof(int);
-	DWORD	size = ExpectedSize;
-	if (!CPersist::GetBinary(Section, Key, Array.GetData(), &size))
+	Array.SetSize(nElems);
+	DWORD	nExpectedSize = nElems * sizeof(int);
+	DWORD	nSize = nExpectedSize;
+	if (!CPersist::GetBinary(pszSection, pszKey, Array.GetData(), &nSize))
 		return(FALSE);
-	if (size != ExpectedSize)	// if unexpected size
+	if (nSize != nExpectedSize)	// if unexpected nSize
 		return(FALSE);
 	return(TRUE);
 }
 
-void CListCtrlExSel::FixContextMenuPoint(CPoint& Point)
+void CListCtrlExSel::FixContextMenuPoint(CPoint& point)
 {
-	if (Point.x == -1 && Point.y == -1) {	// if menu triggered via keyboard
+	if (point.x == -1 && point.y == -1) {	// if menu triggered via keyboard
 		int	iItem = GetSelectionMark();
 		CRect	rc;
 		if (iItem >= 0) {
@@ -244,7 +245,7 @@ void CListCtrlExSel::FixContextMenuPoint(CPoint& Point)
 			ClientToScreen(rc);
 		} else
 			GetWindowRect(rc);
-		Point = rc.CenterPoint();
+		point = rc.CenterPoint();
 	}
 }
 

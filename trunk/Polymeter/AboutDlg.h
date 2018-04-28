@@ -13,8 +13,7 @@
  
 */
 
-#if !defined(AFX_ABOUTDLG_H__ED0ED84D_AA43_442C_85CD_A7FA518EBF90__INCLUDED_)
-#define AFX_ABOUTDLG_H__ED0ED84D_AA43_442C_85CD_A7FA518EBF90__INCLUDED_
+#pragma once
 
 /////////////////////////////////////////////////////////////////////////////
 // CAboutDlg dialog used for App About
@@ -52,5 +51,3 @@ protected:
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_ABOUTDLG_H__ED0ED84D_AA43_442C_85CD_A7FA518EBF90__INCLUDED_)

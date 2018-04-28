@@ -19,7 +19,6 @@
 #include "PropertiesBar.h"
 #include "ChannelsBar.h"
 
-class CPolymeterView;
 class CPolymeterDoc;
 
 class CMainFrame : public CMDIFrameWndEx
@@ -42,9 +41,9 @@ public:
 public:
 	HACCEL	GetAccelTable() const;
 	CMFCStatusBar&	GetStatusBar();
-	CPolymeterView	*GetActiveMDIView();
 	CPolymeterDoc	*GetActiveMDIDoc();
 	bool	PropertiesBarHasFocus() const;
+	CChannelsBar&	GetChannelsBar();
 
 // Operations
 public:
@@ -74,7 +73,7 @@ protected:  // control bar embedded members
 	CChannelsBar	  m_wndChannelsBar;
 
 // Data members
-	CPolymeterView	*m_pActiveView;		// pointer to active view, or NULL if none
+	CPolymeterDoc	*m_pActiveDoc;		// pointer to active document, or NULL if none
 	CString	m_sSongPos;					// song position string
 
 // Helpers
@@ -118,9 +117,9 @@ inline CMFCStatusBar& CMainFrame::GetStatusBar()
 	return m_wndStatusBar;
 }
 
-inline CPolymeterView *CMainFrame::GetActiveMDIView()
+inline CPolymeterDoc *CMainFrame::GetActiveMDIDoc()
 {
-	return(m_pActiveView);
+	return(m_pActiveDoc);
 }
 
 inline bool CMainFrame::PropertiesBarHasFocus() const
@@ -128,3 +127,9 @@ inline bool CMainFrame::PropertiesBarHasFocus() const
 	HWND	hFocusWnd = ::GetFocus();
 	return ::IsChild(m_wndPropertiesBar.m_hWnd, hFocusWnd) != 0;
 }
+
+inline CChannelsBar& CMainFrame::GetChannelsBar()
+{
+	return m_wndChannelsBar;
+}
+

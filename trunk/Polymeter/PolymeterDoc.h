@@ -17,10 +17,11 @@
 #pragma once
 
 #include "Sequencer.h"
-#include "TrackDlg.h"
 #include "MasterProps.h"
 #include "Undoable.h"
 #include "Channel.h"
+
+class COptions;
 
 class CPolymeterDoc : public CDocument, public CMasterProps, public CUndoable, public CTrackBase
 {
@@ -28,7 +29,6 @@ protected: // create from serialization only
 	CPolymeterDoc();
 	DECLARE_DYNCREATE(CPolymeterDoc)
 
-// Attributes
 public:
 // Constants
 	enum {
@@ -43,7 +43,9 @@ public:
 		HINT_MASTER_PROP,		// master property edit
 		HINT_PLAY,				// start or stop playback
 		HINT_SONG_POS,			// song position change
-		HINT_CHANNEL_PROP,		// channel edit; pHint is CPropHint
+		HINT_CHANNEL_PROP,		// channel property edit; pHint is CPropHint
+		HINT_MULTI_CHANNEL_PROP,	// multiple channel property edit; pHint is CMultiItemPropHint
+		HINT_TRACK_SELECTION,	// track selection
 		HINTS
 	};
 
@@ -74,6 +76,13 @@ public:
 	CUndoManager	m_UndoMgr;	// undo manager
 	CString	m_sGoToPosition;	// previous go to position string
 	CChannelArray	m_arrChannel;	// array of channels
+	CIntArrayEx	m_arrTrackSel;	// array of indices of selected tracks
+	int		m_iTrackSelMark;	// track selection mark
+
+// Attributes
+	int		GetTrackCount() const;
+	int		GetSelectedCount() const;
+	static	int		GetTrackPropertyNameID(int iProp);
 
 // Operations
 public:
@@ -85,16 +94,18 @@ public:
 	void	InitChannelArray();
 	void	UpdateChannelEvents();
 	void	OutputChannelEvent(int iChan, int iProp);
+	void	SelectOnly(int iTrack);
+	void	SelectRange(int iStartTrack, int nSels);
+	void	SelectAll();
+	void	Deselect();
+	void	Drop(int iDropPos);
+	void	SortTracks(const CIntArrayEx& arrSortLevel);
 
 // Overrides
 public:
 	virtual BOOL OnNewDocument();
 	virtual void Serialize(CArchive& ar);
 	virtual void PreCloseFrame(CFrameWnd* pFrame );
-#ifdef SHARED_HANDLERS
-	virtual void InitializeSearchContent();
-	virtual void OnDrawThumbnail(CDC& dc, LPRECT lprcBounds);
-#endif // SHARED_HANDLERS
 	virtual	CString	GetUndoTitle(const CUndoState& State);
 
 // Implementation
@@ -127,17 +138,38 @@ protected:
 		CIntArrayEx	m_arrSelection;	// indices of selected tracks
 		CArrayEx<CByteArrayEx, CByteArrayEx&>	m_arrEvent;		// array of events for each track
 	};
+	class CUndoTrackSort : public CRefObj {
+	public:
+		CIntArrayEx	m_arrSelection;	// indices of selected tracks
+		CIntArrayEx	m_arrSorted;	// indices of sorted selected tracks
+	};
+	class CTrackSortInfo {
+	public:
+		const CTrackArray	*m_parrTrack;	// pointer to track array
+		const CIntArrayEx	*m_parrLevel;	// pointer to sort levels array
+		// level's low word is index of track property to sort by; high word 
+		// is sort direction (zero for ascending, non-zero for descending)
+	};
 
 // Constants
 	static const int	m_nUndoTitleId[];	// array of string resource IDs for undo titles
+	static const int	m_nTrackPropNameId[];	// array of string resource IDs for track property names
+
+// Data members
+	static CTrackSortInfo	m_infoTrackSort;	// state passed to track sort compare function
+	static const CIntArrayEx	*m_parrSortedSelection;	// pointer to sorted selection array for undo
 
 // Overrides
-	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
-	virtual BOOL OnSaveDocument(LPCTSTR lpszPathName);
+	virtual	BOOL	OnOpenDocument(LPCTSTR lpszPathName);
+	virtual BOOL	OnSaveDocument(LPCTSTR lpszPathName);
 	virtual	void	SaveUndoState(CUndoState& State);
 	virtual	void	RestoreUndoState(const CUndoState& State);
 
 // Helpers
+	int		GetInsertPos() const;
+	void	DeleteTracks(bool bCopyToClipboard);
+	static	int TrackSortCompare(const void *pElem1, const void *pElem2);
+	void	GetSelectAll(CIntArrayEx& arrSelection) const;
 	void	SaveTrackProperty(int iTrack, int iProp, CUndoState& State) const;
 	void	RestoreTrackProperty(int iTrack, int iProp, const CUndoState& State);
 	void	SaveMultiTrackProperty(const CIntArrayEx& arrSelection, int iProp, CUndoState& State) const;
@@ -150,11 +182,10 @@ protected:
 	void	RestoreClipboard(const CUndoState& State);
 	void	SaveMasterProperty(int iProp, CUndoState& State) const;
 	void	RestoreMasterProperty(int iProp, const CUndoState& State);
-
-#ifdef SHARED_HANDLERS
-	// Helper function that sets search content for a Search Handler
-	void SetSearchContent(const CString& value);
-#endif // SHARED_HANDLERS
+	void	SaveMultiChannelProperty(const CIntArrayEx& arrSelection, int iProp, CUndoState& State) const;
+	void	RestoreMultiChannelProperty(CIntArrayEx& arrSelection, int iProp, const CUndoState& State);
+	void	SaveTrackSort(CUndoState& State) const;
+	void	RestoreTrackSort(const CUndoState& State);
 
 // Generated message map functions
 protected:
@@ -165,4 +196,40 @@ protected:
 	afx_msg void OnUpdateEditRedo(CCmdUI *pCmdUI);
 	afx_msg void OnToolsStatistics();
 	afx_msg void OnFileExport();
+	afx_msg void OnViewPlay();
+	afx_msg void OnUpdateViewPlay(CCmdUI *pCmdUI);
+	afx_msg void OnViewPause();
+	afx_msg void OnUpdateViewPause(CCmdUI *pCmdUI);
+	afx_msg void OnViewGoToPosition();
+	afx_msg void OnEditCopy();
+	afx_msg void OnEditCut();
+	afx_msg void OnEditDelete();
+	afx_msg void OnEditInsert();
+	afx_msg void OnEditPaste();
+	afx_msg void OnEditSelectAll();
+	afx_msg void OnUpdateEditCopy(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateEditCut(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateEditSelectAll(CCmdUI *pCmdUI);
+	afx_msg void OnToolsTimeToRepeat();
+	afx_msg void OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI);
+	afx_msg void OnEditTrackSort();
 };
+
+inline int CPolymeterDoc::GetTrackCount() const
+{
+	return m_Seq.GetTrackCount();
+}
+
+inline int CPolymeterDoc::GetSelectedCount() const
+{
+	return m_arrTrackSel.GetSize();
+}
+
+inline int CPolymeterDoc::GetTrackPropertyNameID(int iProp)
+{
+	ASSERT(iProp >= 0 && iProp < CTrackBase::PROPERTIES);
+	return m_nTrackPropNameId[iProp];
+}

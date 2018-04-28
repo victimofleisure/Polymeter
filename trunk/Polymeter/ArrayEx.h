@@ -277,6 +277,7 @@ public:
 	void	Swap(CDWordArrayEx& src);
 	void	FastRemoveAll();
 	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);
+	W64INT	Find(DWORD val) const;
 };
 
 AFX_INLINE CDWordArrayEx::CDWordArrayEx()
@@ -347,6 +348,16 @@ AFX_INLINE void CDWordArrayEx::FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy)
 		SetSize(nNewSize, nGrowBy);
 }
 
+AFX_INLINE W64INT CDWordArrayEx::Find(DWORD val) const
+{
+	W64INT nElems = m_nSize;
+	for (W64INT iElem = 0; iElem < nElems; iElem++) {
+		if (GetAt(iElem) == val)
+			return iElem;
+	}
+	return -1;
+}
+
 class CIntArrayEx : public CDWordArray
 {
 public:
@@ -366,6 +377,7 @@ public:
 	void	Swap(CIntArrayEx& src);
 	void	FastRemoveAll();
 	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);
+	W64INT	Find(int val) const;
 };
 
 AFX_INLINE CIntArrayEx::CIntArrayEx()
@@ -446,6 +458,16 @@ AFX_INLINE void CIntArrayEx::FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy)
 		SetSize(nNewSize, nGrowBy);
 }
 
+AFX_INLINE W64INT CIntArrayEx::Find(int val) const
+{
+	W64INT nElems = m_nSize;
+	for (W64INT iElem = 0; iElem < nElems; iElem++) {
+		if (GetAt(iElem) == val)
+			return iElem;
+	}
+	return -1;
+}
+
 class CByteArrayEx : public CByteArray
 {
 public:
@@ -463,6 +485,7 @@ public:
 	void	Swap(CByteArrayEx& src);
 	void	FastRemoveAll();
 	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);
+	W64INT	Find(BYTE val) const;
 };
 
 AFX_INLINE CByteArrayEx::CByteArrayEx()
@@ -533,6 +556,16 @@ AFX_INLINE void CByteArrayEx::FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy)
 		SetSize(nNewSize, nGrowBy);
 }
 
+AFX_INLINE W64INT CByteArrayEx::Find(BYTE val) const
+{
+	W64INT nElems = m_nSize;
+	for (W64INT iElem = 0; iElem < nElems; iElem++) {
+		if (GetAt(iElem) == val)
+			return iElem;
+	}
+	return -1;
+}
+
 class CStringArrayEx : public CStringArray
 {
 public:
@@ -541,6 +574,7 @@ public:
 	CStringArrayEx& operator=(const CStringArrayEx& arr);
 	int		GetSize() const;
 	W64INT	GetSize64() const;
+	W64INT Find(const CString& val) const;
 };
 
 AFX_INLINE CStringArrayEx::CStringArrayEx()
@@ -567,6 +601,16 @@ AFX_INLINE int CStringArrayEx::GetSize() const
 AFX_INLINE W64INT CStringArrayEx::GetSize64() const
 {
 	return(m_nSize);
+}
+
+AFX_INLINE W64INT CStringArrayEx::Find(const CString& val) const
+{
+	W64INT nElems = m_nSize;
+	for (W64INT iElem = 0; iElem < nElems; iElem++) {
+		if (GetAt(iElem) == val)
+			return iElem;
+	}
+	return -1;
 }
 
 #endif

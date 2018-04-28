@@ -68,6 +68,10 @@ public:
 	void	SetInitialEvents(const CDWordArrayEx& arrEvent);
 	int		GetTrackCount() const;
 	void	SetTrackCount(int nTracks);
+	const CTrackArray&	GetTracks() const;
+	void	SetTracks(const CTrackArray& arrTrack);
+	void	GetTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const;
+	void	SetTracks(const CIntArrayEx& arrSelection, const CTrackArray& arrTrack);
 	const CTrack&	GetTrack(int iTrack) const;
 	void	SetTrack(int iTrack, const CTrack& track);
 	CString	GetName(int iTrack) const;
@@ -98,6 +102,7 @@ public:
 	void	SetTrackProperty(int iTrack, int iProp, const CComVariant& var);
 	int		GetUsedTrackCount(bool bExcludeMuted = false) const;
 	void	GetUsedTracks(CIntArrayEx& arrUsedTrack, bool bExcludeMuted = false) const;
+	int		GetEventIndex(int iTrack, LONGLONG nPos) const;
 
 // Operations
 	bool	Play(bool bEnable);
@@ -105,7 +110,6 @@ public:
 	void	Abort();
 	bool	Export(LPCTSTR pszPath, int nDuration);
 	bool	OutputLiveEvent(DWORD dwEvent);
-	void	CopyTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const;
 	void	InsertTracks(int iTrack, int nCount = 1);
 	void	InsertTrack(int iTrack, CTrack& track);
 	void	InsertTracks(int iTrack, CTrackArray& arrTrack);
@@ -173,7 +177,7 @@ protected:
 	CILockRingBuf<DWORD>	m_qLiveEvent;	// thread-safe queue of live events to be output
 	WCritSec	m_csCallback;		// critical section for serializing access to callback shared state
 #if SEQ_DUMP_EVENTS
-	CArrayEx<CMidiEventArray, CMidiEventArray&>	m_arrDumpEvent;	// for debug only
+	CArrayEx<CMidiEventStream, CMidiEventStream&>	m_arrDumpEvent;	// for debug only
 #endif	// SEQ_DUMP_EVENTS
 
 // Overridables
@@ -190,7 +194,7 @@ protected:
 	void	UpdateCallbackLength();
 	bool	ExportImpl(LPCTSTR pszPath, int nDuration);
 #if SEQ_DUMP_EVENTS
-	void	AddDumpEvent(const CMidiEventArray& arrEvt, int nEvents);
+	void	AddDumpEvent(const CMidiEventStream& arrEvt, int nEvents);
 	void	DumpEvents(LPCTSTR pszPath);
 #endif	// SEQ_DUMP_EVENTS
 	friend class CSequencerReader;
@@ -306,6 +310,11 @@ inline void CSequencer::SetInitialEvents(const CDWordArrayEx& arrEvent)
 inline int CSequencer::GetTrackCount() const
 {
 	return m_arrTrack.GetSize();
+}
+
+inline const CTrackArray& CSequencer::GetTracks() const
+{
+	return m_arrTrack;
 }
 
 inline const CTrack& CSequencer::GetTrack(int iTrack) const

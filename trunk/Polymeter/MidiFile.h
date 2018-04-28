@@ -10,6 +10,7 @@
         00		30aug99 initial version
 		01		25apr02 set key signature
         02      07mar14	convert to MFC
+        03      25apr18	standardize names
 		
 		MIDI file I/O
  
@@ -47,8 +48,8 @@ public:
 	};
 
 // Operations
-	void	WriteHeader(short Tracks, short PPQ, double Tempo = 0, const TIME_SIGNATURE* TimeSig = NULL, const KEY_SIGNATURE* KeySig = NULL);
-	void	WriteTrack(const CMidiEventArray& Event, LPCTSTR Name = NULL);
+	void	WriteHeader(USHORT nTracks, USHORT nPPQ, double fTempo = 0, const TIME_SIGNATURE* pTimeSig = NULL, const KEY_SIGNATURE* pKeySig = NULL);
+	void	WriteTrack(const CMidiEventArray& arrEvent, LPCTSTR pszName = NULL);
 
 protected:
 // Types

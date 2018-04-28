@@ -34,7 +34,7 @@ IMPLEMENT_DYNAMIC(CPopupEdit, CEdit);
 
 CPopupEdit::CPopupEdit()
 {
-	m_EndingEdit = FALSE;
+	m_bEndingEdit = FALSE;
 }
 
 CPopupEdit::~CPopupEdit()
@@ -53,7 +53,7 @@ bool CPopupEdit::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT 
 
 void CPopupEdit::EndEdit()
 {
-	m_EndingEdit = TRUE;	// avoid reentrance if we lose focus
+	m_bEndingEdit = TRUE;	// avoid reentrance if we lose focus
 	if (GetModify()) {	// if text was modified
 		CString	text;
 		GetWindowText(text);
@@ -82,7 +82,7 @@ END_MESSAGE_MAP()
 void CPopupEdit::OnKillFocus(CWnd* pNewWnd) 
 {
 	CEdit::OnKillFocus(pNewWnd);
-	if (!m_EndingEdit)	// if not ending edit already
+	if (!m_bEndingEdit)	// if not ending edit already
 		SendMessage(UWM_END_EDIT);
 }
 

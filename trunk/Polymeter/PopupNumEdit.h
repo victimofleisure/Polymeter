@@ -14,21 +14,17 @@
 
 */
 
-#if !defined(AFX_POPUPEDIT_H__6F4A61F8_D590_426E_AD60_A826FDF20554__INCLUDED_)
-#define AFX_POPUPEDIT_H__6F4A61F8_D590_426E_AD60_A826FDF20554__INCLUDED_
-
-#if _MSC_VER > 1000
 #pragma once
-#endif // _MSC_VER > 1000
+
 // PopupNumEdit.h : header file
 //
 
 /////////////////////////////////////////////////////////////////////////////
 // CPopupNumEdit window
 
-#include "NumEdit.h"
+#include "NoteEdit.h"
 
-class CPopupNumEdit : public CNumEdit
+class CPopupNumEdit : public CNoteEdit
 {
 	DECLARE_DYNAMIC(CPopupNumEdit);
 // Construction
@@ -55,6 +51,7 @@ public:
 	protected:
 	virtual void PreSubclassWindow();
 	//}}AFX_VIRTUAL
+	virtual	void	AddSpin(double fDelta);
 
 // Implementation
 public:
@@ -69,12 +66,10 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 // Data members
-	bool	m_EndingEdit;	// true if ending edit
+	bool	m_bEndingEdit;	// true if ending edit
 };
 
 /////////////////////////////////////////////////////////////////////////////
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_POPUPEDIT_H__6F4A61F8_D590_426E_AD60_A826FDF20554__INCLUDED_)

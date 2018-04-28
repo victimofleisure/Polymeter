@@ -15,16 +15,9 @@
 //
 
 #include "stdafx.h"
-// SHARED_HANDLERS can be defined in an ATL project implementing preview, thumbnail
-// and search filter handlers and allows sharing of document code with that project.
-#ifndef SHARED_HANDLERS
 #include "Polymeter.h"
-#endif
-
 #include "PolymeterDoc.h"
-#include "PolymeterView.h"
-
-#include <propkey.h>
+#include "TrackView.h"
 #include "MainFrm.h"
 #include "IniFile.h"
 #include "RegTempl.h"
@@ -33,6 +26,11 @@
 #include "MidiWrap.h"
 #include "PathStr.h"
 #include "ExportDlg.h"
+#include "GoToPositionDlg.h"
+#include "DocIter.h"
+#include "NumberTheory.h"
+#include "VariantHelper.h"
+#include "TrackSortDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -61,20 +59,31 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define IDS_EDIT_TRACK_STEP			0
 #define IDS_EDIT_MASTER_PROP		0
 #define IDS_EDIT_CHANNEL_PROP		0
+#define IDS_EDIT_MULTI_CHANNEL_PROP	0
 
 const int CPolymeterDoc::m_nUndoTitleId[UNDO_CODES] = {
 	#define UCODE_DEF(name) IDS_EDIT_##name,
 	#include "UndoCodeData.h"	
 };
 
+const int CPolymeterDoc::m_nTrackPropNameId[CTrackBase::PROPERTIES] = {
+	#define TRACKDEF(type, prefix, name, defval, offset) IDS_TRK_##name,
+	#include "TrackDef.h"		// generate enumeration
+};
+
+CPolymeterDoc::CTrackSortInfo CPolymeterDoc::m_infoTrackSort;
+const CIntArrayEx	*CPolymeterDoc::m_parrSortedSelection;
+
 // CPolymeterDoc construction/destruction
 
-CPolymeterDoc::CPolymeterDoc()
+CPolymeterDoc::CPolymeterDoc() 
+	: m_sGoToPosition("1")
 {
 	m_nFileVersion = FILE_VERSION;
 	m_UndoMgr.SetRoot(this);
 	SetUndoManager(&m_UndoMgr);
 	InitChannelArray();
+	m_iTrackSelMark = -1;
 }
 
 CPolymeterDoc::~CPolymeterDoc()
@@ -107,10 +116,13 @@ void CPolymeterDoc::PreCloseFrame(CFrameWnd* pFrame )
 
 void CPolymeterDoc::ApplyOptions(const COptions *pPrevOptions)
 {
-	UNREFERENCED_PARAMETER(pPrevOptions);
 	m_Seq.SetOutputDevice(theApp.m_midiDevs.GetIdx(CMidiDevices::OUTPUT));
 	m_Seq.SetLatency(theApp.m_Options.m_Midi_nLatency);
 	m_Seq.SetBufferSize(theApp.m_Options.m_Midi_nBufferSize);
+	if (pPrevOptions != NULL) {
+		if (theApp.m_Options.m_View_bShowCurPos != pPrevOptions->m_View_bShowCurPos)
+			UpdateAllViews(NULL, HINT_SONG_POS);
+	}
 }
 
 void CPolymeterDoc::InitChannelArray()
@@ -118,6 +130,32 @@ void CPolymeterDoc::InitChannelArray()
 	CChannel	chanDefault(true);	// init to default values
 	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++)	// for each channel
 		m_arrChannel[iChan] = chanDefault;	// set to default values
+}
+
+void CPolymeterDoc::SelectOnly(int iTrack)
+{
+	m_arrTrackSel.SetSize(1);
+	m_arrTrackSel[0] = iTrack;
+}
+
+void CPolymeterDoc::SelectRange(int iStartTrack, int nSels)
+{
+	m_arrTrackSel.SetSize(nSels);
+	for (int iSel = 0; iSel < nSels; iSel++)
+		m_arrTrackSel[iSel] = iStartTrack + iSel;
+}
+
+void CPolymeterDoc::SelectAll()
+{
+	int	nSels = GetTrackCount();
+	m_arrTrackSel.SetSize(nSels);
+	for (int iSel = 0; iSel < nSels; iSel++)
+		m_arrTrackSel[iSel] = iSel;
+}
+
+void CPolymeterDoc::Deselect()
+{
+	m_arrTrackSel.RemoveAll();
 }
 
 // CPolymeterDoc serialization
@@ -162,7 +200,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 	m_Seq.SetTimeDivision(CMasterProps::GetTimeDivisionTicks(m_nTimeDiv));
 	int	nTracks = 0;
 	RdReg(RK_TRACK_COUNT, nTracks);
-	ASSERT(!m_Seq.GetTrackCount());	// track array should be empty for proper initialization
+	ASSERT(!GetTrackCount());	// track array should be empty for proper initialization
 	m_Seq.SetTrackCount(nTracks);
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		CTrack	trk(true);	// initialize to defaults
@@ -192,7 +230,7 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 		else \
 			WrReg(RK_MASTER, _T(#name), m_##name);
 	#include "MasterPropsDef.h"	// generate code to write master properties
-	int	nTracks = m_Seq.GetTrackCount();
+	int	nTracks = GetTrackCount();
 	WrReg(RK_TRACK_COUNT, nTracks);
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		const CTrack&	trk = m_Seq.GetTrack(iTrack);
@@ -206,6 +244,110 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 		CPersist::WriteBinary(sTrkID, RK_TRACK_EVENT, trk.m_arrEvent.GetData(), nUsed); 
 	}
 	m_arrChannel.Write();	// write channels
+}
+
+int CPolymeterDoc::GetInsertPos() const
+{
+	if (GetSelectedCount())
+		return m_arrTrackSel[0];
+	if (m_iTrackSelMark >= 0 && m_iTrackSelMark <= GetTrackCount())	// if anchor within range
+		return m_iTrackSelMark;
+	return GetTrackCount();
+}
+
+void CPolymeterDoc::DeleteTracks(bool bCopyToClipboard)
+{
+	int	nUndoCode;
+	if (bCopyToClipboard)
+		nUndoCode = UCODE_CUT;
+	else
+		nUndoCode = UCODE_DELETE;
+	NotifyUndoableEdit(0, nUndoCode);
+	if (bCopyToClipboard)
+		m_Seq.GetTracks(m_arrTrackSel, theApp.m_arrTrackClipboard);
+	m_Seq.DeleteTracks(m_arrTrackSel);
+	Deselect();
+	UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
+	SetModifiedFlag();
+}
+
+void CPolymeterDoc::Drop(int iDropPos)
+{
+	const CIntArrayEx&	arrSelection = m_arrTrackSel;
+	int	nSels = arrSelection.GetSize();
+	ASSERT(nSels > 0);	// at least one track must be selected
+	// if multiple selection, or single selection and track is actually moving
+	if (nSels == 1 && (iDropPos == m_iTrackSelMark || iDropPos == m_iTrackSelMark + 1))
+		return;	// nothing to do
+	int	nSelsBelowDrop = 0;
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		if (arrSelection[iSel] < iDropPos)	// if track's index is below drop position
+			nSelsBelowDrop++;
+	}
+	iDropPos -= nSelsBelowDrop;	// compensate for deletions below drop position
+	NotifyUndoableEdit(iDropPos, UCODE_MOVE);
+	CTrackArray	arrTrack;
+	m_Seq.GetTracks(arrSelection, arrTrack);
+	m_Seq.DeleteTracks(arrSelection);
+	m_Seq.InsertTracks(iDropPos, arrTrack);
+	SelectRange(iDropPos, nSels);
+	UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
+	SetModifiedFlag();
+}
+
+void CPolymeterDoc::SortTracks(const CIntArrayEx& arrSortLevel)
+{
+	CIntArrayEx	arrSelection;
+	if (GetSelectedCount()) {	// if selection exists
+		arrSelection = m_arrTrackSel;	// sort selection
+	} else {	// no selection
+		GetSelectAll(arrSelection);	// sort all tracks
+	}
+	m_infoTrackSort.m_parrTrack = &m_Seq.GetTracks();	// pass track array to sort compare
+	m_infoTrackSort.m_parrLevel = &arrSortLevel;	// pass sort level array to sort compare
+	CIntArrayEx	arrSorted(arrSelection);
+	qsort(arrSorted.GetData(), arrSorted.GetSize(), sizeof(int), TrackSortCompare);	// sort track indices
+	m_infoTrackSort.m_parrTrack = NULL;	// reset sort info pointers to avoid confusion
+	m_infoTrackSort.m_parrLevel = NULL;
+	m_parrSortedSelection = &arrSorted;	// pass sorted selection to undo handler
+	NotifyUndoableEdit(0, UCODE_TRACK_SORT);
+	m_parrSortedSelection = NULL;	// reset sorted selection pointer
+	CTrackArray	arrTrack;
+	m_Seq.GetTracks(arrSorted, arrTrack);
+	m_Seq.SetTracks(arrSelection, arrTrack);
+	UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
+	SetModifiedFlag();
+}
+
+int CPolymeterDoc::TrackSortCompare(const void *pElem1, const void *pElem2)
+{
+	int	iTrack1 = *static_cast<const int *>(pElem1);
+	int	iTrack2 = *static_cast<const int *>(pElem2);
+	const CTrackArray&	arrTrack = *m_infoTrackSort.m_parrTrack;
+	const CTrack&	track1 = arrTrack.GetAt(iTrack1);
+	const CTrack&	track2 = arrTrack.GetAt(iTrack2);
+	const CIntArrayEx&	arrLevel = *m_infoTrackSort.m_parrLevel;
+	int	nLevels = arrLevel.GetSize();
+	for (int iLevel = 0; iLevel < nLevels; iLevel++) {	// for each sort level
+		int	nLevel = arrLevel.GetAt(iLevel);
+		int	iProp = LOWORD(nLevel);	// property index
+		int	iDir = HIWORD(nLevel);	// sort direction; non-zero for descending
+		int	nRetVal = track1.CompareProperty(iProp, track2);
+		if (nRetVal) {
+			if (iDir)
+				nRetVal = -nRetVal;
+			return nRetVal;
+		}
+	}
+	return 0;
+}
+
+void CPolymeterDoc::GetSelectAll(CIntArrayEx& arrSelection) const
+{
+	int	nTracks = GetTrackCount();
+	arrSelection.SetSize(nTracks);	// sort all tracks
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
+		arrSelection[iTrack] = iTrack;	// store track's index
 }
 
 void CPolymeterDoc::SaveTrackProperty(int iTrack, int iProp, CUndoState& State) const
@@ -312,10 +454,9 @@ void CPolymeterDoc::SaveClipboard(CUndoState& State) const
 	if (UndoMgrIsIdle()) {	// if initial state
 		CRefPtr<CUndoClipboard>	pClipboard;
 		pClipboard.CreateObj();
-		CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
-		pView->GetSelection(pClipboard->m_arrSelection);
-		m_Seq.CopyTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack); 
-		pClipboard->m_nSelMark = pView->GetSelectionMark();
+		pClipboard->m_arrSelection = m_arrTrackSel;
+		m_Seq.GetTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack); 
+		pClipboard->m_nSelMark = m_iTrackSelMark;
 		State.SetObj(pClipboard);
 		switch (State.GetCode()) {
 		case UCODE_CUT:
@@ -336,24 +477,20 @@ void CPolymeterDoc::RestoreClipboard(const CUndoState& State)
 		if (State.GetCode() == UCODE_MOVE)
 			m_Seq.DeleteTracks(State.GetCtrlID(), pClipboard->m_arrTrack.GetSize());
 		m_Seq.InsertTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack);
+		m_arrTrackSel = pClipboard->m_arrSelection;
+		m_iTrackSelMark = pClipboard->m_nSelMark;
 		UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
-		CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
-		pView->SetSelection(pClipboard->m_arrSelection);
-		pView->SetSelectionMark(pClipboard->m_nSelMark);
-		pView->EnsureSelectionVisible();
 	} else {	// deleting
 		m_Seq.DeleteTracks(pClipboard->m_arrSelection);
 		if (State.GetCode() == UCODE_MOVE)
 			m_Seq.InsertTracks(State.GetCtrlID(), pClipboard->m_arrTrack);
-		UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
-		CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
 		if (State.GetCode() == UCODE_MOVE) {
 			int	iTrack = State.GetCtrlID();
-			pView->SelectRange(iTrack, pClipboard->m_arrTrack.GetSize());
-			pView->SetSelectionMark(iTrack);
-			pView->EnsureSelectionVisible();
+			SelectRange(iTrack, pClipboard->m_arrTrack.GetSize());
+			m_iTrackSelMark = iTrack;
 		} else
-			pView->Deselect();
+			Deselect();
+		UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
 	}
 }
 
@@ -376,6 +513,62 @@ void CPolymeterDoc::RestoreMasterProperty(int iProp, const CUndoState& State)
 	}
 }
 
+void CPolymeterDoc::SaveMultiChannelProperty(const CIntArrayEx& arrSelection, int iProp, CUndoState& State) const
+{
+	CRefPtr<CUndoMultiItemProp>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrSelection = arrSelection;
+	int	nSels = arrSelection.GetSize();
+	pInfo->m_arrVal.SetSize(nSels);
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iChan = arrSelection[iSel];
+		pInfo->m_arrVal[iSel] = m_arrChannel[iChan].GetProperty(iProp);
+	}
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreMultiChannelProperty(CIntArrayEx& arrSelection, int iProp, const CUndoState& State)
+{
+	const CUndoMultiItemProp	*pInfo = static_cast<CUndoMultiItemProp*>(State.GetObj());
+	int	nSels = pInfo->m_arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iChan = pInfo->m_arrSelection[iSel];
+		int	nVal;
+		GetVariant(pInfo->m_arrVal[iSel], nVal);
+		m_arrChannel[iChan].SetProperty(iProp, nVal);
+	}
+	arrSelection = pInfo->m_arrSelection;
+}
+
+void CPolymeterDoc::SaveTrackSort(CUndoState& State) const
+{
+	if (UndoMgrIsIdle()) {	// if initial state
+		ASSERT(m_parrSortedSelection != NULL);
+		CRefPtr<CUndoTrackSort>	pInfo;
+		pInfo.CreateObj();
+		if (GetSelectedCount())
+			pInfo->m_arrSelection = m_arrTrackSel;
+		else {	// no selection
+			GetSelectAll(pInfo->m_arrSelection);	// sort all tracks
+		}
+		pInfo->m_arrSorted = *m_parrSortedSelection;
+		State.SetObj(pInfo);
+	}
+}
+
+void CPolymeterDoc::RestoreTrackSort(const CUndoState& State)
+{
+	const CUndoTrackSort	*pInfo = static_cast<CUndoTrackSort*>(State.GetObj());
+	CTrackArray	arrTrack;
+	if (IsUndoing()) {	// if undoing
+		m_Seq.GetTracks(pInfo->m_arrSelection, arrTrack);
+		m_Seq.SetTracks(pInfo->m_arrSorted, arrTrack);
+	} else {	// redoing
+		m_Seq.GetTracks(pInfo->m_arrSorted, arrTrack);
+		m_Seq.SetTracks(pInfo->m_arrSelection, arrTrack);
+	}
+}
+
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
 {
 	switch (State.GetCode()) {
@@ -395,8 +588,7 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 			int	iProp = State.GetCtrlID();
 			CIntArrayEx	arrSelection;
 			if (State.IsEmpty()) {	// if initial state
-				CPolymeterView	*pView = theApp.GetMainFrame()->GetActiveMDIView();
-				pView->GetSelection(arrSelection);	// get selection from view
+				arrSelection = m_arrTrackSel;	// get fresh selection
 			} else {	// undoing or redoing; selection may have changed, so don't rely on it
 				if (iProp == PROP_Length) {	// if track length
 					const CUndoMultiItemEvents	*pInfo = static_cast<CUndoMultiItemEvents*>(State.GetObj());
@@ -439,6 +631,22 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 			int	iProp = HIWORD(State.GetCtrlID());
 			State.m_Val.p.x.i = m_arrChannel[iChan].GetProperty(iProp);
 		}
+		break;
+	case UCODE_MULTI_CHANNEL_PROP:
+		{
+			int	iProp = State.GetCtrlID();
+			CIntArrayEx	arrSelection;
+			if (State.IsEmpty()) {	// if initial state
+				theApp.GetMainFrame()->GetChannelsBar().GetSelection(arrSelection);	// get fresh selection
+			} else {	// undoing or redoing; selection may have changed, so don't rely on it
+				const CUndoMultiItemProp	*pInfo = static_cast<CUndoMultiItemProp*>(State.GetObj());
+				arrSelection = pInfo->m_arrSelection;	// use edit's original selection
+			}
+			SaveMultiChannelProperty(arrSelection, iProp, State);
+		}
+		break;
+	case UCODE_TRACK_SORT:
+		SaveTrackSort(State);
 		break;
 	}
 }
@@ -505,6 +713,19 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 			UpdateAllViews(NULL, HINT_CHANNEL_PROP, &hint);
 		}
 		break;
+	case UCODE_MULTI_CHANNEL_PROP:
+		{
+			int	iProp = State.GetCtrlID();
+			CIntArrayEx	arrSelection;
+			RestoreMultiChannelProperty(arrSelection, iProp, State);
+			CMultiItemPropHint	hint(arrSelection, iProp);
+			UpdateAllViews(NULL, HINT_MULTI_CHANNEL_PROP, &hint);
+		}
+		break;
+	case UCODE_TRACK_SORT:
+		RestoreTrackSort(State);
+		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
+		break;
 	}
 }
 
@@ -516,7 +737,7 @@ CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 	case UCODE_MULTI_TRACK_PROP:
 		{
 			int	iProp = HIWORD(State.GetCtrlID());
-			sTitle.LoadString(CTrackDlg::GetPropertyCaptionId(iProp));
+			sTitle.LoadString(m_nTrackPropNameId[iProp]);
 		}
 		break;
 	case UCODE_TRACK_STEP:
@@ -526,6 +747,7 @@ CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 		sTitle = GetPropertyName(State.GetCtrlID());
 		break;
 	case UCODE_CHANNEL_PROP:
+	case UCODE_MULTI_CHANNEL_PROP:
 		{
 			int	iProp = HIWORD(State.GetCtrlID());
 			sTitle = CChannelsBar::GetPropertyName(iProp);
@@ -591,60 +813,6 @@ void CPolymeterDoc::OutputChannelEvent(int iChan, int iProp)
 	}
 }
 
-#ifdef SHARED_HANDLERS
-
-// Support for thumbnails
-void CPolymeterDoc::OnDrawThumbnail(CDC& dc, LPRECT lprcBounds)
-{
-	// Modify this code to draw the document's data
-	dc.FillSolidRect(lprcBounds, RGB(255, 255, 255));
-
-	CString strText = _T("TODO: implement thumbnail drawing here");
-	LOGFONT lf;
-
-	CFont* pDefaultGUIFont = CFont::FromHandle((HFONT) GetStockObject(DEFAULT_GUI_FONT));
-	pDefaultGUIFont->GetLogFont(&lf);
-	lf.lfHeight = 36;
-
-	CFont fontDraw;
-	fontDraw.CreateFontIndirect(&lf);
-
-	CFont* pOldFont = dc.SelectObject(&fontDraw);
-	dc.DrawText(strText, lprcBounds, DT_CENTER | DT_WORDBREAK);
-	dc.SelectObject(pOldFont);
-}
-
-// Support for Search Handlers
-void CPolymeterDoc::InitializeSearchContent()
-{
-	CString strSearchContent;
-	// Set search contents from document's data. 
-	// The content parts should be separated by ";"
-
-	// For example:  strSearchContent = _T("point;rectangle;circle;ole object;");
-	SetSearchContent(strSearchContent);
-}
-
-void CPolymeterDoc::SetSearchContent(const CString& value)
-{
-	if (value.IsEmpty())
-	{
-		RemoveChunk(PKEY_Search_Contents.fmtid, PKEY_Search_Contents.pid);
-	}
-	else
-	{
-		CMFCFilterChunkValueImpl *pChunk = NULL;
-		ATLTRY(pChunk = new CMFCFilterChunkValueImpl);
-		if (pChunk != NULL)
-		{
-			pChunk->SetTextValue(PKEY_Search_Contents, value, CHUNK_TEXT);
-			SetChunkValue(pChunk);
-		}
-	}
-}
-
-#endif // SHARED_HANDLERS
-
 // CPolymeterDoc diagnostics
 
 #ifdef _DEBUG
@@ -668,6 +836,27 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_REDO, OnUpdateEditRedo)
 	ON_COMMAND(ID_TOOLS_STATISTICS, OnToolsStatistics)
 	ON_COMMAND(ID_FILE_EXPORT, OnFileExport)
+	ON_COMMAND(ID_VIEW_PLAY, OnViewPlay)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_PLAY, OnUpdateViewPlay)
+	ON_COMMAND(ID_VIEW_PAUSE, OnViewPause)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_PAUSE, OnUpdateViewPause)
+	ON_COMMAND(ID_VIEW_GO_TO_POSITION, OnViewGoToPosition)
+	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
+	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
+	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
+	ON_COMMAND(ID_EDIT_INSERT, OnEditInsert)
+	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
+	ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditCopy)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditCut)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditSelectAll)
+	ON_COMMAND(ID_TOOLS_TIME_TO_REPEAT, OnToolsTimeToRepeat)
+	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIME_TO_REPEAT, OnUpdateToolsTimeToRepeat)
+	ON_COMMAND(ID_EDIT_TRACK_SORT, OnEditTrackSort)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_TRACK_SORT, OnUpdateEditSelectAll)
 END_MESSAGE_MAP()
 
 // CPolymeterDoc commands
@@ -739,16 +928,20 @@ void CPolymeterDoc::OnFileExport()
 
 void CPolymeterDoc::OnEditUndo()
 {
-	GetUndoManager()->Undo();
-	SetModifiedFlag();	// undo counts as modification
+	if (!CFocusEdit::Undo()) {
+		GetUndoManager()->Undo();
+		SetModifiedFlag();	// undo counts as modification
+	}
 }
 
 void CPolymeterDoc::OnUpdateEditUndo(CCmdUI *pCmdUI)
 {
-	CString	Text;
-	Text.Format(LDS(IDS_EDIT_UNDO_FMT), GetUndoManager()->GetUndoTitle());
-	pCmdUI->SetText(Text);
-	pCmdUI->Enable(m_UndoMgr.CanUndo());
+	if (!CFocusEdit::UpdateUndo(pCmdUI)) {
+		CString	Text;
+		Text.Format(LDS(IDS_EDIT_UNDO_FMT), GetUndoManager()->GetUndoTitle());
+		pCmdUI->SetText(Text);
+		pCmdUI->Enable(m_UndoMgr.CanUndo());
+	}
 }
 
 void CPolymeterDoc::OnEditRedo()
@@ -763,6 +956,160 @@ void CPolymeterDoc::OnUpdateEditRedo(CCmdUI *pCmdUI)
 	Text.Format(LDS(IDS_EDIT_REDO_FMT), GetUndoManager()->GetRedoTitle());
 	pCmdUI->SetText(Text);
 	pCmdUI->Enable(m_UndoMgr.CanRedo());
+}
+
+void CPolymeterDoc::OnEditCopy()
+{
+	if (!CFocusEdit::Copy()) {
+		m_Seq.GetTracks(m_arrTrackSel, theApp.m_arrTrackClipboard);
+	}
+}
+
+void CPolymeterDoc::OnUpdateEditCopy(CCmdUI *pCmdUI)
+{
+	if (!CFocusEdit::UpdateCopy(pCmdUI)) {
+		pCmdUI->Enable(GetSelectedCount() > 0);
+	}
+}
+
+void CPolymeterDoc::OnEditCut()
+{
+	if (!CFocusEdit::Cut()) {
+		DeleteTracks(true);	// copy to clipboard
+	}
+}
+
+void CPolymeterDoc::OnUpdateEditCut(CCmdUI *pCmdUI)
+{
+	if (!CFocusEdit::UpdateCut(pCmdUI)) {
+		pCmdUI->Enable(GetSelectedCount() > 0);
+	}
+}
+
+void CPolymeterDoc::OnEditPaste()
+{
+	if (!CFocusEdit::Paste()) {
+		int	iInsPos = GetInsertPos();
+		m_Seq.InsertTracks(iInsPos, theApp.m_arrTrackClipboard);
+		SetModifiedFlag();
+		SelectRange(iInsPos, theApp.m_arrTrackClipboard.GetSize());
+		UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
+		NotifyUndoableEdit(0, UCODE_PASTE);
+	}
+}
+
+void CPolymeterDoc::OnUpdateEditPaste(CCmdUI *pCmdUI)
+{
+	if (!CFocusEdit::UpdatePaste(pCmdUI)) {
+		pCmdUI->Enable(theApp.m_arrTrackClipboard.GetSize() > 0);
+	}
+}
+
+void CPolymeterDoc::OnEditDelete()
+{
+	if (!CFocusEdit::Delete()) {
+		DeleteTracks(false);	// don't copy to clipboard
+	}
+}
+
+void CPolymeterDoc::OnUpdateEditDelete(CCmdUI *pCmdUI)
+{
+	if (!CFocusEdit::UpdateDelete(pCmdUI)) {
+		pCmdUI->Enable(GetSelectedCount() > 0);
+	}
+}
+
+void CPolymeterDoc::OnEditInsert()
+{
+	int	iInsPos = GetInsertPos();
+	m_Seq.InsertTracks(iInsPos);
+	SetModifiedFlag();
+	SelectOnly(iInsPos);
+	UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
+	NotifyUndoableEdit(0, UCODE_INSERT);
+}
+
+void CPolymeterDoc::OnUpdateEditInsert(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(true);
+}
+
+void CPolymeterDoc::OnEditSelectAll()
+{
+	if (!CFocusEdit::SelectAll()) {
+		SelectAll();
+		UpdateAllViews(NULL, HINT_TRACK_SELECTION);
+	}
+}
+
+void CPolymeterDoc::OnUpdateEditSelectAll(CCmdUI *pCmdUI)
+{
+	if (!CFocusEdit::UpdateSelectAll(pCmdUI)) {
+		pCmdUI->Enable(GetTrackCount());
+	}
+}
+
+void CPolymeterDoc::OnEditTrackSort()
+{
+	CTrackSortDlg	dlg;
+	if (dlg.DoModal() == IDOK) {
+		CIntArrayEx	arrLevel;
+		dlg.GetSortLevels(arrLevel);
+		SortTracks(arrLevel);
+	}
+}
+
+void CPolymeterDoc::OnViewPlay()
+{
+	bool	bIsPlaying = !m_Seq.IsPlaying();
+	if (bIsPlaying) {	// if starting playback
+		if (m_Seq.GetOutputDevice() < 0) {	// if no output MIDI device selected
+			AfxMessageBox(IDS_MIDI_NO_OUTPUT_DEVICE);
+			return;
+		}
+		CAllDocIter	iter;	// iterate all documents
+		CPolymeterDoc	*pOtherDoc;
+		while ((pOtherDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
+			if (pOtherDoc != this && pOtherDoc->m_Seq.IsPlaying()) {	// if another document is playing
+				pOtherDoc->m_Seq.Play(false);	// stop other document; only one can play at a time
+				break;
+			}
+		}
+		UpdateChannelEvents();	// queue channel events to be output at start of playback
+	}
+	m_Seq.Play(bIsPlaying);
+	theApp.GetMainFrame()->OnUpdate(NULL, CPolymeterDoc::HINT_PLAY);
+}
+
+void CPolymeterDoc::OnUpdateViewPlay(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_Seq.IsPlaying());
+}
+
+void CPolymeterDoc::OnViewPause()
+{
+	ASSERT(m_Seq.IsPlaying());
+	m_Seq.Pause(!m_Seq.IsPaused());
+}
+
+void CPolymeterDoc::OnUpdateViewPause(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_Seq.IsPaused());
+	pCmdUI->Enable(m_Seq.IsPlaying());
+}
+
+void CPolymeterDoc::OnViewGoToPosition()
+{
+	CGoToPositionDlg	dlg;
+	dlg.m_sPos = m_sGoToPosition;
+	if (dlg.DoModal() == IDOK) {
+		m_sGoToPosition = dlg.m_sPos;
+		LONGLONG	nPos;
+		if (m_Seq.ConvertStringToPosition(dlg.m_sPos, nPos)) {
+			m_Seq.SetPosition(static_cast<int>(nPos));
+			UpdateAllViews(NULL, HINT_SONG_POS);
+		}
+	}
 }
 
 void CPolymeterDoc::OnToolsStatistics()
@@ -787,4 +1134,50 @@ void CPolymeterDoc::OnToolsStatistics()
 		fCBTimeMax, fCBTimeMax / fLatency * 100,
 		fCBTimeAvg, fCBTimeAvg / fLatency * 100);
 	AfxMessageBox(s, MB_ICONINFORMATION);
+}
+
+void CPolymeterDoc::OnToolsTimeToRepeat()
+{
+	int	nSels = GetSelectedCount();
+	if (!nSels)	// if empty selection
+		return;
+	int	nTimeDiv = m_Seq.GetTimeDivision();
+	CArrayEx<ULONGLONG, ULONGLONG>	arrDuration;
+	arrDuration.Add(nTimeDiv);	// avoids fractions when LCM result is converted from ticks back to beats
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = m_arrTrackSel[iSel];
+		ULONGLONG	nDuration = m_Seq.GetLength(iTrack) * m_Seq.GetQuant(iTrack);	// track duration in ticks
+		if (arrDuration.BinarySearch(nDuration) < 0)	// eliminate duplicates to avoid needless LCM
+			arrDuration.InsertSorted(nDuration);	// ascending sort may improve LCM performance
+	}
+	CWaitCursor	wc;	// LCM can take a while
+	int	nDurs = arrDuration.GetSize();
+	ULONGLONG	nLCM = arrDuration[0];
+	for (int iDur = 1; iDur < nDurs; iDur++) {	// for each track duration
+		nLCM = CNumberTheory::LeastCommonMultiple(nLCM, arrDuration[iDur]);
+	}
+	ULONGLONG	nBeats = nLCM / nTimeDiv;	// convert ticks to beats; no remainder, see comment above
+	ULONGLONG	nGPF = CNumberTheory::GreatestPrimeFactor(nBeats);
+	CTimeSpan	ts = round64(nBeats / (m_Seq.GetTempo() / 60));	// convert beats to time in seconds
+	CString	sBeats, sGPF;
+	sBeats.Format(_T("%llu"), nBeats);
+	FormatNumberCommas(sBeats, sBeats);
+	sGPF.Format(_T("%llu"), nGPF);
+	FormatNumberCommas(sGPF, sGPF);
+	CString	sTime(ts.Format(_T("%H:%M:%S")));	// convert time in seconds to string
+	LONGLONG	nDays = ts.GetDays();
+	if (nDays) {	// if one or more days
+		CString	sDays;
+		sDays.Format(_T("%lld"), ts.GetDays());
+		FormatNumberCommas(sDays, sDays);
+		sTime.Insert(0, sDays + ' ' + LDS(IDS_TIME_TO_REPEAT_DAYS) + _T(" + "));
+	}
+	CString	sMsg;
+	sMsg.Format(IDS_TIME_TO_REPEAT_FMT, sBeats, sTime, sGPF);
+	AfxMessageBox(sMsg, MB_ICONINFORMATION);
+}
+
+void CPolymeterDoc::OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(GetSelectedCount());
 }

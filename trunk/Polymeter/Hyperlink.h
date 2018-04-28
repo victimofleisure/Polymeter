@@ -14,12 +14,8 @@
  
 */
 
-#if !defined(AFX_HYPERLINK_H__B003156A_9003_475B_B121_68760E26E8C6__INCLUDED_)
-#define AFX_HYPERLINK_H__B003156A_9003_475B_B121_68760E26E8C6__INCLUDED_
-
-#if _MSC_VER > 1000
 #pragma once
-#endif // _MSC_VER > 1000
+
 // Hyperlink.h : header file
 //
 
@@ -79,5 +75,3 @@ protected:
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_HYPERLINK_H__B003156A_9003_475B_B121_68760E26E8C6__INCLUDED_)

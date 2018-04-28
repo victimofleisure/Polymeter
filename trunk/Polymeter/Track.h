@@ -38,6 +38,8 @@ public:
 	CByteArrayEx	m_arrEvent;	// array of events
 	int		GetUsedEventCount() const;
 	void	SetDefaults();
+	int		CompareProperty(int iProp, const CTrack& track) const;
+	template<class T> static int Compare(const T& a, const T& b);
 };
 
 inline CTrack::CTrack()

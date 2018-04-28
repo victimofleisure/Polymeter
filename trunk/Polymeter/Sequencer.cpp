@@ -156,6 +156,34 @@ void CSequencer::SetTrackCount(int nTracks)
 	}
 }
 
+void CSequencer::SetTracks(const CTrackArray& arrTrack)
+{
+	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
+	m_arrTrack = arrTrack;
+}
+
+void CSequencer::GetTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const
+{
+	int	nSels = arrSelection.GetSize();
+	arrTrack.SetSize(nSels);
+	int	iTrack = 0;
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		arrTrack[iTrack] = m_arrTrack[arrSelection[iSel]];
+		iTrack++;
+	}
+}
+
+void CSequencer::SetTracks(const CIntArrayEx& arrSelection, const CTrackArray& arrTrack)
+{
+	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
+	int	nSels = arrSelection.GetSize();
+	int	iTrack = 0;
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		m_arrTrack[arrSelection[iSel]] = arrTrack[iTrack];
+		iTrack++;
+	}
+}
+
 void CSequencer::SetTrack(int iTrack, const CTrack& track)
 {
 	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
@@ -621,17 +649,6 @@ bool CSequencer::OutputLiveEvent(DWORD dwEvent)
 	return m_qLiveEvent.Push(dwEvent);	// fails if queue is full
 }
 
-void CSequencer::CopyTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const
-{
-	int	nSels = arrSelection.GetSize();
-	arrTrack.SetSize(nSels);
-	int	iTrack = 0;
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		arrTrack[iTrack] = m_arrTrack[arrSelection[iSel]];
-		iTrack++;
-	}
-}
-
 void CSequencer::InsertTracks(int iTrack, int nCount)
 {
 	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
@@ -705,6 +722,26 @@ bool CSequencer::ConvertStringToPosition(const CString& sPosition, LONGLONG& nPo
 		return false;
 	ConvertBeatToPosition(nBeat - 1, nTick, nPos);	// convert beat from one-origin to zero-origin
 	return true;
+}
+
+int CSequencer::GetEventIndex(int iTrack, LONGLONG nPos) const
+{
+	const CTrack&	trk = m_arrTrack[iTrack];
+	int	nLength = trk.m_arrEvent.GetSize();
+	int	nQuant = trk.m_nQuant;
+	int	nOffset = trk.m_nOffset;
+	// similar to AddEvents, but divide by nQuant instead nQuant * 2
+	int	nTrkStart = static_cast<int>(nPos) - nOffset;
+	int	iQuant = nTrkStart / nQuant;
+	int	nEvtTime = nTrkStart % nQuant;
+	if (nEvtTime < 0) {
+		iQuant--;
+		nEvtTime += nQuant;
+	}
+	int	iEvt = iQuant % nLength;
+	if (iEvt < 0)
+		iEvt += nLength;
+	return iEvt;
 }
 
 #if SEQ_DUMP_EVENTS

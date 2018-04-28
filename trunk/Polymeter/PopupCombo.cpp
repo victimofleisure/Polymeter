@@ -35,7 +35,7 @@ IMPLEMENT_DYNAMIC(CPopupCombo, CComboBox);
 
 CPopupCombo::CPopupCombo()
 {
-	m_EndingEdit = FALSE;
+	m_bEndingEdit = FALSE;
 }
 
 CPopupCombo::~CPopupCombo()
@@ -67,7 +67,7 @@ CPopupCombo *CPopupCombo::Factory(DWORD dwStyle, const RECT& rect, CWnd* pParent
 
 void CPopupCombo::EndEdit()
 {
-	m_EndingEdit = TRUE;	// avoid reentrance if we lose focus
+	m_bEndingEdit = TRUE;	// avoid reentrance if we lose focus
 	CString	text;
 	GetWindowText(text);
 	LPCTSTR	pText = text;
@@ -94,7 +94,7 @@ END_MESSAGE_MAP()
 void CPopupCombo::OnKillFocus(CWnd* pNewWnd) 
 {
 	CComboBox::OnKillFocus(pNewWnd);
-	if (!m_EndingEdit)	// if not ending edit already
+	if (!m_bEndingEdit)	// if not ending edit already
 		SendMessage(UWM_END_EDIT);
 }
 

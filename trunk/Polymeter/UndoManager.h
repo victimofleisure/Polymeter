@@ -16,7 +16,8 @@
 		06		28may10	support insignificant edits
 		07		05dec12	add UndoNoRedo
 		08		11feb13	add OnUpdateTitles and SetPos
-		09		01may14	widen CtrlID and Code to 32-bit
+		09		01may14	widen nCtrlID and nCode to 32-bit
+		10		25apr18	standardize names
 
         undoable edit interface
  
@@ -33,7 +34,7 @@ class CUndoable;
 class CUndoManager : public WObject {
 public:
 // Construction
-	CUndoManager(CUndoable *Root = NULL);
+	CUndoManager(CUndoable *pRoot = NULL);
 	virtual	~CUndoManager();
 
 // Constants
@@ -55,24 +56,24 @@ public:
 	LPCTSTR	GetUndoTitle();
 	LPCTSTR	GetRedoTitle();
 	int		GetLevels() const;
-	void	SetLevels(int Levels);
-	void	SetRoot(CUndoable *Root);
+	void	SetLevels(int nLevels);
+	void	SetRoot(CUndoable *pRoot);
 	int		GetSize() const;
 	int		GetPos() const;
-	void	SetPos(int Pos);
-	const	CUndoState& GetState(int Pos) const;
+	void	SetPos(int iPos);
+	const	CUndoState& GetState(int iPos) const;
 
 // Operations
 	void	Undo();
 	void	Redo();
 	void	UndoNoRedo();
-	void	NotifyEdit(int CtrlID, int Code, UINT Flags = 0);
-	void	CancelEdit(int CtrlID, int Code);
+	void	NotifyEdit(int nCtrlID, int nCode, UINT nFlags = 0);
+	void	CancelEdit(int nCtrlID, int nCode);
 	void	DiscardAllEdits();
 
 protected:
 // Overridables
-	virtual	void	OnModify(bool Modified);
+	virtual	void	OnModify(bool bModified);
 	virtual	void	OnUpdateTitles();
 
 private:
@@ -85,21 +86,21 @@ private:
 	};
 
 // Member data
-	CUndoable	*m_Root;	// owner of this undo stack
-	CUndoStateArray	m_List;	// undo stack; array of undo states
-	bool	m_CanUndo;		// true if edit can be undone
-	bool	m_CanRedo;		// true if edit can be redone
-	int		m_Pos;			// current position in undo stack
-	int		m_Levels;		// number of undo levels, or -1 for unlimited
-	int		m_Edits;		// total number of edits made so far
-	int		m_Action;		// undo action; see enum above
-	CString	m_UndoTitle;	// current undo title for edit menu
-	CString	m_RedoTitle;	// current redo title for edit menu
+	CUndoable	*m_pRoot;	// owner of this undo stack
+	CUndoStateArray	m_arrState;	// undo stack; array of undo states
+	bool	m_bCanUndo;		// true if edit can be undone
+	bool	m_bCanRedo;		// true if edit can be redone
+	int		m_iPos;			// current position in undo stack
+	int		m_nLevels;		// number of undo levels, or -1 for unlimited
+	int		m_nEdits;		// total number of edits made so far
+	int		m_nAction;		// undo action; see enum above
+	CString	m_sUndoTitle;	// current undo title for edit menu
+	CString	m_sRedoTitle;	// current redo title for edit menu
 
 // Helpers
-	void	SwapState(int Pos);
-	void	DumpState(LPCTSTR Tag, int Pos);
-	CString	GetTitle(int Pos);
+	void	SwapState(int iPos);
+	void	DumpState(LPCTSTR pszTag, int iPos);
+	CString	GetTitle(int iPos);
 	void	UpdateTitles();
 	int		FindUndoable() const;
 	int		FindRedoable() const;
@@ -107,77 +108,77 @@ private:
 
 inline bool CUndoManager::CanUndo() const
 {
-	return(m_CanUndo);
+	return(m_bCanUndo);
 }
 
 inline bool CUndoManager::CanRedo() const
 {
-	return(m_CanRedo);
+	return(m_bCanRedo);
 }
 
 inline int CUndoManager::GetAction() const
 {
-	return(m_Action);
+	return(m_nAction);
 }
 
 inline bool CUndoManager::IsIdle() const
 {
-	return(m_Action == UA_NONE);
+	return(m_nAction == UA_NONE);
 }
 
 inline bool CUndoManager::IsUndoing() const
 {
-	return(m_Action == UA_UNDO);
+	return(m_nAction == UA_UNDO);
 }
 
 inline bool CUndoManager::IsRedoing() const
 {
-	return(m_Action == UA_REDO);
+	return(m_nAction == UA_REDO);
 }
 
 inline bool CUndoManager::IsModified() const
 {
-	return(m_Edits > 0);
+	return(m_nEdits > 0);
 }
 
 inline void CUndoManager::ResetModifiedFlag()
 {
-	m_Edits = 0;
+	m_nEdits = 0;
 }
 
 inline int CUndoManager::GetLevels() const
 {
-	return(m_Levels);
+	return(m_nLevels);
 }
 
 inline LPCTSTR CUndoManager::GetUndoTitle()
 {
-	return(m_UndoTitle);
+	return(m_sUndoTitle);
 }
 
 inline LPCTSTR CUndoManager::GetRedoTitle()
 {
-	return(m_RedoTitle);
+	return(m_sRedoTitle);
 }
 
-inline void CUndoManager::SetRoot(CUndoable *Root)
+inline void CUndoManager::SetRoot(CUndoable *pRoot)
 {
-	m_Root = Root;
+	m_pRoot = pRoot;
 }
 
 inline int CUndoManager::GetSize() const
 {
-	return(m_List.GetSize());
+	return(m_arrState.GetSize());
 }
 
 inline int CUndoManager::GetPos() const
 {
-	return(m_Pos);
+	return(m_iPos);
 }
 
-inline const CUndoState& CUndoManager::GetState(int Pos) const
+inline const CUndoState& CUndoManager::GetState(int iPos) const
 {
-	return(m_List[Pos]);
+	return(m_arrState[iPos]);
 }
 
 #endif

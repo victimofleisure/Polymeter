@@ -50,7 +50,7 @@ public:
 	
 void CPopupIntEdit::ValToStr(CString& Str)
 {
-	if (m_Val < 0)
+	if (m_fVal < 0)
 		Str.Empty();
 	else
 		CPopupNumEdit::ValToStr(Str);
@@ -59,12 +59,12 @@ void CPopupIntEdit::ValToStr(CString& Str)
 void CPopupIntEdit::StrToVal(LPCTSTR Str)
 {
 	if (!_tcslen(Str))
-		m_Val = -1;
+		m_fVal = -1;
 	else
 		CPopupNumEdit::StrToVal(Str);
 }
 
-CWnd *CChannelsBar::CChannelsGridCtrl::CreateEditCtrl(LPCTSTR Text, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
+CWnd *CChannelsBar::CChannelsGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
 	UNREFERENCED_PARAMETER(pParentWnd);
 	CPopupIntEdit	*pEdit = new CPopupIntEdit;
@@ -75,8 +75,8 @@ CWnd *CChannelsBar::CChannelsGridCtrl::CreateEditCtrl(LPCTSTR Text, DWORD dwStyl
 		return(NULL);
 	}
 	int nVal;
-	if (_tcslen(Text))
-		nVal = _ttoi(Text);
+	if (_tcslen(pszText))
+		nVal = _ttoi(pszText);
 	else
 		nVal = -1;
 	pEdit->SetVal(nVal);
@@ -84,22 +84,45 @@ CWnd *CChannelsBar::CChannelsGridCtrl::CreateEditCtrl(LPCTSTR Text, DWORD dwStyl
 	return(pEdit);
 }
 
-void CChannelsBar::CChannelsGridCtrl::OnItemChange(LPCTSTR Text)
+void CChannelsBar::CChannelsGridCtrl::OnItemChange(LPCTSTR pszText)
 {
-	UNREFERENCED_PARAMETER(Text);
+	UNREFERENCED_PARAMETER(pszText);
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL) {
-		int	iChan = m_EditRow;
-		int	iProp = m_EditCol - 1;	// skip number column
-		CPopupNumEdit	*pNumEdit = STATIC_DOWNCAST(CPopupNumEdit, m_EditCtrl);
+		CPopupNumEdit	*pNumEdit = STATIC_DOWNCAST(CPopupNumEdit, m_pEditCtrl);
+		int	iChan = m_iEditRow;
+		int	iProp = m_iEditCol - 1;	// skip number column
 		int	nVal = pNumEdit->GetIntVal();
-		if (nVal != pDoc->m_arrChannel[iChan].GetProperty(iProp)) {	// if property really changed
-			pDoc->NotifyUndoableEdit(MAKELONG(iChan, iProp), UCODE_CHANNEL_PROP);
-			pDoc->m_arrChannel[iChan].SetProperty(iProp, nVal);
-			CPolymeterDoc::CPropHint	hint(iChan, iProp);
-			CView	*pSender = reinterpret_cast<CView *>(GetParent());	// sender is parent grid control
-			pDoc->UpdateAllViews(pSender, CPolymeterDoc::HINT_CHANNEL_PROP, &hint);
-			pDoc->SetModifiedFlag();
+		if (GetSelectedCount() > 1 && GetSelected(iChan)) {	// if multiple selection and editing within selection
+			CIntArrayEx	arrSelection;
+			GetSelection(arrSelection);
+			int	nSels = arrSelection.GetSize();
+			int	iSel;
+			for (iSel = 0; iSel < nSels; iSel++) {	// for each selected channel
+				int	iSelChan = arrSelection[iSel];
+				if (nVal != pDoc->m_arrChannel[iSelChan].GetProperty(iProp))	// if property changed
+					break;
+			}
+			if (iSel < nSels) {	// if at least one channel's property changed
+				pDoc->NotifyUndoableEdit(iProp, UCODE_MULTI_CHANNEL_PROP);
+				for (iSel = 0; iSel < nSels; iSel++) {	// for each selected channel
+					int	iSelChan = arrSelection[iSel];
+					pDoc->m_arrChannel[iSelChan].SetProperty(iProp, nVal);	// set property
+				}
+				CPolymeterDoc::CMultiItemPropHint	hint(arrSelection, iProp);
+				CView	*pSender = reinterpret_cast<CView *>(GetParent());	// sender is parent
+				pDoc->UpdateAllViews(pSender, CPolymeterDoc::HINT_MULTI_CHANNEL_PROP, &hint);
+				pDoc->SetModifiedFlag();
+			}
+		} else {	// single selection
+			if (nVal != pDoc->m_arrChannel[iChan].GetProperty(iProp)) {	// if property changed
+				pDoc->NotifyUndoableEdit(MAKELONG(iChan, iProp), UCODE_CHANNEL_PROP);
+				pDoc->m_arrChannel[iChan].SetProperty(iProp, nVal);	// set property
+				CPolymeterDoc::CPropHint	hint(iChan, iProp);
+				CView	*pSender = reinterpret_cast<CView *>(GetParent());	// sender is parent
+				pDoc->UpdateAllViews(pSender, CPolymeterDoc::HINT_CHANNEL_PROP, &hint);
+				pDoc->SetModifiedFlag();
+			}
 		}
 	}
 }
@@ -107,23 +130,33 @@ void CChannelsBar::CChannelsGridCtrl::OnItemChange(LPCTSTR Text)
 CString CChannelsBar::GetPropertyName(int iProp)
 {
 	ASSERT(iProp >= 0 && iProp < CChannel::PROPERTIES);
-	return LDS(m_arrColInfo[iProp + 1].TitleID);	// skip column name
+	return LDS(m_arrColInfo[iProp + 1].nTitleID);	// skip column name
 }
 
 void CChannelsBar::Update()
 {
-	m_Grid.Invalidate();
+	m_grid.Invalidate();
 }
 
 void CChannelsBar::Update(int iChan)
 {
-	m_Grid.RedrawItems(iChan, iChan);
+	m_grid.RedrawItems(iChan, iChan);
 }
 
 void CChannelsBar::Update(int iChan, int iProp)
 {
 	ASSERT(iProp >= 0 && iProp < CChannel::PROPERTIES);
-	m_Grid.RedrawSubItem(iChan, iProp + 1);	// skip column name
+	m_grid.RedrawSubItem(iChan, iProp + 1);	// skip column name
+}
+
+void CChannelsBar::Update(const CIntArrayEx& arrSelection, int iProp)
+{
+	ASSERT(iProp >= 0 && iProp < CChannel::PROPERTIES);
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {
+		int	iChan = arrSelection[iSel];
+		m_grid.RedrawSubItem(iChan, iProp + 1);	// skip column name
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -147,12 +180,12 @@ int CChannelsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	DWORD	dwStyle = WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_OWNERDATA
 		| LVS_SHOWSELALWAYS | LVS_NOSORTHEADER;
-	m_Grid.Create(dwStyle, CRect(0, 0, 0, 0), this, IDC_CHANNELS_GRID);
-	m_Grid.CreateColumns(m_arrColInfo, COLUMNS);
+	m_grid.Create(dwStyle, CRect(0, 0, 0, 0), this, IDC_CHANNELS_GRID);
+	m_grid.CreateColumns(m_arrColInfo, COLUMNS);
 	DWORD	dwListExStyle = LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT;
-	m_Grid.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
-	m_Grid.SetExtendedStyle(dwListExStyle);
-	m_Grid.SetItemCountEx(MIDI_CHANNELS);
+	m_grid.SetExtendedStyle(dwListExStyle);
+	m_grid.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
+	m_grid.SetItemCountEx(MIDI_CHANNELS);
 	return 0;
 }
 
@@ -164,7 +197,7 @@ void CChannelsBar::OnDestroy()
 void CChannelsBar::OnSize(UINT nType, int cx, int cy)
 {
 	CDockablePane::OnSize(nType, cx, cy);
-	m_Grid.MoveWindow(0, 0, cx, cy);
+	m_grid.MoveWindow(0, 0, cx, cy);
 }
 
 LRESULT CChannelsBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)

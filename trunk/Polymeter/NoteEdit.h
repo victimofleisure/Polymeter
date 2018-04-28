@@ -7,58 +7,67 @@
  
 		revision history:
 		rev		date	comments
-        00      28sep04	initial version
-		01		24apr18	standardize names
+        00      04oct05	initial version
+		01		23nov07	support Unicode
+		02		12sep13	use note object's conversions
+		03		24apr18	standardize names
 
-        spin buddy for numeric edit control
+        numeric edit control
  
 */
 
 #pragma once
 
-// NumSpin.h : header file
+// NoteEdit.h : header file
 //
 
 /////////////////////////////////////////////////////////////////////////////
-// CNumSpin window
+// CNoteEdit window
 
-class CNumSpin : public CSpinButtonCtrl
+#include "NumEdit.h"
+
+class CNoteEdit : public CNumEdit
 {
-	DECLARE_DYNAMIC(CNumSpin);
+	DECLARE_DYNAMIC(CNoteEdit);
 // Construction
 public:
-	CNumSpin();
+	CNoteEdit();
 
 // Attributes
 public:
-	void	SetDelta(double fDelta);
+	void	SetNoteEntry(bool bEnable);
+	bool	IsNoteEntry() const;
 
 // Operations
 public:
 
 // Overrides
 	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CNumSpin)
+	//{{AFX_VIRTUAL(CNoteEdit)
 	//}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~CNumSpin();
+	virtual ~CNoteEdit();
 
-// Generated message map functions
+	// Generated message map functions
 protected:
-	//{{AFX_MSG(CNumSpin)
-	afx_msg void OnDeltapos(NMHDR* pNMHDR, LRESULT* pResult);
+	//{{AFX_MSG(CNoteEdit)
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
-// Member data
-	double	m_fDelta;	// increment numeric edit control by this amount
+// Overrides
+	void	StrToVal(LPCTSTR Str);
+	void	ValToStr(CString& Str);
+	bool	IsValidChar(int nChar);
+
+// Data members
+	bool	m_bIsNoteEntry;
 };
 
-inline void CNumSpin::SetDelta(double fDelta)
+inline bool CNoteEdit::IsNoteEntry() const
 {
-	m_fDelta = fDelta;
+	return(m_bIsNoteEntry);
 }
 
 /////////////////////////////////////////////////////////////////////////////

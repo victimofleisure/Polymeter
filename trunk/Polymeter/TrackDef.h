@@ -18,7 +18,9 @@
 TRACKDEF(	CString,	s,		Name,		_T(""),		0		)	// track name
 #endif
 TRACKDEF(	int,		n,		Channel,	9,			1		)	// channel number
+#ifndef TRACKDEF_EXCLUDE_NOTE
 TRACKDEF(	int,		n,		Note,		64,			0		)	// note number
+#endif
 #ifndef TRACKDEF_EXCLUDE_LENGTH
 TRACKDEF(	int,		n,		Length,		INIT_STEPS,	0		)	// loop length in steps
 #endif
@@ -33,6 +35,7 @@ TRACKDEF(	bool,		b,		Mute,		false,		0		)	// true if muted
 
 #undef TRACKDEF
 #undef TRACKDEF_INT
+#undef TRACKDEF_EXCLUDE_NOTE
 #undef TRACKDEF_EXCLUDE_LENGTH
 
 #endif

@@ -22,7 +22,7 @@
 
 #include "ChildFrm.h"
 #include "PolymeterDoc.h"
-#include "PolymeterView.h"
+#include "TrackView.h"
 
 #include "Win32Console.h"
 #include "AboutDlg.h"
@@ -124,7 +124,7 @@ BOOL CPolymeterApp::InitInstance()
 	pDocTemplate = new CMultiDocTemplate(IDR_PolymeterTYPE,
 		RUNTIME_CLASS(CPolymeterDoc),
 		RUNTIME_CLASS(CChildFrame), // custom MDI child frame
-		RUNTIME_CLASS(CPolymeterView));
+		RUNTIME_CLASS(CTrackView));
 	if (!pDocTemplate)
 		return FALSE;
 	AddDocTemplate(pDocTemplate);

@@ -19,7 +19,6 @@
 
 #include "MainFrm.h"
 #include "PolymeterDoc.h"
-#include "PolymeterView.h"
 #include "UndoCodes.h"
 #include "OptionsDlg.h"
 #include "DocIter.h"
@@ -80,7 +79,7 @@ CMainFrame::CMainFrame()
 {
 	// TODO: add member initialization code here
 	theApp.m_nAppLook = theApp.GetInt(_T("ApplicationLook"), APPLOOK_VS_2008);
-	m_pActiveView = NULL;
+	m_pActiveDoc = NULL;
 }
 
 CMainFrame::~CMainFrame()
@@ -236,15 +235,26 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 void CMainFrame::OnActivateView(CView *pView)
 {
 	// dynamic cast because other view types are possible, e.g. print preview
-	CPolymeterView	*pActiveView = DYNAMIC_DOWNCAST(CPolymeterView, pView);
-	if (pActiveView != m_pActiveView) {	// if active view changed
-		m_pActiveView = pActiveView;
+	CPolymeterDoc	*pDoc;
+	if (pView != NULL)
+		pDoc = DYNAMIC_DOWNCAST(CPolymeterDoc, pView->GetDocument());
+	else
+		pDoc = NULL;
+	if (pDoc != m_pActiveDoc) {	// if active document changed
+		m_pActiveDoc = pDoc;
 		OnUpdate(NULL);
-		bool	bNewEnable = pActiveView != NULL;
+		bool	bNewEnable = pDoc != NULL;
 		bool	bOldEnable = m_wndPropertiesBar.GetWindow(GW_CHILD)->IsWindowEnabled() != 0;
 		if (bNewEnable != bOldEnable) {	// if first or last view
 			EnableChildWindows(m_wndPropertiesBar, bNewEnable);
 		}
+		CString	m_sSongPos;
+		if (pDoc != NULL) {	// if valid document
+			LONGLONG	nPos;
+			if (pDoc->m_Seq.GetPosition(nPos))	// if valid song position
+				pDoc->m_Seq.ConvertPositionToString(nPos, m_sSongPos);
+		}
+		m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);	// update song position in status bar
 	}
 }
 
@@ -287,8 +297,6 @@ void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 				if (pDoc->m_Seq.IsPlaying())
 					SetViewTimer(true);
 			}
-			if (theApp.m_Options.m_View_bShowCurPos != pPrevOptions->m_View_bShowCurPos)
-				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_SONG_POS);
 		}
 	}
 }
@@ -352,18 +360,8 @@ BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParent
 	return TRUE;
 }
 
-CPolymeterDoc *CMainFrame::GetActiveMDIDoc()
-{
-	if (m_pActiveView != NULL)
-		return(m_pActiveView->GetDocument());
-	return(NULL);
-}
-
 void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
-	UNREFERENCED_PARAMETER(pSender);
-	UNREFERENCED_PARAMETER(lHint);
-	UNREFERENCED_PARAMETER(pHint);
 //	printf("CMainFrame::OnUpdate pSender=%Ix lHint=%Id pHint=%Ix\n", pSender, lHint, pHint);
 	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
 	if (pDoc != NULL) {
@@ -378,7 +376,8 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			}
 			break;
 		case CPolymeterDoc::HINT_SONG_POS:
-			UpdateSongPosition();
+			if (pSender != reinterpret_cast<CView *>(this))
+				UpdateSongPosition();
 			break;
 		case CPolymeterDoc::HINT_CHANNEL_PROP:
 			{
@@ -389,6 +388,21 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 					m_wndChannelsBar.Update(iChan, iProp);	// update channels bar
 				}
 				pDoc->OutputChannelEvent(iChan, iProp);
+			}
+			break;
+		case CPolymeterDoc::HINT_MULTI_CHANNEL_PROP:
+			{
+				const CPolymeterDoc::CMultiItemPropHint	*pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
+				const CIntArrayEx& arrSelection = pPropHint->m_arrSelection;
+				int	iProp = pPropHint->m_iProp;
+				if (pSender != reinterpret_cast<CView *>(&m_wndChannelsBar)) {	// if sender isn't channels bar
+					m_wndChannelsBar.Update(arrSelection, iProp);	// update channels bar
+				}
+				int	nSels = arrSelection.GetSize();
+				for (int iSel = 0; iSel < nSels; iSel++) {
+					int	iChan = arrSelection[iSel];
+					pDoc->OutputChannelEvent(iChan, iProp);
+				}
 			}
 			break;
 		}
@@ -405,15 +419,13 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 
 void CMainFrame::UpdateSongPosition()
 {
-	CPolymeterView	*pView = GetActiveMDIView();
-	CPolymeterDoc	*pDoc = pView->GetDocument();
 	LONGLONG	nPos;
+	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
 	if (pDoc->m_Seq.GetPosition(nPos)) {	// if valid song position
 		pDoc->m_Seq.ConvertPositionToString(nPos, m_sSongPos);
 		m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);
-		if (theApp.m_Options.m_View_bShowCurPos) {
-			pView->SetSongPosition(nPos);
-		}
+		CView	*pView = reinterpret_cast<CView *>(this);
+		pDoc->UpdateAllViews(pView, CPolymeterDoc::HINT_SONG_POS);
 	}
 }
 
@@ -672,10 +684,7 @@ LRESULT	CMainFrame::OnHandleDlgKey(WPARAM wParam, LPARAM lParam)
 
 void CMainFrame::OnUpdateIndicatorSongPos(CCmdUI* pCmdUI)
 {
-	pCmdUI->Enable(m_pActiveView != NULL);
-	if (m_pActiveView == NULL) {
-		pCmdUI->SetText(_T(""));
-	}
+	pCmdUI->Enable(m_pActiveDoc != NULL);
 }
 
 LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)

@@ -118,7 +118,6 @@ public:
 
 inline void CProperties::ReadEnum(LPCTSTR szSection, LPCTSTR szKey, int& Value, const CProperties::OPTION_INFO *pOption, int nOptions)
 {
-	UNREFERENCED_PARAMETER(nOptions);
 	ASSERT(pOption != NULL);
 	ASSERT(Value < nOptions);
 	Value = FindOption(AfxGetApp()->GetProfileString(szSection, szKey), pOption, nOptions);

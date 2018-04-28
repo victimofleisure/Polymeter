@@ -16,17 +16,14 @@
 		06		21nov13	derive from extended selection list
 		07		12jun14	add drag enable
 		08		04apr15	add GetCompensatedDropPos
+		09		24apr18	standardize names
 
         virtual list control with drag reordering
  
 */
 
-#if !defined(AFX_DRAGVIRTUALLISTCTRL_H__99B4EEB6_9380_4505_8BFB_AC4E2E67FD23__INCLUDED_)
-#define AFX_DRAGVIRTUALLISTCTRL_H__99B4EEB6_9380_4505_8BFB_AC4E2E67FD23__INCLUDED_
-
-#if _MSC_VER > 1000
 #pragma once
-#endif // _MSC_VER > 1000
+
 // DragVirtualListCtrl.h : header file
 //
 
@@ -46,12 +43,12 @@ public:
 
 // Attributes
 public:
-	void	SetDragEnable(bool Enable);
+	void	SetDragEnable(bool bEnable);
 	bool	GetDragEnable() const;
 	int		GetDropPos() const;
 	int		GetCompensatedDropPos() const;
 	bool	IsDragging() const;
-	void	TrackDropPos(bool Enable);
+	void	TrackDropPos(bool bEnable);
 
 // Operations
 public:
@@ -86,48 +83,46 @@ protected:
 	};
 
 // Member data
-	bool	m_DragEnable;		// true if drag is enabled
-	bool	m_Dragging;			// true if items are being dragged
-	bool	m_TrackDropPos;		// true if tracking drop position
-	int		m_ScrollDelta;		// scroll by this amount per timer tick
-	W64UINT	m_ScrollTimer;		// if non-zero, timer instance for scrolling
-	int		m_DropPos;			// position at which items were dropped
+	bool	m_bDragEnable;		// true if drag is enabled
+	bool	m_bDragging;		// true if items are being dragged
+	bool	m_bTrackDropPos;	// true if tracking drop position
+	int		m_nScrollDelta;		// scroll by this amount per timer tick
+	W64UINT	m_nScrollTimer;		// if non-zero, timer instance for scrolling
+	int		m_iDropPos;			// position at which items were dropped
 
 // Overrideables
 	virtual	void	UpdateCursor(CPoint point);
 
 // Helpers
-	void	AutoScroll(const CPoint& Cursor);
+	void	AutoScroll(const CPoint& point);
 };
 
-inline void CDragVirtualListCtrl::SetDragEnable(bool Enable)
+inline void CDragVirtualListCtrl::SetDragEnable(bool bEnable)
 {
-	m_DragEnable = Enable;
+	m_bDragEnable = bEnable;
 }
 
 inline bool CDragVirtualListCtrl::GetDragEnable() const
 {
-	return(m_DragEnable);
+	return(m_bDragEnable);
 }
 
 inline int CDragVirtualListCtrl::GetDropPos() const
 {
-	return(m_DropPos);
+	return(m_iDropPos);
 }
 
 inline bool CDragVirtualListCtrl::IsDragging() const
 {
-	return(m_Dragging);
+	return(m_bDragging);
 }
 
-inline void CDragVirtualListCtrl::TrackDropPos(bool Enable)
+inline void CDragVirtualListCtrl::TrackDropPos(bool bEnable)
 {
-	m_TrackDropPos = Enable;
+	m_bTrackDropPos = bEnable;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_DRAGVIRTUALLISTCTRL_H__99B4EEB6_9380_4505_8BFB_AC4E2E67FD23__INCLUDED_)

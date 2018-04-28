@@ -15,12 +15,8 @@
 
 */
 
-#if !defined(AFX_POPUPCOMBO_H__6F4A61F8_D590_426E_AD60_A826FDF20554__INCLUDED_)
-#define AFX_POPUPCOMBO_H__6F4A61F8_D590_426E_AD60_A826FDF20554__INCLUDED_
-
-#if _MSC_VER > 1000
 #pragma once
-#endif // _MSC_VER > 1000
+
 // PopupCombo.h : header file
 //
 
@@ -68,12 +64,10 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 // Data members
-	bool	m_EndingEdit;	// true if ending edit
+	bool	m_bEndingEdit;	// true if ending edit
 };
 
 /////////////////////////////////////////////////////////////////////////////
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_POPUPCOMBO_H__6F4A61F8_D590_426E_AD60_A826FDF20554__INCLUDED_)

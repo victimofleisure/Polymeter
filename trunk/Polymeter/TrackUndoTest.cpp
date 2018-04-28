@@ -49,13 +49,14 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_DELETE,				1},
 	{UCODE_MOVE,				2},
 	{UCODE_CHANNEL_PROP,		0.1f},
+	{UCODE_MULTI_CHANNEL_PROP,	0.1f},
 	{UCODE_MASTER_PROP,			0.1f},
+	{UCODE_TRACK_SORT,			0.1f},
 };
 
 CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
 	CUndoTest(InitRunning, TIMER_PERIOD, m_EditInfo, _countof(m_EditInfo))
 {
-	m_pView = NULL;
 	m_pDoc = NULL;
 	m_iNextTrack = 0;
 #if 0
@@ -83,12 +84,12 @@ CTrackUndoTest::~CTrackUndoTest()
 
 int CTrackUndoTest::GetRandomItem() const
 {
-	return(Random(m_pDoc->m_Seq.GetTrackCount()));
+	return(Random(m_pDoc->GetTrackCount()));
 }
 
 int CTrackUndoTest::GetRandomInsertPos() const
 {
-	return(Random(m_pDoc->m_Seq.GetTrackCount() + 1));
+	return(Random(m_pDoc->GetTrackCount() + 1));
 }
 
 int CTrackUndoTest::IntArraySortCompare(const void *arg1, const void *arg2)
@@ -100,16 +101,15 @@ int CTrackUndoTest::IntArraySortCompare(const void *arg1, const void *arg2)
 	return(0);
 }
 
-bool CTrackUndoTest::MakeRandomSelection(CIntArrayEx& arrSelection) const
+bool CTrackUndoTest::MakeRandomSelection(int nItems, CIntArrayEx& arrSelection) const
 {
-	int	nItems = m_pDoc->m_Seq.GetTrackCount();
 	if (nItems <= 0)
 		return(FALSE);
 	int	nSels = Random(nItems) + 1;	// select at least one item
 	CRandList	list(nItems);
 	arrSelection.SetSize(nSels);
 	for (int iSel = 0; iSel < nSels; iSel++)	// for each selection
-		arrSelection[iSel] = list.GetNext();	// select random channel
+		arrSelection[iSel] = list.GetNext();	// select random track
 	qsort(arrSelection.GetData(), arrSelection.GetSize(), sizeof(int), IntArraySortCompare);
 	return(TRUE);
 }
@@ -176,12 +176,18 @@ CString	CTrackUndoTest::PrintSelection(CIntArrayEx& arrSelection) const
 	return(str);
 }
 
+// NOTE: if track members are reordered, these defines must be updated
+#define TRACK_VAR_FIRST m_nChannel
+#define TRACK_VAR_LAST m_bMute
+#define TRACK_VAR_SIZE offsetof(CTrack, TRACK_VAR_LAST) - offsetof(CTrack, TRACK_VAR_FIRST) + sizeof(trk.TRACK_VAR_LAST)
+
 LONGLONG CTrackUndoTest::GetSnapshot() const
 {
 	LONGLONG	nSum = 0;
-	int	nTracks = m_pDoc->m_Seq.GetTrackCount();
+	int	nTracks = m_pDoc->GetTrackCount();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
 		const CTrack&	trk = m_pDoc->m_Seq.GetTrack(iTrack);
+		nSum += Fletcher64(&trk.TRACK_VAR_FIRST, TRACK_VAR_SIZE);	// assumes vars are packed contiguously
 		const CByteArrayEx&	ba = trk.m_arrEvent;
 		nSum += Fletcher64(ba.GetData(), ba.GetSize());
 		LPCTSTR	pszName = trk.m_sName;
@@ -213,9 +219,9 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 	case UCODE_MULTI_TRACK_PROP:
 		{
 			CIntArrayEx	arrSelection;
-			if (!MakeRandomSelection(arrSelection))
+			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
 				return(DISABLED);
-			m_pView->SetSelection(arrSelection);
+			m_pDoc->m_arrTrackSel = arrSelection;
 			int	iProp = Random(PROPERTIES);
 			m_pDoc->NotifyUndoableEdit(iProp, UCODE_MULTI_TRACK_PROP);
 			int	nSels = arrSelection.GetSize();
@@ -260,10 +266,10 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 	case UCODE_CUT:
 		{
 			CIntArrayEx	arrSelection;
-			if (!MakeRandomSelection(arrSelection))
+			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
 				return(DISABLED);
-			m_pView->SetSelection(arrSelection);
-			m_pView->SendMessage(WM_COMMAND, ID_EDIT_CUT);
+			m_pDoc->m_arrTrackSel = arrSelection;
+			theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_EDIT_CUT);
 			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
 		}
 		break;
@@ -271,42 +277,42 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 		{
 			if (!theApp.m_arrTrackClipboard.GetSize())
 				return(DISABLED);
-			if (m_pDoc->m_Seq.GetTrackCount() >= MAX_TRACKS)
+			if (m_pDoc->GetTrackCount() >= MAX_TRACKS)
 				return(DISABLED);
-			m_pView->SendMessage(WM_COMMAND, ID_EDIT_PASTE);
+			theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_EDIT_PASTE);
 			PRINTF(_T("%s\n"), sUndoTitle);
 		}
 		break;
 	case UCODE_INSERT:
 		{
-			if (m_pDoc->m_Seq.GetTrackCount() >= MAX_TRACKS)
+			if (m_pDoc->GetTrackCount() >= MAX_TRACKS)
 				return(DISABLED);
 			int iInsPos = max(GetRandomItem(), 0);
-			m_pView->SetSelectionMark(iInsPos);
-			m_pView->SendMessage(WM_COMMAND, ID_EDIT_INSERT);
+			m_pDoc->SelectOnly(iInsPos);
+			theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_EDIT_INSERT);
 			PRINTF(_T("%s %d\n"), sUndoTitle, iInsPos);
 		}
 		break;
 	case UCODE_DELETE:
 		{
 			CIntArrayEx	arrSelection;
-			if (!MakeRandomSelection(arrSelection))
+			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
 				return(DISABLED);
-			m_pView->SetSelection(arrSelection);
-			m_pView->SendMessage(WM_COMMAND, ID_EDIT_DELETE);
+			m_pDoc->m_arrTrackSel = arrSelection;
+			theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_EDIT_DELETE);
 			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
 		}
 		break;
 	case UCODE_MOVE:
 		{
-			if (m_pDoc->m_Seq.GetTrackCount() < 2)
+			if (m_pDoc->GetTrackCount() < 2)
 				return(DISABLED);
 			CIntArrayEx	arrSelection;
-			if (!MakeRandomSelection(arrSelection))
+			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
 				return(DISABLED);
-			m_pView->SetSelection(arrSelection);
+			m_pDoc->m_arrTrackSel = arrSelection;
 			int	iInsPos = GetRandomInsertPos();
-			m_pView->Drop(iInsPos);
+			m_pDoc->Drop(iInsPos);
 			PRINTF(_T("%s %s %d\n"), sUndoTitle, PrintSelection(arrSelection), iInsPos);
 		}
 		break;
@@ -322,6 +328,25 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			PRINTF(_T("%s %d %d\n"), sUndoTitle, iChan, iProp);
 		}
 		break;
+	case UCODE_MULTI_CHANNEL_PROP:
+		{
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(MIDI_CHANNELS, arrSelection))
+				return(DISABLED);
+			theApp.GetMainFrame()->GetChannelsBar().SetSelection(arrSelection);
+			int	iProp = Random(CChannel::PROPERTIES);
+			int	nVal = Random(MIDI_NOTES + 1) - 1;
+			m_pDoc->NotifyUndoableEdit(iProp, UCODE_MULTI_CHANNEL_PROP);
+			int	nSels = arrSelection.GetSize();
+			for (int iSel = 0; iSel < nSels; iSel++) {
+				int	iChan = arrSelection[iSel];
+				m_pDoc->m_arrChannel[iChan].SetProperty(iProp, nVal);
+			}
+			CPolymeterDoc::CMultiItemPropHint	hint(arrSelection, iProp);
+			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_CHANNEL_PROP, &hint);
+			PRINTF(_T("%s %d %s\n"), sUndoTitle, iProp, PrintSelection(arrSelection));
+		}
+		break;
 	case UCODE_MASTER_PROP:
 		{
 			int	iProp = Random(CMasterProps::PROPERTIES);
@@ -334,6 +359,20 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			PRINTF(_T("%s %d\n"), sUndoTitle, iProp);
 		}
 		break;
+	case UCODE_TRACK_SORT:
+		{
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
+				return(DISABLED);
+			int	iProp = Random(PROPERTIES);
+			CIntArrayEx	arrSortLevel;
+			arrSortLevel.Add(iProp);
+			m_pDoc->SortTracks(arrSortLevel);
+			CPolymeterDoc::CPropHint	hint(0, iProp);
+			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
+			PRINTF(_T("%s %s %d\n"), sUndoTitle, PrintSelection(arrSelection), iProp);
+		}
+		break;
 	default:
 		NODEFAULTCASE;
 		return(ABORT);
@@ -343,11 +382,10 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 
 bool CTrackUndoTest::Create()
 {
-	m_pView = theApp.GetMainFrame()->GetActiveMDIView();
-	m_pDoc = m_pView->GetDocument();
+	m_pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	m_UndoMgr = m_pDoc->GetUndoManager();
 	m_UndoMgr->SetLevels(-1);	// unlimited undo
-	int	nTracks = m_pDoc->m_Seq.GetTrackCount();
+	int	nTracks = m_pDoc->GetTrackCount();
 	CString	sName;
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
 		sName.Format(_T("%d"), iTrack);
@@ -355,7 +393,7 @@ bool CTrackUndoTest::Create()
 	}
 	m_pDoc->UpdateAllViews(NULL);
 	if (TEST_PLAYING)	// if playback during test
-		m_pView->SendMessage(WM_COMMAND, ID_VIEW_PLAY);
+		theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_VIEW_PLAY);
 	if (!CUndoTest::Create())
 		return(FALSE);
 	return(TRUE);
@@ -364,8 +402,9 @@ bool CTrackUndoTest::Create()
 void CTrackUndoTest::Destroy()
 {
 	CUndoTest::Destroy();
-	m_pView->Deselect();
+	m_pDoc->Deselect();
 	m_pDoc->SetModifiedFlag(FALSE);
+	m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_SELECTION);
 }
 
 #endif

@@ -19,7 +19,6 @@
 
 #include "UndoTest.h"
 #include "PolymeterDoc.h"
-#include "PolymeterView.h"
 #include "MainFrm.h"
 
 class CTrackUndoTest : public CUndoTest, public CTrackBase {
@@ -35,7 +34,6 @@ protected:
 	static const EDIT_INFO	m_EditInfo[];	// array of edit properties
 
 // Data members
-	CPolymeterView	*m_pView;		// pointer to target view
 	CPolymeterDoc	*m_pDoc;		// pointer to target document
 	int		m_iNextTrack;			// next track number for renaming
 
@@ -49,7 +47,7 @@ protected:
 	int		GetRandomItem() const;
 	int		GetRandomInsertPos() const;
 	bool	GetRandomSelection(CIntArrayEx& arrSelection) const;
-	bool	MakeRandomSelection(CIntArrayEx& arrSelection) const;
+	bool	MakeRandomSelection(int nItems, CIntArrayEx& arrSelection) const;
 	void	MakeRandomTrackProperty(int iTrack, int iProp, CComVariant& var);
 	void	MakeRandomMasterProperty(int iProp, CComVariant& var);
 	CString	PrintSelection(CIntArrayEx& arrSelection) const;

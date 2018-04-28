@@ -30,11 +30,12 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CPopupNumEdit
 
-IMPLEMENT_DYNAMIC(CPopupNumEdit, CNumEdit);
+IMPLEMENT_DYNAMIC(CPopupNumEdit, CNoteEdit);
 
 CPopupNumEdit::CPopupNumEdit()
 {
-	m_EndingEdit = FALSE;
+	m_bEndingEdit = FALSE;
+	m_bIsNoteEntry = FALSE;
 }
 
 CPopupNumEdit::~CPopupNumEdit()
@@ -44,9 +45,9 @@ CPopupNumEdit::~CPopupNumEdit()
 bool CPopupNumEdit::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
 	dwStyle |= WS_BORDER | ES_AUTOHSCROLL;
-	if (!CNumEdit::Create(dwStyle, rect, pParentWnd, nID))	// create control
+	if (!CNoteEdit::Create(dwStyle, rect, pParentWnd, nID))	// create control
 		return(FALSE);	// control creation failed
-	if (m_Format & DF_SPIN)	// if spin control requested
+	if (m_nFormat & DF_SPIN)	// if spin control requested
 		CreateSpinCtrl();
 	SetFont(pParentWnd->GetFont());	// set font same as parent
 	SetFocus();	// give control focus
@@ -55,11 +56,11 @@ bool CPopupNumEdit::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UI
 
 void CPopupNumEdit::EndEdit()
 {
-	m_EndingEdit = TRUE;	// avoid reentrance if we lose focus
+	m_bEndingEdit = TRUE;	// avoid reentrance if we lose focus
 	if (GetModify()) {	// if text was modified
 		GetText();
-		if (m_HaveRange) {
-			m_Val = CLAMP(m_Val, m_MinVal, m_MaxVal);
+		if (m_bHaveRange) {
+			m_fVal = CLAMP(m_fVal, m_fMinVal, m_fMaxVal);
 			SetText();
 		}
 		GetParent()->SendMessage(UWM_TEXT_CHANGE, NULL);
@@ -73,7 +74,13 @@ void CPopupNumEdit::CancelEdit()
 	EndEdit();
 }
 
-BEGIN_MESSAGE_MAP(CPopupNumEdit, CNumEdit)
+void CPopupNumEdit::AddSpin(double fDelta)
+{
+	CNoteEdit::AddSpin(fDelta);
+	SetModify();	// so EndEdit handles text change
+}
+
+BEGIN_MESSAGE_MAP(CPopupNumEdit, CNoteEdit)
 	//{{AFX_MSG_MAP(CPopupNumEdit)
 	ON_WM_KILLFOCUS()
 	//}}AFX_MSG_MAP
@@ -85,8 +92,8 @@ END_MESSAGE_MAP()
 
 void CPopupNumEdit::OnKillFocus(CWnd* pNewWnd) 
 {
-	CNumEdit::OnKillFocus(pNewWnd);
-	if (!m_EndingEdit)	// if not ending edit already
+	CNoteEdit::OnKillFocus(pNewWnd);
+	if (!m_bEndingEdit)	// if not ending edit already
 		SendMessage(UWM_END_EDIT);
 }
 
@@ -100,12 +107,12 @@ BOOL CPopupNumEdit::PreTranslateMessage(MSG* pMsg)
 			return TRUE;	// no further processing; our instance is deleted
 		}
 	}
-	return CNumEdit::PreTranslateMessage(pMsg);
+	return CNoteEdit::PreTranslateMessage(pMsg);
 }
 
 void CPopupNumEdit::PreSubclassWindow() 
 {
-	SetVal(m_Val);
+	// skip CNumEdit override to avoid crash; caller must set initial value and create spin control
 	CEdit::PreSubclassWindow();
 }
 

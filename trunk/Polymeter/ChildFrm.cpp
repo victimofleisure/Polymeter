@@ -19,6 +19,9 @@
 
 #include "ChildFrm.h"
 #include "MainFrm.h"
+#include "StepView.h"
+#include "GridCtrl.h"
+#include "TrackView.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -83,4 +86,31 @@ void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeact
 		if (pActivateWnd == NULL)	// if no document
 			theApp.GetMainFrame()->OnActivateView(NULL);	// notify main frame
 	}
+}
+
+BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
+{
+	UNREFERENCED_PARAMETER(lpcs);
+	if (!m_wndSplitter.CreateStatic(this, 1, PANES))
+		return false;
+	if (!m_wndSplitter.CreateView(0, PANE_TRACK, RUNTIME_CLASS(CTrackView), CSize(700, 0), pContext))
+		return false;
+	if (!m_wndSplitter.CreateView(0, PANE_STEP, RUNTIME_CLASS(CStepView), CSize(700, 0), pContext))
+		return false;
+	CTrackView	*pTrackView = STATIC_DOWNCAST(CTrackView, m_wndSplitter.GetPane(0, PANE_TRACK));
+	CStepView	*pStepView = STATIC_DOWNCAST(CStepView, m_wndSplitter.GetPane(0, PANE_STEP));
+	pStepView->SetHeaderHeight(pTrackView->GetHeaderHeight());
+	pStepView->SetTrackHeight(pTrackView->GetItemHeight());
+	return true;
+}
+
+BOOL CChildFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
+{
+	switch (nID) {
+	case ID_VIEW_ZOOM_IN:
+	case ID_VIEW_ZOOM_OUT:
+	case ID_VIEW_ZOOM_RESET:
+		return m_wndSplitter.GetPane(0, PANE_STEP)->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+	}
+	return CMDIChildWndEx::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
 }

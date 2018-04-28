@@ -15,12 +15,8 @@
  
 */
 
-#if !defined(AFX_PROGRESSDLG_H__371804AF_56CF_433C_BCFD_C543787BC927__INCLUDED_)
-#define AFX_PROGRESSDLG_H__371804AF_56CF_433C_BCFD_C543787BC927__INCLUDED_
-
-#if _MSC_VER > 1000
 #pragma once
-#endif // _MSC_VER > 1000
+
 // ProgressDlg.h : header file
 //
 
@@ -93,5 +89,3 @@ inline void CProgressDlg::ShowPercent(bool Enable)
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_PROGRESSDLG_H__371804AF_56CF_433C_BCFD_C543787BC927__INCLUDED_)

@@ -191,12 +191,14 @@
     <ClInclude Include="AboutDlg.h" />
     <ClInclude Include="ArrayEx.h" />
     <ClInclude Include="Benchmark.h" />
+    <ClInclude Include="BoundArray.h" />
     <ClInclude Include="Channel.h" />
     <ClInclude Include="ChannelsBar.h" />
     <ClInclude Include="ChannelDef.h" />
     <ClInclude Include="ChildFrm.h" />
     <ClInclude Include="ColoredButton.h" />
     <ClInclude Include="CritSec.h" />
+    <ClInclude Include="Diatonic.h" />
     <ClInclude Include="DLLWrap.h" />
     <ClInclude Include="DocIter.h" />
     <ClInclude Include="DragVirtualListCtrl.h" />
@@ -206,6 +208,7 @@
     <ClInclude Include="Globals.h" />
     <ClInclude Include="GoToPositionDlg.h" />
     <ClInclude Include="GridCtrl.h" />
+    <ClInclude Include="HeptatonicDef.h" />
     <ClInclude Include="Hyperlink.h" />
     <ClInclude Include="ILockRingBuf.h" />
     <ClInclude Include="IniFile.h" />
@@ -218,6 +221,9 @@
     <ClInclude Include="MidiDevices.h" />
     <ClInclude Include="MidiFile.h" />
     <ClInclude Include="MidiWrap.h" />
+    <ClInclude Include="ModeDef.h" />
+    <ClInclude Include="Note.h" />
+    <ClInclude Include="NoteEdit.h" />
     <ClInclude Include="NumberTheory.h" />
     <ClInclude Include="NumEdit.h" />
     <ClInclude Include="NumSpin.h" />
@@ -228,7 +234,8 @@
     <ClInclude Include="Persist.h" />
     <ClInclude Include="Polymeter.h" />
     <ClInclude Include="PolymeterDoc.h" />
-    <ClInclude Include="PolymeterView.h" />
+    <ClInclude Include="Scale.h" />
+    <ClInclude Include="StepView.h" />
     <ClInclude Include="PopupCombo.h" />
     <ClInclude Include="PopupEdit.h" />
     <ClInclude Include="PopupNumEdit.h" />
@@ -251,8 +258,9 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Track.h" />
     <ClInclude Include="TrackDef.h" />
-    <ClInclude Include="TrackDlg.h" />
+    <ClInclude Include="TrackSortDlg.h" />
     <ClInclude Include="TrackUndoTest.h" />
+    <ClInclude Include="TrackView.h" />
     <ClInclude Include="Undoable.h" />
     <ClInclude Include="UndoCodeData.h" />
     <ClInclude Include="UndoCodes.h" />
@@ -275,6 +283,7 @@
     <ClCompile Include="ChannelsBar.cpp" />
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="ColoredButton.cpp" />
+    <ClCompile Include="Diatonic.cpp" />
     <ClCompile Include="DLLWrap.cpp" />
     <ClCompile Include="DocIter.cpp" />
     <ClCompile Include="DragVirtualListCtrl.cpp" />
@@ -290,6 +299,8 @@
     <ClCompile Include="MidiDevices.cpp" />
     <ClCompile Include="MidiFile.cpp" />
     <ClCompile Include="MidiWrap.cpp" />
+    <ClCompile Include="Note.cpp" />
+    <ClCompile Include="NoteEdit.cpp" />
     <ClCompile Include="NumberTheory.cpp" />
     <ClCompile Include="NumEdit.cpp" />
     <ClCompile Include="NumSpin.cpp" />
@@ -299,7 +310,8 @@
     <ClCompile Include="Persist.cpp" />
     <ClCompile Include="Polymeter.cpp" />
     <ClCompile Include="PolymeterDoc.cpp" />
-    <ClCompile Include="PolymeterView.cpp" />
+    <ClCompile Include="Scale.cpp" />
+    <ClCompile Include="StepView.cpp" />
     <ClCompile Include="PopupCombo.cpp" />
     <ClCompile Include="PopupEdit.cpp" />
     <ClCompile Include="PopupNumEdit.cpp" />
@@ -316,8 +328,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Track.cpp" />
-    <ClCompile Include="TrackDlg.cpp" />
+    <ClCompile Include="TrackSortDlg.cpp" />
     <ClCompile Include="TrackUndoTest.cpp" />
+    <ClCompile Include="TrackView.cpp" />
     <ClCompile Include="Undoable.cpp" />
     <ClCompile Include="UndoManager.cpp" />
     <ClCompile Include="UndoState.cpp" />

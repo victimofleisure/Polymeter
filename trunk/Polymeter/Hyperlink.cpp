@@ -82,10 +82,9 @@ void CHyperlink::FitWindowToUrl()
 
 void CHyperlink::SetUnderline(bool Enable)
 {
-	UNREFERENCED_PARAMETER(Enable);
 	LOGFONT	lf;
 	if (GetFont()->GetLogFont(&lf)) {
-		lf.lfUnderline = TRUE;
+		lf.lfUnderline = Enable;
 		m_Font.Detach();
 		m_Font.CreateFontIndirect(&lf);
 		SetFont(&m_Font);
