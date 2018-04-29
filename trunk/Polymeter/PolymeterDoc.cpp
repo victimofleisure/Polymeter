@@ -546,11 +546,12 @@ void CPolymeterDoc::SaveTrackSort(CUndoState& State) const
 		ASSERT(m_parrSortedSelection != NULL);
 		CRefPtr<CUndoTrackSort>	pInfo;
 		pInfo.CreateObj();
-		if (GetSelectedCount())
-			pInfo->m_arrSelection = m_arrTrackSel;
-		else {	// no selection
+		int	nSels = GetSelectedCount(); 
+		State.SetVal(nSels);
+		if (nSels)	// if selection exists
+			pInfo->m_arrSelection = m_arrTrackSel;	// sort selection
+		else	// no selection
 			GetSelectAll(pInfo->m_arrSelection);	// sort all tracks
-		}
 		pInfo->m_arrSorted = *m_parrSortedSelection;
 		State.SetObj(pInfo);
 	}
@@ -567,6 +568,10 @@ void CPolymeterDoc::RestoreTrackSort(const CUndoState& State)
 		m_Seq.GetTracks(pInfo->m_arrSorted, arrTrack);
 		m_Seq.SetTracks(pInfo->m_arrSelection, arrTrack);
 	}
+	int	nSels;
+	State.GetVal(nSels);
+	if (nSels)	// if selection exists
+		m_arrTrackSel = pInfo->m_arrSelection;	// restore selection
 }
 
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
