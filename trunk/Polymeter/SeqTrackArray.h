@@ -137,7 +137,7 @@ inline bool CSeqTrackArray::GetMute(int iTrack) const
 	return GetAt(iTrack).m_bMute;
 }
 
-inline CSeqTrackArray::STEP CSeqTrackArray::GetStep(int iTrack, int iStep) const
+inline CTrackBase::STEP CSeqTrackArray::GetStep(int iTrack, int iStep) const
 {
 	return GetAt(iTrack).m_arrStep[iStep];
 }
