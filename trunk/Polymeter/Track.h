@@ -25,7 +25,15 @@ public:
 	enum {
 		MAX_STEPS = 256,			// maximum number of steps
 		INIT_STEPS = 32,			// initial number of steps
+		DEFAULT_VELOCITY = 64,		// default note velocity
 	};
+	enum {	// note bitmasks
+		NB_TIE = 0x80,				// if non-zero, note is tied
+		NB_VELOCITY = 0x7f,			// remaining bits are velocity
+	};
+	typedef BYTE STEP;				// sequencer step
+	typedef CByteArrayEx CStepArray;	// array of sequencer steps
+	typedef CArrayEx<CStepArray, CStepArray&> CStepArrayArray;	// array of step arrays
 };
 
 class CTrack : public CTrackBase {
@@ -35,8 +43,8 @@ public:
 	#define TRACKDEF(type, prefix, name, defval, offset) type m_##prefix##name;
 	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 	#include "TrackDef.h"		// generate definitions of track property member vars
-	CByteArrayEx	m_arrEvent;	// array of events
-	int		GetUsedEventCount() const;
+	CStepArray	m_arrStep;		// array of steps
+	int		GetUsedStepCount() const;
 	void	SetDefaults();
 	int		CompareProperty(int iProp, const CTrack& track) const;
 	template<class T> static int Compare(const T& a, const T& b);

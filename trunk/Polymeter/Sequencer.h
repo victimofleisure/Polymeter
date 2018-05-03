@@ -64,8 +64,8 @@ public:
 	int		GetBufferSize() const;
 	void	SetBufferSize(int nEvents);
 	void	GetStatistics(STATS& stats) const;
-	void	GetInitialEvents(CDWordArrayEx& arrEvent) const;
-	void	SetInitialEvents(const CDWordArrayEx& arrEvent);
+	void	GetInitialMidiEvents(CDWordArrayEx& arrMidiEvent) const;
+	void	SetInitialMidiEvents(const CDWordArrayEx& arrMidiEvent);
 	int		GetTrackCount() const;
 	void	SetTrackCount(int nTracks);
 	const CTrackArray&	GetTracks() const;
@@ -94,15 +94,18 @@ public:
 	void	SetDuration(int iTrack, int nDuration);
 	bool	GetMute(int iTrack) const;
 	void	SetMute(int iTrack, bool bMute);
-	BYTE	GetEvent(int iTrack, int iEvent) const;
-	void	SetEvent(int iTrack, int iEvent, BYTE nVal);
-	void	GetEvents(int iTrack, CByteArrayEx& arrEvent) const;
-	void	SetEvents(int iTrack, const CByteArrayEx& arrEvent);
+	STEP	GetStep(int iTrack, int iStep) const;
+	void	SetStep(int iTrack, int iStep, STEP nStep);
+	void	GetSteps(int iTrack, CStepArray& arrStep) const;
+	void	SetSteps(int iTrack, const CStepArray& arrStep);
+	void	GetSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const;
+	void	SetSteps(const CRect& rSelection, const CStepArrayArray& arrStepArray);
+	void	SetSteps(const CRect& rSelection, STEP nStep);
 	void	GetTrackProperty(int iTrack, int iProp, CComVariant& var) const;
 	void	SetTrackProperty(int iTrack, int iProp, const CComVariant& var);
 	int		GetUsedTrackCount(bool bExcludeMuted = false) const;
 	void	GetUsedTracks(CIntArrayEx& arrUsedTrack, bool bExcludeMuted = false) const;
-	int		GetEventIndex(int iTrack, LONGLONG nPos) const;
+	int		GetStepIndex(int iTrack, LONGLONG nPos) const;
 
 // Operations
 	bool	Play(bool bEnable);
@@ -173,7 +176,7 @@ protected:
 	CMidiEventStream	m_arrMidiEvent[BUFFERS];	// array of MIDI event stream buffers
 	CEventArray	m_arrEvent;			// array of track events
 	CEventArray	m_arrNoteOff;		// array of pending note off events
-	CDWordArrayEx	m_arrInitEvent;	// array of events to output at start of playback
+	CDWordArrayEx	m_arrInitMidiEvent;	// array of MIDI events to output at start of playback
 	CILockRingBuf<DWORD>	m_qLiveEvent;	// thread-safe queue of live events to be output
 	WCritSec	m_csCallback;		// critical section for serializing access to callback shared state
 #if SEQ_DUMP_EVENTS
@@ -185,6 +188,7 @@ protected:
 
 // Helpers
 	static	void	CALLBACK MidiOutProc(HMIDIOUT hMidiOut, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2);
+	int		GetNoteDuration(const CStepArray& arrStep, int nSteps, int iCurStep) const;
 	void	AddTrackEvents(int iTrack, int nCBStart);
 	void	AddNoteOffs(int nCBStart, int nCBEnd);
 	bool	OutputMidiBuffer();
@@ -297,14 +301,14 @@ inline void CSequencer::GetStatistics(STATS& stats) const
 	stats = m_stats;
 }
 
-inline void CSequencer::GetInitialEvents(CDWordArrayEx& arrEvent) const
+inline void CSequencer::GetInitialMidiEvents(CDWordArrayEx& arrMidiEvent) const
 {
-	arrEvent = m_arrInitEvent;
+	arrMidiEvent = m_arrInitMidiEvent;
 }
 
-inline void CSequencer::SetInitialEvents(const CDWordArrayEx& arrEvent)
+inline void CSequencer::SetInitialMidiEvents(const CDWordArrayEx& arrMidiEvent)
 {
-	m_arrInitEvent = arrEvent;
+	m_arrInitMidiEvent = arrMidiEvent;
 }
 
 inline int CSequencer::GetTrackCount() const
@@ -344,7 +348,7 @@ inline int CSequencer::GetQuant(int iTrack) const
 
 inline int CSequencer::GetLength(int iTrack) const
 {
-	return m_arrTrack[iTrack].m_arrEvent.GetSize();
+	return m_arrTrack[iTrack].m_arrStep.GetSize();
 }
 
 inline int CSequencer::GetOffset(int iTrack) const
@@ -372,12 +376,12 @@ inline bool CSequencer::GetMute(int iTrack) const
 	return m_arrTrack[iTrack].m_bMute;
 }
 
-inline BYTE CSequencer::GetEvent(int iTrack, int iEvent) const
+inline CSequencer::STEP CSequencer::GetStep(int iTrack, int iStep) const
 {
-	return m_arrTrack[iTrack].m_arrEvent[iEvent];
+	return m_arrTrack[iTrack].m_arrStep[iStep];
 }
 
-inline void CSequencer::GetEvents(int iTrack, CByteArrayEx& arrEvent) const
+inline void CSequencer::GetSteps(int iTrack, CStepArray& arrStep) const
 {
-	arrEvent = m_arrTrack[iTrack].m_arrEvent;
+	arrStep = m_arrTrack[iTrack].m_arrStep;
 }

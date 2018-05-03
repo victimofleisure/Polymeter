@@ -52,6 +52,7 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_MULTI_CHANNEL_PROP,	0.1f},
 	{UCODE_MASTER_PROP,			0.1f},
 	{UCODE_TRACK_SORT,			0.1f},
+	{UCODE_MULTI_STEP_RECT,		1},
 };
 
 CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
@@ -188,8 +189,7 @@ LONGLONG CTrackUndoTest::GetSnapshot() const
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
 		const CTrack&	trk = m_pDoc->m_Seq.GetTrack(iTrack);
 		nSum += Fletcher64(&trk.TRACK_VAR_FIRST, TRACK_VAR_SIZE);	// assumes vars are packed contiguously
-		const CByteArrayEx&	ba = trk.m_arrEvent;
-		nSum += Fletcher64(ba.GetData(), ba.GetSize());
+		nSum += Fletcher64(trk.m_arrStep.GetData(), trk.m_arrStep.GetSize());
 		LPCTSTR	pszName = trk.m_sName;
 		nSum += Fletcher64(pszName, trk.m_sName.GetLength());
 	}
@@ -258,7 +258,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (iStep < 0)
 				return(DISABLED);
 			m_pDoc->NotifyUndoableEdit(MAKELONG(iTrack, iStep), UCODE_TRACK_STEP);
-			m_pDoc->m_Seq.SetEvent(iTrack, iStep, m_pDoc->m_Seq.GetEvent(iTrack, iStep) ^ 1);
+			m_pDoc->m_Seq.SetStep(iTrack, iStep, m_pDoc->m_Seq.GetStep(iTrack, iStep) ^ 1);
 			CPolymeterDoc::CPropHint	hint(iTrack, iStep);
 			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_STEP, &hint);
 		}
@@ -288,7 +288,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (m_pDoc->GetTrackCount() >= MAX_TRACKS)
 				return(DISABLED);
 			int iInsPos = max(GetRandomItem(), 0);
-			m_pDoc->SelectOnly(iInsPos);
+			m_pDoc->SelectOnly(iInsPos, false);	// don't update views
 			theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_EDIT_INSERT);
 			PRINTF(_T("%s %d\n"), sUndoTitle, iInsPos);
 		}
@@ -373,6 +373,27 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			PRINTF(_T("%s %s %d\n"), sUndoTitle, PrintSelection(arrSelection), iProp);
 		}
 		break;
+	case UCODE_MULTI_STEP_RECT:
+		{
+			int	nTracks = m_pDoc->GetTrackCount();
+			if (!nTracks)
+				return(DISABLED);
+			int	iStartTrack = Random(nTracks);
+			int	iEndTrack = Random(nTracks - iStartTrack) + iStartTrack;
+			int	nMaxLen = 0;
+			for (int iTrack = iStartTrack; iTrack < iEndTrack; iTrack++) {
+				int	nLen = m_pDoc->m_Seq.GetLength(iTrack);
+				if (nLen > nMaxLen)
+					nMaxLen = nLen;
+			}
+			int	iStartStep = Random(nMaxLen);
+			int	iEndStep = Random(nMaxLen - iStartStep) + iStartStep;
+			CRect	rSelection(iStartStep, iStartTrack, iEndStep, iEndTrack);
+			STEP	nStep = STEP(Random(256));
+			m_pDoc->SetTrackSteps(rSelection, nStep);
+			PRINTF(_T("%s %d\n"), sUndoTitle, nStep);
+		}
+		break;
 	default:
 		NODEFAULTCASE;
 		return(ABORT);
@@ -404,7 +425,6 @@ void CTrackUndoTest::Destroy()
 	CUndoTest::Destroy();
 	m_pDoc->Deselect();
 	m_pDoc->SetModifiedFlag(FALSE);
-	m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_SELECTION);
 }
 
 #endif

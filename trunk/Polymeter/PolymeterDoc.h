@@ -46,6 +46,7 @@ public:
 		HINT_CHANNEL_PROP,		// channel property edit; pHint is CPropHint
 		HINT_MULTI_CHANNEL_PROP,	// multiple channel property edit; pHint is CMultiItemPropHint
 		HINT_TRACK_SELECTION,	// track selection
+		HINT_MULTI_STEP_RECT,	// multiple step edit via rectangular selection; pHint is CRectSelPropHint
 		HINTS
 	};
 
@@ -69,6 +70,12 @@ public:
 		CIntArrayEx	m_arrSelection;	// indices of selected items
 		int		m_iProp;	// property index
 	};
+	class CRectSelPropHint :  public CObject {
+	public:
+		CRectSelPropHint() {}
+		CRectSelPropHint(const CRect& rSelection) : m_rSelection(rSelection) {}
+		CRect	m_rSelection;	// rectangular step selection; x is step index, y is track index
+	};
 
 // Public data
 	CMySequencer	m_Seq;		// sequencer instance
@@ -82,7 +89,10 @@ public:
 // Attributes
 	int		GetTrackCount() const;
 	int		GetSelectedCount() const;
+	bool	GetSelected(int iTrack) const;
 	static	int		GetTrackPropertyNameID(int iProp);
+	void	SetTrackStep(int iTrack, int iStep, STEP nStep);
+	void	SetTrackSteps(const CRect& rSelection, STEP nStep);
 
 // Operations
 public:
@@ -94,12 +104,17 @@ public:
 	void	InitChannelArray();
 	void	UpdateChannelEvents();
 	void	OutputChannelEvent(int iChan, int iProp);
-	void	SelectOnly(int iTrack);
-	void	SelectRange(int iStartTrack, int nSels);
-	void	SelectAll();
-	void	Deselect();
+	void	Select(const CIntArrayEx& arrSelection, bool bUpdate = true);
+	void	SelectOnly(int iTrack, bool bUpdate = true);
+	void	SelectRange(int iStartTrack, int nSels, bool bUpdate = true);
+	void	SelectAll(bool bUpdate = true);
+	void	Deselect(bool bUpdate = true);
+	void	ToggleSelection(int iTrack, bool bUpdate = true);
+	void	MergeSelection(const CIntArrayEx& arrSelection, bool bUpdate = true);
 	void	Drop(int iDropPos);
 	void	SortTracks(const CIntArrayEx& arrSortLevel);
+	void	MuteTrack(int iTrack, bool bMute);
+	void	MuteSelectedTracks(bool bMute);
 
 // Overrides
 public:
@@ -129,14 +144,14 @@ protected:
 		CIntArrayEx	m_arrSelection;	// indices of selected items
 		CVariantArray	m_arrVal;	// variant property values for selected items
 	};
-	class CUndoEvents : public CRefObj {
+	class CUndoSteps : public CRefObj {
 	public:
-		CByteArrayEx	m_arrEvent;		// array of events
+		CStepArray	m_arrStep;		// array of steps
 	};
-	class CUndoMultiItemEvents : public CRefObj {
+	class CUndoMultiItemSteps : public CRefObj {
 	public:
 		CIntArrayEx	m_arrSelection;	// indices of selected tracks
-		CArrayEx<CByteArrayEx, CByteArrayEx&>	m_arrEvent;		// array of events for each track
+		CStepArrayArray	m_arrStepArray;		// array of step arrays for each track
 	};
 	class CUndoTrackSort : public CRefObj {
 	public:
@@ -150,12 +165,18 @@ protected:
 		// level's low word is index of track property to sort by; high word 
 		// is sort direction (zero for ascending, non-zero for descending)
 	};
+	class CUndoMultiStepRect : public CRefObj {
+	public:
+		CRect	m_rSelection;	// rectangular step selection
+		CStepArrayArray	m_arrStepArray;		// array of step arrays for each track
+	};
 
 // Constants
 	static const int	m_nUndoTitleId[];	// array of string resource IDs for undo titles
 	static const int	m_nTrackPropNameId[];	// array of string resource IDs for track property names
 
 // Data members
+	CRect	m_rStepSel;			// rectangular step selection, used by undo
 	static CTrackSortInfo	m_infoTrackSort;	// state passed to track sort compare function
 	static const CIntArrayEx	*m_parrSortedSelection;	// pointer to sorted selection array for undo
 
@@ -166,26 +187,34 @@ protected:
 	virtual	void	RestoreUndoState(const CUndoState& State);
 
 // Helpers
+	template<class T> void	MergeArray(T& arrDest, const T& arrSrc);
+	void	ConvertLegacyFileFormat();
 	int		GetInsertPos() const;
 	void	DeleteTracks(bool bCopyToClipboard);
 	static	int TrackSortCompare(const void *pElem1, const void *pElem2);
 	void	GetSelectAll(CIntArrayEx& arrSelection) const;
-	void	SaveTrackProperty(int iTrack, int iProp, CUndoState& State) const;
-	void	RestoreTrackProperty(int iTrack, int iProp, const CUndoState& State);
-	void	SaveMultiTrackProperty(const CIntArrayEx& arrSelection, int iProp, CUndoState& State) const;
-	void	RestoreMultiTrackProperty(CIntArrayEx& parrSelection, int iProp, const CUndoState& State);
-	void	SaveTrackEvents(int iTrack, CUndoState& State) const;
-	void	RestoreTrackEvents(int iTrack, const CUndoState& State);
-	void	SaveMultiTrackEvents(const CIntArrayEx& arrSelection, CUndoState& State) const;
-	void	RestoreMultiTrackEvents(CIntArrayEx& arrSelection, const CUndoState& State);
+	void	SaveTrackProperty(CUndoState& State) const;
+	void	RestoreTrackProperty(const CUndoState& State);
+	void	SaveMultiTrackProperty(CUndoState& State) const;
+	void	RestoreMultiTrackProperty(const CUndoState& State);
+	void	SaveTrackStep(CUndoState& State) const;
+	void	RestoreTrackStep(const CUndoState& State);
+	void	SaveTrackSteps(CUndoState& State) const;
+	void	RestoreTrackSteps(const CUndoState& State);
+	void	SaveMultiTrackSteps(CUndoState& State) const;
+	void	RestoreMultiTrackSteps(const CUndoState& State);
 	void	SaveClipboard(CUndoState& State) const;
 	void	RestoreClipboard(const CUndoState& State);
-	void	SaveMasterProperty(int iProp, CUndoState& State) const;
-	void	RestoreMasterProperty(int iProp, const CUndoState& State);
-	void	SaveMultiChannelProperty(const CIntArrayEx& arrSelection, int iProp, CUndoState& State) const;
-	void	RestoreMultiChannelProperty(CIntArrayEx& arrSelection, int iProp, const CUndoState& State);
+	void	SaveMasterProperty(CUndoState& State) const;
+	void	RestoreMasterProperty(const CUndoState& State);
+	void	SaveChannelProperty(CUndoState& State) const;
+	void	RestoreChannelProperty(const CUndoState& State);
+	void	SaveMultiChannelProperty(CUndoState& State) const;
+	void	RestoreMultiChannelProperty(const CUndoState& State);
 	void	SaveTrackSort(CUndoState& State) const;
 	void	RestoreTrackSort(const CUndoState& State);
+	void	SaveMultiStepRect(CUndoState& State) const;
+	void	RestoreMultiStepRect(const CUndoState& State);
 
 // Generated message map functions
 protected:
@@ -226,6 +255,11 @@ inline int CPolymeterDoc::GetTrackCount() const
 inline int CPolymeterDoc::GetSelectedCount() const
 {
 	return m_arrTrackSel.GetSize();
+}
+
+inline bool CPolymeterDoc::GetSelected(int iTrack) const
+{
+	return m_arrTrackSel.Find(iTrack) >= 0;
 }
 
 inline int CPolymeterDoc::GetTrackPropertyNameID(int iProp)

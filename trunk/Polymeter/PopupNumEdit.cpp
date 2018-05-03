@@ -92,7 +92,9 @@ END_MESSAGE_MAP()
 
 void CPopupNumEdit::OnKillFocus(CWnd* pNewWnd) 
 {
-	CNoteEdit::OnKillFocus(pNewWnd);
+	BOOL	bModified = GetModify();	// save modified flag
+	CNoteEdit::OnKillFocus(pNewWnd);	// base class may reset modified flag
+	SetModify(bModified);	// restore modified flag
 	if (!m_bEndingEdit)	// if not ending edit already
 		SendMessage(UWM_END_EDIT);
 }

@@ -19,6 +19,8 @@
 		09		16feb18	add FastSetSize
 		10		19mar18	add FastRemoveAll
 		11		22mar18	add Find, BinarySearch, InsertSorted
+		12		30apr18	add GetMaxSize
+		13		02may18	add equality operators to non-template arrays
 
 		enhanced array with copy ctor, assignment, and fast const access
  
@@ -40,6 +42,7 @@ public:
 // Attributes
 	int		GetSize() const;
 	W64INT	GetSize64() const;
+	W64INT	GetMaxSize() const;
 
 // Operations
 	TYPE& GetAt(W64INT nIndex);
@@ -173,6 +176,12 @@ AFX_INLINE W64INT CArrayEx<TYPE, ARG_TYPE>::GetSize64() const
 }
 
 template<class TYPE, class ARG_TYPE>
+AFX_INLINE W64INT CArrayEx<TYPE, ARG_TYPE>::GetMaxSize() const
+{
+	return(m_nMaxSize);
+}
+
+template<class TYPE, class ARG_TYPE>
 AFX_INLINE bool CArrayEx<TYPE, ARG_TYPE>::operator==(const CArrayEx& arr) const
 {
 	if (m_nSize != arr.m_nSize)
@@ -268,6 +277,7 @@ public:
 	CDWordArrayEx& operator=(const CDWordArrayEx& arr);
 	int		GetSize() const;
 	W64INT	GetSize64() const;
+	W64INT	GetMaxSize() const;
 	DWORD	GetAt(W64INT nIndex) const;
 	DWORD&	ElementAt(W64INT nIndex);
 	DWORD	operator[](W64INT nIndex) const;
@@ -275,6 +285,8 @@ public:
 	void	Detach(DWORD*& pData, W64INT& Size);
 	void	Attach(DWORD *pData, W64INT Size);
 	void	Swap(CDWordArrayEx& src);
+	bool	operator==(const CDWordArrayEx& arr) const;
+	bool	operator!=(const CDWordArrayEx& arr) const;
 	void	FastRemoveAll();
 	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);
 	W64INT	Find(DWORD val) const;
@@ -306,6 +318,11 @@ AFX_INLINE W64INT CDWordArrayEx::GetSize64() const
 	return(m_nSize);
 }
 
+AFX_INLINE W64INT CDWordArrayEx::GetMaxSize() const
+{
+	return(m_nMaxSize);
+}
+
 AFX_INLINE DWORD CDWordArrayEx::GetAt(W64INT nIndex) const
 {
 	ASSERT(nIndex >= 0 && nIndex < m_nSize);
@@ -333,6 +350,22 @@ AFX_INLINE void CDWordArrayEx::Swap(CDWordArrayEx& src)
 	CArrayEx_Swap(m_pData, src.m_pData);
 	CArrayEx_Swap(m_nSize, src.m_nSize);
 	CArrayEx_Swap(m_nMaxSize, src.m_nMaxSize);
+}
+
+AFX_INLINE bool CDWordArrayEx::operator==(const CDWordArrayEx& arr) const
+{
+	if (m_nSize != arr.m_nSize)
+		return(FALSE);
+	for (int iElem = 0; iElem < m_nSize; iElem++) {
+		if (GetAt(iElem) != arr.GetAt(iElem))
+			return(FALSE);
+	}
+	return(TRUE);
+}
+
+AFX_INLINE bool CDWordArrayEx::operator!=(const CDWordArrayEx& arr) const
+{
+	return !operator==(arr);
 }
 
 AFX_INLINE void CDWordArrayEx::FastRemoveAll()
@@ -366,6 +399,7 @@ public:
 	CIntArrayEx& operator=(const CIntArrayEx& arr);
 	int		GetSize() const;
 	W64INT	GetSize64() const;
+	W64INT	GetMaxSize() const;
 	int		GetAt(W64INT nIndex) const;
 	int&	ElementAt(W64INT nIndex);
 	int		operator[](W64INT nIndex) const;
@@ -375,6 +409,8 @@ public:
 	void	Detach(int*& pData, W64INT& Size);
 	void	Attach(int *pData, W64INT Size);
 	void	Swap(CIntArrayEx& src);
+	bool	operator==(const CIntArrayEx& arr) const;
+	bool	operator!=(const CIntArrayEx& arr) const;
 	void	FastRemoveAll();
 	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);
 	W64INT	Find(int val) const;
@@ -404,6 +440,11 @@ AFX_INLINE int CIntArrayEx::GetSize() const
 AFX_INLINE W64INT CIntArrayEx::GetSize64() const
 {
 	return(m_nSize);
+}
+
+AFX_INLINE W64INT CIntArrayEx::GetMaxSize() const
+{
+	return(m_nMaxSize);
 }
 
 AFX_INLINE int CIntArrayEx::GetAt(W64INT nIndex) const
@@ -445,6 +486,22 @@ AFX_INLINE void CIntArrayEx::Swap(CIntArrayEx& src)
 	CArrayEx_Swap(m_nMaxSize, src.m_nMaxSize);
 }
 
+AFX_INLINE bool CIntArrayEx::operator==(const CIntArrayEx& arr) const
+{
+	if (m_nSize != arr.m_nSize)
+		return(FALSE);
+	for (int iElem = 0; iElem < m_nSize; iElem++) {
+		if (GetAt(iElem) != arr.GetAt(iElem))
+			return(FALSE);
+	}
+	return(TRUE);
+}
+
+AFX_INLINE bool CIntArrayEx::operator!=(const CIntArrayEx& arr) const
+{
+	return !operator==(arr);
+}
+
 AFX_INLINE void CIntArrayEx::FastRemoveAll()
 {
 	m_nSize = 0;	// set size without freeing memory
@@ -476,6 +533,7 @@ public:
 	CByteArrayEx& operator=(const CByteArrayEx& arr);
 	int		GetSize() const;
 	W64INT	GetSize64() const;
+	W64INT	GetMaxSize() const;
 	BYTE	GetAt(W64INT nIndex) const;
 	BYTE&	ElementAt(W64INT nIndex);
 	BYTE	operator[](W64INT nIndex) const;
@@ -483,6 +541,8 @@ public:
 	void	Detach(BYTE*& pData, W64INT& Size);
 	void	Attach(BYTE *pData, W64INT Size);
 	void	Swap(CByteArrayEx& src);
+	bool	operator==(const CByteArrayEx& arr) const;
+	bool	operator!=(const CByteArrayEx& arr) const;
 	void	FastRemoveAll();
 	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);
 	W64INT	Find(BYTE val) const;
@@ -514,6 +574,11 @@ AFX_INLINE W64INT CByteArrayEx::GetSize64() const
 	return(m_nSize);
 }
 
+AFX_INLINE W64INT CByteArrayEx::GetMaxSize() const
+{
+	return(m_nMaxSize);
+}
+
 AFX_INLINE BYTE CByteArrayEx::GetAt(W64INT nIndex) const
 {
 	ASSERT(nIndex >= 0 && nIndex < m_nSize);
@@ -541,6 +606,22 @@ AFX_INLINE void CByteArrayEx::Swap(CByteArrayEx& src)
 	CArrayEx_Swap(m_pData, src.m_pData);
 	CArrayEx_Swap(m_nSize, src.m_nSize);
 	CArrayEx_Swap(m_nMaxSize, src.m_nMaxSize);
+}
+
+AFX_INLINE bool CByteArrayEx::operator==(const CByteArrayEx& arr) const
+{
+	if (m_nSize != arr.m_nSize)
+		return(FALSE);
+	for (int iElem = 0; iElem < m_nSize; iElem++) {
+		if (GetAt(iElem) != arr.GetAt(iElem))
+			return(FALSE);
+	}
+	return(TRUE);
+}
+
+AFX_INLINE bool CByteArrayEx::operator!=(const CByteArrayEx& arr) const
+{
+	return !operator==(arr);
 }
 
 AFX_INLINE void CByteArrayEx::FastRemoveAll()
@@ -574,6 +655,9 @@ public:
 	CStringArrayEx& operator=(const CStringArrayEx& arr);
 	int		GetSize() const;
 	W64INT	GetSize64() const;
+	W64INT	GetMaxSize() const;
+	bool	operator==(const CStringArrayEx& arr) const;
+	bool	operator!=(const CStringArrayEx& arr) const;
 	W64INT Find(const CString& val) const;
 };
 
@@ -601,6 +685,27 @@ AFX_INLINE int CStringArrayEx::GetSize() const
 AFX_INLINE W64INT CStringArrayEx::GetSize64() const
 {
 	return(m_nSize);
+}
+
+AFX_INLINE W64INT CStringArrayEx::GetMaxSize() const
+{
+	return(m_nMaxSize);
+}
+
+AFX_INLINE bool CStringArrayEx::operator==(const CStringArrayEx& arr) const
+{
+	if (m_nSize != arr.m_nSize)
+		return(FALSE);
+	for (int iElem = 0; iElem < m_nSize; iElem++) {
+		if (GetAt(iElem) != arr.GetAt(iElem))
+			return(FALSE);
+	}
+	return(TRUE);
+}
+
+AFX_INLINE bool CStringArrayEx::operator!=(const CStringArrayEx& arr) const
+{
+	return !operator==(arr);
 }
 
 AFX_INLINE W64INT CStringArrayEx::Find(const CString& val) const

@@ -72,6 +72,14 @@ bool FormatNumberCommas(LPCTSTR pszSrc, CString& sDst, int nPrecision = 0);
 // data validation method to flunk a control
 void DDV_Fail(CDataExchange* pDX, int nIDC);
 
+// swap values of any type that allows assignment
+template<typename T> inline void Swap(T& a, T& b)
+{
+	T tmp = a;
+	a = b;
+	b = tmp;
+}
+
 // undo natter should always be zero in a shipping version
 #define UNDO_NATTER 0	// set non-zero to enable undo natter
 

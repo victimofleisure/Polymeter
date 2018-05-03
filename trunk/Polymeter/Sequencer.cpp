@@ -217,7 +217,7 @@ void CSequencer::SetLength(int iTrack, int nLength)
 {
 	ASSERT(nLength > 0);
 	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	m_arrTrack[iTrack].m_arrEvent.SetSize(nLength);
+	m_arrTrack[iTrack].m_arrStep.SetSize(nLength);
 }
 
 void CSequencer::SetOffset(int iTrack, int nOffset)
@@ -245,15 +245,55 @@ void CSequencer::SetMute(int iTrack, bool bMute)
 	m_arrTrack[iTrack].m_bMute = bMute;
 }
 
-void CSequencer::SetEvent(int iTrack, int iEvent, BYTE nVal)
+void CSequencer::SetStep(int iTrack, int iStep, STEP nStep)
 {
-	m_arrTrack[iTrack].m_arrEvent[iEvent] = nVal;
+	m_arrTrack[iTrack].m_arrStep[iStep] = nStep;
 }
 
-void CSequencer::SetEvents(int iTrack, const CByteArrayEx& arrEvent)
+void CSequencer::SetSteps(int iTrack, const CStepArray& arrStep)
 {
 	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	m_arrTrack[iTrack].m_arrEvent = arrEvent;
+	m_arrTrack[iTrack].m_arrStep = arrStep;
+}
+
+void CSequencer::GetSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const
+{
+	int	nRows = rSelection.Height();
+	arrStepArray.SetSize(nRows);
+	for (int iRow = 0; iRow < nRows; iRow++) {	// for each selected row
+		int	iTrack = rSelection.top + iRow;
+		int	iEndStep = min(rSelection.right, GetLength(iTrack));
+		int	nCols = max(iEndStep - rSelection.left, 0);
+		CStepArray&	arrStep = arrStepArray[iRow];
+		arrStep.SetSize(nCols);
+		for (int iCol = 0; iCol < nCols; iCol++) {	// for each selected column
+			int	iStep = rSelection.left + iCol;
+			arrStep[iCol] = GetStep(iTrack, iStep);
+		}
+	}
+}
+
+void CSequencer::SetSteps(const CRect& rSelection, const CStepArrayArray& arrStepArray)
+{
+	int	nRows = arrStepArray.GetSize();
+	for (int iRow = 0; iRow < nRows; iRow++) {	// for each selected row
+		int	iTrack = rSelection.top + iRow;
+		const CStepArray&	arrStep = arrStepArray[iRow];
+		int	nCols = arrStep.GetSize();
+		for (int iCol = 0; iCol < nCols; iCol++) {	// for each selected column
+			int	iStep = rSelection.left + iCol;
+			m_arrTrack[iTrack].m_arrStep[iStep] = arrStep[iCol];
+		}
+	}
+}
+
+void CSequencer::SetSteps(const CRect& rSelection, STEP nStep)
+{
+	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
+		int	iEndStep = min(rSelection.right, GetLength(iTrack));
+		for (int iStep = rSelection.left; iStep < iEndStep; iStep++)	// for each step in range
+			m_arrTrack[iTrack].m_arrStep[iStep] = nStep;
+	}
 }
 
 void CSequencer::GetTrackProperty(int iTrack, int iProp, CComVariant& var) const
@@ -284,7 +324,7 @@ void CSequencer::GetUsedTracks(CIntArrayEx& arrUsedTrack, bool bExcludeMuted) co
 	int	nTracks = m_arrTrack.GetSize();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		if (!GetMute(iTrack) || !bExcludeMuted) {	// if track is unmuted, or we're including muted tracks
-			if (m_arrTrack[iTrack].GetUsedEventCount())	// if track is non-empty
+			if (m_arrTrack[iTrack].GetUsedStepCount())	// if track has non-empty steps
 				arrUsedTrack.Add(iTrack);	// add track's index to used array
 		}
 	}
@@ -323,6 +363,10 @@ bool CSequencer::Play(bool bEnable)
 		m_bIsStopping = false;
 		m_bIsTempoChange = false;
 		m_bIsPositionChange = false;
+		m_arrEvent.SetSize(DEF_BUFFER_SIZE);	// preallocate event array
+		m_arrEvent.FastRemoveAll();
+		m_arrNoteOff.SetSize(DEF_BUFFER_SIZE);	// preallocate note off array
+		m_arrNoteOff.FastRemoveAll();
 		UINT	uDevice = m_iOutputDevice;
 		CHECK(midiStreamOpen(&m_hStrm, &uDevice, 1, reinterpret_cast<W64UINT>(MidiOutProc), 
 			reinterpret_cast<W64UINT>(this), CALLBACK_FUNCTION));
@@ -335,10 +379,10 @@ bool CSequencer::Play(bool bEnable)
 			CHECK(midiOutPrepareHeader(reinterpret_cast<HMIDIOUT>(m_hStrm), &hdr, sizeof(MIDIHDR)));	// prepare buffer
 		}
 		CMidiEventStream&	arrEvt = m_arrMidiEvent[0];
-		const int	nInitEvents = m_arrInitEvent.GetSize();
+		const int	nInitEvents = m_arrInitMidiEvent.GetSize();
 		for (int iEvent = 0; iEvent < nInitEvents; iEvent++) {
 			arrEvt[iEvent].dwDeltaTime = 0;
-			arrEvt[iEvent].dwEvent = m_arrInitEvent[iEvent];
+			arrEvt[iEvent].dwEvent = m_arrInitMidiEvent[iEvent];
 		}
 		int	nEvents = nInitEvents;
 		arrEvt[nEvents].dwDeltaTime = m_nCBLen;
@@ -419,11 +463,35 @@ void CALLBACK CSequencer::MidiOutProc(HMIDIOUT hMidiOut, UINT wMsg, W64UINT dwIn
 	}
 }
 
+__forceinline int CSequencer::GetNoteDuration(const CStepArray& arrStep, int nSteps, int iCurStep) const
+{
+	int	iPrevStep = iCurStep - 1;	// previous step
+	if (iPrevStep < 0)	// if underrun
+		iPrevStep = nSteps - 1;	// wrap to last step
+	if (arrStep[iPrevStep] & NB_TIE)	// if previous step is tied
+		return 0;	// failure; not at start of note
+	if (!(arrStep[iCurStep] & NB_TIE))	// if current step isn't tied
+		return 1;	// duration is one; optimized case
+	// current step is tied; find first step that isn't tied
+	for (int nDur = 1; nDur < nSteps; nDur++) {	// for remaining steps
+		iCurStep++;	// next step
+		if (iCurStep >= nSteps)	// if overrun
+			iCurStep = 0;	// wrap to first step
+		if (!(arrStep[iCurStep] & NB_TIE)) {	// if step isn't tied
+			if (arrStep[iCurStep])	// if step is on
+				return nDur + 1;	// duration includes this step
+			else	// step is off
+				return nDur;	// duration excludes this step
+		}
+	}
+	return nSteps;	// degenerate case
+}
+
 __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 {
 	CTrack&	trk = m_arrTrack[iTrack];
 	int	nOffset = trk.m_nOffset;	// cache these values for thread safety
-	int	nLength = trk.m_arrEvent.GetSize();
+	int	nLength = trk.m_arrStep.GetSize();
 	int	nQuant = trk.m_nQuant;
 	int	nSwing = trk.m_nSwing;
 	nSwing = CLAMP(nSwing, 1 - nQuant, nQuant - 1);	// limit swing within quant
@@ -435,33 +503,37 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 		iPairQuant--;	// compensate quant pair index
 		nEvtTime += nPairQuant;	// wrap event time
 	}
-	int	iEvt = (iPairQuant * 2) % nLength;
-	if (iEvt < 0)	// if negative event index
-		iEvt += nLength;	// wrap event index
+	int	iStep = (iPairQuant * 2) % nLength;
+	if (iStep < 0)	// if negative step index
+		iStep += nLength;	// wrap step index
 	nEvtTime = -nEvtTime;	// start far enough back to discard up to two events
 	bool	bIsOdd = false;	// starting on even step, due to pair of quants logic
 	while (nEvtTime < m_nCBLen) {	// while event time within callback period
 		if (nEvtTime >= 0) {	// discard already played events
-			if (trk.m_arrEvent[iEvt]) {
-				CEvent	evt;
-				evt.m_dwTime = nEvtTime;
-				int	nVel = CLAMP(64 + trk.m_nVelocity, 0, 127);
-				evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, trk.m_nNote, nVel);
-				m_arrEvent.InsertSorted(evt);
-				int	nDuration = nQuant + trk.m_nDuration;	// add duration offset
-				if (bIsOdd)	// if odd step
-					nDuration -= nSwing;	// subtract swing from duration
-				else	// even step
-					nDuration += nSwing;	// add swing to duration
-				nDuration = max(nDuration, 1);	// keep duration above zero
-				evt.m_dwTime = nCBStart + nEvtTime + nDuration;	// absolute time
-				evt.m_dwEvent &= ~0xff0000;	// zero note's velocity
-				m_arrNoteOff.InsertSorted(evt);	// add pending note off to array
+			if (trk.m_arrStep[iStep]) {
+				int	nDurSteps = GetNoteDuration(trk.m_arrStep, nLength, iStep);
+				if (nDurSteps) {	// if at start of note
+					CEvent	evt;
+					evt.m_dwTime = nEvtTime;
+					int	nVel = (trk.m_arrStep[iStep] & NB_VELOCITY) + trk.m_nVelocity;
+					nVel = CLAMP(nVel, 0, 127);
+					evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, trk.m_nNote, nVel);
+					m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
+					int	nDuration = nDurSteps * nQuant + trk.m_nDuration;	// add duration offset
+					if (bIsOdd)	// if odd step
+						nDuration -= nSwing;	// subtract swing from duration
+					else	// even step
+						nDuration += nSwing;	// add swing to duration
+					nDuration = max(nDuration, 1);	// keep duration above zero
+					evt.m_dwTime = nCBStart + nEvtTime + nDuration;	// absolute time
+					evt.m_dwEvent &= ~0xff0000;	// zero note's velocity
+					m_arrNoteOff.InsertSorted(evt);	// add pending note off to array
+				}
 			}
 		}
-		iEvt++;	// advance to next track event
-		if (iEvt >= nLength)	// if track length reached
-			iEvt -= nLength;	// wrap to start of track
+		iStep++;	// advance to next track step
+		if (iStep >= nLength)	// if track length reached
+			iStep -= nLength;	// wrap to start of track
 		nEvtTime += nQuant;	// advance event time by track's time quant
 		if (bIsOdd)	// if odd step
 			nEvtTime -= nSwing;	// subtract swing from event time
@@ -501,9 +573,9 @@ bool CSequencer::OutputMidiBuffer()
 		if (m_bIsPositionChange) {	// if position changed
 			m_bIsPositionChange = false;	// reset signal
 			int	nEvents = m_arrNoteOff.GetSize();
-			for (int iEvt = 0; iEvt < nEvents; iEvt++) {	// for each active note
-				m_arrNoteOff[iEvt].m_dwTime = 0;	// at callback start time
-				m_arrEvent.Add(m_arrNoteOff[iEvt]);	// add note off event
+			for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each active note
+				m_arrNoteOff[iEvent].m_dwTime = 0;	// at callback start time
+				m_arrEvent.Add(m_arrNoteOff[iEvent]);	// add note off event
 			}
 			m_arrNoteOff.FastRemoveAll();	// empty note off array
 		}
@@ -536,10 +608,10 @@ bool CSequencer::OutputMidiBuffer()
 		}
 		// convert event times (relative to start of callback period) to delta times
 		int	nPrevTime = 0;
-		for (int iEvt = 0; iEvt < nEvents; iEvt++) {	// for each event
-			const CEvent&	evt = m_arrEvent[iEvt];
-			arrEvt[iEvt].dwDeltaTime = evt.m_dwTime - nPrevTime;	// convert to delta time
-			arrEvt[iEvt].dwEvent = evt.m_dwEvent;
+		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
+			const CEvent&	evt = m_arrEvent[iEvent];
+			arrEvt[iEvent].dwDeltaTime = evt.m_dwTime - nPrevTime;	// convert to delta time
+			arrEvt[iEvent].dwEvent = evt.m_dwEvent;
 			nPrevTime = evt.m_dwTime;
 		}
 	} else {	// no events to output, so output NOP
@@ -592,7 +664,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 		int	iTrack = arrUsedTrack[iUsed];	// get track index
 		int	nCBTime = 0;
 		int	nPadTime = 0;
-		CMidiEventArray arrMidiEvt;
+		CMidiEventArray arrMidiEvent;
 		for (int iChunk = 0; iChunk < nChunks; iChunk++) {	// for each time chunk
 			m_arrEvent.FastRemoveAll();	// empty event array
 			AddTrackEvents(iTrack, nCBTime);	// get track's events for this chunk
@@ -601,12 +673,12 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 			if (nEvents) {	// if any events to output
 				// convert event times (relative to start of callback period) to delta times
 				int	nPrevTime = -nPadTime;
-				for (int iEvt = 0; iEvt < nEvents; iEvt++) {	// for each event
-					const CEvent&	evt = m_arrEvent[iEvt];
+				for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
+					const CEvent&	evt = m_arrEvent[iEvent];
 					MIDI_EVENT	midiEvt;
 					midiEvt.DeltaT = evt.m_dwTime - nPrevTime;	// convert to delta time
 					midiEvt.Msg = evt.m_dwEvent;
-					arrMidiEvt.Add(midiEvt);
+					arrMidiEvent.Add(midiEvt);
 					nPrevTime = evt.m_dwTime;
 				}
 				nPadTime = nChunkLen - m_arrEvent[nEvents - 1].m_dwTime;
@@ -614,7 +686,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 				nPadTime += nChunkLen;
 			nCBTime += nChunkLen;
 		}
-		fMidi.WriteTrack(arrMidiEvt);	// write track to MIDI file
+		fMidi.WriteTrack(arrMidiEvent);	// write track to MIDI file
 	}
 	return true;
 }
@@ -724,10 +796,10 @@ bool CSequencer::ConvertStringToPosition(const CString& sPosition, LONGLONG& nPo
 	return true;
 }
 
-int CSequencer::GetEventIndex(int iTrack, LONGLONG nPos) const
+int CSequencer::GetStepIndex(int iTrack, LONGLONG nPos) const
 {
 	const CTrack&	trk = m_arrTrack[iTrack];
-	int	nLength = trk.m_arrEvent.GetSize();
+	int	nLength = trk.m_arrStep.GetSize();
 	int	nQuant = trk.m_nQuant;
 	int	nOffset = trk.m_nOffset;
 	// similar to AddEvents, but divide by nQuant instead nQuant * 2
@@ -738,20 +810,20 @@ int CSequencer::GetEventIndex(int iTrack, LONGLONG nPos) const
 		iQuant--;
 		nEvtTime += nQuant;
 	}
-	int	iEvt = iQuant % nLength;
-	if (iEvt < 0)
-		iEvt += nLength;
-	return iEvt;
+	int	iStep = iQuant % nLength;
+	if (iStep < 0)
+		iStep += nLength;
+	return iStep;
 }
 
 #if SEQ_DUMP_EVENTS
 
 void CSequencer::AddDumpEvent(const CMidiEventStream& arrEvt, int nEvents)
 {
-	int	iEvt = m_arrDumpEvent.GetSize();
-	m_arrDumpEvent.SetSize(iEvt + 1);
-	m_arrDumpEvent[iEvt].SetSize(nEvents);
-	memcpy(m_arrDumpEvent[iEvt].GetData(), arrEvt.GetData(), nEvents * sizeof(MIDI_STREAM_EVENT));
+	int	iEvent = m_arrDumpEvent.GetSize();
+	m_arrDumpEvent.SetSize(iEvent + 1);
+	m_arrDumpEvent[iEvent].SetSize(nEvents);
+	memcpy(m_arrDumpEvent[iEvent].GetData(), arrEvt.GetData(), nEvents * sizeof(MIDI_STREAM_EVENT));
 }
 
 void CSequencer::DumpEvents(LPCTSTR pszPath)
