@@ -21,15 +21,111 @@
 		11		22mar18	add Find, BinarySearch, InsertSorted
 		12		30apr18	add GetMaxSize
 		13		02may18	add equality operators to non-template arrays
+		14		03may18	add InsertSortedUnique and refactor
 
 		enhanced array with copy ctor, assignment, and fast const access
  
 */
 
-#ifndef CARRAYEX_INCLUDED
-#define CARRAYEX_INCLUDED
+#pragma once
 
 #include <afxtempl.h>
+
+template<typename T> inline void CArrayEx_Swap(T& a, T& b)
+{
+	T tmp = a;
+	a = b;
+	b = tmp;
+}
+
+template<class ARRAY>
+__forceinline bool CArrayEx_IsEqual(const ARRAY& arr1, const ARRAY& arr2)
+{
+	if (arr1.GetSize() != arr2.GetSize())
+		return(FALSE);
+	W64INT nElems = arr1.GetSize();
+	for (int iElem = 0; iElem < nElems; iElem++) {
+		if (arr1[iElem] != arr2[iElem])
+			return(FALSE);
+	}
+	return(TRUE);
+}
+
+template<class ARRAY, class TYPE>
+__forceinline W64INT CArrayEx_Find(const ARRAY& arr, const TYPE& val)
+{
+	W64INT nElems = arr.GetSize();
+	for (W64INT iElem = 0; iElem < nElems; iElem++) {
+		if (arr[iElem] == val)
+			return iElem;
+	}
+	return -1;
+}
+
+template<class ARRAY, class TYPE>
+__forceinline W64INT CArrayEx_BinarySearch(const ARRAY& arr, const TYPE& val)
+{
+	W64INT iStart = 0;
+	W64INT iEnd = arr.GetSize() - 1;
+	while (iStart <= iEnd) {
+		W64INT iMid = (iStart + iEnd) / 2;
+		if (val == arr[iMid])
+			return iMid;
+		else if (val < arr[iMid])
+			iEnd = iMid - 1;
+		else
+			iStart = iMid + 1;
+	}
+	return -1;
+}
+
+template<class ARRAY, class TYPE>
+__forceinline void CArrayEx_InsertSorted(ARRAY& arr, TYPE& val)
+{
+	W64INT	iInsert = 0;
+	W64INT	nSize = arr.GetSize();
+	if (nSize) {	// optimize initial insertion
+		W64INT	iStart = 0;
+		W64INT	iEnd = nSize - 1;
+		if (val <= arr[0])	// optimize insertion at start
+			iInsert = 0;
+		else if (val >= arr[iEnd])	// optimize insertion at end
+			iInsert = nSize;
+		else {	// general case
+			while (iStart <= iEnd) {
+				W64INT	iMid = (iStart + iEnd) / 2;
+				if (arr[iMid] <= val)
+					iStart = iMid + 1;
+				else {
+					iInsert = iMid;
+					iEnd = iMid - 1;
+				}
+			}
+		}
+	}
+	arr.InsertAt(iInsert, val);
+}
+
+template<class ARRAY, class TYPE>
+__forceinline W64INT CArrayEx_InsertSortedUnique(ARRAY& arr, TYPE& val)
+{
+	W64INT	iInsert = arr.GetSize();
+	W64INT	iStart = 0;
+	W64INT	iEnd = iInsert - 1;
+	while (iStart <= iEnd) {
+		W64INT	iMid = (iStart + iEnd) / 2;
+		if (arr[iMid] == val)	// if would be duplicate
+			return iMid;	// return element index
+		if (arr[iMid] < val)
+			iStart = iMid + 1;
+		else {
+			iInsert = iMid;
+			iEnd = iMid - 1;
+		}
+	}
+	arr.InsertAt(iInsert, val);
+	return -1;	// success
+}
 
 template<class TYPE, class ARG_TYPE>
 class CArrayEx : public CArray<TYPE, ARG_TYPE> {
@@ -52,16 +148,17 @@ public:
 	const TYPE& ElementAt(W64INT nIndex) const;
 	TYPE& operator[](W64INT nIndex);
 	const TYPE& operator[](W64INT nIndex) const;
-	void Detach(TYPE*& pData, W64INT& Size);
-	void Attach(TYPE *pData, W64INT Size);
-	void Swap(CArrayEx& src);
-	bool	operator==(const CArrayEx& arr) const;
-	bool	operator!=(const CArrayEx& arr) const;
+	void	Detach(TYPE*& pData, W64INT& Size);
+	void	Attach(TYPE *pData, W64INT Size);
+	void	Swap(CArrayEx& src);
 	void	FastRemoveAll();	// destructors may not be called
 	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);	// ctors and dtors may not be called
-	W64INT	Find(const ARG_TYPE val) const;
-	W64INT	BinarySearch(ARG_TYPE val);
-	void	InsertSorted(ARG_TYPE val);
+	bool	operator==(const CArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
+	bool	operator!=(const CArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
+	W64INT	Find(const ARG_TYPE val) const { return CArrayEx_Find(*this, val); }
+	W64INT	BinarySearch(ARG_TYPE val) const { return CArrayEx_BinarySearch(*this, val); }
+	void	InsertSorted(ARG_TYPE val) { CArrayEx_InsertSorted(*this, val); }
+	W64INT	InsertSortedUnique(ARG_TYPE val) { return CArrayEx_InsertSortedUnique(*this, val); }
 };
 
 template<class TYPE, class ARG_TYPE>
@@ -148,13 +245,6 @@ AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::Attach(TYPE *pData, W64INT nSize)
 	m_nMaxSize = nSize;
 }
 
-template<typename T> inline void CArrayEx_Swap(T& a, T& b)
-{
-	T tmp = a;
-	a = b;
-	b = tmp;
-}
-
 template<class TYPE, class ARG_TYPE>
 AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::Swap(CArrayEx& src)
 {
@@ -182,24 +272,6 @@ AFX_INLINE W64INT CArrayEx<TYPE, ARG_TYPE>::GetMaxSize() const
 }
 
 template<class TYPE, class ARG_TYPE>
-AFX_INLINE bool CArrayEx<TYPE, ARG_TYPE>::operator==(const CArrayEx& arr) const
-{
-	if (m_nSize != arr.m_nSize)
-		return(FALSE);
-	for (int iElem = 0; iElem < m_nSize; iElem++) {
-		if (!CompareElements(&GetAt(iElem), &arr.GetAt(iElem)))
-			return(FALSE);
-	}
-	return(TRUE);
-}
-
-template<class TYPE, class ARG_TYPE>
-AFX_INLINE bool CArrayEx<TYPE, ARG_TYPE>::operator!=(const CArrayEx& arr) const
-{
-	return(!operator==(arr));
-}
-
-template<class TYPE, class ARG_TYPE>
 AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::FastRemoveAll()
 {
 	m_nSize = 0;	// set size without freeing memory
@@ -212,61 +284,6 @@ AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::FastSetSize(INT_PTR nNewSize, INT_PTR 
 		m_nSize = nNewSize;	// set size without zeroing or freeing memory
 	else	// set size the usual way
 		SetSize(nNewSize, nGrowBy);
-}
-
-template<class TYPE, class ARG_TYPE>
-AFX_INLINE W64INT CArrayEx<TYPE, ARG_TYPE>::Find(const ARG_TYPE val) const
-{
-	W64INT nElems = m_nSize;
-	for (W64INT iElem = 0; iElem < nElems; iElem++) {
-		if (GetAt(iElem) == val)
-			return iElem;
-	}
-	return -1;
-}
-
-template<class TYPE, class ARG_TYPE>
-AFX_INLINE W64INT CArrayEx<TYPE, ARG_TYPE>::BinarySearch(ARG_TYPE val)
-{
-	W64INT iStart = 0;
-	W64INT iEnd = m_nSize - 1;
-	W64INT iMid;
-	while (iStart <= iEnd) {
-		iMid = (iStart + iEnd) / 2;
-		if (val == GetAt(iMid))
-			return iMid;
-		else if (val < GetAt(iMid))
-			iEnd = iMid - 1;
-		else
-			iStart = iMid + 1;
-	}
-	return -1;
-}
-
-template<class TYPE, class ARG_TYPE>
-AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::InsertSorted(ARG_TYPE val)
-{
-	W64INT	iInsert = 0;
-	if (m_nSize) {	// optimize initial insertion
-		W64INT	iStart = 0;
-		W64INT	iEnd = m_nSize - 1;
-		if (val <= GetAt(0))	// optimize insertion at start
-			iInsert = 0;
-		else if (val >= GetAt(iEnd))	// optimize insertion at end
-			iInsert = m_nSize;
-		else {	// general case
-			while (iStart <= iEnd) {
-				W64INT	iMid = (iStart + iEnd) / 2;
-				if (GetAt(iMid) <= val)
-					iStart = iMid + 1;
-				else {
-					iInsert = iMid;
-					iEnd = iMid - 1;
-				}
-			}
-		}
-	}
-	InsertAt(iInsert, val);
 }
 
 class CDWordArrayEx : public CDWordArray
@@ -284,12 +301,15 @@ public:
 	DWORD&	operator[](W64INT nIndex);
 	void	Detach(DWORD*& pData, W64INT& Size);
 	void	Attach(DWORD *pData, W64INT Size);
-	void	Swap(CDWordArrayEx& src);
-	bool	operator==(const CDWordArrayEx& arr) const;
-	bool	operator!=(const CDWordArrayEx& arr) const;
 	void	FastRemoveAll();
 	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);
-	W64INT	Find(DWORD val) const;
+	void	Swap(CDWordArrayEx& src);
+	bool	operator==(const CDWordArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
+	bool	operator!=(const CDWordArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
+	W64INT	Find(DWORD val) const { return CArrayEx_Find(*this, val); }
+	W64INT	BinarySearch(DWORD val) const { return CArrayEx_BinarySearch(*this, val); }
+	void	InsertSorted(DWORD val) { CArrayEx_InsertSorted(*this, val); }
+	W64INT	InsertSortedUnique(DWORD val) { return CArrayEx_InsertSortedUnique(*this, val); }
 };
 
 AFX_INLINE CDWordArrayEx::CDWordArrayEx()
@@ -352,22 +372,6 @@ AFX_INLINE void CDWordArrayEx::Swap(CDWordArrayEx& src)
 	CArrayEx_Swap(m_nMaxSize, src.m_nMaxSize);
 }
 
-AFX_INLINE bool CDWordArrayEx::operator==(const CDWordArrayEx& arr) const
-{
-	if (m_nSize != arr.m_nSize)
-		return(FALSE);
-	for (int iElem = 0; iElem < m_nSize; iElem++) {
-		if (GetAt(iElem) != arr.GetAt(iElem))
-			return(FALSE);
-	}
-	return(TRUE);
-}
-
-AFX_INLINE bool CDWordArrayEx::operator!=(const CDWordArrayEx& arr) const
-{
-	return !operator==(arr);
-}
-
 AFX_INLINE void CDWordArrayEx::FastRemoveAll()
 {
 	m_nSize = 0;	// set size without freeing memory
@@ -379,16 +383,6 @@ AFX_INLINE void CDWordArrayEx::FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy)
 		m_nSize = nNewSize;	// set size without zeroing or freeing memory
 	else	// set size the usual way
 		SetSize(nNewSize, nGrowBy);
-}
-
-AFX_INLINE W64INT CDWordArrayEx::Find(DWORD val) const
-{
-	W64INT nElems = m_nSize;
-	for (W64INT iElem = 0; iElem < nElems; iElem++) {
-		if (GetAt(iElem) == val)
-			return iElem;
-	}
-	return -1;
 }
 
 class CIntArrayEx : public CDWordArray
@@ -409,11 +403,14 @@ public:
 	void	Detach(int*& pData, W64INT& Size);
 	void	Attach(int *pData, W64INT Size);
 	void	Swap(CIntArrayEx& src);
-	bool	operator==(const CIntArrayEx& arr) const;
-	bool	operator!=(const CIntArrayEx& arr) const;
 	void	FastRemoveAll();
 	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);
-	W64INT	Find(int val) const;
+	bool	operator==(const CIntArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
+	bool	operator!=(const CIntArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
+	W64INT	Find(int val) const { return CArrayEx_Find(*this, val); }
+	W64INT	BinarySearch(int val) const { return CArrayEx_BinarySearch(*this, val); }
+	void	InsertSorted(int val) { CArrayEx_InsertSorted(*this, val); }
+	W64INT	InsertSortedUnique(int val) { return CArrayEx_InsertSortedUnique(*this, val); }
 };
 
 AFX_INLINE CIntArrayEx::CIntArrayEx()
@@ -486,22 +483,6 @@ AFX_INLINE void CIntArrayEx::Swap(CIntArrayEx& src)
 	CArrayEx_Swap(m_nMaxSize, src.m_nMaxSize);
 }
 
-AFX_INLINE bool CIntArrayEx::operator==(const CIntArrayEx& arr) const
-{
-	if (m_nSize != arr.m_nSize)
-		return(FALSE);
-	for (int iElem = 0; iElem < m_nSize; iElem++) {
-		if (GetAt(iElem) != arr.GetAt(iElem))
-			return(FALSE);
-	}
-	return(TRUE);
-}
-
-AFX_INLINE bool CIntArrayEx::operator!=(const CIntArrayEx& arr) const
-{
-	return !operator==(arr);
-}
-
 AFX_INLINE void CIntArrayEx::FastRemoveAll()
 {
 	m_nSize = 0;	// set size without freeing memory
@@ -513,16 +494,6 @@ AFX_INLINE void CIntArrayEx::FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy)
 		m_nSize = nNewSize;	// set size without zeroing or freeing memory
 	else	// set size the usual way
 		SetSize(nNewSize, nGrowBy);
-}
-
-AFX_INLINE W64INT CIntArrayEx::Find(int val) const
-{
-	W64INT nElems = m_nSize;
-	for (W64INT iElem = 0; iElem < nElems; iElem++) {
-		if (GetAt(iElem) == val)
-			return iElem;
-	}
-	return -1;
 }
 
 class CByteArrayEx : public CByteArray
@@ -541,11 +512,14 @@ public:
 	void	Detach(BYTE*& pData, W64INT& Size);
 	void	Attach(BYTE *pData, W64INT Size);
 	void	Swap(CByteArrayEx& src);
-	bool	operator==(const CByteArrayEx& arr) const;
-	bool	operator!=(const CByteArrayEx& arr) const;
 	void	FastRemoveAll();
 	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);
-	W64INT	Find(BYTE val) const;
+	bool	operator==(const CByteArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
+	bool	operator!=(const CByteArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
+	W64INT	Find(BYTE val) const { return CArrayEx_Find(*this, val); }
+	W64INT	BinarySearch(BYTE val) const { return CArrayEx_BinarySearch(*this, val); }
+	void	InsertSorted(BYTE val) { CArrayEx_InsertSorted(*this, val); }
+	W64INT	InsertSortedUnique(BYTE val) { return CArrayEx_InsertSortedUnique(*this, val); }
 };
 
 AFX_INLINE CByteArrayEx::CByteArrayEx()
@@ -608,22 +582,6 @@ AFX_INLINE void CByteArrayEx::Swap(CByteArrayEx& src)
 	CArrayEx_Swap(m_nMaxSize, src.m_nMaxSize);
 }
 
-AFX_INLINE bool CByteArrayEx::operator==(const CByteArrayEx& arr) const
-{
-	if (m_nSize != arr.m_nSize)
-		return(FALSE);
-	for (int iElem = 0; iElem < m_nSize; iElem++) {
-		if (GetAt(iElem) != arr.GetAt(iElem))
-			return(FALSE);
-	}
-	return(TRUE);
-}
-
-AFX_INLINE bool CByteArrayEx::operator!=(const CByteArrayEx& arr) const
-{
-	return !operator==(arr);
-}
-
 AFX_INLINE void CByteArrayEx::FastRemoveAll()
 {
 	m_nSize = 0;	// set size without freeing memory
@@ -637,16 +595,6 @@ AFX_INLINE void CByteArrayEx::FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy)
 		SetSize(nNewSize, nGrowBy);
 }
 
-AFX_INLINE W64INT CByteArrayEx::Find(BYTE val) const
-{
-	W64INT nElems = m_nSize;
-	for (W64INT iElem = 0; iElem < nElems; iElem++) {
-		if (GetAt(iElem) == val)
-			return iElem;
-	}
-	return -1;
-}
-
 class CStringArrayEx : public CStringArray
 {
 public:
@@ -656,9 +604,12 @@ public:
 	int		GetSize() const;
 	W64INT	GetSize64() const;
 	W64INT	GetMaxSize() const;
-	bool	operator==(const CStringArrayEx& arr) const;
-	bool	operator!=(const CStringArrayEx& arr) const;
-	W64INT Find(const CString& val) const;
+	bool	operator==(const CStringArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
+	bool	operator!=(const CStringArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
+	W64INT	Find(const CString& val) const { return CArrayEx_Find(*this, val); }
+	W64INT	BinarySearch(const CString& val) const { return CArrayEx_BinarySearch(*this, val); }
+	void	InsertSorted(const CString& val) { CArrayEx_InsertSorted(*this, val); }
+	W64INT	InsertSortedUnique(const CString& val) { return CArrayEx_InsertSortedUnique(*this, val); }
 };
 
 AFX_INLINE CStringArrayEx::CStringArrayEx()
@@ -691,31 +642,3 @@ AFX_INLINE W64INT CStringArrayEx::GetMaxSize() const
 {
 	return(m_nMaxSize);
 }
-
-AFX_INLINE bool CStringArrayEx::operator==(const CStringArrayEx& arr) const
-{
-	if (m_nSize != arr.m_nSize)
-		return(FALSE);
-	for (int iElem = 0; iElem < m_nSize; iElem++) {
-		if (GetAt(iElem) != arr.GetAt(iElem))
-			return(FALSE);
-	}
-	return(TRUE);
-}
-
-AFX_INLINE bool CStringArrayEx::operator!=(const CStringArrayEx& arr) const
-{
-	return !operator==(arr);
-}
-
-AFX_INLINE W64INT CStringArrayEx::Find(const CString& val) const
-{
-	W64INT nElems = m_nSize;
-	for (W64INT iElem = 0; iElem < nElems; iElem++) {
-		if (GetAt(iElem) == val)
-			return iElem;
-	}
-	return -1;
-}
-
-#endif

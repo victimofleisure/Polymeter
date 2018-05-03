@@ -560,6 +560,7 @@ void CStepView::BeginDrag(CPoint point, UINT nFlags)
 		SetCapture();
 		m_nDragState = DS_TRACK;
 		m_ptDragOrigin = point;
+		m_arrTrackSel.RemoveAll();
 		if (iStep == HT_MUTE && (nFlags & MK_CONTROL))
 			GetDocument()->ToggleSelection(iTrack);
 	} else {	// out of bounds
@@ -573,6 +574,7 @@ void CStepView::EndDrag()
 	if (m_nDragState) {
 		ReleaseCapture();
 		m_nDragState = DS_NONE;
+		m_arrTrackSel.RemoveAll();
 	}
 }
 
@@ -637,10 +639,11 @@ void CStepView::UpdateDrag(CPoint point, UINT nFlags)
 			arrSelection.SetSize(nTracks);
 			for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track in range
 				arrSelection[iTrack] = iOrgTrack + iTrack;	// add track index to selection
-			if (nFlags & MK_CONTROL) {	// if control key down
-				pDoc->MergeSelection(arrSelection);	// merge with existing selection
-			} else {	// normal case
-				if (arrSelection != pDoc->m_arrTrackSel)	// if track selection changed
+			if (arrSelection != m_arrTrackSel) {	// if track selection changed
+				m_arrTrackSel = arrSelection;
+				if (nFlags & MK_CONTROL)	// if control key down
+					pDoc->MergeSelection(arrSelection);	// merge with existing selection
+				else	// normal case
 					pDoc->Select(arrSelection);	// update document and views
 			}
 		}

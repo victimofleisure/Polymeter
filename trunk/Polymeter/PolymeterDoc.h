@@ -187,7 +187,6 @@ protected:
 	virtual	void	RestoreUndoState(const CUndoState& State);
 
 // Helpers
-	template<class T> void	MergeArray(T& arrDest, const T& arrSrc);
 	void	ConvertLegacyFileFormat();
 	int		GetInsertPos() const;
 	void	DeleteTracks(bool bCopyToClipboard);

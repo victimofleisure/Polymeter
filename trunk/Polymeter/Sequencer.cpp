@@ -17,6 +17,7 @@
 #include "float.h"
 #include "VariantHelper.h"
 #include "MidiFile.h"
+#include "Midi.h"
 
 #define CHECK(x) { MMRESULT nResult = x; if (MIDI_FAILED(nResult)) { OnMidiError(nResult); return false; } }
 
@@ -100,7 +101,7 @@ bool CSequencer::GetPosition(LONGLONG& nTicks)
 void CSequencer::SetPosition(int nTicks)
 {
 	if (m_bIsPlaying) {	// if playing
-		WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
+		WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 		m_nPosOffset += nTicks - m_nCBTime;
 		m_nCBTime = nTicks;
 		m_bIsPositionChange = true;	// signal position change
@@ -114,7 +115,7 @@ void CSequencer::SetTempo(double fTempo)
 {
 	ASSERT(fTempo > 0);
 	if (m_bIsPlaying) {	// if playing
-		WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
+		WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 		m_fTempo = fTempo;
 		UpdateCallbackLength();
 		m_bIsTempoChange = true;	// signal tempo change
@@ -143,198 +144,6 @@ void CSequencer::SetBufferSize(int nEvents)
 {
 	ASSERT(nEvents > 1);
 	m_nBufferSize = nEvents;
-}
-
-void CSequencer::SetTrackCount(int nTracks)
-{
-	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	int	nPrevTracks = GetTrackCount();
-	m_arrTrack.SetSize(nTracks);
-	if (nTracks > nPrevTracks) {	// if array grew
-		for (int iTrack = nPrevTracks; iTrack < nTracks; iTrack++)
-			m_arrTrack[iTrack].SetDefaults();
-	}
-}
-
-void CSequencer::SetTracks(const CTrackArray& arrTrack)
-{
-	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	m_arrTrack = arrTrack;
-}
-
-void CSequencer::GetTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const
-{
-	int	nSels = arrSelection.GetSize();
-	arrTrack.SetSize(nSels);
-	int	iTrack = 0;
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		arrTrack[iTrack] = m_arrTrack[arrSelection[iSel]];
-		iTrack++;
-	}
-}
-
-void CSequencer::SetTracks(const CIntArrayEx& arrSelection, const CTrackArray& arrTrack)
-{
-	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	int	nSels = arrSelection.GetSize();
-	int	iTrack = 0;
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		m_arrTrack[arrSelection[iSel]] = arrTrack[iTrack];
-		iTrack++;
-	}
-}
-
-void CSequencer::SetTrack(int iTrack, const CTrack& track)
-{
-	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	m_arrTrack[iTrack] = track;
-}
-
-void CSequencer::SetName(int iTrack, const CString& sName)
-{
-	m_arrTrack[iTrack].m_sName = sName;
-}
-
-void CSequencer::SetChannel(int iTrack, int nChannel)
-{
-	ASSERT(IsMidiChan(nChannel));
-	m_arrTrack[iTrack].m_nChannel = nChannel;
-}
-
-void CSequencer::SetNote(int iTrack, int nNote)
-{
-	ASSERT(IsMidiParam(nNote));
-	m_arrTrack[iTrack].m_nNote = nNote;
-}
-
-void CSequencer::SetQuant(int iTrack, int nQuant)
-{
-	ASSERT(nQuant > 0);
-	m_arrTrack[iTrack].m_nQuant = nQuant;
-}
-
-void CSequencer::SetLength(int iTrack, int nLength)
-{
-	ASSERT(nLength > 0);
-	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	m_arrTrack[iTrack].m_arrStep.SetSize(nLength);
-}
-
-void CSequencer::SetOffset(int iTrack, int nOffset)
-{
-	m_arrTrack[iTrack].m_nOffset = nOffset;
-}
-
-void CSequencer::SetSwing(int iTrack, int nSwing)
-{
-	m_arrTrack[iTrack].m_nSwing = nSwing;
-}
-
-void CSequencer::SetVelocity(int iTrack, int nVelocity)
-{
-	m_arrTrack[iTrack].m_nVelocity = nVelocity;
-}
-
-void CSequencer::SetDuration(int iTrack, int nDuration)
-{
-	m_arrTrack[iTrack].m_nDuration = nDuration;
-}
-
-void CSequencer::SetMute(int iTrack, bool bMute)
-{
-	m_arrTrack[iTrack].m_bMute = bMute;
-}
-
-void CSequencer::SetStep(int iTrack, int iStep, STEP nStep)
-{
-	m_arrTrack[iTrack].m_arrStep[iStep] = nStep;
-}
-
-void CSequencer::SetSteps(int iTrack, const CStepArray& arrStep)
-{
-	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	m_arrTrack[iTrack].m_arrStep = arrStep;
-}
-
-void CSequencer::GetSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const
-{
-	int	nRows = rSelection.Height();
-	arrStepArray.SetSize(nRows);
-	for (int iRow = 0; iRow < nRows; iRow++) {	// for each selected row
-		int	iTrack = rSelection.top + iRow;
-		int	iEndStep = min(rSelection.right, GetLength(iTrack));
-		int	nCols = max(iEndStep - rSelection.left, 0);
-		CStepArray&	arrStep = arrStepArray[iRow];
-		arrStep.SetSize(nCols);
-		for (int iCol = 0; iCol < nCols; iCol++) {	// for each selected column
-			int	iStep = rSelection.left + iCol;
-			arrStep[iCol] = GetStep(iTrack, iStep);
-		}
-	}
-}
-
-void CSequencer::SetSteps(const CRect& rSelection, const CStepArrayArray& arrStepArray)
-{
-	int	nRows = arrStepArray.GetSize();
-	for (int iRow = 0; iRow < nRows; iRow++) {	// for each selected row
-		int	iTrack = rSelection.top + iRow;
-		const CStepArray&	arrStep = arrStepArray[iRow];
-		int	nCols = arrStep.GetSize();
-		for (int iCol = 0; iCol < nCols; iCol++) {	// for each selected column
-			int	iStep = rSelection.left + iCol;
-			m_arrTrack[iTrack].m_arrStep[iStep] = arrStep[iCol];
-		}
-	}
-}
-
-void CSequencer::SetSteps(const CRect& rSelection, STEP nStep)
-{
-	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
-		int	iEndStep = min(rSelection.right, GetLength(iTrack));
-		for (int iStep = rSelection.left; iStep < iEndStep; iStep++)	// for each step in range
-			m_arrTrack[iTrack].m_arrStep[iStep] = nStep;
-	}
-}
-
-void CSequencer::GetTrackProperty(int iTrack, int iProp, CComVariant& var) const
-{
-	switch (iProp) {
-	#define TRACKDEF(type, prefix, name, defval, offset) \
-		case PROP_##name: var = Get##name(iTrack); break;
-	#include "TrackDef.h"		// generate code to get track properties
-	default:
-		NODEFAULTCASE;
-	}
-}
-
-void CSequencer::SetTrackProperty(int iTrack, int iProp, const CComVariant& var)
-{
-	switch (iProp) {
-	#define TRACKDEF(type, prefix, name, defval, offset) \
-		case PROP_##name: { type val; GetVariant(var, val); Set##name(iTrack, val); } break;
-	#include "TrackDef.h"		// generate code to set track properties
-	default:
-		NODEFAULTCASE;
-	}
-}
-
-void CSequencer::GetUsedTracks(CIntArrayEx& arrUsedTrack, bool bExcludeMuted) const
-{
-	arrUsedTrack.RemoveAll();
-	int	nTracks = m_arrTrack.GetSize();
-	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-		if (!GetMute(iTrack) || !bExcludeMuted) {	// if track is unmuted, or we're including muted tracks
-			if (m_arrTrack[iTrack].GetUsedStepCount())	// if track has non-empty steps
-				arrUsedTrack.Add(iTrack);	// add track's index to used array
-		}
-	}
-}
-
-int CSequencer::GetUsedTrackCount(bool bExcludeMuted) const
-{
-	CIntArrayEx	arrUsedTrack;
-	GetUsedTracks(arrUsedTrack, bExcludeMuted);
-	return arrUsedTrack.GetSize();
 }
 
 int CSequencer::GetCallbackLength(int nLatency) const
@@ -489,7 +298,7 @@ __forceinline int CSequencer::GetNoteDuration(const CStepArray& arrStep, int nSt
 
 __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 {
-	CTrack&	trk = m_arrTrack[iTrack];
+	CTrack&	trk = GetAt(iTrack);
 	int	nOffset = trk.m_nOffset;	// cache these values for thread safety
 	int	nLength = trk.m_arrStep.GetSize();
 	int	nQuant = trk.m_nQuant;
@@ -560,7 +369,7 @@ bool CSequencer::OutputMidiBuffer()
 	CBenchmark b;	// for timing statistics only
 	int	nCBStart, nCBEnd;
 	{
-		WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
+		WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 		m_arrEvent.FastRemoveAll();
 		// handle tempo change first to improve responsiveness
 		if (m_bIsTempoChange) {	// if tempo changed
@@ -587,9 +396,9 @@ bool CSequencer::OutputMidiBuffer()
 		nCBStart = m_nCBTime;
 		nCBEnd = nCBStart + m_nCBLen;
 		m_nCBTime = nCBEnd;	// advance callback time by one period
-		int	nTracks = m_arrTrack.GetSize();
+		int	nTracks = GetSize();
 		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-			if (!m_arrTrack[iTrack].m_bMute)	// if track isn't muted
+			if (!GetAt(iTrack).m_bMute)	// if track isn't muted
 				AddTrackEvents(iTrack, nCBStart);	// add events for this callback period
 		}
 	}	// leave callback critical section, releasing lock on callback state
@@ -701,7 +510,7 @@ CSequencerReader::CSequencerReader(CSequencer& seq)
 {
 	// attach our track array to sequencer's track array; risky but OK so long as
 	// our instance is destroyed before sequencer, and never modifies track array
-	m_arrTrack.Attach(seq.m_arrTrack.GetData(), seq.m_arrTrack.GetSize());
+	Attach(seq.GetData(), seq.GetSize());
 	m_fTempo = seq.m_fTempo;
 	m_nTimeDiv = seq.m_nTimeDiv;
 }
@@ -710,7 +519,7 @@ CSequencerReader::~CSequencerReader()
 {
 	CTrack	*pTrack;
 	W64INT	nSize;
-	m_arrTrack.Detach(pTrack, nSize);	// detach our track array from sequencer's
+	Detach(pTrack, nSize);	// detach our track array from sequencer's
 }
 
 bool CSequencer::OutputLiveEvent(DWORD dwEvent)
@@ -719,50 +528,6 @@ bool CSequencer::OutputLiveEvent(DWORD dwEvent)
 	if (!IsOpen())
 		return false;
 	return m_qLiveEvent.Push(dwEvent);	// fails if queue is full
-}
-
-void CSequencer::InsertTracks(int iTrack, int nCount)
-{
-	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	CTrack	trk(true);	// initialize to defaults
-	for (int iCopy = 0; iCopy < nCount; iCopy++)	// for each copy
-		m_arrTrack.InsertAt(iTrack + iCopy, trk);
-}
-
-void CSequencer::InsertTrack(int iTrack, CTrack& track)
-{
-	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	m_arrTrack.InsertAt(iTrack, track);
-}
-
-void CSequencer::InsertTracks(int iTrack, CTrackArray& arrTrack)
-{
-	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	m_arrTrack.InsertAt(iTrack, &arrTrack);
-}
-
-void CSequencer::InsertTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack)
-{
-	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	// assume selection array's track indices are in ascending order
-	int	nSels = arrSelection.GetSize();
-	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected track
-		m_arrTrack.InsertAt(arrSelection[iSel], arrTrack[iSel]);
-}
-
-void CSequencer::DeleteTracks(int iTrack, int nCount)
-{
-	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	m_arrTrack.RemoveAt(iTrack, nCount);
-}
-
-void CSequencer::DeleteTracks(const CIntArrayEx& arrSelection)
-{
-	WCritSec::Lock	lock(m_csCallback);	// serialize access to callback shared state
-	// assume selection array's track indices are in ascending order
-	int	nSels = arrSelection.GetSize();	// reverse iterate for deletion stability
-	for (int iSel = nSels - 1; iSel >= 0; iSel--)	// for each selected track
-		m_arrTrack.RemoveAt(arrSelection[iSel]);
 }
 
 void CSequencer::ConvertPositionToBeat(LONGLONG nPos, LONGLONG& nBeat, LONGLONG& nTick) const
@@ -798,7 +563,7 @@ bool CSequencer::ConvertStringToPosition(const CString& sPosition, LONGLONG& nPo
 
 int CSequencer::GetStepIndex(int iTrack, LONGLONG nPos) const
 {
-	const CTrack&	trk = m_arrTrack[iTrack];
+	const CTrack&	trk = GetAt(iTrack);
 	int	nLength = trk.m_arrStep.GetSize();
 	int	nQuant = trk.m_nQuant;
 	int	nOffset = trk.m_nOffset;

@@ -101,6 +101,7 @@ protected:
 	CPoint	m_ptDragOrigin;		// drag origin
 	int		m_nDragState;		// drag state; see enum above
 	CRect	m_rStepSel;			// rectangular step selection; x is step index, y is track index
+	CIntArrayEx	m_arrTrackSel;	// track selection array, for change detection
 
 // Helpers
 	int		GetTrackY(int iTrack) const;

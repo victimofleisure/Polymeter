@@ -14,14 +14,12 @@
 #pragma once
 
 #include "mmsystem.h"
-#include "Track.h"
-#include "Midi.h"
-#include "CritSec.h"
+#include "SeqTrackArray.h"
 #include "ILockRingBuf.h"
 
 #define SEQ_DUMP_EVENTS 0
 
-class CSequencer : public WObject, public CTrackBase {
+class CSequencer : public CSeqTrackArray {
 public:
 // Construction
 	CSequencer();
@@ -66,45 +64,6 @@ public:
 	void	GetStatistics(STATS& stats) const;
 	void	GetInitialMidiEvents(CDWordArrayEx& arrMidiEvent) const;
 	void	SetInitialMidiEvents(const CDWordArrayEx& arrMidiEvent);
-	int		GetTrackCount() const;
-	void	SetTrackCount(int nTracks);
-	const CTrackArray&	GetTracks() const;
-	void	SetTracks(const CTrackArray& arrTrack);
-	void	GetTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const;
-	void	SetTracks(const CIntArrayEx& arrSelection, const CTrackArray& arrTrack);
-	const CTrack&	GetTrack(int iTrack) const;
-	void	SetTrack(int iTrack, const CTrack& track);
-	CString	GetName(int iTrack) const;
-	void	SetName(int iTrack, const CString& sName);
-	int		GetChannel(int iTrack) const;
-	void	SetChannel(int iTrack, int nChannel);
-	int		GetNote(int iTrack) const;
-	void	SetNote(int iTrack, int nNote);
-	int		GetQuant(int iTrack) const;
-	void	SetQuant(int iTrack, int nQuant);
-	int		GetLength(int iTrack) const;
-	void	SetLength(int iTrack, int nLength);
-	int		GetOffset(int iTrack) const;
-	void	SetOffset(int iTrack, int nOffset);
-	int		GetSwing(int iTrack) const;
-	void	SetSwing(int iTrack, int nSwing);
-	int		GetVelocity(int iTrack) const;
-	void	SetVelocity(int iTrack, int nVelocity);
-	int		GetDuration(int iTrack) const;
-	void	SetDuration(int iTrack, int nDuration);
-	bool	GetMute(int iTrack) const;
-	void	SetMute(int iTrack, bool bMute);
-	STEP	GetStep(int iTrack, int iStep) const;
-	void	SetStep(int iTrack, int iStep, STEP nStep);
-	void	GetSteps(int iTrack, CStepArray& arrStep) const;
-	void	SetSteps(int iTrack, const CStepArray& arrStep);
-	void	GetSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const;
-	void	SetSteps(const CRect& rSelection, const CStepArrayArray& arrStepArray);
-	void	SetSteps(const CRect& rSelection, STEP nStep);
-	void	GetTrackProperty(int iTrack, int iProp, CComVariant& var) const;
-	void	SetTrackProperty(int iTrack, int iProp, const CComVariant& var);
-	int		GetUsedTrackCount(bool bExcludeMuted = false) const;
-	void	GetUsedTracks(CIntArrayEx& arrUsedTrack, bool bExcludeMuted = false) const;
 	int		GetStepIndex(int iTrack, LONGLONG nPos) const;
 
 // Operations
@@ -113,12 +72,6 @@ public:
 	void	Abort();
 	bool	Export(LPCTSTR pszPath, int nDuration);
 	bool	OutputLiveEvent(DWORD dwEvent);
-	void	InsertTracks(int iTrack, int nCount = 1);
-	void	InsertTrack(int iTrack, CTrack& track);
-	void	InsertTracks(int iTrack, CTrackArray& arrTrack);
-	void	InsertTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack);
-	void	DeleteTracks(int iTrack, int nCount = 1);
-	void	DeleteTracks(const CIntArrayEx& arrSelection);
 	void	ConvertPositionToBeat(LONGLONG nPos, LONGLONG& nBeat, LONGLONG& nTick) const;
 	void	ConvertBeatToPosition(LONGLONG nBeat, LONGLONG nTick, LONGLONG& nPos) const;
 	void	ConvertPositionToString(const LONGLONG& nPos, CString& sPos) const;
@@ -172,13 +125,11 @@ protected:
 	bool	m_bIsTempoChange;		// true if tempo changed
 	bool	m_bIsPositionChange;	// true if position changed
 	STATS	m_stats;				// timing statistics
-	CTrackArray	m_arrTrack;			// array of track instances
 	CMidiEventStream	m_arrMidiEvent[BUFFERS];	// array of MIDI event stream buffers
 	CEventArray	m_arrEvent;			// array of track events
 	CEventArray	m_arrNoteOff;		// array of pending note off events
 	CDWordArrayEx	m_arrInitMidiEvent;	// array of MIDI events to output at start of playback
 	CILockRingBuf<DWORD>	m_qLiveEvent;	// thread-safe queue of live events to be output
-	WCritSec	m_csCallback;		// critical section for serializing access to callback shared state
 #if SEQ_DUMP_EVENTS
 	CArrayEx<CMidiEventStream, CMidiEventStream&>	m_arrDumpEvent;	// for debug only
 #endif	// SEQ_DUMP_EVENTS
@@ -309,79 +260,4 @@ inline void CSequencer::GetInitialMidiEvents(CDWordArrayEx& arrMidiEvent) const
 inline void CSequencer::SetInitialMidiEvents(const CDWordArrayEx& arrMidiEvent)
 {
 	m_arrInitMidiEvent = arrMidiEvent;
-}
-
-inline int CSequencer::GetTrackCount() const
-{
-	return m_arrTrack.GetSize();
-}
-
-inline const CTrackArray& CSequencer::GetTracks() const
-{
-	return m_arrTrack;
-}
-
-inline const CTrack& CSequencer::GetTrack(int iTrack) const
-{
-	return m_arrTrack[iTrack];
-}
-
-inline int CSequencer::GetChannel(int iTrack) const
-{
-	return m_arrTrack[iTrack].m_nChannel;
-}
-
-inline CString CSequencer::GetName(int iTrack) const
-{
-	return m_arrTrack[iTrack].m_sName;
-}
-
-inline int CSequencer::GetNote(int iTrack) const
-{
-	return m_arrTrack[iTrack].m_nNote;
-}
-
-inline int CSequencer::GetQuant(int iTrack) const
-{
-	return m_arrTrack[iTrack].m_nQuant;
-}
-
-inline int CSequencer::GetLength(int iTrack) const
-{
-	return m_arrTrack[iTrack].m_arrStep.GetSize();
-}
-
-inline int CSequencer::GetOffset(int iTrack) const
-{
-	return m_arrTrack[iTrack].m_nOffset;
-}
-
-inline int CSequencer::GetSwing(int iTrack) const
-{
-	return m_arrTrack[iTrack].m_nSwing;
-}
-
-inline int CSequencer::GetVelocity(int iTrack) const
-{
-	return m_arrTrack[iTrack].m_nVelocity;
-}
-
-inline int CSequencer::GetDuration(int iTrack) const
-{
-	return m_arrTrack[iTrack].m_nDuration;
-}
-
-inline bool CSequencer::GetMute(int iTrack) const
-{
-	return m_arrTrack[iTrack].m_bMute;
-}
-
-inline CSequencer::STEP CSequencer::GetStep(int iTrack, int iStep) const
-{
-	return m_arrTrack[iTrack].m_arrStep[iStep];
-}
-
-inline void CSequencer::GetSteps(int iTrack, CStepArray& arrStep) const
-{
-	arrStep = m_arrTrack[iTrack].m_arrStep;
 }

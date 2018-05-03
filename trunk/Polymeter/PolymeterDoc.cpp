@@ -175,11 +175,9 @@ void CPolymeterDoc::Deselect(bool bUpdate)
 
 void CPolymeterDoc::ToggleSelection(int iTrack, bool bUpdate)
 {
-	W64INT	iSel = m_arrTrackSel.Find(iTrack);
+	W64INT	iSel = m_arrTrackSel.InsertSortedUnique(iTrack);
 	if (iSel >= 0)	// if track found in selection
 		m_arrTrackSel.RemoveAt(iSel);	// remove track from selection
-	else	// track not found
-		m_arrTrackSel.Add(iTrack);	// add track to selection
 	if (bUpdate)
 		UpdateAllViews(NULL, HINT_TRACK_SELECTION);
 }
@@ -187,19 +185,12 @@ void CPolymeterDoc::ToggleSelection(int iTrack, bool bUpdate)
 void CPolymeterDoc::MergeSelection(const CIntArrayEx& arrSelection, bool bUpdate)
 {
 	int	nPrevSels = GetSelectedCount();
-	MergeArray(m_arrTrackSel, arrSelection);
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++)	// for each selection index
+		m_arrTrackSel.InsertSortedUnique(arrSelection[iSel]);
 	if (GetSelectedCount() != nPrevSels) {	// if selection changed
 		if (bUpdate)
 			UpdateAllViews(NULL, HINT_TRACK_SELECTION);
-	}
-}
-
-template<class T> void CPolymeterDoc::MergeArray(T& arrDest, const T& arrSrc)
-{
-	int	nElems = arrSrc.GetSize();
-	for (int iElem = 0; iElem < nElems; iElem++) {	// for each source element
-		if (arrDest.Find(arrSrc[iElem]) < 0)	// if not found in destination
-			arrDest.Add(arrSrc[iElem]);	// add element to destination
 	}
 }
 
