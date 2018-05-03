@@ -99,9 +99,9 @@ protected:
 	double	m_fZoom;			// zoom scaling factor
 	double	m_fZoomStep;		// zoom step size, as a fraction
 	CPoint	m_ptDragOrigin;		// drag origin
+	int		m_iCurTrack;		// index of currently selected track
 	int		m_nDragState;		// drag state; see enum above
 	CRect	m_rStepSel;			// rectangular step selection; x is step index, y is track index
-	CIntArrayEx	m_arrTrackSel;	// track selection array, for change detection
 
 // Helpers
 	int		GetTrackY(int iTrack) const;
