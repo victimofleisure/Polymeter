@@ -31,6 +31,10 @@ open	close	type	description	rev	user
 04/25/18	04/26/18	done	multi-channel edit in channels bar	0.0.01.000	
 04/24/18	04/27/18	done	add ruler numbered in beats to step view	0.0.01.000	
 04/26/18	04/28/18	done	sort tracks; multi-level sorting	0.0.01.000	
+03/25/18	04/30/18	done	add support for tied notes	0.0.02.000	
+04/24/18	04/30/18	done	indicate beats in step view, via vertical grid lines	0.0.02.000	
+03/25/18	05/02/18	done	in step view, add rectangular selection of steps via right-click and drag	0.0.02.000	
+03/25/18	05/02/18	done	in step view, add track selection via right-click and vertical drag over mute buttons	0.0.02.000	
 03/25/18		hold	animated visualization		
 04/25/18		hold	apply popup numeric edit's spin control to document immediately; causes problems and inconsistencies		
 03/22/18		todo	data architecture		
@@ -44,13 +48,11 @@ open	close	type	description	rev	user
 03/25/18		todo	rotate track's beats left or right, for one or more tracks		
 03/25/18		todo	editing commands (copy, cut, paste) for beats; rectangular selection of beats		
 03/25/18		todo	playback can be slow to start, due to device open delay; keep output device open all the time?		
-03/25/18		todo	right button selection of tracks or beats; drag selection of multiple items		
 03/25/18		todo	record live arrangment; at least track mute/unmute, maybe other things too		
 03/25/18		todo	edit arrangement on timeline, similar to Stencil		
 03/25/18		todo	MIDI mapping of all parameters, with manual assignment and learn mode		
 04/09/18		todo	undoing track value or beat edit should ensure track is visible		
-04/12/18		todo	beat positions are hard to identify; optional tooltip? Grid lines?		
 04/12/18		todo	synchonize vertical scrolling between track and step views; splitter window isn't helping		
 04/16/18		todo	optionally show MIDI notes instead of numbers in note edit controls		
-04/24/18		todo	add optional vertical grid lines to step view		
-04/27/18		todo	step ruler shouldn't scroll with tracks; nightmare		
+04/27/18		todo	step ruler shouldn't scroll with tracks; derived splitter?		
+05/03/18		todo	add error check for product of track's length and quant exceeding range of 32-bit integer		
