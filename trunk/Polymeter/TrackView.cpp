@@ -160,7 +160,7 @@ CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle,
 			pEdit->SetRange(1, SHRT_MAX);
 			break;
 		case COL_Length:
-			pEdit->SetRange(1, SHRT_MAX);
+			pEdit->SetRange(1, INT_MAX);
 			break;
 		case COL_Velocity:
 			pEdit->SetRange(-127, 127);

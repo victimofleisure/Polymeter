@@ -23,7 +23,6 @@ public:
 		PROPERTIES,
 	};
 	enum {
-		MAX_STEPS = 256,			// maximum number of steps
 		INIT_STEPS = 32,			// initial number of steps
 		DEFAULT_VELOCITY = 64,		// default note velocity
 	};

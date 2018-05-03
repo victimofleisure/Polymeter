@@ -31,6 +31,7 @@
 #define TIMER_PERIOD 0			// timer period, in milliseconds
 #define TEST_PLAYING 0			// true to enable playback during test
 #define MAX_TRACKS 100			// maximum number of tracks
+#define MAX_STEPS 256			// maximum number of steps
 
 static CTrackUndoTest gUndoTest(TRUE);	// one and only instance, initially running
 
