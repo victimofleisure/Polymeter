@@ -20,6 +20,7 @@
 #endif
 
 #include "resource.h"       // main symbols
+#include "WinAppCK.h"
 #include "Options.h"
 #include "Track.h"
 #include "MidiWrap.h"
@@ -31,24 +32,13 @@
 
 class CMainFrame;
 
-class CPolymeterApp : public CWinAppEx
+class CPolymeterApp : public CWinAppCK
 {
 public:
 	CPolymeterApp();
 
 // Attributes
 	CMainFrame	*GetMainFrame() const;
-	bool	GetTempPath(CString& Path);
-	bool	GetTempFileName(CString& Path, LPCTSTR Prefix = NULL, UINT Unique = 0);
-	static	void	GetCurrentDirectory(CString& Path);
-	static	bool	GetSpecialFolderPath(int FolderID, CString& Folder);
-	bool	GetAppDataFolder(CString& Folder) const;
-	bool	GetJobLogFolder(CString& Folder) const;
-	static	CString GetAppPath();
-	static	CString GetAppFolder();
-	static	CString GetVersionString();
-	static	bool	CreateFolder(LPCTSTR Path);
-	static	bool	DeleteFolder(LPCTSTR Path, FILEOP_FLAGS nFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT);
 	bool	IsMidiInputDeviceOpen() const;
 
 // Operations

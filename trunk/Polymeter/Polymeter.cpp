@@ -15,8 +15,6 @@
 //
 
 #include "stdafx.h"
-#include "afxwinappex.h"
-#include "afxdialogex.h"
 #include "Polymeter.h"
 #include "MainFrm.h"
 
@@ -26,7 +24,6 @@
 
 #include "Win32Console.h"
 #include "AboutDlg.h"
-#include "VersionInfo.h"
 #include "FocusEdit.h"
 #include "PathStr.h"
 #include "Hyperlink.h"
@@ -245,117 +242,6 @@ void CPolymeterApp::ApplyOptions(const COptions *pPrevOptions)
 	m_midiDevs.SetIdx(CMidiDevices::OUTPUT, m_Options.m_Midi_iOutputDevice - 1);
 	if (pPrevOptions != NULL)	// if during OnCreate, defer to delayed creation handler
 		OpenMidiInputDevice(m_midiDevs.GetIdx(CMidiDevices::INPUT) >= 0);
-}
-
-bool CPolymeterApp::GetTempPath(CString& Path)
-{
-	LPTSTR	pBuf = Path.GetBuffer(MAX_PATH);
-	DWORD	retc = ::GetTempPath(MAX_PATH, pBuf);
-	Path.ReleaseBuffer();
-	return(retc != 0);
-}
-
-bool CPolymeterApp::GetTempFileName(CString& Path, LPCTSTR Prefix, UINT Unique)
-{
-	CString	TempPath;
-	if (!GetTempPath(TempPath))
-		return(FALSE);
-	if (Prefix == NULL)
-		Prefix = m_pszAppName;
-	LPTSTR	pBuf = Path.GetBuffer(MAX_PATH);
-	DWORD	retc = ::GetTempFileName(TempPath, Prefix, Unique, pBuf);
-	Path.ReleaseBuffer();
-	return(retc != 0);
-}
-
-void CPolymeterApp::GetCurrentDirectory(CString& Path)
-{
-	LPTSTR	pBuf = Path.GetBuffer(MAX_PATH);
-	::GetCurrentDirectory(MAX_PATH, pBuf);
-	Path.ReleaseBuffer();
-}
-
-bool CPolymeterApp::GetSpecialFolderPath(int FolderID, CString& Path)
-{
-	LPTSTR	p = Path.GetBuffer(MAX_PATH);
-	bool	retc = SUCCEEDED(SHGetSpecialFolderPath(NULL, p, FolderID, 0));
-	Path.ReleaseBuffer();
-	return(retc);
-}
-
-bool CPolymeterApp::GetAppDataFolder(CString& Folder) const
-{
-	CPathStr	path;
-	if (!GetSpecialFolderPath(CSIDL_APPDATA, path))
-		return(FALSE);
-	path.Append(m_pszAppName);
-	Folder = path;
-	return(TRUE);
-}
-
-CString CPolymeterApp::GetAppPath()
-{
-	CString	s = GetCommandLine();
-	s.TrimLeft();	// trim leading whitespace just in case
-	if (s[0] == '"')	// if first char is a quote
-		s = s.Mid(1).SpanExcluding(_T("\""));	// span to next quote
-	else
-		s = s.SpanExcluding(_T(" \t"));	// span to next whitespace
-	return(s);
-}
-
-CString CPolymeterApp::GetAppFolder()
-{
-	CPathStr	path(GetAppPath());
-	path.RemoveFileSpec();
-	return(path);
-}
-
-bool CPolymeterApp::GetJobLogFolder(CString& Folder) const
-{
-	UNREFERENCED_PARAMETER(Folder);
-	return(false);
-}
-
-CString CPolymeterApp::GetVersionString()
-{
-	VS_FIXEDFILEINFO	AppInfo;
-	CString	sVersion;
-	CVersionInfo::GetFileInfo(AppInfo, NULL);
-	sVersion.Format(_T("%d.%d.%d.%d"), 
-		HIWORD(AppInfo.dwFileVersionMS), LOWORD(AppInfo.dwFileVersionMS),
-		HIWORD(AppInfo.dwFileVersionLS), LOWORD(AppInfo.dwFileVersionLS));
-#ifdef _WIN64
-	sVersion += _T(" x64");
-#else
-	sVersion += _T(" x86");
-#endif
-#ifdef _DEBUG
-	sVersion += _T(" Debug");
-#else
-	sVersion += _T(" Release");
-#endif
-	return sVersion;
-}
-
-bool CPolymeterApp::CreateFolder(LPCTSTR Path)
-{
-	int	retc = SHCreateDirectoryEx(NULL, Path, NULL);	// create folder
-	switch (retc) {
-	case ERROR_SUCCESS:
-	case ERROR_FILE_EXISTS:
-	case ERROR_ALREADY_EXISTS:
-		break;
-	default:
-		return false;
-	}
-	return true;
-}
-
-bool CPolymeterApp::DeleteFolder(LPCTSTR Path, FILEOP_FLAGS nFlags)
-{
-	SHFILEOPSTRUCT fop = {NULL, FO_DELETE, Path, _T(""), nFlags};
-	return !SHFileOperation(&fop);
 }
 
 // CPolymeterApp message handlers

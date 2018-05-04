@@ -7,12 +7,9 @@
  
 		revision history:
 		rev		date	comments
-		00		23mar18	0.0.00.000
-		01		20apr18	0.0.00.043
-		02		28apr18	0.0.01.000
-		03		03may18	0.0.02.001
-		04		04may18	0.0.03.000
-
-		DON'T FORGET TO CHANGE VERSION RESOURCE IN .RC2
+        00      03may18	initial version
 
 */
+
+#include "stdafx.h"
+#include "GDIUtils.h"

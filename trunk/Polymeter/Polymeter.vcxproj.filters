@@ -279,6 +279,12 @@
     <ClInclude Include="SeqTrackArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WinAppCK.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GDIUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Polymeter.cpp">
@@ -450,6 +456,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SeqTrackArray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WinAppCK.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GDIUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

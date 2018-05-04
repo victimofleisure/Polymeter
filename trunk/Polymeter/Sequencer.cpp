@@ -329,10 +329,12 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 					evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, trk.m_nNote, nVel);
 					m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
 					int	nDuration = nDurSteps * nQuant + trk.m_nDuration;	// add duration offset
-					if (bIsOdd)	// if odd step
-						nDuration -= nSwing;	// subtract swing from duration
-					else	// even step
-						nDuration += nSwing;	// add swing to duration
+					if (nDurSteps & 1) {	// if odd duration
+						if (bIsOdd)	// if odd step
+							nDuration -= nSwing;	// subtract swing from duration
+						else	// even step
+							nDuration += nSwing;	// add swing to duration
+					}
 					nDuration = max(nDuration, 1);	// keep duration above zero
 					evt.m_dwTime = nCBStart + nEvtTime + nDuration;	// absolute time
 					evt.m_dwEvent &= ~0xff0000;	// zero note's velocity

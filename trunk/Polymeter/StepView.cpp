@@ -21,6 +21,7 @@
 #include "MainFrm.h"
 #include "Benchmark.h"
 #include <math.h>
+#include "GDIUtils.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -619,15 +620,11 @@ void CStepView::UpdateDrag(CPoint point, UINT nFlags)
 				rgnNew.CreateRectRgnIndirect(&rStepSel);
 				m_rStepSel = rStepSel;
 				rgnNew.CombineRgn(&rgnOld, &rgnNew, RGN_XOR);	// remove overlapping areas
-				CByteArray	arrRgnData;
-				int	nRgnDataSize = rgnNew.GetRegionData(NULL, 0);	// get size of region data
-				arrRgnData.SetSize(nRgnDataSize);
-				LPRGNDATA	pRgnData = reinterpret_cast<LPRGNDATA>(arrRgnData.GetData());
-				if (rgnNew.GetRegionData(pRgnData, nRgnDataSize) == nRgnDataSize) {
-					int	nRects = pRgnData->rdh.nCount;
-					LPRECT	pRect = reinterpret_cast<LPRECT>(pRgnData->Buffer);
+				CRgnData	rgnData;
+				if (rgnData.Create(rgnNew)) {	// if region data retrieved
+					int	nRects = rgnData.GetRectCount();
 					for (int iRect = 0; iRect < nRects; iRect++)	// for each rect in region data
-						UpdateSteps(pRect[iRect]);	// update corresponding steps
+						UpdateSteps(rgnData.GetRect(iRect));	// update corresponding steps
 				}
 			}
 		} else if (iOrgStep == HT_MUTE) {	// if original click was on mute button

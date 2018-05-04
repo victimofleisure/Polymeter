@@ -205,6 +205,7 @@
     <ClInclude Include="ExportDlg.h" />
     <ClInclude Include="FixedArray.h" />
     <ClInclude Include="FocusEdit.h" />
+    <ClInclude Include="GDIUtils.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="GoToPositionDlg.h" />
     <ClInclude Include="GridCtrl.h" />
@@ -273,6 +274,7 @@
     <ClInclude Include="Version.h" />
     <ClInclude Include="VersionInfo.h" />
     <ClInclude Include="Win32Console.h" />
+    <ClInclude Include="WinAppCK.h" />
     <ClInclude Include="WObject.h" />
     <ClInclude Include="Wrapx64.h" />
   </ItemGroup>
@@ -290,6 +292,7 @@
     <ClCompile Include="DragVirtualListCtrl.cpp" />
     <ClCompile Include="ExportDlg.cpp" />
     <ClCompile Include="FocusEdit.cpp" />
+    <ClCompile Include="GDIUtils.cpp" />
     <ClCompile Include="GoToPositionDlg.cpp" />
     <ClCompile Include="GridCtrl.cpp" />
     <ClCompile Include="Hyperlink.cpp" />
@@ -339,6 +342,7 @@
     <ClCompile Include="UndoTest.cpp" />
     <ClCompile Include="VersionInfo.cpp" />
     <ClCompile Include="Win32Console.cpp" />
+    <ClCompile Include="WinAppCK.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Polymeter.reg" />
