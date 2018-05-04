@@ -35,6 +35,7 @@ open	close	type	description	rev	user
 04/24/18	04/30/18	done	indicate beats in step view, via vertical grid lines	0.0.02.000	
 03/25/18	05/02/18	done	in step view, add rectangular selection of steps via right-click and drag	0.0.02.000	
 03/25/18	05/02/18	done	in step view, add track selection via right-click and vertical drag over mute buttons	0.0.02.000	
+05/03/18	05/04/18	done	tied notes with swing overlapping due to incorrect durations; fixed	0.0.03.000	
 03/25/18		hold	animated visualization		
 04/25/18		hold	apply popup numeric edit's spin control to document immediately; causes problems and inconsistencies		
 03/22/18		todo	data architecture		
