@@ -1,5 +1,6 @@
 @echo off
 copy C:\Chris\MyProjects\Polymeter\web\*.* .
+copy C:\Chris\MyProjects\Polymeter\web\images\screenshots\*.* images\screenshots
 copy downloadGitHub.html download.html
 C:\Chris\MyProjects\tbl2web\release\tbl2web "..\Polymeter ToDo.txt" issues.html issues.txt "Polymeter Issues"
 if errorlevel 1 goto err
