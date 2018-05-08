@@ -27,8 +27,12 @@ public:
 		DEFAULT_VELOCITY = 64,		// default note velocity
 	};
 	enum {	// note bitmasks
-		NB_TIE = 0x80,				// if non-zero, note is tied
-		NB_VELOCITY = 0x7f,			// remaining bits are velocity
+		NB_TIE		= 0x80,			// if non-zero, note is tied
+		NB_VELOCITY	= 0x7f,			// remaining bits are velocity
+	};
+	enum {	// mute bitmasks
+		MB_MUTE		= 0x01,			// mute state
+		MB_TOGGLE	= 0x02,			// toggle mute
 	};
 	typedef BYTE STEP;				// sequencer step
 	typedef CByteArrayEx CStepArray;	// array of sequencer steps

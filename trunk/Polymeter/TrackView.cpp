@@ -115,6 +115,16 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_TRACK_SELECTION:
 		m_grid.SetSelection(pDoc->m_arrTrackSel);
 		break;
+	case CPolymeterDoc::HINT_STEPS_ARRAY:
+		{
+			const CPolymeterDoc::CRectSelPropHint *pStepsHint = static_cast<CPolymeterDoc::CRectSelPropHint *>(pHint);
+			int	iStartTrack = pStepsHint->m_rSelection.top;
+			int	iEndTrack = pStepsHint->m_rSelection.bottom;
+			for (int iTrack = iStartTrack; iTrack < iEndTrack; iTrack++) {	// for each selected track
+				m_grid.RedrawSubItem(iTrack, COL_Length);	// redraw length
+			}
+		}
+		break;
 	}
 	theApp.GetMainFrame()->OnUpdate(pSender, lHint, pHint);	// notify main frame
 }
@@ -209,24 +219,28 @@ void CTrackView::CTrackGridCtrl::OnItemChange(LPCTSTR pszText)
 				break;
 		}
 		if (iSel < nSels) {	// if at least one track's property changed
-			pDoc->NotifyUndoableEdit(iProp, UCODE_MULTI_TRACK_PROP);
-			for (iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-				int	iSelTrack = arrSelection[iSel];
-				pDoc->m_Seq.SetTrackProperty(iSelTrack, iProp, valNew);	// set property
+			if (pDoc->ValidateTrackProperty(arrSelection, iProp, valNew)) {	// if valid track property
+				pDoc->NotifyUndoableEdit(iProp, UCODE_MULTI_TRACK_PROP);
+				for (iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+					int	iSelTrack = arrSelection[iSel];
+					pDoc->m_Seq.SetTrackProperty(iSelTrack, iProp, valNew);	// set property
+				}
+				CPolymeterDoc::CMultiItemPropHint	hint(arrSelection, iProp);
+				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_TRACK_PROP, &hint);
+				pDoc->SetModifiedFlag();
 			}
-			CPolymeterDoc::CMultiItemPropHint	hint(arrSelection, iProp);
-			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_TRACK_PROP, &hint);
-			pDoc->SetModifiedFlag();
 		}
 	} else {	// single selection
 		CComVariant	valOld;
 		pDoc->m_Seq.GetTrackProperty(iTrack, iProp, valOld);
 		if (valNew != valOld) {	// if property changed
-			pDoc->NotifyUndoableEdit(MAKELONG(iTrack, iProp), UCODE_TRACK_PROP);
-			pDoc->m_Seq.SetTrackProperty(iTrack, iProp, valNew);	// set property
-			CPolymeterDoc::CPropHint	hint(iTrack, iProp);
-			pDoc->UpdateAllViews(pView, CPolymeterDoc::HINT_TRACK_PROP, &hint);
-			pDoc->SetModifiedFlag();
+			if (pDoc->ValidateTrackProperty(iTrack, iProp, valNew)) {	// if valid track property
+				pDoc->NotifyUndoableEdit(MAKELONG(iTrack, iProp), UCODE_TRACK_PROP);
+				pDoc->m_Seq.SetTrackProperty(iTrack, iProp, valNew);	// set property
+				CPolymeterDoc::CPropHint	hint(iTrack, iProp);
+				pDoc->UpdateAllViews(pView, CPolymeterDoc::HINT_TRACK_PROP, &hint);
+				pDoc->SetModifiedFlag();
+			}
 		}
 	}
 }
@@ -320,8 +334,5 @@ void CTrackView::OnReorder(NMHDR* pNMHDR, LRESULT* pResult)
 void CTrackView::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	UNREFERENCED_PARAMETER(pWnd);
-	CMenu	menu;
-	menu.LoadMenu(IDR_POPUP_EDIT);
-	CMenu	*pSubMenu = menu.GetSubMenu(0);
-	pSubMenu->TrackPopupMenu(0, point.x, point.y, theApp.GetMainFrame());
+	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE);
 }

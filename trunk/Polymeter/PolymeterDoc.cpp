@@ -182,18 +182,6 @@ void CPolymeterDoc::ToggleSelection(int iTrack, bool bUpdate)
 		UpdateAllViews(NULL, HINT_TRACK_SELECTION);
 }
 
-void CPolymeterDoc::MergeSelection(const CIntArrayEx& arrSelection, bool bUpdate)
-{
-	int	nPrevSels = GetSelectedCount();
-	int	nSels = arrSelection.GetSize();
-	for (int iSel = 0; iSel < nSels; iSel++)	// for each selection index
-		m_arrTrackSel.InsertSortedUnique(arrSelection[iSel]);
-	if (GetSelectedCount() != nPrevSels) {	// if selection changed
-		if (bUpdate)
-			UpdateAllViews(NULL, HINT_TRACK_SELECTION);
-	}
-}
-
 // CPolymeterDoc serialization
 
 void CPolymeterDoc::Serialize(CArchive& ar)
@@ -317,15 +305,15 @@ void CPolymeterDoc::DeleteTracks(bool bCopyToClipboard)
 {
 	int	nUndoCode;
 	if (bCopyToClipboard)
-		nUndoCode = UCODE_CUT;
+		nUndoCode = UCODE_CUT_TRACKS;
 	else
-		nUndoCode = UCODE_DELETE;
+		nUndoCode = UCODE_DELETE_TRACKS;
 	NotifyUndoableEdit(0, nUndoCode);
 	if (bCopyToClipboard)
 		m_Seq.GetTracks(m_arrTrackSel, theApp.m_arrTrackClipboard);
 	m_Seq.DeleteTracks(m_arrTrackSel);
 	Deselect(false);	// don't update views
-	UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
+	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	SetModifiedFlag();
 }
 
@@ -343,13 +331,13 @@ void CPolymeterDoc::Drop(int iDropPos)
 			nSelsBelowDrop++;
 	}
 	iDropPos -= nSelsBelowDrop;	// compensate for deletions below drop position
-	NotifyUndoableEdit(iDropPos, UCODE_MOVE);
+	NotifyUndoableEdit(iDropPos, UCODE_MOVE_TRACKS);
 	CTrackArray	arrTrack;
 	m_Seq.GetTracks(arrSelection, arrTrack);
 	m_Seq.DeleteTracks(arrSelection);
 	m_Seq.InsertTracks(iDropPos, arrTrack);
 	SelectRange(iDropPos, nSels, false);	// don't update views
-	UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
+	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	SetModifiedFlag();
 }
 
@@ -373,7 +361,7 @@ void CPolymeterDoc::SortTracks(const CIntArrayEx& arrSortLevel)
 	CTrackArray	arrTrack;
 	m_Seq.GetTracks(arrSorted, arrTrack);
 	m_Seq.SetTracks(arrSelection, arrTrack);
-	UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
+	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	SetModifiedFlag();
 }
 
@@ -408,36 +396,41 @@ void CPolymeterDoc::GetSelectAll(CIntArrayEx& arrSelection) const
 		arrSelection[iTrack] = iTrack;	// store track's index
 }
 
-void CPolymeterDoc::MuteTrack(int iTrack, bool bMute)
+void CPolymeterDoc::SetMute(int iTrack, bool bMute)
 {
 	NotifyUndoableEdit(MAKELONG(iTrack, PROP_Mute), UCODE_TRACK_PROP);
-	SetModifiedFlag();
 	m_Seq.SetMute(iTrack, bMute);	// set track mute
-	CPolymeterDoc::CPropHint	hint(iTrack, PROP_Mute);
-	UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_PROP, &hint);
+	SetModifiedFlag();
+	CPropHint	hint(iTrack, PROP_Mute);
+	UpdateAllViews(NULL, HINT_TRACK_PROP, &hint);
 }
 
-void CPolymeterDoc::MuteSelectedTracks(bool bMute)
+void CPolymeterDoc::SetSelectedMutes(UINT nMuteMask)
 {
 	NotifyUndoableEdit(PROP_Mute, UCODE_MULTI_TRACK_PROP);
-	SetModifiedFlag();
 	const CIntArrayEx&	arrSelection = m_arrTrackSel;
 	int	nSels = arrSelection.GetSize();
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = arrSelection[iSel];
-		m_Seq.SetMute(iTrack, bMute);	// set track mute
+		bool	bMute;
+		if (nMuteMask & MB_TOGGLE)	// if toggling set
+			bMute = m_Seq.GetMute(iTrack) ^ 1;	// invert mute
+		else	// not toggling
+			bMute = nMuteMask & MB_MUTE;	// set mute
+		m_Seq.SetMute(iTrack, bMute);
 	}
-	CPolymeterDoc::CMultiItemPropHint	hint(arrSelection, PROP_Mute);
-	UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_TRACK_PROP, &hint);
+	SetModifiedFlag();
+	CMultiItemPropHint	hint(arrSelection, PROP_Mute);
+	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
 }
 
 void CPolymeterDoc::SetTrackStep(int iTrack, int iStep, STEP nStep)
 {
 	NotifyUndoableEdit(MAKELONG(iTrack, iStep), UCODE_TRACK_STEP);
-	SetModifiedFlag();
 	m_Seq.SetStep(iTrack, iStep, nStep);
-	CPolymeterDoc::CPropHint	hint(iTrack, iStep);
-	UpdateAllViews(NULL, CPolymeterDoc::HINT_STEP, &hint);
+	SetModifiedFlag();
+	CPropHint	hint(iTrack, iStep);
+	UpdateAllViews(NULL, HINT_STEP, &hint);
 }
 
 void CPolymeterDoc::SetTrackSteps(const CRect& rSelection, STEP nStep)
@@ -445,10 +438,150 @@ void CPolymeterDoc::SetTrackSteps(const CRect& rSelection, STEP nStep)
 	m_rStepSel = rSelection;
 	NotifyUndoableEdit(0, UCODE_MULTI_STEP_RECT);
 	m_Seq.SetSteps(rSelection, nStep);
-	CPolymeterDoc::CRectSelPropHint	hint(rSelection);
-	UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_STEP_RECT, &hint);
+	SetModifiedFlag();
+	CRectSelPropHint	hint(rSelection);
+	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
 }
 
+bool CPolymeterDoc::GetTrackSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const
+{
+	if (!IsRectStepSelection(rSelection))
+		return false;
+	m_Seq.GetSteps(rSelection, arrStepArray);	
+	return true;
+}
+
+bool CPolymeterDoc::DeleteSteps(const CRect& rSelection, bool bCopyToClipboard)
+{
+	if (!IsRectStepSelection(rSelection, true))	// deleting
+		return false;
+	m_rStepSel = rSelection;
+	NotifyUndoableEdit(0, UCODE_DELETE_STEPS);
+	if (bCopyToClipboard)
+		m_Seq.GetSteps(rSelection, theApp.m_arrStepClipboard);
+	m_Seq.DeleteSteps(rSelection);
+	ApplyStepsArrayEdit(false);	// reset selection
+	return true;
+}
+
+bool CPolymeterDoc::PasteSteps(const CRect& rSelection)
+{
+	if (!IsRectStepSelection(rSelection))
+		return false;
+	CRect	rPasteSel(rSelection);
+	CSize	szData(theApp.m_arrStepClipboard[0].GetSize(), theApp.m_arrStepClipboard.GetSize());
+	if (!MakePasteSelection(szData, rPasteSel))
+		return false;
+	m_rStepSel = rPasteSel;
+	m_Seq.InsertSteps(rPasteSel, theApp.m_arrStepClipboard);
+	ApplyStepsArrayEdit(true);	// select pasted steps
+	NotifyUndoableEdit(0, UCODE_PASTE_STEPS);
+	return true;
+}
+
+bool CPolymeterDoc::InsertStep(const CRect& rSelection)
+{
+	if (!IsRectStepSelection(rSelection))
+		return false;
+	CRect	rPasteSel(rSelection);
+	CSize	szData(1, rPasteSel.Height());
+	if (!MakePasteSelection(szData, rPasteSel))
+		return false;
+	m_rStepSel = rPasteSel;
+	m_Seq.InsertStep(rPasteSel);
+	ApplyStepsArrayEdit(true);	// select inserted steps
+	NotifyUndoableEdit(0, UCODE_INSERT_STEPS);
+	return true;
+}
+
+void CPolymeterDoc::ApplyStepsArrayEdit(bool bSelect)
+{
+	SetModifiedFlag();
+	CRectSelPropHint	hint(m_rStepSel, bSelect);
+	UpdateAllViews(NULL, HINT_STEPS_ARRAY, &hint);
+}
+
+bool CPolymeterDoc::IsRectStepSelection(const CRect& rSelection, bool bIsDeleting) const
+{
+	int	nRows = rSelection.Height();
+	int	nCols = rSelection.Width();
+	for (int iRow = 0; iRow < nRows; iRow++) {	// for each selected row
+		int	iTrack = rSelection.top + iRow;
+		int	nSteps = m_Seq.GetLength(iTrack);
+		if (rSelection.right > nSteps)	// if selection not within track
+			return false;
+		if (bIsDeleting && nCols >= nSteps)
+			return false;
+	}
+	return true;
+}
+
+bool CPolymeterDoc::MakePasteSelection(CSize szData, CRect& rSelection) const
+{
+	CRect	rPasteSel;
+	rPasteSel.TopLeft() = rSelection.TopLeft();
+	rPasteSel.bottom = rPasteSel.top + szData.cy;
+	if (rPasteSel.bottom > GetTrackCount())
+		return false;
+	rPasteSel.right = rPasteSel.left + szData.cx;
+	for (int iTrack = rPasteSel.top; iTrack < rPasteSel.bottom; iTrack++) {	// for each selection row
+		if (rPasteSel.left >= m_Seq.GetLength(iTrack))
+			return false;
+	}
+	rSelection = rPasteSel;
+	return true;
+}
+
+bool CPolymeterDoc::ValidateTrackLength(int nLength, int nQuant) const
+{
+	// sequencer limits product of track's length and quant to integer range
+	if (LONGLONG(nLength) * nQuant > INT_MAX) {	// if product exceeds integer range
+		AfxMessageBox(IDS_DOC_TRACK_TOO_LONG);
+		return false;
+	}
+	return true;
+}
+
+bool CPolymeterDoc::ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const
+{
+	switch (iProp) {
+	case PROP_Length:
+		return ValidateTrackLength(val.intVal, m_Seq.GetQuant(iTrack));
+	case PROP_Quant:
+		return ValidateTrackLength(m_Seq.GetLength(iTrack), val.intVal);
+	}
+	return true;
+}
+
+bool CPolymeterDoc::ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const
+{
+	switch (iProp) {
+	case PROP_Length:
+		{
+			int	nMaxQuant = 0;
+			int	nSels = arrSelection.GetSize();
+			for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+				int	nQuant = m_Seq.GetQuant(arrSelection[iSel]);
+				if (nQuant > nMaxQuant)
+					nMaxQuant = nQuant;
+			}
+			return ValidateTrackLength(val.intVal, nMaxQuant);
+		}
+		break;
+	case PROP_Quant:
+		{
+			int	nMaxLength = 0;
+			int	nSels = arrSelection.GetSize();
+			for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+				int	nLength = m_Seq.GetLength(arrSelection[iSel]);
+				if (nLength > nMaxLength)
+					nMaxLength = nLength;
+			}
+			return ValidateTrackLength(nMaxLength, val.intVal);
+		}
+	}
+	return true;
+}
 
 void CPolymeterDoc::SaveTrackProperty(CUndoState& State) const
 {
@@ -618,19 +751,19 @@ void CPolymeterDoc::RestoreMasterProperty(const CUndoState& State)
 	UpdateAllViews(NULL, HINT_MASTER_PROP, &hint);
 }
 
-void CPolymeterDoc::SaveClipboard(CUndoState& State) const
+void CPolymeterDoc::SaveClipboardTracks(CUndoState& State) const
 {
 	if (UndoMgrIsIdle()) {	// if initial state
 		CRefPtr<CUndoClipboard>	pClipboard;
 		pClipboard.CreateObj();
 		pClipboard->m_arrSelection = m_arrTrackSel;
-		m_Seq.GetTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack); 
+		m_Seq.GetTracks(m_arrTrackSel, pClipboard->m_arrTrack); 
 		pClipboard->m_nSelMark = m_iTrackSelMark;
 		State.SetObj(pClipboard);
 		switch (State.GetCode()) {
-		case UCODE_CUT:
-		case UCODE_DELETE:
-		case UCODE_MOVE:
+		case UCODE_CUT_TRACKS:
+		case UCODE_DELETE_TRACKS:
+		case UCODE_MOVE_TRACKS:
 			State.m_Val.p.x.i = CUndoManager::UA_UNDO;	// undo inserts, redo deletes
 			break;
 		default:
@@ -639,27 +772,26 @@ void CPolymeterDoc::SaveClipboard(CUndoState& State) const
 	}
 }
 
-void CPolymeterDoc::RestoreClipboard(const CUndoState& State)
+void CPolymeterDoc::RestoreClipboardTracks(const CUndoState& State)
 {
 	CUndoClipboard	*pClipboard = static_cast<CUndoClipboard *>(State.GetObj());
 	if (GetUndoAction() == State.m_Val.p.x.i) {	// if inserting
-		if (State.GetCode() == UCODE_MOVE)
+		if (State.GetCode() == UCODE_MOVE_TRACKS)
 			m_Seq.DeleteTracks(State.GetCtrlID(), pClipboard->m_arrTrack.GetSize());
 		m_Seq.InsertTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack);
 		m_arrTrackSel = pClipboard->m_arrSelection;
 		m_iTrackSelMark = pClipboard->m_nSelMark;
-		UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
+		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	} else {	// deleting
 		m_Seq.DeleteTracks(pClipboard->m_arrSelection);
-		if (State.GetCode() == UCODE_MOVE)
+		if (State.GetCode() == UCODE_MOVE_TRACKS) {
 			m_Seq.InsertTracks(State.GetCtrlID(), pClipboard->m_arrTrack);
-		if (State.GetCode() == UCODE_MOVE) {
 			int	iTrack = State.GetCtrlID();
 			SelectRange(iTrack, pClipboard->m_arrTrack.GetSize(), false);	// don't update views
 			m_iTrackSelMark = iTrack;
 		} else
 			Deselect(false);	// don't update views
-		UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
+		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	}
 }
 
@@ -770,8 +902,40 @@ void CPolymeterDoc::RestoreMultiStepRect(const CUndoState& State)
 {
 	const CUndoMultiStepRect	*pInfo = static_cast<CUndoMultiStepRect*>(State.GetObj());
 	m_Seq.SetSteps(pInfo->m_rSelection, pInfo->m_arrStepArray);
-	CPolymeterDoc::CRectSelPropHint	hint(pInfo->m_rSelection);
-	UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_STEP_RECT, &hint);
+	CRectSelPropHint	hint(pInfo->m_rSelection);
+	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
+}
+
+void CPolymeterDoc::SaveClipboardSteps(CUndoState& State) const
+{
+	if (UndoMgrIsIdle()) {	// if initial state
+		CRefPtr<CUndoMultiStepRect>	pClipboard;
+		pClipboard.CreateObj();
+		pClipboard->m_rSelection = m_rStepSel;
+		m_Seq.GetSteps(m_rStepSel, pClipboard->m_arrStepArray); 
+		State.SetObj(pClipboard);
+		switch (State.GetCode()) {
+		case UCODE_CUT_STEPS:
+		case UCODE_DELETE_STEPS:
+			State.m_Val.p.x.i = CUndoManager::UA_UNDO;	// undo inserts, redo deletes
+			break;
+		default:
+			State.m_Val.p.x.i = CUndoManager::UA_REDO;	// undo deletes, redo inserts
+		}
+	}
+}
+
+void CPolymeterDoc::RestoreClipboardSteps(const CUndoState& State)
+{
+	CUndoMultiStepRect	*pClipboard = static_cast<CUndoMultiStepRect *>(State.GetObj());
+	bool	bIsInsert = GetUndoAction() == State.m_Val.p.x.i;
+	if (bIsInsert) {	// if inserting
+		m_Seq.InsertSteps(pClipboard->m_rSelection, pClipboard->m_arrStepArray);
+	} else {	// deleting
+		m_Seq.DeleteSteps(pClipboard->m_rSelection);
+	}
+	CRectSelPropHint	hint(pClipboard->m_rSelection, bIsInsert);
+	UpdateAllViews(NULL, HINT_STEPS_ARRAY, &hint);
 }
 
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
@@ -795,12 +959,12 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 	case UCODE_MASTER_PROP:
 		SaveMasterProperty(State);
 		break;
-	case UCODE_CUT:
-	case UCODE_PASTE:
-	case UCODE_INSERT:
-	case UCODE_DELETE:
-	case UCODE_MOVE:
-		SaveClipboard(State);
+	case UCODE_CUT_TRACKS:
+	case UCODE_PASTE_TRACKS:
+	case UCODE_INSERT_TRACKS:
+	case UCODE_DELETE_TRACKS:
+	case UCODE_MOVE_TRACKS:
+		SaveClipboardTracks(State);
 		break;
 	case UCODE_CHANNEL_PROP:
 		SaveChannelProperty(State);
@@ -813,6 +977,12 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		break;
 	case UCODE_MULTI_STEP_RECT:
 		SaveMultiStepRect(State);
+		break;
+	case UCODE_CUT_STEPS:
+	case UCODE_PASTE_STEPS:
+	case UCODE_INSERT_STEPS:
+	case UCODE_DELETE_STEPS:
+		SaveClipboardSteps(State);
 		break;
 	}
 }
@@ -838,12 +1008,12 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_MASTER_PROP:
 		RestoreMasterProperty(State);
 		break;
-	case UCODE_CUT:
-	case UCODE_PASTE:
-	case UCODE_INSERT:
-	case UCODE_DELETE:
-	case UCODE_MOVE:
-		RestoreClipboard(State);
+	case UCODE_CUT_TRACKS:
+	case UCODE_PASTE_TRACKS:
+	case UCODE_INSERT_TRACKS:
+	case UCODE_DELETE_TRACKS:
+	case UCODE_MOVE_TRACKS:
+		RestoreClipboardTracks(State);
 		break;
 	case UCODE_CHANNEL_PROP:
 		RestoreChannelProperty(State);
@@ -857,6 +1027,12 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		break;
 	case UCODE_MULTI_STEP_RECT:
 		RestoreMultiStepRect(State);
+		break;
+	case UCODE_CUT_STEPS:
+	case UCODE_PASTE_STEPS:
+	case UCODE_INSERT_STEPS:
+	case UCODE_DELETE_STEPS:
+		RestoreClipboardSteps(State);
 		break;
 	}
 }
@@ -1125,8 +1301,8 @@ void CPolymeterDoc::OnEditPaste()
 		m_Seq.InsertTracks(iInsPos, theApp.m_arrTrackClipboard);
 		SetModifiedFlag();
 		SelectRange(iInsPos, theApp.m_arrTrackClipboard.GetSize(), false);	// don't update views
-		UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
-		NotifyUndoableEdit(0, UCODE_PASTE);
+		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
+		NotifyUndoableEdit(0, UCODE_PASTE_TRACKS);
 	}
 }
 
@@ -1157,8 +1333,8 @@ void CPolymeterDoc::OnEditInsert()
 	m_Seq.InsertTracks(iInsPos);
 	SetModifiedFlag();
 	SelectOnly(iInsPos, false);	// don't update views
-	UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
-	NotifyUndoableEdit(0, UCODE_INSERT);
+	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
+	NotifyUndoableEdit(0, UCODE_INSERT_TRACKS);
 }
 
 void CPolymeterDoc::OnUpdateEditInsert(CCmdUI *pCmdUI)
@@ -1209,7 +1385,7 @@ void CPolymeterDoc::OnViewPlay()
 		UpdateChannelEvents();	// queue channel events to be output at start of playback
 	}
 	m_Seq.Play(bIsPlaying);
-	theApp.GetMainFrame()->OnUpdate(NULL, CPolymeterDoc::HINT_PLAY);
+	theApp.GetMainFrame()->OnUpdate(NULL, HINT_PLAY);
 }
 
 void CPolymeterDoc::OnUpdateViewPlay(CCmdUI *pCmdUI)

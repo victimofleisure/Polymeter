@@ -46,7 +46,8 @@ public:
 		HINT_CHANNEL_PROP,		// channel property edit; pHint is CPropHint
 		HINT_MULTI_CHANNEL_PROP,	// multiple channel property edit; pHint is CMultiItemPropHint
 		HINT_TRACK_SELECTION,	// track selection
-		HINT_MULTI_STEP_RECT,	// multiple step edit via rectangular selection; pHint is CRectSelPropHint
+		HINT_MULTI_STEP,		// multiple steps edit; pHint is CRectSelPropHint
+		HINT_STEPS_ARRAY,		// inserting or deleting steps; pHint is CRectSelPropHint
 		HINTS
 	};
 
@@ -57,24 +58,23 @@ public:
 	};
 	class CPropHint : public CObject {
 	public:
-		CPropHint() {}
 		CPropHint(int iItem, int iProp) : m_iItem(iItem), m_iProp(iProp) {}
 		int		m_iItem;	// item index
 		int		m_iProp;	// property index, or -1 for all
 	};
 	class CMultiItemPropHint : public CObject {
 	public:
-		CMultiItemPropHint() {}
 		CMultiItemPropHint(const CIntArrayEx& arrSelection, int iProp) 
 			: m_arrSelection(arrSelection), m_iProp(iProp) {}
-		CIntArrayEx	m_arrSelection;	// indices of selected items
+		const CIntArrayEx&	m_arrSelection;	// indices of selected items
 		int		m_iProp;	// property index
 	};
 	class CRectSelPropHint :  public CObject {
 	public:
-		CRectSelPropHint() {}
-		CRectSelPropHint(const CRect& rSelection) : m_rSelection(rSelection) {}
+		CRectSelPropHint(const CRect& rSelection, bool bSelect = false) 
+			: m_rSelection(rSelection), m_bSelect(bSelect) {}
 		CRect	m_rSelection;	// rectangular step selection; x is step index, y is track index
+		bool	m_bSelect;		// if true, select steps in rectangle
 	};
 
 // Public data
@@ -93,6 +93,8 @@ public:
 	static	int		GetTrackPropertyNameID(int iProp);
 	void	SetTrackStep(int iTrack, int iStep, STEP nStep);
 	void	SetTrackSteps(const CRect& rSelection, STEP nStep);
+	bool	GetTrackSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const;
+	bool	IsRectStepSelection(const CRect& rSelection, bool bIsDeleting = false) const;
 
 // Operations
 public:
@@ -110,11 +112,16 @@ public:
 	void	SelectAll(bool bUpdate = true);
 	void	Deselect(bool bUpdate = true);
 	void	ToggleSelection(int iTrack, bool bUpdate = true);
-	void	MergeSelection(const CIntArrayEx& arrSelection, bool bUpdate = true);
 	void	Drop(int iDropPos);
 	void	SortTracks(const CIntArrayEx& arrSortLevel);
-	void	MuteTrack(int iTrack, bool bMute);
-	void	MuteSelectedTracks(bool bMute);
+	void	SetMute(int iTrack, bool bMute);
+	void	SetSelectedMutes(UINT nMuteMask);
+	bool	DeleteSteps(const CRect& rSelection, bool bCopyToClipboard);
+	bool	PasteSteps(const CRect& rSelection);
+	bool	InsertStep(const CRect& rSelection);
+	bool	ValidateTrackLength(int nLength, int nQuant) const;
+	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
+	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
 
 // Overrides
 public:
@@ -176,7 +183,7 @@ protected:
 	static const int	m_nTrackPropNameId[];	// array of string resource IDs for track property names
 
 // Data members
-	CRect	m_rStepSel;			// rectangular step selection, used by undo
+	CRect	m_rStepSel;			// rectangular step selection, used by undo handling
 	static CTrackSortInfo	m_infoTrackSort;	// state passed to track sort compare function
 	static const CIntArrayEx	*m_parrSortedSelection;	// pointer to sorted selection array for undo
 
@@ -192,6 +199,8 @@ protected:
 	void	DeleteTracks(bool bCopyToClipboard);
 	static	int TrackSortCompare(const void *pElem1, const void *pElem2);
 	void	GetSelectAll(CIntArrayEx& arrSelection) const;
+	void	ApplyStepsArrayEdit(bool bSelect);
+	bool	MakePasteSelection(CSize szData, CRect& rSelection) const;
 	void	SaveTrackProperty(CUndoState& State) const;
 	void	RestoreTrackProperty(const CUndoState& State);
 	void	SaveMultiTrackProperty(CUndoState& State) const;
@@ -202,8 +211,8 @@ protected:
 	void	RestoreTrackSteps(const CUndoState& State);
 	void	SaveMultiTrackSteps(CUndoState& State) const;
 	void	RestoreMultiTrackSteps(const CUndoState& State);
-	void	SaveClipboard(CUndoState& State) const;
-	void	RestoreClipboard(const CUndoState& State);
+	void	SaveClipboardTracks(CUndoState& State) const;
+	void	RestoreClipboardTracks(const CUndoState& State);
 	void	SaveMasterProperty(CUndoState& State) const;
 	void	RestoreMasterProperty(const CUndoState& State);
 	void	SaveChannelProperty(CUndoState& State) const;
@@ -214,6 +223,8 @@ protected:
 	void	RestoreTrackSort(const CUndoState& State);
 	void	SaveMultiStepRect(CUndoState& State) const;
 	void	RestoreMultiStepRect(const CUndoState& State);
+	void	SaveClipboardSteps(CUndoState& State) const;
+	void	RestoreClipboardSteps(const CUndoState& State);
 
 // Generated message map functions
 protected:

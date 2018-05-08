@@ -66,6 +66,9 @@ public:
 	void	InsertTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack);
 	void	DeleteTracks(int iTrack, int nCount = 1);
 	void	DeleteTracks(const CIntArrayEx& arrSelection);
+	void	InsertStep(const CRect& rSelection);
+	void	InsertSteps(const CRect& rSelection, CStepArrayArray& arrStepArray);
+	void	DeleteSteps(const CRect& rSelection);
 
 protected:
 // Member data

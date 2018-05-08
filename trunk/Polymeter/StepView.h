@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include "resource.h"
+#include "Range.h"
+#include "GDIUtils.h"
 
 class CSequencer;
 
@@ -34,6 +35,7 @@ public:
 	void	SetTrackHeight(int nHeight);
 	double	GetZoomStep() const;
 	void	SetZoomStep(double fStep);
+	int		GetBeatWidth() const;
 
 // Operations
 public:
@@ -60,6 +62,7 @@ protected:
 		bool	m_bIsSelected;		// true if track is selected
 	};
 	typedef CArrayEx<CTrackState, CTrackState&> CTrackStateArray;
+	typedef CRange<int> CIntRange;
 
 // Constants
 	enum {	// layout
@@ -91,7 +94,7 @@ protected:
 // Member data
 	CTrackStateArray	m_arrTrackState;	// array of per-track state info
 	CSize	m_szClient;			// size of window client area
-	int		m_nHdrHeight;		// header height, in client coords
+	int		m_nTrackY;			// top of track area, in client coords
 	int		m_nTrackHeight;		// track height, in client coords
 	int		m_nBeatWidth;		// width of a beat, in client coords
 	int		m_nZoom;			// zoom level as base two exponent
@@ -99,9 +102,12 @@ protected:
 	double	m_fZoom;			// zoom scaling factor
 	double	m_fZoomStep;		// zoom step size, as a fraction
 	CPoint	m_ptDragOrigin;		// drag origin
-	int		m_iCurTrack;		// index of currently selected track
 	int		m_nDragState;		// drag state; see enum above
+	bool	m_bDoContextMenu;	// true if context menu should be displayed
+	bool	m_bOriginMute;		// true if original mute was set
+	CIntRange	m_rngMute;		// mute selection range
 	CRect	m_rStepSel;			// rectangular step selection; x is step index, y is track index
+	CRgnData	m_rgndStepSel;	// region data for step selection overlap removal
 
 // Helpers
 	int		GetTrackY(int iTrack) const;
@@ -110,13 +116,15 @@ protected:
 	void	UpdateViewSize();
 	void	OnTrackCountChange();
 	void	OnTrackSizeChange(int iTrack);
-	void	OnSelectionChange();
+	void	OnTrackSelectionChange();
 	CPoint	GetMaxScrollPos() const;
+	void	GetTrackRect(int iTrack, CRect& rTrack) const;
 	void	GetMuteRect(int iTrack, CRect& rMute) const;
 	void	GetStepsRect(int iTrack, CRect& rStep) const;
 	void	GetStepRect(int iTrack, int iStep, CRect& rStep) const;
 	void	UpdateTrack(int iTrack);
 	void	UpdateTracks(const CIntArrayEx& arrSelection);
+	void	UpdateTracks(const CRect& rSelection);
 	void	UpdateMute(int iTrack);
 	void	UpdateMutes(const CIntArrayEx& arrSelection);
 	void	UpdateSteps(int iTrack);
@@ -124,9 +132,7 @@ protected:
 	void	UpdateSteps(const CRect& rSelection);
 	bool	HaveStepSelection() const;
 	void	ResetStepSelection();
-	void	BeginDrag(CPoint point, UINT nFlags);
 	void	EndDrag();
-	void	UpdateDrag(CPoint point, UINT nFlags);
 	void	SetCurStep(int iTrack, int iStep);
 	void	UpdateSongPositionNoRedraw(int iTrack);
 	void	UpdateSongPositionNoRedraw(const CIntArrayEx& arrSelection);
@@ -162,6 +168,17 @@ protected:
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+	afx_msg void OnEditCut();
+	afx_msg void OnUpdateEditCut(CCmdUI *pCmdUI);
+	afx_msg void OnEditCopy();
+	afx_msg void OnUpdateEditCopy(CCmdUI *pCmdUI);
+	afx_msg void OnEditPaste();
+	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
+	afx_msg void OnEditInsert();
+	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
+	afx_msg void OnEditDelete();
+	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
 };
 
 inline CPolymeterDoc* CStepView::GetDocument() const
@@ -177,4 +194,9 @@ inline double CStepView::GetZoomStep() const
 inline bool CStepView::HaveStepSelection() const
 {
 	return !m_rStepSel.IsRectEmpty();
+}
+
+inline int CStepView::GetBeatWidth() const
+{
+	return m_nBeatWidth;
 }

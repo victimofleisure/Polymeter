@@ -44,16 +44,20 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_MULTI_TRACK_PROP,	1},
 	{UCODE_TRACK_NAME,			1},
 	{UCODE_TRACK_STEP,			1},
-	{UCODE_CUT,					1},
-	{UCODE_PASTE,				2},
-	{UCODE_INSERT,				1},
-	{UCODE_DELETE,				1},
-	{UCODE_MOVE,				2},
+	{UCODE_CUT_TRACKS,			1},
+	{UCODE_PASTE_TRACKS,		2},
+	{UCODE_INSERT_TRACKS,		1},
+	{UCODE_DELETE_TRACKS,		1},
+	{UCODE_MOVE_TRACKS,			2},
 	{UCODE_CHANNEL_PROP,		0.1f},
 	{UCODE_MULTI_CHANNEL_PROP,	0.1f},
 	{UCODE_MASTER_PROP,			0.1f},
 	{UCODE_TRACK_SORT,			0.1f},
 	{UCODE_MULTI_STEP_RECT,		1},
+	{UCODE_CUT_STEPS,			1},
+	{UCODE_PASTE_STEPS,			2},
+	{UCODE_INSERT_STEPS,		1},
+	{UCODE_DELETE_STEPS,		1},
 };
 
 CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
@@ -162,6 +166,36 @@ void CTrackUndoTest::MakeRandomMasterProperty(int iProp, CComVariant& var)
 	}
 }
 
+bool CTrackUndoTest::GetRandomStep(CPoint& ptStep) const
+{
+	int	nTracks = m_pDoc->GetTrackCount();
+	if (!nTracks)
+		return(FALSE);
+	int	iTrack = Random(nTracks);
+	int	iStep = Random(m_pDoc->m_Seq.GetLength(iTrack));
+	ptStep = CPoint(iStep, iTrack);
+	return(TRUE);
+}
+
+bool CTrackUndoTest::MakeRandomStepSelection(CRect& rSelection) const
+{
+	int	nTracks = m_pDoc->GetTrackCount();
+	if (!nTracks)
+		return(FALSE);
+	int	iStartTrack = Random(nTracks);
+	int	iEndTrack = Random(nTracks - iStartTrack) + iStartTrack + 1;
+	int	nMaxLen = 0;
+	for (int iTrack = iStartTrack; iTrack < iEndTrack; iTrack++) {
+		int	nLen = m_pDoc->m_Seq.GetLength(iTrack);
+		if (nLen > nMaxLen)
+			nMaxLen = nLen;
+	}
+	int	iStartStep = Random(nMaxLen);
+	int	iEndStep = Random(nMaxLen - iStartStep) + iStartStep + 1;
+	rSelection = CRect(iStartStep, iStartTrack, iEndStep, iEndTrack);
+	return(TRUE);
+}
+
 CString	CTrackUndoTest::PrintSelection(CIntArrayEx& arrSelection) const
 {
 	CString	str;
@@ -264,7 +298,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_STEP, &hint);
 		}
 		break;
-	case UCODE_CUT:
+	case UCODE_CUT_TRACKS:
 		{
 			CIntArrayEx	arrSelection;
 			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
@@ -274,7 +308,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
 		}
 		break;
-	case UCODE_PASTE:
+	case UCODE_PASTE_TRACKS:
 		{
 			if (!theApp.m_arrTrackClipboard.GetSize())
 				return(DISABLED);
@@ -284,7 +318,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			PRINTF(_T("%s\n"), sUndoTitle);
 		}
 		break;
-	case UCODE_INSERT:
+	case UCODE_INSERT_TRACKS:
 		{
 			if (m_pDoc->GetTrackCount() >= MAX_TRACKS)
 				return(DISABLED);
@@ -294,7 +328,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			PRINTF(_T("%s %d\n"), sUndoTitle, iInsPos);
 		}
 		break;
-	case UCODE_DELETE:
+	case UCODE_DELETE_TRACKS:
 		{
 			CIntArrayEx	arrSelection;
 			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
@@ -304,7 +338,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
 		}
 		break;
-	case UCODE_MOVE:
+	case UCODE_MOVE_TRACKS:
 		{
 			if (m_pDoc->GetTrackCount() < 2)
 				return(DISABLED);
@@ -376,23 +410,46 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 		break;
 	case UCODE_MULTI_STEP_RECT:
 		{
-			int	nTracks = m_pDoc->GetTrackCount();
-			if (!nTracks)
+			CRect	rSelection;
+			if (!MakeRandomStepSelection(rSelection))
 				return(DISABLED);
-			int	iStartTrack = Random(nTracks);
-			int	iEndTrack = Random(nTracks - iStartTrack) + iStartTrack;
-			int	nMaxLen = 0;
-			for (int iTrack = iStartTrack; iTrack < iEndTrack; iTrack++) {
-				int	nLen = m_pDoc->m_Seq.GetLength(iTrack);
-				if (nLen > nMaxLen)
-					nMaxLen = nLen;
-			}
-			int	iStartStep = Random(nMaxLen);
-			int	iEndStep = Random(nMaxLen - iStartStep) + iStartStep;
-			CRect	rSelection(iStartStep, iStartTrack, iEndStep, iEndTrack);
 			STEP	nStep = STEP(Random(256));
 			m_pDoc->SetTrackSteps(rSelection, nStep);
 			PRINTF(_T("%s %d\n"), sUndoTitle, nStep);
+		}
+		break;
+	case UCODE_CUT_STEPS:
+	case UCODE_DELETE_STEPS:
+		{
+			CRect	rSelection;
+			if (!MakeRandomStepSelection(rSelection))
+				return(DISABLED);
+			if (!m_pDoc->DeleteSteps(rSelection, UndoCode == UCODE_CUT_STEPS))
+				return(DISABLED);
+			PRINTF(_T("%s (%d %d %d %d)\n"), sUndoTitle, rSelection.left, rSelection.top, rSelection.right, rSelection.bottom);
+		}
+		break;
+	case UCODE_PASTE_STEPS:
+		{
+			if (!theApp.m_arrStepClipboard.GetSize())
+				return(DISABLED);
+			CPoint	ptStep;
+			if (!GetRandomStep(ptStep))
+				return(DISABLED);
+			CRect	rSelection(ptStep, CSize(1, 1));
+			if (!m_pDoc->PasteSteps(rSelection))
+				return(DISABLED);
+			PRINTF(_T("%s (%d %d %d %d)\n"), sUndoTitle, rSelection.left, rSelection.top, rSelection.right, rSelection.bottom);
+		}
+		break;
+	case UCODE_INSERT_STEPS:
+		{
+			CRect	rSelection;
+			if (!MakeRandomStepSelection(rSelection))
+				return(DISABLED);
+			if (!m_pDoc->InsertStep(rSelection))
+				return(DISABLED);
+			PRINTF(_T("%s (%d %d %d %d)\n"), sUndoTitle, rSelection.left, rSelection.top, rSelection.right, rSelection.bottom);
 		}
 		break;
 	default:
@@ -412,6 +469,9 @@ bool CTrackUndoTest::Create()
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
 		sName.Format(_T("%d"), iTrack);
 		m_pDoc->m_Seq.SetName(iTrack, sName);
+		int	nSteps = m_pDoc->m_Seq.GetLength(iTrack);
+		for (int iStep = 0; iStep < nSteps; iStep++)
+			m_pDoc->m_Seq.SetStep(iTrack, iStep, BYTE(Random(256)));
 	}
 	m_pDoc->UpdateAllViews(NULL);
 	if (TEST_PLAYING)	// if playback during test

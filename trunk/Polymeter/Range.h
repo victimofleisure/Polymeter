@@ -11,6 +11,7 @@
         01		10jun17	overload multiply and divide
         02		10jun17	remove self-assignment check
         03		13feb18	add IsNull and Include
+        04		05may18	overload assignment operator for single value
 
 		range template
 
@@ -26,6 +27,7 @@ public:
 	CRange(const CRange& Range);
 	CRange(T Start, T End);
 	CRange& operator=(const CRange& Range);
+	CRange& operator=(T Val);
 
 // Attributes
 	T		Length() const;
@@ -92,6 +94,14 @@ inline CRange<T>& CRange<T>::operator=(const CRange& Range)
 {
 	Start = Range.Start;
 	End = Range.End;
+	return(*this);
+}
+
+template<class T>
+inline CRange<T>& CRange<T>::operator=(T Val)
+{
+	Start = Val;
+	End = Val;
 	return(*this);
 }
 

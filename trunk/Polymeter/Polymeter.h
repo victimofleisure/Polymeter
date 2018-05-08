@@ -59,6 +59,7 @@ public:
 	BOOL  m_bHiColorIcons;
 	COptions	m_Options;	// options data
 	CTrackArray	m_arrTrackClipboard;	// clipboard for tracks
+	CTrack::CStepArrayArray m_arrStepClipboard;	// clipboard for steps
 	CMidiDevices	m_midiDevs;		// MIDI device information
 
 protected:

@@ -252,3 +252,35 @@ void CSeqTrackArray::DeleteTracks(const CIntArrayEx& arrSelection)
 		RemoveAt(arrSelection[iSel]);
 }
 
+void CSeqTrackArray::InsertStep(const CRect& rSelection)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	STEP	nStep = 0;
+	int	nRows = rSelection.Height();
+	for (int iRow = 0; iRow < nRows; iRow++) {	// for each selected row
+		int	iTrack = rSelection.top + iRow;
+		GetAt(iTrack).m_arrStep.InsertAt(rSelection.left, nStep);
+	}
+}
+
+void CSeqTrackArray::InsertSteps(const CRect& rSelection, CStepArrayArray& arrStepArray)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	int	nRows = min(arrStepArray.GetSize(), GetSize() - rSelection.top); 
+	for (int iRow = 0; iRow < nRows; iRow++) {	// for each selected row
+		int	iTrack = rSelection.top + iRow;
+		CStepArray&	arrStep = arrStepArray[iRow];
+		GetAt(iTrack).m_arrStep.InsertAt(rSelection.left, &arrStep);
+	}
+}
+
+void CSeqTrackArray::DeleteSteps(const CRect& rSelection)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	int	nRows = rSelection.Height();
+	int	nCols = rSelection.Width();
+	for (int iRow = 0; iRow < nRows; iRow++) {	// for each selected row
+		int	iTrack = rSelection.top + iRow;
+		GetAt(iTrack).m_arrStep.RemoveAt(rSelection.left, nCols);	// remove steps
+	}
+}
