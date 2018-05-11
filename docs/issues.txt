@@ -36,24 +36,27 @@ open	close	type	description	rev	user
 03/25/18	05/02/18	done	in step view, add rectangular selection of steps via right-click and drag	0.0.02.000	
 03/25/18	05/02/18	done	in step view, add track selection via right-click and vertical drag over mute buttons	0.0.02.000	
 05/03/18	05/04/18	done	tied notes with swing overlapping due to incorrect durations; fixed	0.0.03.000	
+03/25/18	05/06/18	done	step editing commands; cut, copy, paste, insert, delete	0.0.04.000	
+05/03/18	05/08/18	done	add error check for product of track's length and quant exceeding range of 32-bit integer	0.0.04.000	
+04/12/18	05/10/18	done	synchronize vertical scrolling between track and step views	0.0.04.001	
+04/27/18	05/10/18	done	step view's ruler shouldn't scroll vertically off screen	0.0.04.001	
 03/25/18		hold	animated visualization		
-04/25/18		hold	apply popup numeric edit's spin control to document immediately; causes problems and inconsistencies		
+04/25/18		hold	apply popup numeric edit's spin control to document immediately; causes various bugs and inconsistencies		
 03/22/18		todo	data architecture		
 03/22/18		todo	controller tracks		
 03/22/18		todo	velocity editing		
 03/22/18		todo	UI design; real track view		
 03/22/18		todo	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		todo	app architecture; Bongo, Jock and Stencil all in one app? Different views of same document?		
-03/22/18		todo	PPQ change should optionally update Quant, Offset and Swing values		
-03/25/18		todo	insert or delete beat, shifting following beats, for one or more tracks (use track length undo handling)		
+03/22/18		todo	PPQ change should optionally update Quant, Offset and Swing values, or otherwise update step view		
 03/25/18		todo	rotate track's beats left or right, for one or more tracks		
-03/25/18		todo	editing commands (copy, cut, paste) for beats; rectangular selection of beats		
 03/25/18		todo	playback can be slow to start, due to device open delay; keep output device open all the time?		
 03/25/18		todo	record live arrangment; at least track mute/unmute, maybe other things too		
 03/25/18		todo	edit arrangement on timeline, similar to Stencil		
 03/25/18		todo	MIDI mapping of all parameters, with manual assignment and learn mode		
 04/09/18		todo	undoing track value or beat edit should ensure track is visible		
-04/12/18		todo	synchonize vertical scrolling between track and step views; splitter window isn't helping		
 04/16/18		todo	optionally show MIDI notes instead of numbers in note edit controls		
-04/27/18		todo	step ruler shouldn't scroll with tracks; derived splitter?		
-05/03/18		todo	add error check for product of track's length and quant exceeding range of 32-bit integer		
+05/10/18		todo	tempo nudge; tempo property doesn't have spin buttons		
+05/10/18		todo	left-click anywhere in step view should toggle steps or tracks, to be consistent with original app		
+05/10/18		todo	right-click in step view background with no selection should show context menu?		
+05/10/18		todo	implement pane switching shortcuts (F6)		
