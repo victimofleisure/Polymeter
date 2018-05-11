@@ -16,6 +16,9 @@
 
 #pragma once
 
+class CTrackView;
+class CStepParent;
+
 class CChildFrame : public CMDIChildWndEx
 {
 	DECLARE_DYNCREATE(CChildFrame)
@@ -42,6 +45,8 @@ public:
 	virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
 
 	CSplitterWndEx	m_wndSplitter;
+	CTrackView		*m_pTrackView;
+	CStepParent		*m_pStepParent;
 
 	enum {	// panes
 		PANE_TRACK,
@@ -53,4 +58,5 @@ public:
 protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd);
+	afx_msg LRESULT OnTrackScroll(WPARAM wParam, LPARAM lParam);
 };

@@ -45,6 +45,8 @@ CTrackView::CTrackView()
 {
 	m_grid.TrackDropPos(true);
 	m_bIsUpdating = false;
+	m_nHdrHeight = 0;
+	m_nItemHeight = 0;
 }
 
 CTrackView::~CTrackView()
@@ -129,7 +131,7 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	theApp.GetMainFrame()->OnUpdate(pSender, lHint, pHint);	// notify main frame
 }
 
-int CTrackView::GetHeaderHeight() const
+int CTrackView::CalcHeaderHeight() const
 {
 	CRect	rItem;
 	if (!m_grid.GetHeaderCtrl()->GetItemRect(0, rItem))
@@ -137,7 +139,7 @@ int CTrackView::GetHeaderHeight() const
 	return rItem.Height();
 }
 
-int CTrackView::GetItemHeight()
+int CTrackView::CalcItemHeight()
 {
 	CRect	rItem;
 	int	nItems = m_grid.GetItemCount();
@@ -151,6 +153,12 @@ int CTrackView::GetItemHeight()
 	if (!nItems)
 		m_grid.SetItemCountEx(0);
 	return nHeight;
+}
+
+void CTrackView::SetVScrollPos(int nPos)
+{
+	int	nTop = m_grid.GetTopIndex();
+	m_grid.Scroll(CSize(0, nPos - nTop * m_nItemHeight));
 }
 
 CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
@@ -250,10 +258,13 @@ void CTrackView::CTrackGridCtrl::OnItemChange(LPCTSTR pszText)
 BEGIN_MESSAGE_MAP(CTrackView, CView)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
-	ON_NOTIFY(LVN_GETDISPINFO, IDC_TRACK_GRID, OnGetdispinfo)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_TRACK_GRID, OnItemChanged)
-	ON_NOTIFY(ULVN_REORDER, IDC_TRACK_GRID, OnReorder)
 	ON_WM_CONTEXTMENU()
+	ON_NOTIFY(LVN_GETDISPINFO, IDC_TRACK_GRID, OnListGetdispinfo)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_TRACK_GRID, OnListItemChanged)
+	ON_NOTIFY(ULVN_REORDER, IDC_TRACK_GRID, OnListReorder)
+	ON_NOTIFY(LVN_ENDSCROLL, IDC_TRACK_GRID, OnListEndScroll)
+	ON_NOTIFY(LVN_KEYDOWN, IDC_TRACK_GRID, OnListKeyDown)
+	ON_MESSAGE(UWM_LIST_SCROLL_KEY, OnListScrollKey)
 END_MESSAGE_MAP()
 
 // CTrackView message handlers
@@ -272,6 +283,8 @@ int CTrackView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_grid.SetExtendedStyle(dwListExStyle);
 	m_grid.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
 	m_grid.CreateColumns(m_arrColInfo, COLUMNS);
+	m_nHdrHeight = CalcHeaderHeight();
+	m_nItemHeight = CalcItemHeight();
 	return 0;
 }
 
@@ -281,10 +294,16 @@ void CTrackView::OnSize(UINT nType, int cx, int cy)
 	m_grid.MoveWindow(0, 0, cx, cy);
 }
 
-void CTrackView::OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
+void CTrackView::OnContextMenu(CWnd* pWnd, CPoint point)
+{
+	UNREFERENCED_PARAMETER(pWnd);
+	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE);
+}
+
+void CTrackView::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	UNREFERENCED_PARAMETER(pResult);
-	LV_DISPINFO* pDispInfo = reinterpret_cast<LV_DISPINFO*>(pNMHDR);
+	NMLVDISPINFO* pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
 	LVITEM&	item = pDispInfo->item;
 	int	iTrack = item.iItem;
 	CPolymeterDoc	*pDoc = GetDocument();
@@ -307,7 +326,7 @@ void CTrackView::OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 	}
 }
 
-void CTrackView::OnItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
+void CTrackView::OnListItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	UNREFERENCED_PARAMETER(pResult);
 	NMLISTVIEW *pnmv = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
@@ -321,9 +340,9 @@ void CTrackView::OnItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
 	}
 }
 
-void CTrackView::OnReorder(NMHDR* pNMHDR, LRESULT* pResult)
+void CTrackView::OnListReorder(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	UNREFERENCED_PARAMETER(pNMHDR);
+	UNREFERENCED_PARAMETER(pNMHDR);	// NMLISTVIEW
 	UNREFERENCED_PARAMETER(pResult);
 	CPolymeterDoc	*pDoc = GetDocument();
 	int	iDropPos = m_grid.GetDropPos();
@@ -331,8 +350,34 @@ void CTrackView::OnReorder(NMHDR* pNMHDR, LRESULT* pResult)
 		pDoc->Drop(iDropPos);
 }
 
-void CTrackView::OnContextMenu(CWnd* pWnd, CPoint point)
+void CTrackView::OnListEndScroll(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	UNREFERENCED_PARAMETER(pWnd);
-	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE);
+	UNREFERENCED_PARAMETER(pNMHDR);	// NMLVSCROLL
+	UNREFERENCED_PARAMETER(pResult);
+	GetParentFrame()->SendMessage(UWM_TRACK_SCROLL, m_grid.GetTopIndex());
 }
+
+void CTrackView::OnListKeyDown(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	UNREFERENCED_PARAMETER(pResult);
+	NMLVKEYDOWN	*pKeyDown = reinterpret_cast<NMLVKEYDOWN *>(pNMHDR);
+	switch (pKeyDown->wVKey) {
+	case VK_PRIOR:
+	case VK_NEXT:
+	case VK_END:
+	case VK_HOME:
+	case VK_UP:
+	case VK_DOWN:
+		PostMessage(UWM_LIST_SCROLL_KEY);	// use post to delay handling until after list scrolls
+		break;
+	}
+}
+
+LRESULT CTrackView::OnListScrollKey(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	GetParentFrame()->SendMessage(UWM_TRACK_SCROLL, m_grid.GetTopIndex());
+	return 0;
+}
+

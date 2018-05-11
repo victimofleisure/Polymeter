@@ -27,15 +27,25 @@ protected: // create from serialization only
 	CStepView();
 	DECLARE_DYNCREATE(CStepView)
 
+// Constants
+	enum {	// custom messages
+		UWM_STEP_FIRST = WM_USER + 200,
+		UWM_STEP_SCROLL,
+		UWM_STEP_ZOOM,
+	};
+
 // Attributes
 public:
 	CPolymeterDoc* GetDocument() const;
 	void	SetSongPosition(LONGLONG nPos);
-	void	SetHeaderHeight(int nHeight);
+	int		GetTrackHeight() const;
 	void	SetTrackHeight(int nHeight);
+	double	GetZoom() const;
 	double	GetZoomStep() const;
 	void	SetZoomStep(double fStep);
 	int		GetBeatWidth() const;
+	int		GetStepX() const;
+	COLORREF	GetBeatLineColor() const;
 
 // Operations
 public:
@@ -66,6 +76,7 @@ protected:
 
 // Constants
 	enum {	// layout
+		m_nTrackY = 0,
 		m_nMuteMarginH = 4,
 		m_nMuteWidth = 30,
 		m_nMuteX = m_nMuteMarginH,
@@ -93,8 +104,6 @@ protected:
 
 // Member data
 	CTrackStateArray	m_arrTrackState;	// array of per-track state info
-	CSize	m_szClient;			// size of window client area
-	int		m_nTrackY;			// top of track area, in client coords
 	int		m_nTrackHeight;		// track height, in client coords
 	int		m_nBeatWidth;		// width of a beat, in client coords
 	int		m_nZoom;			// zoom level as base two exponent
@@ -132,6 +141,7 @@ protected:
 	void	UpdateSteps(const CRect& rSelection);
 	bool	HaveStepSelection() const;
 	void	ResetStepSelection();
+	bool	HaveEitherSelection() const;
 	void	EndDrag();
 	void	SetCurStep(int iTrack, int iStep);
 	void	UpdateSongPositionNoRedraw(int iTrack);
@@ -141,7 +151,7 @@ protected:
 	void	UpdateSongPosition(const CIntArrayEx& arrSelection);
 	void	UpdateSongPosition();
 	void	ResetSongPosition();
-	void	SetZoom(int nZoom);
+	void	SetZoom(int nZoom, bool bRedraw = true);
 	void	Zoom(int nZoom);
 	void	Zoom(int nZoom, int nOriginX);
 	int		HitTest(CPoint point, int& iStep) const;
@@ -150,13 +160,17 @@ protected:
 	static	USHORT	Make16BitColor(BYTE nIntensity);
 	static	void	InitTriangleVertex(TRIVERTEX& tv, int x, int y, COLORREF clr);
 	void	DrawStep(CDC* pDC, int x, int y, int cx, int cy, STEP nStep, int iCurPosColor);
-	void	DrawClippedStep(CDC *pDC, const CSequencer& seq, int iTrack, int iStep);
+	void	DrawClippedStep(CDC *pDC, const CRect& rClip, const CSequencer& seq, int iTrack, int iStep);
+	void	NotifyParent(DWORD message);
+	void	DispatchToDocument();
+	CSize	GetClientSize() const;
 
 // Generated message map functionsq
 protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg LRESULT	OnDelayedCreate(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnViewZoomIn();
@@ -164,10 +178,10 @@ protected:
 	afx_msg void OnViewZoomOut();
 	afx_msg void OnUpdateViewZoomOut(CCmdUI *pCmdUI);
 	afx_msg void OnViewZoomReset();
-	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnEditCut();
 	afx_msg void OnUpdateEditCut(CCmdUI *pCmdUI);
@@ -179,11 +193,22 @@ protected:
 	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
 	afx_msg void OnEditDelete();
 	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
+	virtual BOOL OnScrollBy(CSize sizeScroll, BOOL bDoScroll = TRUE);
 };
 
 inline CPolymeterDoc* CStepView::GetDocument() const
 {
 	return reinterpret_cast<CPolymeterDoc*>(m_pDocument);
+}
+
+inline int CStepView::GetTrackHeight() const
+{
+	return m_nTrackHeight;
+}
+
+inline double CStepView::GetZoom() const
+{
+	return m_fZoom;
 }
 
 inline double CStepView::GetZoomStep() const
@@ -199,4 +224,14 @@ inline bool CStepView::HaveStepSelection() const
 inline int CStepView::GetBeatWidth() const
 {
 	return m_nBeatWidth;
+}
+
+inline int CStepView::GetStepX() const
+{
+	return m_nStepX;
+}
+
+inline COLORREF CStepView::GetBeatLineColor() const
+{
+	return m_clrBeatLine;
 }

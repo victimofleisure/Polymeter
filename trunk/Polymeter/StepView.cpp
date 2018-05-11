@@ -64,8 +64,6 @@ IMPLEMENT_DYNCREATE(CStepView, CScrollView)
 
 CStepView::CStepView()
 {
-	m_szClient = CSize(0, 0);
-	m_nTrackY = 24;
 	m_nTrackHeight = 20;
 	m_nBeatWidth = m_nTrackHeight * 4;
 	m_nZoom = 0;
@@ -194,15 +192,17 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	}
 }
 
-void CStepView::SetHeaderHeight(int nHeight)
+__forceinline CSize CStepView::GetClientSize() const
 {
-	m_nTrackY = nHeight;
+	CRect	rc;
+	GetClientRect(rc);
+	return rc.Size();
 }
 
 void CStepView::SetTrackHeight(int nHeight)
 {
 	m_nTrackHeight = nHeight;
-	m_nBeatWidth = m_nTrackHeight * 4;
+	m_nBeatWidth = m_nTrackHeight * 4;	// make sixteenth notes square
 }
 
 inline int CStepView::GetTrackY(int iTrack) const
@@ -279,14 +279,14 @@ void CStepView::OnTrackSelectionChange()
 
 CPoint CStepView::GetMaxScrollPos() const
 {
-	CPoint	pt(GetTotalSize() - m_szClient);	// compute max scroll position
+	CPoint	pt(GetTotalSize() - GetClientSize());	// compute max scroll position
 	return CPoint(max(pt.x, 0), max(pt.y, 0));	// stay positive
 }
 
 void CStepView::GetTrackRect(int iTrack, CRect& rTrack) const
 {
 	CPoint	ptTrack(CPoint(0, GetTrackY(iTrack)) - GetScrollPosition());
-	int	nWidth = max(m_szClient.cx, GetTotalSize().cx);	// handle width changes
+	int	nWidth = max(GetClientSize().cx, GetTotalSize().cx);	// handle width changes
 	rTrack = CRect(ptTrack, CSize(nWidth, m_nTrackHeight + 1));	// include bottom border
 }
 
@@ -394,6 +394,11 @@ void CStepView::ResetStepSelection()
 	}
 }
 
+bool CStepView::HaveEitherSelection() const
+{
+	return HaveStepSelection() || GetDocument()->GetSelectedCount() > 0;
+}
+
 void CStepView::SetCurStep(int iTrack, int iStep)
 {
 	int	iOldStep = m_arrTrackState[iTrack].m_iCurStep;
@@ -480,18 +485,27 @@ void CStepView::UpdateSongPosition()
 			// critical enough to justify explicitly drawing steps that need updating.
 			CClientDC	dc(this);	// create device context for client area
 			const CSequencer&	seq = GetDocument()->m_Seq;
+			CRect	rClient;
+			GetClientRect(rClient);
+			CPoint	ptScroll(GetScrollPosition());
+			int	iStartTrack = ptScroll.y / m_nTrackHeight;
+			int	iEndTrack = (ptScroll.y + rClient.Height()) / m_nTrackHeight;
 			int	nTracks = seq.GetTrackCount();
 			for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-				int	iStep = seq.GetStepIndex(iTrack, nPos);
+				int	iNewStep = seq.GetStepIndex(iTrack, nPos);
 				int	iOldStep = m_arrTrackState[iTrack].m_iCurStep;
-				if (iStep != iOldStep) {	// if current step changed
+				if (iNewStep != iOldStep) {	// if current step changed
+					bool	bIsTrackVisible = iTrack >= iStartTrack && iTrack <= iEndTrack;	// optimization
 					if (iOldStep >= 0) {	// if old current step valid
 						m_arrTrackState[iTrack].m_iCurStep = -1;	// draw depends on this
-						DrawClippedStep(&dc, seq, iTrack, iOldStep);	// remove highlight
+						if (bIsTrackVisible)	// if track is visible
+							DrawClippedStep(&dc, rClient, seq, iTrack, iOldStep);	// remove highlight
 					}
-					m_arrTrackState[iTrack].m_iCurStep = iStep;
-					if (iStep >= 0)	// if new current step valid
-						DrawClippedStep(&dc, seq, iTrack, iStep);	// add highlight
+					m_arrTrackState[iTrack].m_iCurStep = iNewStep;
+					if (iNewStep >= 0) {	// if new current step valid
+						if (bIsTrackVisible)	// if track is visible
+							DrawClippedStep(&dc, rClient, seq, iTrack, iNewStep);	// add highlight
+					}
 				}
 			}
 		}
@@ -524,16 +538,21 @@ void CStepView::SetZoomStep(double fStep)
 	m_nMaxZoomSteps = round(log(double(MAX_ZOOM_SCALE)) / log(fStep));
 }
 
-void CStepView::SetZoom(int nZoom)
+void CStepView::SetZoom(int nZoom, bool bRedraw)
 {
 	m_nZoom = nZoom;
 	m_fZoom = pow(m_fZoomStep, nZoom);
+	if (bRedraw) {
+		UpdateViewSize();
+		Invalidate();
+		NotifyParent(UWM_STEP_ZOOM);
+	}
 }
 
 void CStepView::Zoom(int nZoom)
 {
 	if (GetScrollPosition().x) {	// if scrolled
-		Zoom(nZoom, m_szClient.cx / 2);
+		Zoom(nZoom, GetClientSize().cx / 2);
 	} else {	// unscrolled
 		SetZoom(nZoom);
 		UpdateViewSize();
@@ -545,7 +564,7 @@ void CStepView::Zoom(int nZoom, int nOriginX)
 {
 	CPoint	ptScroll(GetScrollPosition());
 	double	fPrevZoom = m_fZoom;
-	SetZoom(nZoom);
+	SetZoom(nZoom, false);	// no redraw
 	UpdateViewSize();
 	int	nOffset = nOriginX + ptScroll.x - m_nStepX;
 	double	fDeltaZoom = m_fZoom / fPrevZoom;
@@ -554,6 +573,7 @@ void CStepView::Zoom(int nZoom, int nOriginX)
 	ptScroll.x = CLAMP(ptScroll.x, 0, ptScrollMax.x);
 	ScrollToPosition(ptScroll);
 	Invalidate();
+	NotifyParent(UWM_STEP_ZOOM);
 }
 
 int CStepView::HitTest(CPoint point, int& iStep) const
@@ -658,13 +678,13 @@ __forceinline void CStepView::DrawStep(CDC* pDC, int x, int y, int cx, int cy, S
 	}
 }
 
-void CStepView::DrawClippedStep(CDC *pDC, const CSequencer& seq, int iTrack, int iStep)
+void CStepView::DrawClippedStep(CDC *pDC, const CRect& rClip, const CSequencer& seq, int iTrack, int iStep)
 {
 	CRect	rStep;
 	GetStepRect(iTrack, iStep, rStep);
 	rStep.TopLeft().Offset(1, 1);
 	CRect	rClipStep;
-	if (rClipStep.IntersectRect(CRect(CPoint(0, 0), m_szClient), rStep)) {
+	if (rClipStep.IntersectRect(rClip, rStep)) {
 		int	iCurPosColor = GetCurPosColorIdx(iTrack, iStep, seq.GetMute(iTrack));
 		STEP	nStep = seq.GetStep(iTrack, iStep);
 		DrawStep(pDC, rStep.left, rStep.top, rStep.Width(), rStep.Height(), nStep, iCurPosColor);
@@ -677,33 +697,7 @@ void CStepView::OnDraw(CDC* pDC)
 	COLORREF	clrViewBkgnd = GetSysColor(COLOR_3DFACE);
 	CRect	rClip;
 	pDC->GetClipBox(rClip);
-	CRect	rRuler(CPoint(m_nStepX, 0), CSize(INT_MAX / 2, m_nTrackHeight));
-	CRect	rClipRuler;
 	double	fStride = m_nBeatWidth * m_fZoom;
-	if (rClipRuler.IntersectRect(rClip, rRuler)) {	// if clip box intersects ruler
-		int	iFirstBeat = trunc((rClipRuler.left - m_nStepX + fStride / 2) / fStride);
-		int	iLastBeat = trunc((rClipRuler.right - m_nStepX + fStride / 2) / fStride);
-		CRect	rPrevText;
-		rPrevText.SetRectEmpty();
-		pDC->SetBkColor(clrViewBkgnd);
-		pDC->SelectObject(GetStockObject(DEFAULT_GUI_FONT));
-		for (int iBeat = iFirstBeat; iBeat <= iLastBeat; iBeat++) {
-			CString	s;
-			s.Format(_T("%d"), iBeat + 1);
-			int	x = round(m_nStepX + iBeat * fStride);
-			CSize	szText = pDC->GetTextExtent(s);
-			x -= szText.cx / 2;
-			int	y = m_nTrackHeight / 2 - szText.cy / 2;
-			CRect	rText(CPoint(x, y), szText);
-			CRect	rTemp;
-			if (!rTemp.IntersectRect(rText, rPrevText)) {
-				pDC->TextOut(x, y, s);
-				pDC->ExcludeClipRect(rText);
-				rText.InflateRect(10, 0);
-				rPrevText = rText;
-			}
-		}
-	}
 	const CSequencer&	seq = GetDocument()->m_Seq;
 	int	nTracks = seq.GetTrackCount();
 	if (nTracks) {
@@ -789,11 +783,23 @@ BOOL CStepView::OnScroll(UINT nScrollCode, UINT nPos, BOOL bDoScroll)
 	return CScrollView::OnScroll(nScrollCode, nPos, bDoScroll);
 }
 
+inline void CStepView::NotifyParent(DWORD message)
+{
+	GetParent()->SendMessage(message);
+}
+
+void CStepView::DispatchToDocument()
+{
+	const MSG	*pMsg = GetCurrentMessage();
+	ASSERT(pMsg != NULL);
+	GetDocument()->OnCmdMsg(LOWORD(pMsg->wParam), CN_COMMAND, NULL, NULL);	// low word is command ID
+}
+
 // CStepView message map
 
 BEGIN_MESSAGE_MAP(CStepView, CScrollView)
 	ON_WM_CREATE()
-	ON_WM_SIZE()
+	ON_MESSAGE(UWM_DELAYED_CREATE, OnDelayedCreate)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_COMMAND(ID_VIEW_ZOOM_IN, OnViewZoomIn)
@@ -816,6 +822,7 @@ BEGIN_MESSAGE_MAP(CStepView, CScrollView)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 // CStepView message handlers
@@ -824,7 +831,8 @@ int CStepView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CScrollView::OnCreate(lpCreateStruct) == -1)
 		return -1;
-
+	SetScrollSizes(MM_TEXT, CSize(0, 0));	// set mapping mode
+	PostMessage(UWM_DELAYED_CREATE);
 	return 0;
 }
 
@@ -841,7 +849,22 @@ BOOL CStepView::PreTranslateMessage(MSG* pMsg)
 void CStepView::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
-	m_szClient = CSize(cx, cy);
+	NotifyParent(UWM_STEP_SCROLL);
+}
+
+BOOL CStepView::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
+{
+	BOOL	bResult = CScrollView::OnScrollBy(sizeScroll, bDoScroll);
+	GetParent()->SendMessage(UWM_STEP_SCROLL);
+	return bResult;
+}
+
+LRESULT	CStepView::OnDelayedCreate(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	NotifyParent(UWM_STEP_ZOOM);
+	return(0);
 }
 
 void CStepView::OnLButtonDown(UINT nFlags, CPoint point)
@@ -1057,12 +1080,13 @@ void CStepView::OnEditCut()
 	if (HaveStepSelection()) {
 		if (!GetDocument()->DeleteSteps(m_rStepSel, true))
 			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-	}
+	} else
+		DispatchToDocument();
 }
 
 void CStepView::OnUpdateEditCut(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(HaveStepSelection());
+	pCmdUI->Enable(HaveEitherSelection());
 }
 
 void CStepView::OnEditCopy()
@@ -1070,25 +1094,28 @@ void CStepView::OnEditCopy()
 	if (HaveStepSelection()) {
 		if (!GetDocument()->GetTrackSteps(m_rStepSel, theApp.m_arrStepClipboard))
 			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-	}
+	} else
+		DispatchToDocument();
 }
 
 void CStepView::OnUpdateEditCopy(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(HaveStepSelection());
+	pCmdUI->Enable(HaveEitherSelection());
 }
 
 void CStepView::OnEditPaste()
 {
-	if (HaveStepSelection() && theApp.m_arrStepClipboard.GetSize()) {
+	if (HaveStepSelection()) {
 		if (!GetDocument()->PasteSteps(m_rStepSel))
 			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-	}
+	} else
+		DispatchToDocument();
 }
 
 void CStepView::OnUpdateEditPaste(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(HaveStepSelection() && theApp.m_arrStepClipboard.GetSize());
+	pCmdUI->Enable((HaveStepSelection() && theApp.m_arrStepClipboard.GetSize())
+		|| theApp.m_arrTrackClipboard.GetSize());
 }
 
 void CStepView::OnEditInsert()
@@ -1096,12 +1123,13 @@ void CStepView::OnEditInsert()
 	if (HaveStepSelection()) {
 		if (!GetDocument()->InsertStep(m_rStepSel))
 			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-	}
+	} else
+		DispatchToDocument();
 }
 
 void CStepView::OnUpdateEditInsert(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(HaveStepSelection());
+	pCmdUI->Enable(HaveEitherSelection());
 }
 
 void CStepView::OnEditDelete()
@@ -1109,10 +1137,11 @@ void CStepView::OnEditDelete()
 	if (HaveStepSelection()) {
 		if (!GetDocument()->DeleteSteps(m_rStepSel, false))
 			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-	}
+	} else
+		DispatchToDocument();
 }
 
 void CStepView::OnUpdateEditDelete(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(HaveStepSelection());
+	pCmdUI->Enable(HaveEitherSelection());
 }

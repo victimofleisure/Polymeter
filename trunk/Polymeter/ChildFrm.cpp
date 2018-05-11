@@ -19,9 +19,10 @@
 
 #include "ChildFrm.h"
 #include "MainFrm.h"
-#include "StepView.h"
+#include "StepParent.h"
 #include "GridCtrl.h"
 #include "TrackView.h"
+#include "StepView.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -35,13 +36,13 @@ IMPLEMENT_DYNCREATE(CChildFrame, CMDIChildWndEx)
 
 CChildFrame::CChildFrame()
 {
-	// TODO: add member initialization code here
+	m_pTrackView = NULL;
+	m_pStepParent = NULL;
 }
 
 CChildFrame::~CChildFrame()
 {
 }
-
 
 BOOL CChildFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
@@ -52,6 +53,10 @@ BOOL CChildFrame::PreCreateWindow(CREATESTRUCT& cs)
 		theApp.LoadStandardCursor(IDC_ARROW),	// standard cursor
 		NULL,									// no background brush
 		theApp.LoadIcon(IDR_MAINFRAME));		// app's icon
+	cs.x = 0;	// create at maximum size; reduces flicker when creating first child
+	cs.y = 0;
+	cs.cx = SHRT_MAX;
+	cs.cy = SHRT_MAX;
 	return CMDIChildWndEx::PreCreateWindow(cs);
 }
 
@@ -73,6 +78,7 @@ void CChildFrame::Dump(CDumpContext& dc) const
 
 BEGIN_MESSAGE_MAP(CChildFrame, CMDIChildWndEx)
 	ON_WM_MDIACTIVATE()
+	ON_MESSAGE(CTrackView::UWM_TRACK_SCROLL, OnTrackScroll)
 END_MESSAGE_MAP()
 
 // CChildFrame message handlers
@@ -95,12 +101,13 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 		return false;
 	if (!m_wndSplitter.CreateView(0, PANE_TRACK, RUNTIME_CLASS(CTrackView), CSize(700, 0), pContext))
 		return false;
-	if (!m_wndSplitter.CreateView(0, PANE_STEP, RUNTIME_CLASS(CStepView), CSize(700, 0), pContext))
+	if (!m_wndSplitter.CreateView(0, PANE_STEP, RUNTIME_CLASS(CStepParent), CSize(700, 0), pContext))
 		return false;
-	CTrackView	*pTrackView = STATIC_DOWNCAST(CTrackView, m_wndSplitter.GetPane(0, PANE_TRACK));
-	CStepView	*pStepView = STATIC_DOWNCAST(CStepView, m_wndSplitter.GetPane(0, PANE_STEP));
-	pStepView->SetHeaderHeight(pTrackView->GetHeaderHeight());
-	pStepView->SetTrackHeight(pTrackView->GetItemHeight());
+	m_pTrackView = STATIC_DOWNCAST(CTrackView, m_wndSplitter.GetPane(0, PANE_TRACK));
+	m_pStepParent = STATIC_DOWNCAST(CStepParent, m_wndSplitter.GetPane(0, PANE_STEP));
+	m_pStepParent->m_pTrackView = m_pTrackView;
+	m_pStepParent->SetRulerHeight(m_pTrackView->GetHeaderHeight());
+	m_pStepParent->m_pStepView->SetTrackHeight(m_pTrackView->GetItemHeight());
 	return true;
 }
 
@@ -113,4 +120,11 @@ BOOL CChildFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO
 		return m_wndSplitter.GetPane(0, PANE_STEP)->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
 	}
 	return CMDIChildWndEx::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+}
+
+LRESULT CChildFrame::OnTrackScroll(WPARAM wParam, LPARAM lParam)
+{
+	// relay track scroll to step parent view
+	m_pStepParent->SendMessage(CTrackView::UWM_TRACK_SCROLL, wParam, lParam);
+	return 0;
 }

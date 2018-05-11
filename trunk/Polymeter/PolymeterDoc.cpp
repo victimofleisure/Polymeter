@@ -503,6 +503,8 @@ void CPolymeterDoc::ApplyStepsArrayEdit(bool bSelect)
 
 bool CPolymeterDoc::IsRectStepSelection(const CRect& rSelection, bool bIsDeleting) const
 {
+	if (rSelection.IsRectEmpty())
+		return false;
 	int	nRows = rSelection.Height();
 	int	nCols = rSelection.Width();
 	for (int iRow = 0; iRow < nRows; iRow++) {	// for each selected row

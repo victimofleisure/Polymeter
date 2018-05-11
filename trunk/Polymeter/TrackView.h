@@ -27,11 +27,21 @@ public:
 	CTrackView();
 	virtual	~CTrackView();
 
+// Constants
+	enum {	// custom messages
+		UWM_TRACK_FIRST = WM_USER + 100,
+		UWM_TRACK_SCROLL,		// wParam: list control top item index
+		UWM_LIST_SCROLL_KEY,
+	};
+
 // Attributes
 public:
 	CPolymeterDoc* GetDocument() const;
 	int		GetHeaderHeight() const;
-	int		GetItemHeight();
+	int		GetItemHeight() const;
+
+// Operations
+	void	SetVScrollPos(int nPos);
 
 protected:
 // Types
@@ -58,6 +68,8 @@ protected:
 // Member data
 	CTrackGridCtrl	m_grid;		// grid control
 	bool	m_bIsUpdating;		// true while updating
+	int		m_nHdrHeight;		// header height, in logical coords
+	int		m_nItemHeight;		// item height, in logical coords
 
 // Overrides
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
@@ -66,18 +78,33 @@ protected:
 	virtual void OnInitialUpdate();
 
 // Helpers
+	int		CalcHeaderHeight() const;
+	int		CalcItemHeight();
 
 // Message map
 	DECLARE_MESSAGE_MAP()
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnReorder(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+	afx_msg void OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnListItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnListReorder(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnListEndScroll(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnListKeyDown(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg LRESULT OnListScrollKey(WPARAM wParam, LPARAM lParam);
 };
 
 inline CPolymeterDoc* CTrackView::GetDocument() const
 {
 	return reinterpret_cast<CPolymeterDoc*>(m_pDocument);
+}
+
+inline int CTrackView::GetHeaderHeight() const
+{
+	return m_nHdrHeight;
+}
+
+inline int CTrackView::GetItemHeight() const
+{
+	return m_nItemHeight;
 }
