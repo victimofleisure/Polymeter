@@ -6,9 +6,65 @@
 <meta content="text/html; charset=windows-1252" http-equiv=Content-Type>
 <link href="./style.css" rel=stylesheet title=default type=text/css>
 </head>
-<frameset cols="300,*">
-  <frame src="Help/Contents.htm" name="toc">
-  <frame src="Help/Getting_Started/Introduction.htm" name="topic">
-  <noframes>Sorry, your browser does not handle frames!</noframes>
-</frameset>
+<body>
+<div class=menu>
+<a href="./index.html"><img src="./images/polymeter-32.png" width="32" height="32" alt="icon"></a>
+<div class=title>Polymeter</div><p>
+<div class=menuitem0 title="Overview"><a href="./index.html">Home</a></div>
+<div class=menuitem0 title="Screenshots"><a href="./screenshots.html">Screenshots</a></div>
+<div class=menuitem0 title="Features"><a href="./features.html">Features</a></div>
+<div class=menuitem0 title="Download"><a href="./download.html">Download</a></div>
+<div class=menuitem0 title="Documentation"><b>Documentation</b></div>
+<div class=menuitem0 title="Development"><a href="./development.html">Development</a></div>
+<div class=menuitem0 title="FAQ"><a href="./faq.html">FAQ</a></div>
+<div class=menuitem0 title="Gallery"><a href="./gallery/bongo.html">Gallery</a></div>
+<div class=menuitem0 title="Videos"><a href="./videos.html">Videos</a></div>
+<div class=menuitem0 title="Forums"><a href="./forums.html">Forums</a></div>
+<div class=menuitem0 title="Links"><a href="./links.html">Links</a></div>
+<div class=menuitem0 title="Contact"><a href="./contact.html">Contact</a></div><br>
+<div class=images><br><a href="https://translate.google.com/translate?sl=auto&tl=es&js=y&prev=_t&hl=en&ie=UTF-8&u=https%3A%2F%2Fvictimofleisure.github.io%2FPolymeter%2F&edit-text="><img src="./images/translate.png" width="100" height="33" alt="Translate button"></a></div>
+</div>
+<div id=body>
+<!--  content goes HERE  -->
+
+<p>Here's some basic help for Polymeter.
+
+<p> 
+<li>To create a pattern, left-click on the squares at the right of a track.
+<li>To change the track's loop length, edit its "Length".
+<li>To change what MIDI channel the track outputs, edit its "Channel".
+<li>To change what MIDI note the track outputs, edit its "Note".
+<li>To change the track's time unit, edit its "Quant". The default is 30 ticks, which is a sixteenth note at the default PPQ of 120 (ticks per quarter note).
+<li>Offset and Swing are in ticks; they can be positive or negative.
+<li>Velocity is an offset added to the default velocity (64); it can be positive or negative.
+<li>Duration is also an offset. Negative values make the notes more staccato. Positive values make them more legato (they may overlap).
+<li>To start or stop playback, click the Play icon in the toolbar, or use main menu View/Play, or press Ctrl+Space.
+<li>To indicate the current position within each track during playback, open the Options dialog (Tools/Options) and set "Show current position" to "true".
+<li>You can change the tempo while playing, but to change the PPQ you have to be stopped.
+<li>You can specify an initial bank, patch, volume and pan for each MIDI channel, via the Channels bar. To display the Channels bar, use View/Toolbars and Docking Windows/Channels. To edit a value, left-click in a cell and type a number.
+
+<p>Track view:
+
+<p>
+<li>To select a track, left-click on its track number.
+<li>Ctrl+left-click and Shift+left-click both do what you'd expect (select multiple tracks and select a range of tracks).
+<li>You can copy/cut/paste/delete/insert tracks, using the usual commands, or reorder tracks via dragging.
+<li>To edit a field, left-click it. When you're finished editing, press Enter or Tab, or left-click anywhere outside of the field. Pressing Tab or Shift-Tab iterates through the fields. You can also end an edit by pressing Ctrl+Up or Ctrl+Down, in which case the edit focus moves one track above or below.
+<li>To set the same value for multiple tracks, first select the tracks, and then edit the desired field in any one of the tracks; when you end the edit, the new value is applied to all the selected tracks.
+<li>Columns can be resized or reordered via the column header.
+
+<p>Step view;
+
+<p>
+<li>Left-click a step to create an event. Left-click the step again to empty it.
+<li>To create a tied note, use Shift+left-click. Multiple adjacent steps can be tied together to create long notes, but at least one step in each track must be empty or untied, otherwise the track will be silent.
+<li>Right-clicking behaves differently than usual. In the step area, right-click and drag creates a rectangular step selection.
+<li>Rectangular step selections can be cut, copied, pasted, deleted, and inserted, using the standard editing commands.
+<li>Right-click and drag vertically over the mute buttons selects the corresponding tracks. Left-click within the selection toggles the selected track mutes. Shift+left-click within the selection toggles the track mute you clicked on, and sets all the other selected track mutes to the same state.
+
+<p>Back to <a href="index.html">Polymeter home page</a>
+
+<!--  content stops HERE  -->
+</div>
+</body>
 </html>
