@@ -7,15 +7,17 @@
  
 		revision history:
 		rev		date	comments
-		00		23mar18	0.0.00.000
-		01		20apr18	0.0.00.043
-		02		28apr18	0.0.01.000
-		03		03may18	0.0.02.001
-		04		04may18	0.0.03.000
-		05		08may18	0.0.04.000
-		06		09may18	0.0.04.001
-		07		15may18	0.0.05.000
-
-		DON'T FORGET TO CHANGE VERSION RESOURCE IN .RC2
+        00      14may18	initial version
 
 */
+
+// to stay compatible with previously saved documents, don't change existing track types
+
+TRACKTYPEDEF(NOTE)
+TRACKTYPEDEF(KEY_AFT)
+TRACKTYPEDEF(CONTROL)
+TRACKTYPEDEF(PATCH)
+TRACKTYPEDEF(CHAN_AFT)
+TRACKTYPEDEF(WHEEL)
+
+#undef TRACKTYPEDEF

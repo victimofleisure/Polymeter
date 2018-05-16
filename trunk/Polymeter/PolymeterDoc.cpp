@@ -41,7 +41,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	1
+#define	FILE_VERSION	2
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -67,7 +67,7 @@ const int CPolymeterDoc::m_nUndoTitleId[UNDO_CODES] = {
 };
 
 const int CPolymeterDoc::m_nTrackPropNameId[CTrackBase::PROPERTIES] = {
-	#define TRACKDEF(type, prefix, name, defval, offset) IDS_TRK_##name,
+	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) IDS_TRK_##name,
 	#include "TrackDef.h"		// generate enumeration
 };
 
@@ -103,15 +103,15 @@ BOOL CPolymeterDoc::OnNewDocument()
 
 	// TODO: add reinitialization code here
 	// (SDI documents will reuse this document)
-	m_Seq.SetTrackCount(TRACKS);
+	m_Seq.SetTrackCount(INIT_TRACKS);
 
 	return TRUE;
 }
 
-void CPolymeterDoc::PreCloseFrame(CFrameWnd* pFrame )
+void CPolymeterDoc::OnCloseDocument()
 {
 	m_Seq.Play(false);	// stop playback
-	CDocument::PreCloseFrame(pFrame);
+	CDocument::OnCloseDocument();
 }
 
 void CPolymeterDoc::ApplyOptions(const COptions *pPrevOptions)
@@ -235,7 +235,11 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 		CTrack	trk(true);	// initialize to defaults
 		CString	sTrkID;
 		sTrkID.Format(_T("Track%d"), iTrack);
-		#define TRACKDEF(type, prefix, name, defval, offset) RdReg(sTrkID, _T(#name), trk.m_##prefix##name);
+		#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) \
+			if (PT_##proptype == PT_ENUM) \
+				ReadEnum(sTrkID, _T(#name), trk.m_##prefix##name, itemopt, items); \
+			else \
+				RdReg(sTrkID, _T(#name), trk.m_##prefix##name);
 		#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 		#include "TrackDef.h"		// generate code to read track properties
 		int	nLength = theApp.GetProfileInt(sTrkID, RK_TRACK_LENGTH, INIT_STEPS);
@@ -267,7 +271,11 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 		const CTrack&	trk = m_Seq.GetTrack(iTrack);
 		CString	sTrkID;
 		sTrkID.Format(_T("Track%d"), iTrack);
-		#define TRACKDEF(type, prefix, name, defval, offset) WrReg(sTrkID, _T(#name), trk.m_##prefix##name);
+		#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) \
+			if (PT_##proptype == PT_ENUM) \
+				WriteEnum(sTrkID, _T(#name), trk.m_##prefix##name, itemopt, items); \
+			else \
+				WrReg(sTrkID, _T(#name), trk.m_##prefix##name);
 		#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 		#include "TrackDef.h"		// generate code to write track properties
 		theApp.WriteProfileInt(sTrkID, RK_TRACK_LENGTH, trk.m_arrStep.GetSize());
@@ -398,7 +406,7 @@ void CPolymeterDoc::GetSelectAll(CIntArrayEx& arrSelection) const
 
 void CPolymeterDoc::SetMute(int iTrack, bool bMute)
 {
-	NotifyUndoableEdit(MAKELONG(iTrack, PROP_Mute), UCODE_TRACK_PROP);
+	NotifyUndoableEdit(iTrack, MAKELONG(UCODE_TRACK_PROP, PROP_Mute));
 	m_Seq.SetMute(iTrack, bMute);	// set track mute
 	SetModifiedFlag();
 	CPropHint	hint(iTrack, PROP_Mute);
@@ -426,7 +434,7 @@ void CPolymeterDoc::SetSelectedMutes(UINT nMuteMask)
 
 void CPolymeterDoc::SetTrackStep(int iTrack, int iStep, STEP nStep)
 {
-	NotifyUndoableEdit(MAKELONG(iTrack, iStep), UCODE_TRACK_STEP);
+	NotifyUndoableEdit(iStep, MAKELONG(UCODE_TRACK_STEP, iTrack));
 	m_Seq.SetStep(iTrack, iStep, nStep);
 	SetModifiedFlag();
 	CPropHint	hint(iTrack, iStep);
@@ -534,6 +542,44 @@ bool CPolymeterDoc::MakePasteSelection(CSize szData, CRect& rSelection) const
 	return true;
 }
 
+void CPolymeterDoc::SetTrackLength(int iTrack, int nLength)
+{
+	if (nLength != m_Seq.GetLength(iTrack)) {	// if length actually changing
+		NotifyUndoableEdit(iTrack, MAKELONG(UCODE_TRACK_PROP, PROP_Length));
+		m_Seq.SetLength(iTrack, nLength);
+		CPropHint	hint(iTrack, PROP_Length);
+		UpdateAllViews(NULL, HINT_TRACK_PROP, &hint);
+		SetModifiedFlag();
+	}
+}
+
+void CPolymeterDoc::SetTrackLength(const CRect& rSelection, int nLength)
+{
+	CIntArrayEx	arrTrackSel;
+	bool	bLengthChange = false; 
+	int	nSels = rSelection.Height();	// rectangular selection
+	arrTrackSel.SetSize(nSels);
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int iTrack = rSelection.top + iSel;
+		arrTrackSel[iSel] = iTrack;
+		if (m_Seq.GetLength(iTrack) != nLength)
+			bLengthChange = true;
+	}
+	if (bLengthChange) {	// if at least one length actually changing
+		CIntArrayEx	arrPrevTrackSel(m_arrTrackSel);	// save track selection
+		m_arrTrackSel = arrTrackSel;	// undo handler uses track selection
+		NotifyUndoableEdit(PROP_Length, UCODE_MULTI_TRACK_PROP);
+		m_arrTrackSel = arrPrevTrackSel;	// restore previous track selection
+		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+			int iTrack = rSelection.top + iSel;
+			m_Seq.SetLength(iTrack, nLength);	// update track length
+		}
+		CRectSelPropHint	hint(rSelection);
+		UpdateAllViews(NULL, HINT_STEPS_ARRAY, &hint);
+		SetModifiedFlag();
+	}
+}
+
 bool CPolymeterDoc::ValidateTrackLength(int nLength, int nQuant) const
 {
 	// sequencer limits product of track's length and quant to integer range
@@ -587,10 +633,10 @@ bool CPolymeterDoc::ValidateTrackProperty(const CIntArrayEx& arrSelection, int i
 
 void CPolymeterDoc::SaveTrackProperty(CUndoState& State) const
 {
-	int	iTrack = LOWORD(State.GetCtrlID());
-	int	iProp = HIWORD(State.GetCtrlID());
+	int	iTrack = State.GetCtrlID();
+	int	iProp = HIWORD(State.GetCode());
 	switch (iProp) {
-	#define TRACKDEF(type, prefix, name, defval, offset) \
+	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) \
 	case PROP_##name:	\
 		{	\
 			type val(m_Seq.Get##name(iTrack));	\
@@ -606,10 +652,10 @@ void CPolymeterDoc::SaveTrackProperty(CUndoState& State) const
 
 void CPolymeterDoc::RestoreTrackProperty(const CUndoState& State)
 {
-	int	iTrack = LOWORD(State.GetCtrlID());
-	int	iProp = HIWORD(State.GetCtrlID());
+	int	iTrack = State.GetCtrlID();
+	int	iProp = HIWORD(State.GetCode());
 	switch (iProp) {
-	#define TRACKDEF(type, prefix, name, defval, offset) \
+	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) \
 	case PROP_##name:	\
 		{	\
 			type val;	\
@@ -663,7 +709,7 @@ void CPolymeterDoc::RestoreMultiTrackProperty(const CUndoState& State)
 
 void CPolymeterDoc::SaveTrackSteps(CUndoState& State) const
 {
-	int	iTrack = LOWORD(State.GetCtrlID());
+	int	iTrack = State.GetCtrlID();
 	CRefPtr<CUndoSteps>	pInfo;
 	pInfo.CreateObj();
 	m_Seq.GetSteps(iTrack, pInfo->m_arrStep);
@@ -672,11 +718,10 @@ void CPolymeterDoc::SaveTrackSteps(CUndoState& State) const
 
 void CPolymeterDoc::RestoreTrackSteps(const CUndoState& State)
 {
-	int	iTrack = LOWORD(State.GetCtrlID());
-	int	iProp = HIWORD(State.GetCtrlID());
+	int	iTrack = State.GetCtrlID();
 	CUndoSteps	*pInfo = static_cast<CUndoSteps *>(State.GetObj());
 	m_Seq.SetSteps(iTrack, pInfo->m_arrStep);
-	CPropHint	hint(iTrack, iProp);
+	CPropHint	hint(iTrack, PROP_Length);
 	UpdateAllViews(NULL, HINT_TRACK_PROP, &hint);
 }
 
@@ -703,28 +748,27 @@ void CPolymeterDoc::SaveMultiTrackSteps(CUndoState& State) const
 
 void CPolymeterDoc::RestoreMultiTrackSteps(const CUndoState& State)
 {
-	int	iProp = State.GetCtrlID();
 	const CUndoMultiItemSteps	*pInfo = static_cast<CUndoMultiItemSteps*>(State.GetObj());
 	int	nSels = pInfo->m_arrSelection.GetSize();
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = pInfo->m_arrSelection[iSel];
 		m_Seq.SetSteps(iTrack, pInfo->m_arrStepArray[iSel]);
 	}
-	CMultiItemPropHint	hint(pInfo->m_arrSelection, iProp);
+	CMultiItemPropHint	hint(pInfo->m_arrSelection, PROP_Length);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
 }
 
 void CPolymeterDoc::SaveTrackStep(CUndoState& State) const
 {
-	int	iTrack = LOWORD(State.GetCtrlID());
-	int	iStep = HIWORD(State.GetCtrlID());
+	int	iTrack = HIWORD(State.GetCode());
+	int	iStep = State.GetCtrlID();
 	State.m_Val.p.x.c.al = m_Seq.GetStep(iTrack, iStep);
 }
 
 void CPolymeterDoc::RestoreTrackStep(const CUndoState& State)
 {
-	int	iTrack = LOWORD(State.GetCtrlID());
-	int	iStep = HIWORD(State.GetCtrlID());
+	int	iTrack = HIWORD(State.GetCode());
+	int	iStep = State.GetCtrlID();
 	m_Seq.SetStep(iTrack, iStep, State.m_Val.p.x.c.al);
 	CPropHint	hint(iTrack, iStep);
 	UpdateAllViews(NULL, HINT_STEP, &hint);
@@ -762,7 +806,7 @@ void CPolymeterDoc::SaveClipboardTracks(CUndoState& State) const
 		m_Seq.GetTracks(m_arrTrackSel, pClipboard->m_arrTrack); 
 		pClipboard->m_nSelMark = m_iTrackSelMark;
 		State.SetObj(pClipboard);
-		switch (State.GetCode()) {
+		switch (LOWORD(State.GetCode())) {
 		case UCODE_CUT_TRACKS:
 		case UCODE_DELETE_TRACKS:
 		case UCODE_MOVE_TRACKS:
@@ -778,7 +822,7 @@ void CPolymeterDoc::RestoreClipboardTracks(const CUndoState& State)
 {
 	CUndoClipboard	*pClipboard = static_cast<CUndoClipboard *>(State.GetObj());
 	if (GetUndoAction() == State.m_Val.p.x.i) {	// if inserting
-		if (State.GetCode() == UCODE_MOVE_TRACKS)
+		if (LOWORD(State.GetCode()) == UCODE_MOVE_TRACKS)
 			m_Seq.DeleteTracks(State.GetCtrlID(), pClipboard->m_arrTrack.GetSize());
 		m_Seq.InsertTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack);
 		m_arrTrackSel = pClipboard->m_arrSelection;
@@ -786,7 +830,7 @@ void CPolymeterDoc::RestoreClipboardTracks(const CUndoState& State)
 		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	} else {	// deleting
 		m_Seq.DeleteTracks(pClipboard->m_arrSelection);
-		if (State.GetCode() == UCODE_MOVE_TRACKS) {
+		if (LOWORD(State.GetCode()) == UCODE_MOVE_TRACKS) {
 			m_Seq.InsertTracks(State.GetCtrlID(), pClipboard->m_arrTrack);
 			int	iTrack = State.GetCtrlID();
 			SelectRange(iTrack, pClipboard->m_arrTrack.GetSize(), false);	// don't update views
@@ -916,7 +960,7 @@ void CPolymeterDoc::SaveClipboardSteps(CUndoState& State) const
 		pClipboard->m_rSelection = m_rStepSel;
 		m_Seq.GetSteps(m_rStepSel, pClipboard->m_arrStepArray); 
 		State.SetObj(pClipboard);
-		switch (State.GetCode()) {
+		switch (LOWORD(State.GetCode())) {
 		case UCODE_CUT_STEPS:
 		case UCODE_DELETE_STEPS:
 			State.m_Val.p.x.i = CUndoManager::UA_UNDO;	// undo inserts, redo deletes
@@ -942,9 +986,9 @@ void CPolymeterDoc::RestoreClipboardSteps(const CUndoState& State)
 
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
 {
-	switch (State.GetCode()) {
+	switch (LOWORD(State.GetCode())) {
 	case UCODE_TRACK_PROP:
-		if (HIWORD(State.GetCtrlID()) == PROP_Length)	// if track length
+		if (HIWORD(State.GetCode()) == PROP_Length)	// if track length
 			SaveTrackSteps(State);
 		else	// not track length
 			SaveTrackProperty(State);
@@ -986,14 +1030,17 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 	case UCODE_DELETE_STEPS:
 		SaveClipboardSteps(State);
 		break;
+	case UCODE_VELOCITY:
+		SaveMultiTrackSteps(State);
+		break;
 	}
 }
 
 void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 {
-	switch (State.GetCode()) {
+	switch (LOWORD(State.GetCode())) {
 	case UCODE_TRACK_PROP:
-		if (HIWORD(State.GetCtrlID()) == PROP_Length)	// if track length
+		if (HIWORD(State.GetCode()) == PROP_Length)	// if track length
 			RestoreTrackSteps(State);
 		else	// not track length
 			RestoreTrackProperty(State);
@@ -1036,17 +1083,25 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_DELETE_STEPS:
 		RestoreClipboardSteps(State);
 		break;
+	case UCODE_VELOCITY:
+		RestoreMultiTrackSteps(State);
+		break;
 	}
 }
 
 CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 {
 	CString	sTitle;
-	switch (State.GetCode()) {
+	switch (LOWORD(State.GetCode())) {
 	case UCODE_TRACK_PROP:
+		{
+			int	iProp = HIWORD(State.GetCode());
+			sTitle.LoadString(m_nTrackPropNameId[iProp]);
+		}
+		break;
 	case UCODE_MULTI_TRACK_PROP:
 		{
-			int	iProp = HIWORD(State.GetCtrlID());
+			int	iProp = State.GetCtrlID();
 			sTitle.LoadString(m_nTrackPropNameId[iProp]);
 		}
 		break;
@@ -1057,14 +1112,19 @@ CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 		sTitle = GetPropertyName(State.GetCtrlID());
 		break;
 	case UCODE_CHANNEL_PROP:
-	case UCODE_MULTI_CHANNEL_PROP:
 		{
 			int	iProp = HIWORD(State.GetCtrlID());
 			sTitle = CChannelsBar::GetPropertyName(iProp);
 		}
 		break;
+	case UCODE_MULTI_CHANNEL_PROP:
+		{
+			int	iProp = State.GetCtrlID();
+			sTitle = CChannelsBar::GetPropertyName(iProp);
+		}
+		break;
 	default:
-		sTitle.LoadString(m_nUndoTitleId[State.GetCode()]);
+		sTitle.LoadString(m_nUndoTitleId[LOWORD(State.GetCode())]);
 	}
 	return sTitle;
 }
@@ -1299,6 +1359,8 @@ void CPolymeterDoc::OnUpdateEditCut(CCmdUI *pCmdUI)
 void CPolymeterDoc::OnEditPaste()
 {
 	if (!CFocusEdit::Paste()) {
+		if (m_Seq.GetTrackCount() + theApp.m_arrTrackClipboard.GetSize() > MAX_TRACKS)
+			AfxThrowNotSupportedException();
 		int	iInsPos = GetInsertPos();
 		m_Seq.InsertTracks(iInsPos, theApp.m_arrTrackClipboard);
 		SetModifiedFlag();
@@ -1331,6 +1393,8 @@ void CPolymeterDoc::OnUpdateEditDelete(CCmdUI *pCmdUI)
 
 void CPolymeterDoc::OnEditInsert()
 {
+	if (m_Seq.GetTrackCount() >= MAX_TRACKS)
+		AfxThrowNotSupportedException();
 	int	iInsPos = GetInsertPos();
 	m_Seq.InsertTracks(iInsPos);
 	SetModifiedFlag();

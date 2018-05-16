@@ -58,6 +58,7 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_PASTE_STEPS,			2},
 	{UCODE_INSERT_STEPS,		1},
 	{UCODE_DELETE_STEPS,		1},
+	{UCODE_VELOCITY,			0.1f},
 };
 
 CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
@@ -131,6 +132,9 @@ void CTrackUndoTest::MakeRandomTrackProperty(int iTrack, int iProp, CComVariant&
 			var = sName;
 		}
 		break;
+	case PROP_Type:
+		var = Random(TRACK_TYPES);
+		break;
 	case PROP_Channel:
 		var = Random(MIDI_CHANNELS);
 		break;
@@ -141,7 +145,7 @@ void CTrackUndoTest::MakeRandomTrackProperty(int iTrack, int iProp, CComVariant&
 		var = !m_pDoc->m_Seq.GetMute(iTrack);
 		break;
 	default:
-		var = Random(127) + 1;
+		var = Random(MIDI_NOTE_MAX) + 1;
 		break;
 	}
 }
@@ -245,10 +249,11 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			int	iProp = Random(PROPERTIES);
 			CComVariant	var;
 			MakeRandomTrackProperty(iTrack, iProp, var);
-			m_pDoc->NotifyUndoableEdit(MAKELONG(iTrack, iProp), UCODE_TRACK_PROP);
+			m_pDoc->NotifyUndoableEdit(iTrack, MAKELONG(UCODE_TRACK_PROP, iProp));
 			m_pDoc->m_Seq.SetTrackProperty(iTrack, iProp, var);
 			CPolymeterDoc::CPropHint	hint(iTrack, iProp);
 			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_PROP, &hint);
+			PRINTF(_T("%s %d %d\n"), sUndoTitle, iTrack, iProp);
 		}
 		break;
 	case UCODE_MULTI_TRACK_PROP:
@@ -268,6 +273,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			}
 			CPolymeterDoc::CMultiItemPropHint	hint(arrSelection, iProp);
 			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_TRACK_PROP, &hint);
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
 		}
 		break;
 	case UCODE_TRACK_NAME:
@@ -278,10 +284,11 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			CString	sName;
 			sName.Format(_T("TN%d"), m_iNextTrack);
 			m_iNextTrack++;
-			m_pDoc->NotifyUndoableEdit(MAKELONG(iTrack, PROP_Name), UCODE_TRACK_PROP);
+			m_pDoc->NotifyUndoableEdit(iTrack, MAKELONG(UCODE_TRACK_PROP, PROP_Name));
 			m_pDoc->m_Seq.SetName(iTrack, sName);
 			CPolymeterDoc::CPropHint	hint(iTrack, PROP_Name);
 			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_PROP, &hint);
+			PRINTF(_T("%s %d\n"), sUndoTitle, iTrack);
 		}
 		break;
 	case UCODE_TRACK_STEP:
@@ -292,10 +299,11 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			int	iStep = Random(m_pDoc->m_Seq.GetLength(iTrack));
 			if (iStep < 0)
 				return(DISABLED);
-			m_pDoc->NotifyUndoableEdit(MAKELONG(iTrack, iStep), UCODE_TRACK_STEP);
+			m_pDoc->NotifyUndoableEdit(iStep, MAKELONG(UCODE_TRACK_STEP, iTrack));
 			m_pDoc->m_Seq.SetStep(iTrack, iStep, m_pDoc->m_Seq.GetStep(iTrack, iStep) ^ 1);
 			CPolymeterDoc::CPropHint	hint(iTrack, iStep);
 			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_STEP, &hint);
+			PRINTF(_T("%s %d %d\n"), sUndoTitle, iTrack, iStep);
 		}
 		break;
 	case UCODE_CUT_TRACKS:
@@ -450,6 +458,24 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (!m_pDoc->InsertStep(rSelection))
 				return(DISABLED);
 			PRINTF(_T("%s (%d %d %d %d)\n"), sUndoTitle, rSelection.left, rSelection.top, rSelection.right, rSelection.bottom);
+		}
+		break;
+	case UCODE_VELOCITY:
+		{
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
+				return(DISABLED);
+			m_pDoc->Select(arrSelection);
+			m_pDoc->NotifyUndoableEdit(0, UCODE_VELOCITY);
+			int	nSels = arrSelection.GetSize();
+			for (int iSel = 0; iSel < nSels; iSel++) {
+				int	iTrack = arrSelection[iSel];
+				int	nSteps = m_pDoc->m_Seq.GetLength(iTrack);
+				for (int iStep = 0; iStep < nSteps; iStep++) {
+					m_pDoc->m_Seq.SetStep(iTrack, iStep, static_cast<STEP>(Random(256)));
+				}
+			}
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
 		}
 		break;
 	default:

@@ -211,6 +211,7 @@ BEGIN
         MENUITEM "&Delete",                     ID_EDIT_DELETE
         MENUITEM SEPARATOR
         MENUITEM "Select &All",                 ID_EDIT_SELECT_ALL
+        MENUITEM "&Length",                     ID_EDIT_LENGTH
         MENUITEM "Track &Sort...",              ID_EDIT_TRACK_SORT
     END
     POPUP "&View"
@@ -244,6 +245,8 @@ BEGIN
         MENUITEM "Zoom &In",                    ID_VIEW_ZOOM_IN
         MENUITEM "Zoom &Out",                   ID_VIEW_ZOOM_OUT
         MENUITEM "Zoom &Reset",                 ID_VIEW_ZOOM_RESET
+        MENUITEM SEPARATOR
+        MENUITEM "&Velocities",                 ID_VIEW_SHOW_VELOCITIES
     END
     POPUP "&Tools"
     BEGIN
@@ -317,9 +320,11 @@ BEGIN
     VK_OEM_2,       ID_VIEW_GO_TO_POSITION, VIRTKEY, CONTROL, NOINVERT
     VK_SPACE,       ID_VIEW_PAUSE,          VIRTKEY, SHIFT, CONTROL, NOINVERT
     VK_SPACE,       ID_VIEW_PLAY,           VIRTKEY, CONTROL, NOINVERT
+    VK_F7,          ID_VIEW_SHOW_VELOCITIES, VIRTKEY, NOINVERT
     VK_OEM_PLUS,    ID_VIEW_ZOOM_IN,        VIRTKEY, CONTROL, NOINVERT
     VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
     "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
+    "L",            ID_EDIT_LENGTH,         VIRTKEY, CONTROL, NOINVERT
 END
 
 
@@ -545,6 +550,7 @@ BEGIN
     IDS_DOC_BAD_FORMAT      "'%1' has an invalid format."
     IDS_DOC_BAD_STEP_SELECTION "Invalid step selection."
     IDS_DOC_NEWER_VERSION   "'%1' is from a newer document version. Some of its features may not be supported."
+    IDS_DOC_TRACK_TOO_LONG  "Track too long."
     IDS_EDIT_CUT_STEPS      "Cut Steps"
     IDS_EDIT_CUT_TRACKS     "Cut Tracks"
     IDS_EDIT_DELETE_STEPS   "Delete Steps"
@@ -554,15 +560,16 @@ BEGIN
     IDS_EDIT_MENU           "Edit"
     IDS_EDIT_MOVE_TRACKS    "Move Tracks"
     IDS_EDIT_MULTI_STEP_RECT "Multiple Steps"
-    IDS_EDIT_PASTE_STEPS    "Paste Steps"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_PASTE_STEPS    "Paste Steps"
     IDS_EDIT_PASTE_TRACKS   "Paste Tracks"
     IDS_EDIT_REDO_FMT       "&Redo %s"
     IDS_EDIT_TRACK_SORT     "Track Sort"
     IDS_EDIT_UNDO_FMT       "&Undo %s"
+    IDS_EDIT_VELOCITY       "Velocity"
     IDS_EXPORT              "Export"
     IDS_EXPORT_BAD_DURATION "Invalid duration. Time format is HH:MM:SS and duration must be greater than zero."
     IDS_EXPORT_EMPTY_FILE   "Nothing to export."
@@ -573,12 +580,12 @@ BEGIN
     IDS_MIDI_DEVICES_MISSING "MIDI devices are missing."
     IDS_MIDI_INPUT          "Input"
     IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
-    IDS_MIDI_OUTPUT         "Output"
-    IDS_NONE                "<None>"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDI_OUTPUT         "Output"
+    IDS_NONE                "<None>"
     IDS_OPT_DESC_General_bCheckForUpdates 
                             "Automatically check for newer version of app during startup"
     IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
@@ -596,12 +603,12 @@ BEGIN
     IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
     IDS_OPT_NAME_Midi_bThru "Thru"
     IDS_OPT_NAME_Midi_iInputDevice "Input Device"
-    IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
-    IDS_OPT_NAME_Midi_nBufferSize "Buffer Size"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
+    IDS_OPT_NAME_Midi_nBufferSize "Buffer Size"
     IDS_OPT_NAME_Midi_nLatency "Latency"
     IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
     IDS_OPT_NAME_View_nUpdateFreq "Update Frequency"
@@ -616,20 +623,30 @@ BEGIN
     IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format"
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
-    IDS_SORT_DIR_ASCENDING  "Ascending"
-    IDS_SORT_DIR_DESCENDING "Descending"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_SORT_DIR_ASCENDING  "Ascending"
+    IDS_SORT_DIR_DESCENDING "Descending"
     IDS_STATUS_PANE1        "Pane 1"
     IDS_STATUS_PANE2        "Pane 2"
     IDS_TIME_TO_REPEAT_DAYS "days"
     IDS_TIME_TO_REPEAT_FMT  "%s beats\n%s\nGreatest prime factor is %s"
     IDS_TOOLBAR_CUSTOMIZE   "Customize..."
     IDS_TOOLBAR_STANDARD    "Standard"
+    IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
+    IDS_TRACK_TYPE_CONTROL  "Control"
+    IDS_TRACK_TYPE_KEY_AFT  "Key Aftertouch"
+    IDS_TRACK_TYPE_NOTE     "Note"
+    IDS_TRACK_TYPE_PATCH    "Patch"
+    IDS_TRACK_TYPE_WHEEL    "Wheel"
     IDS_TRK_Channel         "Channel"
     IDS_TRK_Duration        "Duration"
+END
+
+STRINGTABLE
+BEGIN
     IDS_TRK_Length          "Length"
     IDS_TRK_Mute            "Mute"
     IDS_TRK_Name            "Name"
@@ -638,14 +655,10 @@ BEGIN
     IDS_TRK_Offset          "Offset"
     IDS_TRK_Quant           "Quant"
     IDS_TRK_STEP            "Step"
-END
-
-STRINGTABLE
-BEGIN
     IDS_TRK_Swing           "Swing"
+    IDS_TRK_Type            "Type"
     IDS_TRK_Velocity        "Velocity"
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
-    IDS_DOC_TRACK_TOO_LONG  "Track too long."
 END
 
 STRINGTABLE
@@ -674,7 +687,13 @@ BEGIN
     ID_VIEW_GO_TO_POSITION  "Go to specified position within song\nGo To Position"
     ID_VIEW_PAUSE           "Pause or continue playback\nPause"
     ID_VIEW_PLAY            "Start or stop playback\nPlay"
+    ID_VIEW_SHOW_VELOCITIES "Show or hide velocities\nVelocitiies"
+END
+
+STRINGTABLE
+BEGIN
     ID_WINDOW_MANAGER       "&Windows..."
+    ID_EDIT_LENGTH          "Set track length\nLength"
 END
 
 STRINGTABLE

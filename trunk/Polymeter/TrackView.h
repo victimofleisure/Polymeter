@@ -55,7 +55,8 @@ protected:
 	enum {	// columns
 		COL_Number,
 		COL_Name,
-		#define TRACKDEF(type, prefix, name, defval, offset) COL_##name,
+		COL_Type,
+		#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) COL_##name,
 		#define TRACKDEF_INT	// for integer track properties only
 		#include "TrackDef.h"	// generate column definitions
 		COLUMNS
@@ -85,6 +86,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnListItemChanged(NMHDR* pNMHDR, LRESULT* pResult);

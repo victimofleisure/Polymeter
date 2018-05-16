@@ -12,14 +12,21 @@
 */
 
 #include "stdafx.h"
+#include "resource.h"
 #include "Track.h"
+
+const CProperties::OPTION_INFO CTrackBase::m_oiTrackType[TRACK_TYPES] = {
+	#define TRACKTYPEDEF(name) {_T(#name), IDS_TRACK_TYPE_##name},
+	#include "TrackTypeDef.h"	// generate track type name resource IDs
+};
 
 void CTrack::SetDefaults()
 {
-	#define TRACKDEF(type, prefix, name, defval, offset) m_##prefix##name = defval;
+	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) m_##prefix##name = defval;
 	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 	#include "TrackDef.h"		// generate code to initialize track properties
 	m_arrStep.SetSize(INIT_STEPS);
+	m_nCachedParam = -1;	// reset cached parameter
 }
 
 int CTrack::GetUsedStepCount() const
@@ -44,7 +51,7 @@ template<class T> int CTrack::Compare(const T& a, const T& b)
 int CTrack::CompareProperty(int iProp, const CTrack& track) const
 {
 	switch (iProp) {
-	#define TRACKDEF(type, prefix, name, defval, offset) case PROP_##name: \
+	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) case PROP_##name: \
 		return Compare(m_##prefix##name, track.m_##prefix##name);
 	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 	#include "TrackDef.h"		// generate code to compare track properties

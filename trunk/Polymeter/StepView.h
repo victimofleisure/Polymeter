@@ -30,8 +30,11 @@ protected: // create from serialization only
 // Constants
 	enum {	// custom messages
 		UWM_STEP_FIRST = WM_USER + 200,
-		UWM_STEP_SCROLL,
+		UWM_STEP_SCROLL,	// wParam: sizeScroll.cx, lParam: sizeScroll.cy 
 		UWM_STEP_ZOOM,
+	};
+	enum {
+		MIN_BEAT_LINE_SPACING = 4,
 	};
 
 // Attributes
@@ -40,12 +43,14 @@ public:
 	void	SetSongPosition(LONGLONG nPos);
 	int		GetTrackHeight() const;
 	void	SetTrackHeight(int nHeight);
+	int		GetTrackY(int iTrack) const;
 	double	GetZoom() const;
 	double	GetZoomStep() const;
 	void	SetZoomStep(double fStep);
 	int		GetBeatWidth() const;
-	int		GetStepX() const;
+	double	GetStepWidthEx(int iTrack) const;
 	COLORREF	GetBeatLineColor() const;
+	bool	IsSelected(int iTrack) const;
 
 // Operations
 public:
@@ -59,6 +64,7 @@ protected:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual void OnDraw(CDC* pDC);
 	virtual BOOL OnScroll(UINT nScrollCode, UINT nPos, BOOL bDoScroll = TRUE);
+	virtual BOOL OnScrollBy(CSize sizeScroll, BOOL bDoScroll = TRUE);
 
 // Implementation
 public:
@@ -75,17 +81,8 @@ protected:
 	typedef CRange<int> CIntRange;
 
 // Constants
-	enum {	// layout
-		m_nTrackY = 0,
-		m_nMuteMarginH = 4,
-		m_nMuteWidth = 30,
-		m_nMuteX = m_nMuteMarginH,
-		m_nStepX = m_nMuteX + m_nMuteWidth + m_nMuteMarginH + 1,
+	enum {
 		MAX_ZOOM_SCALE = 1024,
-	};
-	enum {	// hit test step indices
-		HT_BKGND	= -1,		// on track background
-		HT_MUTE		= -2,		// on mute button
 	};
 	enum {	// step state flags
 		SF_ON		= 0x01,		// step is non-empty
@@ -98,8 +95,12 @@ protected:
 		DS_TRACK,			// monitoring for start of drag
 		DS_DRAG,			// drag in progress
 	};
+	enum {	// hit test flags
+		HTF_NO_STEP_RANGE	= 0x01,		// don't enforce step range
+	};
 	static const COLORREF	m_arrStepColor[];
-	static const COLORREF	m_arrMuteColor[];
+	static const COLORREF	m_clrViewBkgnd;
+	static const COLORREF	m_clrStepOutline;
 	static const COLORREF	m_clrBeatLine;
 
 // Member data
@@ -113,13 +114,10 @@ protected:
 	CPoint	m_ptDragOrigin;		// drag origin
 	int		m_nDragState;		// drag state; see enum above
 	bool	m_bDoContextMenu;	// true if context menu should be displayed
-	bool	m_bOriginMute;		// true if original mute was set
-	CIntRange	m_rngMute;		// mute selection range
 	CRect	m_rStepSel;			// rectangular step selection; x is step index, y is track index
 	CRgnData	m_rgndStepSel;	// region data for step selection overlap removal
 
 // Helpers
-	int		GetTrackY(int iTrack) const;
 	double	GetStepWidth(int iTrack) const;
 	int		GetMaxTrackWidth() const;
 	void	UpdateViewSize();
@@ -128,15 +126,13 @@ protected:
 	void	OnTrackSelectionChange();
 	CPoint	GetMaxScrollPos() const;
 	void	GetTrackRect(int iTrack, CRect& rTrack) const;
-	void	GetMuteRect(int iTrack, CRect& rMute) const;
-	void	GetStepsRect(int iTrack, CRect& rStep) const;
+	void	GetGridRect(int iTrack, CRect& rStep) const;
 	void	GetStepRect(int iTrack, int iStep, CRect& rStep) const;
+	void	GetStepsRect(int iTrack, CIntRange rngSteps, CRect& rSteps) const;
 	void	UpdateTrack(int iTrack);
 	void	UpdateTracks(const CIntArrayEx& arrSelection);
 	void	UpdateTracks(const CRect& rSelection);
-	void	UpdateMute(int iTrack);
-	void	UpdateMutes(const CIntArrayEx& arrSelection);
-	void	UpdateSteps(int iTrack);
+	void	UpdateGrid(int iTrack);
 	void	UpdateStep(int iTrack, int iStep);
 	void	UpdateSteps(const CRect& rSelection);
 	bool	HaveStepSelection() const;
@@ -146,6 +142,7 @@ protected:
 	void	SetCurStep(int iTrack, int iStep);
 	void	UpdateSongPositionNoRedraw(int iTrack);
 	void	UpdateSongPositionNoRedraw(const CIntArrayEx& arrSelection);
+	void	UpdateSongPositionNoRedraw(const CRect& rSelection);
 	void	UpdateSongPositionNoRedraw();
 	void	UpdateSongPosition(int iTrack);
 	void	UpdateSongPosition(const CIntArrayEx& arrSelection);
@@ -154,14 +151,13 @@ protected:
 	void	SetZoom(int nZoom, bool bRedraw = true);
 	void	Zoom(int nZoom);
 	void	Zoom(int nZoom, int nOriginX);
-	int		HitTest(CPoint point, int& iStep) const;
-	COLORREF	GetBkColor(int iTrack);
-	int		GetCurPosColorIdx(int iTrack, int iStep, bool bMute) const;
+	int		HitTest(CPoint point, int& iStep, UINT nFlags = 0) const;
+	int		GetStepColorIdx(int iTrack, int iStep, STEP nStep, bool bMute) const;
 	static	USHORT	Make16BitColor(BYTE nIntensity);
 	static	void	InitTriangleVertex(TRIVERTEX& tv, int x, int y, COLORREF clr);
-	void	DrawStep(CDC* pDC, int x, int y, int cx, int cy, STEP nStep, int iCurPosColor);
+	void	DrawStep(CDC* pDC, int x, int y, int cx, int cy, STEP nStep, int iStepColor, int iTrackType);
 	void	DrawClippedStep(CDC *pDC, const CRect& rClip, const CSequencer& seq, int iTrack, int iStep);
-	void	NotifyParent(DWORD message);
+	void	NotifyParent(DWORD message, WPARAM wParam = 0, LPARAM lParam = 0);
 	void	DispatchToDocument();
 	CSize	GetClientSize() const;
 
@@ -193,7 +189,7 @@ protected:
 	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
 	afx_msg void OnEditDelete();
 	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
-	virtual BOOL OnScrollBy(CSize sizeScroll, BOOL bDoScroll = TRUE);
+	afx_msg void OnEditLength();
 };
 
 inline CPolymeterDoc* CStepView::GetDocument() const
@@ -204,6 +200,11 @@ inline CPolymeterDoc* CStepView::GetDocument() const
 inline int CStepView::GetTrackHeight() const
 {
 	return m_nTrackHeight;
+}
+
+inline int CStepView::GetTrackY(int iTrack) const
+{
+	return iTrack * m_nTrackHeight;
 }
 
 inline double CStepView::GetZoom() const
@@ -226,12 +227,17 @@ inline int CStepView::GetBeatWidth() const
 	return m_nBeatWidth;
 }
 
-inline int CStepView::GetStepX() const
-{
-	return m_nStepX;
-}
-
 inline COLORREF CStepView::GetBeatLineColor() const
 {
 	return m_clrBeatLine;
+}
+
+inline double CStepView::GetStepWidthEx(int iTrack) const
+{
+	return GetStepWidth(iTrack);
+}
+
+inline bool CStepView::IsSelected(int iTrack) const
+{
+	return m_arrTrackState[iTrack].m_bIsSelected;
 }

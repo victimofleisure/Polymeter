@@ -66,6 +66,12 @@ void CSeqTrackArray::SetName(int iTrack, const CString& sName)
 	GetAt(iTrack).m_sName = sName;
 }
 
+void CSeqTrackArray::SetType(int iTrack, int iType)
+{
+	ASSERT(iType >= 0 && iType < TRACK_TYPES);
+	GetAt(iTrack).m_iType = iType;
+}
+
 void CSeqTrackArray::SetChannel(int iTrack, int nChannel)
 {
 	ASSERT(IsMidiChan(nChannel));
@@ -170,7 +176,7 @@ void CSeqTrackArray::SetSteps(const CRect& rSelection, STEP nStep)
 void CSeqTrackArray::GetTrackProperty(int iTrack, int iProp, CComVariant& var) const
 {
 	switch (iProp) {
-	#define TRACKDEF(type, prefix, name, defval, offset) \
+	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) \
 		case PROP_##name: var = Get##name(iTrack); break;
 	#include "TrackDef.h"		// generate code to get track properties
 	default:
@@ -181,7 +187,7 @@ void CSeqTrackArray::GetTrackProperty(int iTrack, int iProp, CComVariant& var) c
 void CSeqTrackArray::SetTrackProperty(int iTrack, int iProp, const CComVariant& var)
 {
 	switch (iProp) {
-	#define TRACKDEF(type, prefix, name, defval, offset) \
+	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) \
 		case PROP_##name: { type val; GetVariant(var, val); Set##name(iTrack, val); } break;
 	#include "TrackDef.h"		// generate code to set track properties
 	default:
@@ -283,4 +289,31 @@ void CSeqTrackArray::DeleteSteps(const CRect& rSelection)
 		int	iTrack = rSelection.top + iRow;
 		GetAt(iTrack).m_arrStep.RemoveAt(rSelection.left, nCols);	// remove steps
 	}
+}
+
+bool CSeqTrackArray::GetNoteVelocity(int iTrack, int iStep, STEP& nStep) const
+{
+	STEP	nCurStep = GetStep(iTrack, iStep);
+	if (!IsNote(iTrack)) {
+		nStep = GetStep(iTrack, iStep); 
+		return true;
+	}
+	if (nCurStep) {	// if current step not empty
+		int	iPrevStep = iStep - 1;
+		if (iPrevStep < 0)
+			iPrevStep = GetLength(iTrack) - 1;
+		STEP	nPrevStep = GetStep(iTrack, iPrevStep);
+		if (!(nPrevStep & NB_TIE)) {	// if previous step not tied
+			nStep = nCurStep;	// return current step's velocity
+			return true;
+		}
+	}
+	return false;
+}
+
+void CSeqTrackArray::ResetCachedParameters()
+{
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
+		GetAt(iTrack).m_nCachedParam = -1;	// reset cached parameter value
 }

@@ -117,7 +117,20 @@ BOOL CChildFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO
 	case ID_VIEW_ZOOM_IN:
 	case ID_VIEW_ZOOM_OUT:
 	case ID_VIEW_ZOOM_RESET:
-		return m_wndSplitter.GetPane(0, PANE_STEP)->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+	case ID_VIEW_SHOW_VELOCITIES:
+		return m_pStepParent->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+	case ID_NEXT_PANE:
+	case ID_PREV_PANE:
+		if (nCode == CN_COMMAND) {
+			HWND	hWnd = ::GetFocus();
+			CView	*pView;
+			if (::IsChild(m_pStepParent->m_hWnd, hWnd))	// if any step view has focus
+				pView = m_pTrackView;	// activate track view
+			else	// any other window has focus
+				pView = m_pStepParent;	// activate step view 
+			SetActiveView(pView);
+		}
+		return TRUE;	// handled
 	}
 	return CMDIChildWndEx::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
 }

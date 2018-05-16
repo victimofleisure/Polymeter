@@ -51,11 +51,8 @@ const COLORREF CStepView::m_arrStepColor[] = {
 	RGB(128, 0, 128),		//	Y		Y		Y		Y
 };
 
-const COLORREF CStepView::m_arrMuteColor[] = {
-	RGB(0, 255, 0),			// unmuted
-	RGB(255, 0, 0),			// muted
-};
-
+const COLORREF CStepView::m_clrViewBkgnd = RGB(240, 240, 240);
+const COLORREF CStepView::m_clrStepOutline = RGB(160, 160, 160);
 const COLORREF CStepView::m_clrBeatLine = RGB(208, 208, 255);
 
 IMPLEMENT_DYNCREATE(CStepView, CScrollView)
@@ -72,7 +69,6 @@ CStepView::CStepView()
 	m_ptDragOrigin = CPoint(0, 0);
 	m_nDragState = DS_NONE;
 	m_bDoContextMenu = false;
-	m_rngMute.SetEmpty();
 	m_rStepSel.SetRectEmpty();
 }
 
@@ -116,17 +112,17 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			case PROP_Length:
 				OnTrackSizeChange(iTrack);
 				if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
-					UpdateSongPositionNoRedraw(iTrack);
+					UpdateSongPositionNoRedraw(iTrack);	// update song position, no redraw
 				break;
 			case PROP_Quant:
 				OnTrackSizeChange(iTrack);
 				break;
 			case PROP_Offset:
 				if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
-					UpdateSongPosition(iTrack);
+					UpdateSongPosition(iTrack);	// update song position
 				break;
-			case PROP_Mute:
-				UpdateMute(iTrack);
+			case PROP_Type:
+				UpdateTrack(iTrack);
 				break;
 			}
 		}
@@ -141,7 +137,7 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				UpdateTracks(pPropHint->m_arrSelection);
 				UpdateViewSize();
 				if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
-					UpdateSongPositionNoRedraw(pPropHint->m_arrSelection);
+					UpdateSongPositionNoRedraw(pPropHint->m_arrSelection);	// update song position, no redraw
 				break;
 			case PROP_Quant:
 				UpdateTracks(pPropHint->m_arrSelection);
@@ -149,10 +145,10 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				break;
 			case PROP_Offset:
 				if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
-					UpdateSongPosition(pPropHint->m_arrSelection);
+					UpdateSongPosition(pPropHint->m_arrSelection);	// update song position
 				break;
-			case PROP_Mute:
-				UpdateMutes(pPropHint->m_arrSelection);
+			case PROP_Type:
+				UpdateTracks(pPropHint->m_arrSelection);
 				break;
 			}
 		}
@@ -171,7 +167,6 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		break;
 	case CPolymeterDoc::HINT_TRACK_SELECTION:
 		OnTrackSelectionChange();
-		Invalidate();	// over-inclusive but safe
 		break;
 	case CPolymeterDoc::HINT_MULTI_STEP:
 		{
@@ -187,6 +182,14 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				m_rStepSel = pRectSelHint->m_rSelection;
 			UpdateViewSize();
 			UpdateTracks(pRectSelHint->m_rSelection);
+			if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
+				UpdateSongPositionNoRedraw(pRectSelHint->m_rSelection);	// update song position, no redraw
+		}
+		break;
+	case CPolymeterDoc::HINT_VELOCITY:
+		{
+			const CPolymeterDoc::CMultiItemPropHint *pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
+			UpdateTracks(pPropHint->m_arrSelection);
 		}
 		break;
 	}
@@ -205,12 +208,7 @@ void CStepView::SetTrackHeight(int nHeight)
 	m_nBeatWidth = m_nTrackHeight * 4;	// make sixteenth notes square
 }
 
-inline int CStepView::GetTrackY(int iTrack) const
-{
-	return m_nTrackY + iTrack * m_nTrackHeight;
-}
-
-inline double CStepView::GetStepWidth(int iTrack) const
+__forceinline double CStepView::GetStepWidth(int iTrack) const
 {
 	const CSequencer&	seq = GetDocument()->m_Seq;
 	return static_cast<double>(seq.GetQuant(iTrack)) / seq.GetTimeDivision() * m_nBeatWidth * m_fZoom;
@@ -235,8 +233,14 @@ void CStepView::UpdateViewSize()
 	const CSequencer&	seq = GetDocument()->m_Seq;
 	int	nMaxTrackWidth = GetMaxTrackWidth();
 	int	nTracks = seq.GetTrackCount();
-	CSize	szView(m_nStepX + nMaxTrackWidth + 1, m_nTrackY + m_nTrackHeight * nTracks + 1);
+	CSize	szView(nMaxTrackWidth + 1, m_nTrackHeight * nTracks + 1);
+	CPoint	ptPrevScrollPos(GetScrollPosition());
 	SetScrollSizes(MM_TEXT, szView);
+	CPoint	ptNewScrollPos(GetScrollPosition());
+	if (ptNewScrollPos != ptPrevScrollPos) {	// if scroll position changed
+		CSize	szScroll(ptPrevScrollPos - ptNewScrollPos);
+		NotifyParent(UWM_STEP_SCROLL, szScroll.cx, szScroll.cy);
+	}
 }
 
 void CStepView::OnTrackCountChange()
@@ -290,28 +294,35 @@ void CStepView::GetTrackRect(int iTrack, CRect& rTrack) const
 	rTrack = CRect(ptTrack, CSize(nWidth, m_nTrackHeight + 1));	// include bottom border
 }
 
-void CStepView::GetMuteRect(int iTrack, CRect& rMute) const
-{
-	CPoint	ptMute(CPoint(0, GetTrackY(iTrack)) - GetScrollPosition());
-	rMute = CRect(ptMute, CSize(m_nStepX, m_nTrackHeight));
-}
-
-void CStepView::GetStepsRect(int iTrack, CRect& rStep) const
+void CStepView::GetGridRect(int iTrack, CRect& rStep) const
 {
 	double	fStepWidth = GetStepWidth(iTrack);
 	int	nTrackWidth = round(fStepWidth * GetDocument()->m_Seq.GetLength(iTrack));
-	CPoint	ptStep(CPoint(m_nStepX, GetTrackY(iTrack)) - GetScrollPosition());
+	CPoint	ptStep(CPoint(0, GetTrackY(iTrack)) - GetScrollPosition());
 	rStep = CRect(ptStep, CSize(nTrackWidth, m_nTrackHeight));
 }
 
 void CStepView::GetStepRect(int iTrack, int iStep, CRect& rStep) const
 {
 	double	fStepWidth = GetStepWidth(iTrack);
-	int	x1 = m_nStepX + trunc(iStep * fStepWidth);
-	int	x2 = m_nStepX + trunc((iStep + 1) * fStepWidth);
+	int	x1 = round(iStep * fStepWidth);
+	int	x2 = round((iStep + 1) * fStepWidth);
 	int	nStepWidth = x2 - x1;
 	CPoint	ptStep(CPoint(x1, GetTrackY(iTrack)) - GetScrollPosition());
 	rStep = CRect(ptStep, CSize(nStepWidth, m_nTrackHeight));
+}
+
+void CStepView::GetStepsRect(int iTrack, CIntRange rngSteps, CRect& rSteps) const
+{
+	const CSequencer&	seq = GetDocument()->m_Seq;
+	int	iStep = rngSteps.Start;
+	GetStepRect(iTrack, iStep, rSteps);
+	int	iEndStep = min(rngSteps.End, seq.GetLength(iTrack) - 1);
+	if (iEndStep > iStep) {
+		CRect	rEndStep;
+		GetStepRect(iTrack, iEndStep, rEndStep);
+		rSteps.UnionRect(rSteps, rEndStep);
+	}
 }
 
 void CStepView::UpdateTrack(int iTrack)
@@ -339,32 +350,11 @@ void CStepView::UpdateTracks(const CRect& rSelection)
 	}
 }
 
-void CStepView::UpdateMute(int iTrack)
+void CStepView::UpdateGrid(int iTrack)
 {
-	CRect	rMute;
-	GetMuteRect(iTrack, rMute);
-	InvalidateRect(rMute);
-	if (theApp.m_Options.m_View_bShowCurPos) {	// if showing current position
-		int	iCurStep = m_arrTrackState[iTrack].m_iCurStep;
-		if (iCurStep >= 0)	// if current position is valid
-			UpdateStep(iTrack, iCurStep);	// update current step
-	}
-}
-
-void CStepView::UpdateMutes(const CIntArrayEx& arrSelection)
-{
-	int	nSels = arrSelection.GetSize();
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		int	iTrack = arrSelection[iSel];
-		UpdateMute(iTrack);
-	}
-}
-
-void CStepView::UpdateSteps(int iTrack)
-{
-	CRect	rStep;
-	GetStepsRect(iTrack, rStep);
-	InvalidateRect(rStep);
+	CRect	rGrid;
+	GetGridRect(iTrack, rGrid);
+	InvalidateRect(rGrid);
 }
 
 void CStepView::UpdateStep(int iTrack, int iStep)
@@ -376,12 +366,10 @@ void CStepView::UpdateStep(int iTrack, int iStep)
 
 void CStepView::UpdateSteps(const CRect& rSelection)
 {
-	const CSequencer&	seq = GetDocument()->m_Seq;
 	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {
-		int	iEndStep = min(rSelection.right, seq.GetLength(iTrack));
-		for (int iStep = rSelection.left; iStep < iEndStep; iStep++) {
-			UpdateStep(iTrack, iStep);
-		}
+		CRect	rSteps;
+		GetStepsRect(iTrack, CIntRange(rSelection.left, rSelection.right), rSteps);
+		InvalidateRect(rSteps);
 	}
 }
 
@@ -429,6 +417,19 @@ void CStepView::UpdateSongPositionNoRedraw(const CIntArrayEx& arrSelection)
 		int	nSels = arrSelection.GetSize();
 		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 			int	iTrack = arrSelection[iSel];
+			int	iStep = seq.GetStepIndex(iTrack, nPos);
+			m_arrTrackState[iTrack].m_iCurStep = iStep;
+		}
+	}
+}
+
+void CStepView::UpdateSongPositionNoRedraw(const CRect& rSelection)
+{
+	CSequencer&	seq = GetDocument()->m_Seq;
+	LONGLONG	nPos;
+	if (seq.GetPosition(nPos)) {	// if valid position
+		int	nTracks = rSelection.Height();
+		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each selected track
 			int	iStep = seq.GetStepIndex(iTrack, nPos);
 			m_arrTrackState[iTrack].m_iCurStep = iStep;
 		}
@@ -566,7 +567,7 @@ void CStepView::Zoom(int nZoom, int nOriginX)
 	double	fPrevZoom = m_fZoom;
 	SetZoom(nZoom, false);	// no redraw
 	UpdateViewSize();
-	int	nOffset = nOriginX + ptScroll.x - m_nStepX;
+	int	nOffset = nOriginX + ptScroll.x;
 	double	fDeltaZoom = m_fZoom / fPrevZoom;
 	ptScroll.x += round(nOffset * (fDeltaZoom - 1));
 	CPoint	ptScrollMax = GetMaxScrollPos();
@@ -576,27 +577,22 @@ void CStepView::Zoom(int nZoom, int nOriginX)
 	NotifyParent(UWM_STEP_ZOOM);
 }
 
-int CStepView::HitTest(CPoint point, int& iStep) const
+int CStepView::HitTest(CPoint point, int& iStep, UINT nFlags) const
 {
 	const CSequencer&	seq = GetDocument()->m_Seq;
 	int	nTracks = seq.GetTrackCount();
 	point += GetScrollPosition();
-	int	y = point.y - m_nTrackY;
+	int	y = point.y;
 	if (y >= 0 && y < m_nTrackHeight * nTracks) {
 		int	iTrack = y / m_nTrackHeight;
 		int	x = point.x;
-		if (x >= m_nMuteX && x < m_nMuteX + m_nMuteWidth) {
-			iStep = HT_MUTE;
-			return iTrack;
-		}
-		x -= m_nStepX;
 		double	fStepWidth = GetStepWidth(iTrack);
 		int	nTrackWidth = round(fStepWidth * seq.GetLength(iTrack));
-		if (x >= 0 && x < nTrackWidth) {
+		if ((x >= 0 && x < nTrackWidth) || (nFlags & HTF_NO_STEP_RANGE)) {
 			iStep = trunc(static_cast<double>(x) / fStepWidth);
 			return iTrack;
 		}
-		iStep = HT_BKGND;
+		iStep = -1;
 		return iTrack;
 	}
 	iStep = -1;
@@ -611,34 +607,22 @@ void CStepView::EndDrag()
 	}
 }
 
-__forceinline COLORREF CStepView::GetBkColor(int iTrack)
+__forceinline int CStepView::GetStepColorIdx(int iTrack, int iStep, STEP nStep, bool bMute) const
 {
-	COLORREF	nBkColor;
-	if (m_arrTrackState[iTrack].m_bIsSelected) {
-		nBkColor = COLOR_HIGHLIGHT; 
-	} else {
-		nBkColor = COLOR_3DFACE;
-	}
-	COLORREF	clr = GetSysColor(nBkColor);
-	return clr;
-}
-
-__forceinline int CStepView::GetCurPosColorIdx(int iTrack, int iStep, bool bMute) const
-{
-	int	iCurPosColor = 0;
+	int	iStepColor = nStep != 0;	// SF_ON
 	if (theApp.m_Options.m_View_bShowCurPos) {	// if showing current position
 		int	iCurStep = m_arrTrackState[iTrack].m_iCurStep;
 		if (iStep == iCurStep)	// if step is current
-			iCurPosColor |= SF_HOT;
+			iStepColor |= SF_HOT;
 		if (bMute)	// if track is muted
-			iCurPosColor |= SF_MUTE;
-		if (!m_rStepSel.IsRectEmpty()) {
-			if (m_rStepSel.PtInRect(CPoint(iStep, iTrack))) {
-				iCurPosColor |= SF_SELECT;
-			}
+			iStepColor |= SF_MUTE;
+	}
+	if (!m_rStepSel.IsRectEmpty()) {	// if step selection exists
+		if (m_rStepSel.PtInRect(CPoint(iStep, iTrack))) {	// if step is selected
+			iStepColor |= SF_SELECT;
 		}
 	}
-	return iCurPosColor;
+	return iStepColor;
 }
 
 __forceinline USHORT CStepView::Make16BitColor(BYTE nIntensity)
@@ -656,16 +640,15 @@ __forceinline void CStepView::InitTriangleVertex(TRIVERTEX& tv, int x, int y, CO
 	tv.Alpha = 0;
 }
 
-__forceinline void CStepView::DrawStep(CDC* pDC, int x, int y, int cx, int cy, STEP nStep, int iCurPosColor)
+__forceinline void CStepView::DrawStep(CDC* pDC, int x, int y, int cx, int cy, STEP nStep, int iStepColor, int iTrackType)
 {
-	int	iStepColor = (nStep != 0) | iCurPosColor;
-	if (!nStep || (nStep & NB_TIE)) {	// if step empty or tied
+	if (!nStep || (nStep & NB_TIE) || iTrackType != TT_NOTE) {	// if step empty or tied, or track type isn't note
 		pDC->FillSolidRect(x, y, cx, cy, m_arrStepColor[iStepColor]);
 	} else {	// untied note
 #if USE_GRADIENT_FILL
 		static GRADIENT_RECT	rGrad = {0, 1};
 		COLORREF	clrLeft = m_arrStepColor[iStepColor];
-		COLORREF	clrRight = m_arrStepColor[iCurPosColor];
+		COLORREF	clrRight = m_arrStepColor[iStepColor & ~SF_ON];
 		TRIVERTEX	tv[2];
 		InitTriangleVertex(tv[0], x, y, clrLeft);
 		InitTriangleVertex(tv[1], x + cx, y + cy, clrRight);
@@ -673,7 +656,7 @@ __forceinline void CStepView::DrawStep(CDC* pDC, int x, int y, int cx, int cy, S
 #else
 		int	nMidStep = cx / 2;
 		pDC->FillSolidRect(x, y, nMidStep, cy, m_arrStepColor[iStepColor]);
-		pDC->FillSolidRect(x + nMidStep, y,  cx - nMidStep, cy, m_arrStepColor[iCurPosColor]);
+		pDC->FillSolidRect(x + nMidStep, y,  cx - nMidStep, cy, m_arrStepColor[iStepColor & ~SF_ON]);
 #endif
 	}
 }
@@ -682,89 +665,78 @@ void CStepView::DrawClippedStep(CDC *pDC, const CRect& rClip, const CSequencer& 
 {
 	CRect	rStep;
 	GetStepRect(iTrack, iStep, rStep);
-	rStep.TopLeft().Offset(1, 1);
+	rStep.TopLeft().Offset(1, 1);	// omit step's outline
 	CRect	rClipStep;
-	if (rClipStep.IntersectRect(rClip, rStep)) {
-		int	iCurPosColor = GetCurPosColorIdx(iTrack, iStep, seq.GetMute(iTrack));
+	if (rClipStep.IntersectRect(rClip, rStep)) {	// if step intersects clip rectangle
 		STEP	nStep = seq.GetStep(iTrack, iStep);
-		DrawStep(pDC, rStep.left, rStep.top, rStep.Width(), rStep.Height(), nStep, iCurPosColor);
+		int	iStepColor = GetStepColorIdx(iTrack, iStep, nStep, seq.GetMute(iTrack));
+		int	iTrackType = seq.GetType(iTrack);
+		DrawStep(pDC, rStep.left, rStep.top, rStep.Width(), rStep.Height(), nStep, iStepColor, iTrackType);
 	}
 }
 
 void CStepView::OnDraw(CDC* pDC)
 {
-	COLORREF	clrStepOutline = GetSysColor(COLOR_BTNSHADOW);
-	COLORREF	clrViewBkgnd = GetSysColor(COLOR_3DFACE);
 	CRect	rClip;
 	pDC->GetClipBox(rClip);
-	double	fStride = m_nBeatWidth * m_fZoom;
 	const CSequencer&	seq = GetDocument()->m_Seq;
 	int	nTracks = seq.GetTrackCount();
 	if (nTracks) {
-		CRect	rTracks(CPoint(0, m_nTrackY), CSize(GetTotalSize().cx, m_nTrackHeight * nTracks + 1));
+		CRect	rTracks(CPoint(0, 0), CSize(GetTotalSize().cx, m_nTrackHeight * nTracks + 1));
 		CRect	rClipTracks;
 		if (rClipTracks.IntersectRect(rClip, rTracks)) {	// if clip box intersects one or more tracks
-			int	iFirstTrack = (rClip.top - m_nTrackY - 1) / m_nTrackHeight;
+			int	iFirstTrack = (rClip.top - 1) / m_nTrackHeight;
 			iFirstTrack = CLAMP(iFirstTrack, 0, nTracks - 1);
-			int	iLastTrack = (rClip.bottom - 1 - m_nTrackY) / m_nTrackHeight;
+			int	iLastTrack = (rClip.bottom - 1) / m_nTrackHeight;
 			iLastTrack = CLAMP(iLastTrack, 0, nTracks - 1);
-			int	y1 = m_nTrackY + m_nTrackHeight * iFirstTrack;
+			int	y1 = m_nTrackHeight * iFirstTrack;
 			for (int iTrack = iFirstTrack; iTrack <= iLastTrack; iTrack++) {	// for each invalid track
-				COLORREF	clrTrackBkgnd = GetBkColor(iTrack);
-				bool	bMute = seq.GetMute(iTrack);
-				CRect	rMute(CPoint(0, y1), CSize(m_nStepX, m_nTrackHeight));
-				CRect	rClipMute;
-				if (rClipMute.IntersectRect(rClip, rMute)) {	// if clip box intersects mute area
-					CRect	rMuteBtn(CPoint(m_nMuteX, y1), CSize(m_nMuteWidth, m_nTrackHeight));
-					rMuteBtn.DeflateRect(1, 1);	// exclude border
-					pDC->FillSolidRect(rMuteBtn, m_arrMuteColor[bMute]);	// draw mute button
-					pDC->ExcludeClipRect(rMuteBtn);	// exclude mute button from clipping region
-					pDC->FillSolidRect(rMute, clrTrackBkgnd);	// fill background around mute button
-					pDC->ExcludeClipRect(rMute);	// exclude mute area from clipping region
-				}
 				double	fStepWidth = GetStepWidth(iTrack);
-				int	nTrackLength = seq.GetLength(iTrack);
-				CRect	rSteps(CPoint(m_nStepX, y1), CSize(round(fStepWidth * nTrackLength) + 1, m_nTrackHeight + 1));
+				int	nTrackSteps = seq.GetLength(iTrack);
+				CRect	rSteps(CPoint(0, y1), CSize(round(fStepWidth * nTrackSteps) + 1, m_nTrackHeight + 1));
 				CRect	rClipSteps;
 				if (rClipSteps.IntersectRect(rClip, rSteps)) {	// if clip box intersects one or more steps
-					int	iFirstStep = trunc((rClipSteps.left - m_nStepX) / fStepWidth);
-					iFirstStep = CLAMP(iFirstStep, 0, nTrackLength - 1);
-					int	iLastStep = trunc((rClipSteps.right - m_nStepX) / fStepWidth);
-					iLastStep = CLAMP(iLastStep, 0, nTrackLength - 1);
-					int	x1 = m_nStepX + round(iFirstStep * fStepWidth);
+					int	iFirstStep = trunc(rClipSteps.left / fStepWidth);
+					iFirstStep = CLAMP(iFirstStep, 0, nTrackSteps - 1);
+					int	iLastStep = trunc(rClipSteps.right / fStepWidth);
+					iLastStep = CLAMP(iLastStep, 0, nTrackSteps - 1);
+					int	x1 = round(iFirstStep * fStepWidth);
 					int	y2 = y1 + m_nTrackHeight;
+					int	iTrackType = seq.GetType(iTrack);
+					bool	bMute = seq.GetMute(iTrack);
 					for (int iStep = iFirstStep; iStep <= iLastStep; iStep++) {	// for each invalid step
-						int	x2 = m_nStepX + round((iStep + 1) * fStepWidth);
+						int	x2 = round((iStep + 1) * fStepWidth);
 						STEP	nStep = seq.GetStep(iTrack, iStep);
-						int	iCurPosColor = GetCurPosColorIdx(iTrack, iStep, bMute);
-						DrawStep(pDC, x1 + 1, y1 + 1, x2 - x1 - 1, y2 - y1 - 1, nStep, iCurPosColor);
-						pDC->FillSolidRect(x1, y1, x2 - x1, 1, clrStepOutline);
-						pDC->FillSolidRect(x1, y1, 1, m_nTrackHeight, clrStepOutline);
+						int	iStepColor = GetStepColorIdx(iTrack, iStep, nStep, bMute);
+						DrawStep(pDC, x1 + 1, y1 + 1, x2 - x1 - 1, y2 - y1 - 1, nStep, iStepColor, iTrackType);
+						pDC->FillSolidRect(x1, y1, x2 - x1, 1, m_clrStepOutline);
+						pDC->FillSolidRect(x1, y1, 1, m_nTrackHeight, m_clrStepOutline);
 						x1 = x2;
 					}
-					pDC->FillSolidRect(x1, y1, 1, m_nTrackHeight, clrStepOutline);
-					pDC->FillSolidRect(m_nStepX, y1 + m_nTrackHeight, x1 - m_nStepX + 1, 1, clrStepOutline);
+					pDC->FillSolidRect(x1, y1, 1, m_nTrackHeight, m_clrStepOutline);
+					pDC->FillSolidRect(0, y1 + m_nTrackHeight, x1 + 1, 1, m_clrStepOutline);
 				}
 				pDC->ExcludeClipRect(rSteps);	// exclude steps from clipping region
 				y1 += m_nTrackHeight;
 			}
 		}
 	}
-	if (fStride >= 4) {
-		int	iFirstBeat = trunc((rClip.left - m_nStepX) / fStride);
+	double	fBeatWidth = m_nBeatWidth * m_fZoom;
+	if (fBeatWidth >= MIN_BEAT_LINE_SPACING) {
+		int	iFirstBeat = trunc(rClip.left / fBeatWidth);
 		iFirstBeat = max(iFirstBeat, 0);
-		int	iLastBeat = trunc((rClip.right - m_nStepX) / fStride);
+		int	iLastBeat = trunc(rClip.right / fBeatWidth);
 		iLastBeat = max(iLastBeat, 0);
-		int	x1 = round(m_nStepX + iFirstBeat * fStride);
+		int	x1 = round(iFirstBeat * fBeatWidth);
 		for (int iBeat = iFirstBeat; iBeat <= iLastBeat; iBeat++) {
-			int	x2 = round(m_nStepX + (iBeat + 1) * fStride);
+			int	x2 = round((iBeat + 1) * fBeatWidth);
 			CRect	rBar(CPoint(x1, rClip.top), CSize(1, rClip.Height()));
 			pDC->FillSolidRect(rBar, m_clrBeatLine);
 			pDC->ExcludeClipRect(rBar);
 			x1 = x2;
 		}
 	}
-	pDC->FillSolidRect(rClip, clrViewBkgnd);	// erase remaining background
+	pDC->FillSolidRect(rClip, m_clrViewBkgnd);	// erase remaining background
 }
 
 BOOL CStepView::OnScroll(UINT nScrollCode, UINT nPos, BOOL bDoScroll)
@@ -783,9 +755,16 @@ BOOL CStepView::OnScroll(UINT nScrollCode, UINT nPos, BOOL bDoScroll)
 	return CScrollView::OnScroll(nScrollCode, nPos, bDoScroll);
 }
 
-inline void CStepView::NotifyParent(DWORD message)
+BOOL CStepView::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
 {
-	GetParent()->SendMessage(message);
+	BOOL	bResult = CScrollView::OnScrollBy(sizeScroll, bDoScroll);
+	NotifyParent(UWM_STEP_SCROLL, sizeScroll.cx, sizeScroll.cy);
+	return bResult;
+}
+
+inline void CStepView::NotifyParent(DWORD message, WPARAM wParam, LPARAM lParam)
+{
+	GetParent()->SendMessage(message, wParam, lParam);
 }
 
 void CStepView::DispatchToDocument()
@@ -823,6 +802,7 @@ BEGIN_MESSAGE_MAP(CStepView, CScrollView)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
 	ON_WM_SIZE()
+	ON_COMMAND(ID_EDIT_LENGTH, OnEditLength)
 END_MESSAGE_MAP()
 
 // CStepView message handlers
@@ -849,14 +829,7 @@ BOOL CStepView::PreTranslateMessage(MSG* pMsg)
 void CStepView::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
-	NotifyParent(UWM_STEP_SCROLL);
-}
-
-BOOL CStepView::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
-{
-	BOOL	bResult = CScrollView::OnScrollBy(sizeScroll, bDoScroll);
-	GetParent()->SendMessage(UWM_STEP_SCROLL);
-	return bResult;
+	NotifyParent(UWM_STEP_SCROLL, 1, 1);	// both axes potentially scroll
 }
 
 LRESULT	CStepView::OnDelayedCreate(WPARAM wParam, LPARAM lParam)
@@ -875,15 +848,22 @@ void CStepView::OnLButtonDown(UINT nFlags, CPoint point)
 	if (iTrack >= 0) {	// if hit track
 		if (iStep >= 0) {	// if hit step
 			STEP	nStep = pDoc->m_Seq.GetStep(iTrack, iStep);	// get hit step
-			if (nStep) {	// if step is on
-				if (nFlags & MK_SHIFT)	// if modifier key
-					nStep ^= NB_TIE;	// toggle tie state
-				else	// no modifier
+			if (pDoc->m_Seq.IsNote(iTrack)) {	// if track type is note
+				if (nStep) {	// if step is on
+					if (nFlags & MK_SHIFT)	// if modifier key
+						nStep ^= NB_TIE;	// toggle tie state
+					else	// no modifier
+						nStep = 0;	// clear step
+				} else {	// step is off
+					if (nFlags & MK_SHIFT)// if modifier key
+						nStep = DEFAULT_VELOCITY | NB_TIE;	// default velocity with tie
+					else	// no modifier
+						nStep = DEFAULT_VELOCITY;	// default velocity
+				}
+			} else {	// track type isn't note; tie has no meaning, ignore shift key
+				if (nStep)	// if step is on
 					nStep = 0;	// clear step
-			} else {	// step is off
-				if (nFlags & MK_SHIFT)// if modifier key
-					nStep = DEFAULT_VELOCITY | NB_TIE;	// default velocity with tie
-				else	// no modifier
+				else	// step is off
 					nStep = DEFAULT_VELOCITY;	// default velocity
 			}
 			if (HaveStepSelection()) {	// if step selection exists
@@ -892,17 +872,6 @@ void CStepView::OnLButtonDown(UINT nFlags, CPoint point)
 			} else {	// no step selection
 				pDoc->SetTrackStep(iTrack, iStep, nStep);	// set hit step
 			}
-		} else if (iStep == HT_MUTE) {	// else if hit mute
-			if (pDoc->GetSelectedCount()) {	// if tracks are selected
-				if (nFlags & MK_SHIFT) {	// if modifier key
-					// invert hit track's mute and apply it to selected tracks
-					pDoc->SetSelectedMutes(pDoc->m_Seq.GetMute(iTrack) ^ 1);
-				} else	// no modifier
-					pDoc->SetSelectedMutes(MB_TOGGLE);	// invert mute for selected tracks
-			} else {	// single track
-				pDoc->SetMute(iTrack, pDoc->m_Seq.GetMute(iTrack) ^ 1);	// invert hit track's mute
-			}
-			pDoc->Deselect();
 		}
 	}
 	CScrollView::OnLButtonDown(nFlags, point);
@@ -919,24 +888,17 @@ void CStepView::OnRButtonDown(UINT nFlags, CPoint point)
 	m_bDoContextMenu = false;
 	int	iStep;
 	int	iTrack = HitTest(point, iStep);
-	if (iStep >= 0 || iStep == HT_MUTE) {	// if hit on step or mute
+	if (iTrack >= 0 && iStep >= 0) {	// if hit on step
 		SetCapture();
 		m_nDragState = DS_TRACK;
 		m_ptDragOrigin = point;
-		m_rngMute.SetEmpty();
-		if (iStep == HT_MUTE) {	// if hit on mute
-			m_bOriginMute = pDoc->GetSelected(iTrack);
-			pDoc->ToggleSelection(iTrack);
-			m_rngMute = iTrack;
-		} else {	// hit on step
-			// if step selection exists and hit within selection
-			if (HaveStepSelection() && m_rStepSel.PtInRect(CPoint(iStep, iTrack))) {
-				m_bDoContextMenu = true;	// enable context menu on button up
-			} else {	// no selection, or hit outside selection
-				ResetStepSelection();	// reset selection
-				m_rStepSel = CRect(CPoint(iStep, iTrack), CSize(1, 1));
-				UpdateStep(iTrack, iStep);	// select hit step
-			}
+		// if step selection exists and hit within selection
+		if (HaveStepSelection() && m_rStepSel.PtInRect(CPoint(iStep, iTrack))) {
+			m_bDoContextMenu = true;	// enable context menu on button up
+		} else {	// no selection, or hit outside selection
+			ResetStepSelection();	// reset selection
+			m_rStepSel = CRect(CPoint(iStep, iTrack), CSize(1, 1));
+			UpdateStep(iTrack, iStep);	// select hit step
 		}
 	} else {	// out of bounds
 		ResetStepSelection();
@@ -971,7 +933,7 @@ void CStepView::OnMouseMove(UINT nFlags, CPoint point)
 		rngTrack.Start = HitTest(m_ptDragOrigin, rngStep.Start);
 		rngTrack.End = HitTest(point, rngStep.End);
 		if (rngTrack.End < 0) {	// if current track is out of bounds
-			if (point.y < m_nTrackY)	// if above tracks
+			if (point.y < 0)	// if above tracks
 				rngTrack.End = 0;	// clamp to first track
 			else	// below tracks; clamp to last track
 				rngTrack.End = pDoc->GetTrackCount() - 1;
@@ -998,20 +960,6 @@ void CStepView::OnMouseMove(UINT nFlags, CPoint point)
 					for (int iRect = 0; iRect < nRects; iRect++)	// for each rect in region data
 						UpdateSteps(m_rgndStepSel.GetRect(iRect));	// update corresponding steps
 				}
-			}
-		} else if (rngStep.Start == HT_MUTE) {	// if original click was on mute
-			if (rngTrack != m_rngMute) {	// if mute range changed
-				CIntRange	rngAbove(rngTrack.Start, m_rngMute.Start);
-				rngAbove.Normalize();
-				int	iTrack;
-				for (iTrack = rngAbove.Start; iTrack < rngAbove.End; iTrack++)
-					pDoc->ToggleSelection(iTrack, false);	// don't update
-				CIntRange	rngBelow(rngTrack.End, m_rngMute.End);
-				rngBelow.Normalize();
-				for (iTrack = rngBelow.Start + 1; iTrack <= rngBelow.End; iTrack++)
-					pDoc->ToggleSelection(iTrack, false);	// don't update
-				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_SELECTION);
-				m_rngMute = rngTrack;
 			}
 		}
 	}
@@ -1144,4 +1092,20 @@ void CStepView::OnEditDelete()
 void CStepView::OnUpdateEditDelete(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(HaveEitherSelection());
+}
+
+void CStepView::OnEditLength()
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	if (HaveStepSelection()) {	// if step selection exists
+		pDoc->SetTrackLength(m_rStepSel, m_rStepSel.left + 1);
+	} else {	// no step selection
+		CPoint	point;
+		GetCursorPos(&point);
+		ScreenToClient(&point);
+		int	iStep;
+		int	iTrack = HitTest(point, iStep, HTF_NO_STEP_RANGE);
+		if (iTrack >= 0 && iStep >= 0)
+			pDoc->SetTrackLength(iTrack, iStep + 1);
+	}
 }

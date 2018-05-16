@@ -42,7 +42,6 @@ enum {
 	KEYS = NOTES,
 	OCTAVE = NOTES,
 	NOTE_MAX = NOTES - 1,
-	MIDI_NOTE_MAX = MIDI_NOTES - 1,
 };
 
 typedef int NOTE;

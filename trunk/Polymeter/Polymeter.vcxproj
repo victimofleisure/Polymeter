@@ -223,6 +223,7 @@
     <ClInclude Include="MidiFile.h" />
     <ClInclude Include="MidiWrap.h" />
     <ClInclude Include="ModeDef.h" />
+    <ClInclude Include="MuteView.h" />
     <ClInclude Include="Note.h" />
     <ClInclude Include="NoteEdit.h" />
     <ClInclude Include="NumberTheory.h" />
@@ -263,6 +264,7 @@
     <ClInclude Include="Track.h" />
     <ClInclude Include="TrackDef.h" />
     <ClInclude Include="TrackSortDlg.h" />
+    <ClInclude Include="TrackTypeDef.h" />
     <ClInclude Include="TrackUndoTest.h" />
     <ClInclude Include="TrackView.h" />
     <ClInclude Include="Undoable.h" />
@@ -273,6 +275,7 @@
     <ClInclude Include="UndoTest.h" />
     <ClInclude Include="UndoTypes.h" />
     <ClInclude Include="VariantHelper.h" />
+    <ClInclude Include="VelocityView.h" />
     <ClInclude Include="Version.h" />
     <ClInclude Include="VersionInfo.h" />
     <ClInclude Include="Win32Console.h" />
@@ -305,6 +308,7 @@
     <ClCompile Include="MidiDevices.cpp" />
     <ClCompile Include="MidiFile.cpp" />
     <ClCompile Include="MidiWrap.cpp" />
+    <ClCompile Include="MuteView.cpp" />
     <ClCompile Include="Note.cpp" />
     <ClCompile Include="NoteEdit.cpp" />
     <ClCompile Include="NumberTheory.cpp" />
@@ -344,6 +348,7 @@
     <ClCompile Include="UndoManager.cpp" />
     <ClCompile Include="UndoState.cpp" />
     <ClCompile Include="UndoTest.cpp" />
+    <ClCompile Include="VelocityView.cpp" />
     <ClCompile Include="VersionInfo.cpp" />
     <ClCompile Include="Win32Console.cpp" />
     <ClCompile Include="WinAppCK.cpp" />

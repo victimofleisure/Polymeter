@@ -20,6 +20,7 @@
 #include "MainFrm.h"
 #include "TrackView.h"
 #include "PopupNumEdit.h"
+#include "PopupCombo.h"
 #include "UndoCodes.h"
 #include "SaveObj.h"
 
@@ -35,8 +36,9 @@ IMPLEMENT_DYNCREATE(CTrackView, CView)
 
 const CGridCtrl::COL_INFO CTrackView::m_arrColInfo[COLUMNS] = {
 	{IDS_TRK_Number, LVCFMT_LEFT, 40},
-	{IDS_TRK_Name, LVCFMT_LEFT, 100}, 
-	#define TRACKDEF(type, prefix, name, defval, offset) {IDS_TRK_##name, LVCFMT_LEFT, 70}, 
+	{IDS_TRK_Name, LVCFMT_LEFT, 100},
+	{IDS_TRK_Type, LVCFMT_LEFT, 70},
+	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) {IDS_TRK_##name, LVCFMT_LEFT, 70}, 
 	#define TRACKDEF_INT	// for integer track properties only
 	#include "TrackDef.h"	// generate column definitions
 };
@@ -164,7 +166,26 @@ void CTrackView::SetVScrollPos(int nPos)
 CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
 	UNREFERENCED_PARAMETER(pParentWnd);
-	if (m_iEditCol > COL_Name) {
+	switch (m_iEditCol) {
+	case COL_Name:
+		break;
+	case COL_Type:
+		{
+			CPopupCombo	*pCombo = CPopupCombo::Factory(0, rect, this, 0, 100);
+			if (pCombo == NULL)
+				return(NULL);
+			int	iSelType = -1;
+			for (int iType = 0; iType < CTrack::TRACK_TYPES; iType++) {
+				if (CTrack::GetTrackTypeName(iType) == pszText)
+					iSelType = iType;
+				pCombo->AddString(CTrack::GetTrackTypeName(iType));
+			}
+			pCombo->SetCurSel(iSelType);
+			pCombo->ShowDropDown();
+			return pCombo;
+		}
+		break;
+	default:
 		CPopupNumEdit	*pEdit = new CPopupNumEdit;
 		pEdit->SetFormat(CNumEdit::DF_INT | CNumEdit::DF_SPIN);
 		switch (m_iEditCol) {
@@ -172,7 +193,7 @@ CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle,
 			pEdit->SetRange(1, 16);
 			break;
 		case COL_Note:
-			pEdit->SetRange(0, 127);
+			pEdit->SetRange(0, MIDI_NOTE_MAX);
 			break;
 		case COL_Quant:
 			pEdit->SetRange(1, SHRT_MAX);
@@ -181,7 +202,7 @@ CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle,
 			pEdit->SetRange(1, INT_MAX);
 			break;
 		case COL_Velocity:
-			pEdit->SetRange(-127, 127);
+			pEdit->SetRange(-MIDI_NOTE_MAX, MIDI_NOTE_MAX);
 			break;
 		}
 		if (!pEdit->Create(dwStyle, rect, this, nID)) {
@@ -206,11 +227,17 @@ void CTrackView::CTrackGridCtrl::OnItemChange(LPCTSTR pszText)
 	case COL_Name:
 		valNew = pszText;
 		break;
+	case COL_Type:
+		{
+			CPopupCombo	*pCombo = STATIC_DOWNCAST(CPopupCombo, m_pEditCtrl);
+			valNew = pCombo->GetCurSel();
+		}
+		break;
 	default:
 		CPopupNumEdit	*pNumEdit = STATIC_DOWNCAST(CPopupNumEdit, m_pEditCtrl);
 		int	nVal = pNumEdit->GetIntVal();
-		if (iCol == COL_Channel)
-			nVal--;
+		if (iCol == COL_Channel)	// if channel column
+			nVal--;	// convert from one-origin display format
 		valNew = nVal;
 	}
 	int	iTrack = m_iEditRow;
@@ -243,7 +270,7 @@ void CTrackView::CTrackGridCtrl::OnItemChange(LPCTSTR pszText)
 		pDoc->m_Seq.GetTrackProperty(iTrack, iProp, valOld);
 		if (valNew != valOld) {	// if property changed
 			if (pDoc->ValidateTrackProperty(iTrack, iProp, valNew)) {	// if valid track property
-				pDoc->NotifyUndoableEdit(MAKELONG(iTrack, iProp), UCODE_TRACK_PROP);
+				pDoc->NotifyUndoableEdit(iTrack, MAKELONG(UCODE_TRACK_PROP, iProp));
 				pDoc->m_Seq.SetTrackProperty(iTrack, iProp, valNew);	// set property
 				CPolymeterDoc::CPropHint	hint(iTrack, iProp);
 				pDoc->UpdateAllViews(pView, CPolymeterDoc::HINT_TRACK_PROP, &hint);
@@ -258,6 +285,7 @@ void CTrackView::CTrackGridCtrl::OnItemChange(LPCTSTR pszText)
 BEGIN_MESSAGE_MAP(CTrackView, CView)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
+	ON_WM_SETFOCUS()
 	ON_WM_CONTEXTMENU()
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_TRACK_GRID, OnListGetdispinfo)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_TRACK_GRID, OnListItemChanged)
@@ -300,6 +328,12 @@ void CTrackView::OnContextMenu(CWnd* pWnd, CPoint point)
 	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE);
 }
 
+void CTrackView::OnSetFocus(CWnd* pOldWnd)
+{
+	CView::OnSetFocus(pOldWnd);
+	m_grid.SetFocus();	// delegate focus to child control
+}
+
 void CTrackView::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	UNREFERENCED_PARAMETER(pResult);
@@ -316,12 +350,23 @@ void CTrackView::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 		case COL_Name:
 			_tcscpy_s(item.pszText, item.cchTextMax, pDoc->m_Seq.GetName(iTrack));
 			break;
-		#define TRACKDEF(type, prefix, name, defval, offset) case COL_##name: \
-			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), pDoc->m_Seq.Get##name(iTrack) + offset); break;
-		#define TRACKDEF_INT	// for integer track properties only
-		#include "TrackDef.h"	// generate column definitions
+		case COL_Type:
+			_tcscpy_s(item.pszText, item.cchTextMax, CTrack::GetTrackTypeName(pDoc->m_Seq.GetType(iTrack)));
+			break;
 		default:
-			NODEFAULTCASE;
+			int	nVal;
+			switch (item.iSubItem) {
+			#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) case COL_##name: \
+				nVal = pDoc->m_Seq.Get##name(iTrack); break;
+			#define TRACKDEF_INT	// for integer track properties only
+			#include "TrackDef.h"	// generate column definitions
+			default:
+				NODEFAULTCASE;
+				nVal = 0;
+			}
+			if (item.iSubItem == COL_Channel)	// if channel column
+				nVal++;	// convert to one-origin display format
+			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), nVal);
 		}
 	}
 }
@@ -380,4 +425,3 @@ LRESULT CTrackView::OnListScrollKey(WPARAM wParam, LPARAM lParam)
 	GetParentFrame()->SendMessage(UWM_TRACK_SCROLL, m_grid.GetTopIndex());
 	return 0;
 }
-

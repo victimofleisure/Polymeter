@@ -13,24 +13,25 @@
 
 #ifdef TRACKDEF
 
-//			type		prefix	name		defval		offset
+//			proptype	type		prefix	name		defval		itemname		items
 #ifndef TRACKDEF_INT
-TRACKDEF(	CString,	s,		Name,		_T(""),		0		)	// track name
+TRACKDEF(	VAR,		CString,	s,		Name,		_T(""),		NULL,			0			)	// track name
+TRACKDEF(	ENUM,		int,		i,		Type,		0,			m_oiTrackType,	TRACK_TYPES	)	// track type
 #endif
-TRACKDEF(	int,		n,		Channel,	9,			1		)	// channel number
+TRACKDEF(	VAR,		int,		n,		Channel,	9,			NULL,			0			)	// channel number
 #ifndef TRACKDEF_EXCLUDE_NOTE
-TRACKDEF(	int,		n,		Note,		64,			0		)	// note number
+TRACKDEF(	VAR,		int,		n,		Note,		64,			NULL,			0			)	// note number
 #endif
 #ifndef TRACKDEF_EXCLUDE_LENGTH
-TRACKDEF(	int,		n,		Length,		INIT_STEPS,	0		)	// loop length in steps
+TRACKDEF(	VAR,		int,		n,		Length,		INIT_STEPS,	NULL,			0			)	// loop length in steps
 #endif
-TRACKDEF(	int,		n,		Quant,		30,			0		)	// length of a step in ticks
-TRACKDEF(	int,		n,		Offset,		0,			0		)	// track offset in ticks
-TRACKDEF(	int,		n,		Swing,		0,			0		)	// swing in ticks
-TRACKDEF(	int,		n,		Velocity,	0,			0		)	// note velocity offset
-TRACKDEF(	int,		n,		Duration,	0,			0		)	// note duration offset
+TRACKDEF(	VAR,		int,		n,		Quant,		30,			NULL,			0			)	// length of a step in ticks
+TRACKDEF(	VAR,		int,		n,		Offset,		0,			NULL,			0			)	// track offset in ticks
+TRACKDEF(	VAR,		int,		n,		Swing,		0,			NULL,			0			)	// swing in ticks
+TRACKDEF(	VAR,		int,		n,		Velocity,	0,			NULL,			0			)	// note velocity offset
+TRACKDEF(	VAR,		int,		n,		Duration,	0,			NULL,			0			)	// note duration offset
 #ifndef TRACKDEF_INT
-TRACKDEF(	bool,		b,		Mute,		false,		0		)	// true if muted
+TRACKDEF(	VAR,		bool,		b,		Mute,		false,		NULL,			0			)	// true if muted
 #endif
 
 #undef TRACKDEF

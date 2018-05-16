@@ -32,7 +32,8 @@ protected: // create from serialization only
 public:
 // Constants
 	enum {
-		TRACKS = 32,
+		INIT_TRACKS = 32,		// initial track count
+		MAX_TRACKS = USHRT_MAX,	// limiting factor is 16-bit track indices in undo implementation
 	};
 	enum {	// update hints
 		HINT_NONE,				// no hint
@@ -48,6 +49,7 @@ public:
 		HINT_TRACK_SELECTION,	// track selection
 		HINT_MULTI_STEP,		// multiple steps edit; pHint is CRectSelPropHint
 		HINT_STEPS_ARRAY,		// inserting or deleting steps; pHint is CRectSelPropHint
+		HINT_VELOCITY,			// multi-track velocity edit; pHint is CMultiItemPropHint
 		HINTS
 	};
 
@@ -119,6 +121,8 @@ public:
 	bool	DeleteSteps(const CRect& rSelection, bool bCopyToClipboard);
 	bool	PasteSteps(const CRect& rSelection);
 	bool	InsertStep(const CRect& rSelection);
+	void	SetTrackLength(int iTrack, int nLength);
+	void	SetTrackLength(const CRect& rSelection, int nLength);
 	bool	ValidateTrackLength(int nLength, int nQuant) const;
 	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
 	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
@@ -127,8 +131,8 @@ public:
 public:
 	virtual BOOL OnNewDocument();
 	virtual void Serialize(CArchive& ar);
-	virtual void PreCloseFrame(CFrameWnd* pFrame );
 	virtual	CString	GetUndoTitle(const CUndoState& State);
+	virtual void OnCloseDocument();
 
 // Implementation
 public:

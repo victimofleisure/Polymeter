@@ -69,7 +69,7 @@ CWnd *CChannelsBar::CChannelsGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwS
 	UNREFERENCED_PARAMETER(pParentWnd);
 	CPopupIntEdit	*pEdit = new CPopupIntEdit;
 	pEdit->SetFormat(CNumEdit::DF_INT | CNumEdit::DF_SPIN);
-	pEdit->SetRange(-1, 127);
+	pEdit->SetRange(-1, MIDI_NOTE_MAX);
 	if (!pEdit->Create(dwStyle, rect, this, nID)) {
 		delete pEdit;
 		return(NULL);

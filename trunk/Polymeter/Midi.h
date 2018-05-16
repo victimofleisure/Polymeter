@@ -47,6 +47,7 @@ enum {
 enum {
 	MIDI_CHANNELS	= 16,
 	MIDI_NOTES		= 128,
+	MIDI_NOTE_MAX	= MIDI_NOTES - 1,
 };
 
 #define MIDI_CTRLR_DEF(name) name,
@@ -83,12 +84,12 @@ inline bool IsMidiCmd(int Cmd)
 
 inline bool IsMidiChan(int Chan)
 {
-	return(Chan >= 0 && Chan < 16);
+	return(Chan >= 0 && Chan < MIDI_CHANNELS);
 }
 
 inline bool IsMidiParam(int Param)
 {
-	return(Param >= 0 && Param < 128);
+	return(Param >= 0 && Param < MIDI_NOTES);
 }
 
 inline DWORD MakeMidiMsg(int Cmd, int Chan, int P1, int P2)

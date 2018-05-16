@@ -29,6 +29,9 @@ public:
 	void	SetTrack(int iTrack, const CTrack& track);
 	CString	GetName(int iTrack) const;
 	void	SetName(int iTrack, const CString& sName);
+	int		GetType(int iTrack) const;
+	void	SetType(int iTrack, int nType);
+	bool	IsNote(int iTrack) const;
 	int		GetChannel(int iTrack) const;
 	void	SetChannel(int iTrack, int nChannel);
 	int		GetNote(int iTrack) const;
@@ -58,6 +61,7 @@ public:
 	void	SetTrackProperty(int iTrack, int iProp, const CComVariant& var);
 	int		GetUsedTrackCount(bool bExcludeMuted = false) const;
 	void	GetUsedTracks(CIntArrayEx& arrUsedTrack, bool bExcludeMuted = false) const;
+	bool	GetNoteVelocity(int iTrack, int iStep, STEP& nStep) const;
 
 // Operations
 	void	InsertTracks(int iTrack, int nCount = 1);
@@ -69,6 +73,7 @@ public:
 	void	InsertStep(const CRect& rSelection);
 	void	InsertSteps(const CRect& rSelection, CStepArrayArray& arrStepArray);
 	void	DeleteSteps(const CRect& rSelection);
+	void	ResetCachedParameters();
 
 protected:
 // Member data
@@ -88,6 +93,16 @@ inline const CTrackArray& CSeqTrackArray::GetTracks() const
 inline const CTrack& CSeqTrackArray::GetTrack(int iTrack) const
 {
 	return GetAt(iTrack);
+}
+
+inline int CSeqTrackArray::GetType(int iTrack) const
+{
+	return GetAt(iTrack).m_iType;
+}
+
+inline bool CSeqTrackArray::IsNote(int iTrack) const
+{
+	return GetAt(iTrack).m_iType == TT_NOTE;
 }
 
 inline int CSeqTrackArray::GetChannel(int iTrack) const

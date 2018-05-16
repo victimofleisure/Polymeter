@@ -291,6 +291,15 @@
     <ClInclude Include="StepParent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="VelocityView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TrackTypeDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MuteView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Polymeter.cpp">
@@ -474,6 +483,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="StepParent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VelocityView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MuteView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -166,6 +166,7 @@ bool CSequencer::Play(bool bEnable)
 		ZeroMemory(&m_stats, sizeof(m_stats));
 		m_stats.fCBTimeMin = DBL_MAX;
 		UpdateCallbackLength();
+		ResetCachedParameters();
 		m_nCBTime = m_nStartPos;
 		m_nPosOffset = m_nStartPos;
 		m_iBuffer = 0;
@@ -319,26 +320,56 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 	bool	bIsOdd = false;	// starting on even step, due to pair of quants logic
 	while (nEvtTime < m_nCBLen) {	// while event time within callback period
 		if (nEvtTime >= 0) {	// discard already played events
-			if (trk.m_arrStep[iStep]) {
-				int	nDurSteps = GetNoteDuration(trk.m_arrStep, nLength, iStep);
-				if (nDurSteps) {	// if at start of note
+			if (trk.m_iType == TT_NOTE) {	// if track type is note
+				if (trk.m_arrStep[iStep]) {
+					int	nDurSteps = GetNoteDuration(trk.m_arrStep, nLength, iStep);
+					if (nDurSteps) {	// if at start of note
+						CEvent	evt;
+						evt.m_dwTime = nEvtTime;
+						int	nVel = (trk.m_arrStep[iStep] & NB_VELOCITY) + trk.m_nVelocity;
+						nVel = CLAMP(nVel, 0, MIDI_NOTE_MAX);
+						evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, trk.m_nNote, nVel);
+						m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
+						int	nDuration = nDurSteps * nQuant + trk.m_nDuration;	// add duration offset
+						if (nDurSteps & 1) {	// if odd duration
+							if (bIsOdd)	// if odd step
+								nDuration -= nSwing;	// subtract swing from duration
+							else	// even step
+								nDuration += nSwing;	// add swing to duration
+						}
+						nDuration = max(nDuration, 1);	// keep duration above zero
+						evt.m_dwTime = nCBStart + nEvtTime + nDuration;	// absolute time
+						evt.m_dwEvent &= ~0xff0000;	// zero note's velocity
+						m_arrNoteOff.InsertSorted(evt);	// add pending note off to array
+					}
+				}
+			} else {	// track type isn't note
+				int	nVal = (trk.m_arrStep[iStep] & NB_VELOCITY) + trk.m_nVelocity;
+				nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
+				if (nVal != trk.m_nCachedParam) {	// if value differs from cached parameter
+ 					trk.m_nCachedParam = nVal;	// update cached parameter
 					CEvent	evt;
 					evt.m_dwTime = nEvtTime;
-					int	nVel = (trk.m_arrStep[iStep] & NB_VELOCITY) + trk.m_nVelocity;
-					nVel = CLAMP(nVel, 0, 127);
-					evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, trk.m_nNote, nVel);
-					m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
-					int	nDuration = nDurSteps * nQuant + trk.m_nDuration;	// add duration offset
-					if (nDurSteps & 1) {	// if odd duration
-						if (bIsOdd)	// if odd step
-							nDuration -= nSwing;	// subtract swing from duration
-						else	// even step
-							nDuration += nSwing;	// add swing to duration
+					switch (trk.m_iType) {
+					case TT_KEY_AFT:
+						evt.m_dwEvent = MakeMidiMsg(KEY_AFT, trk.m_nChannel, trk.m_nNote, nVal);
+						break;
+					case TT_CONTROL:
+						evt.m_dwEvent = MakeMidiMsg(CONTROL, trk.m_nChannel, trk.m_nNote, nVal);
+						break;
+					case TT_PATCH:
+						evt.m_dwEvent = MakeMidiMsg(PATCH, trk.m_nChannel, nVal, 0);
+						break;
+					case TT_CHAN_AFT:
+						evt.m_dwEvent = MakeMidiMsg(CHAN_AFT, trk.m_nChannel, nVal, 0);
+						break;
+					case TT_WHEEL:
+						evt.m_dwEvent = MakeMidiMsg(WHEEL, trk.m_nChannel, trk.m_nNote, nVal);
+						break;
+					default:
+						NODEFAULTCASE;
 					}
-					nDuration = max(nDuration, 1);	// keep duration above zero
-					evt.m_dwTime = nCBStart + nEvtTime + nDuration;	// absolute time
-					evt.m_dwEvent &= ~0xff0000;	// zero note's velocity
-					m_arrNoteOff.InsertSorted(evt);	// add pending note off to array
+					m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
 				}
 			}
 		}
