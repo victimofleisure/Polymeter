@@ -64,13 +64,13 @@ void CPropertiesBar::InitPropList(const CProperties& Props)
 
 void CPropertiesBar::CMyPropertiesGridCtrl::OnPropertyChanged(CMFCPropertyGridProperty* pProp) const
 {
-	CValidPropertyGridCtrl::OnPropertyChanged(pProp);
+	CPropertiesGridCtrl::OnPropertyChanged(pProp);
 	AfxGetMainWnd()->SendMessage(UWM_PROPERTY_CHANGE, pProp->GetData(), reinterpret_cast<LPARAM>(GetParent()));
 }
 
 void CPropertiesBar::CMyPropertiesGridCtrl::OnChangeSelection(CMFCPropertyGridProperty* pNewSel, CMFCPropertyGridProperty* pOldSel)
 {
-	CValidPropertyGridCtrl::OnChangeSelection(pNewSel, pOldSel);
+	CPropertiesGridCtrl::OnChangeSelection(pNewSel, pOldSel);
 	int	iProp;
 	if (pNewSel != NULL)
 		iProp = INT64TO32(pNewSel->GetData());

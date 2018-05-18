@@ -59,4 +59,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd);
 	afx_msg LRESULT OnTrackScroll(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnEditLength();
+	afx_msg void OnUpdateEditLength(CCmdUI *pCmdUI);
 };

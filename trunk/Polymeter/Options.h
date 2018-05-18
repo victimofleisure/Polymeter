@@ -54,4 +54,6 @@ public:
 	virtual	CString	GetGroupName(int iGroup) const;
 	virtual	int		GetOptionCount(int iProp) const;
 	virtual	CString	GetOptionName(int iProp, int iOption) const;
+	virtual	void	GetProperty(int iProp, CComVariant& var) const;
+	virtual	void	SetProperty(int iProp, const CComVariant& var);
 };

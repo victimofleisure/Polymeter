@@ -44,6 +44,7 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_MULTI_TRACK_PROP,	1},
 	{UCODE_TRACK_NAME,			1},
 	{UCODE_TRACK_STEP,			1},
+	{UCODE_MASTER_PROP,			0.1f},
 	{UCODE_CUT_TRACKS,			1},
 	{UCODE_PASTE_TRACKS,		2},
 	{UCODE_INSERT_TRACKS,		1},
@@ -51,7 +52,6 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_MOVE_TRACKS,			2},
 	{UCODE_CHANNEL_PROP,		0.1f},
 	{UCODE_MULTI_CHANNEL_PROP,	0.1f},
-	{UCODE_MASTER_PROP,			0.1f},
 	{UCODE_TRACK_SORT,			0.1f},
 	{UCODE_MULTI_STEP_RECT,		1},
 	{UCODE_CUT_STEPS,			1},
@@ -59,6 +59,9 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_INSERT_STEPS,		1},
 	{UCODE_DELETE_STEPS,		1},
 	{UCODE_VELOCITY,			0.1f},
+	{UCODE_REVERSE,				0.1f},
+	{UCODE_REVERSE_RECT,		0.1f},
+	{UCODE_ROTATE,				0.1f},
 };
 
 CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
@@ -216,6 +219,13 @@ CString	CTrackUndoTest::PrintSelection(CIntArrayEx& arrSelection) const
 	return(str);
 }
 
+CString CTrackUndoTest::PrintSelection(CRect& rSelection) const
+{
+	CString	str;
+	str.Format(_T("(%d %d %d %d)"), rSelection.left, rSelection.top, rSelection.right, rSelection.bottom);
+	return(str);
+}
+
 // NOTE: if track members are reordered, these defines must be updated
 #define TRACK_VAR_FIRST m_nChannel
 #define TRACK_VAR_LAST m_bMute
@@ -306,6 +316,18 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			PRINTF(_T("%s %d %d\n"), sUndoTitle, iTrack, iStep);
 		}
 		break;
+	case UCODE_MASTER_PROP:
+		{
+			int	iProp = Random(CMasterProps::PROPERTIES);
+			m_pDoc->NotifyUndoableEdit(iProp, UCODE_MASTER_PROP);
+			CComVariant	var;
+			MakeRandomMasterProperty(iProp, var);
+			m_pDoc->SetProperty(iProp, var);
+			CPolymeterDoc::CPropHint	hint(0, iProp);
+			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MASTER_PROP, &hint);
+			PRINTF(_T("%s %d\n"), sUndoTitle, iProp);
+		}
+		break;
 	case UCODE_CUT_TRACKS:
 		{
 			CIntArrayEx	arrSelection;
@@ -390,18 +412,6 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			PRINTF(_T("%s %d %s\n"), sUndoTitle, iProp, PrintSelection(arrSelection));
 		}
 		break;
-	case UCODE_MASTER_PROP:
-		{
-			int	iProp = Random(CMasterProps::PROPERTIES);
-			m_pDoc->NotifyUndoableEdit(iProp, UCODE_MASTER_PROP);
-			CComVariant	var;
-			MakeRandomMasterProperty(iProp, var);
-			m_pDoc->SetProperty(iProp, var);
-			CPolymeterDoc::CPropHint	hint(0, iProp);
-			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MASTER_PROP, &hint);
-			PRINTF(_T("%s %d\n"), sUndoTitle, iProp);
-		}
-		break;
 	case UCODE_TRACK_SORT:
 		{
 			CIntArrayEx	arrSelection;
@@ -434,7 +444,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 				return(DISABLED);
 			if (!m_pDoc->DeleteSteps(rSelection, UndoCode == UCODE_CUT_STEPS))
 				return(DISABLED);
-			PRINTF(_T("%s (%d %d %d %d)\n"), sUndoTitle, rSelection.left, rSelection.top, rSelection.right, rSelection.bottom);
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(rSelection));
 		}
 		break;
 	case UCODE_PASTE_STEPS:
@@ -447,7 +457,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			CRect	rSelection(ptStep, CSize(1, 1));
 			if (!m_pDoc->PasteSteps(rSelection))
 				return(DISABLED);
-			PRINTF(_T("%s (%d %d %d %d)\n"), sUndoTitle, rSelection.left, rSelection.top, rSelection.right, rSelection.bottom);
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(rSelection));
 		}
 		break;
 	case UCODE_INSERT_STEPS:
@@ -457,7 +467,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 				return(DISABLED);
 			if (!m_pDoc->InsertStep(rSelection))
 				return(DISABLED);
-			PRINTF(_T("%s (%d %d %d %d)\n"), sUndoTitle, rSelection.left, rSelection.top, rSelection.right, rSelection.bottom);
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(rSelection));
 		}
 		break;
 	case UCODE_VELOCITY:
@@ -476,6 +486,37 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 				}
 			}
 			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
+		}
+		break;
+	case UCODE_REVERSE:
+		{
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
+				return(DISABLED);
+			m_pDoc->m_arrTrackSel = arrSelection;
+			m_pDoc->ReverseSteps();
+			PRINTF(_T("%s\n"), sUndoTitle);
+		}
+		break;
+	case UCODE_REVERSE_RECT:
+		{
+			CRect	rSelection;
+			if (!MakeRandomStepSelection(rSelection))
+				return(DISABLED);
+			m_pDoc->ReverseSteps(rSelection);
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(rSelection));
+		}
+		break;
+	case UCODE_ROTATE:
+		{
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
+				return(DISABLED);
+			m_pDoc->m_arrTrackSel = arrSelection;
+			int	nMaxRot = 16;
+			int	nRotSteps = Random(nMaxRot * 2) - nMaxRot;
+			m_pDoc->RotateSteps(nRotSteps);
+			PRINTF(_T("%s %d\n"), sUndoTitle, nRotSteps);
 		}
 		break;
 	default:

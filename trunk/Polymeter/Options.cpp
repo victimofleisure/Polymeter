@@ -109,6 +109,28 @@ CString	COptions::GetOptionName(int iProp, int iOption) const
 	}
 }
 
+void COptions::GetProperty(int iProp, CComVariant& var) const
+{
+	switch (iProp) {
+	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
+	case PROP_##group##_##name: var = CComVariant(m_##group##_##name); break;
+	#include "OptionsDef.h"	// generate code to get members from variant
+	default:
+		NODEFAULTCASE;
+	}
+}
+
+void COptions::SetProperty(int iProp, const CComVariant& var)
+{
+	switch (iProp) {
+	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
+		case PROP_##group##_##name: GetVariant(var, m_##group##_##name); break;
+	#include "OptionsDef.h"	// generate code to set members from variant
+	default:
+		NODEFAULTCASE;
+	}
+}
+
 void COptions::ReadProperties()
 {
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \

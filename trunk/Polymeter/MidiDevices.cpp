@@ -84,15 +84,55 @@ void CMidiDevices::Write()
 	}
 }
 
-void CMidiDevices::Dump()
+void CMidiDevices::Dump() const
 {
-	static const LPCTSTR	szType[DEVICE_TYPES] = {_T("In"), _T("Out")};
 	for (int iType = 0; iType < DEVICE_TYPES; iType++) {	// for each device type
-		_tprintf(_T("%s:\n"), szType[iType]);
+		_tprintf(_T("%s:\n"), GetTypeCaption(iType));
 		int	nDevs = GetCount(iType);
 		for (int iDev = 0; iDev < nDevs; iDev++) {	// for each device
-			_tprintf(_T("%d: '%s' '%s'\n"), iDev, GetName(iType), GetID(iType));
+			_tprintf(_T("%d: '%s' '%s'\n"), iDev, GetName(iType, iDev), GetID(iType, iDev));
 		}
+	}
+}
+
+void CMidiDevices::Dump(CString& str, bool bShowIDs) const
+{
+	str.Empty();
+	CString	s;
+	for (int iType = 0; iType < DEVICE_TYPES; iType++) {	// for each device type
+		int	nDevs = GetCount(iType);
+		s.Format(_T("%s\t%d\n"), GetTypeCaption(iType), nDevs);
+		str += s;
+		for (int iDev = 0; iDev < nDevs; iDev++) {	// for each device
+			if (bShowIDs)
+				s.Format(_T("%d\t%s\t%s\n"), iDev, GetName(iType, iDev), GetID(iType, iDev));
+			else
+				s.Format(_T("%d\t%s\n"), iDev, GetName(iType, iDev));
+			str += s;
+		}
+	}
+}
+
+void CMidiDevices::DumpSystemState(CString& str) const
+{
+	str.Empty();
+	CString	s;
+	CStringArray	arrDevName;
+	CMidiIn::GetDeviceNames(arrDevName);
+	int	nIns = INT64TO32(arrDevName.GetSize());
+	s.Format(_T("%s\t%d\n"), GetTypeCaption(INPUT), nIns);
+	str += s;
+	for (int iIn = 0; iIn < nIns; iIn++) {	// for each input device
+		s.Format(_T("%d\t%s\n"), iIn, arrDevName[iIn]);
+		str += s;
+	}
+	CMidiOut::GetDeviceNames(arrDevName);
+	int	nOuts = INT64TO32(arrDevName.GetSize());
+	s.Format(_T("%s\t%d\n"), GetTypeCaption(OUTPUT), nOuts);
+	str += s;
+	for (int iOut = 0; iOut < nOuts; iOut++) {	// for each output device
+		s.Format(_T("%d\t%s\n"), iOut, arrDevName[iOut]);
+		str += s;
 	}
 }
 
@@ -120,7 +160,7 @@ bool CMidiDevices::OnDeviceChange(const CMidiDevices& devsPrev, UINT& nChangeMas
 			if (!devsPrev.IsEmpty(iType)) {	// if device was previously selected
 				SetIdx(iType, m_arrDev[iType].Find(devsPrev.m_arrDev[iType]));
 				if (IsEmpty(iType)) {	// if device is currently missing
-					sMsg += LDS(m_nDevCaption[iType]) + _T(":\t") + devsPrev.GetName(iType) + '\n';
+					sMsg += GetTypeCaption(iType) + _T(":\t") + devsPrev.GetName(iType) + '\n';
 					nChangeMask |= (1 << iType);	// mark device as changed
 				}
 			}

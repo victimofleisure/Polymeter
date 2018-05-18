@@ -106,6 +106,8 @@ BEGIN
     BUTTON      ID_VIEW_PLAY
     BUTTON      ID_VIEW_PAUSE
     SEPARATOR
+    BUTTON      ID_VIEW_VELOCITIES
+    SEPARATOR
     BUTTON      ID_APP_ABOUT
 END
 
@@ -126,6 +128,8 @@ BEGIN
     SEPARATOR
     BUTTON      ID_VIEW_PLAY
     BUTTON      ID_VIEW_PAUSE
+    SEPARATOR
+    BUTTON      ID_VIEW_VELOCITIES
     SEPARATOR
     BUTTON      ID_APP_ABOUT
 END
@@ -175,6 +179,7 @@ BEGIN
     POPUP "&Tools"
     BEGIN
         MENUITEM "&Options...",                 ID_TOOLS_OPTIONS
+        MENUITEM "&Devices",                    ID_TOOLS_DEVICES
     END
     POPUP "&Help"
     BEGIN
@@ -211,7 +216,15 @@ BEGIN
         MENUITEM "&Delete",                     ID_EDIT_DELETE
         MENUITEM SEPARATOR
         MENUITEM "Select &All",                 ID_EDIT_SELECT_ALL
+        MENUITEM SEPARATOR
         MENUITEM "&Length",                     ID_EDIT_LENGTH
+        POPUP "R&otate"
+        BEGIN
+            MENUITEM "&Left",                       ID_EDIT_ROTATE_LEFT
+            MENUITEM "&Right",                      ID_EDIT_ROTATE_RIGHT
+        END
+        MENUITEM "Re&verse",                    ID_EDIT_REVERSE
+        MENUITEM SEPARATOR
         MENUITEM "Track &Sort...",              ID_EDIT_TRACK_SORT
     END
     POPUP "&View"
@@ -246,7 +259,7 @@ BEGIN
         MENUITEM "Zoom &Out",                   ID_VIEW_ZOOM_OUT
         MENUITEM "Zoom &Reset",                 ID_VIEW_ZOOM_RESET
         MENUITEM SEPARATOR
-        MENUITEM "&Velocities",                 ID_VIEW_SHOW_VELOCITIES
+        MENUITEM "&Velocities",                 ID_VIEW_VELOCITIES
     END
     POPUP "&Tools"
     BEGIN
@@ -254,6 +267,7 @@ BEGIN
         MENUITEM "Time to &Repeat",             ID_TOOLS_TIME_TO_REPEAT
         MENUITEM SEPARATOR
         MENUITEM "&Options...",                 ID_TOOLS_OPTIONS
+        MENUITEM "&Devices",                    ID_TOOLS_DEVICES
     END
     POPUP "&Window"
     BEGIN
@@ -306,8 +320,12 @@ BEGIN
     "X",            ID_EDIT_CUT,            VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      ID_EDIT_DELETE,         VIRTKEY, NOINVERT
     VK_INSERT,      ID_EDIT_INSERT,         VIRTKEY, NOINVERT
+    "L",            ID_EDIT_LENGTH,         VIRTKEY, CONTROL, NOINVERT
     "V",            ID_EDIT_PASTE,          VIRTKEY, CONTROL, NOINVERT
     "Y",            ID_EDIT_REDO,           VIRTKEY, CONTROL, NOINVERT
+    "3",            ID_EDIT_REVERSE,        VIRTKEY, CONTROL, NOINVERT
+    "1",            ID_EDIT_ROTATE_LEFT,    VIRTKEY, CONTROL, NOINVERT
+    "2",            ID_EDIT_ROTATE_RIGHT,   VIRTKEY, CONTROL, NOINVERT
     "A",            ID_EDIT_SELECT_ALL,     VIRTKEY, CONTROL, NOINVERT
     "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL, NOINVERT
     "E",            ID_FILE_EXPORT,         VIRTKEY, CONTROL, NOINVERT
@@ -320,11 +338,10 @@ BEGIN
     VK_OEM_2,       ID_VIEW_GO_TO_POSITION, VIRTKEY, CONTROL, NOINVERT
     VK_SPACE,       ID_VIEW_PAUSE,          VIRTKEY, SHIFT, CONTROL, NOINVERT
     VK_SPACE,       ID_VIEW_PLAY,           VIRTKEY, CONTROL, NOINVERT
-    VK_F7,          ID_VIEW_SHOW_VELOCITIES, VIRTKEY, NOINVERT
+    VK_F7,          ID_VIEW_VELOCITIES,     VIRTKEY, NOINVERT
     VK_OEM_PLUS,    ID_VIEW_ZOOM_IN,        VIRTKEY, CONTROL, NOINVERT
     VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
     "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
-    "L",            ID_EDIT_LENGTH,         VIRTKEY, CONTROL, NOINVERT
 END
 
 
@@ -567,9 +584,13 @@ BEGIN
     IDS_EDIT_PASTE_STEPS    "Paste Steps"
     IDS_EDIT_PASTE_TRACKS   "Paste Tracks"
     IDS_EDIT_REDO_FMT       "&Redo %s"
+    IDS_EDIT_REVERSE        "Reverse"
+    IDS_EDIT_ROTATE         "Rotate"
     IDS_EDIT_TRACK_SORT     "Track Sort"
     IDS_EDIT_UNDO_FMT       "&Undo %s"
     IDS_EDIT_VELOCITY       "Velocity"
+    IDS_ERR_TRACK_LENGTH_CURSOR 
+                            "Cursor must be over track in step view to indicate desired length"
     IDS_EXPORT              "Export"
     IDS_EXPORT_BAD_DURATION "Invalid duration. Time format is HH:MM:SS and duration must be greater than zero."
     IDS_EXPORT_EMPTY_FILE   "Nothing to export."
@@ -577,13 +598,13 @@ BEGIN
     IDS_EXPORT_FILE_FILTER  "MIDI Files (*.mid)|*.mid|All Files (*.*)|*.*||"
     IDS_EXPORT_TOO_MANY_TRACKS "Too many tracks."
     IDS_HLINK_CANT_LAUNCH   "Can't launch browser."
-    IDS_MIDI_DEVICES_MISSING "MIDI devices are missing."
-    IDS_MIDI_INPUT          "Input"
-    IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDI_DEVICES_MISSING "MIDI devices are missing."
+    IDS_MIDI_INPUT          "Input"
+    IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
     IDS_MIDI_OUTPUT         "Output"
     IDS_NONE                "<None>"
     IDS_OPT_DESC_General_bCheckForUpdates 
@@ -600,13 +621,13 @@ BEGIN
     IDS_OPT_GROUP_General   "General"
     IDS_OPT_GROUP_Midi      "MIDI"
     IDS_OPT_GROUP_View      "View"
-    IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
-    IDS_OPT_NAME_Midi_bThru "Thru"
-    IDS_OPT_NAME_Midi_iInputDevice "Input Device"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
+    IDS_OPT_NAME_Midi_bThru "Thru"
+    IDS_OPT_NAME_Midi_iInputDevice "Input Device"
     IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
     IDS_OPT_NAME_Midi_nBufferSize "Buffer Size"
     IDS_OPT_NAME_Midi_nLatency "Latency"
@@ -620,13 +641,13 @@ BEGIN
     IDS_PROPERTIES_BAR      "Properties"
     IDS_PROPS_MORE_COLORS   "More Colors..."
     IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
-    IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format"
-    IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
-    IDS_SEQ_MIDI_ERROR      "MIDI error %d."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format"
+    IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
+    IDS_SEQ_MIDI_ERROR      "MIDI error %d."
     IDS_SORT_DIR_ASCENDING  "Ascending"
     IDS_SORT_DIR_DESCENDING "Descending"
     IDS_STATUS_PANE1        "Pane 1"
@@ -640,13 +661,13 @@ BEGIN
     IDS_TRACK_TYPE_KEY_AFT  "Key Aftertouch"
     IDS_TRACK_TYPE_NOTE     "Note"
     IDS_TRACK_TYPE_PATCH    "Patch"
-    IDS_TRACK_TYPE_WHEEL    "Wheel"
-    IDS_TRK_Channel         "Channel"
-    IDS_TRK_Duration        "Duration"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRACK_TYPE_WHEEL    "Wheel"
+    IDS_TRK_Channel         "Channel"
+    IDS_TRK_Duration        "Duration"
     IDS_TRK_Length          "Length"
     IDS_TRK_Mute            "Mute"
     IDS_TRK_Name            "Name"
@@ -673,27 +694,31 @@ BEGIN
     ID_APP_HOME_PAGE        "Go to the Polymeter home page\nHome Page"
     ID_EDIT_DELETE          "Delete the selection\nDelete"
     ID_EDIT_INSERT          "Insert a new item\nInsert"
+    ID_EDIT_LENGTH          "Set length of one or more tracks\nLength"
+    ID_EDIT_REVERSE         "Reverse selected tracks or steps\nReverse"
+    ID_EDIT_ROTATE_LEFT     "Rotate selected tracks left one step\nRotate Left"
+    ID_EDIT_ROTATE_RIGHT    "Rotate selected tracks right one step\nRotate Right"
     ID_EDIT_TRACK_SORT      "Sort selected tracks\nTrack Sort"
     ID_FILE_EXPORT          "Export MIDI file\nExport"
     ID_INDICATOR_SONG_POS   "000000000.000"
+    ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
     ID_TOOLS_OPTIONS        "Edit options\nOptions"
-    ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
-    ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for selected tracks to repeat\nTime to Repeat"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
+    ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for selected tracks to repeat\nTime to Repeat"
     ID_VIEW_CUSTOMIZE       " "
     ID_VIEW_GO_TO_POSITION  "Go to specified position within song\nGo To Position"
     ID_VIEW_PAUSE           "Pause or continue playback\nPause"
-    ID_VIEW_PLAY            "Start or stop playback\nPlay"
-    ID_VIEW_SHOW_VELOCITIES "Show or hide velocities\nVelocitiies"
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_PLAY            "Start or stop playback\nPlay"
+    ID_VIEW_VELOCITIES      "Show or hide velocities pane\nVelocities"
     ID_WINDOW_MANAGER       "&Windows..."
-    ID_EDIT_LENGTH          "Set track length\nLength"
 END
 
 STRINGTABLE

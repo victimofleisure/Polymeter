@@ -36,6 +36,9 @@ protected: // create from serialization only
 	enum {
 		MIN_BEAT_LINE_SPACING = 4,
 	};
+	enum {	// hit test flags
+		HTF_NO_STEP_RANGE	= 0x01,		// don't enforce step range
+	};
 
 // Attributes
 public:
@@ -51,9 +54,14 @@ public:
 	double	GetStepWidthEx(int iTrack) const;
 	COLORREF	GetBeatLineColor() const;
 	bool	IsSelected(int iTrack) const;
+	bool	HaveStepSelection() const;
+	const CRect&	GetStepSelection();
 
 // Operations
 public:
+	void	ResetStepSelection();
+	int		HitTest(CPoint point, int& iStep, UINT nFlags = 0) const;
+	void	OnEditLength(CPoint point);
 
 // Overrides
 public:
@@ -95,9 +103,6 @@ protected:
 		DS_TRACK,			// monitoring for start of drag
 		DS_DRAG,			// drag in progress
 	};
-	enum {	// hit test flags
-		HTF_NO_STEP_RANGE	= 0x01,		// don't enforce step range
-	};
 	static const COLORREF	m_arrStepColor[];
 	static const COLORREF	m_clrViewBkgnd;
 	static const COLORREF	m_clrStepOutline;
@@ -135,8 +140,6 @@ protected:
 	void	UpdateGrid(int iTrack);
 	void	UpdateStep(int iTrack, int iStep);
 	void	UpdateSteps(const CRect& rSelection);
-	bool	HaveStepSelection() const;
-	void	ResetStepSelection();
 	bool	HaveEitherSelection() const;
 	void	EndDrag();
 	void	SetCurStep(int iTrack, int iStep);
@@ -151,7 +154,6 @@ protected:
 	void	SetZoom(int nZoom, bool bRedraw = true);
 	void	Zoom(int nZoom);
 	void	Zoom(int nZoom, int nOriginX);
-	int		HitTest(CPoint point, int& iStep, UINT nFlags = 0) const;
 	int		GetStepColorIdx(int iTrack, int iStep, STEP nStep, bool bMute) const;
 	static	USHORT	Make16BitColor(BYTE nIntensity);
 	static	void	InitTriangleVertex(TRIVERTEX& tv, int x, int y, COLORREF clr);
@@ -189,7 +191,8 @@ protected:
 	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
 	afx_msg void OnEditDelete();
 	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
-	afx_msg void OnEditLength();
+	afx_msg void OnEditReverse();
+	afx_msg void OnUpdateEditReverse(CCmdUI *pCmdUI);
 };
 
 inline CPolymeterDoc* CStepView::GetDocument() const
@@ -240,4 +243,9 @@ inline double CStepView::GetStepWidthEx(int iTrack) const
 inline bool CStepView::IsSelected(int iTrack) const
 {
 	return m_arrTrackState[iTrack].m_bIsSelected;
+}
+
+inline const CRect& CStepView::GetStepSelection()
+{
+	return m_rStepSel;
 }

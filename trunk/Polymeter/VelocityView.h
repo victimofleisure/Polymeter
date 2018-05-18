@@ -38,6 +38,8 @@ public:
 
 // Operations
 public:
+	void	ShowDataTip(bool bShow);
+	bool	HaveDataTip() const;
 
 // Overrides
 public:
@@ -56,6 +58,7 @@ protected:
 // Constants
 	enum {
 		m_nBarBorder = 1,
+		DATA_TIP = 1,
 	};
 
 // Member data
@@ -63,9 +66,14 @@ protected:
 	bool	m_bIsModified;		// true if a velocity was modified
 	CPoint	m_ptAnchor;			// anchor point during dragging
 	CPoint	m_ptPrev;			// previous point during dragging
+	CToolTipCtrl	m_DataTip;	// tool tip for showing velocities
 
 // Helpers
 	void	UpdateVelocities(const CRect& rSpan);
+	int		HitTest(CPoint point, int& iStep) const;
+	bool	GetStepVal(CPoint point, int& nMinVal, int& nMaxVal) const;
+	void	UpdateDataTip(CPoint point);
+	void	UpdateDragDataTip(int y);
 
 // Generated message map functionsq
 protected:
@@ -84,4 +92,9 @@ protected:
 inline CPolymeterDoc* CVelocityView::GetDocument() const
 {
 	return reinterpret_cast<CPolymeterDoc*>(m_pDocument);
+}
+
+inline bool CVelocityView::HaveDataTip() const
+{
+	return m_DataTip.m_hWnd != 0;
 }

@@ -172,6 +172,10 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		{
 			const CPolymeterDoc::CRectSelPropHint *pRectSelHint = static_cast<CPolymeterDoc::CRectSelPropHint *>(pHint);
 			UpdateSteps(pRectSelHint->m_rSelection);
+			if (pRectSelHint->m_bSelect) {
+				ResetStepSelection();
+				m_rStepSel = pRectSelHint->m_rSelection;
+			}
 		}
 		break;
 	case CPolymeterDoc::HINT_STEPS_ARRAY:
@@ -186,11 +190,21 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				UpdateSongPositionNoRedraw(pRectSelHint->m_rSelection);	// update song position, no redraw
 		}
 		break;
+	case CPolymeterDoc::HINT_MULTI_TRACK_STEPS:
+		{
+			const CPolymeterDoc::CMultiItemPropHint *pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
+			UpdateTracks(pPropHint->m_arrSelection);
+		}
+		break;
 	case CPolymeterDoc::HINT_VELOCITY:
 		{
 			const CPolymeterDoc::CMultiItemPropHint *pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
 			UpdateTracks(pPropHint->m_arrSelection);
 		}
+		break;
+	case CPolymeterDoc::HINT_TIME_DIV:
+		UpdateViewSize();
+		Invalidate();
 		break;
 	}
 }
@@ -774,11 +788,51 @@ void CStepView::DispatchToDocument()
 	GetDocument()->OnCmdMsg(LOWORD(pMsg->wParam), CN_COMMAND, NULL, NULL);	// low word is command ID
 }
 
+void CStepView::OnEditLength(CPoint point)
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	if (HaveStepSelection()) {	// if step selection exists
+		pDoc->SetTrackLength(m_rStepSel, m_rStepSel.left + 1);
+		ResetStepSelection();
+	} else {	// no step selection
+		int	nErrMsg = 0;
+		CRect	rClient;
+		GetClientRect(rClient);
+		if (rClient.PtInRect(point)) {
+			int	iStep;
+			int	iTrack = HitTest(point, iStep, CStepView::HTF_NO_STEP_RANGE);
+			if (iTrack >= 0 && iStep >= 0) {
+				int	nNewLength = iStep + 1;
+				int	nSels = pDoc->GetSelectedCount();
+				if (nSels) {	// if track selection exists
+					int	nTicks = nNewLength * pDoc->m_Seq.GetQuant(iTrack);
+					CIntArrayEx	arrLength;
+					arrLength.SetSize(nSels);
+					for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+						int	iSelTrack = pDoc->m_arrTrackSel[iSel];
+						arrLength[iSel] = max(nTicks / pDoc->m_Seq.GetQuant(iSelTrack), 1);
+					}
+					pDoc->SetTrackLength(arrLength);
+				} else {	// no track selection
+					pDoc->SetTrackLength(iTrack, nNewLength);
+				}
+			} else {
+				nErrMsg = IDS_ERR_TRACK_LENGTH_CURSOR;
+			}
+		} else {
+			nErrMsg = IDS_ERR_TRACK_LENGTH_CURSOR;
+		}
+		if (nErrMsg)
+			AfxMessageBox(nErrMsg);
+	}
+}
+
 // CStepView message map
 
 BEGIN_MESSAGE_MAP(CStepView, CScrollView)
 	ON_WM_CREATE()
 	ON_MESSAGE(UWM_DELAYED_CREATE, OnDelayedCreate)
+	ON_WM_SIZE()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_COMMAND(ID_VIEW_ZOOM_IN, OnViewZoomIn)
@@ -801,8 +855,8 @@ BEGIN_MESSAGE_MAP(CStepView, CScrollView)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
-	ON_WM_SIZE()
-	ON_COMMAND(ID_EDIT_LENGTH, OnEditLength)
+	ON_COMMAND(ID_EDIT_REVERSE, OnEditReverse)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_REVERSE, OnUpdateEditReverse)
 END_MESSAGE_MAP()
 
 // CStepView message handlers
@@ -1094,18 +1148,15 @@ void CStepView::OnUpdateEditDelete(CCmdUI *pCmdUI)
 	pCmdUI->Enable(HaveEitherSelection());
 }
 
-void CStepView::OnEditLength()
+void CStepView::OnEditReverse()
 {
-	CPolymeterDoc	*pDoc = GetDocument();
-	if (HaveStepSelection()) {	// if step selection exists
-		pDoc->SetTrackLength(m_rStepSel, m_rStepSel.left + 1);
-	} else {	// no step selection
-		CPoint	point;
-		GetCursorPos(&point);
-		ScreenToClient(&point);
-		int	iStep;
-		int	iTrack = HitTest(point, iStep, HTF_NO_STEP_RANGE);
-		if (iTrack >= 0 && iStep >= 0)
-			pDoc->SetTrackLength(iTrack, iStep + 1);
-	}
+	if (HaveStepSelection())
+		GetDocument()->ReverseSteps(m_rStepSel);
+	else
+		GetDocument()->ReverseSteps();
+}
+
+void CStepView::OnUpdateEditReverse(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(HaveEitherSelection());
 }

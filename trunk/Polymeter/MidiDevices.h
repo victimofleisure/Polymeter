@@ -42,12 +42,15 @@ public:
 	bool	IsValid(int iType, int iDev) const;
 	CString	GetName(int iType, int iDev) const;
 	CString	GetID(int iType, int iDev) const;
+	static	CString	GetTypeCaption(int iType);
 
 // Operations
 	void	Update();
 	void	Read();
 	void	Write();
-	void	Dump();
+	void	Dump() const;
+	void	Dump(CString& str, bool bShowIDs = false) const;
+	void	DumpSystemState(CString& str) const;
 	bool	OnDeviceChange(UINT& nChangeMask);
 	bool	operator==(const CMidiDevices& devs) const;
 	bool	operator!=(const CMidiDevices& devs) const;
@@ -149,4 +152,9 @@ inline CString CMidiDevices::GetName(int iType, int iDev) const
 inline CString CMidiDevices::GetID(int iType, int iDev) const
 {
 	return m_arrDev[iType].GetID(iDev);
+}
+
+inline CString CMidiDevices::GetTypeCaption(int iType)
+{
+	return LDS(m_nDevCaption[iType]);
 }

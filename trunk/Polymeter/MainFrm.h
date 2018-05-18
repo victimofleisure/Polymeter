@@ -105,6 +105,7 @@ protected:
 	afx_msg LRESULT	OnMidiError(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT	OnDeviceNodeChange(WPARAM wParam, LPARAM lParam);
 	afx_msg BOOL OnDeviceChange(UINT nEventType, W64ULONG dwData);
+	afx_msg void OnToolsDevices();
 };
 
 inline HACCEL CMainFrame::GetAccelTable() const
@@ -132,4 +133,3 @@ inline CChannelsBar& CMainFrame::GetChannelsBar()
 {
 	return m_wndChannelsBar;
 }
-

@@ -531,6 +531,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_MESSAGE(UWM_MIDI_ERROR, OnMidiError)
 	ON_MESSAGE(UWM_DEVICE_NODE_CHANGE, OnDeviceNodeChange)
 	ON_WM_DEVICECHANGE()
+	ON_COMMAND(ID_TOOLS_DEVICES, OnToolsDevices)
 END_MESSAGE_MAP()
 
 // CMainFrame message handlers
@@ -703,6 +704,7 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 			ASSERT(!pDoc->m_Seq.IsPlaying());
 			// convert time division preset index to time division value in ticks
 			pDoc->m_Seq.SetTimeDivision(CMasterProps::GetTimeDivisionTicks(pDoc->m_nTimeDiv));
+			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TIME_DIV);
 			break;
 		}
 	}
@@ -773,4 +775,11 @@ BOOL CMainFrame::OnDeviceChange(UINT nEventType, W64ULONG dwData)
 		PostMessage(UWM_DEVICE_NODE_CHANGE);
 	}
 	return retc;	// true to allow device change
+}
+
+void CMainFrame::OnToolsDevices()
+{
+	CString	sMsg;
+	theApp.m_midiDevs.DumpSystemState(sMsg);
+	AfxMessageBox(sMsg, MB_ICONINFORMATION);
 }

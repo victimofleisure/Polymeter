@@ -52,5 +52,6 @@ protected:
 	bool	GetRandomStep(CPoint& ptStep) const;
 	bool	MakeRandomStepSelection(CRect& rSelection) const;
 	CString	PrintSelection(CIntArrayEx& arrSelection) const;
+	CString	PrintSelection(CRect& rSelection) const;
 	static	int IntArraySortCompare(const void *arg1, const void *arg2);
 };

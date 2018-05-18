@@ -173,8 +173,8 @@ BEGIN_MESSAGE_MAP(CStepParent, CView)
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_WM_MOUSEWHEEL()
-	ON_COMMAND(ID_VIEW_SHOW_VELOCITIES, OnViewShowVelocities)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_SHOW_VELOCITIES, OnUpdateViewShowVelocities)
+	ON_COMMAND(ID_VIEW_VELOCITIES, OnViewVelocities)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_VELOCITIES, OnUpdateViewVelocities)
 END_MESSAGE_MAP()
 
 // CStepParent message handlers
@@ -366,12 +366,12 @@ BOOL CStepParent::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 	return m_pStepView->SendMessage(pMsg->message, pMsg->wParam, pMsg->lParam) != 0;	// forward to step view
 }
 
-void CStepParent::OnViewShowVelocities()
+void CStepParent::OnViewVelocities()
 {
 	ShowVelocityView(m_bShowVelos ^ 1);
 }
 
-void CStepParent::OnUpdateViewShowVelocities(CCmdUI *pCmdUI)
+void CStepParent::OnUpdateViewVelocities(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bShowVelos);
 }

@@ -10,6 +10,7 @@
 		00		01sep13	initial version
 		01		07may14	in CMMTimer::Create, fix dwUser type
 		02		27mar18	in GetErrorString, release buffer
+		03		17may18	output GetDeviceNames was using input struct size
  
 		wrap system MIDI and multimedia timer APIs
  
@@ -117,7 +118,7 @@ MMRESULT CMidiOut::GetDeviceNames(CStringArray& DevList)
 	DevList.SetSize(nDevs);
 	MMRESULT	retc = MMSYSERR_NOERROR;
 	for (int iDev = 0; iDev < nDevs; iDev++) {
-		MMRESULT	mr = midiOutGetDevCaps(iDev, &caps, sizeof(MIDIINCAPS));
+		MMRESULT	mr = midiOutGetDevCaps(iDev, &caps, sizeof(MIDIOUTCAPS));
 		if (MIDI_SUCCEEDED(mr))
 			DevList[iDev] = caps.szPname;
 		else

@@ -16,6 +16,8 @@
 		06		10apr18	in InitPropList's file case, handle ANSI string case
 		07		16apr18	in ValidateItemData, use dynamic downcast
 		08		18apr18	add UpdateOptions
+		09		17may18	add enum property to allow duplicate options
+		10		17may18	add spin control for floating point values
 
 */
 
@@ -23,8 +25,13 @@
 #include "resource.h"
 #include "PropertiesGrid.h"
 #include "Properties.h"
+#include <math.h>
 
 IMPLEMENT_DYNAMIC(CValidPropertyGridCtrl, CMFCPropertyGridCtrl)
+
+// private constants copied from base class
+#define AFX_PROP_HAS_SPIN 0x0004
+#define AFX_UM_UPDATESPIN (WM_USER + 101)
 
 CValidPropertyGridCtrl::CValidPropertyGridCtrl()
 {
@@ -183,8 +190,109 @@ void CValidPropertyGridCtrl::TrackToolTip(CPoint point)
 	}
 }
 
+void CValidPropertyGridCtrl::SaveSubitemExpansion(CString sRegKey, const CMFCPropertyGridProperty *pProp) const
+{
+	CWinApp	*pApp = AfxGetApp();
+	int	nSubitems = pProp->GetSubItemsCount();
+	for (int iSubitem = 0; iSubitem < nSubitems; iSubitem++) {	// for each subitem
+		const CMFCPropertyGridProperty	*pSubitem = pProp->GetSubItem(iSubitem);
+		if (pSubitem->IsGroup()) {	// if subitem is a group
+			CString	sKey(CString(sRegKey) + '\\' + pProp->GetName());
+			VERIFY(pApp->WriteProfileInt(sKey, pSubitem->GetName(), pSubitem->IsExpanded()));
+			SaveSubitemExpansion(sKey, pSubitem);	// recurse into subitem
+		}
+	}
+}
+
+void CValidPropertyGridCtrl::RestoreSubitemExpansion(CString sRegKey, CMFCPropertyGridProperty *pProp) const
+{
+	CWinApp	*pApp = AfxGetApp();
+	int	nSubitems = pProp->GetSubItemsCount();
+	for (int iSubitem = 0; iSubitem < nSubitems; iSubitem++) {	// for each subitem
+		CMFCPropertyGridProperty	*pSubitem = pProp->GetSubItem(iSubitem);
+		if (pSubitem->IsGroup()) {	// if subitem is a group
+			CString	sKey(CString(sRegKey) + '\\' + pProp->GetName());
+			pSubitem->Expand(pApp->GetProfileInt(sKey, pSubitem->GetName(), TRUE));
+			RestoreSubitemExpansion(sKey, pSubitem);	// recurse into subitem
+		}
+	}
+}
+
+void CValidPropertyGridCtrl::SaveGroupExpansion(LPCTSTR szRegKey) const
+{
+	CWinApp	*pApp = AfxGetApp();
+	POSITION	pos = m_lstProps.GetHeadPosition();
+	while (pos != NULL) {	// for each top-level property
+		const CMFCPropertyGridProperty	*pProp = m_lstProps.GetNext(pos);
+		if (pProp->IsGroup()) {	// if property is a group
+			VERIFY(pApp->WriteProfileInt(szRegKey, pProp->GetName(), pProp->IsExpanded()));
+			SaveSubitemExpansion(szRegKey, pProp);	// recursively save subitem expansion
+		}
+	}
+}
+
+void CValidPropertyGridCtrl::RestoreGroupExpansion(LPCTSTR szRegKey) const
+{
+	CWinApp	*pApp = AfxGetApp();
+	POSITION	pos = m_lstProps.GetHeadPosition();
+	while (pos != NULL) {	// for each top-level property
+		CMFCPropertyGridProperty	*pProp = m_lstProps.GetNext(pos);
+		if (pProp->IsGroup()) {	// if property is a group
+			pProp->Expand(pApp->GetProfileInt(szRegKey, pProp->GetName(), TRUE));
+			RestoreSubitemExpansion(szRegKey, pProp);	// recursively restore subitem expansion
+		}
+	}
+}
+
+int CValidPropertyGridCtrl::GetActualDescriptionRows() const
+{
+	if (m_nDescrHeight >= 0 && m_nRowHeight > 0)	// if valid heights
+		return m_nDescrHeight / m_nRowHeight;
+	return m_nDescrRows;
+}
+
 BEGIN_MESSAGE_MAP(CValidPropertyGridCtrl, CMFCPropertyGridCtrl)
+	ON_NOTIFY(UDN_DELTAPOS, AFX_PROPLIST_ID_INPLACE, OnSpinDeltaPos)
 END_MESSAGE_MAP()
+
+void CValidPropertyGridCtrl::OnSpinDeltaPos(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMUPDOWN	pUpDown = reinterpret_cast<LPNMUPDOWN>(pNMHDR);
+	CMFCPropertyGridProperty* pProp = GetCurSel();	// get selected property
+	ASSERT(pProp != NULL);	// a property should be selected
+	if (pProp != NULL) {	// but check pointer anyway just in case
+		CComVariant	var = pProp->GetValue();	// get property's value
+		if (var.vt == VT_R4 || var.vt == VT_R8) {	// if value type is float or double
+			// The spin button has UDS_SETBUDDYINT style, and if the buddy window's string
+			// value has a decimal point, this message sets the value to one regardless of
+			// its current value. So we detect this case, round the value up or down to an
+			// integer, and set pResult non-zero to prevent the default position change.
+			double	fVal;
+			if (var.vt == VT_R4)	// if float
+				fVal = var.fltVal;
+			else	// double
+				fVal = var.dblVal;
+			CString	sVal;
+			sVal.Format(_T("%g"), fVal);	// same format our FormatProperty uses
+			if (sVal.Find('.') >= 0) {	// if string value has a decimal point
+				if (pUpDown->iDelta > 0)	// if incrementing
+					fVal = ceil(fVal);	// round up to integer
+				else	// decrementing
+					fVal = floor(fVal);	// round down to integer
+				if (var.vt == VT_R4)	// if float
+					var.fltVal = static_cast<float>(fVal);	// don't change type
+				else	// double
+					var.dblVal = fVal;
+				pProp->SetValue(var);	// update property's value
+				*pResult = 1;	// prevent default position change
+				return;	// don't post update spin message either
+			}
+		}
+	}
+	// default behavior, copied from base class
+	*pResult = 0;
+	PostMessage(AFX_UM_UPDATESPIN);
+}
 
 IMPLEMENT_DYNAMIC(CValidPropertyGridProperty, CMFCPropertyGridProperty)
 
@@ -269,65 +377,134 @@ CString CValidPropertyGridProperty::FormatProperty()
 	return CMFCPropertyGridProperty::FormatProperty();
 }
 
-void CValidPropertyGridCtrl::SaveSubitemExpansion(CString sRegKey, const CMFCPropertyGridProperty *pProp) const
+void CValidPropertyGridProperty::EnableSpinControl(BOOL bEnable, int nMin, int nMax)
 {
-	CWinApp	*pApp = AfxGetApp();
-	int	nSubitems = pProp->GetSubItemsCount();
-	for (int iSubitem = 0; iSubitem < nSubitems; iSubitem++) {	// for each subitem
-		const CMFCPropertyGridProperty	*pSubitem = pProp->GetSubItem(iSubitem);
-		if (pSubitem->IsGroup()) {	// if subitem is a group
-			CString	sKey(CString(sRegKey) + '\\' + pProp->GetName());
-			VERIFY(pApp->WriteProfileInt(sKey, pSubitem->GetName(), pSubitem->IsExpanded()));
-			SaveSubitemExpansion(sKey, pSubitem);	// recurse into subitem
-		}
+	// copied from base class
+	ASSERT_VALID(this);
+
+	switch (m_varValue.vt)
+	{
+	case VT_INT:
+	case VT_UINT:
+	case VT_I2:
+	case VT_I4:
+	case VT_UI2:
+	case VT_UI4:
+	case VT_R4:	// allow reals
+	case VT_R8:
+		break;
+
+	default:
+		ASSERT(FALSE);
+		return;
+	}
+
+	m_nMinValue = nMin;
+	m_nMaxValue = nMax;
+
+	if (bEnable)
+	{
+		m_dwFlags |= AFX_PROP_HAS_SPIN;
+	}
+	else
+	{
+		m_dwFlags &= ~AFX_PROP_HAS_SPIN;
 	}
 }
 
-void CValidPropertyGridCtrl::RestoreSubitemExpansion(CString sRegKey, CMFCPropertyGridProperty *pProp) const
+void CValidPropertyGridProperty::GetValueRange(int& nMinVal, int& nMaxVal) const
 {
-	CWinApp	*pApp = AfxGetApp();
-	int	nSubitems = pProp->GetSubItemsCount();
-	for (int iSubitem = 0; iSubitem < nSubitems; iSubitem++) {	// for each subitem
-		CMFCPropertyGridProperty	*pSubitem = pProp->GetSubItem(iSubitem);
-		if (pSubitem->IsGroup()) {	// if subitem is a group
-			CString	sKey(CString(sRegKey) + '\\' + pProp->GetName());
-			pSubitem->Expand(pApp->GetProfileInt(sKey, pSubitem->GetName(), TRUE));
-			RestoreSubitemExpansion(sKey, pSubitem);	// recurse into subitem
-		}
+	switch (m_vMinVal.vt) {
+	case VT_INT:
+	case VT_UINT:
+	case VT_I4:
+	case VT_UI4:
+		nMinVal = m_vMinVal.intVal;
+		nMaxVal = m_vMaxVal.intVal;
+		break;
+	case VT_I2:
+	case VT_UI2:
+		nMinVal = m_vMinVal.iVal;
+		nMaxVal = m_vMaxVal.iVal;
+		break;
+	case VT_R4:
+		nMinVal = round(m_vMinVal.fltVal);
+		nMaxVal = round(m_vMaxVal.fltVal);
+		break;
+	case VT_R8:
+		nMinVal = round(m_vMinVal.dblVal);
+		nMaxVal = round(m_vMaxVal.dblVal);
+		break;
+	default:
+		nMinVal = 0;
+		nMaxVal = 0;
 	}
 }
 
-void CValidPropertyGridCtrl::SaveGroupExpansion(LPCTSTR szRegKey) const
+IMPLEMENT_DYNAMIC(CEnumPropertyGridProperty, CMFCPropertyGridProperty)
+
+void CEnumPropertyGridProperty::OnSelectCombo()
 {
-	CWinApp	*pApp = AfxGetApp();
-	POSITION	pos = m_lstProps.GetHeadPosition();
-	while (pos != NULL) {	// for each top-level property
-		const CMFCPropertyGridProperty	*pProp = m_lstProps.GetNext(pos);
-		if (pProp->IsGroup()) {	// if property is a group
-			VERIFY(pApp->WriteProfileInt(szRegKey, pProp->GetName(), pProp->IsExpanded()));
-			SaveSubitemExpansion(szRegKey, pProp);	// recursively save subitem expansion
-		}
+	// copied from base class
+	ASSERT_VALID(this);
+	ASSERT_VALID(m_pWndCombo);
+	ASSERT_VALID(m_pWndInPlace);
+
+	int iSelIndex = m_pWndCombo->GetCurSel();
+	if (iSelIndex >= 0)
+	{
+		m_iCurSel = iSelIndex;	// save selection index before updating value
+		CString str;
+		m_pWndCombo->GetLBText(iSelIndex, str);
+		m_pWndInPlace->SetWindowText(str);
+		OnUpdateValue();
 	}
 }
 
-void CValidPropertyGridCtrl::RestoreGroupExpansion(LPCTSTR szRegKey) const
+void CEnumPropertyGridProperty::OnClickButton(CPoint point)
 {
-	CWinApp	*pApp = AfxGetApp();
-	POSITION	pos = m_lstProps.GetHeadPosition();
-	while (pos != NULL) {	// for each top-level property
-		CMFCPropertyGridProperty	*pProp = m_lstProps.GetNext(pos);
-		if (pProp->IsGroup()) {	// if property is a group
-			pProp->Expand(pApp->GetProfileInt(szRegKey, pProp->GetName(), TRUE));
-			RestoreSubitemExpansion(szRegKey, pProp);	// recursively restore subitem expansion
-		}
+	UNREFERENCED_PARAMETER(point);
+	// copied from base class
+	ASSERT_VALID(this);
+	ASSERT_VALID(m_pWndList);
+
+	if (m_pWndCombo != NULL)
+	{
+		m_bButtonIsDown = TRUE;
+		Redraw();
+
+		CString str;
+		m_pWndInPlace->GetWindowText(str);
+
+		m_pWndCombo->SetCurSel(m_iCurSel);	// use selection index
+
+		m_pWndCombo->SetFocus();
+		m_pWndCombo->ShowDropDown();
 	}
 }
 
-int CValidPropertyGridCtrl::GetActualDescriptionRows() const
+BOOL CEnumPropertyGridProperty::OnRotateListValue(BOOL bForward)
 {
-	if (m_nDescrHeight >= 0 && m_nRowHeight > 0)	// if valid heights
-		return m_nDescrHeight / m_nRowHeight;
-	return m_nDescrRows;
+	// emulate base class but using current selection index
+	if (m_pWndInPlace == NULL)
+		return FALSE;
+	INT_PTR	nOptions = m_lstOptions.GetCount();
+	if (bForward) {	// if incrementing
+		m_iCurSel++;
+		if (m_iCurSel >= nOptions)
+			m_iCurSel = 0;
+	} else {	// decrementing
+		m_iCurSel--;
+		if (m_iCurSel < 0)
+			m_iCurSel = INT64TO32(nOptions - 1);
+	}
+	CString	strText = GetOption(m_iCurSel);
+	m_pWndInPlace->SetWindowText(strText);
+	OnUpdateValue();
+	CEdit* pEdit = DYNAMIC_DOWNCAST(CEdit, m_pWndInPlace);
+	if (::IsWindow(pEdit->GetSafeHwnd()))
+		pEdit->SetSel(0, -1);
+	return TRUE;
 }
 
 IMPLEMENT_DYNAMIC(CPropertiesGridCtrl, CValidPropertyGridCtrl)
@@ -346,16 +523,8 @@ void CPropertiesGridCtrl::GetProperties(CProperties& Props) const
 		switch (Props.GetPropertyType(iProp)) {
 		case CProperties::PT_ENUM:
 			{
-				CString	sVal(pProp->GetValue());
-				int	nOptions = Props.GetOptionCount(iProp);
-				int	iOption;
-				for (iOption = 0; iOption < nOptions; iOption++) {	// for each option
-					if (sVal == pProp->GetOption(iOption)) {
-						arrVar[iProp] = iOption;
-						break;
-					}
-				}
-				ASSERT(iOption < nOptions);	// option not found
+				int	iOption = static_cast<const CEnumPropertyGridProperty *>(pProp)->m_iCurSel;
+				arrVar[iProp] = max(iOption, 0);	// avoid negative enum
 			}
 			break;
 		case CProperties::PT_COLOR:
@@ -385,6 +554,7 @@ void CPropertiesGridCtrl::SetProperties(const CProperties& Props)
 				else
 					szOption = NULL;
 				pProp->SetValue(szOption);
+				static_cast<CEnumPropertyGridProperty *>(pProp)->m_iCurSel = iOption;
 			}
 			break;
 		case CProperties::PT_COLOR:
@@ -440,11 +610,13 @@ void CPropertiesGridCtrl::InitPropList(const CProperties& Props)
 		switch (Props.GetPropertyType(iProp)) {
 		case CProperties::PT_ENUM:
 			{
-				pProp = new CMFCPropertyGridProperty(sPropName, _T(""), sPropDescrip, iProp);
+				CEnumPropertyGridProperty	*pEnumProp = 
+				pEnumProp = new CEnumPropertyGridProperty(sPropName, _T(""), sPropDescrip, iProp);
 				int	nOptions = Props.GetOptionCount(iProp);
 				for (int iOption = 0; iOption < nOptions; iOption++)	// for each option
-					VERIFY(pProp->AddOption(Props.GetOptionName(iProp, iOption)));
-				pProp->AllowEdit(false);
+					VERIFY(pEnumProp->AddOption(Props.GetOptionName(iProp, iOption), false));	// allow dups
+				pEnumProp->AllowEdit(false);
+				pProp = pEnumProp;
 			}
 			break;
 		case CProperties::PT_COLOR:
@@ -466,9 +638,11 @@ void CPropertiesGridCtrl::InitPropList(const CProperties& Props)
 			CValidPropertyGridProperty	*pNumProp;
 			pNumProp = new CValidPropertyGridProperty(sPropName, arrVar[iProp], sPropDescrip, iProp);
 			Props.GetRange(iProp, pNumProp->m_vMinVal, pNumProp->m_vMaxVal);
+			int	nMinVal, nMaxVal;
+			pNumProp->GetValueRange(nMinVal, nMaxVal);
+			if (nMinVal != nMaxVal)
+				pNumProp->EnableSpinControl(TRUE, nMinVal, nMaxVal);
 			pProp = pNumProp;
-			if (Props.GetType(iProp) == &typeid(int))	// if integer type, enable spin control
-				pNumProp->EnableSpinControl(TRUE, pNumProp->m_vMinVal.intVal, pNumProp->m_vMaxVal.intVal);
 		}
 		VERIFY(pParentProp->AddSubItem(pProp));	// add property to its parent property
 		m_arrProp[iProp] = pProp;	// store pointer in value property array
@@ -494,9 +668,18 @@ void CPropertiesGridCtrl::SetCurSelIdx(int iProp)
 
 void CPropertiesGridCtrl::UpdateOptions(const CProperties& Props, int iProp)
 {
+	EndEditItem();
 	CMFCPropertyGridProperty	*pProp = m_arrProp[iProp];
 	pProp->RemoveAllOptions();
 	int	nOptions = Props.GetOptionCount(iProp);
 	for (int iOption = 0; iOption < nOptions; iOption++)	// for each option
-		VERIFY(pProp->AddOption(Props.GetOptionName(iProp, iOption)));
+		VERIFY(pProp->AddOption(Props.GetOptionName(iProp, iOption), false));	// allow dups
+	if (Props.GetPropertyType(iProp) == CProperties::PT_ENUM) {
+		CComVariant	var;
+		Props.GetProperty(iProp, var);
+		int	iOption = var.intVal;
+		static_cast<CEnumPropertyGridProperty *>(pProp)->m_iCurSel = iOption;
+		CString	sOption(Props.GetOptionName(iProp, iOption));
+		pProp->SetValue(sOption);
+	}
 }

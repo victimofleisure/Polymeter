@@ -107,8 +107,8 @@ protected:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
-	afx_msg void OnViewShowVelocities();
-	afx_msg void OnUpdateViewShowVelocities(CCmdUI *pCmdUI);
+	afx_msg void OnViewVelocities();
+	afx_msg void OnUpdateViewVelocities(CCmdUI *pCmdUI);
 };
 
 inline void CStepParent::SetRulerHeight(int nHeight)

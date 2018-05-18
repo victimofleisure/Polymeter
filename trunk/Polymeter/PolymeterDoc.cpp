@@ -61,6 +61,9 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define IDS_EDIT_CHANNEL_PROP		0
 #define IDS_EDIT_MULTI_CHANNEL_PROP	0
 
+// define duplicate title IDs
+#define IDS_EDIT_REVERSE_RECT		IDS_EDIT_REVERSE
+
 const int CPolymeterDoc::m_nUndoTitleId[UNDO_CODES] = {
 	#define UCODE_DEF(name) IDS_EDIT_##name,
 	#include "UndoCodeData.h"	
@@ -542,42 +545,128 @@ bool CPolymeterDoc::MakePasteSelection(CSize szData, CRect& rSelection) const
 	return true;
 }
 
+void CPolymeterDoc::MakeTrackSelection(const CRect& rStepSel, CIntArrayEx& arrTrackSel)
+{
+	int	nSels = rStepSel.Height();
+	arrTrackSel.SetSize(nSels);
+	for (int iSel = 0; iSel < nSels; iSel++)	// for each step selection row
+		arrTrackSel[iSel] = rStepSel.top + iSel;	// add to track selection
+}
+
 void CPolymeterDoc::SetTrackLength(int iTrack, int nLength)
 {
-	if (nLength != m_Seq.GetLength(iTrack)) {	// if length actually changing
-		NotifyUndoableEdit(iTrack, MAKELONG(UCODE_TRACK_PROP, PROP_Length));
-		m_Seq.SetLength(iTrack, nLength);
-		CPropHint	hint(iTrack, PROP_Length);
-		UpdateAllViews(NULL, HINT_TRACK_PROP, &hint);
-		SetModifiedFlag();
+	if (nLength == m_Seq.GetLength(iTrack))	// if length unchanged
+		return;	// nothing to do
+	NotifyUndoableEdit(iTrack, MAKELONG(UCODE_TRACK_PROP, PROP_Length));
+	m_Seq.SetLength(iTrack, nLength);
+	CPropHint	hint(iTrack, PROP_Length);
+	UpdateAllViews(NULL, HINT_TRACK_PROP, &hint);
+	SetModifiedFlag();
+}
+
+void CPolymeterDoc::SetTrackLength(const CIntArrayEx& arrLength)
+{
+	bool	bLengthChange = false; 
+	int	nSels = m_arrTrackSel.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int iTrack = m_arrTrackSel[iSel];
+		if (m_Seq.GetLength(iTrack) != arrLength[iSel])	// if length would change
+			bLengthChange = true;
 	}
+	if (!bLengthChange)	// if no lengths changing
+		return;	// nothing to do
+	NotifyUndoableEdit(PROP_Length, UCODE_MULTI_TRACK_PROP);
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int iTrack = m_arrTrackSel[iSel];
+		m_Seq.SetLength(iTrack, arrLength[iSel]);	// update track length
+	}
+	CMultiItemPropHint	hint(m_arrTrackSel, PROP_Length);
+	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
+	SetModifiedFlag();
 }
 
 void CPolymeterDoc::SetTrackLength(const CRect& rSelection, int nLength)
 {
-	CIntArrayEx	arrTrackSel;
-	bool	bLengthChange = false; 
-	int	nSels = rSelection.Height();	// rectangular selection
-	arrTrackSel.SetSize(nSels);
+	CIntArrayEx	arrPrevTrackSel(m_arrTrackSel);	// save track selection
+	MakeTrackSelection(rSelection, m_arrTrackSel);	// create track selection from step selection
+	CIntArrayEx	arrLength;
+	int	nSels = GetSelectedCount();
+	arrLength.SetSize(nSels);
+	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected track
+		arrLength[iSel] = nLength;	// make same length
+	SetTrackLength(arrLength);
+	m_arrTrackSel = arrPrevTrackSel;	// restore previous track selection
+}
+
+bool CPolymeterDoc::ReverseSteps()
+{
+	if (!GetSelectedCount())
+		return false;
+	NotifyUndoableEdit(0, UCODE_REVERSE);
+	int	nSels = m_arrTrackSel.GetSize();
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		int iTrack = rSelection.top + iSel;
-		arrTrackSel[iSel] = iTrack;
-		if (m_Seq.GetLength(iTrack) != nLength)
-			bLengthChange = true;
-	}
-	if (bLengthChange) {	// if at least one length actually changing
-		CIntArrayEx	arrPrevTrackSel(m_arrTrackSel);	// save track selection
-		m_arrTrackSel = arrTrackSel;	// undo handler uses track selection
-		NotifyUndoableEdit(PROP_Length, UCODE_MULTI_TRACK_PROP);
-		m_arrTrackSel = arrPrevTrackSel;	// restore previous track selection
-		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-			int iTrack = rSelection.top + iSel;
-			m_Seq.SetLength(iTrack, nLength);	// update track length
+		int	iTrack = m_arrTrackSel[iSel];
+		CStepArray	arrOldStep;
+		m_Seq.GetSteps(iTrack, arrOldStep);
+		CStepArray	arrStep;
+		int	nSteps = arrOldStep.GetSize();
+		arrStep.SetSize(nSteps);
+		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
+			arrStep[iStep] = arrOldStep[nSteps - 1 - iStep];
 		}
-		CRectSelPropHint	hint(rSelection);
-		UpdateAllViews(NULL, HINT_STEPS_ARRAY, &hint);
-		SetModifiedFlag();
+		m_Seq.SetSteps(iTrack, arrStep);
 	}
+	CMultiItemPropHint	hint(m_arrTrackSel);
+	UpdateAllViews(NULL, HINT_MULTI_TRACK_STEPS, &hint);
+	SetModifiedFlag();
+	return true;
+}
+
+void CPolymeterDoc::ReverseSteps(const CRect& rSelection)
+{
+	m_rStepSel = rSelection;
+	NotifyUndoableEdit(0, UCODE_REVERSE_RECT);
+	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each track
+		CStepArray	arrOldStep;
+		m_Seq.GetSteps(iTrack, arrOldStep);
+		CStepArray	arrStep(arrOldStep);
+		int	iEndStep = min(rSelection.right, arrOldStep.GetSize());
+		int	nSteps = iEndStep - rSelection.left;
+		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
+			arrStep[rSelection.left + iStep] = arrOldStep[iEndStep - 1 - iStep];
+		}
+		m_Seq.SetSteps(iTrack, arrStep);
+	}
+	CRectSelPropHint	hint(rSelection, true);	// set selection
+	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
+	SetModifiedFlag();
+}
+
+bool CPolymeterDoc::RotateSteps(int nRotSteps)
+{
+	if (!GetSelectedCount())
+		return false;
+	NotifyUndoableEdit(nRotSteps, UCODE_ROTATE);
+	int	nSels = m_arrTrackSel.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = m_arrTrackSel[iSel];
+		CStepArray	arrOldStep;
+		m_Seq.GetSteps(iTrack, arrOldStep);
+		CStepArray	arrStep;
+		int	nSteps = arrOldStep.GetSize();
+		arrStep.SetSize(nSteps);
+		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
+			int	iRot = (iStep + nRotSteps) % nSteps;
+			if (iRot < 0)
+				iRot += nSteps;
+			arrStep[iRot] = arrOldStep[iStep];
+		}
+		m_Seq.SetSteps(iTrack, arrStep);
+	}
+	CMultiItemPropHint	hint(m_arrTrackSel);
+	UpdateAllViews(NULL, HINT_MULTI_TRACK_STEPS, &hint);
+	SetModifiedFlag();
+	return true;
 }
 
 bool CPolymeterDoc::ValidateTrackLength(int nLength, int nQuant) const
@@ -984,6 +1073,74 @@ void CPolymeterDoc::RestoreClipboardSteps(const CUndoState& State)
 	UpdateAllViews(NULL, HINT_STEPS_ARRAY, &hint);
 }
 
+void CPolymeterDoc::SaveReverse(CUndoState& State) const
+{
+	CIntArrayEx	arrSelection;
+	if (State.IsEmpty()) {	// if initial state
+		arrSelection = m_arrTrackSel;	// get fresh selection
+	} else {	// undoing or redoing; selection may have changed, so don't rely on it
+		const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
+		arrSelection = pInfo->m_arrSelection;	// use edit's original selection
+	}
+	CRefPtr<CUndoSelection>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrSelection = arrSelection;
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreReverse(const CUndoState& State)
+{
+	const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
+	Select(pInfo->m_arrSelection);
+	ReverseSteps();
+}
+
+void CPolymeterDoc::SaveReverseRect(CUndoState& State) const
+{
+	CRect	rSelection;
+	if (State.IsEmpty()) {	// if initial state
+		rSelection = m_rStepSel;	// get fresh selection
+	} else {	// undoing or redoing; selection may have changed, so don't rely on it
+		const CUndoRectSel	*pInfo = static_cast<CUndoRectSel*>(State.GetObj());
+		rSelection  = pInfo->m_rSelection;	// use edit's original selection
+	}
+	CRefPtr<CUndoRectSel>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_rSelection = rSelection;
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreReverseRect(const CUndoState& State)
+{
+	const CUndoRectSel	*pInfo = static_cast<CUndoRectSel*>(State.GetObj());
+	ReverseSteps(pInfo->m_rSelection);
+}
+
+void CPolymeterDoc::SaveRotate(CUndoState& State) const
+{
+	CIntArrayEx	arrSelection;
+	if (State.IsEmpty()) {	// if initial state
+		arrSelection = m_arrTrackSel;	// get fresh selection
+	} else {	// undoing or redoing; selection may have changed, so don't rely on it
+		const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
+		arrSelection = pInfo->m_arrSelection;	// use edit's original selection
+	}
+	CRefPtr<CUndoSelection>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrSelection = arrSelection;
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreRotate(const CUndoState& State)
+{
+	const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
+	Select(pInfo->m_arrSelection);
+	int	nRotSteps = State.GetCtrlID(); 
+	if (IsUndoing())
+		nRotSteps = -nRotSteps;	// inverse rotation
+	RotateSteps(nRotSteps);
+}
+
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
 {
 	switch (LOWORD(State.GetCode())) {
@@ -1032,6 +1189,15 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		break;
 	case UCODE_VELOCITY:
 		SaveMultiTrackSteps(State);
+		break;
+	case UCODE_REVERSE:
+		SaveReverse(State);
+		break;
+	case UCODE_REVERSE_RECT:
+		SaveReverseRect(State);
+		break;
+	case UCODE_ROTATE:
+		SaveRotate(State);
 		break;
 	}
 }
@@ -1085,6 +1251,15 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		break;
 	case UCODE_VELOCITY:
 		RestoreMultiTrackSteps(State);
+		break;
+	case UCODE_REVERSE:
+		RestoreReverse(State);
+		break;
+	case UCODE_REVERSE_RECT:
+		RestoreReverseRect(State);
+		break;
+	case UCODE_ROTATE:
+		RestoreRotate(State);
 		break;
 	}
 }
@@ -1223,10 +1398,16 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditSelectAll)
-	ON_COMMAND(ID_TOOLS_TIME_TO_REPEAT, OnToolsTimeToRepeat)
-	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIME_TO_REPEAT, OnUpdateToolsTimeToRepeat)
+	ON_COMMAND(ID_EDIT_REVERSE, OnEditReverse)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_REVERSE, OnUpdateEditReverse)
+	ON_COMMAND(ID_EDIT_ROTATE_LEFT, OnEditRotateLeft)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_ROTATE_LEFT, OnUpdateEditRotate)
+	ON_COMMAND(ID_EDIT_ROTATE_RIGHT, OnEditRotateRight)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_ROTATE_RIGHT, OnUpdateEditRotate)
 	ON_COMMAND(ID_EDIT_TRACK_SORT, OnEditTrackSort)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_TRACK_SORT, OnUpdateEditSelectAll)
+	ON_COMMAND(ID_TOOLS_TIME_TO_REPEAT, OnToolsTimeToRepeat)
+	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIME_TO_REPEAT, OnUpdateToolsTimeToRepeat)
 END_MESSAGE_MAP()
 
 // CPolymeterDoc commands
@@ -1420,6 +1601,31 @@ void CPolymeterDoc::OnUpdateEditSelectAll(CCmdUI *pCmdUI)
 	if (!CFocusEdit::UpdateSelectAll(pCmdUI)) {
 		pCmdUI->Enable(GetTrackCount());
 	}
+}
+
+void CPolymeterDoc::OnEditReverse()
+{
+	ReverseSteps();
+}
+
+void CPolymeterDoc::OnUpdateEditReverse(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(GetSelectedCount());
+}
+
+void CPolymeterDoc::OnEditRotateLeft()
+{
+	RotateSteps(-1);
+}
+
+void CPolymeterDoc::OnEditRotateRight()
+{
+	RotateSteps(1);
+}
+
+void CPolymeterDoc::OnUpdateEditRotate(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(GetSelectedCount());
 }
 
 void CPolymeterDoc::OnEditTrackSort()

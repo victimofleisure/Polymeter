@@ -12,6 +12,7 @@
 		02		03nov17	add subgroup
 		03		27mar18	make GetOptionCount virtual
 		04		16apr18	add get/set property
+		05		17may18	make get/set property mandatory
 		
 */
 
@@ -103,6 +104,8 @@ public:
 	virtual	const PROPERTY_INFO&	GetPropertyInfo(int iProp) const = 0;
 	virtual	void	GetVariants(CVariantArray& Var) const = 0;
 	virtual	void	SetVariants(const CVariantArray& Var) = 0;
+	virtual	void	GetProperty(int iProp, CComVariant& var) const = 0;
+	virtual	void	SetProperty(int iProp, const CComVariant& var) = 0;
 
 // Optional overridables
 	virtual	CString	GetGroupName(int iGroup) const;
@@ -112,8 +115,6 @@ public:
 	virtual	CString	GetOptionName(int iProp, int iOption) const;
 	virtual	int		GetSubgroupCount(int iGroup) const;
 	virtual	CString	GetSubgroupName(int iGroup, int iSubgroup) const;
-	virtual	void	GetProperty(int iProp, CComVariant& var) const;
-	virtual	void	SetProperty(int iProp, const CComVariant& var);
 };
 
 inline void CProperties::ReadEnum(LPCTSTR szSection, LPCTSTR szKey, int& Value, const CProperties::OPTION_INFO *pOption, int nOptions)

@@ -76,8 +76,10 @@ void CVelocityView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_TRACK_SELECTION:
 	case CPolymeterDoc::HINT_STEP:
 	case CPolymeterDoc::HINT_MULTI_STEP:
+	case CPolymeterDoc::HINT_MULTI_TRACK_STEPS:
 	case CPolymeterDoc::HINT_STEPS_ARRAY:
 	case CPolymeterDoc::HINT_VELOCITY:
+	case CPolymeterDoc::HINT_TIME_DIV:
 		Invalidate();
 		break;
 	case CPolymeterDoc::HINT_TRACK_PROP:
@@ -100,6 +102,106 @@ void CVelocityView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			}
 		}
 		break;
+	}
+}
+
+int CVelocityView::HitTest(CPoint point, int& iStep) const
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	int	nScrollPos = m_pStepView->GetScrollPosition().x;
+	int	x = point.x + nScrollPos;
+	int	nSels = pDoc->GetSelectedCount();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = pDoc->m_arrTrackSel[iSel];
+		int	nSteps = pDoc->m_Seq.GetLength(iTrack);
+		double	fStepWidth = m_pStepView->GetStepWidthEx(iTrack);
+		int	iHitStep = trunc(x / fStepWidth);
+		if (iHitStep >= 0 && iHitStep < nSteps) {
+			STEP	nStep;
+			if (pDoc->m_Seq.GetNoteVelocity(iTrack, iHitStep, nStep)) {
+				iStep = iHitStep;
+				return iTrack;
+			}
+		}
+	}
+	return -1;
+}
+
+bool CVelocityView::GetStepVal(CPoint point, int& nMinVal, int& nMaxVal) const
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	int	nScrollPos = m_pStepView->GetScrollPosition().x;
+	int	x = point.x + nScrollPos;
+	int	nSels = pDoc->GetSelectedCount();
+	bool	bHit = false;
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = pDoc->m_arrTrackSel[iSel];
+		int	nSteps = pDoc->m_Seq.GetLength(iTrack);
+		double	fStepWidth = m_pStepView->GetStepWidthEx(iTrack);
+		int	iHitStep = trunc(x / fStepWidth);
+		if (iHitStep >= 0 && iHitStep < nSteps) {
+			STEP	nStep;
+			if (pDoc->m_Seq.GetNoteVelocity(iTrack, iHitStep, nStep)) {
+				int	nVal = nStep & NB_VELOCITY;
+				if (!bHit) {
+					nMinVal = nVal;
+					nMaxVal = nVal;
+				} else {
+					if (nVal < nMinVal)
+						nMinVal = nVal;
+					else if (nVal > nMaxVal)
+						nMaxVal = nVal;
+				}
+				bHit = true;
+			}
+		}
+	}
+	return bHit;
+}
+
+void CVelocityView::ShowDataTip(bool bShow)
+{
+	if (bShow == HaveDataTip())	// if already in requested state
+		return;	// nothing to do
+	if (bShow) {	// if showing
+		VERIFY(m_DataTip.Create(this));
+		if (HaveDataTip()) {
+			CRect	rClient;
+			GetClientRect(rClient);
+			VERIFY(m_DataTip.AddTool(this, _T(""), rClient, DATA_TIP));
+		}
+	} else {	// hiding
+		VERIFY(m_DataTip.DestroyWindow());
+	}
+}
+
+void CVelocityView::UpdateDragDataTip(int y)
+{
+	if (HaveDataTip()) {
+		CRect	rClient;
+		GetClientRect(rClient);
+		double	ry = y;
+		int	nVel = round((1 - ry / rClient.Height()) * MIDI_NOTE_MAX);	// y-axis is reversed
+		CString	sTip;
+		sTip.Format(_T("%d"), nVel);
+		m_DataTip.UpdateTipText(sTip, this, DATA_TIP);
+	}
+}
+
+void CVelocityView::UpdateDataTip(CPoint point)
+{
+	if (HaveDataTip()) {
+		m_DataTip.Pop();
+		int	nMinVal, nMaxVal;
+		bool	bHit = GetStepVal(point, nMinVal, nMaxVal);
+		CString	sTip;
+		if (bHit) {	// if cursor over at least one bar
+			if (nMinVal != nMaxVal)	// if range of values
+				sTip.Format(_T("%d, %d"), nMinVal, nMaxVal);
+			else	// single value
+				sTip.Format(_T("%d"), nMinVal);
+		}
+		m_DataTip.UpdateTipText(sTip, this, DATA_TIP);
 	}
 }
 
@@ -133,23 +235,28 @@ void CVelocityView::UpdateVelocities(const CRect& rSpan)
 		double	fStepWidth = m_pStepView->GetStepWidthEx(iTrack);
 		int	iFirstStep = trunc(x1 / fStepWidth);
 		int	iLastStep = trunc(x2 / fStepWidth);
-		if (iLastStep >= 0 && iFirstStep < nSteps) {
+		if (iLastStep >= 0 && iFirstStep < nSteps) {	// if track's steps intersect span
 			iFirstStep = max(iFirstStep, 0);
 			iLastStep = min(iLastStep, nSteps - 1);
 			int	nMinVel;
-			if (pDoc->m_Seq.IsNote(iTrack))
-				nMinVel = 1;
-			else
-				nMinVel = 0;
+			if (pDoc->m_Seq.IsNote(iTrack))	// if track type is note
+				nMinVel = 1;	// keep velocity above zero to avoid note off
+			else	// track type isn't note
+				nMinVel = 0;	// zero is valid parameter value
 			for (int iStep = iFirstStep; iStep <= iLastStep; iStep++) {	// for each invalid step
-				STEP	nStep = pDoc->m_Seq.GetStep(iTrack, iStep);
-				if (pDoc->m_Seq.GetNoteVelocity(iTrack, iStep, nStep)) {
-					double	x = round((iStep + 0.5) * fStepWidth) - x1;	// x-intercept at center of bar
-					double	y = x * fSlope + y1;
+				STEP	nStep;
+				if (pDoc->m_Seq.GetNoteVelocity(iTrack, iStep, nStep)) {	// if velocity obtained
+					double	y;
+					if (abs(nDeltaX) < fStepWidth) {	// if span is narrower than bar
+						y = rSpan.bottom;	// get y directly from cursor position; improves stability
+					} else {	// span is wider than bar; must compute intercept to avoid missing bars
+						double	x = round((iStep + 0.5) * fStepWidth) - x1;	// compute x at center of bar
+						y = x * fSlope + y1;	// compute y-intercept with span at center of bar
+					}
 					int	nVel = round((1 - y / nHeight) * MIDI_NOTE_MAX);	// y-axis is reversed
 					nVel = CLAMP(nVel, nMinVel, MIDI_NOTE_MAX);
 					nStep = static_cast<STEP>((nStep & NB_TIE) | nVel);
-					if (!m_bIsModified) {
+					if (!m_bIsModified) {	// if first modification, notify undo
 						pDoc->NotifyUndoableEdit(0, UCODE_VELOCITY);
 						pDoc->SetModifiedFlag();
 						m_bIsModified = true;
@@ -160,7 +267,7 @@ void CVelocityView::UpdateVelocities(const CRect& rSpan)
 			}
 		}
 	}
-	if (bIsModified) {
+	if (bIsModified) {	// if any steps were modified
 		Invalidate();	// over-inclusive
 		UpdateWindow();
 	}
@@ -238,6 +345,7 @@ int CVelocityView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CView::OnCreate(lpCreateStruct) == -1)
 		return -1;
+	ShowDataTip(true);
 	return 0;
 }
 
@@ -248,12 +356,16 @@ BOOL CVelocityView::PreTranslateMessage(MSG* pMsg)
 		if (theApp.GetMainFrame()->SendMessage(UWM_HANDLE_DLG_KEY, reinterpret_cast<WPARAM>(pMsg)))
 			return TRUE;	// key was handled so don't process further
 	}
+	if (HaveDataTip())
+		m_DataTip.RelayEvent(pMsg);
 	return CView::PreTranslateMessage(pMsg);
 }
 
 void CVelocityView::OnSize(UINT nType, int cx, int cy)
 {
 	CView::OnSize(nType, cx, cy);
+	if (HaveDataTip())
+		m_DataTip.SetToolRect(this, DATA_TIP, CRect(0, 0, cx, cy));
 }
 
 void CVelocityView::OnLButtonDown(UINT nFlags, CPoint point)
@@ -265,6 +377,7 @@ void CVelocityView::OnLButtonDown(UINT nFlags, CPoint point)
 	m_ptAnchor = point;
 	CRect	rSpan(point, point + CPoint(1, 0));
 	UpdateVelocities(rSpan);
+	UpdateDragDataTip(rSpan.bottom);
 	CView::OnLButtonDown(nFlags, point);
 }
 
@@ -294,20 +407,25 @@ void CVelocityView::OnRButtonUp(UINT nFlags, CPoint point)
 
 void CVelocityView::OnMouseMove(UINT nFlags, CPoint point)
 {
-	if (m_bIsDragging) {
-		CRect	rSpan;
-		if (nFlags & MK_CONTROL) {
-			rSpan = CRect(m_ptAnchor, point);
-		} else {
-			if (nFlags & MK_SHIFT) {
-				rSpan = CRect(m_ptAnchor.x, m_ptAnchor.y, point.x, m_ptAnchor.y);
+	if (point != m_ptPrev) {	// if cursor actually moved
+		if (m_bIsDragging) {	// if dragging
+			CRect	rSpan;
+			if (nFlags & MK_CONTROL) {
+				rSpan = CRect(m_ptAnchor, point);
 			} else {
-				rSpan = CRect(m_ptPrev, point);
-				m_ptAnchor = point;
+				if (nFlags & MK_SHIFT) {
+					rSpan = CRect(m_ptAnchor.x, m_ptAnchor.y, point.x, m_ptAnchor.y);
+				} else {
+					rSpan = CRect(m_ptPrev, point);
+					m_ptAnchor = point;
+				}
 			}
+			UpdateVelocities(rSpan);
+			UpdateDragDataTip(rSpan.bottom);
+		} else {	// not dragging
+			UpdateDataTip(point);
 		}
-		UpdateVelocities(rSpan);
-		m_ptPrev = point;
+		m_ptPrev = point;	// update cached cursor position
 	}
 	CView::OnMouseMove(nFlags, point);
 }

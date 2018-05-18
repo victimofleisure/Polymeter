@@ -16,7 +16,7 @@
 
 #include "stdafx.h"
 #include "Polymeter.h"
-
+#include "PolymeterDoc.h"
 #include "ChildFrm.h"
 #include "MainFrm.h"
 #include "StepParent.h"
@@ -79,6 +79,8 @@ void CChildFrame::Dump(CDumpContext& dc) const
 BEGIN_MESSAGE_MAP(CChildFrame, CMDIChildWndEx)
 	ON_WM_MDIACTIVATE()
 	ON_MESSAGE(CTrackView::UWM_TRACK_SCROLL, OnTrackScroll)
+	ON_COMMAND(ID_EDIT_LENGTH, OnEditLength)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_LENGTH, OnUpdateEditLength)
 END_MESSAGE_MAP()
 
 // CChildFrame message handlers
@@ -117,7 +119,7 @@ BOOL CChildFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO
 	case ID_VIEW_ZOOM_IN:
 	case ID_VIEW_ZOOM_OUT:
 	case ID_VIEW_ZOOM_RESET:
-	case ID_VIEW_SHOW_VELOCITIES:
+	case ID_VIEW_VELOCITIES:
 		return m_pStepParent->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
 	case ID_NEXT_PANE:
 	case ID_PREV_PANE:
@@ -140,4 +142,19 @@ LRESULT CChildFrame::OnTrackScroll(WPARAM wParam, LPARAM lParam)
 	// relay track scroll to step parent view
 	m_pStepParent->SendMessage(CTrackView::UWM_TRACK_SCROLL, wParam, lParam);
 	return 0;
+}
+
+void CChildFrame::OnEditLength()
+{
+	// handle here so step view needn't have input focus
+	CStepView	*pStepView = m_pStepParent->m_pStepView;
+	CPoint	ptCursor;
+	GetCursorPos(&ptCursor);
+	pStepView->ScreenToClient(&ptCursor);
+	pStepView->OnEditLength(ptCursor);
+}
+
+void CChildFrame::OnUpdateEditLength(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable();
 }

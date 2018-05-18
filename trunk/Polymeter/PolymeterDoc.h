@@ -38,18 +38,20 @@ public:
 	enum {	// update hints
 		HINT_NONE,				// no hint
 		HINT_TRACK_PROP,		// track property edit; pHint is CPropHint
-		HINT_MULTI_TRACK_PROP,	// multiple tracks property edit; pHint is CMultiItemPropHint
+		HINT_MULTI_TRACK_PROP,	// multi-track property edit; pHint is CMultiItemPropHint
 		HINT_TRACK_ARRAY,		// inserting, deleting or reordering tracks
 		HINT_STEP,				// step edit; pHint is CPropHint, m_iProp is step index
 		HINT_MASTER_PROP,		// master property edit
 		HINT_PLAY,				// start or stop playback
 		HINT_SONG_POS,			// song position change
 		HINT_CHANNEL_PROP,		// channel property edit; pHint is CPropHint
-		HINT_MULTI_CHANNEL_PROP,	// multiple channel property edit; pHint is CMultiItemPropHint
+		HINT_MULTI_CHANNEL_PROP,	// multi-channel property edit; pHint is CMultiItemPropHint
 		HINT_TRACK_SELECTION,	// track selection
-		HINT_MULTI_STEP,		// multiple steps edit; pHint is CRectSelPropHint
+		HINT_MULTI_STEP,		// rectangular step edit; pHint is CRectSelPropHint
+		HINT_MULTI_TRACK_STEPS,	// multi-track steps edit; pHint is CMultiItemPropHint
 		HINT_STEPS_ARRAY,		// inserting or deleting steps; pHint is CRectSelPropHint
 		HINT_VELOCITY,			// multi-track velocity edit; pHint is CMultiItemPropHint
+		HINT_TIME_DIV,			// time division change
 		HINTS
 	};
 
@@ -60,13 +62,13 @@ public:
 	};
 	class CPropHint : public CObject {
 	public:
-		CPropHint(int iItem, int iProp) : m_iItem(iItem), m_iProp(iProp) {}
+		CPropHint(int iItem, int iProp = -1) : m_iItem(iItem), m_iProp(iProp) {}
 		int		m_iItem;	// item index
 		int		m_iProp;	// property index, or -1 for all
 	};
 	class CMultiItemPropHint : public CObject {
 	public:
-		CMultiItemPropHint(const CIntArrayEx& arrSelection, int iProp) 
+		CMultiItemPropHint(const CIntArrayEx& arrSelection, int iProp = -1) 
 			: m_arrSelection(arrSelection), m_iProp(iProp) {}
 		const CIntArrayEx&	m_arrSelection;	// indices of selected items
 		int		m_iProp;	// property index
@@ -121,8 +123,13 @@ public:
 	bool	DeleteSteps(const CRect& rSelection, bool bCopyToClipboard);
 	bool	PasteSteps(const CRect& rSelection);
 	bool	InsertStep(const CRect& rSelection);
+	static	void	MakeTrackSelection(const CRect& rStepSel, CIntArrayEx& arrTrackSel);
 	void	SetTrackLength(int iTrack, int nLength);
+	void	SetTrackLength(const CIntArrayEx& arrLength);
 	void	SetTrackLength(const CRect& rSelection, int nLength);
+	bool	ReverseSteps();
+	void	ReverseSteps(const CRect& rSelection);
+	bool	RotateSteps(int nRotSteps);
 	bool	ValidateTrackLength(int nLength, int nQuant) const;
 	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
 	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
@@ -144,6 +151,10 @@ public:
 
 protected:
 // Types
+	class CUndoSelection : public CRefObj {
+	public:
+		CIntArrayEx	m_arrSelection;	// indices of selected tracks
+	};
 	class CUndoClipboard : public CRefObj {
 	public:
 		CTrackArray	m_arrTrack;		// array of tracks
@@ -175,6 +186,10 @@ protected:
 		const CIntArrayEx	*m_parrLevel;	// pointer to sort levels array
 		// level's low word is index of track property to sort by; high word 
 		// is sort direction (zero for ascending, non-zero for descending)
+	};
+	class CUndoRectSel : public CRefObj {
+	public:
+		CRect	m_rSelection;	// rectangular step selection
 	};
 	class CUndoMultiStepRect : public CRefObj {
 	public:
@@ -229,6 +244,12 @@ protected:
 	void	RestoreMultiStepRect(const CUndoState& State);
 	void	SaveClipboardSteps(CUndoState& State) const;
 	void	RestoreClipboardSteps(const CUndoState& State);
+	void	SaveReverse(CUndoState& State) const;
+	void	RestoreReverse(const CUndoState& State);
+	void	SaveReverseRect(CUndoState& State) const;
+	void	RestoreReverseRect(const CUndoState& State);
+	void	SaveRotate(CUndoState& State) const;
+	void	RestoreRotate(const CUndoState& State);
 
 // Generated message map functions
 protected:
@@ -256,9 +277,14 @@ protected:
 	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateEditSelectAll(CCmdUI *pCmdUI);
+	afx_msg void OnEditReverse();
+	afx_msg void OnUpdateEditReverse(CCmdUI *pCmdUI);
+	afx_msg void OnEditTrackSort();
 	afx_msg void OnToolsTimeToRepeat();
 	afx_msg void OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI);
-	afx_msg void OnEditTrackSort();
+	afx_msg void OnEditRotateLeft();
+	afx_msg void OnEditRotateRight();
+	afx_msg void OnUpdateEditRotate(CCmdUI *pCmdUI);
 };
 
 inline int CPolymeterDoc::GetTrackCount() const

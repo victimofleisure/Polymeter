@@ -12,6 +12,8 @@
 		02		26mar18	add Enable and IsEnabled
 		03		10apr18	add runtime class macros
 		04		18apr18	add GetValueProperty and UpdateOptions
+		05		17may18	add enum property to allow duplicate options
+		06		17may18	add spin control for floating point values
 
 */
 
@@ -53,6 +55,7 @@ protected:
 
 // Message handlers
 	DECLARE_MESSAGE_MAP()
+	afx_msg void OnSpinDeltaPos(NMHDR* pNMHDR, LRESULT* pResult);	
 };
 
 class CValidPropertyGridProperty : public CMFCPropertyGridProperty {
@@ -66,16 +69,40 @@ public:
 		LPCTSTR lpszEditMask = NULL, LPCTSTR lpszEditTemplate = NULL, LPCTSTR lpszValidChars = NULL) 
 		: CMFCPropertyGridProperty(strName, varValue, lpszDescr, dwData, lpszEditMask, lpszEditTemplate, lpszValidChars) {}
 
+// Attributes
+	void	GetValueRange(int& nMinVal, int& nMaxVal) const;
+
 // Data members
 	CComVariant	m_vMinVal;
 	CComVariant	m_vMaxVal;
 
 // Overrides
 	virtual CString FormatProperty();
+	void	EnableSpinControl(BOOL bEnable, int nMin, int nMax);	// not virtual
 
 // Helpers
 	BOOL	ValidateData();
 	friend class CValidPropertyGridCtrl;	// need this for TrackToolTip
+};
+
+class CEnumPropertyGridProperty : public CMFCPropertyGridProperty {
+public:
+	DECLARE_DYNAMIC(CEnumPropertyGridProperty)
+
+// Construction
+	CEnumPropertyGridProperty(const CString& strGroupName, DWORD_PTR dwData = 0, BOOL bIsValueList = FALSE) 
+		: CMFCPropertyGridProperty(strGroupName, dwData, bIsValueList) { m_iCurSel = -1; }
+	CEnumPropertyGridProperty(const CString& strName, const COleVariant& varValue, LPCTSTR lpszDescr = NULL, DWORD_PTR dwData = 0,
+		LPCTSTR lpszEditMask = NULL, LPCTSTR lpszEditTemplate = NULL, LPCTSTR lpszValidChars = NULL) 
+		: CMFCPropertyGridProperty(strName, varValue, lpszDescr, dwData, lpszEditMask, lpszEditTemplate, lpszValidChars) { m_iCurSel = -1; }
+
+// Data members
+	int		m_iCurSel;	// index of current selection, or -1 if none; allows duplicate options
+
+// Overrides
+	virtual	void OnSelectCombo();
+	virtual void OnClickButton(CPoint point);
+	virtual BOOL OnRotateListValue(BOOL bForward);
 };
 
 class CPropertiesGridCtrl : public CValidPropertyGridCtrl {
