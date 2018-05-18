@@ -41,7 +41,7 @@ public:
 		HINT_MULTI_TRACK_PROP,	// multi-track property edit; pHint is CMultiItemPropHint
 		HINT_TRACK_ARRAY,		// inserting, deleting or reordering tracks
 		HINT_STEP,				// step edit; pHint is CPropHint, m_iProp is step index
-		HINT_MASTER_PROP,		// master property edit
+		HINT_MASTER_PROP,		// master property edit; pHint is CPropHint
 		HINT_PLAY,				// start or stop playback
 		HINT_SONG_POS,			// song position change
 		HINT_CHANNEL_PROP,		// channel property edit; pHint is CPropHint
@@ -51,7 +51,6 @@ public:
 		HINT_MULTI_TRACK_STEPS,	// multi-track steps edit; pHint is CMultiItemPropHint
 		HINT_STEPS_ARRAY,		// inserting or deleting steps; pHint is CRectSelPropHint
 		HINT_VELOCITY,			// multi-track velocity edit; pHint is CMultiItemPropHint
-		HINT_TIME_DIV,			// time division change
 		HINTS
 	};
 

@@ -79,7 +79,6 @@ void CVelocityView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_MULTI_TRACK_STEPS:
 	case CPolymeterDoc::HINT_STEPS_ARRAY:
 	case CPolymeterDoc::HINT_VELOCITY:
-	case CPolymeterDoc::HINT_TIME_DIV:
 		Invalidate();
 		break;
 	case CPolymeterDoc::HINT_TRACK_PROP:
@@ -102,6 +101,13 @@ void CVelocityView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			}
 		}
 		break;
+	case CPolymeterDoc::HINT_MASTER_PROP:
+		{
+			const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+			if (pPropHint->m_iProp == CMasterProps::PROP_nTimeDiv) {
+				Invalidate();
+			}
+		}
 	}
 }
 

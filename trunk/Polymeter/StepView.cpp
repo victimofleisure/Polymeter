@@ -161,6 +161,15 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			UpdateStep(iTrack, iStep);
 		}
 		break;
+	case CPolymeterDoc::HINT_MASTER_PROP:
+		{
+			const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+			if (pPropHint->m_iProp == CMasterProps::PROP_nTimeDiv) {
+				UpdateViewSize();
+				Invalidate();
+			}
+		}
+		break;
 	case CPolymeterDoc::HINT_PLAY:
 	case CPolymeterDoc::HINT_SONG_POS:
 		UpdateSongPosition();
@@ -201,10 +210,6 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			const CPolymeterDoc::CMultiItemPropHint *pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
 			UpdateTracks(pPropHint->m_arrSelection);
 		}
-		break;
-	case CPolymeterDoc::HINT_TIME_DIV:
-		UpdateViewSize();
-		Invalidate();
 		break;
 	}
 }

@@ -701,10 +701,13 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 			pDoc->m_Seq.SetTempo(pDoc->m_fTempo);
 			break;
 		case CMasterProps::PROP_nTimeDiv:
-			ASSERT(!pDoc->m_Seq.IsPlaying());
-			// convert time division preset index to time division value in ticks
-			pDoc->m_Seq.SetTimeDivision(CMasterProps::GetTimeDivisionTicks(pDoc->m_nTimeDiv));
-			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TIME_DIV);
+			{
+				ASSERT(!pDoc->m_Seq.IsPlaying());
+				// convert time division preset index to time division value in ticks
+				pDoc->m_Seq.SetTimeDivision(CMasterProps::GetTimeDivisionTicks(pDoc->m_nTimeDiv));
+				CPolymeterDoc::CPropHint	hint(0, iProp);
+				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MASTER_PROP, &hint);
+			}
 			break;
 		}
 	}
