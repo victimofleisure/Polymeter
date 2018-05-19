@@ -1,4 +1,5 @@
 open	close	type	description	rev	user
+05/15/18		bug	Ben reports missing MIDI devices, VirtualMIDISynth displays blank name		
 03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -40,23 +41,30 @@ open	close	type	description	rev	user
 05/03/18	05/08/18	done	add error check for product of track's length and quant exceeding range of 32-bit integer	0.0.04.000	
 04/12/18	05/10/18	done	synchronize vertical scrolling between track and step views	0.0.04.001	
 04/27/18	05/10/18	done	step view's ruler shouldn't scroll vertically off screen	0.0.04.001	
+03/22/18	05/12/18	done	velocity editing	0.0.05.000	
+05/13/18	05/13/18	done	contracting step selection over narrow steps leaves one pixel wide vertical strips of unerased selection	0.0.05.000	
+03/22/18	05/15/18	done	controller tracks	0.0.05.000	
+05/10/18	05/15/18	done	implement next/previous pane (F6)	0.0.05.000	
+05/15/18	05/15/18	done	mute buttons shouldn't scroll horizontally off screen	0.0.05.000	
+05/15/18	05/15/18	done	step selection is invisible if show current position option is false	0.0.05.000	
+05/15/18	05/16/18	done	reverse selected tracks or steps	0.0.05.001	
+03/25/18	05/17/18	done	rotate selected tracks or steps left or right	0.0.05.001	
+05/10/18	05/17/18	done	tempo nudge; implement spin button control for floating-point properties	0.0.05.001	
 03/25/18		hold	animated visualization		
-04/25/18		hold	apply popup numeric edit's spin control to document immediately; causes various bugs and inconsistencies		
-03/22/18		todo	data architecture		
-03/22/18		todo	controller tracks		
-03/22/18		todo	velocity editing		
+04/25/18		hold	popup numeric edit's spin control should affect document immediately; causes bugs and inconsistencies		
+05/10/18		hold	left-click anywhere in step view should toggle steps or tracks, as in original app; too confusing?		
+05/17/18		hold	in velocity pane, left-click on tool tip causes app to flash; all tooltips do this, derived tool tip doesn't help		
+05/17/18		hold	installed app's shortcut icon has poor resolution; bug in VS2008, use WiX toolset instead?		
 03/22/18		todo	UI design; real track view		
 03/22/18		todo	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		todo	app architecture; Bongo, Jock and Stencil all in one app? Different views of same document?		
 03/22/18		todo	PPQ change should optionally update Quant, Offset and Swing values, or otherwise update step view		
-03/25/18		todo	rotate track's beats left or right, for one or more tracks		
+03/22/18		todo	optional linear interpolation for controller tracks, with adjustable output density		
 03/25/18		todo	playback can be slow to start, due to device open delay; keep output device open all the time?		
 03/25/18		todo	record live arrangment; at least track mute/unmute, maybe other things too		
 03/25/18		todo	edit arrangement on timeline, similar to Stencil		
 03/25/18		todo	MIDI mapping of all parameters, with manual assignment and learn mode		
-04/09/18		todo	undoing track value or beat edit should ensure track is visible		
+04/09/18		todo	undoing track value or step edit should ensure track is visible		
 04/16/18		todo	optionally show MIDI notes instead of numbers in note edit controls		
-05/10/18		todo	tempo nudge; tempo property doesn't have spin buttons		
-05/10/18		todo	left-click anywhere in step view should toggle steps or tracks, to be consistent with original app		
 05/10/18		todo	right-click in step view background with no selection should show context menu?		
-05/10/18		todo	implement pane switching shortcuts (F6)		
+05/15/18		todo	other functions besides line for controller fill: sine, triange, ramp, etc.		

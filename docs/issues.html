@@ -36,6 +36,14 @@
 <TD>user</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>05/15/18</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>Ben reports missing MIDI devices, VirtualMIDISynth displays blank name</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>03/25/18</TD>
 <TD>done</TD>
@@ -364,6 +372,78 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>03/22/18</TD>
+<TD>05/12/18</TD>
+<TD>done</TD>
+<TD>velocity editing</TD>
+<TD>0.0.05.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/13/18</TD>
+<TD>05/13/18</TD>
+<TD>done</TD>
+<TD>contracting step selection over narrow steps leaves one pixel wide vertical strips of unerased selection</TD>
+<TD>0.0.05.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/22/18</TD>
+<TD>05/15/18</TD>
+<TD>done</TD>
+<TD>controller tracks</TD>
+<TD>0.0.05.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/10/18</TD>
+<TD>05/15/18</TD>
+<TD>done</TD>
+<TD>implement next/previous pane (F6)</TD>
+<TD>0.0.05.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/15/18</TD>
+<TD>05/15/18</TD>
+<TD>done</TD>
+<TD>mute buttons shouldn't scroll horizontally off screen</TD>
+<TD>0.0.05.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/15/18</TD>
+<TD>05/15/18</TD>
+<TD>done</TD>
+<TD>step selection is invisible if show current position option is false</TD>
+<TD>0.0.05.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/15/18</TD>
+<TD>05/16/18</TD>
+<TD>done</TD>
+<TD>reverse selected tracks or steps</TD>
+<TD>0.0.05.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>05/17/18</TD>
+<TD>done</TD>
+<TD>rotate selected tracks or steps left or right</TD>
+<TD>0.0.05.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/10/18</TD>
+<TD>05/17/18</TD>
+<TD>done</TD>
+<TD>tempo nudge; implement spin button control for floating-point properties</TD>
+<TD>0.0.05.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/25/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -375,31 +455,31 @@
 <TD>04/25/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>apply popup numeric edit's spin control to document immediately; causes various bugs and inconsistencies</TD>
+<TD>popup numeric edit's spin control should affect document immediately; causes bugs and inconsistencies</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>03/22/18</TD>
+<TD>05/10/18</TD>
 <TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>data architecture</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>03/22/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>controller tracks</TD>
+<TD>hold</TD>
+<TD>left-click anywhere in step view should toggle steps or tracks, as in original app; too confusing?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>03/22/18</TD>
+<TD>05/17/18</TD>
 <TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>velocity editing</TD>
+<TD>hold</TD>
+<TD>in velocity pane, left-click on tool tip causes app to flash; all tooltips do this, derived tool tip doesn't help</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/17/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>installed app's shortcut icon has poor resolution; bug in VS2008, use WiX toolset instead?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -436,10 +516,10 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>03/25/18</TD>
+<TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>rotate track's beats left or right, for one or more tracks</TD>
+<TD>optional linear interpolation for controller tracks, with adjustable output density</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -479,7 +559,7 @@
 <TD>04/09/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>undoing track value or beat edit should ensure track is visible</TD>
+<TD>undoing track value or step edit should ensure track is visible</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -495,31 +575,15 @@
 <TD>05/10/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>tempo nudge; tempo property doesn't have spin buttons</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>05/10/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>left-click anywhere in step view should toggle steps or tracks, to be consistent with original app</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>05/10/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
 <TD>right-click in step view background with no selection should show context menu?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>05/10/18</TD>
+<TD>05/15/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>implement pane switching shortcuts (F6)</TD>
+<TD>other functions besides line for controller fill: sine, triange, ramp, etc.</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
