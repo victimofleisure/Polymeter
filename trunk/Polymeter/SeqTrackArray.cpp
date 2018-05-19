@@ -317,3 +317,23 @@ void CSeqTrackArray::ResetCachedParameters()
 	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
 		GetAt(iTrack).m_nCachedParam = -1;	// reset cached parameter value
 }
+
+void CSeqTrackArray::ReverseSteps(int iTrack)
+{
+	GetAt(iTrack).m_arrStep.Reverse();
+}
+
+void CSeqTrackArray::ReverseSteps(int iTrack, int iStep, int nSteps)
+{
+	GetAt(iTrack).m_arrStep.Reverse(iStep, nSteps);
+}
+
+void CSeqTrackArray::RotateSteps(int iTrack, int nRotSteps)
+{
+	GetAt(iTrack).m_arrStep.Rotate(nRotSteps);
+}
+
+void CSeqTrackArray::RotateSteps(int iTrack, int iStep, int nSteps, int nRotSteps)
+{
+	GetAt(iTrack).m_arrStep.Rotate(iStep, nSteps, nRotSteps);
+}

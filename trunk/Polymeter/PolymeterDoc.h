@@ -129,6 +129,7 @@ public:
 	bool	ReverseSteps();
 	void	ReverseSteps(const CRect& rSelection);
 	bool	RotateSteps(int nRotSteps);
+	void	RotateSteps(const CRect& rSelection, int nRotSteps);
 	bool	ValidateTrackLength(int nLength, int nQuant) const;
 	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
 	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
@@ -247,8 +248,6 @@ protected:
 	void	RestoreReverse(const CUndoState& State);
 	void	SaveReverseRect(CUndoState& State) const;
 	void	RestoreReverseRect(const CUndoState& State);
-	void	SaveRotate(CUndoState& State) const;
-	void	RestoreRotate(const CUndoState& State);
 
 // Generated message map functions
 protected:

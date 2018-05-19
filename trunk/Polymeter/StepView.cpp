@@ -832,6 +832,14 @@ void CStepView::OnEditLength(CPoint point)
 	}
 }
 
+void CStepView::RotateSteps(int nRotSteps)
+{
+	if (HaveStepSelection())
+		GetDocument()->RotateSteps(m_rStepSel, nRotSteps);
+	else
+		GetDocument()->RotateSteps(nRotSteps);
+}
+
 // CStepView message map
 
 BEGIN_MESSAGE_MAP(CStepView, CScrollView)
@@ -862,6 +870,10 @@ BEGIN_MESSAGE_MAP(CStepView, CScrollView)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
 	ON_COMMAND(ID_EDIT_REVERSE, OnEditReverse)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_REVERSE, OnUpdateEditReverse)
+	ON_COMMAND(ID_EDIT_ROTATE_LEFT, OnEditRotateLeft)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_ROTATE_LEFT, OnUpdateEditRotate)
+	ON_COMMAND(ID_EDIT_ROTATE_RIGHT, OnEditRotateRight)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_ROTATE_RIGHT, OnUpdateEditRotate)
 END_MESSAGE_MAP()
 
 // CStepView message handlers
@@ -1162,6 +1174,21 @@ void CStepView::OnEditReverse()
 }
 
 void CStepView::OnUpdateEditReverse(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(HaveEitherSelection());
+}
+
+void CStepView::OnEditRotateLeft()
+{
+	RotateSteps(-1);
+}
+
+void CStepView::OnEditRotateRight()
+{
+	RotateSteps(1);
+}
+
+void CStepView::OnUpdateEditRotate(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(HaveEitherSelection());
 }

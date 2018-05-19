@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
+// Microsoft Developer Studio generated include file.
 // Used by Polymeter.rc
 //
 #define IDR_MAINFRAME                   101
@@ -172,10 +172,10 @@
 #define ID_WINDOW_MANAGER               32805
 
 // Next default values for new objects
-// 
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_3D_CONTROLS                     1
+#define _APS_3D_CONTROLS                1
 #define _APS_NEXT_RESOURCE_VALUE        303
 #define _APS_NEXT_COMMAND_VALUE         32806
 #define _APS_NEXT_CONTROL_VALUE         1019

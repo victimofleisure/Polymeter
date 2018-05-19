@@ -162,6 +162,7 @@ protected:
 	void	NotifyParent(DWORD message, WPARAM wParam = 0, LPARAM lParam = 0);
 	void	DispatchToDocument();
 	CSize	GetClientSize() const;
+	void	RotateSteps(int nRotSteps);
 
 // Generated message map functionsq
 protected:
@@ -193,6 +194,9 @@ protected:
 	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
 	afx_msg void OnEditReverse();
 	afx_msg void OnUpdateEditReverse(CCmdUI *pCmdUI);
+	afx_msg void OnEditRotateLeft();
+	afx_msg void OnEditRotateRight();
+	afx_msg void OnUpdateEditRotate(CCmdUI *pCmdUI);
 };
 
 inline CPolymeterDoc* CStepView::GetDocument() const

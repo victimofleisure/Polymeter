@@ -74,6 +74,10 @@ public:
 	void	InsertSteps(const CRect& rSelection, CStepArrayArray& arrStepArray);
 	void	DeleteSteps(const CRect& rSelection);
 	void	ResetCachedParameters();
+	void	ReverseSteps(int iTrack);
+	void	ReverseSteps(int iTrack, int iStep, int nSteps);
+	void	RotateSteps(int iTrack, int nRotSteps);
+	void	RotateSteps(int iTrack, int iStep, int nSteps, int nRotSteps);
 
 protected:
 // Member data

@@ -190,6 +190,7 @@
   <ItemGroup>
     <ClInclude Include="AboutDlg.h" />
     <ClInclude Include="ArrayEx.h" />
+    <ClInclude Include="ArrayExAlgoDef.h" />
     <ClInclude Include="Benchmark.h" />
     <ClInclude Include="BoundArray.h" />
     <ClInclude Include="Channel.h" />

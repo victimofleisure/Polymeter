@@ -22,6 +22,8 @@
 #include "Benchmark.h"
 #include "UndoCodes.h"
 #include "StepView.h"
+#define _USE_MATH_DEFINES	// for trig constants
+#include <math.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -109,6 +111,31 @@ void CVelocityView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			}
 		}
 	}
+}
+
+__forceinline double CVelocityView::Wrap1(double x)
+{
+	return x - floor(x);
+}
+
+double CVelocityView::GetWave(int iWaveform, double fPhase)
+{
+	switch (iWaveform) {
+	case WAVE_SINE:
+		return sin(fPhase * M_PI * 2);
+	case WAVE_TRIANGLE:
+		{
+			double	r = Wrap1(fPhase + 0.25) * 4;
+			return r < 2 ? r - 1 : 3 - r;
+		}
+	case WAVE_RAMP_UP:
+		return Wrap1(fPhase) * 2 - 1;
+	case WAVE_RAMP_DOWN:
+		return 1 - Wrap1(fPhase) * 2;
+	case WAVE_SQUARE:
+		return Wrap1(fPhase) < 0.5 ? 1 : -1;
+	}
+	return 0;
 }
 
 int CVelocityView::HitTest(CPoint point, int& iStep) const
@@ -211,7 +238,7 @@ void CVelocityView::UpdateDataTip(CPoint point)
 	}
 }
 
-void CVelocityView::UpdateVelocities(const CRect& rSpan)
+void CVelocityView::UpdateVelocities(const CRect& rSpan, int iWaveform)
 {
 	CRect	rClient;
 	GetClientRect(rClient);
@@ -257,7 +284,14 @@ void CVelocityView::UpdateVelocities(const CRect& rSpan)
 						y = rSpan.bottom;	// get y directly from cursor position; improves stability
 					} else {	// span is wider than bar; must compute intercept to avoid missing bars
 						double	x = round((iStep + 0.5) * fStepWidth) - x1;	// compute x at center of bar
-						y = x * fSlope + y1;	// compute y-intercept with span at center of bar
+						if (iWaveform < 0) {
+							y = x * fSlope + y1;	// compute y-intercept with span at center of bar
+						} else {
+							double	fPhase = x / nDeltaX;
+							if (rSpan.left > rSpan.right)
+								fPhase += 0.25;
+							y = y1 + (GetWave(iWaveform, fPhase) + 1) * nDeltaY / 2;
+						}
 					}
 					int	nVel = round((1 - y / nHeight) * MIDI_NOTE_MAX);	// y-axis is reversed
 					nVel = CLAMP(nVel, nMinVel, MIDI_NOTE_MAX);
@@ -415,18 +449,39 @@ void CVelocityView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	if (point != m_ptPrev) {	// if cursor actually moved
 		if (m_bIsDragging) {	// if dragging
+			int	iWaveform;
 			CRect	rSpan;
-			if (nFlags & MK_CONTROL) {
-				rSpan = CRect(m_ptAnchor, point);
-			} else {
+			bool	bMenuKey = (GetKeyState(VK_MENU) & GKS_DOWN) != 0;
+			if (bMenuKey) {	// if menu key down
 				if (nFlags & MK_SHIFT) {
-					rSpan = CRect(m_ptAnchor.x, m_ptAnchor.y, point.x, m_ptAnchor.y);
+					iWaveform = WAVE_SINE;
 				} else {
-					rSpan = CRect(m_ptPrev, point);
-					m_ptAnchor = point;
+					iWaveform = WAVE_TRIANGLE;
+				}
+			} else {	// no menu key
+				if (nFlags & MK_CONTROL) {
+					iWaveform = WAVE_LINE;
+				} else {
+					if (nFlags & MK_SHIFT) {
+						iWaveform = WAVE_FLAT;
+					} else {
+						iWaveform = WAVE_NONE;
+					}
 				}
 			}
-			UpdateVelocities(rSpan);
+			switch (iWaveform) {
+			case WAVE_NONE:
+				rSpan = CRect(m_ptPrev, point);
+				m_ptAnchor = point;	// update anchor point
+				break;
+			case WAVE_FLAT:
+				rSpan = CRect(m_ptAnchor.x, m_ptAnchor.y, point.x, m_ptAnchor.y);
+				break;
+			default:
+				rSpan = CRect(m_ptAnchor, point);	// draw from anchor point
+				break;
+			}
+			UpdateVelocities(rSpan, iWaveform);
 			UpdateDragDataTip(rSpan.bottom);
 		} else {	// not dragging
 			UpdateDataTip(point);

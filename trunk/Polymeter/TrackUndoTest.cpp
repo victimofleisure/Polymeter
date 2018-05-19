@@ -32,6 +32,7 @@
 #define TEST_PLAYING 0			// true to enable playback during test
 #define MAX_TRACKS 100			// maximum number of tracks
 #define MAX_STEPS 256			// maximum number of steps
+#define MAX_ROTATION_STEPS 16	// maximum number of rotation steps
 
 static CTrackUndoTest gUndoTest(TRUE);	// one and only instance, initially running
 
@@ -58,10 +59,11 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_PASTE_STEPS,			2},
 	{UCODE_INSERT_STEPS,		1},
 	{UCODE_DELETE_STEPS,		1},
-	{UCODE_VELOCITY,			0.1f},
+	{UCODE_VELOCITY,			0.15f},
 	{UCODE_REVERSE,				0.1f},
 	{UCODE_REVERSE_RECT,		0.1f},
 	{UCODE_ROTATE,				0.1f},
+	{UCODE_ROTATE_RECT,			0.1f},
 };
 
 CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
@@ -513,10 +515,19 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
 				return(DISABLED);
 			m_pDoc->m_arrTrackSel = arrSelection;
-			int	nMaxRot = 16;
-			int	nRotSteps = Random(nMaxRot * 2) - nMaxRot;
+			int	nRotSteps = Random(MAX_ROTATION_STEPS * 2) - MAX_ROTATION_STEPS;
 			m_pDoc->RotateSteps(nRotSteps);
 			PRINTF(_T("%s %d\n"), sUndoTitle, nRotSteps);
+		}
+		break;
+	case UCODE_ROTATE_RECT:
+		{
+			CRect	rSelection;
+			if (!MakeRandomStepSelection(rSelection))
+				return(DISABLED);
+			int	nRotSteps = Random(MAX_ROTATION_STEPS * 2) - MAX_ROTATION_STEPS;
+			m_pDoc->RotateSteps(rSelection, nRotSteps);
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(rSelection));
 		}
 		break;
 	default:

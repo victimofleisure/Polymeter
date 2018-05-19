@@ -28,6 +28,14 @@ protected: // create from serialization only
 	DECLARE_DYNCREATE(CVelocityView)
 
 // Constants
+	enum {	// waveforms
+		WAVE_SINE,
+		WAVE_TRIANGLE,
+		WAVE_RAMP_UP,
+		WAVE_RAMP_DOWN,
+		WAVE_SQUARE,
+		WAVEFORMS,
+	};
 
 // Public data
 	CStepView	*m_pStepView;
@@ -40,6 +48,7 @@ public:
 public:
 	void	ShowDataTip(bool bShow);
 	bool	HaveDataTip() const;
+	static	double	GetWave(int iWaveform, double fPhase);
 
 // Overrides
 public:
@@ -60,6 +69,11 @@ protected:
 		m_nBarBorder = 1,
 		DATA_TIP = 1,
 	};
+	enum {	// extended waveforms
+		WAVE_NONE = -1,
+		WAVE_LINE = -2,
+		WAVE_FLAT = -3,
+	};
 
 // Member data
 	bool	m_bIsDragging;		// true while drag in progress
@@ -69,11 +83,12 @@ protected:
 	CToolTipCtrl	m_DataTip;	// tool tip for showing velocities
 
 // Helpers
-	void	UpdateVelocities(const CRect& rSpan);
+	void	UpdateVelocities(const CRect& rSpan, int iWaveform = WAVE_LINE);
 	int		HitTest(CPoint point, int& iStep) const;
 	bool	GetStepVal(CPoint point, int& nMinVal, int& nMaxVal) const;
 	void	UpdateDataTip(CPoint point);
 	void	UpdateDragDataTip(int y);
+	static	double	Wrap1(double x);
 
 // Generated message map functionsq
 protected:

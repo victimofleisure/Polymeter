@@ -63,6 +63,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 // define duplicate title IDs
 #define IDS_EDIT_REVERSE_RECT		IDS_EDIT_REVERSE
+#define IDS_EDIT_ROTATE_RECT		IDS_EDIT_ROTATE
 
 const int CPolymeterDoc::m_nUndoTitleId[UNDO_CODES] = {
 	#define UCODE_DEF(name) IDS_EDIT_##name,
@@ -604,18 +605,8 @@ bool CPolymeterDoc::ReverseSteps()
 		return false;
 	NotifyUndoableEdit(0, UCODE_REVERSE);
 	int	nSels = m_arrTrackSel.GetSize();
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		int	iTrack = m_arrTrackSel[iSel];
-		CStepArray	arrOldStep;
-		m_Seq.GetSteps(iTrack, arrOldStep);
-		CStepArray	arrStep;
-		int	nSteps = arrOldStep.GetSize();
-		arrStep.SetSize(nSteps);
-		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
-			arrStep[iStep] = arrOldStep[nSteps - 1 - iStep];
-		}
-		m_Seq.SetSteps(iTrack, arrStep);
-	}
+	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected track
+		m_Seq.ReverseSteps(m_arrTrackSel[iSel]);
 	CMultiItemPropHint	hint(m_arrTrackSel);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_STEPS, &hint);
 	SetModifiedFlag();
@@ -627,15 +618,8 @@ void CPolymeterDoc::ReverseSteps(const CRect& rSelection)
 	m_rStepSel = rSelection;
 	NotifyUndoableEdit(0, UCODE_REVERSE_RECT);
 	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each track
-		CStepArray	arrOldStep;
-		m_Seq.GetSteps(iTrack, arrOldStep);
-		CStepArray	arrStep(arrOldStep);
-		int	iEndStep = min(rSelection.right, arrOldStep.GetSize());
-		int	nSteps = iEndStep - rSelection.left;
-		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
-			arrStep[rSelection.left + iStep] = arrOldStep[iEndStep - 1 - iStep];
-		}
-		m_Seq.SetSteps(iTrack, arrStep);
+		int	iEndStep = min(rSelection.right, m_Seq.GetLength(iTrack));
+		m_Seq.ReverseSteps(iTrack, rSelection.left, iEndStep - rSelection.left);
 	}
 	CRectSelPropHint	hint(rSelection, true);	// set selection
 	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
@@ -648,25 +632,25 @@ bool CPolymeterDoc::RotateSteps(int nRotSteps)
 		return false;
 	NotifyUndoableEdit(nRotSteps, UCODE_ROTATE);
 	int	nSels = m_arrTrackSel.GetSize();
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		int	iTrack = m_arrTrackSel[iSel];
-		CStepArray	arrOldStep;
-		m_Seq.GetSteps(iTrack, arrOldStep);
-		CStepArray	arrStep;
-		int	nSteps = arrOldStep.GetSize();
-		arrStep.SetSize(nSteps);
-		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
-			int	iRot = (iStep + nRotSteps) % nSteps;
-			if (iRot < 0)
-				iRot += nSteps;
-			arrStep[iRot] = arrOldStep[iStep];
-		}
-		m_Seq.SetSteps(iTrack, arrStep);
-	}
+	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected track
+		m_Seq.RotateSteps(m_arrTrackSel[iSel], nRotSteps);
 	CMultiItemPropHint	hint(m_arrTrackSel);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_STEPS, &hint);
 	SetModifiedFlag();
 	return true;
+}
+
+void CPolymeterDoc::RotateSteps(const CRect& rSelection, int nRotSteps)
+{
+	m_rStepSel = rSelection;
+	NotifyUndoableEdit(nRotSteps, UCODE_ROTATE_RECT);
+	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each track
+		int	iEndStep = min(rSelection.right, m_Seq.GetLength(iTrack));
+		m_Seq.RotateSteps(iTrack, rSelection.left, iEndStep - rSelection.left, nRotSteps);
+	}
+	CRectSelPropHint	hint(rSelection, true);	// set selection
+	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
+	SetModifiedFlag();
 }
 
 bool CPolymeterDoc::ValidateTrackLength(int nLength, int nQuant) const
@@ -1092,7 +1076,14 @@ void CPolymeterDoc::RestoreReverse(const CUndoState& State)
 {
 	const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
 	Select(pInfo->m_arrSelection);
-	ReverseSteps();
+	if (State.GetCode() == UCODE_REVERSE) {
+		ReverseSteps();
+	} else {
+		int	nRotSteps = State.GetCtrlID(); 
+		if (IsUndoing())
+			nRotSteps = -nRotSteps;	// inverse rotation
+		RotateSteps(nRotSteps);
+	}
 }
 
 void CPolymeterDoc::SaveReverseRect(CUndoState& State) const
@@ -1113,32 +1104,14 @@ void CPolymeterDoc::SaveReverseRect(CUndoState& State) const
 void CPolymeterDoc::RestoreReverseRect(const CUndoState& State)
 {
 	const CUndoRectSel	*pInfo = static_cast<CUndoRectSel*>(State.GetObj());
-	ReverseSteps(pInfo->m_rSelection);
-}
-
-void CPolymeterDoc::SaveRotate(CUndoState& State) const
-{
-	CIntArrayEx	arrSelection;
-	if (State.IsEmpty()) {	// if initial state
-		arrSelection = m_arrTrackSel;	// get fresh selection
-	} else {	// undoing or redoing; selection may have changed, so don't rely on it
-		const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
-		arrSelection = pInfo->m_arrSelection;	// use edit's original selection
+	if (State.GetCode() == UCODE_REVERSE_RECT) {
+		ReverseSteps(pInfo->m_rSelection);
+	} else {
+		int	nRotSteps = State.GetCtrlID(); 
+		if (IsUndoing())
+			nRotSteps = -nRotSteps;	// inverse rotation
+		RotateSteps(pInfo->m_rSelection, nRotSteps);
 	}
-	CRefPtr<CUndoSelection>	pInfo;
-	pInfo.CreateObj();
-	pInfo->m_arrSelection = arrSelection;
-	State.SetObj(pInfo);
-}
-
-void CPolymeterDoc::RestoreRotate(const CUndoState& State)
-{
-	const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
-	Select(pInfo->m_arrSelection);
-	int	nRotSteps = State.GetCtrlID(); 
-	if (IsUndoing())
-		nRotSteps = -nRotSteps;	// inverse rotation
-	RotateSteps(nRotSteps);
 }
 
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
@@ -1191,13 +1164,12 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		SaveMultiTrackSteps(State);
 		break;
 	case UCODE_REVERSE:
+	case UCODE_ROTATE:
 		SaveReverse(State);
 		break;
 	case UCODE_REVERSE_RECT:
+	case UCODE_ROTATE_RECT:
 		SaveReverseRect(State);
-		break;
-	case UCODE_ROTATE:
-		SaveRotate(State);
 		break;
 	}
 }
@@ -1253,13 +1225,12 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		RestoreMultiTrackSteps(State);
 		break;
 	case UCODE_REVERSE:
+	case UCODE_ROTATE:
 		RestoreReverse(State);
 		break;
 	case UCODE_REVERSE_RECT:
+	case UCODE_ROTATE_RECT:
 		RestoreReverseRect(State);
-		break;
-	case UCODE_ROTATE:
-		RestoreRotate(State);
 		break;
 	}
 }

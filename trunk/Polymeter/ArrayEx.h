@@ -22,6 +22,7 @@
 		12		30apr18	add GetMaxSize
 		13		02may18	add equality operators to non-template arrays
 		14		03may18	add InsertSortedUnique and refactor
+		15		18may18	move list of algorithms to header file
 
 		enhanced array with copy ctor, assignment, and fast const access
  
@@ -41,9 +42,9 @@ template<typename T> inline void CArrayEx_Swap(T& a, T& b)
 template<class ARRAY>
 __forceinline bool CArrayEx_IsEqual(const ARRAY& arr1, const ARRAY& arr2)
 {
-	if (arr1.GetSize() != arr2.GetSize())
+	if (arr1.GetSize64() != arr2.GetSize64())
 		return(FALSE);
-	W64INT nElems = arr1.GetSize();
+	W64INT nElems = arr1.GetSize64();
 	for (int iElem = 0; iElem < nElems; iElem++) {
 		if (arr1[iElem] != arr2[iElem])
 			return(FALSE);
@@ -54,7 +55,7 @@ __forceinline bool CArrayEx_IsEqual(const ARRAY& arr1, const ARRAY& arr2)
 template<class ARRAY, class TYPE>
 __forceinline W64INT CArrayEx_Find(const ARRAY& arr, const TYPE& val)
 {
-	W64INT nElems = arr.GetSize();
+	W64INT nElems = arr.GetSize64();
 	for (W64INT iElem = 0; iElem < nElems; iElem++) {
 		if (arr[iElem] == val)
 			return iElem;
@@ -66,7 +67,7 @@ template<class ARRAY, class TYPE>
 __forceinline W64INT CArrayEx_BinarySearch(const ARRAY& arr, const TYPE& val)
 {
 	W64INT iStart = 0;
-	W64INT iEnd = arr.GetSize() - 1;
+	W64INT iEnd = arr.GetSize64() - 1;
 	while (iStart <= iEnd) {
 		W64INT iMid = (iStart + iEnd) / 2;
 		if (val == arr[iMid])
@@ -83,7 +84,7 @@ template<class ARRAY, class TYPE>
 __forceinline void CArrayEx_InsertSorted(ARRAY& arr, TYPE& val)
 {
 	W64INT	iInsert = 0;
-	W64INT	nSize = arr.GetSize();
+	W64INT	nSize = arr.GetSize64();
 	if (nSize) {	// optimize initial insertion
 		W64INT	iStart = 0;
 		W64INT	iEnd = nSize - 1;
@@ -109,7 +110,7 @@ __forceinline void CArrayEx_InsertSorted(ARRAY& arr, TYPE& val)
 template<class ARRAY, class TYPE>
 __forceinline W64INT CArrayEx_InsertSortedUnique(ARRAY& arr, TYPE& val)
 {
-	W64INT	iInsert = arr.GetSize();
+	W64INT	iInsert = arr.GetSize64();
 	W64INT	iStart = 0;
 	W64INT	iEnd = iInsert - 1;
 	while (iStart <= iEnd) {
@@ -125,6 +126,27 @@ __forceinline W64INT CArrayEx_InsertSortedUnique(ARRAY& arr, TYPE& val)
 	}
 	arr.InsertAt(iInsert, val);
 	return -1;	// success
+}
+
+template<class ARRAY>
+__forceinline void CArrayEx_Reverse(ARRAY& arr, W64INT iStart, W64INT nElems)
+{
+	W64INT	nMid = iStart + nElems / 2;
+	W64INT	iLast = iStart * 2 + nElems - 1;
+	for (W64INT iElem = iStart; iElem < nMid; iElem++)
+		CArrayEx_Swap(arr[iElem], arr[iLast - iElem]);
+}
+
+template<class ARRAY>
+__forceinline void CArrayEx_Rotate(ARRAY& arr, W64INT iStart, W64INT nElems, W64INT nOffset)
+{
+	ARRAY	arrSrc(arr);
+	for (W64INT iElem = 0; iElem < nElems; iElem++) {
+		W64INT	iRot = (iElem + nOffset) % nElems;
+		if (iRot < 0)
+			iRot += nElems;
+		arr[iStart + iRot] = arrSrc[iStart + iElem];
+	}
 }
 
 template<class TYPE, class ARG_TYPE>
@@ -155,10 +177,8 @@ public:
 	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);	// ctors and dtors may not be called
 	bool	operator==(const CArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
 	bool	operator!=(const CArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
-	W64INT	Find(const ARG_TYPE val) const { return CArrayEx_Find(*this, val); }
-	W64INT	BinarySearch(ARG_TYPE val) const { return CArrayEx_BinarySearch(*this, val); }
-	void	InsertSorted(ARG_TYPE val) { CArrayEx_InsertSorted(*this, val); }
-	W64INT	InsertSortedUnique(ARG_TYPE val) { return CArrayEx_InsertSortedUnique(*this, val); }
+	#define	ALGO_TYPE ARG_TYPE
+	#include "ArrayExAlgoDef.h"
 };
 
 template<class TYPE, class ARG_TYPE>
@@ -306,10 +326,8 @@ public:
 	void	Swap(CDWordArrayEx& src);
 	bool	operator==(const CDWordArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
 	bool	operator!=(const CDWordArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
-	W64INT	Find(DWORD val) const { return CArrayEx_Find(*this, val); }
-	W64INT	BinarySearch(DWORD val) const { return CArrayEx_BinarySearch(*this, val); }
-	void	InsertSorted(DWORD val) { CArrayEx_InsertSorted(*this, val); }
-	W64INT	InsertSortedUnique(DWORD val) { return CArrayEx_InsertSortedUnique(*this, val); }
+	#define	ALGO_TYPE DWORD
+	#include "ArrayExAlgoDef.h"
 };
 
 AFX_INLINE CDWordArrayEx::CDWordArrayEx()
@@ -407,10 +425,8 @@ public:
 	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);
 	bool	operator==(const CIntArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
 	bool	operator!=(const CIntArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
-	W64INT	Find(int val) const { return CArrayEx_Find(*this, val); }
-	W64INT	BinarySearch(int val) const { return CArrayEx_BinarySearch(*this, val); }
-	void	InsertSorted(int val) { CArrayEx_InsertSorted(*this, val); }
-	W64INT	InsertSortedUnique(int val) { return CArrayEx_InsertSortedUnique(*this, val); }
+	#define	ALGO_TYPE int
+	#include "ArrayExAlgoDef.h"
 };
 
 AFX_INLINE CIntArrayEx::CIntArrayEx()
@@ -516,10 +532,8 @@ public:
 	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);
 	bool	operator==(const CByteArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
 	bool	operator!=(const CByteArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
-	W64INT	Find(BYTE val) const { return CArrayEx_Find(*this, val); }
-	W64INT	BinarySearch(BYTE val) const { return CArrayEx_BinarySearch(*this, val); }
-	void	InsertSorted(BYTE val) { CArrayEx_InsertSorted(*this, val); }
-	W64INT	InsertSortedUnique(BYTE val) { return CArrayEx_InsertSortedUnique(*this, val); }
+	#define	ALGO_TYPE BYTE
+	#include "ArrayExAlgoDef.h"
 };
 
 AFX_INLINE CByteArrayEx::CByteArrayEx()
@@ -606,10 +620,8 @@ public:
 	W64INT	GetMaxSize() const;
 	bool	operator==(const CStringArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
 	bool	operator!=(const CStringArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
-	W64INT	Find(const CString& val) const { return CArrayEx_Find(*this, val); }
-	W64INT	BinarySearch(const CString& val) const { return CArrayEx_BinarySearch(*this, val); }
-	void	InsertSorted(const CString& val) { CArrayEx_InsertSorted(*this, val); }
-	W64INT	InsertSortedUnique(const CString& val) { return CArrayEx_InsertSortedUnique(*this, val); }
+	#define	ALGO_TYPE CString
+	#include "ArrayExAlgoDef.h"
 };
 
 AFX_INLINE CStringArrayEx::CStringArrayEx()
