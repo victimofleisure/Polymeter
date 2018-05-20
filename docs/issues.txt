@@ -50,6 +50,8 @@ open	close	type	description	rev	user
 05/15/18	05/16/18	done	reverse selected tracks or steps	0.0.05.001	
 03/25/18	05/17/18	done	rotate selected tracks or steps left or right	0.0.05.001	
 05/10/18	05/17/18	done	tempo nudge; implement spin button control for floating-point properties	0.0.05.001	
+05/15/18	05/18/18	done	other functions besides line for controller fill: sine, triangle	0.0.05.003	
+05/19/18	05/19/18	done	muting track doesn't update current position color	0.0.05.004	
 03/25/18		hold	animated visualization		
 04/25/18		hold	popup numeric edit's spin control should affect document immediately; causes bugs and inconsistencies		
 05/10/18		hold	left-click anywhere in step view should toggle steps or tracks, as in original app; too confusing?		
@@ -67,4 +69,11 @@ open	close	type	description	rev	user
 04/09/18		todo	undoing track value or step edit should ensure track is visible		
 04/16/18		todo	optionally show MIDI notes instead of numbers in note edit controls		
 05/10/18		todo	right-click in step view background with no selection should show context menu?		
-05/15/18		todo	other functions besides line for controller fill: sine, triange, ramp, etc.		
+05/19/18		todo	tied note mode, instead of always defaulting to untied note		
+05/19/18		todo	transpose command		
+05/19/18		todo	key signature?		
+05/19/18		todo	note correction to chord changes, from ChordEase		
+05/19/18		todo	zoom should persist in document		
+05/19/18		todo	make zoom step size adjustable		
+05/19/18		todo	notes don't toggle the same way they did in the original		
+05/19/18		todo	show current position in time as well as beats and ticks		
