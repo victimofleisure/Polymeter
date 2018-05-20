@@ -137,6 +137,8 @@ protected:
 	void	UpdateTrack(int iTrack);
 	void	UpdateTracks(const CIntArrayEx& arrSelection);
 	void	UpdateTracks(const CRect& rSelection);
+	void	UpdateMute(int iTrack);
+	void	UpdateMutes(const CIntArrayEx& arrSelection);
 	void	UpdateGrid(int iTrack);
 	void	UpdateStep(int iTrack, int iStep);
 	void	UpdateSteps(const CRect& rSelection);

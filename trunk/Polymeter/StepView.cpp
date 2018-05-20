@@ -124,6 +124,9 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			case PROP_Type:
 				UpdateTrack(iTrack);
 				break;
+			case PROP_Mute:
+				UpdateMute(iTrack);
+				break;
 			}
 		}
 		break;
@@ -149,6 +152,9 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				break;
 			case PROP_Type:
 				UpdateTracks(pPropHint->m_arrSelection);
+				break;
+			case PROP_Mute:
+				UpdateMutes(pPropHint->m_arrSelection);
 				break;
 			}
 		}
@@ -357,6 +363,24 @@ void CStepView::UpdateTracks(const CIntArrayEx& arrSelection)
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = arrSelection[iSel];
 		UpdateTrack(iTrack);
+	}
+}
+
+void CStepView::UpdateMute(int iTrack)
+{
+	if (theApp.m_Options.m_View_bShowCurPos) {	// if showing current position
+		int	iCurStep = m_arrTrackState[iTrack].m_iCurStep;
+		if (iCurStep >= 0)	// if current position is valid
+			UpdateStep(iTrack, iCurStep);	// update current step
+	}
+}
+
+void CStepView::UpdateMutes(const CIntArrayEx& arrSelection)
+{
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = arrSelection[iSel];
+		UpdateMute(iTrack);
 	}
 }
 
