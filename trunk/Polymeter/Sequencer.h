@@ -76,6 +76,7 @@ public:
 	void	ConvertBeatToPosition(LONGLONG nBeat, LONGLONG nTick, LONGLONG& nPos) const;
 	void	ConvertPositionToString(const LONGLONG& nPos, CString& sPos) const;
 	bool	ConvertStringToPosition(const CString& sPos, LONGLONG& nPos) const;
+	void	ConvertPositionToTimeString(const LONGLONG& nPos, CString& sTime) const;
 
 protected:
 // Types

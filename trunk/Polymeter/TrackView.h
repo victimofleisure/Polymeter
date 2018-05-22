@@ -79,6 +79,7 @@ protected:
 	virtual void OnInitialUpdate();
 
 // Helpers
+	void	UpdateNotes();
 	int		CalcHeaderHeight() const;
 	int		CalcItemHeight();
 

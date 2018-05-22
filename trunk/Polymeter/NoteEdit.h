@@ -11,6 +11,7 @@
 		01		23nov07	support Unicode
 		02		12sep13	use note object's conversions
 		03		24apr18	standardize names
+		04		21may18	add set key signature
 
         numeric edit control
  
@@ -37,6 +38,7 @@ public:
 public:
 	void	SetNoteEntry(bool bEnable);
 	bool	IsNoteEntry() const;
+	void	SetKeySignature(BYTE nKeySig);
 
 // Operations
 public:
@@ -63,6 +65,7 @@ protected:
 
 // Data members
 	bool	m_bIsNoteEntry;
+	BYTE	m_nKeySig;
 };
 
 inline bool CNoteEdit::IsNoteEntry() const

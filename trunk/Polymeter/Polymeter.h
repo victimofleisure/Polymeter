@@ -61,6 +61,7 @@ public:
 	CTrackArray	m_arrTrackClipboard;	// clipboard for tracks
 	CTrack::CStepArrayArray m_arrStepClipboard;	// clipboard for steps
 	CMidiDevices	m_midiDevs;		// MIDI device information
+	bool	m_bTieNotes;	// if true, new notes are tied
 
 protected:
 // Protected data
@@ -80,6 +81,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnAppAbout();
 	afx_msg void OnAppHomePage();
+	afx_msg void OnToolsTieNotes();
+	afx_msg void OnUpdateToolsTieNotes(CCmdUI *pCmdUI);
 };
 
 extern CPolymeterApp theApp;

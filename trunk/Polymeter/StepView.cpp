@@ -65,7 +65,8 @@ CStepView::CStepView()
 	m_nBeatWidth = m_nTrackHeight * 4;
 	m_nZoom = 0;
 	m_fZoom = 1;
-	SetZoomStep(2);	// also sets m_nMaxZoomSteps
+	m_fZoomDelta = 0;
+	m_nMaxZoomSteps = 1;
 	m_ptDragOrigin = CPoint(0, 0);
 	m_nDragState = DS_NONE;
 	m_bDoContextMenu = false;
@@ -91,6 +92,12 @@ BOOL CStepView::PreCreateWindow(CREATESTRUCT& cs)
 void CStepView::OnInitialUpdate()
 {
 	CScrollView::OnInitialUpdate();
+	double	fDocZoom = GetDocument()->m_fStepZoom;
+	double	fZoomDelta = theApp.m_Options.GetZoomDeltaFrac();
+	m_nMaxZoomSteps = round(InvPow(fZoomDelta, MAX_ZOOM_SCALE));
+	m_nZoom = round(InvPow(fZoomDelta, fDocZoom));
+	m_fZoom = fDocZoom;
+	m_fZoomDelta = fZoomDelta;
 }
 
 void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
@@ -215,6 +222,15 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		{
 			const CPolymeterDoc::CMultiItemPropHint *pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
 			UpdateTracks(pPropHint->m_arrSelection);
+		}
+		break;
+	case CPolymeterDoc::HINT_OPTIONS:
+		{
+			const CPolymeterDoc::COptionsPropHint *pPropHint = static_cast<CPolymeterDoc::COptionsPropHint *>(pHint);
+			if (theApp.m_Options.m_View_bShowCurPos != pPropHint->m_pPrevOptions->m_View_bShowCurPos)
+				UpdateSongPosition();
+			if (theApp.m_Options.m_View_fZoomDelta != pPropHint->m_pPrevOptions->m_View_fZoomDelta)
+				UpdateZoomDelta();
 		}
 		break;
 	}
@@ -576,16 +592,30 @@ void CStepView::SetSongPosition(LONGLONG nPos)
 	}
 }
 
-void CStepView::SetZoomStep(double fStep)
+inline double CStepView::InvPow(double fBase, double fVal)	// inverse of power function
 {
-	m_fZoomStep = fStep;
-	m_nMaxZoomSteps = round(log(double(MAX_ZOOM_SCALE)) / log(fStep));
+	return log(fVal) / log(fBase);	// return exponent of value in specified base
+}
+
+void CStepView::SetZoomDelta(double fDelta)
+{
+	double	fPrevZoomFrac = double(m_nZoom) / m_nMaxZoomSteps;
+	m_fZoomDelta = fDelta;
+	m_nMaxZoomSteps = round(InvPow(fDelta, MAX_ZOOM_SCALE));
+	int	nZoom = round(fPrevZoomFrac * m_nMaxZoomSteps);
+	SetZoom(nZoom, false);	// compensate zoom index, no redraw
+}
+
+void CStepView::UpdateZoomDelta()
+{
+	SetZoomDelta(theApp.m_Options.GetZoomDeltaFrac());
 }
 
 void CStepView::SetZoom(int nZoom, bool bRedraw)
 {
 	m_nZoom = nZoom;
-	m_fZoom = pow(m_fZoomStep, nZoom);
+	m_fZoom = pow(m_fZoomDelta, nZoom);
+	GetDocument()->m_fStepZoom = m_fZoom;
 	if (bRedraw) {
 		UpdateViewSize();
 		Invalidate();
@@ -947,12 +977,12 @@ void CStepView::OnLButtonDown(UINT nFlags, CPoint point)
 				if (nStep) {	// if step is on
 					if (nFlags & MK_SHIFT)	// if modifier key
 						nStep ^= NB_TIE;	// toggle tie state
-					else	// no modifier
+					else	// no modifier key
 						nStep = 0;	// clear step
 				} else {	// step is off
-					if (nFlags & MK_SHIFT)// if modifier key
+					if (((nFlags & MK_SHIFT) != 0) ^ theApp.m_bTieNotes)	// if modifier key, or tie mode
 						nStep = DEFAULT_VELOCITY | NB_TIE;	// default velocity with tie
-					else	// no modifier
+					else	// no modifier key and tie mode off
 						nStep = DEFAULT_VELOCITY;	// default velocity
 				}
 			} else {	// track type isn't note; tie has no meaning, ignore shift key

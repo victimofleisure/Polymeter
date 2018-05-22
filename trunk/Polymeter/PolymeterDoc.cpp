@@ -31,6 +31,7 @@
 #include "NumberTheory.h"
 #include "VariantHelper.h"
 #include "TrackSortDlg.h"
+#include "TransposeDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -50,8 +51,13 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_TRACK_LENGTH	_T("Length")
 #define RK_TRACK_STEP	_T("Step")
 #define RK_MASTER		_T("Master")
+#define RK_STEP_VIEW	_T("StepView")
+#define RK_STEP_ZOOM	_T("Zoom")
 
-#define RK_EXPORT_DURATION	_T("ExportDuration")
+#define RK_TRANSPOSE_DLG	REG_SETTINGS _T("\\Transpose")
+#define RK_TRANSPOSE_NOTES	_T("nNotes")
+#define RK_EXPORT_DLG		REG_SETTINGS _T("\\Export")
+#define RK_EXPORT_DURATION	_T("nDuration")
 
 // define null title IDs for undo codes that have dynamic titles
 #define IDS_EDIT_TRACK_PROP			0
@@ -88,6 +94,7 @@ CPolymeterDoc::CPolymeterDoc()
 	SetUndoManager(&m_UndoMgr);
 	InitChannelArray();
 	m_iTrackSelMark = -1;
+	m_fStepZoom = 1;
 }
 
 CPolymeterDoc::~CPolymeterDoc()
@@ -124,8 +131,9 @@ void CPolymeterDoc::ApplyOptions(const COptions *pPrevOptions)
 	m_Seq.SetLatency(theApp.m_Options.m_Midi_nLatency);
 	m_Seq.SetBufferSize(theApp.m_Options.m_Midi_nBufferSize);
 	if (pPrevOptions != NULL) {
-		if (theApp.m_Options.m_View_bShowCurPos != pPrevOptions->m_View_bShowCurPos)
-			UpdateAllViews(NULL, HINT_SONG_POS);
+		COptionsPropHint	hint;
+		hint.m_pPrevOptions = pPrevOptions;
+		UpdateAllViews(NULL, HINT_OPTIONS, &hint);
 	}
 }
 
@@ -255,6 +263,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 	if (m_nFileVersion < FILE_VERSION)	// if older format
 		ConvertLegacyFileFormat();
 	m_arrChannel.Read();	// read channels
+	RdReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
 }
 
 void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
@@ -287,6 +296,7 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 		CPersist::WriteBinary(sTrkID, RK_TRACK_STEP, trk.m_arrStep.GetData(), nUsed);
 	}
 	m_arrChannel.Write();	// write channels
+	WrReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
 }
 
 void CPolymeterDoc::ConvertLegacyFileFormat()
@@ -651,6 +661,22 @@ void CPolymeterDoc::RotateSteps(const CRect& rSelection, int nRotSteps)
 	CRectSelPropHint	hint(rSelection, true);	// set selection
 	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
 	SetModifiedFlag();
+}
+
+bool CPolymeterDoc::Transpose(int nNoteDelta)
+{
+	if (!GetSelectedCount())
+		return false;
+	NotifyUndoableEdit(PROP_Note, UCODE_MULTI_TRACK_PROP);
+	int	nSels = GetSelectedCount();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = m_arrTrackSel[iSel];
+		int	nNote = m_Seq.GetNote(iTrack) + nNoteDelta;
+		m_Seq.SetNote(iTrack, CLAMP(nNote, 0, MIDI_NOTE_MAX));
+	}
+	CMultiItemPropHint	hint(m_arrTrackSel, PROP_Note);
+	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
+	return true;
 }
 
 bool CPolymeterDoc::ValidateTrackLength(int nLength, int nQuant) const
@@ -1379,6 +1405,8 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_TRACK_SORT, OnUpdateEditSelectAll)
 	ON_COMMAND(ID_TOOLS_TIME_TO_REPEAT, OnToolsTimeToRepeat)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIME_TO_REPEAT, OnUpdateToolsTimeToRepeat)
+	ON_COMMAND(ID_EDIT_TRANSPOSE, OnEditTranspose)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_TRANSPOSE, OnUpdateEditTranspose)
 END_MESSAGE_MAP()
 
 // CPolymeterDoc commands
@@ -1437,9 +1465,9 @@ void CPolymeterDoc::OnFileExport()
 	if (fd.DoModal() == IDOK) {
 		const int	nDefaultDuration = 60;	// seconds
 		CExportDlg	dlg;
-		dlg.m_nDuration = theApp.GetProfileInt(REG_SETTINGS, RK_EXPORT_DURATION, nDefaultDuration);
+		dlg.m_nDuration = theApp.GetProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, nDefaultDuration);
 		if (dlg.DoModal() == IDOK) {
-			theApp.WriteProfileInt(REG_SETTINGS, RK_EXPORT_DURATION, dlg.m_nDuration);
+			theApp.WriteProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, dlg.m_nDuration);
 			CWaitCursor	wc;
 			if (!m_Seq.Export(fd.GetPathName(), dlg.m_nDuration)) {
 				AfxMessageBox(IDS_EXPORT_ERROR);
@@ -1595,6 +1623,22 @@ void CPolymeterDoc::OnEditRotateRight()
 }
 
 void CPolymeterDoc::OnUpdateEditRotate(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(GetSelectedCount());
+}
+
+void CPolymeterDoc::OnEditTranspose()
+{
+	CTransposeDlg	dlg;
+	dlg.m_nNotes = theApp.GetProfileInt(RK_TRANSPOSE_DLG, RK_TRANSPOSE_NOTES, 0);
+	if (dlg.DoModal() == IDOK) {
+		if (dlg.m_nNotes)
+			Transpose(dlg.m_nNotes);
+		theApp.WriteProfileInt(RK_TRANSPOSE_DLG, RK_TRANSPOSE_NOTES, dlg.m_nNotes);
+	}
+}
+
+void CPolymeterDoc::OnUpdateEditTranspose(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(GetSelectedCount());
 }

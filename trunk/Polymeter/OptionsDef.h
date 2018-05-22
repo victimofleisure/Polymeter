@@ -30,8 +30,10 @@ PROPDEF(	Midi,		NONE,		ENUM,		int,		iOutputDevice,		0,			0,			0,			NULL,		0)
 PROPDEF(	Midi,		NONE,		VAR,		int,		nLatency,			10,			1,			1000,		NULL,		0)
 PROPDEF(	Midi,		NONE,		VAR,		int,		nBufferSize,		4096,		1,			USHRT_MAX,	NULL,		0)
 PROPDEF(	Midi,		NONE,		VAR,		bool,		bThru,				1,			0,			0,			NULL,		0)
-PROPDEF(	View,		NONE,		VAR,		float,		nUpdateFreq,		20.0f,		1.0f,		60.0f,		NULL,		0)
+PROPDEF(	View,		NONE,		VAR,		float,		fUpdateFreq,		20.0f,		1.0f,		60.0f,		NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowCurPos,		1,			0,			0,			NULL,		0)
+PROPDEF(	View,		NONE,		VAR,		bool,		bShowNoteNames,		1,			0,			0,			NULL,		0)
+PROPDEF(	View,		NONE,		VAR,		float,		fZoomDelta,			100.0f,		1.0f,		100.0f,		NULL,		0)
 PROPDEF(	General,	NONE,		VAR,		bool,		bCheckForUpdates,	1,			0,			0,			NULL,		0)
 
 #undef PROPDEF

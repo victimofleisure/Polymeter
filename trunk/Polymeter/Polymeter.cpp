@@ -39,6 +39,8 @@
 
 #define CHECK_MIDI(x) { MMRESULT nResult = x; if (MIDI_FAILED(nResult)) { OnMidiError(nResult); return false; } }
 
+#define RK_TIE_NOTES _T("bTieNotes")
+
 // CPolymeterApp construction
 
 CPolymeterApp::CPolymeterApp()
@@ -52,6 +54,7 @@ CPolymeterApp::CPolymeterApp()
 	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance
 	m_bInMsgBox = false;
+	m_bTieNotes = false;
 }
 
 // The one and only CPolymeterApp object
@@ -104,6 +107,7 @@ BOOL CPolymeterApp::InitInstance()
 	LoadStdProfileSettings(4);  // Load standard INI file options (including MRU)
 
 	m_Options.ReadProperties();	// get options from registry
+	m_bTieNotes = GetProfileInt(REG_SETTINGS, RK_TIE_NOTES, 0) != 0;
 
 	InitContextMenuManager();
 
@@ -168,6 +172,8 @@ int CPolymeterApp::ExitInstance()
 
 	//TODO: handle additional resources you may have added
 	AfxOleTerm(FALSE);
+
+	WriteProfileInt(REG_SETTINGS, RK_TIE_NOTES, m_bTieNotes);
 
 	return CWinAppEx::ExitInstance();
 }
@@ -383,6 +389,8 @@ BEGIN_MESSAGE_MAP(CPolymeterApp, CWinAppEx)
 	ON_COMMAND(ID_FILE_NEW, &CWinAppEx::OnFileNew)
 	ON_COMMAND(ID_FILE_OPEN, &CWinAppEx::OnFileOpen)
 	ON_COMMAND(ID_APP_HOME_PAGE, OnAppHomePage)
+	ON_COMMAND(ID_TOOLS_TIE_NOTES, OnToolsTieNotes)
+	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIE_NOTES, OnUpdateToolsTieNotes)
 END_MESSAGE_MAP()
 
 // CPolymeterApp message handlers
@@ -405,4 +413,14 @@ void CPolymeterApp::OnAppHomePage()
 {
 	if (!CHyperlink::GotoUrl(HOME_PAGE_URL))
 		AfxMessageBox(IDS_HLINK_CANT_LAUNCH);
+}
+
+void CPolymeterApp::OnToolsTieNotes()
+{
+	m_bTieNotes ^= 1;
+}
+
+void CPolymeterApp::OnUpdateToolsTieNotes(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bTieNotes);
 }

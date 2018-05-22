@@ -34,6 +34,7 @@ public:
 	enum {	// status bar panes
 		SBP_HINT,
 		SBP_SONG_POS,
+		SBP_SONG_TIME,
 		STATUS_BAR_PANES
 	};
 
@@ -75,6 +76,7 @@ protected:  // control bar embedded members
 // Data members
 	CPolymeterDoc	*m_pActiveDoc;		// pointer to active document, or NULL if none
 	CString	m_sSongPos;					// song position string
+	CString	m_sSongTime;				// song time string
 
 // Helpers
 	BOOL	CreateDockingWindows();
@@ -94,6 +96,7 @@ protected:
 	afx_msg void OnApplicationLook(UINT id);
 	afx_msg void OnUpdateApplicationLook(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateIndicatorSongPos(CCmdUI* pCmdUI);
+	afx_msg void OnUpdateIndicatorSongTime(CCmdUI* pCmdUI);
 	afx_msg LRESULT OnAfterTaskbarActivate(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT	OnHandleDlgKey(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPropertyChange(WPARAM wParam, LPARAM lParam);

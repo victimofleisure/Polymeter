@@ -36,6 +36,9 @@ public:
 	static const OPTION_INFO	m_Group[GROUPS];	// group names
 	static const PROPERTY_INFO	m_Info[PROPERTIES];	// fixed info for each property
 
+// Attributes
+	double	GetZoomDeltaFrac() const;
+
 // Operations
 	void	ReadProperties();
 	void	WriteProperties() const;
@@ -57,3 +60,8 @@ public:
 	virtual	void	GetProperty(int iProp, CComVariant& var) const;
 	virtual	void	SetProperty(int iProp, const CComVariant& var);
 };
+
+inline double COptions::GetZoomDeltaFrac() const
+{
+	return m_View_fZoomDelta / 100 + 1;
+}

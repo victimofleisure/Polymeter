@@ -594,6 +594,17 @@ bool CSequencer::ConvertStringToPosition(const CString& sPosition, LONGLONG& nPo
 	return true;
 }
 
+void CSequencer::ConvertPositionToTimeString(const LONGLONG& nPos, CString& sTime) const
+{
+	LONGLONG	nTime = round64(static_cast<double>(nPos) / m_nTimeDiv / m_fTempo * 60);
+	LONGLONG	nSecs = nTime % 60;
+	nTime /= 60;
+	LONGLONG	nMins = nTime % 60;
+	nTime /= 60;
+	LONGLONG	nHours = nTime;
+	sTime.Format(_T("%lld:%02lld:%02lld"), nHours, nMins, nSecs);
+}
+
 int CSequencer::GetStepIndex(int iTrack, LONGLONG nPos) const
 {
 	const CTrack&	trk = GetAt(iTrack);

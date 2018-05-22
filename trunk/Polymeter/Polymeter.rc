@@ -107,6 +107,7 @@ BEGIN
     BUTTON      ID_VIEW_PAUSE
     SEPARATOR
     BUTTON      ID_VIEW_VELOCITIES
+    BUTTON      ID_TOOLS_TIE_NOTES
     SEPARATOR
     BUTTON      ID_APP_ABOUT
 END
@@ -130,6 +131,7 @@ BEGIN
     BUTTON      ID_VIEW_PAUSE
     SEPARATOR
     BUTTON      ID_VIEW_VELOCITIES
+    BUTTON      ID_TOOLS_TIE_NOTES
     SEPARATOR
     BUTTON      ID_APP_ABOUT
 END
@@ -178,8 +180,8 @@ BEGIN
     END
     POPUP "&Tools"
     BEGIN
-        MENUITEM "&Options...",                 ID_TOOLS_OPTIONS
         MENUITEM "&Devices",                    ID_TOOLS_DEVICES
+        MENUITEM "&Options...",                 ID_TOOLS_OPTIONS
     END
     POPUP "&Help"
     BEGIN
@@ -225,6 +227,7 @@ BEGIN
         END
         MENUITEM "Re&verse",                    ID_EDIT_REVERSE
         MENUITEM SEPARATOR
+        MENUITEM "Tra&nspose...",               ID_EDIT_TRANSPOSE
         MENUITEM "Track &Sort...",              ID_EDIT_TRACK_SORT
     END
     POPUP "&View"
@@ -266,8 +269,10 @@ BEGIN
         MENUITEM "&Statistics",                 ID_TOOLS_STATISTICS
         MENUITEM "Time to &Repeat",             ID_TOOLS_TIME_TO_REPEAT
         MENUITEM SEPARATOR
-        MENUITEM "&Options...",                 ID_TOOLS_OPTIONS
+        MENUITEM "&Tie Notes",                  ID_TOOLS_TIE_NOTES
+        MENUITEM SEPARATOR
         MENUITEM "&Devices",                    ID_TOOLS_DEVICES
+        MENUITEM "&Options...",                 ID_TOOLS_OPTIONS
     END
     POPUP "&Window"
     BEGIN
@@ -342,6 +347,7 @@ BEGIN
     VK_OEM_PLUS,    ID_VIEW_ZOOM_IN,        VIRTKEY, CONTROL, NOINVERT
     VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
     "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
+    "T",            ID_TOOLS_TIE_NOTES,     VIRTKEY, CONTROL, NOINVERT
 END
 
 
@@ -438,6 +444,18 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,146,146,50,14
 END
 
+IDD_TRANSPOSE DIALOGEX 0, 0, 118, 62
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Transpose"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Notes:",IDC_STATIC,33,7,22,8
+    EDITTEXT        IDC_TRANSPOSE_EDIT,33,17,51,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_TRANSPOSE_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,78,15,10,14
+    DEFPUSHBUTTON   "OK",IDOK,7,41,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,61,41,50,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -493,6 +511,14 @@ BEGIN
         RIGHTMARGIN, 197
         TOPMARGIN, 7
         BOTTOMMARGIN, 160
+    END
+
+    IDD_TRANSPOSE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 111
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 55
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -616,15 +642,18 @@ BEGIN
     IDS_OPT_DESC_Midi_nLatency "Desired MIDI latency, in milliseconds"
     IDS_OPT_DESC_View_bShowCurPos 
                             "Indicate current position within each track"
-    IDS_OPT_DESC_View_nUpdateFreq 
+    IDS_OPT_DESC_View_bShowNoteNames 
+                            "Display notes as names instead of numbers"
+    IDS_OPT_DESC_View_fUpdateFreq 
                             "Frequency at which view is updated, in Hertz"
+    IDS_OPT_DESC_View_fZoomDelta "Zoom step size, as a percentage"
     IDS_OPT_GROUP_General   "General"
-    IDS_OPT_GROUP_Midi      "MIDI"
-    IDS_OPT_GROUP_View      "View"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_GROUP_Midi      "MIDI"
+    IDS_OPT_GROUP_View      "View"
     IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
     IDS_OPT_NAME_Midi_bThru "Thru"
     IDS_OPT_NAME_Midi_iInputDevice "Input Device"
@@ -632,19 +661,23 @@ BEGIN
     IDS_OPT_NAME_Midi_nBufferSize "Buffer Size"
     IDS_OPT_NAME_Midi_nLatency "Latency"
     IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
-    IDS_OPT_NAME_View_nUpdateFreq "Update Frequency"
+    IDS_OPT_NAME_View_bShowNoteNames "Show Note Names"
+    IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
+    IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
     IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
+    IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
     IDS_PDR_DESC_nTimeDiv   "Time division, in pulses per quarter note"
     IDS_PDR_GROUP_Master    "Master"
-    IDS_PDR_NAME_fTempo     "Tempo"
-    IDS_PDR_NAME_nTimeDiv   "PPQ"
-    IDS_PROPERTIES_BAR      "Properties"
-    IDS_PROPS_MORE_COLORS   "More Colors..."
-    IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_NAME_fTempo     "Tempo"
+    IDS_PDR_NAME_nKeySig    "Key Signature"
+    IDS_PDR_NAME_nTimeDiv   "PPQ"
+    IDS_PROPERTIES_BAR      "Properties"
+    IDS_PROPS_MORE_COLORS   "More Colors..."
+    IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
     IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format"
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
@@ -655,16 +688,16 @@ BEGIN
     IDS_TIME_TO_REPEAT_DAYS "days"
     IDS_TIME_TO_REPEAT_FMT  "%s beats\n%s\nGreatest prime factor is %s"
     IDS_TOOLBAR_CUSTOMIZE   "Customize..."
+END
+
+STRINGTABLE
+BEGIN
     IDS_TOOLBAR_STANDARD    "Standard"
     IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
     IDS_TRACK_TYPE_CONTROL  "Control"
     IDS_TRACK_TYPE_KEY_AFT  "Key Aftertouch"
     IDS_TRACK_TYPE_NOTE     "Note"
     IDS_TRACK_TYPE_PATCH    "Patch"
-END
-
-STRINGTABLE
-BEGIN
     IDS_TRACK_TYPE_WHEEL    "Wheel"
     IDS_TRK_Channel         "Channel"
     IDS_TRK_Duration        "Duration"
@@ -675,6 +708,10 @@ BEGIN
     IDS_TRK_Number          "#"
     IDS_TRK_Offset          "Offset"
     IDS_TRK_Quant           "Quant"
+END
+
+STRINGTABLE
+BEGIN
     IDS_TRK_STEP            "Step"
     IDS_TRK_Swing           "Swing"
     IDS_TRK_Type            "Type"
@@ -699,23 +736,26 @@ BEGIN
     ID_EDIT_ROTATE_LEFT     "Rotate selected tracks or steps left\nRotate Left"
     ID_EDIT_ROTATE_RIGHT    "Rotate selected tracks or steps right\nRotate Right"
     ID_EDIT_TRACK_SORT      "Sort selected tracks\nTrack Sort"
+    ID_EDIT_TRANSPOSE       "Transpose selected tracks\nTranspose"
     ID_FILE_EXPORT          "Export MIDI file\nExport"
     ID_INDICATOR_SONG_POS   "000000000.000"
     ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
-    ID_TOOLS_OPTIONS        "Edit options\nOptions"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TOOLS_OPTIONS        "Edit options\nOptions"
     ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
+    ID_TOOLS_TIE_NOTES      "Toggle tie notes mode; if on, new notes are tied\nTie Notes"
     ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for selected tracks to repeat\nTime to Repeat"
+    ID_INDICATOR_SONG_TIME  "0000000:00:00"
     ID_VIEW_CUSTOMIZE       " "
+END
+
+STRINGTABLE
+BEGIN
     ID_VIEW_GO_TO_POSITION  "Go to specified position within song\nGo To Position"
     ID_VIEW_PAUSE           "Pause or continue playback\nPause"
-END
-
-STRINGTABLE
-BEGIN
     ID_VIEW_PLAY            "Start or stop playback\nPlay"
     ID_VIEW_VELOCITIES      "Show or hide velocities pane\nVelocities"
     ID_WINDOW_MANAGER       "&Windows..."

@@ -307,8 +307,12 @@ LRESULT CStepParent::OnTrackScroll(WPARAM wParam, LPARAM lParam)
 	UNREFERENCED_PARAMETER(lParam);
 	if (!m_bIsScrolling) {	// if not already handling scroll message
 		CSaveObj<bool>	save(m_bIsScrolling, true);
+		int	iTrack = static_cast<int>(wParam);
 		CPoint	ptScroll(m_pStepView->GetScrollPosition());
-		m_pStepView->ScrollToPosition(CPoint(ptScroll.x, static_cast<int>(wParam) * m_pStepView->GetTrackHeight()));
+		ptScroll.y = iTrack * m_pStepView->GetTrackHeight();
+		CPoint	ptScrollMax(m_pStepView->GetMaxScrollPos());
+		ptScroll.y = CLAMP(ptScroll.y, 0, ptScrollMax.y);
+		m_pStepView->ScrollToPosition(ptScroll);
 		m_pMuteView->Invalidate();
 	}
 	return 0;

@@ -48,14 +48,15 @@ public:
 	void	SetTrackHeight(int nHeight);
 	int		GetTrackY(int iTrack) const;
 	double	GetZoom() const;
-	double	GetZoomStep() const;
-	void	SetZoomStep(double fStep);
+	double	GetZoomDelta() const;
+	void	SetZoomDelta(double fDelta);
 	int		GetBeatWidth() const;
 	double	GetStepWidthEx(int iTrack) const;
 	COLORREF	GetBeatLineColor() const;
 	bool	IsSelected(int iTrack) const;
 	bool	HaveStepSelection() const;
 	const CRect&	GetStepSelection();
+	CPoint	GetMaxScrollPos() const;
 
 // Operations
 public:
@@ -115,7 +116,7 @@ protected:
 	int		m_nZoom;			// zoom level as base two exponent
 	int		m_nMaxZoomSteps;	// maximum number of zoom steps
 	double	m_fZoom;			// zoom scaling factor
-	double	m_fZoomStep;		// zoom step size, as a fraction
+	double	m_fZoomDelta;		// zoom step size, as a fraction
 	CPoint	m_ptDragOrigin;		// drag origin
 	int		m_nDragState;		// drag state; see enum above
 	bool	m_bDoContextMenu;	// true if context menu should be displayed
@@ -129,7 +130,6 @@ protected:
 	void	OnTrackCountChange();
 	void	OnTrackSizeChange(int iTrack);
 	void	OnTrackSelectionChange();
-	CPoint	GetMaxScrollPos() const;
 	void	GetTrackRect(int iTrack, CRect& rTrack) const;
 	void	GetGridRect(int iTrack, CRect& rStep) const;
 	void	GetStepRect(int iTrack, int iStep, CRect& rStep) const;
@@ -156,6 +156,7 @@ protected:
 	void	SetZoom(int nZoom, bool bRedraw = true);
 	void	Zoom(int nZoom);
 	void	Zoom(int nZoom, int nOriginX);
+	void	UpdateZoomDelta();
 	int		GetStepColorIdx(int iTrack, int iStep, STEP nStep, bool bMute) const;
 	static	USHORT	Make16BitColor(BYTE nIntensity);
 	static	void	InitTriangleVertex(TRIVERTEX& tv, int x, int y, COLORREF clr);
@@ -165,6 +166,7 @@ protected:
 	void	DispatchToDocument();
 	CSize	GetClientSize() const;
 	void	RotateSteps(int nRotSteps);
+	static	double	InvPow(double fBase, double fVal);
 
 // Generated message map functionsq
 protected:
@@ -221,9 +223,9 @@ inline double CStepView::GetZoom() const
 	return m_fZoom;
 }
 
-inline double CStepView::GetZoomStep() const
+inline double CStepView::GetZoomDelta() const
 {
-	return m_fZoomStep;
+	return m_fZoomDelta;
 }
 
 inline bool CStepView::HaveStepSelection() const

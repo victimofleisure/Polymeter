@@ -33,6 +33,11 @@ const int CMasterProps::m_arrTimeDivTicks[TIME_DIVS] = {
 	#include "MasterPropsDef.h"	// generate time division tick values
 };
 
+CProperties::OPTION_INFO CMasterProps::m_KeySig[NOTES] = {
+	#define NOTEDEF(name) {_T(#name)},
+	#include "NoteDef.h"	// generate note name array
+};
+
 const CProperties::PROPERTY_INFO CMasterProps::m_Info[PROPERTIES] = {
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
 		{_T(#name), IDS_PDR_NAME_##name, IDS_PDR_DESC_##name, offsetof(CMasterProps, m_##name), \

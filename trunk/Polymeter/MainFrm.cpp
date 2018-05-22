@@ -43,6 +43,7 @@ static UINT indicators[] =
 {
 	ID_SEPARATOR,           // status line indicator
 	ID_INDICATOR_SONG_POS,
+	ID_INDICATOR_SONG_TIME,
 	ID_INDICATOR_CAPS,
 	ID_INDICATOR_NUM,
 	ID_INDICATOR_SCRL,
@@ -248,13 +249,18 @@ void CMainFrame::OnActivateView(CView *pView)
 		if (bNewEnable != bOldEnable) {	// if first or last view
 			EnableChildWindows(m_wndPropertiesBar, bNewEnable);
 		}
-		CString	m_sSongPos;
 		if (pDoc != NULL) {	// if valid document
 			LONGLONG	nPos;
-			if (pDoc->m_Seq.GetPosition(nPos))	// if valid song position
+			if (pDoc->m_Seq.GetPosition(nPos)) {	// if valid song position
 				pDoc->m_Seq.ConvertPositionToString(nPos, m_sSongPos);
+				pDoc->m_Seq.ConvertPositionToTimeString(nPos, m_sSongTime);
+			}
+		} else {	// no document
+			m_sSongPos.Empty();
+			m_sSongTime.Empty();
 		}
 		m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);	// update song position in status bar
+		m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);	// update song time in status bar
 	}
 }
 
@@ -293,7 +299,7 @@ void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 	pDoc = GetActiveMDIDoc();
 	if (pDoc != NULL) {
 		if (pPrevOptions != NULL) {
-			if (theApp.m_Options.m_View_nUpdateFreq != pPrevOptions->m_View_nUpdateFreq) {
+			if (theApp.m_Options.m_View_fUpdateFreq != pPrevOptions->m_View_fUpdateFreq) {
 				if (pDoc->m_Seq.IsPlaying())
 					SetViewTimer(true);
 			}
@@ -304,8 +310,8 @@ void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 void CMainFrame::SetViewTimer(bool bEnable)
 {
 	if (bEnable) {	// if starting timer
-		ASSERT(theApp.m_Options.m_View_nUpdateFreq);	// else divide by zero
-		int	nPeriod = round(1000.0 / theApp.m_Options.m_View_nUpdateFreq);
+		ASSERT(theApp.m_Options.m_View_fUpdateFreq);	// else divide by zero
+		int	nPeriod = round(1000.0 / theApp.m_Options.m_View_fUpdateFreq);
 		SetTimer(VIEW_TIMER_ID, nPeriod, NULL);
 	} else	// stopping timer
 		KillTimer(VIEW_TIMER_ID);
@@ -424,6 +430,8 @@ void CMainFrame::UpdateSongPosition()
 	if (pDoc->m_Seq.GetPosition(nPos)) {	// if valid song position
 		pDoc->m_Seq.ConvertPositionToString(nPos, m_sSongPos);
 		m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);
+		pDoc->m_Seq.ConvertPositionToTimeString(nPos, m_sSongTime);
+		m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);
 		CView	*pView = reinterpret_cast<CView *>(this);
 		pDoc->UpdateAllViews(pView, CPolymeterDoc::HINT_SONG_POS);
 	}
@@ -520,6 +528,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_COMMAND_RANGE(ID_VIEW_APPLOOK_FIRST, ID_VIEW_APPLOOK_LAST, OnApplicationLook)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_VIEW_APPLOOK_FIRST, ID_VIEW_APPLOOK_LAST, OnUpdateApplicationLook)
 	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SONG_POS, OnUpdateIndicatorSongPos)
+	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SONG_TIME, OnUpdateIndicatorSongPos)
 	ON_REGISTERED_MESSAGE(AFX_WM_AFTER_TASKBAR_ACTIVATE, OnAfterTaskbarActivate)
 	ON_MESSAGE(UWM_HANDLE_DLG_KEY, OnHandleDlgKey)
 	ON_MESSAGE(UWM_PROPERTY_CHANGE, OnPropertyChange)
@@ -701,15 +710,13 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 			pDoc->m_Seq.SetTempo(pDoc->m_fTempo);
 			break;
 		case CMasterProps::PROP_nTimeDiv:
-			{
-				ASSERT(!pDoc->m_Seq.IsPlaying());
-				// convert time division preset index to time division value in ticks
-				pDoc->m_Seq.SetTimeDivision(CMasterProps::GetTimeDivisionTicks(pDoc->m_nTimeDiv));
-				CPolymeterDoc::CPropHint	hint(0, iProp);
-				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MASTER_PROP, &hint);
-			}
+			ASSERT(!pDoc->m_Seq.IsPlaying());
+			// convert time division preset index to time division value in ticks
+			pDoc->m_Seq.SetTimeDivision(CMasterProps::GetTimeDivisionTicks(pDoc->m_nTimeDiv));
 			break;
 		}
+		CPolymeterDoc::CPropHint	hint(0, iProp);
+		pDoc->UpdateAllViews(reinterpret_cast<CView *>(lParam), CPolymeterDoc::HINT_MASTER_PROP, &hint);
 	}
 	return 0;
 }

@@ -51,6 +51,7 @@ public:
 		HINT_MULTI_TRACK_STEPS,	// multi-track steps edit; pHint is CMultiItemPropHint
 		HINT_STEPS_ARRAY,		// inserting or deleting steps; pHint is CRectSelPropHint
 		HINT_VELOCITY,			// multi-track velocity edit; pHint is CMultiItemPropHint
+		HINT_OPTIONS,			// options change; pHint is COptionsPropHint
 		HINTS
 	};
 
@@ -79,6 +80,10 @@ public:
 		CRect	m_rSelection;	// rectangular step selection; x is step index, y is track index
 		bool	m_bSelect;		// if true, select steps in rectangle
 	};
+	class COptionsPropHint :  public CObject {
+	public:
+		const COptions	*m_pPrevOptions;	// previous options
+	};
 
 // Public data
 	CMySequencer	m_Seq;		// sequencer instance
@@ -88,6 +93,7 @@ public:
 	CChannelArray	m_arrChannel;	// array of channels
 	CIntArrayEx	m_arrTrackSel;	// array of indices of selected tracks
 	int		m_iTrackSelMark;	// track selection mark
+	double	m_fStepZoom;		// step view zoom
 
 // Attributes
 	int		GetTrackCount() const;
@@ -130,6 +136,7 @@ public:
 	void	ReverseSteps(const CRect& rSelection);
 	bool	RotateSteps(int nRotSteps);
 	void	RotateSteps(const CRect& rSelection, int nRotSteps);
+	bool	Transpose(int nNoteDelta);
 	bool	ValidateTrackLength(int nLength, int nQuant) const;
 	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
 	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
@@ -277,6 +284,8 @@ protected:
 	afx_msg void OnUpdateEditSelectAll(CCmdUI *pCmdUI);
 	afx_msg void OnEditReverse();
 	afx_msg void OnUpdateEditReverse(CCmdUI *pCmdUI);
+	afx_msg void OnEditTranspose();
+	afx_msg void OnUpdateEditTranspose(CCmdUI *pCmdUI);
 	afx_msg void OnEditTrackSort();
 	afx_msg void OnToolsTimeToRepeat();
 	afx_msg void OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI);

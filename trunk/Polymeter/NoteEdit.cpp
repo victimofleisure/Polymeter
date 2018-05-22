@@ -11,6 +11,7 @@
 		01		23nov07	support Unicode
 		02		12sep13	use note object's conversions
 		03		24apr18	standardize names
+		04		21may18	add set key signature
 
         numeric edit control
  
@@ -38,6 +39,7 @@ IMPLEMENT_DYNAMIC(CNoteEdit, CNumEdit);
 CNoteEdit::CNoteEdit()
 {
 	m_bIsNoteEntry = TRUE;
+	m_nKeySig = 0;
 }
 
 CNoteEdit::~CNoteEdit()
@@ -64,7 +66,7 @@ void CNoteEdit::ValToStr(CString& Str)
 	if (m_bIsNoteEntry) {
 		CNote	note;
 		note = GetIntVal();
-		Str = note.MidiName();
+		Str = note.MidiName(m_nKeySig);
 	} else
 		CNumEdit::ValToStr(Str);
 }
@@ -82,6 +84,11 @@ void CNoteEdit::SetNoteEntry(bool bEnable)
 	m_bIsNoteEntry = bEnable;
 	if (m_hWnd)	// if window exists
 		SetText();
+}
+
+void CNoteEdit::SetKeySignature(BYTE nKeySig)
+{
+	m_nKeySig = nKeySig;
 }
 
 BEGIN_MESSAGE_MAP(CNoteEdit, CNumEdit)

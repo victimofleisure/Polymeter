@@ -14,6 +14,7 @@
 #pragma once
 
 #include "Properties.h"
+#include "Note.h"
 
 class CMasterProps : public CProperties {
 public:
@@ -41,6 +42,7 @@ public:
 	static const OPTION_INFO	m_Group[GROUPS];		// group name options
 	static const OPTION_INFO	m_TimeDiv[TIME_DIVS];	// time division options
 	static const int m_arrTimeDivTicks[TIME_DIVS];		// time division values in ticks
+	static OPTION_INFO	m_KeySig[NOTES];	// key signature options
 	enum {	// properties
 		#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) PROP_##name,
 		#include "MasterPropsDef.h"	// generate enumeratation 

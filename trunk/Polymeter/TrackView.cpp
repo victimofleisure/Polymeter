@@ -23,6 +23,7 @@
 #include "PopupCombo.h"
 #include "UndoCodes.h"
 #include "SaveObj.h"
+#include "Note.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -99,9 +100,11 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
 			int	iTrack = pPropHint->m_iItem;
 			int	iProp = pPropHint->m_iProp;
-			if (iProp >= 0)	// if property specified
+			if (iProp >= 0) {	// if property specified
 				m_grid.RedrawSubItem(iTrack, iProp + 1);	// account for track number
-			else	// update all properties
+				if (iProp == CTrack::PROP_Type && theApp.m_Options.m_View_bShowNoteNames)	// if track type
+					m_grid.RedrawSubItem(iTrack, COL_Note);
+			} else	// update all properties
 				m_grid.RedrawItems(iTrack, iTrack);
 		}
 		break;
@@ -113,6 +116,8 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 				int	iTrack = pPropHint->m_arrSelection[iSel];
 				m_grid.RedrawSubItem(iTrack, iProp + 1);	// account for track number
+				if (iProp == CTrack::PROP_Type && theApp.m_Options.m_View_bShowNoteNames)	// if track type
+					m_grid.RedrawSubItem(iTrack, COL_Note);
 			}
 		}
 		break;
@@ -129,8 +134,33 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			}
 		}
 		break;
+	case CPolymeterDoc::HINT_OPTIONS:
+		{
+			const CPolymeterDoc::COptionsPropHint *pPropHint = static_cast<CPolymeterDoc::COptionsPropHint *>(pHint);
+			if (theApp.m_Options.m_View_bShowNoteNames != pPropHint->m_pPrevOptions->m_View_bShowNoteNames)
+				UpdateNotes();
+		}
+		break;
+	case CPolymeterDoc::HINT_MASTER_PROP:
+		{
+			const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+			if (pPropHint->m_iProp == CMasterProps::PROP_nKeySig)
+				UpdateNotes();
+		}
+		break;
 	}
 	theApp.GetMainFrame()->OnUpdate(pSender, lHint, pHint);	// notify main frame
+}
+
+void CTrackView::UpdateNotes()
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	int	iStartTrack = m_grid.GetTopIndex();
+	int	iEndTrack = min(iStartTrack + m_grid.GetCountPerPage(), pDoc->m_Seq.GetTrackCount());
+	for (int iTrack = iStartTrack; iTrack < iEndTrack; iTrack++) {	// for each visible track
+		if (pDoc->m_Seq.GetType(iTrack) == CTrack::TT_NOTE)
+			m_grid.RedrawSubItem(iTrack, COL_Note);
+	}
 }
 
 int CTrackView::CalcHeaderHeight() const
@@ -160,11 +190,18 @@ int CTrackView::CalcItemHeight()
 void CTrackView::SetVScrollPos(int nPos)
 {
 	int	nTop = m_grid.GetTopIndex();
-	m_grid.Scroll(CSize(0, nPos - nTop * m_nItemHeight));
+	int	cy = nPos - nTop * m_nItemHeight;
+	int	nNewTop = nTop + cy / m_nItemHeight;	// list scrolls by whole items
+	int	nMaxTop = max(m_grid.GetItemCount() - m_grid.GetCountPerPage(), 0);
+	nNewTop = CLAMP(nNewTop, 0, nMaxTop);
+	if (nNewTop != nTop)	// if scroll position actually changing
+		m_grid.Scroll(CSize(0, cy));
 }
 
 CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
+	CTrackView	*pView = STATIC_DOWNCAST(CTrackView, GetParent());
+	CPolymeterDoc	*pDoc = pView->GetDocument();
 	UNREFERENCED_PARAMETER(pParentWnd);
 	switch (m_iEditCol) {
 	case COL_Name:
@@ -194,6 +231,8 @@ CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle,
 			break;
 		case COL_Note:
 			pEdit->SetRange(0, MIDI_NOTE_MAX);
+			pEdit->SetKeySignature(static_cast<BYTE>(pDoc->m_nKeySig));
+			pEdit->SetNoteEntry(true);
 			break;
 		case COL_Quant:
 			pEdit->SetRange(1, SHRT_MAX);
@@ -273,6 +312,8 @@ void CTrackView::CTrackGridCtrl::OnItemChange(LPCTSTR pszText)
 				pDoc->NotifyUndoableEdit(iTrack, MAKELONG(UCODE_TRACK_PROP, iProp));
 				pDoc->m_Seq.SetTrackProperty(iTrack, iProp, valNew);	// set property
 				CPolymeterDoc::CPropHint	hint(iTrack, iProp);
+				if (iProp == CTrack::PROP_Type && theApp.m_Options.m_View_bShowNoteNames)
+					pView = NULL;	// update this view so note column gets updated
 				pDoc->UpdateAllViews(pView, CPolymeterDoc::HINT_TRACK_PROP, &hint);
 				pDoc->SetModifiedFlag();
 			}
@@ -364,9 +405,15 @@ void CTrackView::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 				NODEFAULTCASE;
 				nVal = 0;
 			}
-			if (item.iSubItem == COL_Channel)	// if channel column
-				nVal++;	// convert to one-origin display format
-			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), nVal);
+			// if note column, and track type is note, and showing notes as names
+			if (item.iSubItem == COL_Note && pDoc->m_Seq.GetType(iTrack) == CTrack::TT_NOTE
+			&& theApp.m_Options.m_View_bShowNoteNames) {
+				_tcscpy_s(item.pszText, item.cchTextMax, CNote(nVal).MidiName(pDoc->m_nKeySig));
+			} else {	// default case
+				if (item.iSubItem == COL_Channel)	// if channel column
+					nVal++;	// convert to one-origin display format
+				_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), nVal);
+			}
 		}
 	}
 }
