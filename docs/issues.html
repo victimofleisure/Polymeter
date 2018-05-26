@@ -36,10 +36,18 @@
 <TD>user</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>05/15/18</TD>
+<TD>05/24/18</TD>
 <TD>&nbsp;</TD>
 <TD>bug</TD>
-<TD>Ben reports missing MIDI devices, VirtualMIDISynth displays blank name</TD>
+<TD>export doesn't output channel setup</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/24/18</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>export's skipping of muted tracks logic must account for dubs</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -452,6 +460,14 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>05/15/18</TD>
+<TD>05/19/18</TD>
+<TD>done</TD>
+<TD>Ben reports missing MIDI devices, VirtualMIDISynth has blank name; wrong struct size in GetDeviceNames</TD>
+<TD>0.0.05.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>05/19/18</TD>
 <TD>05/19/18</TD>
 <TD>done</TD>
@@ -460,10 +476,106 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>05/19/18</TD>
+<TD>05/20/18</TD>
+<TD>done</TD>
+<TD>make zoom step size adjustable</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/19/18</TD>
+<TD>05/20/18</TD>
+<TD>done</TD>
+<TD>add tie notes mode; instead of always defaulting to untied note, let user specify the default</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/16/18</TD>
+<TD>05/21/18</TD>
+<TD>done</TD>
+<TD>optionally show note names instead of numbers in note edit controls</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/18/18</TD>
+<TD>05/21/18</TD>
+<TD>done</TD>
+<TD>track view occasionally paints incorrectly when scrolled via step view; clamp scroll range</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/19/18</TD>
+<TD>05/21/18</TD>
+<TD>done</TD>
+<TD>key signature</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/19/18</TD>
+<TD>05/21/18</TD>
+<TD>done</TD>
+<TD>transpose command</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/19/18</TD>
+<TD>05/21/18</TD>
+<TD>done</TD>
+<TD>zoom should persist in document</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/19/18</TD>
+<TD>05/22/18</TD>
+<TD>done</TD>
+<TD>show current position in time as well as beats and ticks</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/22/18</TD>
+<TD>05/22/18</TD>
+<TD>done</TD>
+<TD>auto-repeated arrow key in tempo edit property sets tempo to one instead of incrementing</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/24/18</TD>
+<TD>05/24/18</TD>
+<TD>done</TD>
+<TD>deleting current step crashes app</TD>
+<TD>0.0.06.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/25/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>animated visualization</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>playback can be slow to start, due to device open delay; keep output device open all the time?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/25/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>MIDI mapping of all parameters, with manual assignment and learn mode</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -484,6 +596,14 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>05/10/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>right-click in step view background with no selection should show context menu?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>05/17/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -495,15 +615,71 @@
 <TD>05/17/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>installed app's shortcut icon has poor resolution; bug in VS2008, use WiX toolset instead?</TD>
+<TD>installed app's shortcut icon has poor resolution; VS2008 bug, try including icon separately, or use WiX toolset?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>03/22/18</TD>
+<TD>05/19/18</TD>
 <TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>UI design; real track view</TD>
+<TD>hold</TD>
+<TD>note correction to chord changes, from ChordEase</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/20/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>track view's column widths and order should persist; document or registry?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/20/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>child frame and step view spiltter bars should persist; document or registry?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/21/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>scroll positions should persist in document; more trouble than it's worth?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/21/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>song meter; affects position dialog, step view ruler, current position in status bar</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/21/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>splitter bars should be same for all documents</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/21/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>velocity pane visibility should be same for all documents</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/23/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>default note velocity should be configurable</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -543,7 +719,7 @@
 <TD>03/25/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>playback can be slow to start, due to device open delay; keep output device open all the time?</TD>
+<TD>record live arrangment; at least track mute/unmute, maybe other properties too</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -551,23 +727,7 @@
 <TD>03/25/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>record live arrangment; at least track mute/unmute, maybe other things too</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>03/25/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>edit arrangement on timeline, similar to Stencil</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>03/25/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>MIDI mapping of all parameters, with manual assignment and learn mode</TD>
+<TD>song view: edit arrangement on timeline, similar to Stencil</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -580,82 +740,18 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>04/16/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>optionally show MIDI notes instead of numbers in note edit controls</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>05/10/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>right-click in step view background with no selection should show context menu?</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>05/19/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>tied note mode, instead of always defaulting to untied note</TD>
+<TD>notes don't toggle the same way they did in the original, very annoying</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>05/19/18</TD>
+<TD>05/23/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>transpose command</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>05/19/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>key signature?</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>05/19/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>note correction to chord changes, from ChordEase</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>05/19/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>zoom should persist in document</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>05/19/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>make zoom step size adjustable</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>05/19/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>notes don't toggle the same way they did in the original</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>05/19/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>show current position in time as well as beats and ticks</TD>
+<TD>track solo</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>

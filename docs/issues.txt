@@ -1,5 +1,6 @@
 open	close	type	description	rev	user
-05/15/18		bug	Ben reports missing MIDI devices, VirtualMIDISynth displays blank name		
+05/24/18		bug	export doesn't output channel setup		
+05/24/18		bug	export's skipping of muted tracks logic must account for dubs		
 03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -51,29 +52,40 @@ open	close	type	description	rev	user
 03/25/18	05/17/18	done	rotate selected tracks or steps left or right	0.0.05.001	
 05/10/18	05/17/18	done	tempo nudge; implement spin button control for floating-point properties	0.0.05.001	
 05/15/18	05/18/18	done	other functions besides line for controller fill: sine, triangle	0.0.05.003	
+05/15/18	05/19/18	done	Ben reports missing MIDI devices, VirtualMIDISynth has blank name; wrong struct size in GetDeviceNames	0.0.05.003	
 05/19/18	05/19/18	done	muting track doesn't update current position color	0.0.05.004	
+05/19/18	05/20/18	done	make zoom step size adjustable	0.0.06.000	
+05/19/18	05/20/18	done	add tie notes mode; instead of always defaulting to untied note, let user specify the default	0.0.06.000	
+04/16/18	05/21/18	done	optionally show note names instead of numbers in note edit controls	0.0.06.000	
+05/18/18	05/21/18	done	track view occasionally paints incorrectly when scrolled via step view; clamp scroll range	0.0.06.000	
+05/19/18	05/21/18	done	key signature	0.0.06.000	
+05/19/18	05/21/18	done	transpose command	0.0.06.000	
+05/19/18	05/21/18	done	zoom should persist in document	0.0.06.000	
+05/19/18	05/22/18	done	show current position in time as well as beats and ticks	0.0.06.000	
+05/22/18	05/22/18	done	auto-repeated arrow key in tempo edit property sets tempo to one instead of incrementing	0.0.06.000	
+05/24/18	05/24/18	done	deleting current step crashes app	0.0.06.001	
 03/25/18		hold	animated visualization		
+03/25/18		hold	playback can be slow to start, due to device open delay; keep output device open all the time?		
+03/25/18		hold	MIDI mapping of all parameters, with manual assignment and learn mode		
 04/25/18		hold	popup numeric edit's spin control should affect document immediately; causes bugs and inconsistencies		
 05/10/18		hold	left-click anywhere in step view should toggle steps or tracks, as in original app; too confusing?		
+05/10/18		hold	right-click in step view background with no selection should show context menu?		
 05/17/18		hold	in velocity pane, left-click on tool tip causes app to flash; all tooltips do this, derived tool tip doesn't help		
-05/17/18		hold	installed app's shortcut icon has poor resolution; bug in VS2008, use WiX toolset instead?		
-03/22/18		todo	UI design; real track view		
+05/17/18		hold	installed app's shortcut icon has poor resolution; VS2008 bug, try including icon separately, or use WiX toolset?		
+05/19/18		hold	note correction to chord changes, from ChordEase		
+05/20/18		hold	track view's column widths and order should persist; document or registry?		
+05/20/18		hold	child frame and step view spiltter bars should persist; document or registry?		
+05/21/18		hold	scroll positions should persist in document; more trouble than it's worth?		
+05/21/18		hold	song meter; affects position dialog, step view ruler, current position in status bar		
+05/21/18		hold	splitter bars should be same for all documents		
+05/21/18		hold	velocity pane visibility should be same for all documents		
+05/23/18		hold	default note velocity should be configurable		
 03/22/18		todo	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		todo	app architecture; Bongo, Jock and Stencil all in one app? Different views of same document?		
 03/22/18		todo	PPQ change should optionally update Quant, Offset and Swing values, or otherwise update step view		
 03/22/18		todo	optional linear interpolation for controller tracks, with adjustable output density		
-03/25/18		todo	playback can be slow to start, due to device open delay; keep output device open all the time?		
-03/25/18		todo	record live arrangment; at least track mute/unmute, maybe other things too		
-03/25/18		todo	edit arrangement on timeline, similar to Stencil		
-03/25/18		todo	MIDI mapping of all parameters, with manual assignment and learn mode		
+03/25/18		todo	record live arrangment; at least track mute/unmute, maybe other properties too		
+03/25/18		todo	song view: edit arrangement on timeline, similar to Stencil		
 04/09/18		todo	undoing track value or step edit should ensure track is visible		
-04/16/18		todo	optionally show MIDI notes instead of numbers in note edit controls		
-05/10/18		todo	right-click in step view background with no selection should show context menu?		
-05/19/18		todo	tied note mode, instead of always defaulting to untied note		
-05/19/18		todo	transpose command		
-05/19/18		todo	key signature?		
-05/19/18		todo	note correction to chord changes, from ChordEase		
-05/19/18		todo	zoom should persist in document		
-05/19/18		todo	make zoom step size adjustable		
-05/19/18		todo	notes don't toggle the same way they did in the original		
-05/19/18		todo	show current position in time as well as beats and ticks		
+05/19/18		todo	notes don't toggle the same way they did in the original, very annoying		
+05/23/18		todo	track solo		
