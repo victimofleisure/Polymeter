@@ -47,6 +47,7 @@ public:
 	CSplitterWndEx	m_wndSplitter;
 	CTrackView		*m_pTrackView;
 	CStepParent		*m_pStepParent;
+	int		m_nViewMode;
 
 	enum {	// panes
 		PANE_TRACK,

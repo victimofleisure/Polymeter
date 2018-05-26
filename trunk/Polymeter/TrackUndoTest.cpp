@@ -170,6 +170,12 @@ void CTrackUndoTest::MakeRandomMasterProperty(int iProp, CComVariant& var)
 			var = nTimeDiv;
 		}
 		break;
+	case CMasterProps::PROP_nKeySig:
+		{
+			int	nKeySig = Random(NOTES);
+			var = nKeySig;
+		}
+		break;
 	default:
 		NODEFAULTCASE;
 	}
@@ -243,6 +249,7 @@ LONGLONG CTrackUndoTest::GetSnapshot() const
 		nSum += Fletcher64(trk.m_arrStep.GetData(), trk.m_arrStep.GetSize());
 		LPCTSTR	pszName = trk.m_sName;
 		nSum += Fletcher64(pszName, trk.m_sName.GetLength());
+		nSum += trk.m_nUID;
 	}
 //	_tprintf(_T("%I64x\n"), nSum);
 	return(nSum);

@@ -62,18 +62,18 @@ public:
 	virtual ~CStepParent();
 	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
 
-protected:
-// Types
-
-// Constants
-	enum {
-		m_nSplitHeight = 6,
-	};
-
 // Attributes
 
 // Operations
 	void	ShowVelocityView(bool bShow);
+	void	OnStepScroll(CSize szScroll);
+	void	OnStepZoom();
+
+protected:
+// Constants
+	enum {
+		m_nSplitHeight = 6,
+	};
 
 // Member data
 	CRulerCtrl	m_wndRuler;		// ruler control
@@ -100,8 +100,6 @@ protected:
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnParentNotify(UINT message, LPARAM lParam);
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
-	afx_msg LRESULT OnStepScroll(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnStepZoom(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnTrackScroll(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);

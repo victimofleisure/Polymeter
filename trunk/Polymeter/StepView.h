@@ -20,6 +20,7 @@
 #include "GDIUtils.h"
 
 class CSequencer;
+class CStepParent;
 
 class CStepView : public CScrollView, public CTrackBase
 {
@@ -28,17 +29,15 @@ protected: // create from serialization only
 	DECLARE_DYNCREATE(CStepView)
 
 // Constants
-	enum {	// custom messages
-		UWM_STEP_FIRST = WM_USER + 200,
-		UWM_STEP_SCROLL,	// wParam: sizeScroll.cx, lParam: sizeScroll.cy 
-		UWM_STEP_ZOOM,
-	};
 	enum {
 		MIN_BEAT_LINE_SPACING = 4,
 	};
 	enum {	// hit test flags
 		HTF_NO_STEP_RANGE	= 0x01,		// don't enforce step range
 	};
+
+// Public data
+	CStepParent	*m_pParent;
 
 // Attributes
 public:
@@ -62,6 +61,7 @@ public:
 public:
 	void	ResetStepSelection();
 	int		HitTest(CPoint point, int& iStep, UINT nFlags = 0) const;
+	void	EndDrag();
 	void	OnEditLength(CPoint point);
 
 // Overrides
@@ -124,6 +124,8 @@ protected:
 	CRgnData	m_rgndStepSel;	// region data for step selection overlap removal
 
 // Helpers
+	CSize	GetClientSize() const;
+	void	GetVisibleTracks(int& iStartTrack, int& iEndTrack) const;
 	double	GetStepWidth(int iTrack) const;
 	int		GetMaxTrackWidth() const;
 	void	UpdateViewSize();
@@ -143,7 +145,6 @@ protected:
 	void	UpdateStep(int iTrack, int iStep);
 	void	UpdateSteps(const CRect& rSelection);
 	bool	HaveEitherSelection() const;
-	void	EndDrag();
 	void	SetCurStep(int iTrack, int iStep);
 	void	UpdateSongPositionNoRedraw(int iTrack);
 	void	UpdateSongPositionNoRedraw(const CIntArrayEx& arrSelection);
@@ -162,9 +163,7 @@ protected:
 	static	void	InitTriangleVertex(TRIVERTEX& tv, int x, int y, COLORREF clr);
 	void	DrawStep(CDC* pDC, int x, int y, int cx, int cy, STEP nStep, int iStepColor, int iTrackType);
 	void	DrawClippedStep(CDC *pDC, const CRect& rClip, const CSequencer& seq, int iTrack, int iStep);
-	void	NotifyParent(DWORD message, WPARAM wParam = 0, LPARAM lParam = 0);
 	void	DispatchToDocument();
-	CSize	GetClientSize() const;
 	void	RotateSteps(int nRotSteps);
 	static	double	InvPow(double fBase, double fVal);
 

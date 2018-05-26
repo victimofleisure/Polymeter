@@ -27,6 +27,8 @@ void CTrack::SetDefaults()
 	#include "TrackDef.h"		// generate code to initialize track properties
 	m_arrStep.SetSize(INIT_STEPS);
 	m_nCachedParam = -1;	// reset cached parameter
+	m_nUID = 0;
+	m_iDub = 0;
 }
 
 int CTrack::GetUsedStepCount() const

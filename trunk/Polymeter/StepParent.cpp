@@ -118,6 +118,36 @@ void CStepParent::ShowVelocityView(bool bShow)
 	Invalidate();
 }
 
+void CStepParent::OnStepScroll(CSize szScroll)
+{
+	if (!m_bIsScrolling) {	// if not already handling scroll message
+		CSaveObj<bool>	save(m_bIsScrolling, true);
+		CPoint	ptScroll(m_pStepView->GetScrollPosition());
+		if (szScroll.cx) {	// if x scroll
+			m_wndRuler.ScrollToPosition(ptScroll.x - m_nMuteWidth);
+			if (m_bShowVelos)	// if showing velocities
+				m_pVeloView->Invalidate();
+		}
+		if (szScroll.cy) {	// if y scroll
+			m_pTrackView->SetVScrollPos(ptScroll.y);
+			m_pMuteView->Invalidate();
+		}
+	}
+}
+
+void CStepParent::OnStepZoom()
+{
+	if (!m_bIsScrolling) {	// if not already handling scroll message
+		CSaveObj<bool>	save(m_bIsScrolling, true);
+		CPoint	ptScroll(m_pStepView->GetScrollPosition());
+		double	fBeatWidth = m_pStepView->GetBeatWidth() * m_pStepView->GetZoom();
+		m_wndRuler.SetScrollPosition(ptScroll.x - m_nMuteWidth);
+		m_wndRuler.SetZoom(1 / fBeatWidth);
+		if (m_bShowVelos)	// if showing velocities
+			m_pVeloView->Invalidate();
+	}
+}
+
 void CStepParent::RecalcLayout(int cx, int cy)
 {
 	int	nWnds = 2;
@@ -166,8 +196,6 @@ BEGIN_MESSAGE_MAP(CStepParent, CView)
 	ON_WM_SETFOCUS()
 	ON_WM_PARENTNOTIFY()
 	ON_WM_SETCURSOR()
-	ON_MESSAGE(CStepView::UWM_STEP_SCROLL, OnStepScroll)
-	ON_MESSAGE(CStepView::UWM_STEP_ZOOM, OnStepZoom)
 	ON_MESSAGE(CTrackView::UWM_TRACK_SCROLL, OnTrackScroll)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
@@ -183,12 +211,17 @@ BOOL CStepParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 {
 	if (!CView::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext))
 		return false;
+	// create our child views
 	CRuntimeClass* pMuteClass = RUNTIME_CLASS(CMuteView);
 	m_pMuteView = (CMuteView *)pMuteClass->CreateObject();
 	CRuntimeClass* pStepClass = RUNTIME_CLASS(CStepView);
 	m_pStepView = (CStepView *)pStepClass->CreateObject();
 	CRuntimeClass* pVelocityClass = RUNTIME_CLASS(CVelocityView);
+	// give child views pointers to parent or siblings, before creating windows
 	m_pVeloView = (CVelocityView *)pVelocityClass->CreateObject();
+	m_pStepView->m_pParent = this;
+	m_pMuteView->m_pStepView = m_pStepView;
+	m_pVeloView->m_pStepView = m_pStepView;
 	CRect rInit(0, 0, 0, 0);
 	DWORD	dwRulerStyle = WS_CHILD | WS_VISIBLE | CBRS_ALIGN_TOP | CRulerCtrl::NO_ACTIVATE;
 	if (!m_wndRuler.Create(dwRulerStyle, rInit, this, AFX_IDW_PANE_FIRST + PANE_RULER))
@@ -204,8 +237,6 @@ BOOL CStepParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 	if (!m_pVeloView->Create(NULL, NULL, dwVeloStyle, rInit, this, PANE_VELOCITY, pContext))
 		return false;
 	m_nMuteWidth = m_pMuteView->GetViewWidth();
-	m_pMuteView->m_pStepView = m_pStepView;
-	m_pVeloView->m_pStepView = m_pStepView;
 	m_wndRuler.SendMessage(WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)));
 	m_wndRuler.SetTickLengths(4, 0);
 	m_wndRuler.SetMinMajorTickGap(m_pStepView->GetBeatWidth() - 1);
@@ -264,42 +295,6 @@ BOOL CStepParent::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 	if (nHitTest == HTCLIENT && pWnd == this && !m_bIsSplitDrag)
 		return TRUE;    // we will handle it in the mouse move
 	return CView::OnSetCursor(pWnd, nHitTest, message);
-}
-
-LRESULT CStepParent::OnStepScroll(WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
-	if (!m_bIsScrolling) {	// if not already handling scroll message
-		CSaveObj<bool>	save(m_bIsScrolling, true);
-		CPoint	ptScroll(m_pStepView->GetScrollPosition());
-		if (wParam) {	// if x scroll
-			m_wndRuler.ScrollToPosition(ptScroll.x - m_nMuteWidth);
-			if (m_bShowVelos)	// if showing velocities
-				m_pVeloView->Invalidate();
-		}
-		if (lParam) {	// if y scroll
-			m_pTrackView->SetVScrollPos(ptScroll.y);
-			m_pMuteView->Invalidate();
-		}
-	}
-	return 0;
-}
-
-LRESULT CStepParent::OnStepZoom(WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
-	if (!m_bIsScrolling) {	// if not already handling scroll message
-		CSaveObj<bool>	save(m_bIsScrolling, true);
-		CPoint	ptScroll(m_pStepView->GetScrollPosition());
-		double	fBeatWidth = m_pStepView->GetBeatWidth() * m_pStepView->GetZoom();
-		m_wndRuler.SetScrollPosition(ptScroll.x - m_nMuteWidth);
-		m_wndRuler.SetZoom(1 / fBeatWidth);
-		if (m_bShowVelos)	// if showing velocities
-			m_pVeloView->Invalidate();
-	}
-	return 0;
 }
 
 LRESULT CStepParent::OnTrackScroll(WPARAM wParam, LPARAM lParam)

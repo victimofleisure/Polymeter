@@ -22,11 +22,11 @@ public:
 	int		GetTrackCount() const;
 	void	SetTrackCount(int nTracks);
 	const CTrackArray&	GetTracks() const;
-	void	SetTracks(const CTrackArray& arrTrack);
 	void	GetTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const;
 	void	SetTracks(const CIntArrayEx& arrSelection, const CTrackArray& arrTrack);
 	const CTrack&	GetTrack(int iTrack) const;
 	void	SetTrack(int iTrack, const CTrack& track);
+	UINT	GetID(int iTrack) const;
 	CString	GetName(int iTrack) const;
 	void	SetName(int iTrack, const CString& sName);
 	int		GetType(int iTrack) const;
@@ -57,17 +57,22 @@ public:
 	void	GetSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const;
 	void	SetSteps(const CRect& rSelection, const CStepArrayArray& arrStepArray);
 	void	SetSteps(const CRect& rSelection, STEP nStep);
+	int		GetDubCount(int iTrack) const;
+	const CDub&	GetDub(int iTrack, int iDub) const;
 	void	GetTrackProperty(int iTrack, int iProp, CComVariant& var) const;
 	void	SetTrackProperty(int iTrack, int iProp, const CComVariant& var);
 	int		GetUsedTrackCount(bool bExcludeMuted = false) const;
 	void	GetUsedTracks(CIntArrayEx& arrUsedTrack, bool bExcludeMuted = false) const;
 	bool	GetNoteVelocity(int iTrack, int iStep, STEP& nStep) const;
+	bool	HasDubs() const;
+	int		GetSongDuration() const;
 
 // Operations
+	void	AssignID(int iTrack);
 	void	InsertTracks(int iTrack, int nCount = 1);
-	void	InsertTrack(int iTrack, CTrack& track);
-	void	InsertTracks(int iTrack, CTrackArray& arrTrack);
-	void	InsertTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack);
+	void	InsertTrack(int iTrack, CTrack& track, bool bKeepID = false);
+	void	InsertTracks(int iTrack, CTrackArray& arrTrack, bool bKeepID = false);
+	void	InsertTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack, bool bKeepID = false);
 	void	DeleteTracks(int iTrack, int nCount = 1);
 	void	DeleteTracks(const CIntArrayEx& arrSelection);
 	void	InsertStep(const CRect& rSelection);
@@ -78,10 +83,16 @@ public:
 	void	ReverseSteps(int iTrack, int iStep, int nSteps);
 	void	RotateSteps(int iTrack, int nRotSteps);
 	void	RotateSteps(int iTrack, int iStep, int nSteps, int nRotSteps);
+	void	RemoveAllDubs();
+	void	AddDub(int iTrack, int nTime);
+	void	AddDub(const CIntArrayEx& arrSelection, int nTime);
+	int		FindDub(int iTrack, int nTime) const;
+	void	ChaseDubs(int nTime, bool bUpdateMutes = false);
 
 protected:
 // Member data
 	WCritSec	m_csTrack;		// critical section for serializing access to tracks
+	static	UINT	m_nNextUID;	// next unique ID
 };
 
 inline int CSeqTrackArray::GetTrackCount() const
@@ -99,6 +110,16 @@ inline const CTrack& CSeqTrackArray::GetTrack(int iTrack) const
 	return GetAt(iTrack);
 }
 
+inline UINT CSeqTrackArray::GetID(int iTrack) const
+{
+	return GetAt(iTrack).m_nUID;
+}
+
+inline CString CSeqTrackArray::GetName(int iTrack) const
+{
+	return GetAt(iTrack).m_sName;
+}
+
 inline int CSeqTrackArray::GetType(int iTrack) const
 {
 	return GetAt(iTrack).m_iType;
@@ -112,11 +133,6 @@ inline bool CSeqTrackArray::IsNote(int iTrack) const
 inline int CSeqTrackArray::GetChannel(int iTrack) const
 {
 	return GetAt(iTrack).m_nChannel;
-}
-
-inline CString CSeqTrackArray::GetName(int iTrack) const
-{
-	return GetAt(iTrack).m_sName;
 }
 
 inline int CSeqTrackArray::GetNote(int iTrack) const
@@ -167,4 +183,19 @@ inline CTrackBase::STEP CSeqTrackArray::GetStep(int iTrack, int iStep) const
 inline void CSeqTrackArray::GetSteps(int iTrack, CStepArray& arrStep) const
 {
 	arrStep = GetAt(iTrack).m_arrStep;
+}
+
+inline int CSeqTrackArray::GetDubCount(int iTrack) const
+{
+	return GetAt(iTrack).m_arrDub.GetSize();
+}
+
+inline const CTrack::CDub& CSeqTrackArray::GetDub(int iTrack, int iDub) const
+{
+	return GetAt(iTrack).m_arrDub[iDub];
+}
+
+inline void CSeqTrackArray::AssignID(int iTrack)
+{
+	GetAt(iTrack).m_nUID = ++m_nNextUID;
 }

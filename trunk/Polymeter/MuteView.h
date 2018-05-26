@@ -36,9 +36,14 @@ protected: // create from serialization only
 public:
 	CPolymeterDoc* GetDocument() const;
 	int		GetViewWidth() const;
+	void	GetMuteRect(int iTrack, CRect& rMute) const;
 
 // Operations
 public:
+	void	UpdateMute(int iTrack);
+	void	UpdateMutes(const CIntArrayEx& arrSelection);
+	int		HitTest(CPoint point, bool bIgnoreX = false) const;
+	void	EndDrag();
 
 // Overrides
 public:
@@ -80,11 +85,6 @@ protected:
 	CRgnData	m_rgndStepSel;	// region data for step selection overlap removal
 
 // Helpers
-	void	GetMuteRect(int iTrack, CRect& rMute) const;
-	void	UpdateMute(int iTrack);
-	void	UpdateMutes(const CIntArrayEx& arrSelection);
-	void	EndDrag();
-	int		HitTest(CPoint point, bool bIgnoreX = false) const;
 	CSize	GetClientSize() const;
 
 // Generated message map functionsq

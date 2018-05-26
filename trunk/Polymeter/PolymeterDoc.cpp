@@ -42,7 +42,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	2
+#define	FILE_VERSION	3
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -50,6 +50,8 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_TRACK_COUNT	_T("Tracks")
 #define RK_TRACK_LENGTH	_T("Length")
 #define RK_TRACK_STEP	_T("Step")
+#define RK_TRACK_DUB_ARRAY	_T("Dub")
+#define RK_TRACK_DUB_COUNT	_T("Dubs")
 #define RK_MASTER		_T("Master")
 #define RK_STEP_VIEW	_T("StepView")
 #define RK_STEP_ZOOM	_T("Zoom")
@@ -95,6 +97,7 @@ CPolymeterDoc::CPolymeterDoc()
 	InitChannelArray();
 	m_iTrackSelMark = -1;
 	m_fStepZoom = 1;
+	m_nViewMode = VIEW_TRACK;
 }
 
 CPolymeterDoc::~CPolymeterDoc()
@@ -180,9 +183,11 @@ void CPolymeterDoc::SelectAll(bool bUpdate)
 
 void CPolymeterDoc::Deselect(bool bUpdate)
 {
-	m_arrTrackSel.RemoveAll();
-	if (bUpdate)
-		UpdateAllViews(NULL, HINT_TRACK_SELECTION);
+	if (GetSelectedCount()) {	// if selection exists
+		m_arrTrackSel.RemoveAll();
+		if (bUpdate)
+			UpdateAllViews(NULL, HINT_TRACK_SELECTION);
+	}
 }
 
 void CPolymeterDoc::ToggleSelection(int iTrack, bool bUpdate)
@@ -256,8 +261,14 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 		#include "TrackDef.h"		// generate code to read track properties
 		int	nLength = theApp.GetProfileInt(sTrkID, RK_TRACK_LENGTH, INIT_STEPS);
 		trk.m_arrStep.SetSize(nLength);
-		DWORD	nUsed = nLength;
-		CPersist::GetBinary(sTrkID, pszStepKey, trk.m_arrStep.GetData(), &nUsed);
+		DWORD	nReadSize = nLength;
+		CPersist::GetBinary(sTrkID, pszStepKey, trk.m_arrStep.GetData(), &nReadSize);
+		int	nDubs = theApp.GetProfileInt(sTrkID, RK_TRACK_DUB_COUNT, 0);
+		if (nDubs) {	// if track has dubs
+			trk.m_arrDub.SetSize(nDubs);
+			nReadSize = nDubs * sizeof(CDub);
+			CPersist::GetBinary(sTrkID, RK_TRACK_DUB_ARRAY, trk.m_arrDub.GetData(), &nReadSize);
+		}
 		m_Seq.SetTrack(iTrack, trk);
 	}
 	if (m_nFileVersion < FILE_VERSION)	// if older format
@@ -292,8 +303,12 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 		#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 		#include "TrackDef.h"		// generate code to write track properties
 		theApp.WriteProfileInt(sTrkID, RK_TRACK_LENGTH, trk.m_arrStep.GetSize());
-		int	nUsed = trk.GetUsedStepCount();
-		CPersist::WriteBinary(sTrkID, RK_TRACK_STEP, trk.m_arrStep.GetData(), nUsed);
+		CPersist::WriteBinary(sTrkID, RK_TRACK_STEP, trk.m_arrStep.GetData(), trk.GetUsedStepCount());
+		DWORD	nDubs = trk.m_arrDub.GetSize();
+		if (nDubs) {	// if track has dubs
+			theApp.WriteProfileInt(sTrkID, RK_TRACK_DUB_COUNT, nDubs);
+			CPersist::WriteBinary(sTrkID, RK_TRACK_DUB_ARRAY, trk.m_arrDub.GetData(), nDubs * sizeof(CDub));
+		}
 	}
 	m_arrChannel.Write();	// write channels
 	WrReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
@@ -357,7 +372,7 @@ void CPolymeterDoc::Drop(int iDropPos)
 	CTrackArray	arrTrack;
 	m_Seq.GetTracks(arrSelection, arrTrack);
 	m_Seq.DeleteTracks(arrSelection);
-	m_Seq.InsertTracks(iDropPos, arrTrack);
+	m_Seq.InsertTracks(iDropPos, arrTrack, true);	// keep IDs
 	SelectRange(iDropPos, nSels, false);	// don't update views
 	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	SetModifiedFlag();
@@ -422,6 +437,8 @@ void CPolymeterDoc::SetMute(int iTrack, bool bMute)
 {
 	NotifyUndoableEdit(iTrack, MAKELONG(UCODE_TRACK_PROP, PROP_Mute));
 	m_Seq.SetMute(iTrack, bMute);	// set track mute
+	if (m_Seq.IsRecording())
+		m_Seq.RecordDub(iTrack);
 	SetModifiedFlag();
 	CPropHint	hint(iTrack, PROP_Mute);
 	UpdateAllViews(NULL, HINT_TRACK_PROP, &hint);
@@ -441,6 +458,8 @@ void CPolymeterDoc::SetSelectedMutes(UINT nMuteMask)
 			bMute = nMuteMask & MB_MUTE;	// set mute
 		m_Seq.SetMute(iTrack, bMute);
 	}
+	if (m_Seq.IsRecording())
+		m_Seq.RecordDub(m_arrTrackSel);
 	SetModifiedFlag();
 	CMultiItemPropHint	hint(arrSelection, PROP_Mute);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
@@ -767,6 +786,8 @@ void CPolymeterDoc::RestoreTrackProperty(const CUndoState& State)
 	default:
 		NODEFAULTCASE;
 	}
+	if (iProp == PROP_Mute && m_Seq.IsRecording())
+		m_Seq.RecordDub(iTrack);
 	CPropHint	hint(iTrack, iProp);
 	UpdateAllViews(NULL, HINT_TRACK_PROP, &hint);
 }
@@ -802,6 +823,8 @@ void CPolymeterDoc::RestoreMultiTrackProperty(const CUndoState& State)
 		int	iTrack = pInfo->m_arrSelection[iSel];
 		m_Seq.SetTrackProperty(iTrack, iProp, pInfo->m_arrVal[iSel]);
 	}
+	if (iProp == PROP_Mute && m_Seq.IsRecording())
+		m_Seq.RecordDub(pInfo->m_arrSelection);
 	CMultiItemPropHint	hint(pInfo->m_arrSelection, iProp);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
 }
@@ -920,17 +943,18 @@ void CPolymeterDoc::SaveClipboardTracks(CUndoState& State) const
 void CPolymeterDoc::RestoreClipboardTracks(const CUndoState& State)
 {
 	CUndoClipboard	*pClipboard = static_cast<CUndoClipboard *>(State.GetObj());
+	bool	bIsMove = LOWORD(State.GetCode()) == UCODE_MOVE_TRACKS;
 	if (GetUndoAction() == State.m_Val.p.x.i) {	// if inserting
-		if (LOWORD(State.GetCode()) == UCODE_MOVE_TRACKS)
+		if (bIsMove)
 			m_Seq.DeleteTracks(State.GetCtrlID(), pClipboard->m_arrTrack.GetSize());
-		m_Seq.InsertTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack);
+		m_Seq.InsertTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack, true);	// keep IDs
 		m_arrTrackSel = pClipboard->m_arrSelection;
 		m_iTrackSelMark = pClipboard->m_nSelMark;
 		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	} else {	// deleting
 		m_Seq.DeleteTracks(pClipboard->m_arrSelection);
-		if (LOWORD(State.GetCode()) == UCODE_MOVE_TRACKS) {
-			m_Seq.InsertTracks(State.GetCtrlID(), pClipboard->m_arrTrack);
+		if (bIsMove) {
+			m_Seq.InsertTracks(State.GetCtrlID(), pClipboard->m_arrTrack, true);	// keep IDs
 			int	iTrack = State.GetCtrlID();
 			SelectRange(iTrack, pClipboard->m_arrTrack.GetSize(), false);	// don't update views
 			m_iTrackSelMark = iTrack;
@@ -1355,6 +1379,48 @@ void CPolymeterDoc::OutputChannelEvent(int iChan, int iProp)
 	}
 }
 
+bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
+{
+	if (bPlay == m_Seq.IsPlaying())	// if already in requested state
+		return true;	// nothing to do
+	if (bPlay) {	// if starting playback
+		if (m_Seq.GetOutputDevice() < 0) {	// if no output MIDI device selected
+			AfxMessageBox(IDS_MIDI_NO_OUTPUT_DEVICE);
+			return false;
+		}
+		CAllDocIter	iter;	// iterate all documents
+		CPolymeterDoc	*pOtherDoc;
+		while ((pOtherDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
+			if (pOtherDoc != this && pOtherDoc->m_Seq.IsPlaying()) {	// if another document is playing
+				pOtherDoc->m_Seq.Play(false);	// stop other document; only one can play at a time
+				break;
+			}
+		}
+		UpdateChannelEvents();	// queue channel events to be output at start of playback
+	}
+	bool	bRetVal;
+	if (bRecord) {
+		bRetVal = m_Seq.Record(bPlay);
+	} else {
+		bRetVal = m_Seq.Play(bPlay);
+	}
+	UpdateAllViews(NULL, HINT_PLAY);
+	return bRetVal;
+}
+
+void CPolymeterDoc::DumpDubs()
+{
+	int	nTracks = GetTrackCount();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		const CTrack& trk = m_Seq.GetTrack(iTrack);
+		int	nDubs = trk.m_arrDub.GetSize();
+		printf("track %d\n", iTrack);
+		for (int iDub = 0; iDub < nDubs; iDub++) {	// for each dub
+			printf("%d\t%d\n", trk.m_arrDub[iDub].m_nTime, trk.m_arrDub[iDub].m_bMute);
+		}
+	}
+}
+
 // CPolymeterDoc diagnostics
 
 #ifdef _DEBUG
@@ -1382,7 +1448,13 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_PLAY, OnUpdateViewPlay)
 	ON_COMMAND(ID_VIEW_PAUSE, OnViewPause)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_PAUSE, OnUpdateViewPause)
+	ON_COMMAND(ID_VIEW_RECORD, OnViewRecord)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_RECORD, OnUpdateViewRecord)
 	ON_COMMAND(ID_VIEW_GO_TO_POSITION, OnViewGoToPosition)
+	ON_COMMAND(ID_VIEW_MODE_SONG, OnViewModeSong)
+	ON_COMMAND(ID_VIEW_MODE_TRACK, OnViewModeTrack)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_MODE_SONG, OnUpdateViewModeSong)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_MODE_TRACK, OnUpdateViewModeTrack)
 	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
 	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
@@ -1447,7 +1519,7 @@ BOOL CPolymeterDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
 void CPolymeterDoc::OnFileExport()
 {
-	int	nUsedTracks = m_Seq.GetUsedTrackCount(true);	// exclude muted tracks
+	int	nUsedTracks = m_Seq.GetUsedTrackCount(m_nViewMode != VIEW_SONG);	// in track mode, exclude muted tracks
 	if (!nUsedTracks) {	// if no tracks to export
 		AfxMessageBox(IDS_EXPORT_EMPTY_FILE);
 		return;
@@ -1464,11 +1536,19 @@ void CPolymeterDoc::OnFileExport()
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
 		const int	nDefaultDuration = 60;	// seconds
+		const int	nDecayPadding = 5;	// additional time for final notes to decay, in seconds  
 		CExportDlg	dlg;
 		dlg.m_nDuration = theApp.GetProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, nDefaultDuration);
+		if (m_nViewMode == VIEW_SONG) {
+			int	nDurationTicks = m_Seq.GetSongDuration();
+			int	nDurationSecs = static_cast<int>(m_Seq.ConvertPositionToSeconds(nDurationTicks));
+			nDurationSecs += nDecayPadding;
+			dlg.m_nDuration = nDurationSecs;
+		}
 		if (dlg.DoModal() == IDOK) {
 			theApp.WriteProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, dlg.m_nDuration);
-			CWaitCursor	wc;
+			CWaitCursor	wc;	// show wait cursor; export can take time
+			UpdateChannelEvents();	// queue channel events to be output at start of playback
 			if (!m_Seq.Export(fd.GetPathName(), dlg.m_nDuration)) {
 				AfxMessageBox(IDS_EXPORT_ERROR);
 			}
@@ -1655,24 +1735,7 @@ void CPolymeterDoc::OnEditTrackSort()
 
 void CPolymeterDoc::OnViewPlay()
 {
-	bool	bIsPlaying = !m_Seq.IsPlaying();
-	if (bIsPlaying) {	// if starting playback
-		if (m_Seq.GetOutputDevice() < 0) {	// if no output MIDI device selected
-			AfxMessageBox(IDS_MIDI_NO_OUTPUT_DEVICE);
-			return;
-		}
-		CAllDocIter	iter;	// iterate all documents
-		CPolymeterDoc	*pOtherDoc;
-		while ((pOtherDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
-			if (pOtherDoc != this && pOtherDoc->m_Seq.IsPlaying()) {	// if another document is playing
-				pOtherDoc->m_Seq.Play(false);	// stop other document; only one can play at a time
-				break;
-			}
-		}
-		UpdateChannelEvents();	// queue channel events to be output at start of playback
-	}
-	m_Seq.Play(bIsPlaying);
-	theApp.GetMainFrame()->OnUpdate(NULL, HINT_PLAY);
+	Play(!m_Seq.IsPlaying());
 }
 
 void CPolymeterDoc::OnUpdateViewPlay(CCmdUI *pCmdUI)
@@ -1692,6 +1755,16 @@ void CPolymeterDoc::OnUpdateViewPause(CCmdUI *pCmdUI)
 	pCmdUI->Enable(m_Seq.IsPlaying());
 }
 
+void CPolymeterDoc::OnViewRecord()
+{
+	Play(!m_Seq.IsPlaying(), true);
+}
+
+void CPolymeterDoc::OnUpdateViewRecord(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_Seq.IsRecording());
+}
+
 void CPolymeterDoc::OnViewGoToPosition()
 {
 	CGoToPositionDlg	dlg;
@@ -1704,6 +1777,28 @@ void CPolymeterDoc::OnViewGoToPosition()
 			UpdateAllViews(NULL, HINT_SONG_POS);
 		}
 	}
+}
+
+void CPolymeterDoc::OnViewModeTrack()
+{
+	m_nViewMode = VIEW_TRACK;
+	m_Seq.SetSongMode(false);
+}
+
+void CPolymeterDoc::OnUpdateViewModeTrack(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetRadio(m_nViewMode == VIEW_TRACK);
+}
+
+void CPolymeterDoc::OnViewModeSong()
+{
+	m_nViewMode = VIEW_SONG;
+	m_Seq.SetSongMode(true);
+}
+
+void CPolymeterDoc::OnUpdateViewModeSong(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetRadio(m_nViewMode == VIEW_SONG);
 }
 
 void CPolymeterDoc::OnToolsStatistics()

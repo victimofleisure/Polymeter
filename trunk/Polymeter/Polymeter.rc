@@ -105,6 +105,7 @@ BEGIN
     SEPARATOR
     BUTTON      ID_VIEW_PLAY
     BUTTON      ID_VIEW_PAUSE
+    BUTTON      ID_VIEW_RECORD
     SEPARATOR
     BUTTON      ID_VIEW_VELOCITIES
     BUTTON      ID_TOOLS_TIE_NOTES
@@ -129,6 +130,7 @@ BEGIN
     SEPARATOR
     BUTTON      ID_VIEW_PLAY
     BUTTON      ID_VIEW_PAUSE
+    BUTTON      ID_VIEW_RECORD
     SEPARATOR
     BUTTON      ID_VIEW_VELOCITIES
     BUTTON      ID_TOOLS_TIE_NOTES
@@ -256,13 +258,19 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Play",                       ID_VIEW_PLAY
         MENUITEM "Pa&use",                      ID_VIEW_PAUSE
+        MENUITEM "&Record",                     ID_VIEW_RECORD
         MENUITEM "&Go To Position...",          ID_VIEW_GO_TO_POSITION
         MENUITEM SEPARATOR
         MENUITEM "Zoom &In",                    ID_VIEW_ZOOM_IN
         MENUITEM "Zoom &Out",                   ID_VIEW_ZOOM_OUT
-        MENUITEM "Zoom &Reset",                 ID_VIEW_ZOOM_RESET
+        MENUITEM "Zoom R&eset",                 ID_VIEW_ZOOM_RESET
         MENUITEM SEPARATOR
         MENUITEM "&Velocities",                 ID_VIEW_VELOCITIES
+        POPUP "&Mode"
+        BEGIN
+            MENUITEM "&Track",                      ID_VIEW_MODE_TRACK
+            MENUITEM "&Song",                       ID_VIEW_MODE_SONG
+        END
     END
     POPUP "&Tools"
     BEGIN
@@ -340,6 +348,7 @@ BEGIN
     VK_F6,          ID_NEXT_PANE,           VIRTKEY, NOINVERT
     VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT, NOINVERT
     "O",            ID_TOOLS_OPTIONS,       VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "T",            ID_TOOLS_TIE_NOTES,     VIRTKEY, CONTROL, NOINVERT
     VK_OEM_2,       ID_VIEW_GO_TO_POSITION, VIRTKEY, CONTROL, NOINVERT
     VK_SPACE,       ID_VIEW_PAUSE,          VIRTKEY, SHIFT, CONTROL, NOINVERT
     VK_SPACE,       ID_VIEW_PLAY,           VIRTKEY, CONTROL, NOINVERT
@@ -347,7 +356,7 @@ BEGIN
     VK_OEM_PLUS,    ID_VIEW_ZOOM_IN,        VIRTKEY, CONTROL, NOINVERT
     VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
     "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
-    "T",            ID_TOOLS_TIE_NOTES,     VIRTKEY, CONTROL, NOINVERT
+    "R",            ID_VIEW_RECORD,         VIRTKEY, CONTROL, NOINVERT
 END
 
 
@@ -739,26 +748,29 @@ BEGIN
     ID_EDIT_TRANSPOSE       "Transpose selected tracks\nTranspose"
     ID_FILE_EXPORT          "Export MIDI file\nExport"
     ID_INDICATOR_SONG_POS   "000000000.000"
-    ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
+    ID_INDICATOR_SONG_TIME  "0000000:00:00"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
     ID_TOOLS_OPTIONS        "Edit options\nOptions"
     ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
     ID_TOOLS_TIE_NOTES      "Toggle tie notes mode; if on, new notes are tied\nTie Notes"
     ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for selected tracks to repeat\nTime to Repeat"
-    ID_INDICATOR_SONG_TIME  "0000000:00:00"
-    ID_VIEW_CUSTOMIZE       " "
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_CUSTOMIZE       " "
     ID_VIEW_GO_TO_POSITION  "Go to specified position within song\nGo To Position"
     ID_VIEW_PAUSE           "Pause or continue playback\nPause"
     ID_VIEW_PLAY            "Start or stop playback\nPlay"
+    ID_VIEW_RECORD          "Start or stop recording\nRecord"
     ID_VIEW_VELOCITIES      "Show or hide velocities pane\nVelocities"
     ID_WINDOW_MANAGER       "&Windows..."
+    ID_VIEW_MODE_TRACK      "Show track view\nTrack View"
+    ID_VIEW_MODE_SONG       "Show song view\nSong View"
 END
 
 STRINGTABLE

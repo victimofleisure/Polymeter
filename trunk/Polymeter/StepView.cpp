@@ -22,6 +22,8 @@
 #include "Benchmark.h"
 #include <math.h>
 #include "UndoCodes.h"
+#include "StepParent.h"
+#include "MuteView.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -61,6 +63,7 @@ IMPLEMENT_DYNCREATE(CStepView, CScrollView)
 
 CStepView::CStepView()
 {
+	m_pParent = NULL;
 	m_nTrackHeight = 20;
 	m_nBeatWidth = m_nTrackHeight * 4;
 	m_nZoom = 0;
@@ -184,8 +187,12 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		}
 		break;
 	case CPolymeterDoc::HINT_PLAY:
+		UpdateSongPosition();
+		break;
 	case CPolymeterDoc::HINT_SONG_POS:
 		UpdateSongPosition();
+		if (GetDocument()->m_nViewMode == CPolymeterDoc::VIEW_SONG)
+			m_pParent->m_pMuteView->Invalidate();	// wastes about 1ms but avoids gnarly problems
 		break;
 	case CPolymeterDoc::HINT_TRACK_SELECTION:
 		OnTrackSelectionChange();
@@ -243,6 +250,16 @@ __forceinline CSize CStepView::GetClientSize() const
 	return rc.Size();
 }
 
+void CStepView::GetVisibleTracks(int& iStartTrack, int& iEndTrack) const
+{
+	CRect	rClient;
+	GetClientRect(rClient);
+	CPoint	ptScroll(GetScrollPosition());
+	iStartTrack = ptScroll.y / m_nTrackHeight;
+	iEndTrack = (ptScroll.y + rClient.Height()) / m_nTrackHeight;
+	iEndTrack = min(iEndTrack, GetDocument()->GetTrackCount());
+}
+
 void CStepView::SetTrackHeight(int nHeight)
 {
 	m_nTrackHeight = nHeight;
@@ -280,7 +297,7 @@ void CStepView::UpdateViewSize()
 	CPoint	ptNewScrollPos(GetScrollPosition());
 	if (ptNewScrollPos != ptPrevScrollPos) {	// if scroll position changed
 		CSize	szScroll(ptPrevScrollPos - ptNewScrollPos);
-		NotifyParent(UWM_STEP_SCROLL, szScroll.cx, szScroll.cy);
+		m_pParent->OnStepScroll(szScroll);
 	}
 }
 
@@ -382,6 +399,13 @@ void CStepView::UpdateTracks(const CIntArrayEx& arrSelection)
 	}
 }
 
+void CStepView::UpdateTracks(const CRect& rSelection)
+{
+	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
+		UpdateTrack(iTrack);
+	}
+}
+
 void CStepView::UpdateMute(int iTrack)
 {
 	if (theApp.m_Options.m_View_bShowCurPos) {	// if showing current position
@@ -397,15 +421,6 @@ void CStepView::UpdateMutes(const CIntArrayEx& arrSelection)
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = arrSelection[iSel];
 		UpdateMute(iTrack);
-	}
-}
-
-void CStepView::UpdateTracks(const CRect& rSelection)
-{
-	int	iStartTrack = rSelection.top;
-	int	iEndTrack = rSelection.bottom;
-	for (int iTrack = iStartTrack; iTrack < iEndTrack; iTrack++) {	// for each selected track
-		UpdateTrack(iTrack);
 	}
 }
 
@@ -425,7 +440,7 @@ void CStepView::UpdateStep(int iTrack, int iStep)
 
 void CStepView::UpdateSteps(const CRect& rSelection)
 {
-	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {
+	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
 		CRect	rSteps;
 		GetStepsRect(iTrack, CIntRange(rSelection.left, rSelection.right), rSteps);
 		InvalidateRect(rSteps);
@@ -487,8 +502,7 @@ void CStepView::UpdateSongPositionNoRedraw(const CRect& rSelection)
 	CSequencer&	seq = GetDocument()->m_Seq;
 	LONGLONG	nPos;
 	if (seq.GetPosition(nPos)) {	// if valid position
-		int	nTracks = rSelection.Height();
-		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each selected track
+		for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
 			int	iStep = seq.GetStepIndex(iTrack, nPos);
 			m_arrTrackState[iTrack].m_iCurStep = iStep;
 		}
@@ -619,7 +633,7 @@ void CStepView::SetZoom(int nZoom, bool bRedraw)
 	if (bRedraw) {
 		UpdateViewSize();
 		Invalidate();
-		NotifyParent(UWM_STEP_ZOOM);
+		m_pParent->OnStepZoom();
 	}
 }
 
@@ -647,7 +661,7 @@ void CStepView::Zoom(int nZoom, int nOriginX)
 	ptScroll.x = CLAMP(ptScroll.x, 0, ptScrollMax.x);
 	ScrollToPosition(ptScroll);
 	Invalidate();
-	NotifyParent(UWM_STEP_ZOOM);
+	m_pParent->OnStepZoom();
 }
 
 int CStepView::HitTest(CPoint point, int& iStep, UINT nFlags) const
@@ -831,13 +845,8 @@ BOOL CStepView::OnScroll(UINT nScrollCode, UINT nPos, BOOL bDoScroll)
 BOOL CStepView::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
 {
 	BOOL	bResult = CScrollView::OnScrollBy(sizeScroll, bDoScroll);
-	NotifyParent(UWM_STEP_SCROLL, sizeScroll.cx, sizeScroll.cy);
+	m_pParent->OnStepScroll(sizeScroll);
 	return bResult;
-}
-
-inline void CStepView::NotifyParent(DWORD message, WPARAM wParam, LPARAM lParam)
-{
-	GetParent()->SendMessage(message, wParam, lParam);
 }
 
 void CStepView::DispatchToDocument()
@@ -954,14 +963,14 @@ BOOL CStepView::PreTranslateMessage(MSG* pMsg)
 void CStepView::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
-	NotifyParent(UWM_STEP_SCROLL, 1, 1);	// both axes potentially scroll
+	m_pParent->OnStepScroll(CSize(1, 1));	// both axes potentially scroll
 }
 
 LRESULT	CStepView::OnDelayedCreate(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
-	NotifyParent(UWM_STEP_ZOOM);
+	m_pParent->OnStepZoom();
 	return(0);
 }
 

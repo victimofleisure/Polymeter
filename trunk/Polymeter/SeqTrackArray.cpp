@@ -16,21 +16,24 @@
 #include "VariantHelper.h"
 #include "Midi.h"
 
+// The sequencer's callback function runs in a different thread than the UI.
+// In order to safely allocate, reallocate or delete array elements, access
+// must be serialized. Scrutinize methods such as SetSize, SetAtGrow, Add,
+// InsertAt, RemoveAt, and RemoveAll, on this array or its component arrays.
+
+UINT CSeqTrackArray::m_nNextUID;
+
 void CSeqTrackArray::SetTrackCount(int nTracks)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
-	int	nPrevTracks = GetTrackCount();
+	int	nPrevTracks = GetSize();
 	SetSize(nTracks);
 	if (nTracks > nPrevTracks) {	// if array grew
-		for (int iTrack = nPrevTracks; iTrack < nTracks; iTrack++)
+		for (int iTrack = nPrevTracks; iTrack < nTracks; iTrack++) {
 			GetAt(iTrack).SetDefaults();
+			AssignID(iTrack);
+		}
 	}
-}
-
-void CSeqTrackArray::SetTracks(const CTrackArray& arrTrack)
-{
-	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
-	CTrackArray::operator=(arrTrack);
 }
 
 void CSeqTrackArray::GetTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const
@@ -50,7 +53,7 @@ void CSeqTrackArray::SetTracks(const CIntArrayEx& arrSelection, const CTrackArra
 	int	nSels = arrSelection.GetSize();
 	int	iTrack = 0;
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		GetAt(arrSelection[iSel]) = arrTrack[iTrack];
+		GetAt(arrSelection[iSel]).CopyKeepingID(arrTrack[iTrack]);
 		iTrack++;
 	}
 }
@@ -58,7 +61,7 @@ void CSeqTrackArray::SetTracks(const CIntArrayEx& arrSelection, const CTrackArra
 void CSeqTrackArray::SetTrack(int iTrack, const CTrack& track)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
-	GetAt(iTrack) = track;
+	GetAt(iTrack).CopyKeepingID(track);
 }
 
 void CSeqTrackArray::SetName(int iTrack, const CString& sName)
@@ -214,33 +217,57 @@ int CSeqTrackArray::GetUsedTrackCount(bool bExcludeMuted) const
 	return arrUsedTrack.GetSize();
 }
 
+bool CSeqTrackArray::HasDubs() const
+{
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		if (GetDubCount(iTrack))
+			return true;
+	}
+	return false;
+}
+
 void CSeqTrackArray::InsertTracks(int iTrack, int nCount)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
-	CTrack	trk(true);	// initialize to defaults
-	for (int iCopy = 0; iCopy < nCount; iCopy++)	// for each copy
-		InsertAt(iTrack + iCopy, trk);
+	CTrack	track(true);	// initialize to defaults
+	int	iEndTrack = iTrack + nCount;
+	for (int iNewTrack = iTrack; iNewTrack < iEndTrack; iNewTrack++) {	// for each new track
+		InsertAt(iNewTrack, track);
+		AssignID(iNewTrack);
+	}
 }
 
-void CSeqTrackArray::InsertTrack(int iTrack, CTrack& track)
+void CSeqTrackArray::InsertTrack(int iTrack, CTrack& track, bool bKeepID)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	InsertAt(iTrack, track);
+	if (!bKeepID)	// if not keeping ID
+		AssignID(iTrack);
 }
 
-void CSeqTrackArray::InsertTracks(int iTrack, CTrackArray& arrTrack)
+void CSeqTrackArray::InsertTracks(int iTrack, CTrackArray& arrTrack, bool bKeepID)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	InsertAt(iTrack, &arrTrack);
+	if (!bKeepID) {	// if not keeping IDs
+		int	iEndTrack = iTrack + arrTrack.GetSize();
+		for (int iNewTrack = iTrack; iNewTrack < iEndTrack; iNewTrack++)	// for each new track
+			AssignID(iNewTrack);
+	}
 }
 
-void CSeqTrackArray::InsertTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack)
+void CSeqTrackArray::InsertTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack, bool bKeepID)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	// assume selection array's track indices are in ascending order
 	int	nSels = arrSelection.GetSize();
-	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected track
-		InsertAt(arrSelection[iSel], arrTrack[iSel]);
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = arrSelection[iSel];
+		InsertAt(iTrack, arrTrack[iSel]);
+		if (!bKeepID)	// if not keeping IDs
+			AssignID(iTrack);
+	}
 }
 
 void CSeqTrackArray::DeleteTracks(int iTrack, int nCount)
@@ -337,3 +364,74 @@ void CSeqTrackArray::RotateSteps(int iTrack, int iStep, int nSteps, int nRotStep
 {
 	GetAt(iTrack).m_arrStep.Rotate(iStep, nSteps, nRotSteps);
 }
+
+void CSeqTrackArray::RemoveAllDubs()
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
+		GetAt(iTrack).m_arrDub.RemoveAll();
+}
+
+void CSeqTrackArray::AddDub(int iTrack, int nTime)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	CDub	dub(nTime, GetMute(iTrack));
+	GetAt(iTrack).m_arrDub.Add(dub);
+}
+
+void CSeqTrackArray::AddDub(const CIntArrayEx& arrSelection, int nTime)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = arrSelection[iSel];
+		CDub	dub(nTime, GetMute(iTrack));
+		GetAt(iTrack).m_arrDub.Add(dub);
+	}
+}
+
+int CSeqTrackArray::FindDub(int iTrack, int nTime) const
+{
+	const CTrack& trk = GetAt(iTrack);
+	int	nDubs = trk.m_arrDub.GetSize();
+	if (!nDubs)
+		return 0;
+	for (int iDub = 0; iDub < nDubs; iDub++) {	// for each dub
+		if (trk.m_arrDub[iDub].m_nTime > nTime)	// if dub occurs after specified time
+			return iDub - 1;	// return previous dub
+	}
+	return nDubs - 1;	// return last dub
+}
+
+void CSeqTrackArray::ChaseDubs(int nTime, bool bUpdateMutes)
+{
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
+		int	iDub = FindDub(iTrack, nTime);
+		if (iDub >= 0) {	// if dub found
+			CTrack& trk = GetAt(iTrack);
+			trk.m_iDub = iDub;
+			if (bUpdateMutes)
+				trk.m_bMute = trk.m_arrDub[iDub].m_bMute;
+		} else	// dub not found
+			GetAt(iTrack).m_iDub = 0;
+	}
+}
+
+int CSeqTrackArray::GetSongDuration() const
+{
+	int	nTracks = GetSize();
+	int	nDuration = 0;
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
+		const CTrack& trk = GetAt(iTrack);
+		int	nDubs = trk.m_arrDub.GetSize();
+		if (nDubs) {
+			int	nDubTime = trk.m_arrDub[nDubs - 1].m_nTime;
+			if (nDubTime > nDuration)
+				nDuration = nDubTime;
+		}
+	}
+	return nDuration;
+}
+

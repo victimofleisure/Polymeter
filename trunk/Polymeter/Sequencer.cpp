@@ -38,10 +38,12 @@ CSequencer::CSequencer()
 	m_bIsPlaying = false;
 	m_bIsPaused = false;
 	m_bIsStopping = false;
+	m_bIsRecording = false;
 	m_bIsTempoChange = false;
 	m_bIsPositionChange = false;
-	m_qLiveEvent.Create(DEF_BUFFER_SIZE);
+	m_bIsSongMode = false;
 	ZeroMemory(&m_stats, sizeof(m_stats));
+	m_qLiveEvent.Create(DEF_BUFFER_SIZE);
 }
 
 CSequencer::~CSequencer()
@@ -105,9 +107,13 @@ void CSequencer::SetPosition(int nTicks)
 		m_nPosOffset += nTicks - m_nCBTime;
 		m_nCBTime = nTicks;
 		m_bIsPositionChange = true;	// signal position change
+		if (m_bIsSongMode)	// if song playback
+			ChaseDubs(nTicks);	// reset dub indices
 	} else {	// stopped
 		m_nCBTime = nTicks;
 		m_nStartPos = nTicks;
+		if (m_bIsSongMode)	// if song playback
+			ChaseDubs(nTicks, true);	// reset dub indices and update mutes
 	}
 }
 
@@ -177,6 +183,8 @@ bool CSequencer::Play(bool bEnable)
 		m_arrEvent.FastRemoveAll();
 		m_arrNoteOff.SetSize(DEF_BUFFER_SIZE);	// preallocate note off array
 		m_arrNoteOff.FastRemoveAll();
+		if (m_bIsSongMode)
+			ChaseDubs(m_nStartPos, true);
 		UINT	uDevice = m_iOutputDevice;
 		CHECK(midiStreamOpen(&m_hStrm, &uDevice, 1, reinterpret_cast<W64UINT>(MidiOutProc), 
 			reinterpret_cast<W64UINT>(this), CALLBACK_FUNCTION));
@@ -212,6 +220,7 @@ bool CSequencer::Play(bool bEnable)
 		m_bIsPlaying = true;	// set playing last
 	} else {	// stopping
 		m_bIsPlaying = false;	// clear playing first
+		m_bIsRecording = false;
 		m_bIsStopping = true;	// signal callback to stop outputting events
 		CHECK(midiStreamStop(m_hStrm));	// stop playback
 		for (int iBuf = 0; iBuf < BUFFERS; iBuf++) {	// for each buffer, unprepare buffer
@@ -242,11 +251,40 @@ bool CSequencer::Pause(bool bEnable)
 	return true;
 }
 
+bool CSequencer::Record(bool bEnable)
+{
+	if (bEnable == m_bIsRecording)	// if already in requested state
+		return true;	// nothing to do
+	if (bEnable) {	// if starting
+		RemoveAllDubs();
+		int	nTracks = GetTrackCount();
+		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+			CDub	dub(0, GetMute(iTrack));
+			GetAt(iTrack).m_arrDub.Add(dub);
+		}
+	} else {	// stopping
+		LONGLONG	nPos;
+		GetPosition(nPos);
+		int	nTracks = GetTrackCount();
+		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+			if (!GetMute(iTrack)) {	// if track unmuted
+				CDub	dub(static_cast<int>(nPos), true);	// add mute
+				GetAt(iTrack).m_arrDub.Add(dub);
+			}
+		}
+	}
+	m_bIsRecording = bEnable;
+	if (!Play(bEnable))
+		return false;
+	return true;
+}
+
 void CSequencer::Abort()
 {
 	m_bIsPlaying = false;
 	m_bIsPaused = false;
 	m_bIsStopping = true;
+	m_bIsRecording = false;
 	midiStreamClose(m_hStrm);
 	m_hStrm = NULL;
 }
@@ -297,6 +335,33 @@ __forceinline int CSequencer::GetNoteDuration(const CStepArray& arrStep, int nSt
 	return nSteps;	// degenerate case
 }
 
+__forceinline void CSequencer::CEvent::Create(const CTrack& trk, DWORD dwTime, int nVal)
+{
+	m_dwTime = dwTime;
+	switch (trk.m_iType) {
+	case TT_NOTE:
+		m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, trk.m_nNote, nVal);
+		break;
+	case TT_KEY_AFT:
+		m_dwEvent = MakeMidiMsg(KEY_AFT, trk.m_nChannel, trk.m_nNote, nVal);
+		break;
+	case TT_CONTROL:
+		m_dwEvent = MakeMidiMsg(CONTROL, trk.m_nChannel, trk.m_nNote, nVal);
+		break;
+	case TT_PATCH:
+		m_dwEvent = MakeMidiMsg(PATCH, trk.m_nChannel, nVal, 0);
+		break;
+	case TT_CHAN_AFT:
+		m_dwEvent = MakeMidiMsg(CHAN_AFT, trk.m_nChannel, nVal, 0);
+		break;
+	case TT_WHEEL:
+		m_dwEvent = MakeMidiMsg(WHEEL, trk.m_nChannel, trk.m_nNote, nVal);
+		break;
+	default:
+		NODEFAULTCASE;
+	}
+}
+
 __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 {
 	CTrack&	trk = GetAt(iTrack);
@@ -320,56 +385,47 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 	bool	bIsOdd = false;	// starting on even step, due to pair of quants logic
 	while (nEvtTime < m_nCBLen) {	// while event time within callback period
 		if (nEvtTime >= 0) {	// discard already played events
-			if (trk.m_iType == TT_NOTE) {	// if track type is note
-				if (trk.m_arrStep[iStep]) {
-					int	nDurSteps = GetNoteDuration(trk.m_arrStep, nLength, iStep);
-					if (nDurSteps) {	// if at start of note
-						CEvent	evt;
-						evt.m_dwTime = nEvtTime;
-						int	nVel = (trk.m_arrStep[iStep] & NB_VELOCITY) + trk.m_nVelocity;
-						nVel = CLAMP(nVel, 0, MIDI_NOTE_MAX);
-						evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, trk.m_nNote, nVel);
-						m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
-						int	nDuration = nDurSteps * nQuant + trk.m_nDuration;	// add duration offset
-						if (nDurSteps & 1) {	// if odd duration
-							if (bIsOdd)	// if odd step
-								nDuration -= nSwing;	// subtract swing from duration
-							else	// even step
-								nDuration += nSwing;	// add swing to duration
-						}
-						nDuration = max(nDuration, 1);	// keep duration above zero
-						evt.m_dwTime = nCBStart + nEvtTime + nDuration;	// absolute time
-						evt.m_dwEvent &= ~0xff0000;	// zero note's velocity
-						m_arrNoteOff.InsertSorted(evt);	// add pending note off to array
-					}
+			if (m_bIsSongMode) {	// if applying track dubs
+				CTrack&	trk = GetAt(iTrack);
+				int	nDubs = trk.m_arrDub.GetSize();
+				while (trk.m_iDub < nDubs && nCBStart + nEvtTime >= trk.m_arrDub[trk.m_iDub].m_nTime) {
+					trk.m_bMute = trk.m_arrDub[trk.m_iDub].m_bMute;
+					trk.m_iDub++;
 				}
-			} else {	// track type isn't note
-				int	nVal = (trk.m_arrStep[iStep] & NB_VELOCITY) + trk.m_nVelocity;
-				nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
-				if (nVal != trk.m_nCachedParam) {	// if value differs from cached parameter
- 					trk.m_nCachedParam = nVal;	// update cached parameter
-					CEvent	evt;
-					evt.m_dwTime = nEvtTime;
-					switch (trk.m_iType) {
-					case TT_KEY_AFT:
-						evt.m_dwEvent = MakeMidiMsg(KEY_AFT, trk.m_nChannel, trk.m_nNote, nVal);
-						break;
-					case TT_CONTROL:
-						evt.m_dwEvent = MakeMidiMsg(CONTROL, trk.m_nChannel, trk.m_nNote, nVal);
-						break;
-					case TT_PATCH:
-						evt.m_dwEvent = MakeMidiMsg(PATCH, trk.m_nChannel, nVal, 0);
-						break;
-					case TT_CHAN_AFT:
-						evt.m_dwEvent = MakeMidiMsg(CHAN_AFT, trk.m_nChannel, nVal, 0);
-						break;
-					case TT_WHEEL:
-						evt.m_dwEvent = MakeMidiMsg(WHEEL, trk.m_nChannel, trk.m_nNote, nVal);
-						break;
-					default:
-						NODEFAULTCASE;
+			}
+			if (!trk.m_bMute) {
+				if (trk.m_iType == TT_NOTE) {	// if track type is note
+					if (trk.m_arrStep[iStep]) {
+						int	nDurSteps = GetNoteDuration(trk.m_arrStep, nLength, iStep);
+						if (nDurSteps) {	// if at start of note
+							CEvent	evt;
+							evt.m_dwTime = nEvtTime;
+							int	nVel = (trk.m_arrStep[iStep] & NB_VELOCITY) + trk.m_nVelocity;
+							nVel = CLAMP(nVel, 0, MIDI_NOTE_MAX);
+							evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, trk.m_nNote, nVel);
+							m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
+							int	nDuration = nDurSteps * nQuant + trk.m_nDuration;	// add duration offset
+							if (nDurSteps & 1) {	// if odd duration
+								if (bIsOdd)	// if odd step
+									nDuration -= nSwing;	// subtract swing from duration
+								else	// even step
+									nDuration += nSwing;	// add swing to duration
+							}
+							nDuration = max(nDuration, 1);	// keep duration above zero
+							evt.m_dwTime = nCBStart + nEvtTime + nDuration;	// absolute time
+							evt.m_dwEvent &= ~0xff0000;	// zero note's velocity
+							m_arrNoteOff.InsertSorted(evt);	// add pending note off to array
+						}
 					}
-					m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
+				} else {	// track type isn't note
+					int	nVal = (trk.m_arrStep[iStep] & NB_VELOCITY) + trk.m_nVelocity;
+					nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
+					if (nVal != trk.m_nCachedParam) {	// if value differs from cached parameter
+ 						trk.m_nCachedParam = nVal;	// update cached parameter
+						CEvent	evt;
+						evt.Create(trk, nEvtTime, nVal);
+						m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
+					}
 				}
 			}
 		}
@@ -431,7 +487,15 @@ bool CSequencer::OutputMidiBuffer()
 		m_nCBTime = nCBEnd;	// advance callback time by one period
 		int	nTracks = GetSize();
 		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-			if (!GetAt(iTrack).m_bMute)	// if track isn't muted
+			bool	bIsDubbing = false;
+			if (m_bIsSongMode) {	// if applying track dubs
+				const CTrack&	trk = GetAt(iTrack);
+				if (trk.m_iDub < trk.m_arrDub.GetSize()) {	// if unplayed dubs remain
+					if (trk.m_arrDub[trk.m_iDub].m_nTime < nCBEnd)	// if dubs during this callback
+						bIsDubbing = true;	// call AddTrackEvents even if track is muted
+				}
+			}
+			if (!GetAt(iTrack).m_bMute || bIsDubbing)	// if track isn't muted, or track is dubbing
 				AddTrackEvents(iTrack, nCBStart);	// add events for this callback period
 		}
 	}	// leave callback critical section, releasing lock on callback state
@@ -486,22 +550,38 @@ bool CSequencer::OutputMidiBuffer()
 
 bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 {
+	if (m_bIsSongMode)
+		ChaseDubs(0, true);	// reset dub indices and update mutes
 	// note that this method may throw CFileException (from CMidiFile)
 	if (nDuration <= 0)	// if invalid duration (in seconds)
 		return false;	// avoid divide by zero
 	CIntArrayEx	arrUsedTrack;
-	GetUsedTracks(arrUsedTrack, true);	// exclude muted tracks
+	GetUsedTracks(arrUsedTrack, !m_bIsSongMode);	// in track mode, exclude muted tracks
 	int	nUsedTracks = arrUsedTrack.GetSize();
-	if (!nUsedTracks || nUsedTracks > USHRT_MAX)	// if no tracks, or too many tracks
+	// max tracks is one less to allow for initialization track
+	if (!nUsedTracks || nUsedTracks > USHRT_MAX - 1)	// if no tracks, or too many tracks
 		return false;
 	CMidiFile	fMidi(pszPath, CFile::modeCreate | CFile::modeWrite);	// create MIDI file
-	USHORT	uTracks = static_cast<USHORT>(nUsedTracks);
+	USHORT	uTracks = static_cast<USHORT>(nUsedTracks + 1);	// account for initialization track
 	USHORT	uTimeDiv = static_cast<USHORT>(m_nTimeDiv);
 	fMidi.WriteHeader(uTracks, uTimeDiv, m_fTempo);	// write MIDI file header
 	const int	nChunkDuration = 1000;	// desired chunk duration, in milliseconds
 	int	nChunkLen = GetCallbackLength(nChunkDuration);	// convert chunk duration to ticks
 	int	nChunks = (nDuration * 1000 - 1) / nChunkDuration + 1;	// number of chunks, rounded up
 	m_nCBLen = nChunkLen;	// set callback length member; used in AddTrackEvents
+	{	// output initialization track
+		CMidiEventArray arrMidiEvent;
+		int	nInitEvents = m_arrInitMidiEvent.GetSize();
+		arrMidiEvent.SetSize(nInitEvents + 1);
+		for (int iEvt = 0; iEvt < nInitEvents; iEvt++) {	// for each initial event
+			MIDI_EVENT	evt = {0, m_arrInitMidiEvent[iEvt]};
+			arrMidiEvent[iEvt] = evt;
+		}
+		int	nDurationTicks = static_cast<int>(ConvertSecondsToPosition(nDuration));
+		MIDI_EVENT	evt = {nDurationTicks, KEY_AFT};	// dummy event to pad track out to duration
+		arrMidiEvent[nInitEvents] = evt;
+		fMidi.WriteTrack(arrMidiEvent);	// write initialization track
+	}
 	for (int iUsed = 0; iUsed < nUsedTracks; iUsed++) {	// for each non-empty track
 		int	iTrack = arrUsedTrack[iUsed];	// get track index
 		int	nCBTime = 0;
@@ -544,8 +624,11 @@ CSequencerReader::CSequencerReader(CSequencer& seq)
 	// attach our track array to sequencer's track array; risky but OK so long as
 	// our instance is destroyed before sequencer, and never modifies track array
 	Attach(seq.GetData(), seq.GetSize());
+	// copy any variables used by export
 	m_fTempo = seq.m_fTempo;
 	m_nTimeDiv = seq.m_nTimeDiv;
+	m_bIsSongMode = seq.m_bIsSongMode;
+	m_arrInitMidiEvent = seq.m_arrInitMidiEvent;
 }
 
 CSequencerReader::~CSequencerReader()
@@ -578,7 +661,7 @@ void CSequencer::ConvertBeatToPosition(LONGLONG nBeat, LONGLONG nTick, LONGLONG&
 	nPos = nBeat * m_nTimeDiv + nTick;
 }
 
-void CSequencer::ConvertPositionToString(const LONGLONG& nPos, CString& sPos) const
+void CSequencer::ConvertPositionToString(LONGLONG nPos, CString& sPos) const
 {
 	LONGLONG	nBeat, nTick;
 	ConvertPositionToBeat(nPos, nBeat, nTick);
@@ -594,9 +677,19 @@ bool CSequencer::ConvertStringToPosition(const CString& sPosition, LONGLONG& nPo
 	return true;
 }
 
-void CSequencer::ConvertPositionToTimeString(const LONGLONG& nPos, CString& sTime) const
+LONGLONG CSequencer::ConvertPositionToSeconds(LONGLONG nPos) const
 {
-	LONGLONG	nTime = round64(static_cast<double>(nPos) / m_nTimeDiv / m_fTempo * 60);
+	return round64(static_cast<double>(nPos) / m_nTimeDiv / m_fTempo * 60);
+}
+
+LONGLONG CSequencer::ConvertSecondsToPosition(LONGLONG nSecs) const
+{
+	return round64(static_cast<double>(nSecs) / 60 * m_fTempo * m_nTimeDiv);
+}
+
+void CSequencer::ConvertPositionToTimeString(LONGLONG nPos, CString& sTime) const
+{
+	LONGLONG	nTime = ConvertPositionToSeconds(nPos);
 	LONGLONG	nSecs = nTime % 60;
 	nTime /= 60;
 	LONGLONG	nMins = nTime % 60;
@@ -623,6 +716,20 @@ int CSequencer::GetStepIndex(int iTrack, LONGLONG nPos) const
 	if (iStep < 0)
 		iStep += nLength;
 	return iStep;
+}
+
+void CSequencer::RecordDub(int iTrack)
+{
+	LONGLONG	nPos;
+	if (GetPosition(nPos))
+		AddDub(iTrack, static_cast<int>(nPos));
+}
+
+void CSequencer::RecordDub(const CIntArrayEx& arrSelection)
+{
+	LONGLONG	nPos;
+	if (GetPosition(nPos))
+		AddDub(arrSelection, static_cast<int>(nPos));
 }
 
 #if SEQ_DUMP_EVENTS

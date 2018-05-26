@@ -43,7 +43,7 @@ public:
 		HINT_STEP,				// step edit; pHint is CPropHint, m_iProp is step index
 		HINT_MASTER_PROP,		// master property edit; pHint is CPropHint
 		HINT_PLAY,				// start or stop playback
-		HINT_SONG_POS,			// song position change
+		HINT_SONG_POS,			// song position change; pHint is CSongPosHint
 		HINT_CHANNEL_PROP,		// channel property edit; pHint is CPropHint
 		HINT_MULTI_CHANNEL_PROP,	// multi-channel property edit; pHint is CMultiItemPropHint
 		HINT_TRACK_SELECTION,	// track selection
@@ -53,6 +53,11 @@ public:
 		HINT_VELOCITY,			// multi-track velocity edit; pHint is CMultiItemPropHint
 		HINT_OPTIONS,			// options change; pHint is COptionsPropHint
 		HINTS
+	};
+	enum {	// view modes
+		VIEW_TRACK,
+		VIEW_SONG,
+		VIEW_MODES
 	};
 
 // Types
@@ -94,6 +99,7 @@ public:
 	CIntArrayEx	m_arrTrackSel;	// array of indices of selected tracks
 	int		m_iTrackSelMark;	// track selection mark
 	double	m_fStepZoom;		// step view zoom
+	int		m_nViewMode;		// see view mode enum
 
 // Attributes
 	int		GetTrackCount() const;
@@ -140,6 +146,8 @@ public:
 	bool	ValidateTrackLength(int nLength, int nQuant) const;
 	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
 	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
+	bool	Play(bool bPlay, bool bRecord = false);
+	void	DumpDubs();
 
 // Overrides
 public:
@@ -269,7 +277,13 @@ protected:
 	afx_msg void OnUpdateViewPlay(CCmdUI *pCmdUI);
 	afx_msg void OnViewPause();
 	afx_msg void OnUpdateViewPause(CCmdUI *pCmdUI);
+	afx_msg void OnViewRecord();
+	afx_msg void OnUpdateViewRecord(CCmdUI *pCmdUI);
 	afx_msg void OnViewGoToPosition();
+	afx_msg void OnViewModeSong();
+	afx_msg void OnViewModeTrack();
+	afx_msg void OnUpdateViewModeSong(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateViewModeTrack(CCmdUI *pCmdUI);
 	afx_msg void OnEditCopy();
 	afx_msg void OnEditCut();
 	afx_msg void OnEditDelete();

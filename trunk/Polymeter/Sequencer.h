@@ -46,6 +46,7 @@ public:
 	bool	IsOpen() const;
 	bool	IsPlaying() const;
 	bool	IsPaused() const;
+	bool	IsRecording() const;
 	int		GetOutputDevice() const;
 	void	SetOutputDevice(int iOutputDevice);
 	bool	GetPosition(LONGLONG& nTicks);
@@ -65,18 +66,25 @@ public:
 	void	GetInitialMidiEvents(CDWordArrayEx& arrMidiEvent) const;
 	void	SetInitialMidiEvents(const CDWordArrayEx& arrMidiEvent);
 	int		GetStepIndex(int iTrack, LONGLONG nPos) const;
+	bool	GetSongMode() const;
+	void	SetSongMode(bool bEnable);
 
 // Operations
 	bool	Play(bool bEnable);
 	bool	Pause(bool bEnable);
+	bool	Record(bool bEnable);
 	void	Abort();
 	bool	Export(LPCTSTR pszPath, int nDuration);
 	bool	OutputLiveEvent(DWORD dwEvent);
 	void	ConvertPositionToBeat(LONGLONG nPos, LONGLONG& nBeat, LONGLONG& nTick) const;
 	void	ConvertBeatToPosition(LONGLONG nBeat, LONGLONG nTick, LONGLONG& nPos) const;
-	void	ConvertPositionToString(const LONGLONG& nPos, CString& sPos) const;
+	void	ConvertPositionToString(LONGLONG nPos, CString& sPos) const;
 	bool	ConvertStringToPosition(const CString& sPos, LONGLONG& nPos) const;
-	void	ConvertPositionToTimeString(const LONGLONG& nPos, CString& sTime) const;
+	LONGLONG	ConvertPositionToSeconds(LONGLONG nPos) const;
+	LONGLONG	ConvertSecondsToPosition(LONGLONG nSecs) const;
+	void	ConvertPositionToTimeString(LONGLONG nPos, CString& sTime) const;
+	void	RecordDub(int iTrack);
+	void	RecordDub(const CIntArrayEx& arrSelection);
 
 protected:
 // Types
@@ -92,6 +100,7 @@ protected:
 		bool	operator>=(const CEvent &evt) const;
 		int		m_dwTime;			// time in ticks
 		DWORD	m_dwEvent;			// MIDI event
+		void	Create(const CTrack& track, DWORD dwTime, int nVal); 
 	};
 	typedef CArrayEx<CEvent, CEvent&> CEventArray;
 	struct MIDI_STREAM_EVENT {
@@ -123,8 +132,10 @@ protected:
 	bool	m_bIsPlaying;			// true if playing
 	bool	m_bIsPaused;			// true if paused
 	bool	m_bIsStopping;			// true if stopping
+	bool	m_bIsRecording;			// true if recording
 	bool	m_bIsTempoChange;		// true if tempo changed
 	bool	m_bIsPositionChange;	// true if position changed
+	bool	m_bIsSongMode;			// true if applying track dubs
 	STATS	m_stats;				// timing statistics
 	CMidiEventStream	m_arrMidiEvent[BUFFERS];	// array of MIDI event stream buffers
 	CEventArray	m_arrEvent;			// array of track events
@@ -141,6 +152,7 @@ protected:
 // Helpers
 	static	void	CALLBACK MidiOutProc(HMIDIOUT hMidiOut, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2);
 	int		GetNoteDuration(const CStepArray& arrStep, int nSteps, int iCurStep) const;
+	void	MakeEvent(const CTrack& trk, DWORD dwTime, int nVal, CEvent& evt);
 	void	AddTrackEvents(int iTrack, int nCBStart);
 	void	AddNoteOffs(int nCBStart, int nCBEnd);
 	bool	OutputMidiBuffer();
@@ -213,6 +225,11 @@ inline bool CSequencer::IsPaused() const
 	return m_bIsPaused;
 }
 
+inline bool CSequencer::IsRecording() const
+{
+	return m_bIsRecording;
+}
+
 inline int CSequencer::GetOutputDevice() const
 {
 	return m_iOutputDevice;
@@ -262,3 +279,14 @@ inline void CSequencer::SetInitialMidiEvents(const CDWordArrayEx& arrMidiEvent)
 {
 	m_arrInitMidiEvent = arrMidiEvent;
 }
+
+inline bool CSequencer::GetSongMode() const
+{
+	return m_bIsSongMode;
+}
+
+inline void CSequencer::SetSongMode(bool bEnable)
+{
+	m_bIsSongMode = bEnable;
+}
+

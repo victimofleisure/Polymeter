@@ -175,13 +175,16 @@
 #define ID_VIEW_APPLOOK_WIN_XP          32799
 #define ID_VIEW_CUSTOMIZE               32800
 #define ID_VIEW_GO_TO_POSITION          32801
-#define ID_VIEW_PAUSE                   32802
-#define ID_VIEW_PLAY                    32803
-#define ID_VIEW_VELOCITIES              32804
-#define ID_VIEW_ZOOM_IN                 32805
-#define ID_VIEW_ZOOM_OUT                32806
-#define ID_VIEW_ZOOM_RESET              32807
-#define ID_WINDOW_MANAGER               32808
+#define ID_VIEW_MODE_SONG               32802
+#define ID_VIEW_MODE_TRACK              32803
+#define ID_VIEW_PAUSE                   32804
+#define ID_VIEW_PLAY                    32805
+#define ID_VIEW_RECORD                  32806
+#define ID_VIEW_VELOCITIES              32807
+#define ID_VIEW_ZOOM_IN                 32808
+#define ID_VIEW_ZOOM_OUT                32809
+#define ID_VIEW_ZOOM_RESET              32810
+#define ID_WINDOW_MANAGER               32811
 
 // Next default values for new objects
 //
@@ -189,7 +192,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                1
 #define _APS_NEXT_RESOURCE_VALUE        309
-#define _APS_NEXT_COMMAND_VALUE         32809
+#define _APS_NEXT_COMMAND_VALUE         32812
 #define _APS_NEXT_CONTROL_VALUE         1021
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
