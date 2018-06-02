@@ -109,7 +109,7 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	m_pStepParent = STATIC_DOWNCAST(CStepParent, m_wndSplitter.GetPane(0, PANE_STEP));
 	m_pStepParent->m_pTrackView = m_pTrackView;
 	m_pStepParent->SetRulerHeight(m_pTrackView->GetHeaderHeight());
-	m_pStepParent->m_pStepView->SetTrackHeight(m_pTrackView->GetItemHeight());
+	m_pStepParent->SetTrackHeight(m_pTrackView->GetItemHeight());
 	return true;
 }
 

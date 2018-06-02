@@ -41,6 +41,8 @@ protected: // create from serialization only
 // Attributes
 public:
 	void	SetRulerHeight(int nHeight);
+	int		GetTrackHeight() const;
+	void	SetTrackHeight(int nHeight);
 
 // Public data
 	CTrackView*	m_pTrackView;		// pointer to track view

@@ -18,6 +18,7 @@
 		08		18feb14	add OnEnable to invalidate spin control
 		09		19apr18	move spin control creation to helper
 		10		24apr18	standardize names
+		11		02jun18	in Notify, fix x64 crash due to casting pointer to long
 
         numeric edit control
  
@@ -147,9 +148,9 @@ void CNumEdit::Notify(int nNotifyMask)
 	// notify aux before parent; else if parent send its own notification via
 	// SendMessage, and recipient reads value from aux, value will be stale
 	if (m_pAuxNotify != NULL && (nNotifyMask & NTF_AUX))	// notify aux first
-		m_pAuxNotify->SendMessage(WM_NOTIFY, nmh.idFrom, long(&nmh));
+		m_pAuxNotify->SendMessage(WM_NOTIFY, nmh.idFrom, reinterpret_cast<LPARAM>(&nmh));
 	if (nNotifyMask & NTF_PARENT)
-		GetParent()->SendMessage(WM_NOTIFY, nmh.idFrom, long(&nmh));
+		GetParent()->SendMessage(WM_NOTIFY, nmh.idFrom, reinterpret_cast<LPARAM>(&nmh));
 }
 
 void CNumEdit::SetRange(double fMinVal, double fMaxVal)

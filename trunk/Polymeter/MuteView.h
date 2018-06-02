@@ -35,6 +35,8 @@ protected: // create from serialization only
 // Attributes
 public:
 	CPolymeterDoc* GetDocument() const;
+	int		GetTrackHeight() const;
+	void	SetTrackHeight(int nHeight);
 	int		GetViewWidth() const;
 	void	GetMuteRect(int iTrack, CRect& rMute) const;
 
@@ -103,6 +105,16 @@ protected:
 inline CPolymeterDoc* CMuteView::GetDocument() const
 {
 	return reinterpret_cast<CPolymeterDoc*>(m_pDocument);
+}
+
+inline int CMuteView::GetTrackHeight() const
+{
+	return m_nTrackHeight;
+}
+
+inline void CMuteView::SetTrackHeight(int nHeight)
+{
+	m_nTrackHeight = nHeight;
 }
 
 inline int CMuteView::GetViewWidth() const

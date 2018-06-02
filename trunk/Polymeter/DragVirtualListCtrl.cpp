@@ -21,6 +21,7 @@
 		11		12jun14	add drag enable
 		12		04apr15	add GetCompensatedDropPos
 		13		24apr18	standardize names
+		14		02jun18	in OnLButtonUp, fix x64 crash due to casting pointer to long
 
         virtual list control with drag reordering
  
@@ -177,7 +178,7 @@ void CDragVirtualListCtrl::OnLButtonUp(UINT nFlags, CPoint point)
 		lvh.hdr.hwndFrom = m_hWnd;
 		lvh.hdr.idFrom = GetDlgCtrlID();
 		lvh.hdr.code = ULVN_REORDER;
-		GetParent()->SendMessage(WM_NOTIFY, lvh.hdr.idFrom, long(&lvh));
+		GetParent()->SendMessage(WM_NOTIFY, lvh.hdr.idFrom, reinterpret_cast<LPARAM>(&lvh));
 		KillTimer(m_nScrollTimer);
 		m_nScrollTimer = 0;
 		EnsureVisible(min(iItem, GetItemCount() - 1), FALSE);

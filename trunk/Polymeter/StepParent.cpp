@@ -66,6 +66,17 @@ BOOL CStepParent::PreCreateWindow(CREATESTRUCT& cs)
 	return CView::PreCreateWindow(cs);
 }
 
+int CStepParent::GetTrackHeight() const
+{
+	return m_pStepView->GetTrackHeight();
+}
+
+void CStepParent::SetTrackHeight(int nHeight)
+{
+	m_pStepView->SetTrackHeight(nHeight);
+	m_pMuteView->SetTrackHeight(nHeight);
+}
+
 void CStepParent::GetSplitRect(CRect& rSplit) const
 {
 	CRect	rc;
