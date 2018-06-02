@@ -64,6 +64,8 @@ open	close	type	description	rev	user
 05/19/18	05/22/18	done	show current position in time as well as beats and ticks	0.0.06.000	
 05/22/18	05/22/18	done	auto-repeated arrow key in tempo edit property sets tempo to one instead of incrementing	0.0.06.000	
 05/24/18	05/24/18	done	deleting current step crashes app	0.0.06.001	
+06/02/18	06/02/18	done	in a popup edit control, left-clicking up/down spin button or pressing up/down arrow key crashes in x64; bad cast	0.0.06.002	
+06/02/18	06/02/18	done	mute buttons aren't same height as steps and tracks	0.0.06.002	
 03/25/18		hold	animated visualization		
 03/25/18		hold	playback can be slow to start, due to device open delay; keep output device open all the time?		
 03/25/18		hold	MIDI mapping of all parameters, with manual assignment and learn mode		
@@ -89,3 +91,4 @@ open	close	type	description	rev	user
 04/09/18		todo	undoing track value or step edit should ensure track is visible		
 05/19/18		todo	notes don't toggle the same way they did in the original, very annoying		
 05/23/18		todo	track solo		
+05/30/18		todo	song view needs different menus		
