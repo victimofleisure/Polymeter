@@ -52,6 +52,8 @@ public:
 	int		GetBeatWidth() const;
 	double	GetStepWidthEx(int iTrack) const;
 	COLORREF	GetBeatLineColor() const;
+	COLORREF	GetStepOutlineColor() const;
+	COLORREF	GetViewBkgndColor() const;
 	bool	IsSelected(int iTrack) const;
 	bool	HaveStepSelection() const;
 	const CRect&	GetStepSelection();
@@ -62,7 +64,7 @@ public:
 	void	ResetStepSelection();
 	int		HitTest(CPoint point, int& iStep, UINT nFlags = 0) const;
 	void	EndDrag();
-	void	OnEditLength(CPoint point);
+	void	OnTrackLength(CPoint point);
 
 // Overrides
 public:
@@ -98,6 +100,7 @@ protected:
 		SF_HOT		= 0x02,		// step is current position
 		SF_MUTE		= 0x04,		// step's track is muted
 		SF_SELECT	= 0x08,		// step is selected
+		STEP_STATES	= 16,		// power of two
 	};
 	enum {	// drag states
 		DS_NONE,			// inactive
@@ -164,7 +167,8 @@ protected:
 	void	DrawStep(CDC* pDC, int x, int y, int cx, int cy, STEP nStep, int iStepColor, int iTrackType);
 	void	DrawClippedStep(CDC *pDC, const CRect& rClip, const CSequencer& seq, int iTrack, int iStep);
 	void	DispatchToDocument();
-	void	RotateSteps(int nRotSteps);
+	void	ShiftSteps(int nOffset);
+	void	RotateSteps(int nOffset);
 	static	double	InvPow(double fBase, double fVal);
 
 // Generated message map functionsq
@@ -195,11 +199,13 @@ protected:
 	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
 	afx_msg void OnEditDelete();
 	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
-	afx_msg void OnEditReverse();
-	afx_msg void OnUpdateEditReverse(CCmdUI *pCmdUI);
-	afx_msg void OnEditRotateLeft();
-	afx_msg void OnEditRotateRight();
-	afx_msg void OnUpdateEditRotate(CCmdUI *pCmdUI);
+	afx_msg void OnTrackReverse();
+	afx_msg void OnUpdateTrackReverse(CCmdUI *pCmdUI);
+	afx_msg void OnTrackShiftLeft();
+	afx_msg void OnTrackShiftRight();
+	afx_msg void OnUpdateTrackShift(CCmdUI *pCmdUI);
+	afx_msg void OnTrackRotateLeft();
+	afx_msg void OnTrackRotateRight();
 };
 
 inline CPolymeterDoc* CStepView::GetDocument() const
@@ -240,6 +246,16 @@ inline int CStepView::GetBeatWidth() const
 inline COLORREF CStepView::GetBeatLineColor() const
 {
 	return m_clrBeatLine;
+}
+
+inline COLORREF CStepView::GetStepOutlineColor() const
+{
+	return m_clrStepOutline;
+}
+
+inline COLORREF CStepView::GetViewBkgndColor() const
+{
+	return m_clrViewBkgnd;
 }
 
 inline double CStepView::GetStepWidthEx(int iTrack) const

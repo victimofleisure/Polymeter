@@ -24,6 +24,7 @@ GROUPDEF(	Master	)
 PROPDEF(	Master,		NONE,		VAR,		double,		fTempo,				120,			1.0,		500.0,		NULL,		0)
 PROPDEF(	Master,		NONE,		ENUM,		int,		nTimeDiv,			TIME_DIV_120,	0,			0,			m_TimeDiv,	_countof(m_TimeDiv))
 PROPDEF(	Master,		NONE,		ENUM,		int,		nKeySig,			0,				0,			0,			m_KeySig,	_countof(m_KeySig))
+PROPDEF(	Master,		NONE,		TIME,		int,		nSongLength,		600,			0,			0,			NULL,		0)
 
 #undef PROPDEF
 #endif

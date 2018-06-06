@@ -32,6 +32,7 @@ public:
 		UWM_TRACK_FIRST = WM_USER + 100,
 		UWM_TRACK_SCROLL,		// wParam: list control top item index
 		UWM_LIST_SCROLL_KEY,
+		UWM_LIST_HDR_REORDER,
 	};
 
 // Attributes
@@ -39,9 +40,15 @@ public:
 	CPolymeterDoc* GetDocument() const;
 	int		GetHeaderHeight() const;
 	int		GetItemHeight() const;
+	static const LPCTSTR	GetGMDrumName(int iNote);
+	void	SetColumnOrder(const CIntArrayEx& arrOrder);
+	void	SetColumnWidths(const CIntArrayEx& arrWidth);
 
 // Operations
 	void	SetVScrollPos(int nPos);
+	static	void	LoadPersistentState();
+	static	void	SavePersistentState();
+	void	UpdatePersistentState(bool bNoRedraw = false);
 
 protected:
 // Types
@@ -49,6 +56,26 @@ protected:
 	public:
 		virtual	CWnd*	CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
 		virtual	void	OnItemChange(LPCTSTR pszText);
+		int		m_nPreEditVal;		// pre-edit value for integer edits, or INT_MIN if change was saved
+		class CRefStepArray : public CByteArrayEx, public CRefObj {};
+		CRefPtr<CRefStepArray>	m_pStepArray;	// pointer to steps array, for restoring track length
+		enum {	// update target flags
+			UT_UPDATE_VIEWS		= 0x01,		// update all views
+			UT_RESTORE_VALUE	= 0x02,		// restore pre-edit value
+		};
+		void	UpdateTarget(int nVal, UINT nFlags = UT_UPDATE_VIEWS);
+		DECLARE_MESSAGE_MAP()
+		afx_msg void OnEditChanged(NMHDR* pNMHDR, LRESULT* pResult);
+		afx_msg void OnParentNotify(UINT message, LPARAM lParam);
+	};
+	class CListColumnState {
+	public:
+		CIntArrayEx	m_arrWidth;		// column width array
+		CIntArrayEx	m_arrOrder;		// column order array
+		int		m_nWidthUpdates;	// number of column width updates
+		int		m_nOrderUpdates;	// number of column order updates
+		void	Save();
+		void	Load();
 	};
 
 // Constants
@@ -65,12 +92,16 @@ protected:
 		IDC_TRACK_GRID = 1963,
 	};
 	static const CGridCtrl::COL_INFO	m_arrColInfo[COLUMNS];
+	static const LPCTSTR	m_arrGMDrumName[];
 
 // Member data
 	CTrackGridCtrl	m_grid;		// grid control
 	bool	m_bIsUpdating;		// true while updating
 	int		m_nHdrHeight;		// header height, in logical coords
 	int		m_nItemHeight;		// item height, in logical coords
+	static	CListColumnState	m_gColState;	// global list column state
+	int		m_nColWidthUpdates;	// cache of global column width update count
+	int		m_nColOrderUpdates;	// cache of global column order update count
 
 // Overrides
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
@@ -95,6 +126,10 @@ protected:
 	afx_msg void OnListEndScroll(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnListKeyDown(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg LRESULT OnListScrollKey(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnListHdrEndDrag(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnListHdrEndTrack(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg LRESULT OnListHdrReorder(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnListColHdrReset();
 };
 
 inline CPolymeterDoc* CTrackView::GetDocument() const

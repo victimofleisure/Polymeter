@@ -149,6 +149,32 @@ __forceinline void CArrayEx_Rotate(ARRAY& arr, W64INT iStart, W64INT nElems, W64
 	}
 }
 
+template<class ARRAY, class TYPE>
+__forceinline void CArrayEx_Shift(ARRAY& arr, W64INT iStart, W64INT nElems, W64INT nOffset, TYPE val)
+{
+	ARRAY	arrSrc(arr);
+	W64INT	iEnd = iStart + nElems;
+	if (nOffset < 0) {	// if shifting down
+		W64INT	iSrc = iStart - nOffset;
+		for (W64INT iElem = iStart; iElem < iEnd; iElem++) {
+			if (iSrc < iEnd)
+				arr[iElem] = arr[iSrc];
+			else
+				arr[iElem] = val;
+			iSrc++;
+		}
+	} else {	// shifting up
+		W64INT	iSrc = iEnd - nOffset;
+		for (W64INT iElem = iEnd - 1; iElem >= iStart; iElem--) {
+			iSrc--;
+			if (iSrc >= iStart)
+				arr[iElem] = arr[iSrc];
+			else
+				arr[iElem] = val;
+		}
+	}
+}
+
 template<class TYPE, class ARG_TYPE>
 class CArrayEx : public CArray<TYPE, ARG_TYPE> {
 public:

@@ -11,6 +11,7 @@
 		01		31may14	add OnItemChange
 		02		12may15	remove unused update pos message
 		03		24apr18	standardize names
+		04		04jun18	give popup edit control non-zero ID
 
 		grid control
  
@@ -44,6 +45,9 @@ public:
 	void	CancelEdit();
 
 // Constants
+	enum {
+		IDC_POPUP_EDIT = 1,
+	};
 
 // Overrides
 	// ClassWizard generated virtual function overrides

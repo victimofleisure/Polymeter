@@ -355,28 +355,61 @@ void CSeqTrackArray::ReverseSteps(int iTrack, int iStep, int nSteps)
 	GetAt(iTrack).m_arrStep.Reverse(iStep, nSteps);
 }
 
-void CSeqTrackArray::RotateSteps(int iTrack, int nRotSteps)
+void CSeqTrackArray::ShiftSteps(int iTrack, int nOffset)
 {
-	GetAt(iTrack).m_arrStep.Rotate(nRotSteps);
+	GetAt(iTrack).m_arrStep.Shift(nOffset, 0);
 }
 
-void CSeqTrackArray::RotateSteps(int iTrack, int iStep, int nSteps, int nRotSteps)
+void CSeqTrackArray::ShiftSteps(int iTrack, int iStep, int nSteps, int nOffset)
 {
-	GetAt(iTrack).m_arrStep.Rotate(iStep, nSteps, nRotSteps);
+	GetAt(iTrack).m_arrStep.Shift(iStep, nSteps, nOffset, 0);
 }
 
-void CSeqTrackArray::RemoveAllDubs()
+void CSeqTrackArray::RotateSteps(int iTrack, int nOffset)
+{
+	GetAt(iTrack).m_arrStep.Rotate(nOffset);
+}
+
+void CSeqTrackArray::RotateSteps(int iTrack, int iStep, int nSteps, int nOffset)
+{
+	GetAt(iTrack).m_arrStep.Rotate(iStep, nSteps, nOffset);
+}
+
+void CSeqTrackArray::OnRecordStart()
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	int	nTracks = GetSize();
-	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
-		GetAt(iTrack).m_arrDub.RemoveAll();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		CTrack&	trk = GetAt(iTrack);
+		trk.m_arrDub.RemoveAll();
+		CDub	dub(0, trk.m_bMute);	// add initial mute state
+		trk.m_arrDub.Add(dub);
+	}
+}
+
+void CSeqTrackArray::OnRecordStop(int nEndTime)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	CDub	dub(nEndTime, true);
+	int	nTracks = GetTrackCount();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		CTrack&	trk = GetAt(iTrack);
+		trk.m_arrDub.Add(dub);	// add end of song mute
+		trk.m_arrDub.RemoveDuplicates();	// clean up dub array
+	}
 }
 
 void CSeqTrackArray::AddDub(int iTrack, int nTime)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	CDub	dub(nTime, GetMute(iTrack));
+	GetAt(iTrack).m_arrDub.Add(dub);
+}
+
+void CSeqTrackArray::AddDub(int iTrack, int nTime, bool bMute)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	CDub	dub(nTime, bMute);
 	GetAt(iTrack).m_arrDub.Add(dub);
 }
 
@@ -391,26 +424,13 @@ void CSeqTrackArray::AddDub(const CIntArrayEx& arrSelection, int nTime)
 	}
 }
 
-int CSeqTrackArray::FindDub(int iTrack, int nTime) const
-{
-	const CTrack& trk = GetAt(iTrack);
-	int	nDubs = trk.m_arrDub.GetSize();
-	if (!nDubs)
-		return 0;
-	for (int iDub = 0; iDub < nDubs; iDub++) {	// for each dub
-		if (trk.m_arrDub[iDub].m_nTime > nTime)	// if dub occurs after specified time
-			return iDub - 1;	// return previous dub
-	}
-	return nDubs - 1;	// return last dub
-}
-
 void CSeqTrackArray::ChaseDubs(int nTime, bool bUpdateMutes)
 {
 	int	nTracks = GetSize();
-	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
-		int	iDub = FindDub(iTrack, nTime);
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		CTrack& trk = GetAt(iTrack);
+		int	iDub = trk.m_arrDub.FindDub(nTime);
 		if (iDub >= 0) {	// if dub found
-			CTrack& trk = GetAt(iTrack);
 			trk.m_iDub = iDub;
 			if (bUpdateMutes)
 				trk.m_bMute = trk.m_arrDub[iDub].m_bMute;
@@ -421,9 +441,9 @@ void CSeqTrackArray::ChaseDubs(int nTime, bool bUpdateMutes)
 
 int CSeqTrackArray::GetSongDuration() const
 {
-	int	nTracks = GetSize();
 	int	nDuration = 0;
-	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		const CTrack& trk = GetAt(iTrack);
 		int	nDubs = trk.m_arrDub.GetSize();
 		if (nDubs) {
@@ -435,3 +455,14 @@ int CSeqTrackArray::GetSongDuration() const
 	return nDuration;
 }
 
+void CSeqTrackArray::SetDubs(int iTrack, int nStartTime, int nEndTime, bool bMute)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	GetAt(iTrack).m_arrDub.SetDubs(nStartTime, nEndTime, bMute);
+}
+
+void CSeqTrackArray::SetDubs(int iTrack, const CDubArray& arrDub)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	GetAt(iTrack).m_arrDub = arrDub;
+}

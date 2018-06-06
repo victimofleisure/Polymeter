@@ -59,11 +59,13 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_PASTE_STEPS,			2},
 	{UCODE_INSERT_STEPS,		1},
 	{UCODE_DELETE_STEPS,		1},
-	{UCODE_VELOCITY,			0.15f},
+	{UCODE_VELOCITY,			0.1f},
 	{UCODE_REVERSE,				0.1f},
 	{UCODE_REVERSE_RECT,		0.1f},
 	{UCODE_ROTATE,				0.1f},
 	{UCODE_ROTATE_RECT,			0.1f},
+	{UCODE_SHIFT,				0.1f},
+	{UCODE_SHIFT_RECT,			0.1f},
 };
 
 CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
@@ -174,6 +176,12 @@ void CTrackUndoTest::MakeRandomMasterProperty(int iProp, CComVariant& var)
 		{
 			int	nKeySig = Random(NOTES);
 			var = nKeySig;
+		}
+		break;
+	case CMasterProps::PROP_nSongLength:
+		{
+			int	nSongLength = Random(1000) + 1;
+			var = nSongLength;
 		}
 		break;
 	default:
@@ -522,9 +530,9 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
 				return(DISABLED);
 			m_pDoc->m_arrTrackSel = arrSelection;
-			int	nRotSteps = Random(MAX_ROTATION_STEPS * 2) - MAX_ROTATION_STEPS;
-			m_pDoc->RotateSteps(nRotSteps);
-			PRINTF(_T("%s %d\n"), sUndoTitle, nRotSteps);
+			int	nOffset = Random(MAX_ROTATION_STEPS * 2) - MAX_ROTATION_STEPS;
+			m_pDoc->RotateSteps(nOffset);
+			PRINTF(_T("%s %d\n"), sUndoTitle, nOffset);
 		}
 		break;
 	case UCODE_ROTATE_RECT:
@@ -532,8 +540,29 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			CRect	rSelection;
 			if (!MakeRandomStepSelection(rSelection))
 				return(DISABLED);
-			int	nRotSteps = Random(MAX_ROTATION_STEPS * 2) - MAX_ROTATION_STEPS;
-			m_pDoc->RotateSteps(rSelection, nRotSteps);
+			int	nOffset = Random(MAX_ROTATION_STEPS * 2) - MAX_ROTATION_STEPS;
+			m_pDoc->RotateSteps(rSelection, nOffset);
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(rSelection));
+		}
+		break;
+	case UCODE_SHIFT:
+		{
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
+				return(DISABLED);
+			m_pDoc->m_arrTrackSel = arrSelection;
+			int	nOffset = Random(1) ? 1 : -1;
+			m_pDoc->ShiftSteps(nOffset);
+			PRINTF(_T("%s %d\n"), sUndoTitle, nOffset);
+		}
+		break;
+	case UCODE_SHIFT_RECT:
+		{
+			CRect	rSelection;
+			if (!MakeRandomStepSelection(rSelection))
+				return(DISABLED);
+			int	nOffset = Random(1) ? 1 : -1;
+			m_pDoc->ShiftSteps(rSelection, nOffset);
 			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(rSelection));
 		}
 		break;
@@ -560,7 +589,7 @@ bool CTrackUndoTest::Create()
 	}
 	m_pDoc->UpdateAllViews(NULL);
 	if (TEST_PLAYING)	// if playback during test
-		theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_VIEW_PLAY);
+		theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_TRANSPORT_PLAY);
 	if (!CUndoTest::Create())
 		return(FALSE);
 	return(TRUE);

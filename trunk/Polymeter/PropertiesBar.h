@@ -50,6 +50,11 @@ public:
 	virtual ~CPropertiesBar();
 
 protected:
+// Constants
+	enum {
+		IDC_PROPERTIES_GRID = 1976,
+	};
+
 // Helpers
 	void	InitPropList(const CProperties& Props);
 	void	AdjustLayout();

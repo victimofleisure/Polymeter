@@ -7,11 +7,11 @@
  
 		revision history:
 		rev		date	comments
-        00      09may18	initial version
+        00      30may18	initial version
 
 */
 
-// StepParent.h : interface of the CStepParent class
+// SongParent.h : interface of the CSongParent class
 //
 
 #pragma once
@@ -19,37 +19,30 @@
 #include "SplitView.h"
 #include "RulerCtrl.h"
 
-class CTrackView;
-class CMuteView;
-class CStepView;
-class CVelocityView;
+class CSongView;
+class CSongTrackView;
 
-class CStepParent : public CSplitView
+class CSongParent : public CSplitView
 {
 protected: // create from serialization only
-	CStepParent();
-	DECLARE_DYNCREATE(CStepParent)
+	CSongParent();
+	DECLARE_DYNCREATE(CSongParent)
 
 // Constants
 	enum {	// panes
 		PANE_RULER,
-		PANE_MUTE,
-		PANE_STEP,
-		PANE_VELOCITY,
+		PANE_SONG,
+		PANE_TRACK,
 		PANES
 	};
 
 // Attributes
 public:
 	void	SetRulerHeight(int nHeight);
-	int		GetTrackHeight() const;
-	void	SetTrackHeight(int nHeight);
 
 // Public data
-	CTrackView*	m_pTrackView;		// pointer to track view
-	CStepView*	m_pStepView;		// pointer to step view
-	CMuteView*	m_pMuteView;		// pointer to mute view
-	CVelocityView*	m_pVeloView;	// pointer to velocity view
+	CSongView*	m_pSongView;		// pointer to song view
+	CSongTrackView	*m_pSongTrackView;	// pointer to song track view
 
 // Operations
 public:
@@ -62,15 +55,16 @@ protected:
 
 // Implementation
 public:
-	virtual ~CStepParent();
+	virtual ~CSongParent();
+	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
 
 // Attributes
 
 // Operations
 	void	ShowVelocityView(bool bShow);
-	void	OnStepScroll(CSize szScroll);
-	void	OnStepZoom();
+	void	OnSongScroll(CSize szScroll);
+	void	OnSongZoom();
 	void	UpdatePersistentState();
 	static	void	LoadPersistentState();
 	static	void	SavePersistentState();
@@ -78,17 +72,16 @@ public:
 protected:
 // Constants
 	enum {
-		PANE_ID_FIRST = 2000,
-		INIT_VELO_HEIGHT = 100,
+		PANE_ID_FIRST = 3000,
+		INIT_NAME_WIDTH = 100,
 	};
 
 // Member data
 	CRulerCtrl	m_wndRuler;		// ruler control
 	int		m_nRulerHeight;		// ruler height
+	int		m_nNameWidth;		// width of track names
 	bool	m_bIsScrolling;		// true while handling scroll message; prevents reentrance
-	int		m_nVeloHeight;		// height of velocity view
-	int		m_nMuteWidth;		// width of mute view
-	static	int		m_nGlobVeloHeight;	// global velocity pane height for all documents
+	static	int		m_nGlobNameWidth;	// global track name width for all documents
 
 // Helpers
 	void	RecalcLayout(int cx, int cy);
@@ -96,7 +89,6 @@ protected:
 
 // Overrides
 	virtual	void GetSplitRect(CRect& rSplit) const;
-	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 
 // Generated message map functionsq
 protected:
@@ -104,14 +96,11 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnParentNotify(UINT message, LPARAM lParam);
-	afx_msg LRESULT OnTrackScroll(WPARAM wParam, LPARAM lParam);
-	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
-	afx_msg void OnViewVelocities();
-	afx_msg void OnUpdateViewVelocities(CCmdUI *pCmdUI);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 };
 
-inline void CStepParent::SetRulerHeight(int nHeight)
+inline void CSongParent::SetRulerHeight(int nHeight)
 {
 	m_nRulerHeight = nHeight;
 }

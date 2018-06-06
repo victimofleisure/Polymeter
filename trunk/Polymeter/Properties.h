@@ -13,6 +13,7 @@
 		03		27mar18	make GetOptionCount virtual
 		04		16apr18	add get/set property
 		05		17may18	make get/set property mandatory
+		06		04jun18	add time property type
 		
 */
 
@@ -56,6 +57,7 @@ public:
 		PT_ENUM,		// drop list of enumerated options; value is integer selection index
 		PT_COLOR,		// color picker; value is COLORREF
 		PT_FILE,		// file picker; value is CString
+		PT_TIME,		// time in hh:mm:ss format; value is int
 		PROP_TYPES
 	};
 

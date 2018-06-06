@@ -20,6 +20,7 @@
 #include "stdafx.h"
 #include "Resource.h"
 #include "PopupNumEdit.h"
+#include "PopupEdit.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -63,7 +64,7 @@ void CPopupNumEdit::EndEdit()
 			m_fVal = CLAMP(m_fVal, m_fMinVal, m_fMaxVal);
 			SetText();
 		}
-		GetParent()->SendMessage(UWM_TEXT_CHANGE, NULL);
+		GetParent()->SendMessage(CPopupEdit::UWM_TEXT_CHANGE, NULL);
 	}
 	delete this;
 }
@@ -84,7 +85,7 @@ BEGIN_MESSAGE_MAP(CPopupNumEdit, CNoteEdit)
 	//{{AFX_MSG_MAP(CPopupNumEdit)
 	ON_WM_KILLFOCUS()
 	//}}AFX_MSG_MAP
-	ON_MESSAGE(UWM_END_EDIT, OnEndEdit)
+	ON_MESSAGE(CPopupEdit::UWM_END_EDIT, OnEndEdit)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -96,7 +97,7 @@ void CPopupNumEdit::OnKillFocus(CWnd* pNewWnd)
 	CNoteEdit::OnKillFocus(pNewWnd);	// base class may reset modified flag
 	SetModify(bModified);	// restore modified flag
 	if (!m_bEndingEdit)	// if not ending edit already
-		SendMessage(UWM_END_EDIT);
+		SendMessage(CPopupEdit::UWM_END_EDIT);
 }
 
 BOOL CPopupNumEdit::PreTranslateMessage(MSG* pMsg) 
@@ -105,7 +106,7 @@ BOOL CPopupNumEdit::PreTranslateMessage(MSG* pMsg)
 		switch (pMsg->wParam) {
 		case VK_RETURN:
 		case VK_ESCAPE:
-			SendMessage(UWM_END_EDIT, pMsg->wParam == VK_ESCAPE);	// cancel if escape
+			SendMessage(CPopupEdit::UWM_END_EDIT, pMsg->wParam == VK_ESCAPE);	// cancel if escape
 			return TRUE;	// no further processing; our instance is deleted
 		}
 	}

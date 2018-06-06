@@ -116,7 +116,7 @@ int CPropertiesBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CDockablePane::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
-	if (!m_Grid.Create(WS_VISIBLE | WS_CHILD, CRect(0, 0, 0, 0), this, 0))
+	if (!m_Grid.Create(WS_VISIBLE | WS_CHILD, CRect(0, 0, 0, 0), this, IDC_PROPERTIES_GRID))
 	{
 		TRACE0("Failed to create Properties Grid \n");
 		return -1;      // fail to create

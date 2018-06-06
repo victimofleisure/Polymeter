@@ -18,7 +18,7 @@
 TRACKDEF(	VAR,		CString,	s,		Name,		_T(""),		NULL,			0			)	// track name
 TRACKDEF(	ENUM,		int,		i,		Type,		0,			m_oiTrackType,	TRACK_TYPES	)	// track type
 #endif
-TRACKDEF(	VAR,		int,		n,		Channel,	9,			NULL,			0			)	// channel number
+TRACKDEF(	VAR,		int,		n,		Channel,	9,			NULL,			0			)	// channel index
 #ifndef TRACKDEF_EXCLUDE_NOTE
 TRACKDEF(	VAR,		int,		n,		Note,		64,			NULL,			0			)	// note number
 #endif

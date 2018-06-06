@@ -18,6 +18,7 @@
 
 class CTrackView;
 class CStepParent;
+class CSongParent;
 
 class CChildFrame : public CMDIChildWndEx
 {
@@ -25,11 +26,25 @@ class CChildFrame : public CMDIChildWndEx
 public:
 	CChildFrame();
 
+// Constants
+	enum {	// splitter panes (in track view)
+		PANE_TRACK,
+		PANE_STEP,
+		PANES
+	};
+	enum {
+		INIT_SPLIT_POS = 700,
+	};
+
 // Attributes
 public:
+	void	SetViewType(int nViewType);
 
 // Operations
 public:
+	void	OnSplitterChange(int nSplitPos);
+	static	void	LoadPersistentState();
+	static	void	SavePersistentState();
 
 // Overrides
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
@@ -44,22 +59,32 @@ public:
 #endif
 	virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
 
-	CSplitterWndEx	m_wndSplitter;
+// Public data
 	CTrackView		*m_pTrackView;
 	CStepParent		*m_pStepParent;
-	int		m_nViewMode;
+	CSongParent		*m_pSongParent;
 
-	enum {	// panes
-		PANE_TRACK,
-		PANE_STEP,
-		PANES
+protected:
+// Types
+	class CMySplitterWnd : public CSplitterWndEx {
+	public:
+		virtual void StopTracking(BOOL bAccept);
 	};
 
+// Member data
+	CMySplitterWnd	m_wndSplitter;
+	int		m_nViewType;			// view type; see enum in CPolymeterDoc
+	int		m_nSplitPos;			// cached split position for this instance
+	static	int		m_nGlobSplitPos;	// global split position for all documents
+
+// Helpers
+	void	UpdatePersistentState();
+
 // Generated message map functions
-protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeactivateWnd);
 	afx_msg LRESULT OnTrackScroll(WPARAM wParam, LPARAM lParam);
-	afx_msg void OnEditLength();
-	afx_msg void OnUpdateEditLength(CCmdUI *pCmdUI);
+	afx_msg void OnTrackLength();
+	afx_msg void OnUpdateTrackLength(CCmdUI *pCmdUI);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 };

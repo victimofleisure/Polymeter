@@ -52,12 +52,14 @@ public:
 		HINT_STEPS_ARRAY,		// inserting or deleting steps; pHint is CRectSelPropHint
 		HINT_VELOCITY,			// multi-track velocity edit; pHint is CMultiItemPropHint
 		HINT_OPTIONS,			// options change; pHint is COptionsPropHint
+		HINT_VIEW_TYPE,			// view type change
+		HINT_SONG_DUB,			// song dub edit
 		HINTS
 	};
-	enum {	// view modes
+	enum {	// view types
 		VIEW_TRACK,
 		VIEW_SONG,
-		VIEW_MODES
+		VIEW_TYPES
 	};
 
 // Types
@@ -78,16 +80,21 @@ public:
 		const CIntArrayEx&	m_arrSelection;	// indices of selected items
 		int		m_iProp;	// property index
 	};
-	class CRectSelPropHint :  public CObject {
+	class CRectSelPropHint : public CObject {
 	public:
 		CRectSelPropHint(const CRect& rSelection, bool bSelect = false) 
 			: m_rSelection(rSelection), m_bSelect(bSelect) {}
 		CRect	m_rSelection;	// rectangular step selection; x is step index, y is track index
 		bool	m_bSelect;		// if true, select steps in rectangle
 	};
-	class COptionsPropHint :  public CObject {
+	class COptionsPropHint : public CObject {
 	public:
 		const COptions	*m_pPrevOptions;	// previous options
+	};
+	class CSongPosHint : public CObject {
+	public:
+		CSongPosHint(LONGLONG nSongPos) : m_nSongPos(nSongPos) {}
+		LONGLONG	m_nSongPos;		// song position in ticks
 	};
 
 // Public data
@@ -99,7 +106,8 @@ public:
 	CIntArrayEx	m_arrTrackSel;	// array of indices of selected tracks
 	int		m_iTrackSelMark;	// track selection mark
 	double	m_fStepZoom;		// step view zoom
-	int		m_nViewMode;		// see view mode enum
+	double	m_fSongZoom;		// song view zoom
+	int		m_nViewType;		// see view type enum
 
 // Attributes
 	int		GetTrackCount() const;
@@ -110,6 +118,10 @@ public:
 	void	SetTrackSteps(const CRect& rSelection, STEP nStep);
 	bool	GetTrackSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const;
 	bool	IsRectStepSelection(const CRect& rSelection, bool bIsDeleting = false) const;
+	void	SetPosition(int nPos);
+	bool	IsTrackView() const;
+	bool	IsSongView() const;
+	bool	ShowGMDrums(int iTrack) const;
 
 // Operations
 public:
@@ -140,14 +152,18 @@ public:
 	void	SetTrackLength(const CRect& rSelection, int nLength);
 	bool	ReverseSteps();
 	void	ReverseSteps(const CRect& rSelection);
-	bool	RotateSteps(int nRotSteps);
-	void	RotateSteps(const CRect& rSelection, int nRotSteps);
+	bool	ShiftSteps(int nOffset);
+	void	ShiftSteps(const CRect& rSelection, int nOffset);
+	bool	RotateSteps(int nOffset);
+	void	RotateSteps(const CRect& rSelection, int nOffset);
 	bool	Transpose(int nNoteDelta);
 	bool	ValidateTrackLength(int nLength, int nQuant) const;
 	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
 	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
 	bool	Play(bool bPlay, bool bRecord = false);
-	void	DumpDubs();
+	void	SetDubs(const CRect& rSelection, double fTicksPerCell);
+	void	OnPlay(bool bPlay, bool bRecord);
+	void	UpdateSongLength();
 
 // Overrides
 public:
@@ -211,6 +227,11 @@ protected:
 		CRect	m_rSelection;	// rectangular step selection
 		CStepArrayArray	m_arrStepArray;		// array of step arrays for each track
 	};
+	class CUndoDub : public CRefObj {
+	public:
+		int		m_iTrack;	// first track of selection
+		CDubArrayArray	m_arrDub;	// array of dub arrays, one for each selected track
+	};
 
 // Constants
 	static const int	m_nUndoTitleId[];	// array of string resource IDs for undo titles
@@ -235,6 +256,7 @@ protected:
 	void	GetSelectAll(CIntArrayEx& arrSelection) const;
 	void	ApplyStepsArrayEdit(bool bSelect);
 	bool	MakePasteSelection(CSize szData, CRect& rSelection) const;
+	void	SetViewType(int nViewType);
 	void	SaveTrackProperty(CUndoState& State) const;
 	void	RestoreTrackProperty(const CUndoState& State);
 	void	SaveMultiTrackProperty(CUndoState& State) const;
@@ -263,6 +285,8 @@ protected:
 	void	RestoreReverse(const CUndoState& State);
 	void	SaveReverseRect(CUndoState& State) const;
 	void	RestoreReverseRect(const CUndoState& State);
+	void	SaveDubs(CUndoState& State) const;
+	void	RestoreDubs(const CUndoState& State);
 
 // Generated message map functions
 protected:
@@ -273,17 +297,18 @@ protected:
 	afx_msg void OnUpdateEditRedo(CCmdUI *pCmdUI);
 	afx_msg void OnToolsStatistics();
 	afx_msg void OnFileExport();
-	afx_msg void OnViewPlay();
-	afx_msg void OnUpdateViewPlay(CCmdUI *pCmdUI);
-	afx_msg void OnViewPause();
-	afx_msg void OnUpdateViewPause(CCmdUI *pCmdUI);
-	afx_msg void OnViewRecord();
-	afx_msg void OnUpdateViewRecord(CCmdUI *pCmdUI);
-	afx_msg void OnViewGoToPosition();
-	afx_msg void OnViewModeSong();
-	afx_msg void OnViewModeTrack();
-	afx_msg void OnUpdateViewModeSong(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateViewModeTrack(CCmdUI *pCmdUI);
+	afx_msg void OnTransportPlay();
+	afx_msg void OnUpdateTransportPlay(CCmdUI *pCmdUI);
+	afx_msg void OnTransportPause();
+	afx_msg void OnUpdateTransportPause(CCmdUI *pCmdUI);
+	afx_msg void OnTransportRecord();
+	afx_msg void OnUpdateTransportRecord(CCmdUI *pCmdUI);
+	afx_msg void OnTransportRewind();
+	afx_msg void OnTransportGoToPosition();
+	afx_msg void OnViewTypeSong();
+	afx_msg void OnViewTypeTrack();
+	afx_msg void OnUpdateViewTypeSong(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateViewTypeTrack(CCmdUI *pCmdUI);
 	afx_msg void OnEditCopy();
 	afx_msg void OnEditCut();
 	afx_msg void OnEditDelete();
@@ -296,16 +321,17 @@ protected:
 	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateEditSelectAll(CCmdUI *pCmdUI);
-	afx_msg void OnEditReverse();
-	afx_msg void OnUpdateEditReverse(CCmdUI *pCmdUI);
+	afx_msg void OnTrackReverse();
+	afx_msg void OnUpdateTrackReverse(CCmdUI *pCmdUI);
 	afx_msg void OnEditTranspose();
 	afx_msg void OnUpdateEditTranspose(CCmdUI *pCmdUI);
 	afx_msg void OnEditTrackSort();
 	afx_msg void OnToolsTimeToRepeat();
 	afx_msg void OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI);
-	afx_msg void OnEditRotateLeft();
-	afx_msg void OnEditRotateRight();
-	afx_msg void OnUpdateEditRotate(CCmdUI *pCmdUI);
+	afx_msg void OnTrackShiftLeft();
+	afx_msg void OnTrackShiftRight();
+	afx_msg void OnTrackRotateLeft();
+	afx_msg void OnTrackRotateRight();
 };
 
 inline int CPolymeterDoc::GetTrackCount() const
@@ -327,4 +353,14 @@ inline int CPolymeterDoc::GetTrackPropertyNameID(int iProp)
 {
 	ASSERT(iProp >= 0 && iProp < CTrackBase::PROPERTIES);
 	return m_nTrackPropNameId[iProp];
+}
+
+inline bool CPolymeterDoc::IsTrackView() const
+{
+	return m_nViewType == VIEW_TRACK;
+}
+
+inline bool CPolymeterDoc::IsSongView() const
+{
+	return m_nViewType == VIEW_SONG;
 }

@@ -16,6 +16,7 @@
 		06		04apr15	add GetInsertPos
 		07		24apr18	standardize names
 		08		25apr18	add GetSelected
+		09		05jun18	make LoadArray public
 
 		extended selection list control
  
@@ -77,6 +78,7 @@ public:
 	void	FixContextMenuPoint(CPoint& point);
 	void	EnableToolTips(BOOL bEnable = TRUE);
 	void	RedrawSubItem(int iItem, int iSubItem);
+	static	bool	LoadArray(LPCTSTR pszSection, LPCTSTR pszKey, CIntArrayEx& arr, int nElems);
 
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -94,9 +96,6 @@ protected:
 
 // Overrideables
 	virtual	int		GetToolTipText(const LVHITTESTINFO* pHTI, CString& sText);
-
-// Helpers
-	bool	LoadArray(LPCTSTR pszSection, LPCTSTR pszKey, CIntArrayEx& arr, int nElems);
 };
 
 inline int CListCtrlExSel::GetColumnCount() const

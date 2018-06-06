@@ -24,6 +24,7 @@
 #include "UndoCodes.h"
 #include "SaveObj.h"
 #include "Note.h"
+#include "Persist.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -32,6 +33,12 @@
 // CTrackView
 
 IMPLEMENT_DYNCREATE(CTrackView, CView)
+
+CTrackView::CListColumnState CTrackView::m_gColState;
+
+#define RK_TRACK_VIEW _T("TrackView")
+#define RK_COL_WIDTH _T("ColWidth")
+#define RK_COL_ORDER _T("ColOrder")
 
 // CTrackView construction/destruction
 
@@ -44,6 +51,11 @@ const CGridCtrl::COL_INFO CTrackView::m_arrColInfo[COLUMNS] = {
 	#include "TrackDef.h"	// generate column definitions
 };
 
+const LPCTSTR CTrackView::m_arrGMDrumName[] = {
+	#define MIDI_GM_DRUM_DEF(name) _T(name),
+	#include "MidiCtrlrDef.h"	// generate array of General MIDI drum names
+};
+
 CTrackView::CTrackView()
 {
 	m_grid.TrackDropPos(true);
@@ -54,6 +66,13 @@ CTrackView::CTrackView()
 
 CTrackView::~CTrackView()
 {
+}
+
+const LPCTSTR CTrackView::GetGMDrumName(int iNote)
+{
+	if (iNote >= MIDI_GM_DRUM_FIRST && iNote <= MIDI_GM_DRUM_LAST)
+		return m_arrGMDrumName[iNote - MIDI_GM_DRUM_FIRST];
+	return NULL;	// undefined
 }
 
 void CTrackView::OnDraw(CDC *pDC)
@@ -137,7 +156,8 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_OPTIONS:
 		{
 			const CPolymeterDoc::COptionsPropHint *pPropHint = static_cast<CPolymeterDoc::COptionsPropHint *>(pHint);
-			if (theApp.m_Options.m_View_bShowNoteNames != pPropHint->m_pPrevOptions->m_View_bShowNoteNames)
+			if (theApp.m_Options.m_View_bShowNoteNames != pPropHint->m_pPrevOptions->m_View_bShowNoteNames
+			|| theApp.m_Options.m_View_bShowGMNames != pPropHint->m_pPrevOptions->m_View_bShowGMNames)
 				UpdateNotes();
 		}
 		break;
@@ -203,6 +223,7 @@ CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle,
 	CTrackView	*pView = STATIC_DOWNCAST(CTrackView, GetParent());
 	CPolymeterDoc	*pDoc = pView->GetDocument();
 	UNREFERENCED_PARAMETER(pParentWnd);
+	m_nPreEditVal = INT_MIN;
 	switch (m_iEditCol) {
 	case COL_Name:
 		break;
@@ -222,9 +243,32 @@ CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle,
 			return pCombo;
 		}
 		break;
+	case COL_Note:
+		if (pDoc->ShowGMDrums(m_iEditRow)) {	// if showing General MIDI drums for this track
+			CPopupCombo	*pCombo = CPopupCombo::Factory(0, rect, this, 0, 100);
+			if (pCombo == NULL)
+				return(NULL);
+			CString	sDrumName;
+			for (int iNote = 0; iNote < MIDI_NOTES; iNote++) {
+				LPCTSTR	pszDrumName = GetGMDrumName(iNote);
+				if (pszDrumName == NULL) {
+					sDrumName.Format(_T("%d"), iNote);
+					pszDrumName = sDrumName;
+				}
+				pCombo->AddString(pszDrumName);
+			}
+			int	iSelPatch = pDoc->m_Seq.GetNote(m_iEditRow);
+			pCombo->SetCurSel(iSelPatch);
+			pCombo->ShowDropDown();
+			return pCombo;
+		} else	// default note handling
+			goto DefaultCreateEditCtrl;	// don't rely on falling through
+		break;
 	default:
+DefaultCreateEditCtrl:
 		CPopupNumEdit	*pEdit = new CPopupNumEdit;
 		pEdit->SetFormat(CNumEdit::DF_INT | CNumEdit::DF_SPIN);
+		bool	bIsCustomType = false;
 		switch (m_iEditCol) {
 		case COL_Channel:
 			pEdit->SetRange(1, 16);
@@ -232,19 +276,30 @@ CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle,
 		case COL_Note:
 			pEdit->SetRange(0, MIDI_NOTE_MAX);
 			pEdit->SetKeySignature(static_cast<BYTE>(pDoc->m_nKeySig));
-			pEdit->SetNoteEntry(true);
+			pEdit->SetNoteEntry(theApp.m_Options.m_View_bShowNoteNames);
+			if (pEdit->IsNoteEntry()) {	// if showing note names
+				CNote	note;
+				if (note.ParseMidi(pszText)) {	// convert note name to integer
+					m_nPreEditVal = note;	// set pre-edit value
+					bIsCustomType = true;	// prevent default integer conversion
+				}
+			}
 			break;
 		case COL_Quant:
 			pEdit->SetRange(1, SHRT_MAX);
 			break;
 		case COL_Length:
 			pEdit->SetRange(1, INT_MAX);
+			m_pStepArray.CreateObj();	// allocate step array
+			pDoc->m_Seq.GetSteps(m_iEditRow, m_pStepArray);	// save track's step array
 			break;
 		case COL_Velocity:
 			pEdit->SetRange(-MIDI_NOTE_MAX, MIDI_NOTE_MAX);
 			break;
 		}
-		if (!pEdit->Create(dwStyle, rect, this, nID)) {
+		if (!bIsCustomType)	// if ordinary integer
+			m_nPreEditVal = _ttoi(pszText);	// convert item text to integer and set pre-edit value
+		if (!pEdit->Create(dwStyle, rect, this, nID)) {	// create edit control
 			delete pEdit;
 			return(NULL);
 		}
@@ -272,11 +327,27 @@ void CTrackView::CTrackGridCtrl::OnItemChange(LPCTSTR pszText)
 			valNew = pCombo->GetCurSel();
 		}
 		break;
+	case COL_Note:
+		if (pDoc->ShowGMDrums(m_iEditRow)) {	// if showing General MIDI drums for this track
+			CPopupCombo	*pCombo = STATIC_DOWNCAST(CPopupCombo, m_pEditCtrl);
+			valNew = pCombo->GetCurSel();	// get current value
+		} else	// default note handling
+			goto DefaultOnItemChanged;	// don't rely on falling through
+		break;
 	default:
+DefaultOnItemChanged:
 		CPopupNumEdit	*pNumEdit = STATIC_DOWNCAST(CPopupNumEdit, m_pEditCtrl);
-		int	nVal = pNumEdit->GetIntVal();
+		int	nVal = pNumEdit->GetIntVal();	// get current value
+		if (m_nPreEditVal != INT_MIN) {	// if pre-edit value is valid
+			if (nVal != m_nPreEditVal) {	// if current value differs from pre-edit value
+				// restore pre-edit value for undo notification save, but don't update views;
+				// glitch could occur if callback preempts while value is reverted (unlikely)
+				UpdateTarget(m_nPreEditVal, UT_RESTORE_VALUE);
+			}
+			m_nPreEditVal = INT_MIN;	// mark change saved
+		}
 		if (iCol == COL_Channel)	// if channel column
-			nVal--;	// convert from one-origin display format
+			nVal--;	// convert one-origin channel number to zero-origin channel index
 		valNew = nVal;
 	}
 	int	iTrack = m_iEditRow;
@@ -321,6 +392,128 @@ void CTrackView::CTrackGridCtrl::OnItemChange(LPCTSTR pszText)
 	}
 }
 
+BEGIN_MESSAGE_MAP(CTrackView::CTrackGridCtrl, CGridCtrl)
+	ON_NOTIFY(NEN_CHANGED, IDC_POPUP_EDIT, OnEditChanged)
+	ON_WM_PARENTNOTIFY()
+END_MESSAGE_MAP()
+
+void CTrackView::CTrackGridCtrl::UpdateTarget(int nVal, UINT nFlags)
+{
+	CTrackView	*pView = STATIC_DOWNCAST(CTrackView, GetParent());
+	CPolymeterDoc	*pDoc = pView->GetDocument();
+	int	iTrack = m_iEditRow;
+	int	iProp = m_iEditCol - 1;	// skip number column
+	switch (m_iEditCol) {
+	case COL_Channel:
+		nVal--;	// convert one-origin channel number to zero-origin channel index
+		break;
+	case COL_Length:
+		if (nFlags & UT_RESTORE_VALUE)
+			pDoc->m_Seq.SetSteps(iTrack, m_pStepArray);	// restore track's steps
+		break;
+	}
+	pDoc->m_Seq.SetTrackProperty(iTrack, iProp, nVal);	// set property
+	if (nFlags & UT_UPDATE_VIEWS) {
+		CPolymeterDoc::CPropHint	hint(iTrack, iProp);
+		pDoc->UpdateAllViews(pView, CPolymeterDoc::HINT_TRACK_PROP, &hint);
+	}
+}
+
+void CTrackView::CTrackGridCtrl::OnEditChanged(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	UNREFERENCED_PARAMETER(pNMHDR);
+	UNREFERENCED_PARAMETER(pResult);
+	CPopupNumEdit	*pNumEdit = STATIC_DOWNCAST(CPopupNumEdit, m_pEditCtrl);
+	UpdateTarget(pNumEdit->GetIntVal());
+}
+
+void CTrackView::CTrackGridCtrl::OnParentNotify(UINT message, LPARAM lParam) 
+{
+	if (IsEditing()) {
+		switch (LOWORD(message)) {	// high word may contain child window ID
+		case WM_DESTROY:
+			if (m_nPreEditVal != INT_MIN) {	// if change wasn't saved
+				// edit canceled; restore pre-edit value and update views
+				UpdateTarget(m_nPreEditVal, UT_RESTORE_VALUE | UT_UPDATE_VIEWS);
+			}
+			m_pStepArray.SetEmpty();
+			break;
+		}
+	}
+	CGridCtrl::OnParentNotify(message, lParam);
+}
+
+void CTrackView::SetColumnOrder(const CIntArrayEx& arrOrder)
+{
+	m_grid.SetRedraw(false);	// disable redraw; greatly reduces flicker
+	m_grid.SetColumnOrder(arrOrder);
+	m_grid.SetRedraw();	// reenable redraw
+	m_grid.Invalidate();
+}
+
+void CTrackView::SetColumnWidths(const CIntArrayEx& arrWidth)
+{
+	m_grid.SetRedraw(false);	// disable redraw; greatly reduces flicker
+	m_grid.SetColumnWidths(arrWidth);
+	m_grid.SetRedraw();	// reenable redraw
+	m_grid.Invalidate();
+}
+
+void CTrackView::LoadPersistentState()
+{
+	m_gColState.Load();
+}
+
+void CTrackView::SavePersistentState()
+{
+	m_gColState.Save();
+}
+
+void CTrackView::UpdatePersistentState(bool bNoRedraw)
+{
+	enum {	// dirty flags
+		DF_COL_WIDTH = 0x01,
+		DF_COL_ORDER = 0x02,
+	};
+	UINT	nDirty = 0;
+	if (m_nColWidthUpdates != m_gColState.m_nWidthUpdates) {	// if column widths changed
+		m_nColWidthUpdates = m_gColState.m_nWidthUpdates;	// update our cached state
+		nDirty |= DF_COL_WIDTH;	// set dirty bit
+	}
+	if (m_nColOrderUpdates != m_gColState.m_nOrderUpdates) {	// if column order changed
+		m_nColOrderUpdates = m_gColState.m_nOrderUpdates;	// update our cached state
+		nDirty |= DF_COL_ORDER;	// set dirty bit
+	}
+	if (nDirty) {	// if anything changed
+		if (!bNoRedraw)	// if redrawing control
+			m_grid.SetRedraw(false);	// temporarily disable drawing to reduce flicker
+		if (nDirty & DF_COL_WIDTH)	// if column widths changed
+			m_grid.SetColumnWidths(m_gColState.m_arrWidth);	// update our column widths
+		if (nDirty & DF_COL_ORDER)	// if column order changed
+			m_grid.SetColumnOrder(m_gColState.m_arrOrder);	// update our column order
+		if (!bNoRedraw) {	// if redrawing control
+			m_grid.SetRedraw();	// reenable drawing
+			m_grid.Invalidate();	// queue repaint
+		}
+	}
+}
+
+void CTrackView::CListColumnState::Save()
+{
+	DWORD	nSize = m_arrWidth.GetSize() * sizeof(int);
+	CPersist::WriteBinary(RK_TRACK_VIEW, RK_COL_WIDTH, m_arrWidth.GetData(), nSize);
+	nSize = m_arrOrder.GetSize() * sizeof(int);
+	CPersist::WriteBinary(RK_TRACK_VIEW, RK_COL_ORDER, m_arrOrder.GetData(), nSize);
+}
+
+void CTrackView::CListColumnState::Load()
+{
+	if (CListCtrlExSel::LoadArray(RK_TRACK_VIEW, RK_COL_WIDTH, m_arrWidth, COLUMNS))	// if column widths loaded
+		m_nWidthUpdates++;	// increment update count
+	if (CListCtrlExSel::LoadArray(RK_TRACK_VIEW, RK_COL_ORDER, m_arrOrder, COLUMNS))	// if column order loaded
+		m_nOrderUpdates++;	// increment update count
+}
+
 // CTrackView message map
 
 BEGIN_MESSAGE_MAP(CTrackView, CView)
@@ -334,6 +527,12 @@ BEGIN_MESSAGE_MAP(CTrackView, CView)
 	ON_NOTIFY(LVN_ENDSCROLL, IDC_TRACK_GRID, OnListEndScroll)
 	ON_NOTIFY(LVN_KEYDOWN, IDC_TRACK_GRID, OnListKeyDown)
 	ON_MESSAGE(UWM_LIST_SCROLL_KEY, OnListScrollKey)
+	ON_WM_CONTEXTMENU()
+	ON_COMMAND(ID_LIST_COL_HDR_RESET, OnListColHdrReset)
+	ON_NOTIFY(HDN_ENDDRAG, 0, OnListHdrEndDrag)
+	ON_NOTIFY(HDN_ENDTRACK, 0, OnListHdrEndTrack)
+	ON_NOTIFY(HDN_DIVIDERDBLCLICK, 0, OnListHdrEndTrack)
+	ON_MESSAGE(UWM_LIST_HDR_REORDER, OnListHdrReorder)
 END_MESSAGE_MAP()
 
 // CTrackView message handlers
@@ -342,7 +541,7 @@ int CTrackView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CView::OnCreate(lpCreateStruct) == -1)
 		return -1;
-	DWORD	dwStyle = WS_CHILD | WS_VISIBLE 
+	DWORD	dwStyle = WS_CHILD | WS_VISIBLE
 		| LVS_REPORT | LVS_OWNERDATA | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER;
 	CRect	rGrid(CPoint(lpCreateStruct->x, lpCreateStruct->y),
 		CSize(lpCreateStruct->cx, lpCreateStruct->cy));
@@ -352,6 +551,7 @@ int CTrackView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_grid.SetExtendedStyle(dwListExStyle);
 	m_grid.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
 	m_grid.CreateColumns(m_arrColInfo, COLUMNS);
+	UpdatePersistentState(true);	// no redraw
 	m_nHdrHeight = CalcHeaderHeight();
 	m_nItemHeight = CalcItemHeight();
 	return 0;
@@ -366,6 +566,8 @@ void CTrackView::OnSize(UINT nType, int cx, int cy)
 void CTrackView::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	UNREFERENCED_PARAMETER(pWnd);
+	if (CChannelsBar::ShowListColumnHeaderMenu(this, &m_grid, point))
+		return;
 	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE);
 }
 
@@ -394,7 +596,19 @@ void CTrackView::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 		case COL_Type:
 			_tcscpy_s(item.pszText, item.cchTextMax, CTrack::GetTrackTypeName(pDoc->m_Seq.GetType(iTrack)));
 			break;
+		case COL_Note:
+			if (pDoc->ShowGMDrums(iTrack)) {	// if showing General MIDI drums for this track
+				int	iNote = pDoc->m_Seq.GetNote(iTrack);
+				LPCTSTR	pszDrumName = GetGMDrumName(iNote);
+				if (pszDrumName != NULL)
+					_tcscpy_s(item.pszText, item.cchTextMax, pszDrumName);
+				else
+					_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), iNote);
+			} else	// default note handling
+				goto DefaultDisplayItem;	// don't rely on falling through
+			break;
 		default:
+DefaultDisplayItem:
 			int	nVal;
 			switch (item.iSubItem) {
 			#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) case COL_##name: \
@@ -411,7 +625,7 @@ void CTrackView::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 				_tcscpy_s(item.pszText, item.cchTextMax, CNote(nVal).MidiName(pDoc->m_nKeySig));
 			} else {	// default case
 				if (item.iSubItem == COL_Channel)	// if channel column
-					nVal++;	// convert to one-origin display format
+					nVal++;	// convert zero-origin channel index to one-origin channel number
 				_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), nVal);
 			}
 		}
@@ -471,4 +685,40 @@ LRESULT CTrackView::OnListScrollKey(WPARAM wParam, LPARAM lParam)
 	UNREFERENCED_PARAMETER(lParam);
 	GetParentFrame()->SendMessage(UWM_TRACK_SCROLL, m_grid.GetTopIndex());
 	return 0;
+}
+
+void CTrackView::OnListHdrEndDrag(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	UNREFERENCED_PARAMETER(pNMHDR);
+	UNREFERENCED_PARAMETER(pResult);
+	// list's column order hasn't been updated yet when this notification is sent
+	PostMessage(UWM_LIST_HDR_REORDER);	// delay our handling until after column order is updated
+}
+
+LRESULT CTrackView::OnListHdrReorder(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	m_grid.GetColumnOrder(m_gColState.m_arrOrder);	// store column order in global
+	m_gColState.m_nOrderUpdates++;	// increment global update count
+	return 0;
+}
+
+void CTrackView::OnListHdrEndTrack(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	UNREFERENCED_PARAMETER(pNMHDR);
+	UNREFERENCED_PARAMETER(pResult);
+	m_grid.GetColumnWidths(m_gColState.m_arrWidth);	// store column widths in global
+	m_gColState.m_nWidthUpdates++;	// increment global update count
+}
+
+void CTrackView::OnListColHdrReset()
+{
+	m_grid.SetRedraw(false);	// disable drawing to reduce flicker
+	m_grid.ResetColumnWidths(m_arrColInfo, COLUMNS);	// reset column widths
+	OnListHdrEndTrack(NULL, NULL);	// broadcast reset column widths to other views
+	m_grid.ResetColumnOrder();	// reset column order
+	OnListHdrReorder(0, 0);	// broadcast reset column order to other views
+	m_grid.SetRedraw();	// reenable drawing
+	m_grid.Invalidate();
 }

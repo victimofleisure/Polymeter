@@ -241,6 +241,10 @@
     <ClInclude Include="RulerCtrl.h" />
     <ClInclude Include="Scale.h" />
     <ClInclude Include="SeqTrackArray.h" />
+    <ClInclude Include="SongParent.h" />
+    <ClInclude Include="SongTrackView.h" />
+    <ClInclude Include="SongView.h" />
+    <ClInclude Include="SplitView.h" />
     <ClInclude Include="StepParent.h" />
     <ClInclude Include="StepView.h" />
     <ClInclude Include="PopupCombo.h" />
@@ -326,6 +330,10 @@
     <ClCompile Include="RulerCtrl.cpp" />
     <ClCompile Include="Scale.cpp" />
     <ClCompile Include="SeqTrackArray.cpp" />
+    <ClCompile Include="SongParent.cpp" />
+    <ClCompile Include="SongTrackView.cpp" />
+    <ClCompile Include="SongView.cpp" />
+    <ClCompile Include="SplitView.cpp" />
     <ClCompile Include="StepParent.cpp" />
     <ClCompile Include="StepView.cpp" />
     <ClCompile Include="PopupCombo.cpp" />

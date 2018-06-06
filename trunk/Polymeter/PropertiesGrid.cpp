@@ -18,6 +18,8 @@
 		08		18apr18	add UpdateOptions
 		09		17may18	add enum property to allow duplicate options
 		10		17may18	add spin control for floating point values
+		11		04jun18	add time property type
+		12		05jun18	in TrackToolTip, fix cast to derived property
 
 */
 
@@ -107,7 +109,12 @@ void CValidPropertyGridCtrl::TrackToolTip(CPoint point)
 		ReleaseCapture();
 	}
 
-	CValidPropertyGridProperty* pProp = DYNAMIC_DOWNCAST(CValidPropertyGridProperty, HitTest(point));
+	// Because our TrackToolTip isn't a member of CMFCPropertyGridCtrl, it doesn't gain the necessary
+	// access to CMFCPropertyGridProperty's protected members via friendship. The workaround is, first
+	// dynamically downcast to CMFCPropertyGridProperty, and then recast to our derived property, which
+	// does grant access. It's safe so long as TrackToolTip only accesses CMFCPropertyGridProperty members.
+	CMFCPropertyGridProperty* pMFCProp = DYNAMIC_DOWNCAST(CMFCPropertyGridProperty, HitTest(point));
+	CValidPropertyGridProperty*	pProp = static_cast<CValidPropertyGridProperty*>(pMFCProp);
 	if (pProp == NULL)
 	{
 		m_IPToolTip.Deactivate();
@@ -519,7 +526,7 @@ void CPropertiesGridCtrl::GetProperties(CProperties& Props) const
 	CVariantArray	arrVar;
 	arrVar.SetSize(nProps);
 	for (int iProp = 0; iProp < nProps; iProp++) {	// for each property
-		const CMFCPropertyGridProperty* pProp = m_arrProp[iProp];
+		CMFCPropertyGridProperty* pProp = m_arrProp[iProp];
 		switch (Props.GetPropertyType(iProp)) {
 		case CProperties::PT_ENUM:
 			{
@@ -529,6 +536,20 @@ void CPropertiesGridCtrl::GetProperties(CProperties& Props) const
 			break;
 		case CProperties::PT_COLOR:
 			arrVar[iProp].uintVal = static_cast<const CMFCPropertyGridColorProperty *>(pProp)->GetColor();
+			break;
+		case CProperties::PT_TIME:
+			{
+				CString	sTime(pProp->GetValue());
+				COleDateTime dt;
+				CTimeSpan	ts;
+				if (dt.ParseDateTime(sTime, VAR_TIMEVALUEONLY))
+					ts = CTimeSpan(0, dt.GetHour(), dt.GetMinute(), dt.GetSecond());
+				else
+					AfxMessageBox(IDS_GRID_ERR_BAD_TIME_FORMAT);
+				sTime = ts.Format(_T("%H:%M:%S"));	// reformat time
+				pProp->SetValue(sTime);	// display reformatted time
+				arrVar[iProp].intVal = static_cast<int>(ts.GetTimeSpan());
+			}
 			break;
 		default:
 			arrVar[iProp] = pProp->GetValue();
@@ -559,6 +580,15 @@ void CPropertiesGridCtrl::SetProperties(const CProperties& Props)
 			break;
 		case CProperties::PT_COLOR:
 			static_cast<CMFCPropertyGridColorProperty *>(pProp)->SetColor(arrVar[iProp].uintVal);
+			break;
+		case CProperties::PT_TIME:
+			{
+				CComVariant	var;
+				Props.GetProperty(iProp, var);
+				CTimeSpan	ts(var.intVal);
+				CString	sTime(ts.Format(_T("%H:%M:%S")));
+				pProp->SetValue(sTime);
+			}
 			break;
 		default:
 			pProp->SetValue(arrVar[iProp]);
@@ -632,6 +662,13 @@ void CPropertiesGridCtrl::InitPropList(const CProperties& Props)
 				CMFCPropertyGridFileProperty	*pFileProp = 
 					new CMFCPropertyGridFileProperty(sPropName, TRUE, CString(arrVar[iProp].bstrVal), NULL, 0, NULL, sPropDescrip, iProp);
 				pProp = pFileProp;
+			}
+			break;
+		case CProperties::PT_TIME:
+			{
+				CValidPropertyGridProperty	*pNumProp = 
+					new CValidPropertyGridProperty(sPropName, _T(""), sPropDescrip, iProp);
+				pProp = pNumProp;
 			}
 			break;
 		default:

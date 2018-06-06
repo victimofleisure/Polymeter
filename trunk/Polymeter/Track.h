@@ -48,15 +48,26 @@ public:
 	typedef CArrayEx<CStepArray, CStepArray&> CStepArrayArray;	// array of step arrays
 	class CDub {
 	public:
+	// Construction
 		CDub();
 		CDub(int nTime, bool bMute);
-		int		m_nTime;			// event timestamp, in absolute ticks
+
+	// Public data
+		int		m_nTime;			// timestamp, in absolute ticks
 		union {
-			bool	m_bMute;		// true if track is muted
+			bool	m_bMute;		// true if muted
 			int		m_bMute32;		// includes unused bytes
 		};
 	};
-	typedef CArrayEx<CDub, CDub&> CDubArray;	// array of dubs
+	class CDubArray : public CArrayEx<CDub, CDub&> {
+	public:
+		int		FindDub(int nTime, int iStartDub = 0) const;
+		bool	GetDubs(int nStartTime, int nEndTime) const;
+		void	SetDubs(int nStartTime, int nEndTime, bool bMute);
+		void	RemoveDuplicates();
+		void	Dump() const;
+	};
+	typedef CArrayEx<CDubArray, CDubArray&> CDubArrayArray;	// array of dub arrays
 
 // Attributes
 	static	CString	GetTrackTypeName(int iType);
@@ -89,12 +100,26 @@ inline CTrackBase::CDub::CDub(int nTime, bool bMute)
 	m_bMute32 = bMute;		// avoid uninitialized bytes
 }
 
+inline int CTrackBase::CDubArray::FindDub(int nTime, int iStartDub) const
+{
+	// find nearest dub at or before specified time
+	int	nDubs = GetSize();
+	if (!nDubs)	// if no dubs
+		return -1;	// return error
+	for (int iDub = iStartDub; iDub < nDubs; iDub++) {	// for each dub
+		if (GetAt(iDub).m_nTime > nTime)	// if dub occurs after specified time
+			return iDub - 1;	// return previous dub
+	}
+	return nDubs - 1;	// return last dub
+}
+
 class CTrack : public CTrackBase {
 public:
 // Construction
 	CTrack();
 	CTrack(bool bInit);
 
+// Types
 // Public data
 	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) type m_##prefix##name;
 	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length

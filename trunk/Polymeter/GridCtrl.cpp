@@ -18,6 +18,7 @@
 		08		25apr18	handle up and down arrow keys only if control key is down
 		09		25apr18	in EditSubItem, don't modify selection
 		10		27apr18	handle reordered columns
+		11		04jun18	give popup edit control non-zero ID
 
 		grid control
  
@@ -65,7 +66,7 @@ bool CGridCtrl::EditSubitem(int iRow, int iCol)
 	m_iEditRow = iRow;	// update our indices first so create can access them
 	m_iEditCol = iCol;
 	CString	text(GetItemText(iRow, iCol));	// get subitem text
-	m_pEditCtrl = CreateEditCtrl(text, style, rSubitem, this, 0);
+	m_pEditCtrl = CreateEditCtrl(text, style, rSubitem, this, IDC_POPUP_EDIT);
 	if (m_pEditCtrl == NULL)
 		return(FALSE);
 	ASSERT(IsWindow(m_pEditCtrl->m_hWnd));

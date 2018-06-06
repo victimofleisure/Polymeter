@@ -21,5 +21,7 @@
 	void	Reverse() { CArrayEx_Reverse(*this, 0, m_nSize); }
 	void	Rotate(W64INT iStart, W64INT nElems, W64INT nOffset) { CArrayEx_Rotate(*this, iStart, nElems, nOffset); }
 	void	Rotate(W64INT nOffset) { CArrayEx_Rotate(*this, 0, m_nSize, nOffset); }
+	void	Shift(W64INT iStart, W64INT nElems, W64INT nOffset, ALGO_TYPE val) { CArrayEx_Shift(*this, iStart, nElems, nOffset, val); }
+	void	Shift(W64INT nOffset, ALGO_TYPE val) { CArrayEx_Shift(*this, 0, m_nSize, nOffset, val); }
 
 #undef ALGO_TYPE

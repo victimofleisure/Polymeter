@@ -15,6 +15,7 @@
 		05		08may18	in OnSize, avoid repainting in more cases
 		06		09may18	add value offset and reticle color
 		07		09may18	standardize names
+		08		05jun18	in Create, set window name
 
 		ruler control
 
@@ -98,7 +99,7 @@ CRulerCtrl::~CRulerCtrl()
 BOOL CRulerCtrl::Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
 	LPCTSTR	lpszClassName = AfxRegisterWndClass(0, LoadCursor(NULL, IDC_ARROW));
-	if (!CWnd::Create(lpszClassName, NULL, dwStyle, rect, pParentWnd, nID))
+	if (!CWnd::Create(lpszClassName, _T("Ruler"), dwStyle, rect, pParentWnd, nID))
 		return FALSE;
 	return TRUE;
 }

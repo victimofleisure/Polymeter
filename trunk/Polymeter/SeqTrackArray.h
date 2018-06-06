@@ -81,13 +81,20 @@ public:
 	void	ResetCachedParameters();
 	void	ReverseSteps(int iTrack);
 	void	ReverseSteps(int iTrack, int iStep, int nSteps);
-	void	RotateSteps(int iTrack, int nRotSteps);
-	void	RotateSteps(int iTrack, int iStep, int nSteps, int nRotSteps);
-	void	RemoveAllDubs();
+	void	ShiftSteps(int iTrack, int nOffset);
+	void	ShiftSteps(int iTrack, int iStep, int nSteps, int nOffset);
+	void	RotateSteps(int iTrack, int nOffset);
+	void	RotateSteps(int iTrack, int iStep, int nSteps, int nOffset);
+	void	OnRecordStart();
+	void	OnRecordStop(int nEndTime);
 	void	AddDub(int iTrack, int nTime);
+	void	AddDub(int iTrack, int nTime, bool bMute);
 	void	AddDub(const CIntArrayEx& arrSelection, int nTime);
 	int		FindDub(int iTrack, int nTime) const;
 	void	ChaseDubs(int nTime, bool bUpdateMutes = false);
+	bool	GetDubs(int iTrack, int nStartTime, int nEndTime) const;
+	void	SetDubs(int iTrack, int nStartTime, int nEndTime, bool bMute);
+	void	SetDubs(int iTrack, const CDubArray& arrDub);
 
 protected:
 // Member data
@@ -190,7 +197,7 @@ inline int CSeqTrackArray::GetDubCount(int iTrack) const
 	return GetAt(iTrack).m_arrDub.GetSize();
 }
 
-inline const CTrack::CDub& CSeqTrackArray::GetDub(int iTrack, int iDub) const
+inline const CTrackBase::CDub& CSeqTrackArray::GetDub(int iTrack, int iDub) const
 {
 	return GetAt(iTrack).m_arrDub[iDub];
 }
@@ -198,4 +205,14 @@ inline const CTrack::CDub& CSeqTrackArray::GetDub(int iTrack, int iDub) const
 inline void CSeqTrackArray::AssignID(int iTrack)
 {
 	GetAt(iTrack).m_nUID = ++m_nNextUID;
+}
+
+inline int CSeqTrackArray::FindDub(int iTrack, int nTime) const
+{
+	return GetAt(iTrack).m_arrDub.FindDub(nTime);
+}
+
+bool inline CSeqTrackArray::GetDubs(int iTrack, int nStartTime, int nEndTime) const
+{
+	return GetAt(iTrack).m_arrDub.GetDubs(nStartTime, nEndTime);
 }

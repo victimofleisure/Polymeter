@@ -33,7 +33,7 @@
 
 #define USE_GRADIENT_FILL 0
 
-const COLORREF CStepView::m_arrStepColor[] = {
+const COLORREF CStepView::m_arrStepColor[STEP_STATES] = {
 							//	select	mute	hot		on
 	RGB(255, 255, 255),		//	N		N		N		N
 	RGB(0, 0, 0),			//  N		N		N		Y
@@ -190,9 +190,9 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		UpdateSongPosition();
 		break;
 	case CPolymeterDoc::HINT_SONG_POS:
-		UpdateSongPosition();
-		if (GetDocument()->m_nViewMode == CPolymeterDoc::VIEW_SONG)
-			m_pParent->m_pMuteView->Invalidate();	// wastes about 1ms but avoids gnarly problems
+		if (GetDocument()->IsTrackView()) {
+			UpdateSongPosition();
+		}
 		break;
 	case CPolymeterDoc::HINT_TRACK_SELECTION:
 		OnTrackSelectionChange();
@@ -238,6 +238,11 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				UpdateSongPosition();
 			if (theApp.m_Options.m_View_fZoomDelta != pPropHint->m_pPrevOptions->m_View_fZoomDelta)
 				UpdateZoomDelta();
+		}
+		break;
+	case CPolymeterDoc::HINT_VIEW_TYPE:
+		if (GetDocument()->IsTrackView()) {
+			UpdateSongPosition();
 		}
 		break;
 	}
@@ -856,7 +861,7 @@ void CStepView::DispatchToDocument()
 	GetDocument()->OnCmdMsg(LOWORD(pMsg->wParam), CN_COMMAND, NULL, NULL);	// low word is command ID
 }
 
-void CStepView::OnEditLength(CPoint point)
+void CStepView::OnTrackLength(CPoint point)
 {
 	CPolymeterDoc	*pDoc = GetDocument();
 	if (HaveStepSelection()) {	// if step selection exists
@@ -895,12 +900,20 @@ void CStepView::OnEditLength(CPoint point)
 	}
 }
 
-void CStepView::RotateSteps(int nRotSteps)
+void CStepView::ShiftSteps(int nOffset)
 {
 	if (HaveStepSelection())
-		GetDocument()->RotateSteps(m_rStepSel, nRotSteps);
+		GetDocument()->ShiftSteps(m_rStepSel, nOffset);
 	else
-		GetDocument()->RotateSteps(nRotSteps);
+		GetDocument()->ShiftSteps(nOffset);
+}
+
+void CStepView::RotateSteps(int nOffset)
+{
+	if (HaveStepSelection())
+		GetDocument()->RotateSteps(m_rStepSel, nOffset);
+	else
+		GetDocument()->RotateSteps(nOffset);
 }
 
 // CStepView message map
@@ -931,12 +944,16 @@ BEGIN_MESSAGE_MAP(CStepView, CScrollView)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
-	ON_COMMAND(ID_EDIT_REVERSE, OnEditReverse)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_REVERSE, OnUpdateEditReverse)
-	ON_COMMAND(ID_EDIT_ROTATE_LEFT, OnEditRotateLeft)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_ROTATE_LEFT, OnUpdateEditRotate)
-	ON_COMMAND(ID_EDIT_ROTATE_RIGHT, OnEditRotateRight)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_ROTATE_RIGHT, OnUpdateEditRotate)
+	ON_COMMAND(ID_TRACK_REVERSE, OnTrackReverse)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_REVERSE, OnUpdateTrackReverse)
+	ON_COMMAND(ID_TRACK_SHIFT_LEFT, OnTrackShiftLeft)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_LEFT, OnUpdateTrackShift)
+	ON_COMMAND(ID_TRACK_SHIFT_RIGHT, OnTrackShiftRight)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_RIGHT, OnUpdateTrackShift)
+	ON_COMMAND(ID_TRACK_ROTATE_LEFT, OnTrackRotateLeft)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_LEFT, OnUpdateTrackShift)
+	ON_COMMAND(ID_TRACK_ROTATE_RIGHT, OnTrackRotateRight)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_RIGHT, OnUpdateTrackShift)
 END_MESSAGE_MAP()
 
 // CStepView message handlers
@@ -1228,7 +1245,7 @@ void CStepView::OnUpdateEditDelete(CCmdUI *pCmdUI)
 	pCmdUI->Enable(HaveEitherSelection());
 }
 
-void CStepView::OnEditReverse()
+void CStepView::OnTrackReverse()
 {
 	if (HaveStepSelection())
 		GetDocument()->ReverseSteps(m_rStepSel);
@@ -1236,22 +1253,32 @@ void CStepView::OnEditReverse()
 		GetDocument()->ReverseSteps();
 }
 
-void CStepView::OnUpdateEditReverse(CCmdUI *pCmdUI)
+void CStepView::OnUpdateTrackReverse(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(HaveEitherSelection());
 }
 
-void CStepView::OnEditRotateLeft()
+void CStepView::OnTrackShiftLeft()
+{
+	ShiftSteps(-1);
+}
+
+void CStepView::OnTrackShiftRight()
+{
+	ShiftSteps(1);
+}
+
+void CStepView::OnUpdateTrackShift(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(HaveEitherSelection());
+}
+
+void CStepView::OnTrackRotateLeft()
 {
 	RotateSteps(-1);
 }
 
-void CStepView::OnEditRotateRight()
+void CStepView::OnTrackRotateRight()
 {
 	RotateSteps(1);
-}
-
-void CStepView::OnUpdateEditRotate(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable(HaveEitherSelection());
 }

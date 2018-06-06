@@ -21,6 +21,7 @@
 #include "stdafx.h"
 #include "Resource.h"
 #include "PopupCombo.h"
+#include "PopupEdit.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -71,7 +72,7 @@ void CPopupCombo::EndEdit()
 	CString	text;
 	GetWindowText(text);
 	LPCTSTR	pText = text;
-	GetParent()->SendMessage(UWM_TEXT_CHANGE, LPARAM(pText));
+	GetParent()->SendMessage(CPopupEdit::UWM_TEXT_CHANGE, LPARAM(pText));
 	delete this;
 }
 
@@ -85,7 +86,7 @@ BEGIN_MESSAGE_MAP(CPopupCombo, CComboBox)
 	ON_WM_KILLFOCUS()
 	ON_CONTROL_REFLECT(CBN_CLOSEUP, OnCloseup)
 	//}}AFX_MSG_MAP
-	ON_MESSAGE(UWM_END_EDIT, OnEndEdit)
+	ON_MESSAGE(CPopupEdit::UWM_END_EDIT, OnEndEdit)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -95,7 +96,7 @@ void CPopupCombo::OnKillFocus(CWnd* pNewWnd)
 {
 	CComboBox::OnKillFocus(pNewWnd);
 	if (!m_bEndingEdit)	// if not ending edit already
-		SendMessage(UWM_END_EDIT);
+		SendMessage(CPopupEdit::UWM_END_EDIT);
 }
 
 BOOL CPopupCombo::PreTranslateMessage(MSG* pMsg) 
@@ -104,7 +105,7 @@ BOOL CPopupCombo::PreTranslateMessage(MSG* pMsg)
 		switch (pMsg->wParam) {
 		case VK_RETURN:
 		case VK_ESCAPE:
-			SendMessage(UWM_END_EDIT, pMsg->wParam == VK_ESCAPE);	// cancel if escape
+			SendMessage(CPopupEdit::UWM_END_EDIT, pMsg->wParam == VK_ESCAPE);	// cancel if escape
 			return TRUE;	// no further processing; our instance is deleted
 		}
 	}

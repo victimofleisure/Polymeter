@@ -9,6 +9,7 @@
 		rev		date	comments
 		00		23sep13	initial version
 		01		16mar15	add ending edit flag to avoid reentrance
+		02		04jun18	define user messages in PopupEdit.h only
 
 		popup edit control
 
@@ -32,10 +33,6 @@ public:
 	CPopupNumEdit();
 
 // Constants
-	enum {
-		UWM_END_EDIT = WM_USER + 400,	// wParam: true if canceling, lParam: none
-		UWM_TEXT_CHANGE,				// wParam: pointer to text, lParam: none
-	};
 
 // Operations
 public:

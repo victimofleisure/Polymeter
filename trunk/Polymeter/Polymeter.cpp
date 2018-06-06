@@ -108,6 +108,7 @@ BOOL CPolymeterApp::InitInstance()
 
 	m_Options.ReadProperties();	// get options from registry
 	m_bTieNotes = GetProfileInt(REG_SETTINGS, RK_TIE_NOTES, 0) != 0;
+	CChildFrame::LoadPersistentState();
 
 	InitContextMenuManager();
 
@@ -174,6 +175,8 @@ int CPolymeterApp::ExitInstance()
 	AfxOleTerm(FALSE);
 
 	WriteProfileInt(REG_SETTINGS, RK_TIE_NOTES, m_bTieNotes);
+
+	CChildFrame::SavePersistentState();
 
 	return CWinAppEx::ExitInstance();
 }
@@ -389,8 +392,8 @@ BEGIN_MESSAGE_MAP(CPolymeterApp, CWinAppEx)
 	ON_COMMAND(ID_FILE_NEW, &CWinAppEx::OnFileNew)
 	ON_COMMAND(ID_FILE_OPEN, &CWinAppEx::OnFileOpen)
 	ON_COMMAND(ID_APP_HOME_PAGE, OnAppHomePage)
-	ON_COMMAND(ID_TOOLS_TIE_NOTES, OnToolsTieNotes)
-	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIE_NOTES, OnUpdateToolsTieNotes)
+	ON_COMMAND(ID_TRACK_TIE_NOTES, OnTrackTieNotes)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_TIE_NOTES, OnUpdateTrackTieNotes)
 END_MESSAGE_MAP()
 
 // CPolymeterApp message handlers
@@ -415,12 +418,12 @@ void CPolymeterApp::OnAppHomePage()
 		AfxMessageBox(IDS_HLINK_CANT_LAUNCH);
 }
 
-void CPolymeterApp::OnToolsTieNotes()
+void CPolymeterApp::OnTrackTieNotes()
 {
 	m_bTieNotes ^= 1;
 }
 
-void CPolymeterApp::OnUpdateToolsTieNotes(CCmdUI *pCmdUI)
+void CPolymeterApp::OnUpdateTrackTieNotes(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bTieNotes);
 }

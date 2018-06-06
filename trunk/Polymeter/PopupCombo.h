@@ -10,6 +10,7 @@
 		00		23sep13	initial version
 		01		31may14	add class factory
 		02		16mar15	add ending edit flag to avoid reentrance
+		03		04jun18	define user messages in PopupEdit.h only
 
 		popup combo box control
 
@@ -31,10 +32,6 @@ public:
 	CPopupCombo();
 
 // Constants
-	enum {
-		UWM_END_EDIT = WM_USER + 400,	// wParam: true if canceling, lParam: none
-		UWM_TEXT_CHANGE,				// wParam: pointer to text, lParam: none
-	};
 
 // Operations
 public:

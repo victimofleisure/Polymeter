@@ -309,6 +309,18 @@
     <ClInclude Include="TransposeDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SongView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SongParent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SongTrackView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SplitView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Polymeter.cpp">
@@ -501,6 +513,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TransposeDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SongView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SongParent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SongTrackView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SplitView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

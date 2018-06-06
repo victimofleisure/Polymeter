@@ -62,3 +62,72 @@ int CTrack::CompareProperty(int iProp, const CTrack& track) const
 	}
 	return 0;
 }
+
+bool CTrackBase::CDubArray::GetDubs(int nStartTime, int nEndTime) const
+{
+	int	iDub = FindDub(nStartTime);
+	if (iDub < 0)	// if no dubs
+		return true;
+	int	nDubs = GetSize();
+	bool	bMute = GetAt(iDub).m_bMute;
+	if (iDub < nDubs - 1 && nEndTime > GetAt(iDub + 1).m_nTime)
+		return GetAt(iDub).m_bMute;
+	return bMute;
+}
+
+void CTrackBase::CDubArray::SetDubs(int nStartTime, int nEndTime, bool bMute)
+{
+	int	iStartDub = FindDub(nStartTime);	// find closest dub at or before start time
+	if (iStartDub < 0) {	// if no dubs
+		CDub	dubInit(0, true);	// muted
+		Add(dubInit);	// add initial dub at start of song
+		iStartDub = 0;
+	}
+	int	iEndDub = FindDub(nEndTime, iStartDub);
+	bool	bEndMute = GetAt(iEndDub).m_bMute;
+	int	nDeletes = 0;
+	for (int iDub = iEndDub; iDub >= iStartDub; iDub--) {	// reverse iterate for stability during deletion
+		int	nTime = GetAt(iDub).m_nTime;
+		if (nTime > nStartTime && nTime < nEndTime) {
+			RemoveAt(iDub);
+			nDeletes++;
+		}
+	}
+	iEndDub -= nDeletes;
+	CDub&	dubStart = GetAt(iStartDub);
+	if (nStartTime == dubStart.m_nTime) {
+		dubStart.m_bMute = bMute;
+	} else {
+		CDub	dub(nStartTime, bMute);
+		InsertAt(iStartDub + 1, dub);
+		iEndDub++;
+	}
+	CDub&	dubEnd = GetAt(iEndDub);
+	if (nEndTime == dubEnd.m_nTime) {
+		dubEnd.m_bMute = bEndMute;
+	} else {
+		CDub	dub(nEndTime, bEndMute);
+		InsertAt(iEndDub + 1, dub);
+	}
+	// above may result in duplicate dubs, and avoiding them is gnarly
+	RemoveDuplicates();	// remove duplicate dubs
+}
+
+void CTrackBase::CDubArray::RemoveDuplicates()
+{
+	int	nDubs = GetSize();
+	// exclude last dub from pruning because it indicates song length
+	for (int iDub = nDubs - 2; iDub > 0; iDub--) {	// reverse iterate for stability during deletion
+		if (GetAt(iDub - 1).m_bMute == GetAt(iDub).m_bMute) {	// if duplicate dubs
+			RemoveAt(iDub);	// remove later duplicate
+		}
+	}
+}
+
+void CTrackBase::CDubArray::Dump() const
+{
+	int	nDubs = GetSize();
+	printf("%d dubs\n", nDubs);
+	for (int iDub = 0; iDub < nDubs; iDub++)
+		printf("%d: %d %d\n", iDub, GetAt(iDub).m_nTime, GetAt(iDub).m_bMute);
+}

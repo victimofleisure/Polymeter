@@ -14,6 +14,7 @@
 #pragma once
 
 #include "GridCtrl.h"
+#include "Midi.h"
 
 class CChannelsBar : public CDockablePane
 {
@@ -26,6 +27,7 @@ public:
 	static	CString	GetPropertyName(int iProp);
 	void	GetSelection(CIntArrayEx& arrSelection) const;
 	void	SetSelection(const CIntArrayEx& arrSelection);
+	static const LPCTSTR	GetGMPatchName(int iPatch);
 
 // Operations
 public:
@@ -33,6 +35,7 @@ public:
 	void	Update(int iChan);
 	void	Update(int iChan, int iProp);
 	void	Update(const CIntArrayEx& arrSelection, int iProp);
+	static	bool	ShowListColumnHeaderMenu(CWnd *pWnd, CListCtrl *pList, CPoint point);
 
 // Implementation
 public:
@@ -44,6 +47,15 @@ protected:
 	public:
 		virtual	CWnd*	CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
 		virtual	void	OnItemChange(LPCTSTR pszText);
+		int		m_nPreEditVal;		// pre-edit value for integer edits, or INT_MIN if change was saved
+		enum {	// update target flags
+			UT_UPDATE_VIEWS		= 0x01,		// update all views
+			UT_RESTORE_VALUE	= 0x02,		// restore pre-edit value
+		};
+		void	UpdateTarget(int nVal, UINT nFlags = UT_UPDATE_VIEWS);
+		DECLARE_MESSAGE_MAP()
+		afx_msg void OnEditChanged(NMHDR* pNMHDR, LRESULT* pResult);
+		afx_msg void OnParentNotify(UINT message, LPARAM lParam);
 	};
 
 // Constants
@@ -57,6 +69,7 @@ protected:
 		IDC_CHANNELS_GRID = 1962,
 	};
 	static const CGridCtrl::COL_INFO	m_arrColInfo[COLUMNS];
+	static const LPCTSTR	m_arrGMPatchName[MIDI_NOTES];
 
 // Member data
 	CChannelsGridCtrl	m_grid;		// grid control
@@ -66,10 +79,13 @@ protected:
 // Generated message map functions
 	DECLARE_MESSAGE_MAP()
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnDestroy();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+	afx_msg void OnListColHdrReset();
 };
 
 inline void CChannelsBar::GetSelection(CIntArrayEx& arrSelection) const
@@ -80,4 +96,10 @@ inline void CChannelsBar::GetSelection(CIntArrayEx& arrSelection) const
 inline void CChannelsBar::SetSelection(const CIntArrayEx& arrSelection)
 {
 	m_grid.SetSelection(arrSelection);
+}
+
+inline const LPCTSTR CChannelsBar::GetGMPatchName(int iPatch)
+{
+	ASSERT(iPatch >= 0 && iPatch < MIDI_NOTES);
+	return m_arrGMPatchName[iPatch];
 }

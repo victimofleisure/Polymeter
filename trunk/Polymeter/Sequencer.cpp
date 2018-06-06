@@ -164,11 +164,13 @@ void CSequencer::UpdateCallbackLength()
 	m_nCBLen = GetCallbackLength(m_nLatency);
 }
 
-bool CSequencer::Play(bool bEnable)
+bool CSequencer::Play(bool bEnable, bool bRecord)
 {
 	if (bEnable == m_bIsPlaying)	// if already in requested state
 		return true;	// nothing to do
 	if (bEnable) {	// if playing
+		if (bRecord)	// if recording
+			OnRecordStart();
 		ZeroMemory(&m_stats, sizeof(m_stats));
 		m_stats.fCBTimeMin = DBL_MAX;
 		UpdateCallbackLength();
@@ -216,12 +218,17 @@ bool CSequencer::Play(bool bEnable)
 		CHECK(midiStreamOut(m_hStrm, &m_arrMsgHdr[0], sizeof(MIDIHDR)));	// output lead-in
 		if (!OutputMidiBuffer())	// output first chunk of sequence in second buffer
 			return false;
+		m_bIsRecording = bRecord;	// set recording flag before starting playback
 		CHECK(midiStreamRestart(m_hStrm));	// start playback
-		m_bIsPlaying = true;	// set playing last
+		m_bIsPlaying = true;	// set playing flag last
 	} else {	// stopping
-		m_bIsPlaying = false;	// clear playing first
-		m_bIsRecording = false;
+		m_bIsPlaying = false;	// clear playing flag first
 		m_bIsStopping = true;	// signal callback to stop outputting events
+		bRecord = m_bIsRecording;	// save recording flag
+		m_bIsRecording = false;	// clear recording flag
+		LONGLONG	nEndTime = 0;
+		if (bRecord)	// if recording
+			GetPosition(nEndTime);	// get end of song position
 		CHECK(midiStreamStop(m_hStrm));	// stop playback
 		for (int iBuf = 0; iBuf < BUFFERS; iBuf++) {	// for each buffer, unprepare buffer
 			CHECK(midiOutUnprepareHeader(reinterpret_cast<HMIDIOUT>(m_hStrm), &m_arrMsgHdr[iBuf], sizeof(MIDIHDR)));
@@ -231,6 +238,8 @@ bool CSequencer::Play(bool bEnable)
 #if SEQ_DUMP_EVENTS
 		DumpEvents(_T("seqdump.txt"));
 #endif	// SEQ_DUMP_EVENTS
+		if (bRecord)	// if recording
+			OnRecordStop(static_cast<int>(nEndTime));
 	}
 	m_bIsPaused = false;
 	return true;
@@ -248,34 +257,6 @@ bool CSequencer::Pause(bool bEnable)
 		CHECK(midiStreamRestart(m_hStrm));
 	}
 	m_bIsPaused = bEnable;
-	return true;
-}
-
-bool CSequencer::Record(bool bEnable)
-{
-	if (bEnable == m_bIsRecording)	// if already in requested state
-		return true;	// nothing to do
-	if (bEnable) {	// if starting
-		RemoveAllDubs();
-		int	nTracks = GetTrackCount();
-		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-			CDub	dub(0, GetMute(iTrack));
-			GetAt(iTrack).m_arrDub.Add(dub);
-		}
-	} else {	// stopping
-		LONGLONG	nPos;
-		GetPosition(nPos);
-		int	nTracks = GetTrackCount();
-		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-			if (!GetMute(iTrack)) {	// if track unmuted
-				CDub	dub(static_cast<int>(nPos), true);	// add mute
-				GetAt(iTrack).m_arrDub.Add(dub);
-			}
-		}
-	}
-	m_bIsRecording = bEnable;
-	if (!Play(bEnable))
-		return false;
 	return true;
 }
 
@@ -613,9 +594,10 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 	return true;
 }
 
-bool CSequencer::Export(LPCTSTR pszPath, int nDuration)
+bool CSequencer::Export(LPCTSTR pszPath, int nDuration, bool bSongMode)
 {
 	CSequencerReader	seq(*this);	// give export its own sequencer instance
+	seq.SetSongMode(bSongMode);
 	return seq.ExportImpl(pszPath, nDuration);
 }
 
@@ -696,6 +678,12 @@ void CSequencer::ConvertPositionToTimeString(LONGLONG nPos, CString& sTime) cons
 	nTime /= 60;
 	LONGLONG	nHours = nTime;
 	sTime.Format(_T("%lld:%02lld:%02lld"), nHours, nMins, nSecs);
+}
+
+int CSequencer::GetSongDurationSeconds() const
+{
+	int	nSongTicks = GetSongDuration();
+	return static_cast<int>(ConvertPositionToSeconds(nSongTicks)) + 1;	// round up
 }
 
 int CSequencer::GetStepIndex(int iTrack, LONGLONG nPos) const

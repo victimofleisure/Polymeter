@@ -68,13 +68,13 @@ public:
 	int		GetStepIndex(int iTrack, LONGLONG nPos) const;
 	bool	GetSongMode() const;
 	void	SetSongMode(bool bEnable);
+	int		GetSongDurationSeconds() const;
 
 // Operations
-	bool	Play(bool bEnable);
+	bool	Play(bool bEnable, bool bRecord = false);
 	bool	Pause(bool bEnable);
-	bool	Record(bool bEnable);
 	void	Abort();
-	bool	Export(LPCTSTR pszPath, int nDuration);
+	bool	Export(LPCTSTR pszPath, int nDuration, bool bSongMode);
 	bool	OutputLiveEvent(DWORD dwEvent);
 	void	ConvertPositionToBeat(LONGLONG nPos, LONGLONG& nBeat, LONGLONG& nTick) const;
 	void	ConvertBeatToPosition(LONGLONG nBeat, LONGLONG nTick, LONGLONG& nPos) const;

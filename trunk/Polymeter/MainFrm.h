@@ -109,6 +109,10 @@ protected:
 	afx_msg LRESULT	OnDeviceNodeChange(WPARAM wParam, LPARAM lParam);
 	afx_msg BOOL OnDeviceChange(UINT nEventType, W64ULONG dwData);
 	afx_msg void OnToolsDevices();
+	afx_msg void OnViewChannels();
+	afx_msg void OnUpdateViewChannels(CCmdUI *pCmdUI);
+	afx_msg void OnViewProperties();
+	afx_msg void OnUpdateViewProperties(CCmdUI *pCmdUI);
 };
 
 inline HACCEL CMainFrame::GetAccelTable() const

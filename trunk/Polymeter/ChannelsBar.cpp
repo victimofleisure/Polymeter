@@ -18,6 +18,7 @@
 #include "PolymeterDoc.h"
 #include "UndoCodes.h"
 #include "PopupNumEdit.h"
+#include "PopupCombo.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -31,8 +32,17 @@ static char THIS_FILE[]=__FILE__;
 const CGridCtrl::COL_INFO CChannelsBar::m_arrColInfo[COLUMNS] = {
 	#define CHANNELDEF(name, align, width) {IDS_CHANNEL_COL_##name, align, width},
 	#define CHANNELDEF_NUMBER	// include channel number
-	#include "ChannelDef.h"	// generate column info intialization
+	#include "ChannelDef.h"	// generate column info initialization
 };
+
+const LPCTSTR CChannelsBar::m_arrGMPatchName[MIDI_NOTES] = {
+	#define MIDI_GM_PATCH_DEF(name) _T(name),
+	#include "MidiCtrlrDef.h"	// generate array of General MIDI patch names
+};
+
+#define RK_CHANNELS _T("ChannelsBar")
+#define RK_COL_ORDER _T("ColOrder")
+#define RK_COL_WIDTH _T("ColWidth")
 
 CChannelsBar::CChannelsBar()
 {
@@ -67,6 +77,24 @@ void CPopupIntEdit::StrToVal(LPCTSTR Str)
 CWnd *CChannelsBar::CChannelsGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
 	UNREFERENCED_PARAMETER(pParentWnd);
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	ASSERT(pDoc != NULL);
+	if (pDoc == NULL)	// run-time check anyway
+		return(NULL);
+	if (m_iEditCol == COL_Patch && theApp.m_Options.m_View_bShowGMNames) {	// if showing GM patch names
+		CPopupCombo	*pCombo = CPopupCombo::Factory(0, rect, this, 0, 100);
+		if (pCombo == NULL)
+			return(NULL);
+		pCombo->AddString(LDS(IDS_NONE));	// insert none item
+		for (int iPatch = 0; iPatch < MIDI_NOTES; iPatch++) {
+			pCombo->AddString(GetGMPatchName(iPatch));
+		}
+		int	iSelPatch = pDoc->m_arrChannel[m_iEditRow].m_nPatch + 1;	// offset for none item
+		pCombo->SetCurSel(iSelPatch);
+		pCombo->ShowDropDown();
+		return pCombo;
+	}
+	// default case: numeric edit control
 	CPopupIntEdit	*pEdit = new CPopupIntEdit;
 	pEdit->SetFormat(CNumEdit::DF_INT | CNumEdit::DF_SPIN);
 	pEdit->SetRange(-1, MIDI_NOTE_MAX);
@@ -79,6 +107,7 @@ CWnd *CChannelsBar::CChannelsGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwS
 		nVal = _ttoi(pszText);
 	else
 		nVal = -1;
+	m_nPreEditVal = nVal;	// save pre-edit value in case edit gets canceled
 	pEdit->SetVal(nVal);
 	pEdit->SetSel(0, -1);	// select entire text
 	return(pEdit);
@@ -88,43 +117,99 @@ void CChannelsBar::CChannelsGridCtrl::OnItemChange(LPCTSTR pszText)
 {
 	UNREFERENCED_PARAMETER(pszText);
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	if (pDoc != NULL) {
+	ASSERT(pDoc != NULL);
+	if (pDoc == NULL)	// run-time check anyway
+		return;
+	int	nVal;
+	if (m_iEditCol == COL_Patch && theApp.m_Options.m_View_bShowGMNames) {	// if showing GM patch names
+		CPopupCombo	*pCombo = STATIC_DOWNCAST(CPopupCombo, m_pEditCtrl);
+		nVal = pCombo->GetCurSel() - 1;	// get current value; offset for none item
+	} else {	// default case: numeric edit control
 		CPopupNumEdit	*pNumEdit = STATIC_DOWNCAST(CPopupNumEdit, m_pEditCtrl);
-		int	iChan = m_iEditRow;
-		int	iProp = m_iEditCol - 1;	// skip number column
-		int	nVal = pNumEdit->GetIntVal();
-		if (GetSelectedCount() > 1 && GetSelected(iChan)) {	// if multiple selection and editing within selection
-			CIntArrayEx	arrSelection;
-			GetSelection(arrSelection);
-			int	nSels = arrSelection.GetSize();
-			int	iSel;
+		nVal = pNumEdit->GetIntVal();	// get current value
+	}
+	int	iChan = m_iEditRow;
+	int	iProp = m_iEditCol - 1;	// skip number column
+	if (m_nPreEditVal != INT_MIN) {	// if pre-edit value is valid
+		if (nVal != m_nPreEditVal) {	// if current value differs from pre-edit value
+			// restore pre-edit value for undo notification save, but don't update views;
+			// glitch could occur if callback preempts while value is reverted (unlikely)
+			UpdateTarget(m_nPreEditVal, UT_RESTORE_VALUE);	// restore pre-edit value
+		}
+		m_nPreEditVal = INT_MIN;	// mark change saved
+	}
+	if (GetSelectedCount() > 1 && GetSelected(iChan)) {	// if multiple selection and editing within selection
+		CIntArrayEx	arrSelection;
+		GetSelection(arrSelection);
+		int	nSels = arrSelection.GetSize();
+		int	iSel;
+		for (iSel = 0; iSel < nSels; iSel++) {	// for each selected channel
+			int	iSelChan = arrSelection[iSel];
+			if (nVal != pDoc->m_arrChannel[iSelChan].GetProperty(iProp))	// if property changed
+				break;
+		}
+		if (iSel < nSels) {	// if at least one channel's property changed
+			pDoc->NotifyUndoableEdit(iProp, UCODE_MULTI_CHANNEL_PROP);
 			for (iSel = 0; iSel < nSels; iSel++) {	// for each selected channel
 				int	iSelChan = arrSelection[iSel];
-				if (nVal != pDoc->m_arrChannel[iSelChan].GetProperty(iProp))	// if property changed
-					break;
+				pDoc->m_arrChannel[iSelChan].SetProperty(iProp, nVal);	// set property
 			}
-			if (iSel < nSels) {	// if at least one channel's property changed
-				pDoc->NotifyUndoableEdit(iProp, UCODE_MULTI_CHANNEL_PROP);
-				for (iSel = 0; iSel < nSels; iSel++) {	// for each selected channel
-					int	iSelChan = arrSelection[iSel];
-					pDoc->m_arrChannel[iSelChan].SetProperty(iProp, nVal);	// set property
-				}
-				CPolymeterDoc::CMultiItemPropHint	hint(arrSelection, iProp);
-				CView	*pSender = reinterpret_cast<CView *>(GetParent());	// sender is parent
-				pDoc->UpdateAllViews(pSender, CPolymeterDoc::HINT_MULTI_CHANNEL_PROP, &hint);
-				pDoc->SetModifiedFlag();
-			}
-		} else {	// single selection
-			if (nVal != pDoc->m_arrChannel[iChan].GetProperty(iProp)) {	// if property changed
-				pDoc->NotifyUndoableEdit(MAKELONG(iChan, iProp), UCODE_CHANNEL_PROP);
-				pDoc->m_arrChannel[iChan].SetProperty(iProp, nVal);	// set property
-				CPolymeterDoc::CPropHint	hint(iChan, iProp);
-				CView	*pSender = reinterpret_cast<CView *>(GetParent());	// sender is parent
-				pDoc->UpdateAllViews(pSender, CPolymeterDoc::HINT_CHANNEL_PROP, &hint);
-				pDoc->SetModifiedFlag();
-			}
+			CPolymeterDoc::CMultiItemPropHint	hint(arrSelection, iProp);
+			CView	*pSender = reinterpret_cast<CView *>(GetParent());	// sender is parent
+			pDoc->UpdateAllViews(pSender, CPolymeterDoc::HINT_MULTI_CHANNEL_PROP, &hint);
+			pDoc->SetModifiedFlag();
+		}
+	} else {	// single selection
+		if (nVal != pDoc->m_arrChannel[iChan].GetProperty(iProp)) {	// if property changed
+			pDoc->NotifyUndoableEdit(MAKELONG(iChan, iProp), UCODE_CHANNEL_PROP);
+			pDoc->m_arrChannel[iChan].SetProperty(iProp, nVal);	// set property
+			CPolymeterDoc::CPropHint	hint(iChan, iProp);
+			CView	*pSender = reinterpret_cast<CView *>(GetParent());	// sender is parent
+			pDoc->UpdateAllViews(pSender, CPolymeterDoc::HINT_CHANNEL_PROP, &hint);
+			pDoc->SetModifiedFlag();
 		}
 	}
+}
+
+BEGIN_MESSAGE_MAP(CChannelsBar::CChannelsGridCtrl, CGridCtrl)
+	ON_NOTIFY(NEN_CHANGED, IDC_POPUP_EDIT, OnEditChanged)
+	ON_WM_PARENTNOTIFY()
+END_MESSAGE_MAP()
+
+void CChannelsBar::CChannelsGridCtrl::UpdateTarget(int nVal, UINT nFlags)
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	int	iChan = m_iEditRow;
+	int	iProp = m_iEditCol - 1;	// skip number column
+	pDoc->m_arrChannel[iChan].SetProperty(iProp, nVal);	// set property
+	if (nFlags & UT_UPDATE_VIEWS) {
+		CPolymeterDoc::CPropHint	hint(iChan, iProp);
+		CView	*pSender = reinterpret_cast<CView *>(GetParent());	// sender is parent
+		pDoc->UpdateAllViews(pSender, CPolymeterDoc::HINT_CHANNEL_PROP, &hint);
+	}
+}
+
+void CChannelsBar::CChannelsGridCtrl::OnEditChanged(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	UNREFERENCED_PARAMETER(pNMHDR);
+	UNREFERENCED_PARAMETER(pResult);
+	CPopupNumEdit	*pNumEdit = STATIC_DOWNCAST(CPopupNumEdit, m_pEditCtrl);
+	UpdateTarget(pNumEdit->GetIntVal());
+}
+
+void CChannelsBar::CChannelsGridCtrl::OnParentNotify(UINT message, LPARAM lParam) 
+{
+	if (IsEditing()) {
+		switch (LOWORD(message)) {	// high word may contain child window ID
+		case WM_DESTROY:
+			if (m_nPreEditVal != INT_MIN) {	// if change wasn't saved
+				// edit canceled; restore pre-edit value and update views
+				UpdateTarget(m_nPreEditVal, UT_RESTORE_VALUE | UT_UPDATE_VIEWS);
+			}
+			break;
+		}
+	}
+	CGridCtrl::OnParentNotify(message, lParam);
 }
 
 CString CChannelsBar::GetPropertyName(int iProp)
@@ -159,15 +244,35 @@ void CChannelsBar::Update(const CIntArrayEx& arrSelection, int iProp)
 	}
 }
 
+bool CChannelsBar::ShowListColumnHeaderMenu(CWnd *pWnd, CListCtrl *pList, CPoint point)
+{
+	ASSERT(pWnd != NULL);
+	ASSERT(pList != NULL);
+	CPoint	ptGrid(point);
+	CHeaderCtrl	*pHdrCtrl = pList->GetHeaderCtrl();
+	pHdrCtrl->ScreenToClient(&ptGrid);
+	HDHITTESTINFO	hti = {ptGrid};
+	pHdrCtrl->HitTest(&hti);
+	if (hti.flags & (HHT_ONHEADER | HHT_NOWHERE)) {
+		CMenu	menu;
+		menu.LoadMenu(IDR_LIST_COL_HDR);
+		return menu.GetSubMenu(0)->TrackPopupMenu(0, point.x, point.y, pWnd) != 0;
+	}
+	return false;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CChannelsBar message map
 
 BEGIN_MESSAGE_MAP(CChannelsBar, CDockablePane)
 	ON_WM_CREATE()
-	ON_WM_SIZE()
 	ON_WM_DESTROY()
+	ON_WM_SIZE()
+	ON_WM_SETFOCUS()
 	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_CHANNELS_GRID, OnGetdispinfo)
+	ON_WM_CONTEXTMENU()
+	ON_COMMAND(ID_LIST_COL_HDR_RESET, OnListColHdrReset)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -182,15 +287,19 @@ int CChannelsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		| LVS_SHOWSELALWAYS | LVS_NOSORTHEADER;
 	m_grid.Create(dwStyle, CRect(0, 0, 0, 0), this, IDC_CHANNELS_GRID);
 	m_grid.CreateColumns(m_arrColInfo, COLUMNS);
-	DWORD	dwListExStyle = LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT;
+	DWORD	dwListExStyle = LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP;
 	m_grid.SetExtendedStyle(dwListExStyle);
 	m_grid.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
 	m_grid.SetItemCountEx(MIDI_CHANNELS);
+	m_grid.LoadColumnOrder(RK_CHANNELS, RK_COL_ORDER);
+	m_grid.LoadColumnWidths(RK_CHANNELS, RK_COL_WIDTH);
 	return 0;
 }
 
 void CChannelsBar::OnDestroy()
 {
+	m_grid.SaveColumnOrder(RK_CHANNELS, RK_COL_ORDER);
+	m_grid.SaveColumnWidths(RK_CHANNELS, RK_COL_WIDTH);
 	CDockablePane::OnDestroy();
 }
 
@@ -198,6 +307,12 @@ void CChannelsBar::OnSize(UINT nType, int cx, int cy)
 {
 	CDockablePane::OnSize(nType, cx, cy);
 	m_grid.MoveWindow(0, 0, cx, cy);
+}
+
+void CChannelsBar::OnSetFocus(CWnd* pOldWnd)
+{
+	CDockablePane::OnSetFocus(pOldWnd);
+	m_grid.SetFocus();	// delegate focus to primary child view
 }
 
 LRESULT CChannelsBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)
@@ -227,7 +342,18 @@ void CChannelsBar::OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 		case COL_Number:
 			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), iItem + 1);
 			break;
+		case COL_Patch:
+			 if (theApp.m_Options.m_View_bShowGMNames) {	// if showing GM patch names
+				int	iPatch = pChan->GetProperty(CChannel::PROP_Patch);
+				if (iPatch >= 0)
+					_tcscpy_s(item.pszText, item.cchTextMax, GetGMPatchName(iPatch));
+				else
+					_tcscpy_s(item.pszText, item.cchTextMax, LDS(IDS_NONE));
+			} else	// show patches as integers
+				goto DefaultDisplayItem;	// don't rely on falling through
+			break;
 		default:
+DefaultDisplayItem:
 			int	nVal = pChan->GetProperty(item.iSubItem - 1);	// skip number column
 			if (nVal >= 0)
 				_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), nVal); 
@@ -235,4 +361,20 @@ void CChannelsBar::OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 				_tcscpy_s(item.pszText, item.cchTextMax, _T(""));
 		}
 	}
+}
+
+void CChannelsBar::OnContextMenu(CWnd* pWnd, CPoint point)
+{
+	if (ShowListColumnHeaderMenu(this, &m_grid, point))
+		return;
+	CDockablePane::OnContextMenu(pWnd, point);
+}
+
+void CChannelsBar::OnListColHdrReset()
+{
+	m_grid.SetRedraw(false);	// disable drawing to reduce flicker
+	m_grid.ResetColumnWidths(m_arrColInfo, COLUMNS);
+	m_grid.ResetColumnOrder();
+	m_grid.SetRedraw();	// reenable drawing
+	m_grid.Invalidate();
 }

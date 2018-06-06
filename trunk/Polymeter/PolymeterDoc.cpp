@@ -32,6 +32,8 @@
 #include "VariantHelper.h"
 #include "TrackSortDlg.h"
 #include "TransposeDlg.h"
+#include "ChildFrm.h"
+#include "Range.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -55,6 +57,8 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_MASTER		_T("Master")
 #define RK_STEP_VIEW	_T("StepView")
 #define RK_STEP_ZOOM	_T("Zoom")
+#define RK_SONG_VIEW	_T("SongView")
+#define RK_SONG_ZOOM	_T("Zoom")
 
 #define RK_TRANSPOSE_DLG	REG_SETTINGS _T("\\Transpose")
 #define RK_TRANSPOSE_NOTES	_T("nNotes")
@@ -72,6 +76,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 // define duplicate title IDs
 #define IDS_EDIT_REVERSE_RECT		IDS_EDIT_REVERSE
 #define IDS_EDIT_ROTATE_RECT		IDS_EDIT_ROTATE
+#define IDS_EDIT_SHIFT_RECT			IDS_EDIT_SHIFT
 
 const int CPolymeterDoc::m_nUndoTitleId[UNDO_CODES] = {
 	#define UCODE_DEF(name) IDS_EDIT_##name,
@@ -97,7 +102,8 @@ CPolymeterDoc::CPolymeterDoc()
 	InitChannelArray();
 	m_iTrackSelMark = -1;
 	m_fStepZoom = 1;
-	m_nViewMode = VIEW_TRACK;
+	m_fSongZoom = 1;
+	m_nViewType = VIEW_TRACK;
 }
 
 CPolymeterDoc::~CPolymeterDoc()
@@ -275,6 +281,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 		ConvertLegacyFileFormat();
 	m_arrChannel.Read();	// read channels
 	RdReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
+	RdReg(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
 }
 
 void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
@@ -312,6 +319,7 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 	}
 	m_arrChannel.Write();	// write channels
 	WrReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
+	WrReg(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
 }
 
 void CPolymeterDoc::ConvertLegacyFileFormat()
@@ -655,27 +663,54 @@ void CPolymeterDoc::ReverseSteps(const CRect& rSelection)
 	SetModifiedFlag();
 }
 
-bool CPolymeterDoc::RotateSteps(int nRotSteps)
+bool CPolymeterDoc::ShiftSteps(int nOffset)
 {
 	if (!GetSelectedCount())
 		return false;
-	NotifyUndoableEdit(nRotSteps, UCODE_ROTATE);
+	NotifyUndoableEdit(nOffset, UCODE_SHIFT);
 	int	nSels = m_arrTrackSel.GetSize();
 	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected track
-		m_Seq.RotateSteps(m_arrTrackSel[iSel], nRotSteps);
+		m_Seq.ShiftSteps(m_arrTrackSel[iSel], nOffset);
 	CMultiItemPropHint	hint(m_arrTrackSel);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_STEPS, &hint);
 	SetModifiedFlag();
 	return true;
 }
 
-void CPolymeterDoc::RotateSteps(const CRect& rSelection, int nRotSteps)
+void CPolymeterDoc::ShiftSteps(const CRect& rSelection, int nOffset)
 {
 	m_rStepSel = rSelection;
-	NotifyUndoableEdit(nRotSteps, UCODE_ROTATE_RECT);
+	NotifyUndoableEdit(nOffset, UCODE_SHIFT_RECT);
 	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each track
 		int	iEndStep = min(rSelection.right, m_Seq.GetLength(iTrack));
-		m_Seq.RotateSteps(iTrack, rSelection.left, iEndStep - rSelection.left, nRotSteps);
+		m_Seq.ShiftSteps(iTrack, rSelection.left, iEndStep - rSelection.left, nOffset);
+	}
+	CRectSelPropHint	hint(rSelection, true);	// set selection
+	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
+	SetModifiedFlag();
+}
+
+bool CPolymeterDoc::RotateSteps(int nOffset)
+{
+	if (!GetSelectedCount())
+		return false;
+	NotifyUndoableEdit(nOffset, UCODE_ROTATE);
+	int	nSels = m_arrTrackSel.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected track
+		m_Seq.RotateSteps(m_arrTrackSel[iSel], nOffset);
+	CMultiItemPropHint	hint(m_arrTrackSel);
+	UpdateAllViews(NULL, HINT_MULTI_TRACK_STEPS, &hint);
+	SetModifiedFlag();
+	return true;
+}
+
+void CPolymeterDoc::RotateSteps(const CRect& rSelection, int nOffset)
+{
+	m_rStepSel = rSelection;
+	NotifyUndoableEdit(nOffset, UCODE_ROTATE_RECT);
+	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each track
+		int	iEndStep = min(rSelection.right, m_Seq.GetLength(iTrack));
+		m_Seq.RotateSteps(iTrack, rSelection.left, iEndStep - rSelection.left, nOffset);
 	}
 	CRectSelPropHint	hint(rSelection, true);	// set selection
 	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
@@ -696,6 +731,24 @@ bool CPolymeterDoc::Transpose(int nNoteDelta)
 	CMultiItemPropHint	hint(m_arrTrackSel, PROP_Note);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
 	return true;
+}
+
+void CPolymeterDoc::SetViewType(int nViewType)
+{
+	if (nViewType == m_nViewType)	// if already in requested state
+		return;	// nothing to do
+	m_nViewType = nViewType;
+	m_Seq.SetSongMode(nViewType == VIEW_SONG);
+	CViewIter	iter(this);
+	CView	*pView;
+	while ((pView = iter.GetNextView()) != NULL) {
+		CTrackView	*pTrackView = DYNAMIC_DOWNCAST(CTrackView, pView);
+		if (pTrackView != NULL) {	// if found track view
+			CFrameWnd	*pFrame = pTrackView->GetParentFrame();
+			CChildFrame	*pChildFrame = STATIC_DOWNCAST(CChildFrame, pFrame);
+			pChildFrame->SetViewType(nViewType);
+		}
+	}
 }
 
 bool CPolymeterDoc::ValidateTrackLength(int nLength, int nQuant) const
@@ -1126,13 +1179,16 @@ void CPolymeterDoc::RestoreReverse(const CUndoState& State)
 {
 	const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
 	Select(pInfo->m_arrSelection);
-	if (State.GetCode() == UCODE_REVERSE) {
+	switch (State.GetCode()) {
+	case UCODE_REVERSE:
 		ReverseSteps();
-	} else {
-		int	nRotSteps = State.GetCtrlID(); 
+		break;
+	case UCODE_ROTATE:
+		int	nOffset = State.GetCtrlID(); 
 		if (IsUndoing())
-			nRotSteps = -nRotSteps;	// inverse rotation
-		RotateSteps(nRotSteps);
+			nOffset = -nOffset;	// inverse rotation
+		RotateSteps(nOffset);
+		break;
 	}
 }
 
@@ -1154,14 +1210,47 @@ void CPolymeterDoc::SaveReverseRect(CUndoState& State) const
 void CPolymeterDoc::RestoreReverseRect(const CUndoState& State)
 {
 	const CUndoRectSel	*pInfo = static_cast<CUndoRectSel*>(State.GetObj());
-	if (State.GetCode() == UCODE_REVERSE_RECT) {
+	switch (State.GetCode()) {
+	case UCODE_REVERSE_RECT:
 		ReverseSteps(pInfo->m_rSelection);
-	} else {
-		int	nRotSteps = State.GetCtrlID(); 
+		break;
+	case UCODE_ROTATE_RECT:
+		int	nOffset = State.GetCtrlID(); 
 		if (IsUndoing())
-			nRotSteps = -nRotSteps;	// inverse rotation
-		RotateSteps(pInfo->m_rSelection, nRotSteps);
+			nOffset = -nOffset;	// inverse rotation
+		RotateSteps(pInfo->m_rSelection, nOffset);
+		break;
 	}
+}
+
+void CPolymeterDoc::SaveDubs(CUndoState& State) const
+{
+	CRefPtr<CUndoDub>	pInfo;
+	pInfo.CreateObj();
+	CRange<int>	rngTrack(m_rStepSel.top, m_rStepSel.bottom);
+	rngTrack.Normalize();
+	int	nTracks = rngTrack.Length();
+	pInfo->m_iTrack = rngTrack.Start;
+	pInfo->m_arrDub.SetSize(nTracks);
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
+		pInfo->m_arrDub[iTrack] = m_Seq.GetTrack(rngTrack.Start + iTrack).m_arrDub;
+	}
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreDubs(const CUndoState& State)
+{
+	if (State.GetCode() == UCODE_RECORD)
+		Play(false);	// stop recording before restoring dubs
+	const CUndoDub	*pInfo = static_cast<CUndoDub*>(State.GetObj());
+	int	nTracks = pInfo->m_arrDub.GetSize();
+	int	iStartTrack = pInfo->m_iTrack;
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
+		m_Seq.SetDubs(iStartTrack + iTrack, pInfo->m_arrDub[iTrack]);
+	}
+	UpdateAllViews(NULL, HINT_SONG_DUB);
+	if (State.GetCode() == UCODE_RECORD)
+		UpdateSongLength();	// restore song length from dubs
 }
 
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
@@ -1202,6 +1291,7 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		SaveTrackSort(State);
 		break;
 	case UCODE_MULTI_STEP_RECT:
+	case UCODE_SHIFT_RECT:
 		SaveMultiStepRect(State);
 		break;
 	case UCODE_CUT_STEPS:
@@ -1211,6 +1301,7 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		SaveClipboardSteps(State);
 		break;
 	case UCODE_VELOCITY:
+	case UCODE_SHIFT:
 		SaveMultiTrackSteps(State);
 		break;
 	case UCODE_REVERSE:
@@ -1220,6 +1311,10 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 	case UCODE_REVERSE_RECT:
 	case UCODE_ROTATE_RECT:
 		SaveReverseRect(State);
+		break;
+	case UCODE_DUB:
+	case UCODE_RECORD:
+		SaveDubs(State);
 		break;
 	}
 }
@@ -1263,6 +1358,7 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 		break;
 	case UCODE_MULTI_STEP_RECT:
+	case UCODE_SHIFT_RECT:
 		RestoreMultiStepRect(State);
 		break;
 	case UCODE_CUT_STEPS:
@@ -1272,6 +1368,7 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		RestoreClipboardSteps(State);
 		break;
 	case UCODE_VELOCITY:
+	case UCODE_SHIFT:
 		RestoreMultiTrackSteps(State);
 		break;
 	case UCODE_REVERSE:
@@ -1281,6 +1378,10 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_REVERSE_RECT:
 	case UCODE_ROTATE_RECT:
 		RestoreReverseRect(State);
+		break;
+	case UCODE_DUB:
+	case UCODE_RECORD:
+		RestoreDubs(State);
 		break;
 	}
 }
@@ -1384,6 +1485,13 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 	if (bPlay == m_Seq.IsPlaying())	// if already in requested state
 		return true;	// nothing to do
 	if (bPlay) {	// if starting playback
+		if (m_Seq.HasDubs()) {	// if recording already exists
+			UINT	nType = MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION;
+			if (AfxMessageBox(IDS_DOC_REPLACE_RECORDING, nType) != IDYES)
+				return false;
+			m_rStepSel = CRect(0, 0, 0, m_Seq.GetTrackCount());
+			NotifyUndoableEdit(0, UCODE_RECORD);
+		}
 		if (m_Seq.GetOutputDevice() < 0) {	// if no output MIDI device selected
 			AfxMessageBox(IDS_MIDI_NO_OUTPUT_DEVICE);
 			return false;
@@ -1392,33 +1500,76 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 		CPolymeterDoc	*pOtherDoc;
 		while ((pOtherDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
 			if (pOtherDoc != this && pOtherDoc->m_Seq.IsPlaying()) {	// if another document is playing
+				bool	bWasRecording = pOtherDoc->m_Seq.IsRecording();
 				pOtherDoc->m_Seq.Play(false);	// stop other document; only one can play at a time
+				pOtherDoc->OnPlay(false, bWasRecording);	// do post-play processing
 				break;
 			}
 		}
 		UpdateChannelEvents();	// queue channel events to be output at start of playback
 	}
 	bool	bRetVal;
-	if (bRecord) {
-		bRetVal = m_Seq.Record(bPlay);
-	} else {
-		bRetVal = m_Seq.Play(bPlay);
-	}
+	bool	bWasRecording = m_Seq.IsRecording();
+	bRetVal = m_Seq.Play(bPlay, bRecord);
 	UpdateAllViews(NULL, HINT_PLAY);
+	OnPlay(bPlay, bWasRecording);	// do post-play processing
 	return bRetVal;
 }
 
-void CPolymeterDoc::DumpDubs()
+void CPolymeterDoc::OnPlay(bool bPlay, bool bRecord)
 {
-	int	nTracks = GetTrackCount();
-	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-		const CTrack& trk = m_Seq.GetTrack(iTrack);
-		int	nDubs = trk.m_arrDub.GetSize();
-		printf("track %d\n", iTrack);
-		for (int iDub = 0; iDub < nDubs; iDub++) {	// for each dub
-			printf("%d\t%d\n", trk.m_arrDub[iDub].m_nTime, trk.m_arrDub[iDub].m_bMute);
-		}
+	if (!bPlay && bRecord) {	// if ending a recording
+		UpdateSongLength();
 	}
+}
+
+void CPolymeterDoc::UpdateSongLength()
+{
+	m_nSongLength = m_Seq.GetSongDurationSeconds();
+	CPropHint	hint(0, CMasterProps::PROP_nSongLength);
+	UpdateAllViews(NULL, HINT_MASTER_PROP, &hint);
+	SetPosition(0);	// rewind
+}
+
+void CPolymeterDoc::SetPosition(int nPos)
+{
+	m_Seq.SetPosition(nPos);
+	CSongPosHint	hint(nPos);
+	UpdateAllViews(NULL, HINT_SONG_POS, &hint);
+}
+
+void CPolymeterDoc::SetDubs(const CRect& rSelection, double fTicksPerCell)
+{
+	m_rStepSel = rSelection;	// for undo handler
+	NotifyUndoableEdit(0, UCODE_DUB);
+	SetModifiedFlag();
+	int	nTracks = GetTrackCount();
+	int	iEndTrack = min(rSelection.bottom, nTracks);
+	for (int iTrack = rSelection.top; iTrack < iEndTrack; iTrack++) {	// for each selected track
+		int	nRunStartTime = round(rSelection.left * fTicksPerCell);
+		int	nRunEndTime = round((rSelection.left + 1) * fTicksPerCell);
+		bool	bRunMute = m_Seq.GetDubs(iTrack, nRunStartTime, nRunEndTime);
+		for (int iCell = rSelection.left + 1; iCell < rSelection.right; iCell++) {
+			int	nStartTime = round(iCell * fTicksPerCell);
+			int	nEndTime = round((iCell + 1) * fTicksPerCell);
+			bool	bMute = m_Seq.GetDubs(iTrack, nStartTime, nEndTime);
+			if (bMute != bRunMute) {
+				m_Seq.SetDubs(iTrack, nRunStartTime, nRunEndTime, !bRunMute);
+				nRunStartTime = nStartTime;
+				bRunMute = bMute;
+			}
+			nRunEndTime = nEndTime;
+		}
+		m_Seq.SetDubs(iTrack, nRunStartTime, nRunEndTime, !bRunMute);
+	}
+	UpdateAllViews(NULL, HINT_SONG_DUB);
+}
+
+bool CPolymeterDoc::ShowGMDrums(int iTrack) const
+{
+	// if track uses drum channel, and track type is note, and showing General MIDI patch names
+	return (m_Seq.GetChannel(iTrack) == 9 && m_Seq.GetType(iTrack) == CTrack::TT_NOTE
+		&& theApp.m_Options.m_View_bShowGMNames);
 }
 
 // CPolymeterDoc diagnostics
@@ -1444,17 +1595,18 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_REDO, OnUpdateEditRedo)
 	ON_COMMAND(ID_TOOLS_STATISTICS, OnToolsStatistics)
 	ON_COMMAND(ID_FILE_EXPORT, OnFileExport)
-	ON_COMMAND(ID_VIEW_PLAY, OnViewPlay)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_PLAY, OnUpdateViewPlay)
-	ON_COMMAND(ID_VIEW_PAUSE, OnViewPause)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_PAUSE, OnUpdateViewPause)
-	ON_COMMAND(ID_VIEW_RECORD, OnViewRecord)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_RECORD, OnUpdateViewRecord)
-	ON_COMMAND(ID_VIEW_GO_TO_POSITION, OnViewGoToPosition)
-	ON_COMMAND(ID_VIEW_MODE_SONG, OnViewModeSong)
-	ON_COMMAND(ID_VIEW_MODE_TRACK, OnViewModeTrack)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_MODE_SONG, OnUpdateViewModeSong)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_MODE_TRACK, OnUpdateViewModeTrack)
+	ON_COMMAND(ID_TRANSPORT_PLAY, OnTransportPlay)
+	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_PLAY, OnUpdateTransportPlay)
+	ON_COMMAND(ID_TRANSPORT_PAUSE, OnTransportPause)
+	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_PAUSE, OnUpdateTransportPause)
+	ON_COMMAND(ID_TRANSPORT_RECORD, OnTransportRecord)
+	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_RECORD, OnUpdateTransportRecord)
+	ON_COMMAND(ID_TRANSPORT_REWIND, OnTransportRewind)
+	ON_COMMAND(ID_TRANSPORT_GO_TO_POSITION, OnTransportGoToPosition)
+	ON_COMMAND(ID_VIEW_TYPE_SONG, OnViewTypeSong)
+	ON_COMMAND(ID_VIEW_TYPE_TRACK, OnViewTypeTrack)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_TYPE_SONG, OnUpdateViewTypeSong)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_TYPE_TRACK, OnUpdateViewTypeTrack)
 	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
 	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
@@ -1467,18 +1619,22 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditSelectAll)
-	ON_COMMAND(ID_EDIT_REVERSE, OnEditReverse)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_REVERSE, OnUpdateEditReverse)
-	ON_COMMAND(ID_EDIT_ROTATE_LEFT, OnEditRotateLeft)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_ROTATE_LEFT, OnUpdateEditRotate)
-	ON_COMMAND(ID_EDIT_ROTATE_RIGHT, OnEditRotateRight)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_ROTATE_RIGHT, OnUpdateEditRotate)
+	ON_COMMAND(ID_TRACK_REVERSE, OnTrackReverse)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_REVERSE, OnUpdateTrackReverse)
+	ON_COMMAND(ID_TRACK_SHIFT_LEFT, OnTrackShiftLeft)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_LEFT, OnUpdateTrackReverse)
+	ON_COMMAND(ID_TRACK_SHIFT_RIGHT, OnTrackShiftRight)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_RIGHT, OnUpdateTrackReverse)
+	ON_COMMAND(ID_TRACK_ROTATE_LEFT, OnTrackRotateLeft)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_LEFT, OnUpdateTrackReverse)
+	ON_COMMAND(ID_TRACK_ROTATE_RIGHT, OnTrackRotateRight)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_RIGHT, OnUpdateTrackReverse)
 	ON_COMMAND(ID_EDIT_TRACK_SORT, OnEditTrackSort)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_TRACK_SORT, OnUpdateEditSelectAll)
 	ON_COMMAND(ID_TOOLS_TIME_TO_REPEAT, OnToolsTimeToRepeat)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIME_TO_REPEAT, OnUpdateToolsTimeToRepeat)
-	ON_COMMAND(ID_EDIT_TRANSPOSE, OnEditTranspose)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_TRANSPOSE, OnUpdateEditTranspose)
+	ON_COMMAND(ID_TRACK_TRANSPOSE, OnEditTranspose)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_TRANSPOSE, OnUpdateEditTranspose)
 END_MESSAGE_MAP()
 
 // CPolymeterDoc commands
@@ -1519,7 +1675,7 @@ BOOL CPolymeterDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
 void CPolymeterDoc::OnFileExport()
 {
-	int	nUsedTracks = m_Seq.GetUsedTrackCount(m_nViewMode != VIEW_SONG);	// in track mode, exclude muted tracks
+	int	nUsedTracks = m_Seq.GetUsedTrackCount(m_nViewType != VIEW_SONG);	// in track mode, exclude muted tracks
 	if (!nUsedTracks) {	// if no tracks to export
 		AfxMessageBox(IDS_EXPORT_EMPTY_FILE);
 		return;
@@ -1536,20 +1692,19 @@ void CPolymeterDoc::OnFileExport()
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
 		const int	nDefaultDuration = 60;	// seconds
-		const int	nDecayPadding = 5;	// additional time for final notes to decay, in seconds  
 		CExportDlg	dlg;
 		dlg.m_nDuration = theApp.GetProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, nDefaultDuration);
-		if (m_nViewMode == VIEW_SONG) {
-			int	nDurationTicks = m_Seq.GetSongDuration();
-			int	nDurationSecs = static_cast<int>(m_Seq.ConvertPositionToSeconds(nDurationTicks));
-			nDurationSecs += nDecayPadding;
-			dlg.m_nDuration = nDurationSecs;
-		}
+		bool	bHasDubs;
+		if (m_Seq.HasDubs()) {
+			bHasDubs = true;
+			dlg.m_nDuration = m_Seq.GetSongDurationSeconds();
+		} else
+			bHasDubs = false;
 		if (dlg.DoModal() == IDOK) {
 			theApp.WriteProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, dlg.m_nDuration);
 			CWaitCursor	wc;	// show wait cursor; export can take time
 			UpdateChannelEvents();	// queue channel events to be output at start of playback
-			if (!m_Seq.Export(fd.GetPathName(), dlg.m_nDuration)) {
+			if (!m_Seq.Export(fd.GetPathName(), dlg.m_nDuration, bHasDubs)) {
 				AfxMessageBox(IDS_EXPORT_ERROR);
 			}
 		}
@@ -1682,29 +1837,34 @@ void CPolymeterDoc::OnUpdateEditSelectAll(CCmdUI *pCmdUI)
 	}
 }
 
-void CPolymeterDoc::OnEditReverse()
+void CPolymeterDoc::OnTrackReverse()
 {
 	ReverseSteps();
 }
 
-void CPolymeterDoc::OnUpdateEditReverse(CCmdUI *pCmdUI)
+void CPolymeterDoc::OnUpdateTrackReverse(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(GetSelectedCount());
+	pCmdUI->Enable(IsTrackView() && GetSelectedCount());
 }
 
-void CPolymeterDoc::OnEditRotateLeft()
+void CPolymeterDoc::OnTrackShiftLeft()
+{
+	ShiftSteps(-1);
+}
+
+void CPolymeterDoc::OnTrackShiftRight()
+{
+	ShiftSteps(1);
+}
+
+void CPolymeterDoc::OnTrackRotateLeft()
 {
 	RotateSteps(-1);
 }
 
-void CPolymeterDoc::OnEditRotateRight()
+void CPolymeterDoc::OnTrackRotateRight()
 {
 	RotateSteps(1);
-}
-
-void CPolymeterDoc::OnUpdateEditRotate(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable(GetSelectedCount());
 }
 
 void CPolymeterDoc::OnEditTranspose()
@@ -1720,7 +1880,7 @@ void CPolymeterDoc::OnEditTranspose()
 
 void CPolymeterDoc::OnUpdateEditTranspose(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(GetSelectedCount());
+	pCmdUI->Enable(IsTrackView() && GetSelectedCount());
 }
 
 void CPolymeterDoc::OnEditTrackSort()
@@ -1733,39 +1893,44 @@ void CPolymeterDoc::OnEditTrackSort()
 	}
 }
 
-void CPolymeterDoc::OnViewPlay()
+void CPolymeterDoc::OnTransportPlay()
 {
 	Play(!m_Seq.IsPlaying());
 }
 
-void CPolymeterDoc::OnUpdateViewPlay(CCmdUI *pCmdUI)
+void CPolymeterDoc::OnUpdateTransportPlay(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_Seq.IsPlaying());
 }
 
-void CPolymeterDoc::OnViewPause()
+void CPolymeterDoc::OnTransportPause()
 {
 	ASSERT(m_Seq.IsPlaying());
 	m_Seq.Pause(!m_Seq.IsPaused());
 }
 
-void CPolymeterDoc::OnUpdateViewPause(CCmdUI *pCmdUI)
+void CPolymeterDoc::OnUpdateTransportPause(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_Seq.IsPaused());
 	pCmdUI->Enable(m_Seq.IsPlaying());
 }
 
-void CPolymeterDoc::OnViewRecord()
+void CPolymeterDoc::OnTransportRecord()
 {
 	Play(!m_Seq.IsPlaying(), true);
 }
 
-void CPolymeterDoc::OnUpdateViewRecord(CCmdUI *pCmdUI)
+void CPolymeterDoc::OnUpdateTransportRecord(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_Seq.IsRecording());
 }
 
-void CPolymeterDoc::OnViewGoToPosition()
+void CPolymeterDoc::OnTransportRewind()
+{
+	SetPosition(0);
+}
+
+void CPolymeterDoc::OnTransportGoToPosition()
 {
 	CGoToPositionDlg	dlg;
 	dlg.m_sPos = m_sGoToPosition;
@@ -1773,32 +1938,29 @@ void CPolymeterDoc::OnViewGoToPosition()
 		m_sGoToPosition = dlg.m_sPos;
 		LONGLONG	nPos;
 		if (m_Seq.ConvertStringToPosition(dlg.m_sPos, nPos)) {
-			m_Seq.SetPosition(static_cast<int>(nPos));
-			UpdateAllViews(NULL, HINT_SONG_POS);
+			SetPosition(static_cast<int>(nPos));
 		}
 	}
 }
 
-void CPolymeterDoc::OnViewModeTrack()
+void CPolymeterDoc::OnViewTypeTrack()
 {
-	m_nViewMode = VIEW_TRACK;
-	m_Seq.SetSongMode(false);
+	SetViewType(VIEW_TRACK);
 }
 
-void CPolymeterDoc::OnUpdateViewModeTrack(CCmdUI *pCmdUI)
+void CPolymeterDoc::OnUpdateViewTypeTrack(CCmdUI *pCmdUI)
 {
-	pCmdUI->SetRadio(m_nViewMode == VIEW_TRACK);
+	pCmdUI->SetRadio(IsTrackView());
 }
 
-void CPolymeterDoc::OnViewModeSong()
+void CPolymeterDoc::OnViewTypeSong()
 {
-	m_nViewMode = VIEW_SONG;
-	m_Seq.SetSongMode(true);
+	SetViewType(VIEW_SONG);
 }
 
-void CPolymeterDoc::OnUpdateViewModeSong(CCmdUI *pCmdUI)
+void CPolymeterDoc::OnUpdateViewTypeSong(CCmdUI *pCmdUI)
 {
-	pCmdUI->SetRadio(m_nViewMode == VIEW_SONG);
+	pCmdUI->SetRadio(IsSongView());
 }
 
 void CPolymeterDoc::OnToolsStatistics()

@@ -81,8 +81,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnAppAbout();
 	afx_msg void OnAppHomePage();
-	afx_msg void OnToolsTieNotes();
-	afx_msg void OnUpdateToolsTieNotes(CCmdUI *pCmdUI);
+	afx_msg void OnTrackTieNotes();
+	afx_msg void OnUpdateTrackTieNotes(CCmdUI *pCmdUI);
 };
 
 extern CPolymeterApp theApp;

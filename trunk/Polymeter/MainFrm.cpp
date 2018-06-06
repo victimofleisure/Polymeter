@@ -411,6 +411,13 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				}
 			}
 			break;
+		case CPolymeterDoc::HINT_OPTIONS:
+			{
+				const CPolymeterDoc::COptionsPropHint *pPropHint = static_cast<CPolymeterDoc::COptionsPropHint *>(pHint);
+				if (theApp.m_Options.m_View_bShowGMNames != pPropHint->m_pPrevOptions->m_View_bShowGMNames)
+					m_wndChannelsBar.Update();	// update channels bar so patches are redisplayed in new format
+			}
+			break;
 		}
 		bool	bIsPlaying = pDoc->m_Seq.IsPlaying();
 		m_wndPropertiesBar.Enable(CMasterProps::PROP_nTimeDiv, !bIsPlaying);
@@ -433,7 +440,8 @@ void CMainFrame::UpdateSongPosition()
 		pDoc->m_Seq.ConvertPositionToTimeString(nPos, m_sSongTime);
 		m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);
 		CView	*pView = reinterpret_cast<CView *>(this);
-		pDoc->UpdateAllViews(pView, CPolymeterDoc::HINT_SONG_POS);
+		CPolymeterDoc::CSongPosHint	hint(nPos);
+		pDoc->UpdateAllViews(pView, CPolymeterDoc::HINT_SONG_POS, &hint);
 	}
 }
 
@@ -541,6 +549,10 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_MESSAGE(UWM_DEVICE_NODE_CHANGE, OnDeviceNodeChange)
 	ON_WM_DEVICECHANGE()
 	ON_COMMAND(ID_TOOLS_DEVICES, OnToolsDevices)
+	ON_COMMAND(ID_VIEW_CHANNELS, OnViewChannels)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_CHANNELS, OnUpdateViewChannels)
+	ON_COMMAND(ID_VIEW_PROPERTIES, OnViewProperties)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_PROPERTIES, OnUpdateViewProperties)
 END_MESSAGE_MAP()
 
 // CMainFrame message handlers
@@ -714,9 +726,19 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 			// convert time division preset index to time division value in ticks
 			pDoc->m_Seq.SetTimeDivision(CMasterProps::GetTimeDivisionTicks(pDoc->m_nTimeDiv));
 			break;
+		case CMasterProps::PROP_nSongLength:
+			if (pDoc->m_Seq.HasDubs()) {
+				int	nSongLength = pDoc->m_Seq.GetSongDurationSeconds();
+				if (pDoc->m_nSongLength < nSongLength) {	// if new song length is shorter than recording
+					AfxMessageBox(IDS_DOC_CANT_TRUNCATE_RECORDING);
+					pDoc->UpdateSongLength();	// restore song length from dubs
+				}
+			}
+			break;
 		}
 		CPolymeterDoc::CPropHint	hint(0, iProp);
 		pDoc->UpdateAllViews(reinterpret_cast<CView *>(lParam), CPolymeterDoc::HINT_MASTER_PROP, &hint);
+		pDoc->SetModifiedFlag();
 	}
 	return 0;
 }
@@ -741,15 +763,6 @@ void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 		UpdateSongPosition();
 	} else
 		CMDIFrameWndEx::OnTimer(nIDEvent);
-}
-
-void CMainFrame::OnToolsOptions()
-{
-	COptions	m_optsPrev(theApp.m_Options);
-	COptionsDlg	dlg;
-	if (dlg.DoModal() == IDOK) {
-		ApplyOptions(&m_optsPrev);
-	}
 }
 
 LRESULT	CMainFrame::OnDelayedCreate(WPARAM wParam, LPARAM lParam)
@@ -785,6 +798,39 @@ BOOL CMainFrame::OnDeviceChange(UINT nEventType, W64ULONG dwData)
 		PostMessage(UWM_DEVICE_NODE_CHANGE);
 	}
 	return retc;	// true to allow device change
+}
+
+void CMainFrame::OnViewChannels()
+{
+	bool	bShow = !m_wndChannelsBar.IsVisible();
+	m_wndChannelsBar.ShowPane(bShow, 0, TRUE);
+	if (bShow)
+		m_wndChannelsBar.SetFocus();	// ShowPane's activate flag doesn't work
+}
+
+void CMainFrame::OnUpdateViewChannels(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_wndChannelsBar.IsVisible());
+}
+
+void CMainFrame::OnViewProperties()
+{
+	bool	bShow = !m_wndPropertiesBar.IsVisible();
+	m_wndPropertiesBar.ShowPane(bShow, 0, TRUE);
+}
+
+void CMainFrame::OnUpdateViewProperties(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_wndPropertiesBar.IsVisible());
+}
+
+void CMainFrame::OnToolsOptions()
+{
+	COptions	m_optsPrev(theApp.m_Options);
+	COptionsDlg	dlg;
+	if (dlg.DoModal() == IDOK) {
+		ApplyOptions(&m_optsPrev);
+	}
 }
 
 void CMainFrame::OnToolsDevices()

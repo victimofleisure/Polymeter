@@ -31,7 +31,14 @@
 
 // CStepParent
 
-IMPLEMENT_DYNCREATE(CStepParent, CView)
+IMPLEMENT_DYNCREATE(CStepParent, CSplitView)
+
+int CStepParent::m_nGlobVeloHeight = INIT_VELO_HEIGHT;
+
+#define RK_STEP_VIEW _T("StepView")
+#define RK_VELO_HEIGHT _T("VeloHeight")
+
+#define PANE_ID(n) (PANE_ID_FIRST + n)
 
 // CStepParent construction/destruction
 
@@ -42,9 +49,7 @@ CStepParent::CStepParent()
 	m_pStepView = NULL;
 	m_nRulerHeight = 0;
 	m_bIsScrolling = true;	// prevents premature scrolling during creation
-	m_bIsSplitDrag = false;
-	m_bShowVelos = false;
-	m_nVeloHeight = 100;
+	m_nVeloHeight = m_nGlobVeloHeight;
 	m_nMuteWidth = 0;
 	m_hSplitCursor = NULL;
 }
@@ -63,7 +68,25 @@ BOOL CStepParent::PreCreateWindow(CREATESTRUCT& cs)
 		NULL,									// no background brush
 		theApp.LoadIcon(IDR_MAINFRAME));		// app's icon
 	cs.style |= WS_CLIPCHILDREN;
-	return CView::PreCreateWindow(cs);
+	return CSplitView::PreCreateWindow(cs);
+}
+
+void CStepParent::UpdatePersistentState()
+{
+	if (m_nVeloHeight != m_nGlobVeloHeight) {	// if velocity pane's height changed
+		m_nVeloHeight = m_nGlobVeloHeight;	// update our cached copy
+		RecalcLayout();
+	}
+}
+
+void CStepParent::LoadPersistentState()
+{
+	m_nGlobVeloHeight = theApp.GetProfileInt(RK_STEP_VIEW, RK_VELO_HEIGHT, INIT_VELO_HEIGHT);
+}
+
+void CStepParent::SavePersistentState()
+{
+	theApp.WriteProfileInt(RK_STEP_VIEW, RK_VELO_HEIGHT, m_nGlobVeloHeight);
 }
 
 int CStepParent::GetTrackHeight() const
@@ -82,51 +105,22 @@ void CStepParent::GetSplitRect(CRect& rSplit) const
 	CRect	rc;
 	GetClientRect(rc);
 	int	nSplitY2 = rc.bottom - m_nVeloHeight;
-	int	nSplitY1 = nSplitY2 - m_nSplitHeight;
+	int	nSplitY1 = nSplitY2 - m_nSplitBarWidth;
 	rSplit = CRect(0, nSplitY1, rc.Width(), nSplitY2);
-}
-
-void CStepParent::SetSplitCursor(bool bEnable)
-{
-	if (m_bIsSplitDrag)	// if dragging splitter bar
-		return;	// don't set cursor during drag, else child window painting lags badly
-	HCURSOR	hCursor = NULL;
-	if (bEnable) {	// if showing splitter bar cursor
-		if (m_hSplitCursor != NULL) {	// if splitter bar cursor already loaded
-			hCursor = m_hSplitCursor;	// use cached cursor
-		} else {	// splitter bar cursor not loaded
-			HINSTANCE	hInst = AfxFindResourceHandle(MAKEINTRESOURCE(AFX_IDC_VSPLITBAR), ATL_RT_GROUP_CURSOR);
-			if (hInst != NULL)	// if AFX resource instance found
-				hCursor = LoadCursor(hInst, MAKEINTRESOURCE(AFX_IDC_VSPLITBAR));
-			ASSERT(hCursor != NULL);	// AFX splitter bar cursor should load
-			if (hCursor == NULL)	// if AFX splitter bar cursor didn't load
-				hCursor = LoadCursor(NULL, IDC_SIZENS);	// load standard sizing cursor
-			ASSERT(hCursor != NULL);	// standard sizing cursor should definitely load
-			m_hSplitCursor = hCursor;	// cache cursor
-		}
-	} else {	// showing default cursor
-		hCursor = LoadCursor(NULL, IDC_ARROW);	// load default cursor
-		m_hSplitCursor = NULL;	// empty cursor cache
-	}
-	if (hCursor != NULL)	// if cursor loaded
-		SetCursor(hCursor);	// set cursor
 }
 
 void CStepParent::ShowVelocityView(bool bShow)
 {
-	if (bShow == m_bShowVelos)	// if already in requested state
+	if (bShow == m_bIsShowSplit)	// if already in requested state
 		return;	// nothing to do
-	m_bShowVelos = bShow;
+	m_bIsShowSplit = bShow;
 	int	nShowCmd;
 	if (bShow)
 		nShowCmd = SW_SHOW;
 	else
 		nShowCmd = SW_HIDE;
 	m_pVeloView->ShowWindow(nShowCmd);
-	CRect	rc;
-	GetClientRect(rc);
-	RecalcLayout(rc.Width(), rc.Height());
-	Invalidate();
+	RecalcLayout();
 }
 
 void CStepParent::OnStepScroll(CSize szScroll)
@@ -136,7 +130,7 @@ void CStepParent::OnStepScroll(CSize szScroll)
 		CPoint	ptScroll(m_pStepView->GetScrollPosition());
 		if (szScroll.cx) {	// if x scroll
 			m_wndRuler.ScrollToPosition(ptScroll.x - m_nMuteWidth);
-			if (m_bShowVelos)	// if showing velocities
+			if (m_bIsShowSplit)	// if showing velocities
 				m_pVeloView->Invalidate();
 		}
 		if (szScroll.cy) {	// if y scroll
@@ -154,7 +148,7 @@ void CStepParent::OnStepZoom()
 		double	fBeatWidth = m_pStepView->GetBeatWidth() * m_pStepView->GetZoom();
 		m_wndRuler.SetScrollPosition(ptScroll.x - m_nMuteWidth);
 		m_wndRuler.SetZoom(1 / fBeatWidth);
-		if (m_bShowVelos)	// if showing velocities
+		if (m_bIsShowSplit)	// if showing velocities
 			m_pVeloView->Invalidate();
 	}
 }
@@ -163,8 +157,8 @@ void CStepParent::RecalcLayout(int cx, int cy)
 {
 	int	nWnds = 2;
 	CSize	szStepView(cx - m_nMuteWidth, cy - m_nRulerHeight);
-	if (m_bShowVelos) {	// if showing velocities
-		szStepView.cy -= m_nVeloHeight + m_nSplitHeight;
+	if (m_bIsShowSplit) {	// if showing velocities
+		szStepView.cy -= m_nVeloHeight + m_nSplitBarWidth;
 		nWnds++;
 	}
 	UINT	dwFlags = SWP_NOACTIVATE | SWP_NOZORDER;
@@ -173,43 +167,40 @@ void CStepParent::RecalcLayout(int cx, int cy)
 	hDWP = DeferWindowPos(hDWP, m_wndRuler.m_hWnd, NULL, 0, 0, cx, m_nRulerHeight, dwFlags);
 	hDWP = DeferWindowPos(hDWP, m_pMuteView->m_hWnd, NULL, 0, m_nRulerHeight, m_nMuteWidth, szStepView.cy, dwFlags);
 	hDWP = DeferWindowPos(hDWP, m_pStepView->m_hWnd, NULL, m_nMuteWidth, m_nRulerHeight, szStepView.cx, szStepView.cy, dwFlags);
-	if (m_bShowVelos)	// if showing velocities
+	if (m_bIsShowSplit)	// if showing velocities
 		hDWP = DeferWindowPos(hDWP, m_pVeloView->m_hWnd, NULL, m_nMuteWidth, cy - m_nVeloHeight, szStepView.cx, m_nVeloHeight, dwFlags);
 	EndDeferWindowPos(hDWP);
+	m_nGlobVeloHeight = m_nVeloHeight;	// update global velocity pane height
+}
+
+void CStepParent::RecalcLayout()
+{
+	CRect	rc;
+	GetClientRect(rc);
+	RecalcLayout(rc.Width(), rc.Height());
+	Invalidate();
 }
 
 void CStepParent::OnDraw(CDC* pDC)
 {
-	if (m_bShowVelos) {	// if showing velocities
-		CRect	rClip;
-		pDC->GetClipBox(rClip);
+	if (m_bIsShowSplit) {	// if showing velocities
+		CSplitView::OnDraw(pDC);
 		CRect	rSplit;
 		GetSplitRect(rSplit);
-		CRect	rClipSplit;
-		if (rClipSplit.IntersectRect(rClip, rSplit)) {
-			pDC->SelectObject(GetStockObject(DC_BRUSH));
-			pDC->SelectObject(GetStockObject(DC_PEN));
-			pDC->SetDCBrushColor(GetSysColor(COLOR_3DFACE));
-			pDC->SetDCPenColor(GetSysColor(COLOR_3DSHADOW));
-			pDC->Rectangle(rSplit);
-		}
 		CRect	rSlack(CPoint(0, rSplit.bottom), CSize(m_nMuteWidth, m_nVeloHeight));
 		pDC->FillSolidRect(rSlack, GetSysColor(COLOR_3DFACE));
 	}
-	UNREFERENCED_PARAMETER(pDC);
 }
 
 // CStepParent message map
 
-BEGIN_MESSAGE_MAP(CStepParent, CView)
+BEGIN_MESSAGE_MAP(CStepParent, CSplitView)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
 	ON_WM_PARENTNOTIFY()
 	ON_WM_SETCURSOR()
 	ON_MESSAGE(CTrackView::UWM_TRACK_SCROLL, OnTrackScroll)
-	ON_WM_LBUTTONDOWN()
-	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_WM_MOUSEWHEEL()
 	ON_COMMAND(ID_VIEW_VELOCITIES, OnViewVelocities)
@@ -220,7 +211,7 @@ END_MESSAGE_MAP()
 
 BOOL CStepParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext)
 {
-	if (!CView::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext))
+	if (!CSplitView::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext))
 		return false;
 	// create our child views
 	CRuntimeClass* pMuteClass = RUNTIME_CLASS(CMuteView);
@@ -235,17 +226,17 @@ BOOL CStepParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 	m_pVeloView->m_pStepView = m_pStepView;
 	CRect rInit(0, 0, 0, 0);
 	DWORD	dwRulerStyle = WS_CHILD | WS_VISIBLE | CBRS_ALIGN_TOP | CRulerCtrl::NO_ACTIVATE;
-	if (!m_wndRuler.Create(dwRulerStyle, rInit, this, AFX_IDW_PANE_FIRST + PANE_RULER))
+	if (!m_wndRuler.Create(dwRulerStyle, rInit, this, PANE_ID(PANE_RULER)))
 		return false;
 	DWORD	dwStepStyle = WS_CHILD | WS_VISIBLE;
-	if (!m_pStepView->Create(NULL, NULL, dwStepStyle, rInit, this, PANE_STEP, pContext))
+	if (!m_pStepView->Create(NULL, _T("Step"), dwStepStyle, rInit, this, PANE_ID(PANE_STEP), pContext))
 		return false;
-	if (!m_pMuteView->Create(NULL, NULL, dwStepStyle, rInit, this, PANE_MUTE, pContext))
+	if (!m_pMuteView->Create(NULL, _T("Mute"), dwStepStyle, rInit, this, PANE_ID(PANE_MUTE), pContext))
 		return false;
 	DWORD	dwVeloStyle = WS_CHILD;
-	if (m_bShowVelos)	// if showing velocities
+	if (m_bIsShowSplit)	// if showing velocities
 		dwVeloStyle |= WS_VISIBLE;	// add visible style
-	if (!m_pVeloView->Create(NULL, NULL, dwVeloStyle, rInit, this, PANE_VELOCITY, pContext))
+	if (!m_pVeloView->Create(NULL, _T("Velocity"), dwVeloStyle, rInit, this, PANE_ID(PANE_VELOCITY), pContext))
 		return false;
 	m_nMuteWidth = m_pMuteView->GetViewWidth();
 	m_wndRuler.SendMessage(WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)));
@@ -259,29 +250,27 @@ BOOL CStepParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 
 void CStepParent::OnSize(UINT nType, int cx, int cy)
 {
-	CView::OnSize(nType, cx, cy);
+	CSplitView::OnSize(nType, cx, cy);
 	if (m_pStepView != NULL)
 		RecalcLayout(cx, cy);
-	if (m_bShowVelos)	// if showing velocities
-		Invalidate();	// paint entire splitter bar
 }
 
 BOOL CStepParent::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
 {
 	if (m_pStepView->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
 		return true;
-	return CView::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+	return CSplitView::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
 }
 
 void CStepParent::OnSetFocus(CWnd* pOldWnd)
 {
-	CView::OnSetFocus(pOldWnd);
+	CSplitView::OnSetFocus(pOldWnd);
 	m_pStepView->SetFocus();	// delegate focus to primary child view
 }
 
 void CStepParent::OnParentNotify(UINT message, LPARAM lParam)
 {
-	CView::OnParentNotify(message, lParam);
+	CSplitView::OnParentNotify(message, lParam);
 	switch (message) {
 	case WM_LBUTTONDOWN:
 	case WM_RBUTTONDOWN:
@@ -301,13 +290,6 @@ void CStepParent::OnParentNotify(UINT message, LPARAM lParam)
 	}
 }
 
-BOOL CStepParent::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
-{
-	if (nHitTest == HTCLIENT && pWnd == this && !m_bIsSplitDrag)
-		return TRUE;    // we will handle it in the mouse move
-	return CView::OnSetCursor(pWnd, nHitTest, message);
-}
-
 LRESULT CStepParent::OnTrackScroll(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(lParam);
@@ -324,47 +306,17 @@ LRESULT CStepParent::OnTrackScroll(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-void CStepParent::OnLButtonDown(UINT nFlags, CPoint point)
-{
-	if (m_bShowVelos) {	// if showing velocities
-		CRect	rSplit;
-		GetSplitRect(rSplit);
-		if (rSplit.PtInRect(point)) {	// if hit splitter bar
-			SetCapture();
-			m_bIsSplitDrag = true;
-			SetSplitCursor(true);
-		}
-	}
-	CView::OnLButtonDown(nFlags, point);
-}
-
-void CStepParent::OnLButtonUp(UINT nFlags, CPoint point)
-{
-	if (m_bIsSplitDrag) {	// if dragging splitter bar
-		ReleaseCapture();
-		m_bIsSplitDrag = false;
-	}
-	CView::OnLButtonUp(nFlags, point);
-}
-
 void CStepParent::OnMouseMove(UINT nFlags, CPoint point)
 {
-	if (m_bShowVelos) {	// if showing velocities
-		CRect	rSplit;
-		GetSplitRect(rSplit);
-		bool	bHitSplit = rSplit.PtInRect(point) != 0;
-		SetSplitCursor(bHitSplit);
-		if (m_bIsSplitDrag) {	// if dragging splitter bar
-			InvalidateRect(rSplit);
-			CRect	rc;
-			GetClientRect(rc);
-			CSize	sz = rc.Size();
-			int	y = CLAMP(point.y, m_nRulerHeight + m_nSplitHeight / 2, sz.cy - m_nSplitHeight / 2);
-			m_nVeloHeight = sz.cy - y - m_nSplitHeight / 2;
-			RecalcLayout(sz.cx, sz.cy);
-		}
+	CSplitView::OnMouseMove(nFlags, point);
+	if (m_bIsShowSplit && m_bIsSplitDrag) {	// if dragging splitter bar
+		CRect	rc;
+		GetClientRect(rc);
+		CSize	sz = rc.Size();
+		int	y = CLAMP(point.y, m_nRulerHeight + m_nSplitBarWidth / 2, sz.cy - m_nSplitBarWidth / 2);
+		m_nVeloHeight = sz.cy - y - m_nSplitBarWidth / 2;
+		RecalcLayout(sz.cx, sz.cy);
 	}
-	CView::OnMouseMove(nFlags, point);
 }
 
 BOOL CStepParent::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
@@ -378,10 +330,10 @@ BOOL CStepParent::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 
 void CStepParent::OnViewVelocities()
 {
-	ShowVelocityView(m_bShowVelos ^ 1);
+	ShowVelocityView(m_bIsShowSplit ^ 1);
 }
 
 void CStepParent::OnUpdateViewVelocities(CCmdUI *pCmdUI)
 {
-	pCmdUI->SetCheck(m_bShowVelos);
+	pCmdUI->SetCheck(m_bIsShowSplit);
 }
