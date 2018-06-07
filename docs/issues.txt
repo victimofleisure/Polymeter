@@ -61,34 +61,46 @@ open	close	type	description	rev	user
 05/19/18	05/21/18	done	key signature	0.0.06.000	
 05/19/18	05/21/18	done	transpose command	0.0.06.000	
 05/19/18	05/21/18	done	zoom should persist in document	0.0.06.000	
+03/25/18	05/22/18	done	record live arrangement of song, consisting of dubs (track mute/unmute)	0.0.06.000	
 05/19/18	05/22/18	done	show current position in time as well as beats and ticks	0.0.06.000	
 05/22/18	05/22/18	done	auto-repeated arrow key in tempo edit property sets tempo to one instead of incrementing	0.0.06.000	
 05/24/18	05/24/18	done	deleting current step crashes app	0.0.06.001	
 06/02/18	06/02/18	done	in a popup edit control, left-clicking up/down spin button or pressing up/down arrow key crashes in x64; bad cast	0.0.06.002	
 06/02/18	06/02/18	done	mute buttons aren't same height as steps and tracks	0.0.06.002	
+03/25/18	06/04/18	done	song view: edit arrangement on timeline	0.0.07.000	
+04/25/18	06/04/18	done	popup numeric edit's spin control should affect sequencer output immediately	0.0.07.000	
+05/15/18	06/04/18	done	shift selected tracks or steps left or right	0.0.07.000	
+05/30/18	06/04/18	done	add Track and Transport menus	0.0.07.000	
+05/20/18	06/05/18	done	track view's column widths and order should persist	0.0.07.000	
+05/20/18	06/05/18	done	channels bar's column widths and order should persist	0.0.07.000	
+05/20/18	06/05/18	done	splitter bar positions should be same for all documents and should persist	0.0.07.000	
+06/02/18	06/05/18	done	optionally show General MIDI patch and drum names instead of numbers (in Channels and Track views)	0.0.07.000	
+06/05/18	06/05/18	done	property lists weren't showing tooltips for partially visible property names, for all non-numeric property types	0.0.07.000	
+06/07/18	06/07/18	done	after recording, playback prompts to replace recording	0.0.07.002	
+03/22/18		hold	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
+03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, or otherwise update step view		
 03/25/18		hold	animated visualization		
 03/25/18		hold	playback can be slow to start, due to device open delay; keep output device open all the time?		
 03/25/18		hold	MIDI mapping of all parameters, with manual assignment and learn mode		
-04/25/18		hold	popup numeric edit's spin control should affect document immediately; causes bugs and inconsistencies		
+03/25/18		hold	output timing is unreliable at start of playback; likely only fixable by keeping output device open all the time		
 05/10/18		hold	left-click anywhere in step view should toggle steps or tracks, as in original app; too confusing?		
 05/10/18		hold	right-click in step view background with no selection should show context menu?		
-05/17/18		hold	in velocity pane, left-click on tool tip causes app to flash; all tooltips do this, derived tool tip doesn't help		
-05/17/18		hold	installed app's shortcut icon has poor resolution; VS2008 bug, try including icon separately, or use WiX toolset?		
+05/17/18		hold	in velocity pane, left-click on tool tip causes app to flash; all tool tips do this, derived tool tip doesn't help		
+05/17/18		hold	installed app's shortcut icon has poor resolution; VS2008 bug, use WiX toolset instead?		
 05/19/18		hold	note correction to chord changes, from ChordEase		
-05/20/18		hold	track view's column widths and order should persist; document or registry?		
-05/20/18		hold	child frame and step view spiltter bars should persist; document or registry?		
 05/21/18		hold	scroll positions should persist in document; more trouble than it's worth?		
 05/21/18		hold	song meter; affects position dialog, step view ruler, current position in status bar		
-05/21/18		hold	splitter bars should be same for all documents		
-05/21/18		hold	velocity pane visibility should be same for all documents		
+05/21/18		hold	velocity pane visibility should be same for all documents?		
 05/23/18		hold	default note velocity should be configurable		
-03/22/18		todo	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
-03/22/18		todo	app architecture; Bongo, Jock and Stencil all in one app? Different views of same document?		
-03/22/18		todo	PPQ change should optionally update Quant, Offset and Swing values, or otherwise update step view		
+05/30/18		hold	song view needs different menus?		
+06/04/18		hold	option to change track name font and thereby change track height		
+06/05/18		hold	optionally show tooltips in grid controls (Track and Channels views); use label tip extended style		
+03/22/18		todo	live performance view (similar to Jock)		
 03/22/18		todo	optional linear interpolation for controller tracks, with adjustable output density		
-03/25/18		todo	record live arrangment; at least track mute/unmute, maybe other properties too		
-03/25/18		todo	song view: edit arrangement on timeline, similar to Stencil		
 04/09/18		todo	undoing track value or step edit should ensure track is visible		
 05/19/18		todo	notes don't toggle the same way they did in the original, very annoying		
 05/23/18		todo	track solo		
-05/30/18		todo	song view needs different menus		
+06/04/18		todo	song view should indicate undersampling (multiple dubs per cell at current zoom)		
+06/04/18		todo	auto-record option, so that playback always records and recording is auto-saved to new file name; for live shows		
+06/04/18		todo	include live MIDI input in recording		
+06/05/18		todo	cut/copy/paste/delete in song view		
