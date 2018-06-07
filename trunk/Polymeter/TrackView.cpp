@@ -121,8 +121,7 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			int	iProp = pPropHint->m_iProp;
 			if (iProp >= 0) {	// if property specified
 				m_grid.RedrawSubItem(iTrack, iProp + 1);	// account for track number
-				if (iProp == CTrack::PROP_Type && theApp.m_Options.m_View_bShowNoteNames)	// if track type
-					m_grid.RedrawSubItem(iTrack, COL_Note);
+				UpdateDependencies(iTrack, iProp);
 			} else	// update all properties
 				m_grid.RedrawItems(iTrack, iTrack);
 		}
@@ -135,8 +134,7 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 				int	iTrack = pPropHint->m_arrSelection[iSel];
 				m_grid.RedrawSubItem(iTrack, iProp + 1);	// account for track number
-				if (iProp == CTrack::PROP_Type && theApp.m_Options.m_View_bShowNoteNames)	// if track type
-					m_grid.RedrawSubItem(iTrack, COL_Note);
+				UpdateDependencies(iTrack, iProp);
 			}
 		}
 		break;
@@ -172,13 +170,27 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	theApp.GetMainFrame()->OnUpdate(pSender, lHint, pHint);	// notify main frame
 }
 
+void CTrackView::UpdateDependencies(int iTrack, int iProp)
+{
+	switch (iProp) {	// implement side effects
+	case PROP_Type:
+		if (theApp.m_Options.m_View_bShowNoteNames)	 // if showing note names
+			m_grid.RedrawSubItem(iTrack, COL_Note);	// also update note column
+		break;
+	case PROP_Channel:
+		if (theApp.m_Options.m_View_bShowGMNames)	// if showing General MIDI names
+			m_grid.RedrawSubItem(iTrack, COL_Note);	// also update note column
+		break;
+	}
+}
+
 void CTrackView::UpdateNotes()
 {
 	CPolymeterDoc	*pDoc = GetDocument();
 	int	iStartTrack = m_grid.GetTopIndex();
 	int	iEndTrack = min(iStartTrack + m_grid.GetCountPerPage(), pDoc->m_Seq.GetTrackCount());
 	for (int iTrack = iStartTrack; iTrack < iEndTrack; iTrack++) {	// for each visible track
-		if (pDoc->m_Seq.GetType(iTrack) == CTrack::TT_NOTE)
+		if (pDoc->m_Seq.GetType(iTrack) == TT_NOTE)
 			m_grid.RedrawSubItem(iTrack, COL_Note);
 	}
 }
@@ -218,12 +230,22 @@ void CTrackView::SetVScrollPos(int nPos)
 		m_grid.Scroll(CSize(0, cy));
 }
 
+void CTrackView::AddMidiChannelComboItems(CComboBox& wndCombo)
+{
+	CString	sChan;
+	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {
+		sChan.Format(_T("%d"), iChan + 1);
+		wndCombo.AddString(sChan);
+	}
+}
+
 CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
 	CTrackView	*pView = STATIC_DOWNCAST(CTrackView, GetParent());
 	CPolymeterDoc	*pDoc = pView->GetDocument();
 	UNREFERENCED_PARAMETER(pParentWnd);
-	m_nPreEditVal = INT_MIN;
+	int	iTrack = m_iEditRow;
+	m_varPreEdit.Clear();	// init pre-edit value to invalid state
 	switch (m_iEditCol) {
 	case COL_Name:
 		break;
@@ -231,34 +253,49 @@ CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle,
 		{
 			CPopupCombo	*pCombo = CPopupCombo::Factory(0, rect, this, 0, 100);
 			if (pCombo == NULL)
-				return(NULL);
-			int	iSelType = -1;
-			for (int iType = 0; iType < CTrack::TRACK_TYPES; iType++) {
-				if (CTrack::GetTrackTypeName(iType) == pszText)
-					iSelType = iType;
-				pCombo->AddString(CTrack::GetTrackTypeName(iType));
+				return NULL;
+			int	iSel = -1;
+			for (int iType = 0; iType < TRACK_TYPES; iType++) {
+				if (GetTrackTypeName(iType) == pszText)
+					iSel = iType;
+				pCombo->AddString(GetTrackTypeName(iType));
 			}
-			pCombo->SetCurSel(iSelType);
+			m_varPreEdit = iSel;	// save pre-edit value to allow preview
+			pCombo->SetCurSel(iSel);
+			pCombo->ShowDropDown();
+			return pCombo;
+		}
+		break;
+	case COL_Channel:
+		{
+			CPopupCombo	*pCombo = CPopupCombo::Factory(0, rect, this, 0, 100);
+			if (pCombo == NULL)
+				return NULL;
+			CTrackView::AddMidiChannelComboItems(*pCombo);
+			int	iSel = pDoc->m_Seq.GetChannel(iTrack);
+			m_varPreEdit = iSel;	// save pre-edit value to allow preview
+			pCombo->SetCurSel(iSel);
 			pCombo->ShowDropDown();
 			return pCombo;
 		}
 		break;
 	case COL_Note:
-		if (pDoc->ShowGMDrums(m_iEditRow)) {	// if showing General MIDI drums for this track
+		if (pDoc->ShowGMDrums(iTrack)) {	// if showing General MIDI drums for this track
 			CPopupCombo	*pCombo = CPopupCombo::Factory(0, rect, this, 0, 100);
 			if (pCombo == NULL)
-				return(NULL);
+				return NULL;
 			CString	sDrumName;
 			for (int iNote = 0; iNote < MIDI_NOTES; iNote++) {
 				LPCTSTR	pszDrumName = GetGMDrumName(iNote);
-				if (pszDrumName == NULL) {
-					sDrumName.Format(_T("%d"), iNote);
+				if (pszDrumName == NULL) {	// if drum undefined
+					sDrumName.Format(_T("%d"), iNote);	// show note number instead
 					pszDrumName = sDrumName;
 				}
 				pCombo->AddString(pszDrumName);
 			}
-			int	iSelPatch = pDoc->m_Seq.GetNote(m_iEditRow);
-			pCombo->SetCurSel(iSelPatch);
+			int	iSel = pDoc->m_Seq.GetNote(iTrack);
+			m_varPreEdit = iSel;	// save pre-edit value to allow preview
+			pCombo->SetCurSel(iSel);
 			pCombo->ShowDropDown();
 			return pCombo;
 		} else	// default note handling
@@ -280,7 +317,7 @@ DefaultCreateEditCtrl:
 			if (pEdit->IsNoteEntry()) {	// if showing note names
 				CNote	note;
 				if (note.ParseMidi(pszText)) {	// convert note name to integer
-					m_nPreEditVal = note;	// set pre-edit value
+					m_varPreEdit = note;	// set pre-edit value
 					bIsCustomType = true;	// prevent default integer conversion
 				}
 			}
@@ -290,18 +327,17 @@ DefaultCreateEditCtrl:
 			break;
 		case COL_Length:
 			pEdit->SetRange(1, INT_MAX);
-			m_pStepArray.CreateObj();	// allocate step array
-			pDoc->m_Seq.GetSteps(m_iEditRow, m_pStepArray);	// save track's step array
+			pDoc->m_Seq.GetSteps(iTrack, m_arrStep);	// save track's step array
 			break;
 		case COL_Velocity:
 			pEdit->SetRange(-MIDI_NOTE_MAX, MIDI_NOTE_MAX);
 			break;
 		}
 		if (!bIsCustomType)	// if ordinary integer
-			m_nPreEditVal = _ttoi(pszText);	// convert item text to integer and set pre-edit value
+			m_varPreEdit = _ttoi(pszText);	// convert item text to integer and set pre-edit value
 		if (!pEdit->Create(dwStyle, rect, this, nID)) {	// create edit control
 			delete pEdit;
-			return(NULL);
+			return NULL;
 		}
 		pEdit->SetWindowText(pszText);
 		pEdit->SetSel(0, -1);	// select entire text
@@ -315,43 +351,10 @@ void CTrackView::CTrackGridCtrl::OnItemChange(LPCTSTR pszText)
 	CTrackView	*pView = STATIC_DOWNCAST(CTrackView, GetParent());
 	CPolymeterDoc	*pDoc = pView->GetDocument();
 	ASSERT(pDoc != NULL);
-	int	iCol = m_iEditCol;
-	CComVariant	valNew;
-	switch (iCol) {
-	case COL_Name:
-		valNew = pszText;
-		break;
-	case COL_Type:
-		{
-			CPopupCombo	*pCombo = STATIC_DOWNCAST(CPopupCombo, m_pEditCtrl);
-			valNew = pCombo->GetCurSel();
-		}
-		break;
-	case COL_Note:
-		if (pDoc->ShowGMDrums(m_iEditRow)) {	// if showing General MIDI drums for this track
-			CPopupCombo	*pCombo = STATIC_DOWNCAST(CPopupCombo, m_pEditCtrl);
-			valNew = pCombo->GetCurSel();	// get current value
-		} else	// default note handling
-			goto DefaultOnItemChanged;	// don't rely on falling through
-		break;
-	default:
-DefaultOnItemChanged:
-		CPopupNumEdit	*pNumEdit = STATIC_DOWNCAST(CPopupNumEdit, m_pEditCtrl);
-		int	nVal = pNumEdit->GetIntVal();	// get current value
-		if (m_nPreEditVal != INT_MIN) {	// if pre-edit value is valid
-			if (nVal != m_nPreEditVal) {	// if current value differs from pre-edit value
-				// restore pre-edit value for undo notification save, but don't update views;
-				// glitch could occur if callback preempts while value is reverted (unlikely)
-				UpdateTarget(m_nPreEditVal, UT_RESTORE_VALUE);
-			}
-			m_nPreEditVal = INT_MIN;	// mark change saved
-		}
-		if (iCol == COL_Channel)	// if channel column
-			nVal--;	// convert one-origin channel number to zero-origin channel index
-		valNew = nVal;
-	}
 	int	iTrack = m_iEditRow;
-	int	iProp = iCol - 1;	// skip number column
+	CComVariant	valNew;
+	GetVarFromPopupCtrl(valNew, pszText);
+	int	iProp = m_iEditCol - 1;	// skip number column
 	if (GetSelectedCount() > 1 && GetSelected(iTrack)) {	//  if multiple selection and editing within selection
 		const CIntArrayEx&	arrSelection = pDoc->m_arrTrackSel;
 		int	nSels = arrSelection.GetSize();
@@ -383,8 +386,7 @@ DefaultOnItemChanged:
 				pDoc->NotifyUndoableEdit(iTrack, MAKELONG(UCODE_TRACK_PROP, iProp));
 				pDoc->m_Seq.SetTrackProperty(iTrack, iProp, valNew);	// set property
 				CPolymeterDoc::CPropHint	hint(iTrack, iProp);
-				if (iProp == CTrack::PROP_Type && theApp.m_Options.m_View_bShowNoteNames)
-					pView = NULL;	// update this view so note column gets updated
+				pView->UpdateDependencies(iTrack, iProp);
 				pDoc->UpdateAllViews(pView, CPolymeterDoc::HINT_TRACK_PROP, &hint);
 				pDoc->SetModifiedFlag();
 			}
@@ -392,55 +394,25 @@ DefaultOnItemChanged:
 	}
 }
 
-BEGIN_MESSAGE_MAP(CTrackView::CTrackGridCtrl, CGridCtrl)
-	ON_NOTIFY(NEN_CHANGED, IDC_POPUP_EDIT, OnEditChanged)
-	ON_WM_PARENTNOTIFY()
-END_MESSAGE_MAP()
-
-void CTrackView::CTrackGridCtrl::UpdateTarget(int nVal, UINT nFlags)
+void CTrackView::CTrackGridCtrl::UpdateTarget(const CComVariant& var, UINT nFlags)
 {
 	CTrackView	*pView = STATIC_DOWNCAST(CTrackView, GetParent());
 	CPolymeterDoc	*pDoc = pView->GetDocument();
 	int	iTrack = m_iEditRow;
 	int	iProp = m_iEditCol - 1;	// skip number column
-	switch (m_iEditCol) {
-	case COL_Channel:
-		nVal--;	// convert one-origin channel number to zero-origin channel index
-		break;
-	case COL_Length:
+	int	nVal = var.intVal;
+	switch (iProp) {
+	case CTrack::PROP_Length:
 		if (nFlags & UT_RESTORE_VALUE)
-			pDoc->m_Seq.SetSteps(iTrack, m_pStepArray);	// restore track's steps
+			pDoc->m_Seq.SetSteps(iTrack, m_arrStep);	// restore track's steps
 		break;
 	}
 	pDoc->m_Seq.SetTrackProperty(iTrack, iProp, nVal);	// set property
+	pView->UpdateDependencies(iTrack, iProp);
 	if (nFlags & UT_UPDATE_VIEWS) {
 		CPolymeterDoc::CPropHint	hint(iTrack, iProp);
 		pDoc->UpdateAllViews(pView, CPolymeterDoc::HINT_TRACK_PROP, &hint);
 	}
-}
-
-void CTrackView::CTrackGridCtrl::OnEditChanged(NMHDR* pNMHDR, LRESULT* pResult)
-{
-	UNREFERENCED_PARAMETER(pNMHDR);
-	UNREFERENCED_PARAMETER(pResult);
-	CPopupNumEdit	*pNumEdit = STATIC_DOWNCAST(CPopupNumEdit, m_pEditCtrl);
-	UpdateTarget(pNumEdit->GetIntVal());
-}
-
-void CTrackView::CTrackGridCtrl::OnParentNotify(UINT message, LPARAM lParam) 
-{
-	if (IsEditing()) {
-		switch (LOWORD(message)) {	// high word may contain child window ID
-		case WM_DESTROY:
-			if (m_nPreEditVal != INT_MIN) {	// if change wasn't saved
-				// edit canceled; restore pre-edit value and update views
-				UpdateTarget(m_nPreEditVal, UT_RESTORE_VALUE | UT_UPDATE_VIEWS);
-			}
-			m_pStepArray.SetEmpty();
-			break;
-		}
-	}
-	CGridCtrl::OnParentNotify(message, lParam);
 }
 
 void CTrackView::SetColumnOrder(const CIntArrayEx& arrOrder)
@@ -594,7 +566,7 @@ void CTrackView::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 			_tcscpy_s(item.pszText, item.cchTextMax, pDoc->m_Seq.GetName(iTrack));
 			break;
 		case COL_Type:
-			_tcscpy_s(item.pszText, item.cchTextMax, CTrack::GetTrackTypeName(pDoc->m_Seq.GetType(iTrack)));
+			_tcscpy_s(item.pszText, item.cchTextMax, GetTrackTypeName(pDoc->m_Seq.GetType(iTrack)));
 			break;
 		case COL_Note:
 			if (pDoc->ShowGMDrums(iTrack)) {	// if showing General MIDI drums for this track
@@ -620,7 +592,7 @@ DefaultDisplayItem:
 				nVal = 0;
 			}
 			// if note column, and track type is note, and showing notes as names
-			if (item.iSubItem == COL_Note && pDoc->m_Seq.GetType(iTrack) == CTrack::TT_NOTE
+			if (item.iSubItem == COL_Note && pDoc->m_Seq.GetType(iTrack) == TT_NOTE
 			&& theApp.m_Options.m_View_bShowNoteNames) {
 				_tcscpy_s(item.pszText, item.cchTextMax, CNote(nVal).MidiName(pDoc->m_nKeySig));
 			} else {	// default case

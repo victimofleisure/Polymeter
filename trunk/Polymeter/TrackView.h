@@ -14,11 +14,12 @@
 // TrackView.h : interface of the CTrackView class
 //
 
-#include "GridCtrl.h"
+#include "PreviewGridCtrl.h"
+#include "Track.h"
 
 class CPolymeterDoc;
 
-class CTrackView : public CView
+class CTrackView : public CView, public CTrackBase
 {
 	DECLARE_DYNCREATE(CTrackView)
 
@@ -46,27 +47,19 @@ public:
 
 // Operations
 	void	SetVScrollPos(int nPos);
+	static	void	AddMidiChannelComboItems(CComboBox& wndCombo);
 	static	void	LoadPersistentState();
 	static	void	SavePersistentState();
 	void	UpdatePersistentState(bool bNoRedraw = false);
 
 protected:
 // Types
-	class CTrackGridCtrl : public CGridCtrl {
+	class CTrackGridCtrl : public CPreviewGridCtrl {
 	public:
 		virtual	CWnd*	CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
 		virtual	void	OnItemChange(LPCTSTR pszText);
-		int		m_nPreEditVal;		// pre-edit value for integer edits, or INT_MIN if change was saved
-		class CRefStepArray : public CByteArrayEx, public CRefObj {};
-		CRefPtr<CRefStepArray>	m_pStepArray;	// pointer to steps array, for restoring track length
-		enum {	// update target flags
-			UT_UPDATE_VIEWS		= 0x01,		// update all views
-			UT_RESTORE_VALUE	= 0x02,		// restore pre-edit value
-		};
-		void	UpdateTarget(int nVal, UINT nFlags = UT_UPDATE_VIEWS);
-		DECLARE_MESSAGE_MAP()
-		afx_msg void OnEditChanged(NMHDR* pNMHDR, LRESULT* pResult);
-		afx_msg void OnParentNotify(UINT message, LPARAM lParam);
+		virtual void	UpdateTarget(const CComVariant& var, UINT nFlags);
+		CStepArray	m_arrStep;		// array of track steps, for restoring track length
 	};
 	class CListColumnState {
 	public:
@@ -110,6 +103,7 @@ protected:
 	virtual void OnInitialUpdate();
 
 // Helpers
+	void	UpdateDependencies(int iTrack, int iProp); 	
 	void	UpdateNotes();
 	int		CalcHeaderHeight() const;
 	int		CalcItemHeight();

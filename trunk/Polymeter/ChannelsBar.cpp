@@ -80,19 +80,26 @@ CWnd *CChannelsBar::CChannelsGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwS
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
 	if (pDoc == NULL)	// run-time check anyway
-		return(NULL);
-	if (m_iEditCol == COL_Patch && theApp.m_Options.m_View_bShowGMNames) {	// if showing GM patch names
-		CPopupCombo	*pCombo = CPopupCombo::Factory(0, rect, this, 0, 100);
-		if (pCombo == NULL)
-			return(NULL);
-		pCombo->AddString(LDS(IDS_NONE));	// insert none item
-		for (int iPatch = 0; iPatch < MIDI_NOTES; iPatch++) {
-			pCombo->AddString(GetGMPatchName(iPatch));
+		return NULL;
+	m_varPreEdit.Clear();	// init pre-edit value to invalid state
+	int	iChan = m_iEditRow;
+	switch (m_iEditCol) {
+	case COL_Patch:
+		if (theApp.m_Options.m_View_bShowGMNames) {	// if showing GM patch names
+			CPopupCombo	*pCombo = CPopupCombo::Factory(0, rect, this, 0, 100);
+			if (pCombo == NULL)
+				return NULL;
+			pCombo->AddString(LDS(IDS_NONE));	// insert none item
+			for (int iPatch = 0; iPatch < MIDI_NOTES; iPatch++) {
+				pCombo->AddString(GetGMPatchName(iPatch));
+			}
+			int	iSel = pDoc->m_arrChannel[iChan].m_nPatch + 1;	// offset for none item
+			m_varPreEdit = iSel;	// save pre-edit value to allow preview
+			pCombo->SetCurSel(iSel);
+			pCombo->ShowDropDown();
+			return pCombo;
 		}
-		int	iSelPatch = pDoc->m_arrChannel[m_iEditRow].m_nPatch + 1;	// offset for none item
-		pCombo->SetCurSel(iSelPatch);
-		pCombo->ShowDropDown();
-		return pCombo;
+		break;
 	}
 	// default case: numeric edit control
 	CPopupIntEdit	*pEdit = new CPopupIntEdit;
@@ -100,17 +107,17 @@ CWnd *CChannelsBar::CChannelsGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwS
 	pEdit->SetRange(-1, MIDI_NOTE_MAX);
 	if (!pEdit->Create(dwStyle, rect, this, nID)) {
 		delete pEdit;
-		return(NULL);
+		return NULL;
 	}
 	int nVal;
 	if (_tcslen(pszText))
 		nVal = _ttoi(pszText);
 	else
 		nVal = -1;
-	m_nPreEditVal = nVal;	// save pre-edit value in case edit gets canceled
+	m_varPreEdit = nVal;	// save pre-edit value in case edit gets canceled
 	pEdit->SetVal(nVal);
 	pEdit->SetSel(0, -1);	// select entire text
-	return(pEdit);
+	return pEdit;
 }
 
 void CChannelsBar::CChannelsGridCtrl::OnItemChange(LPCTSTR pszText)
@@ -120,24 +127,18 @@ void CChannelsBar::CChannelsGridCtrl::OnItemChange(LPCTSTR pszText)
 	ASSERT(pDoc != NULL);
 	if (pDoc == NULL)	// run-time check anyway
 		return;
-	int	nVal;
-	if (m_iEditCol == COL_Patch && theApp.m_Options.m_View_bShowGMNames) {	// if showing GM patch names
-		CPopupCombo	*pCombo = STATIC_DOWNCAST(CPopupCombo, m_pEditCtrl);
-		nVal = pCombo->GetCurSel() - 1;	// get current value; offset for none item
-	} else {	// default case: numeric edit control
-		CPopupNumEdit	*pNumEdit = STATIC_DOWNCAST(CPopupNumEdit, m_pEditCtrl);
-		nVal = pNumEdit->GetIntVal();	// get current value
+	CComVariant	valNew;
+	GetVarFromPopupCtrl(valNew, pszText);
+	ASSERT(valNew.vt == VT_I4);	// only supported type
+	int	nVal = valNew.intVal;
+	switch (m_iEditCol) {
+	case COL_Patch:
+		if (theApp.m_Options.m_View_bShowGMNames)	// if showing GM patch names
+			nVal--;	// offset for none item
+		break;
 	}
 	int	iChan = m_iEditRow;
 	int	iProp = m_iEditCol - 1;	// skip number column
-	if (m_nPreEditVal != INT_MIN) {	// if pre-edit value is valid
-		if (nVal != m_nPreEditVal) {	// if current value differs from pre-edit value
-			// restore pre-edit value for undo notification save, but don't update views;
-			// glitch could occur if callback preempts while value is reverted (unlikely)
-			UpdateTarget(m_nPreEditVal, UT_RESTORE_VALUE);	// restore pre-edit value
-		}
-		m_nPreEditVal = INT_MIN;	// mark change saved
-	}
 	if (GetSelectedCount() > 1 && GetSelected(iChan)) {	// if multiple selection and editing within selection
 		CIntArrayEx	arrSelection;
 		GetSelection(arrSelection);
@@ -171,14 +172,16 @@ void CChannelsBar::CChannelsGridCtrl::OnItemChange(LPCTSTR pszText)
 	}
 }
 
-BEGIN_MESSAGE_MAP(CChannelsBar::CChannelsGridCtrl, CGridCtrl)
-	ON_NOTIFY(NEN_CHANGED, IDC_POPUP_EDIT, OnEditChanged)
-	ON_WM_PARENTNOTIFY()
-END_MESSAGE_MAP()
-
-void CChannelsBar::CChannelsGridCtrl::UpdateTarget(int nVal, UINT nFlags)
+void CChannelsBar::CChannelsGridCtrl::UpdateTarget(const CComVariant& var, UINT nFlags)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	int	nVal = var.intVal;
+	switch (m_iEditCol) {
+	case COL_Patch:
+		if (theApp.m_Options.m_View_bShowGMNames)	// if showing GM patch names
+			nVal--;	// offset for none item
+		break;
+	}
 	int	iChan = m_iEditRow;
 	int	iProp = m_iEditCol - 1;	// skip number column
 	pDoc->m_arrChannel[iChan].SetProperty(iProp, nVal);	// set property
@@ -187,29 +190,6 @@ void CChannelsBar::CChannelsGridCtrl::UpdateTarget(int nVal, UINT nFlags)
 		CView	*pSender = reinterpret_cast<CView *>(GetParent());	// sender is parent
 		pDoc->UpdateAllViews(pSender, CPolymeterDoc::HINT_CHANNEL_PROP, &hint);
 	}
-}
-
-void CChannelsBar::CChannelsGridCtrl::OnEditChanged(NMHDR* pNMHDR, LRESULT* pResult)
-{
-	UNREFERENCED_PARAMETER(pNMHDR);
-	UNREFERENCED_PARAMETER(pResult);
-	CPopupNumEdit	*pNumEdit = STATIC_DOWNCAST(CPopupNumEdit, m_pEditCtrl);
-	UpdateTarget(pNumEdit->GetIntVal());
-}
-
-void CChannelsBar::CChannelsGridCtrl::OnParentNotify(UINT message, LPARAM lParam) 
-{
-	if (IsEditing()) {
-		switch (LOWORD(message)) {	// high word may contain child window ID
-		case WM_DESTROY:
-			if (m_nPreEditVal != INT_MIN) {	// if change wasn't saved
-				// edit canceled; restore pre-edit value and update views
-				UpdateTarget(m_nPreEditVal, UT_RESTORE_VALUE | UT_UPDATE_VIEWS);
-			}
-			break;
-		}
-	}
-	CGridCtrl::OnParentNotify(message, lParam);
 }
 
 CString CChannelsBar::GetPropertyName(int iProp)

@@ -238,6 +238,7 @@
     <ClInclude Include="Persist.h" />
     <ClInclude Include="Polymeter.h" />
     <ClInclude Include="PolymeterDoc.h" />
+    <ClInclude Include="PreviewGridCtrl.h" />
     <ClInclude Include="RulerCtrl.h" />
     <ClInclude Include="Scale.h" />
     <ClInclude Include="SeqTrackArray.h" />
@@ -327,6 +328,7 @@
     <ClCompile Include="Persist.cpp" />
     <ClCompile Include="Polymeter.cpp" />
     <ClCompile Include="PolymeterDoc.cpp" />
+    <ClCompile Include="PreviewGridCtrl.cpp" />
     <ClCompile Include="RulerCtrl.cpp" />
     <ClCompile Include="Scale.cpp" />
     <ClCompile Include="SeqTrackArray.cpp" />

@@ -46,7 +46,7 @@ public:
 
 // Constants
 	enum {
-		IDC_POPUP_EDIT = 1,
+		IDC_POPUP_EDIT = 2001,
 	};
 
 // Overrides

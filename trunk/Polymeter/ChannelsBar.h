@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "GridCtrl.h"
+#include "PreviewGridCtrl.h"
 #include "Midi.h"
 
 class CChannelsBar : public CDockablePane
@@ -43,19 +43,11 @@ public:
 
 protected:
 // Types
-	class CChannelsGridCtrl : public CGridCtrl {
+	class CChannelsGridCtrl : public CPreviewGridCtrl {
 	public:
 		virtual	CWnd*	CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
 		virtual	void	OnItemChange(LPCTSTR pszText);
-		int		m_nPreEditVal;		// pre-edit value for integer edits, or INT_MIN if change was saved
-		enum {	// update target flags
-			UT_UPDATE_VIEWS		= 0x01,		// update all views
-			UT_RESTORE_VALUE	= 0x02,		// restore pre-edit value
-		};
-		void	UpdateTarget(int nVal, UINT nFlags = UT_UPDATE_VIEWS);
-		DECLARE_MESSAGE_MAP()
-		afx_msg void OnEditChanged(NMHDR* pNMHDR, LRESULT* pResult);
-		afx_msg void OnParentNotify(UINT message, LPARAM lParam);
+		virtual	void	UpdateTarget(const CComVariant& var, UINT nFlags);
 	};
 
 // Constants
