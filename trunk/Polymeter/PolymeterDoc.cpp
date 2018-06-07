@@ -1485,7 +1485,7 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 	if (bPlay == m_Seq.IsPlaying())	// if already in requested state
 		return true;	// nothing to do
 	if (bPlay) {	// if starting playback
-		if (m_Seq.HasDubs()) {	// if recording already exists
+		if (bRecord && m_Seq.HasDubs()) {	// if recording already exists
 			UINT	nType = MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION;
 			if (AfxMessageBox(IDS_DOC_REPLACE_RECORDING, nType) != IDYES)
 				return false;
