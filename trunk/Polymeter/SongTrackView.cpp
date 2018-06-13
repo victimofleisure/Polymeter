@@ -22,7 +22,6 @@
 #include "SongParent.h"
 #include "MainFrm.h"
 #include "StepView.h"
-#include "Benchmark.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

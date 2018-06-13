@@ -13,7 +13,6 @@
 
 #include "stdafx.h"
 #include "Sequencer.h"
-#include "Benchmark.h"
 #include "float.h"
 #include "VariantHelper.h"
 #include "MidiFile.h"
@@ -297,16 +296,16 @@ __forceinline int CSequencer::GetNoteDuration(const CStepArray& arrStep, int nSt
 	int	iPrevStep = iCurStep - 1;	// previous step
 	if (iPrevStep < 0)	// if underrun
 		iPrevStep = nSteps - 1;	// wrap to last step
-	if (arrStep[iPrevStep] & NB_TIE)	// if previous step is tied
+	if (arrStep[iPrevStep] & SB_TIE)	// if previous step is tied
 		return 0;	// failure; not at start of note
-	if (!(arrStep[iCurStep] & NB_TIE))	// if current step isn't tied
+	if (!(arrStep[iCurStep] & SB_TIE))	// if current step isn't tied
 		return 1;	// duration is one; optimized case
 	// current step is tied; find first step that isn't tied
 	for (int nDur = 1; nDur < nSteps; nDur++) {	// for remaining steps
 		iCurStep++;	// next step
 		if (iCurStep >= nSteps)	// if overrun
 			iCurStep = 0;	// wrap to first step
-		if (!(arrStep[iCurStep] & NB_TIE)) {	// if step isn't tied
+		if (!(arrStep[iCurStep] & SB_TIE)) {	// if step isn't tied
 			if (arrStep[iCurStep])	// if step is on
 				return nDur + 1;	// duration includes this step
 			else	// step is off
@@ -381,7 +380,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 						if (nDurSteps) {	// if at start of note
 							CEvent	evt;
 							evt.m_dwTime = nEvtTime;
-							int	nVel = (trk.m_arrStep[iStep] & NB_VELOCITY) + trk.m_nVelocity;
+							int	nVel = (trk.m_arrStep[iStep] & SB_VELOCITY) + trk.m_nVelocity;
 							nVel = CLAMP(nVel, 0, MIDI_NOTE_MAX);
 							evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, trk.m_nNote, nVel);
 							m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
@@ -399,7 +398,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 						}
 					}
 				} else {	// track type isn't note
-					int	nVal = (trk.m_arrStep[iStep] & NB_VELOCITY) + trk.m_nVelocity;
+					int	nVal = (trk.m_arrStep[iStep] & SB_VELOCITY) + trk.m_nVelocity;
 					nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
 					if (nVal != trk.m_nCachedParam) {	// if value differs from cached parameter
  						trk.m_nCachedParam = nVal;	// update cached parameter
@@ -718,6 +717,22 @@ void CSequencer::RecordDub(const CIntArrayEx& arrSelection)
 	LONGLONG	nPos;
 	if (GetPosition(nPos))
 		AddDub(arrSelection, static_cast<int>(nPos));
+}
+
+void CSequencer::RecordDub()
+{
+	LONGLONG	nPos;
+	if (GetPosition(nPos))
+		AddDub(static_cast<int>(nPos));
+}
+
+void CSequencer::ChaseDubsFromCurPos()
+{
+	if (m_bIsPlaying && m_bIsSongMode) {
+		LONGLONG	nPos;
+		if (GetPosition(nPos))
+			ChaseDubs(static_cast<int>(nPos), true);	// set mutes
+	}
 }
 
 #if SEQ_DUMP_EVENTS

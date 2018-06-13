@@ -85,6 +85,8 @@ public:
 	void	ConvertPositionToTimeString(LONGLONG nPos, CString& sTime) const;
 	void	RecordDub(int iTrack);
 	void	RecordDub(const CIntArrayEx& arrSelection);
+	void	RecordDub();
+	void	ChaseDubsFromCurPos();
 
 protected:
 // Types

@@ -21,7 +21,6 @@
 #include "SongView.h"
 #include "SongParent.h"
 #include <math.h>
-#include "Benchmark.h"
 #include "UndoCodes.h"
 
 #ifdef _DEBUG
@@ -108,7 +107,6 @@ void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_MULTI_STEP:
 	case CPolymeterDoc::HINT_MULTI_TRACK_STEPS:
 	case CPolymeterDoc::HINT_STEPS_ARRAY:
-	case CPolymeterDoc::HINT_SONG_DUB:
 		Invalidate();
 		break;
 	case CPolymeterDoc::HINT_MASTER_PROP:
@@ -126,6 +124,14 @@ void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			if (GetDocument()->m_Seq.GetPosition(nPos)) {
 				UpdateSongPos(static_cast<int>(nPos));
 			}
+		}
+		break;
+	case CPolymeterDoc::HINT_SONG_DUB:
+		{
+			CPolymeterDoc::CRectSelPropHint	*pPropHint = static_cast<CPolymeterDoc::CRectSelPropHint*>(pHint);
+			UpdateCells(pPropHint->m_rSelection);
+			if (!pPropHint->m_bSelect)
+				ResetSelection();
 		}
 		break;
 	}
@@ -338,26 +344,43 @@ void CSongView::UpdateCell(int iTrack, int iCell)
 
 void CSongView::UpdateCells(const CRect& rSelection)
 {
+	CIntRange	rngHorz;
+	if (rSelection.right == INT_MAX)	// if full width of view
+		rngHorz = CIntRange(0, GetTotalSize().cx / m_nCellWidth);
+	else	// normal case
+		rngHorz = CIntRange(rSelection.left, rSelection.right);
 	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
 		CRect	rCells;
-		GetCellsRect(iTrack, CIntRange(rSelection.left, rSelection.right), rCells);
+		GetCellsRect(iTrack, rngHorz, rCells);
 		InvalidateRect(rCells);
 	}
 }
 
-__forceinline double CSongView::GetTicksPerCell() const
+void CSongView::DispatchToDocument()
+{
+	const MSG	*pMsg = GetCurrentMessage();
+	ASSERT(pMsg != NULL);
+	GetDocument()->OnCmdMsg(LOWORD(pMsg->wParam), CN_COMMAND, NULL, NULL);	// low word is command ID
+}
+
+double CSongView::GetTicksPerCell() const
+{
+	return GetTicksPerCellImpl();
+}
+
+__forceinline double CSongView::GetTicksPerCellImpl() const
 {
 	return GetDocument()->m_Seq.GetTimeDivision() / STEPS_PER_CELL / m_fZoom;
 }
 
 __forceinline int CSongView::ConvertXToSongPos(int x) const
 {
-	return round(x * GetTicksPerCell() / m_nCellWidth);
+	return round(x * GetTicksPerCellImpl() / m_nCellWidth);
 }
 
 __forceinline int CSongView::ConvertSongPosToX(int nSongPos) const
 {
-	return round(nSongPos / GetTicksPerCell() * m_nCellWidth);
+	return round(nSongPos / GetTicksPerCellImpl() * m_nCellWidth);
 }
 
 __forceinline int CSongView::Mod(int Val, int Modulo)
@@ -498,6 +521,16 @@ BEGIN_MESSAGE_MAP(CSongView, CScrollView)
 	ON_WM_MOUSEMOVE()
 	ON_WM_RBUTTONDOWN()
 	ON_WM_RBUTTONUP()
+	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditCut)
+	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditCopy)
+	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
+	ON_COMMAND(ID_EDIT_INSERT, OnEditInsert)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
+	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
 END_MESSAGE_MAP()
 
 // CSongView message handlers
@@ -536,9 +569,20 @@ void CSongView::OnLButtonDown(UINT nFlags, CPoint point)
 		int	nPos = ConvertXToSongPos(point.x + GetScrollPosition().x);
 		pDoc->SetPosition(nPos);
 	} else {
-		if (HaveSelection()) {
-			pDoc->SetDubs(m_rCellSel, GetTicksPerCell());
+		double	fTicksPerCell = GetTicksPerCell();
+		if (HaveSelection()) {	// if selection exists
+			if (nFlags & MK_CONTROL)
+				pDoc->SetDubs(m_rCellSel, fTicksPerCell, true);
+			else
+				pDoc->ToggleDubs(m_rCellSel, fTicksPerCell);
 			ResetSelection();
+		} else {	// no selection
+			int	iCell;
+			int	iTrack = HitTest(point, iCell);
+			if (iTrack >= 0 && iCell >= 0) {	// if hit on cell
+				CRect	rCell(CPoint(iCell, iTrack), CSize(1, 1));
+				pDoc->ToggleDubs(rCell, fTicksPerCell);
+			}
 		}
 	}
 	CScrollView::OnLButtonDown(nFlags, point);
@@ -674,4 +718,73 @@ void CSongView::OnViewZoomReset()
 	SetZoom(0);
 	UpdateViewSize();
 	Invalidate();
+}
+
+void CSongView::OnEditCut()
+{
+	if (HaveSelection()) {
+		GetDocument()->DeleteDubs(m_rCellSel, GetTicksPerCell(), true);	// copy to clipboard
+		ResetSelection();
+	} else
+		DispatchToDocument();
+}
+
+void CSongView::OnUpdateEditCut(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(HaveSelection());
+}
+
+void CSongView::OnEditCopy()
+{
+	if (HaveSelection()) {
+		GetDocument()->CopyDubsToClipboard(m_rCellSel, GetTicksPerCell());
+	} else
+		DispatchToDocument();
+}
+
+void CSongView::OnUpdateEditCopy(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(HaveSelection());
+}
+
+void CSongView::OnEditPaste()
+{
+	if (HaveSelection()) {
+		GetDocument()->PasteDubs(m_rCellSel.TopLeft(), GetTicksPerCell(), m_rCellSel);
+		UpdateCells(m_rCellSel);
+	} else
+		DispatchToDocument();
+}
+
+void CSongView::OnUpdateEditPaste(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(HaveSelection() && theApp.m_arrSongClipboard.GetSize());
+}
+
+void CSongView::OnEditInsert()
+{
+	if (HaveSelection()) {
+		GetDocument()->InsertDubs(m_rCellSel, GetTicksPerCell());
+		UpdateCells(m_rCellSel);
+	} else
+		DispatchToDocument();
+}
+
+void CSongView::OnUpdateEditInsert(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(HaveSelection());
+}
+
+void CSongView::OnEditDelete()
+{
+	if (HaveSelection()) {
+		GetDocument()->DeleteDubs(m_rCellSel, GetTicksPerCell(), false);	// don't copy to clipboard
+		ResetSelection();
+	} else
+		DispatchToDocument();
+}
+
+void CSongView::OnUpdateEditDelete(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(HaveSelection());
 }

@@ -19,7 +19,6 @@
 #include "PolymeterDoc.h"
 #include "StepView.h"
 #include "MainFrm.h"
-#include "Benchmark.h"
 #include <math.h>
 #include "UndoCodes.h"
 #include "StepParent.h"
@@ -245,6 +244,8 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			UpdateSongPosition();
 		}
 		break;
+	case CPolymeterDoc::HINT_SOLO:
+		break;
 	}
 }
 
@@ -427,6 +428,14 @@ void CStepView::UpdateMutes(const CIntArrayEx& arrSelection)
 		int	iTrack = arrSelection[iSel];
 		UpdateMute(iTrack);
 	}
+}
+
+void CStepView::UpdateMutes()
+{
+	CSequencer&	seq = GetDocument()->m_Seq;
+	int	nTracks = seq.GetTrackCount();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
+		UpdateMute(iTrack);
 }
 
 void CStepView::UpdateGrid(int iTrack)
@@ -734,7 +743,7 @@ __forceinline void CStepView::InitTriangleVertex(TRIVERTEX& tv, int x, int y, CO
 
 __forceinline void CStepView::DrawStep(CDC* pDC, int x, int y, int cx, int cy, STEP nStep, int iStepColor, int iTrackType)
 {
-	if (!nStep || (nStep & NB_TIE) || iTrackType != TT_NOTE) {	// if step empty or tied, or track type isn't note
+	if (!nStep || (nStep & SB_TIE) || iTrackType != TT_NOTE) {	// if step empty or tied, or track type isn't note
 		pDC->FillSolidRect(x, y, cx, cy, m_arrStepColor[iStepColor]);
 	} else {	// untied note
 #if USE_GRADIENT_FILL
@@ -999,26 +1008,42 @@ void CStepView::OnLButtonDown(UINT nFlags, CPoint point)
 	if (iTrack >= 0) {	// if hit track
 		if (iStep >= 0) {	// if hit step
 			STEP	nStep = pDoc->m_Seq.GetStep(iTrack, iStep);	// get hit step
-			if (pDoc->m_Seq.IsNote(iTrack)) {	// if track type is note
-				if (nStep) {	// if step is on
-					if (nFlags & MK_SHIFT)	// if modifier key
-						nStep ^= NB_TIE;	// toggle tie state
-					else	// no modifier key
-						nStep = 0;	// clear step
-				} else {	// step is off
-					if (((nFlags & MK_SHIFT) != 0) ^ theApp.m_bTieNotes)	// if modifier key, or tie mode
-						nStep = DEFAULT_VELOCITY | NB_TIE;	// default velocity with tie
-					else	// no modifier key and tie mode off
-						nStep = DEFAULT_VELOCITY;	// default velocity
-				}
-			} else {	// track type isn't note; tie has no meaning, ignore shift key
-				if (nStep)	// if step is on
+			if (nFlags & MK_SHIFT) {	// if shift key down
+				// if track type is note and step is on
+				if (pDoc->m_Seq.GetType(iTrack) == TT_NOTE && nStep)
+					nStep ^= SB_TIE;	// invert tie bit
+			} else {	// shift key up
+				if (nFlags & MK_CONTROL) {	// if control key down
 					nStep = 0;	// clear step
-				else	// step is off
-					nStep = DEFAULT_VELOCITY;	// default velocity
+				} else {	// control key up
+					if (nStep)	// if step is on
+						nStep = 0;	// clear step
+					else {	// step is off
+						// if track type is note and notes should be tied
+						if (pDoc->m_Seq.GetType(iTrack) == TT_NOTE && theApp.m_bTieNotes)
+							nStep = DEFAULT_VELOCITY | SB_TIE;
+						else	// track type isn't note, or notes shouldn't be tied
+							nStep = DEFAULT_VELOCITY;
+					}
+				}
 			}
 			if (HaveStepSelection()) {	// if step selection exists
-				pDoc->SetTrackSteps(m_rStepSel, nStep);	// set selected steps
+				UINT	nToggleFlags;
+				if (nFlags & MK_SHIFT) {	// if shift key down
+					nToggleFlags = SB_TOGGLE_TIE;	// toggle tie
+				} else {	// no shift key
+					if (nFlags & MK_CONTROL) {	// if control key down
+						nToggleFlags = 0;
+					} else {	// control key up
+						nToggleFlags = DEFAULT_VELOCITY;
+						if (theApp.m_bTieNotes)	// if notes should be tied
+							nToggleFlags |= SB_TIE;
+					}
+				}
+				if (nToggleFlags)	// if toggle
+					pDoc->ToggleTrackSteps(m_rStepSel, nToggleFlags);	// toggle selected steps
+				else
+					pDoc->SetTrackSteps(m_rStepSel, nStep);	// set selected steps
 				m_rStepSel.SetRectEmpty();	// reset step selection
 			} else {	// no step selection
 				pDoc->SetTrackStep(iTrack, iStep, nStep);	// set hit step

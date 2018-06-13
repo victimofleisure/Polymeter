@@ -19,6 +19,7 @@
 #include "WObject.h"	// ck: ultra-minimal base class used by many of my objects
 #include "ArrayEx.h"	// ck: wraps MFC dynamic arrays, adding speed and features
 #include "Round.h"		// ck: round floating point to integer
+#include "Benchmark.h"	// ck: wraps performance counter for benchmarking
 
 // define registry section for settings
 #define REG_SETTINGS _T("Settings")
@@ -66,6 +67,9 @@ template<typename T> inline void Swap(T& a, T& b)
 	a = b;
 	b = tmp;
 }
+
+#define BENCH_START CBenchmark b;
+#define BENCH_STOP printf("%f\n", b.Elapsed());
 
 enum {	// application-wide user window messages, based on WP_APP
 	UWM_FIRST = WM_APP,

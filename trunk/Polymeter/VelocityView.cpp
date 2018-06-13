@@ -19,7 +19,6 @@
 #include "PolymeterDoc.h"
 #include "VelocityView.h"
 #include "MainFrm.h"
-#include "Benchmark.h"
 #include "UndoCodes.h"
 #include "StepView.h"
 #define _USE_MATH_DEFINES	// for trig constants
@@ -175,7 +174,7 @@ bool CVelocityView::GetStepVal(CPoint point, int& nMinVal, int& nMaxVal) const
 		if (iHitStep >= 0 && iHitStep < nSteps) {
 			STEP	nStep;
 			if (pDoc->m_Seq.GetNoteVelocity(iTrack, iHitStep, nStep)) {
-				int	nVal = nStep & NB_VELOCITY;
+				int	nVal = nStep & SB_VELOCITY;
 				if (!bHit) {
 					nMinVal = nVal;
 					nMaxVal = nVal;
@@ -295,7 +294,7 @@ void CVelocityView::UpdateVelocities(const CRect& rSpan, int iWaveform)
 					}
 					int	nVel = round((1 - y / nHeight) * MIDI_NOTE_MAX);	// y-axis is reversed
 					nVel = CLAMP(nVel, nMinVel, MIDI_NOTE_MAX);
-					nStep = static_cast<STEP>((nStep & NB_TIE) | nVel);
+					nStep = static_cast<STEP>((nStep & SB_TIE) | nVel);
 					if (!m_bIsModified) {	// if first modification, notify undo
 						pDoc->NotifyUndoableEdit(0, UCODE_VELOCITY);
 						pDoc->SetModifiedFlag();
@@ -354,7 +353,7 @@ void CVelocityView::OnDraw(CDC* pDC)
 			STEP	nStep;
 			if (pDoc->m_Seq.GetNoteVelocity(iTrack, iStep, nStep)) {
 				int	x = m_nBarBorder - nScrollPos + round(iStep * fStepWidth);
-				int	nVal = nStep & NB_VELOCITY;
+				int	nVal = nStep & SB_VELOCITY;
 				int	nHeight = round(static_cast<double>(nVal) / MIDI_NOTE_MAX * szClient.cy);
 				int	y = szClient.cy - nHeight;
 				int	nBarWidth = max(nStepWidth - m_nBarBorder * 2, 1);

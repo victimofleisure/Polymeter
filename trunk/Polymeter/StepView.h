@@ -144,6 +144,7 @@ protected:
 	void	UpdateTracks(const CRect& rSelection);
 	void	UpdateMute(int iTrack);
 	void	UpdateMutes(const CIntArrayEx& arrSelection);
+	void	UpdateMutes();
 	void	UpdateGrid(int iTrack);
 	void	UpdateStep(int iTrack, int iStep);
 	void	UpdateSteps(const CRect& rSelection);

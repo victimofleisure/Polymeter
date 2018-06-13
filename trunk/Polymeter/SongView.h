@@ -37,6 +37,7 @@ public:
 	CPolymeterDoc* GetDocument() const;
 	bool	HaveSelection() const;
 	void	GetSelection(CRect& rSelelection) const;
+	double	GetTicksPerCell() const;
 
 // Operations
 public:
@@ -115,7 +116,7 @@ protected:
 	void	UpdateZoomDelta();
 	static	double	InvPow(double fBase, double fVal);
 	void	UpdateSongPos(int nSongPos);
-	double	GetTicksPerCell() const;
+	double	GetTicksPerCellImpl() const;
 	int		ConvertXToSongPos(int x) const;
 	int		ConvertSongPosToX(int nSongPos) const;
 	static	int		Mod(int Val, int Modulo);
@@ -123,6 +124,7 @@ protected:
 	void	GetCellsRect(int iTrack, CIntRange rngCells, CRect& rCells) const;
 	void	UpdateCell(int iTrack, int iCell);
 	void	UpdateCells(const CRect& rSelection);
+	void	DispatchToDocument();
 
 // Overrides
 	virtual void OnInitialUpdate();
@@ -147,6 +149,16 @@ protected:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnEditCut();
+	afx_msg void OnUpdateEditCut(CCmdUI *pCmdUI);
+	afx_msg void OnEditCopy();
+	afx_msg void OnUpdateEditCopy(CCmdUI *pCmdUI);
+	afx_msg void OnEditPaste();
+	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
+	afx_msg void OnEditInsert();
+	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
+	afx_msg void OnEditDelete();
+	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
 };
 
 inline CPolymeterDoc* CSongView::GetDocument() const

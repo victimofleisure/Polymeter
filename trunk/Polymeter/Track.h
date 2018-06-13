@@ -28,13 +28,17 @@ public:
 		INIT_STEPS = 32,			// initial number of steps
 		DEFAULT_VELOCITY = 64,		// default note velocity
 	};
-	enum {	// note bitmasks
-		NB_TIE		= 0x80,			// if non-zero, note is tied
-		NB_VELOCITY	= 0x7f,			// remaining bits are velocity
+	enum {	// step bitmasks; these define the layout of a sequencer step
+		// for track types other than note, the velocity carries the event's
+		// parameter if any, but the tie bit is inapplicable and should be zero
+		SB_VELOCITY		= 0x7f,		// velocity for note tracks, else event parameter if any
+		SB_TIE			= 0x80,		// if non-zero, note is tied; applies to note tracks only
+		// this flag can be used when toggling multiple steps; applies to note tracks only
+		SB_TOGGLE_TIE	= 0x100,	// if non-zero, toggle note's tie state
 	};
 	enum {	// mute bitmasks
-		MB_MUTE		= 0x01,			// mute state
-		MB_TOGGLE	= 0x02,			// toggle mute
+		MB_MUTE			= 0x01,		// mute state
+		MB_TOGGLE		= 0x02,		// toggle mute state
 	};
 	enum {	// track types
 		#define TRACKTYPEDEF(name) TT_##name,
@@ -63,7 +67,12 @@ public:
 	public:
 		int		FindDub(int nTime, int iStartDub = 0) const;
 		bool	GetDubs(int nStartTime, int nEndTime) const;
+		void	GetDubs(int nStartTime, int nEndTime, CDubArray& arrDub) const;
 		void	SetDubs(int nStartTime, int nEndTime, bool bMute);
+		void	AddDub(int nTime, bool bMute);
+		void	InsertDub(int iDub, int nTime, bool bMute);
+		void	DeleteDubs(int nStartTime, int nEndTime);
+		void	InsertDubs(int nTime, CDubArray& arrDub); 
 		void	RemoveDuplicates();
 		void	Dump() const;
 	};
@@ -111,6 +120,18 @@ inline int CTrackBase::CDubArray::FindDub(int nTime, int iStartDub) const
 			return iDub - 1;	// return previous dub
 	}
 	return nDubs - 1;	// return last dub
+}
+
+inline void CTrackBase::CDubArray::AddDub(int nTime, bool bMute)
+{
+	CDub	dub(nTime, bMute);
+	Add(dub);
+}
+
+inline void CTrackBase::CDubArray::InsertDub(int iDub, int nTime, bool bMute)
+{
+	CDub	dub(nTime, bMute);
+	InsertAt(iDub, dub);
 }
 
 class CTrack : public CTrackBase {

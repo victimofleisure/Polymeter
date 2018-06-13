@@ -19,7 +19,6 @@
 #include "PolymeterDoc.h"
 #include "MuteView.h"
 #include "MainFrm.h"
-#include "Benchmark.h"
 #include <math.h>
 #include "UndoCodes.h"
 #include "StepView.h"
@@ -105,6 +104,9 @@ void CMuteView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		break;
 	case CPolymeterDoc::HINT_TRACK_SELECTION:
 		Invalidate();	// over-inclusive but safe
+		break;
+	case CPolymeterDoc::HINT_SOLO:
+		Invalidate();
 		break;
 	}
 }
@@ -240,13 +242,15 @@ void CMuteView::OnLButtonDown(UINT nFlags, CPoint point)
 	int iTrack = HitTest(point);
 	if (iTrack >= 0) {	// if hit mute
 		if (pDoc->GetSelectedCount()) {	// if tracks are selected
-			if (nFlags & MK_SHIFT) {	// if modifier key
-				// invert hit track's mute and apply it to selected tracks
-				pDoc->SetSelectedMutes(pDoc->m_Seq.GetMute(iTrack) ^ 1);
-			} else	// no modifier
-				pDoc->SetSelectedMutes(MB_TOGGLE);	// invert mute for selected tracks
+			if (nFlags & MK_CONTROL) {	// if control key
+				pDoc->SetSelectedMutes(MB_MUTE);	// mute selected tracks
+			} else	// no control key
+				pDoc->SetSelectedMutes(MB_TOGGLE);	// toggle mute for selected tracks
 		} else {	// single track
-			pDoc->SetMute(iTrack, pDoc->m_Seq.GetMute(iTrack) ^ 1);	// invert hit track's mute
+			if (nFlags & MK_CONTROL) {	// if control key
+				pDoc->SetMute(iTrack, MB_MUTE);	// mute hit track
+			} else	// no control key
+				pDoc->SetMute(iTrack, pDoc->m_Seq.GetMute(iTrack) ^ 1);	// toggle hit track's mute
 		}
 		pDoc->Deselect();
 	}

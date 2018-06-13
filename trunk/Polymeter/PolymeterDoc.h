@@ -53,7 +53,8 @@ public:
 		HINT_VELOCITY,			// multi-track velocity edit; pHint is CMultiItemPropHint
 		HINT_OPTIONS,			// options change; pHint is COptionsPropHint
 		HINT_VIEW_TYPE,			// view type change
-		HINT_SONG_DUB,			// song dub edit
+		HINT_SONG_DUB,			// song dub edit; pHint is CRectSelPropHint
+		HINT_SOLO,				// track solo
 		HINTS
 	};
 	enum {	// view types
@@ -116,6 +117,7 @@ public:
 	static	int		GetTrackPropertyNameID(int iProp);
 	void	SetTrackStep(int iTrack, int iStep, STEP nStep);
 	void	SetTrackSteps(const CRect& rSelection, STEP nStep);
+	void	ToggleTrackSteps(const CRect& rSelection, UINT nFlags);
 	bool	GetTrackSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const;
 	bool	IsRectStepSelection(const CRect& rSelection, bool bIsDeleting = false) const;
 	void	SetPosition(int nPos);
@@ -143,6 +145,7 @@ public:
 	void	SortTracks(const CIntArrayEx& arrSortLevel);
 	void	SetMute(int iTrack, bool bMute);
 	void	SetSelectedMutes(UINT nMuteMask);
+	void	Solo();
 	bool	DeleteSteps(const CRect& rSelection, bool bCopyToClipboard);
 	bool	PasteSteps(const CRect& rSelection);
 	bool	InsertStep(const CRect& rSelection);
@@ -161,9 +164,15 @@ public:
 	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
 	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
 	bool	Play(bool bPlay, bool bRecord = false);
-	void	SetDubs(const CRect& rSelection, double fTicksPerCell);
 	void	OnPlay(bool bPlay, bool bRecord);
 	void	UpdateSongLength();
+	void	SetDubs(const CRect& rSelection, double fTicksPerCell, bool bMute);
+	void	ToggleDubs(const CRect& rSelection, double fTicksPerCell);
+	void	CopyDubsToClipboard(const CRect& rSelection, double fTicksPerCell) const;
+	void	DeleteDubs(const CRect& rSelection, double fTicksPerCell, bool bCopyToClipboard);
+	void	InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double fTicksPerCell, CRect& rSelection);
+	void	InsertDubs(const CRect& rSelection, double fTicksPerCell);
+	void	PasteDubs(CPoint ptPaste, double fTicksPerCell, CRect& rSelection);
 
 // Overrides
 public:
@@ -232,6 +241,15 @@ protected:
 		int		m_iTrack;	// first track of selection
 		CDubArrayArray	m_arrDub;	// array of dub arrays, one for each selected track
 	};
+	class CUndoMute : public CRefObj {
+	public:
+		CIntArrayEx	m_arrSelection;	// indices of selected tracks
+		CByteArrayEx	m_arrMute;	// array of mutes, one per selected track
+	};
+	class CUndoSolo : public CRefObj {
+	public:
+		CByteArrayEx	m_arrMute;	// array of mutes, one per track
+	};
 
 // Constants
 	static const int	m_nUndoTitleId[];	// array of string resource IDs for undo titles
@@ -287,6 +305,10 @@ protected:
 	void	RestoreReverseRect(const CUndoState& State);
 	void	SaveDubs(CUndoState& State) const;
 	void	RestoreDubs(const CUndoState& State);
+	void	SaveMute(CUndoState& State) const;
+	void	RestoreMute(const CUndoState& State);
+	void	SaveSolo(CUndoState& State) const;
+	void	RestoreSolo(const CUndoState& State);
 
 // Generated message map functions
 protected:
@@ -332,6 +354,10 @@ protected:
 	afx_msg void OnTrackShiftRight();
 	afx_msg void OnTrackRotateLeft();
 	afx_msg void OnTrackRotateRight();
+	afx_msg void OnTrackSolo();
+	afx_msg void OnUpdateTrackSolo(CCmdUI *pCmdUI);
+	afx_msg void OnTrackMute();
+	afx_msg void OnUpdateTrackMute(CCmdUI *pCmdUI);
 };
 
 inline int CPolymeterDoc::GetTrackCount() const

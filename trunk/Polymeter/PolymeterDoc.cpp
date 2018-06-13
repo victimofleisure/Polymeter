@@ -77,6 +77,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define IDS_EDIT_REVERSE_RECT		IDS_EDIT_REVERSE
 #define IDS_EDIT_ROTATE_RECT		IDS_EDIT_ROTATE
 #define IDS_EDIT_SHIFT_RECT			IDS_EDIT_SHIFT
+#define IDS_EDIT_MUTE				IDS_TRK_Mute
 
 const int CPolymeterDoc::m_nUndoTitleId[UNDO_CODES] = {
 	#define UCODE_DEF(name) IDS_EDIT_##name,
@@ -454,13 +455,13 @@ void CPolymeterDoc::SetMute(int iTrack, bool bMute)
 
 void CPolymeterDoc::SetSelectedMutes(UINT nMuteMask)
 {
-	NotifyUndoableEdit(PROP_Mute, UCODE_MULTI_TRACK_PROP);
+	NotifyUndoableEdit(NULL, UCODE_MUTE);
 	const CIntArrayEx&	arrSelection = m_arrTrackSel;
 	int	nSels = arrSelection.GetSize();
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = arrSelection[iSel];
 		bool	bMute;
-		if (nMuteMask & MB_TOGGLE)	// if toggling set
+		if (nMuteMask & MB_TOGGLE)	// if toggling state
 			bMute = m_Seq.GetMute(iTrack) ^ 1;	// invert mute
 		else	// not toggling
 			bMute = nMuteMask & MB_MUTE;	// set mute
@@ -471,6 +472,23 @@ void CPolymeterDoc::SetSelectedMutes(UINT nMuteMask)
 	SetModifiedFlag();
 	CMultiItemPropHint	hint(arrSelection, PROP_Mute);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
+}
+
+void CPolymeterDoc::Solo()
+{
+	NotifyUndoableEdit(0, UCODE_SOLO);
+	int	nTracks = GetTrackCount();
+	CByteArrayEx	arrSolo;
+	arrSolo.SetSize(nTracks);
+	int	nSels = m_arrTrackSel.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected track
+		arrSolo[m_arrTrackSel[iSel]] = true;	// set solo flag
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
+		m_Seq.SetMute(iTrack, !arrSolo[iTrack]);	// apply solo
+	if (m_Seq.IsRecording())
+		m_Seq.RecordDub();	// all tracks
+	SetModifiedFlag();
+	UpdateAllViews(NULL, HINT_SOLO);
 }
 
 void CPolymeterDoc::SetTrackStep(int iTrack, int iStep, STEP nStep)
@@ -487,6 +505,16 @@ void CPolymeterDoc::SetTrackSteps(const CRect& rSelection, STEP nStep)
 	m_rStepSel = rSelection;
 	NotifyUndoableEdit(0, UCODE_MULTI_STEP_RECT);
 	m_Seq.SetSteps(rSelection, nStep);
+	SetModifiedFlag();
+	CRectSelPropHint	hint(rSelection);
+	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
+}
+
+void CPolymeterDoc::ToggleTrackSteps(const CRect& rSelection, UINT nFlags)
+{
+	m_rStepSel = rSelection;
+	NotifyUndoableEdit(0, UCODE_MULTI_STEP_RECT);
+	m_Seq.ToggleSteps(rSelection, nFlags);
 	SetModifiedFlag();
 	CRectSelPropHint	hint(rSelection);
 	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
@@ -848,20 +876,20 @@ void CPolymeterDoc::RestoreTrackProperty(const CUndoState& State)
 void CPolymeterDoc::SaveMultiTrackProperty(CUndoState& State) const
 {
 	int	iProp = State.GetCtrlID();
-	CIntArrayEx	arrSelection;
+	const CIntArrayEx	*parrSelection;
 	if (State.IsEmpty()) {	// if initial state
-		arrSelection = m_arrTrackSel;	// get fresh selection
+		parrSelection = &m_arrTrackSel;	// get fresh selection
 	} else {	// undoing or redoing; selection may have changed, so don't rely on it
 		const CUndoMultiItemProp	*pInfo = static_cast<CUndoMultiItemProp*>(State.GetObj());
-		arrSelection = pInfo->m_arrSelection;	// use edit's original selection
+		parrSelection = &pInfo->m_arrSelection;	// use edit's original selection
 	}
 	CRefPtr<CUndoMultiItemProp>	pInfo;
 	pInfo.CreateObj();
-	pInfo->m_arrSelection = arrSelection;
-	int	nSels = arrSelection.GetSize();
+	pInfo->m_arrSelection = *parrSelection;
+	int	nSels = parrSelection->GetSize();
 	pInfo->m_arrVal.SetSize(nSels);
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		int	iTrack = arrSelection[iSel];
+		int	iTrack = parrSelection->GetAt(iSel);
 		m_Seq.GetTrackProperty(iTrack, iProp, pInfo->m_arrVal[iSel]);
 	}
 	State.SetObj(pInfo);
@@ -902,20 +930,20 @@ void CPolymeterDoc::RestoreTrackSteps(const CUndoState& State)
 
 void CPolymeterDoc::SaveMultiTrackSteps(CUndoState& State) const
 {
-	CIntArrayEx	arrSelection;
+	const CIntArrayEx	*parrSelection;
 	if (State.IsEmpty()) {	// if initial state
-		arrSelection = m_arrTrackSel;	// get fresh selection
+		parrSelection = &m_arrTrackSel;	// get fresh selection
 	} else {	// undoing or redoing; selection may have changed, so don't rely on it
 		const CUndoMultiItemSteps	*pInfo = static_cast<CUndoMultiItemSteps*>(State.GetObj());
-		arrSelection = pInfo->m_arrSelection;	// use edit's original selection
+		parrSelection = &pInfo->m_arrSelection;	// use edit's original selection
 	}
 	CRefPtr<CUndoMultiItemSteps>	pInfo;
 	pInfo.CreateObj();
-	pInfo->m_arrSelection = arrSelection;
-	int	nSels = arrSelection.GetSize();
+	pInfo->m_arrSelection = *parrSelection;
+	int	nSels = parrSelection->GetSize();
 	pInfo->m_arrStepArray.SetSize(nSels);
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		int	iTrack = arrSelection[iSel];
+		int	iTrack = parrSelection->GetAt(iSel);
 		m_Seq.GetSteps(iTrack, pInfo->m_arrStepArray[iSel]);
 	}
 	State.SetObj(pInfo);
@@ -1162,16 +1190,16 @@ void CPolymeterDoc::RestoreClipboardSteps(const CUndoState& State)
 
 void CPolymeterDoc::SaveReverse(CUndoState& State) const
 {
-	CIntArrayEx	arrSelection;
+	const CIntArrayEx	*parrSelection;
 	if (State.IsEmpty()) {	// if initial state
-		arrSelection = m_arrTrackSel;	// get fresh selection
+		parrSelection = &m_arrTrackSel;	// get fresh selection
 	} else {	// undoing or redoing; selection may have changed, so don't rely on it
 		const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
-		arrSelection = pInfo->m_arrSelection;	// use edit's original selection
+		parrSelection = &pInfo->m_arrSelection;	// use edit's original selection
 	}
 	CRefPtr<CUndoSelection>	pInfo;
 	pInfo.CreateObj();
-	pInfo->m_arrSelection = arrSelection;
+	pInfo->m_arrSelection = *parrSelection;
 	State.SetObj(pInfo);
 }
 
@@ -1227,13 +1255,21 @@ void CPolymeterDoc::SaveDubs(CUndoState& State) const
 {
 	CRefPtr<CUndoDub>	pInfo;
 	pInfo.CreateObj();
-	CRange<int>	rngTrack(m_rStepSel.top, m_rStepSel.bottom);
-	rngTrack.Normalize();
-	int	nTracks = rngTrack.Length();
-	pInfo->m_iTrack = rngTrack.Start;
+	int	iStartTrack, nTracks;
+	if (State.IsEmpty()) {	// if initial state
+		CRange<int>	rngTrack(m_rStepSel.top, m_rStepSel.bottom);
+		rngTrack.Normalize();
+		iStartTrack = rngTrack.Start;
+		nTracks = rngTrack.Length();
+	} else {	// undoing or redoing; selection may have changed, so don't rely on it
+		const CUndoDub	*pInfo = static_cast<CUndoDub*>(State.GetObj());
+		iStartTrack = pInfo->m_iTrack;
+		nTracks = pInfo->m_arrDub.GetSize();
+	}
+	pInfo->m_iTrack = iStartTrack;
 	pInfo->m_arrDub.SetSize(nTracks);
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
-		pInfo->m_arrDub[iTrack] = m_Seq.GetTrack(rngTrack.Start + iTrack).m_arrDub;
+		pInfo->m_arrDub[iTrack] = m_Seq.GetTrack(iStartTrack + iTrack).m_arrDub;
 	}
 	State.SetObj(pInfo);
 }
@@ -1248,9 +1284,69 @@ void CPolymeterDoc::RestoreDubs(const CUndoState& State)
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
 		m_Seq.SetDubs(iStartTrack + iTrack, pInfo->m_arrDub[iTrack]);
 	}
-	UpdateAllViews(NULL, HINT_SONG_DUB);
+	m_Seq.ChaseDubsFromCurPos();
+	CRect	rCellSel(CPoint(0, iStartTrack), CSize(INT_MAX, nTracks));	// full width of view
+	CRectSelPropHint	hint(rCellSel);
+	UpdateAllViews(NULL, HINT_SONG_DUB, &hint);
 	if (State.GetCode() == UCODE_RECORD)
 		UpdateSongLength();	// restore song length from dubs
+}
+
+void CPolymeterDoc::SaveMute(CUndoState& State) const
+{
+	const CIntArrayEx	*parrSelection;
+	if (State.IsEmpty()) {	// if initial state
+		parrSelection = &m_arrTrackSel;	// get fresh selection
+	} else {	// undoing or redoing; selection may have changed, so don't rely on it
+		const CUndoMute	*pInfo = static_cast<CUndoMute*>(State.GetObj());
+		parrSelection = &pInfo->m_arrSelection;	// use edit's original selection
+	}
+	CRefPtr<CUndoMute>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrSelection = *parrSelection;
+	int	nSels = parrSelection->GetSize();
+	pInfo->m_arrMute.SetSize(nSels);
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = parrSelection->GetAt(iSel);
+		pInfo->m_arrMute[iSel] = m_Seq.GetMute(iTrack);
+	}
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreMute(const CUndoState& State)
+{
+	const CUndoMute	*pInfo = static_cast<CUndoMute*>(State.GetObj());
+	int	nSels = pInfo->m_arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = pInfo->m_arrSelection[iSel];
+		m_Seq.SetMute(iTrack, pInfo->m_arrMute[iSel] != 0);
+	}
+	if (m_Seq.IsRecording())
+		m_Seq.RecordDub(pInfo->m_arrSelection);
+	CMultiItemPropHint	hint(pInfo->m_arrSelection, PROP_Mute);
+	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
+}
+
+void CPolymeterDoc::SaveSolo(CUndoState& State) const
+{
+	CRefPtr<CUndoSolo>	pInfo;
+	pInfo.CreateObj();
+	int	nTracks = GetTrackCount();
+	pInfo->m_arrMute.SetSize(nTracks);
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)
+		pInfo->m_arrMute[iTrack] = m_Seq.GetMute(iTrack);
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreSolo(const CUndoState& State)
+{
+	const CUndoSolo	*pInfo = static_cast<CUndoSolo*>(State.GetObj());
+	int	nTracks = GetTrackCount();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)
+		m_Seq.SetMute(iTrack, pInfo->m_arrMute[iTrack] != 0);
+	UpdateAllViews(NULL, HINT_SOLO);
+	if (m_Seq.IsRecording())
+		m_Seq.RecordDub();	// all tracks
 }
 
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
@@ -1315,6 +1411,12 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 	case UCODE_DUB:
 	case UCODE_RECORD:
 		SaveDubs(State);
+		break;
+	case UCODE_MUTE:
+		SaveMute(State);
+		break;
+	case UCODE_SOLO:
+		SaveSolo(State);
 		break;
 	}
 }
@@ -1382,6 +1484,12 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_DUB:
 	case UCODE_RECORD:
 		RestoreDubs(State);
+		break;
+	case UCODE_MUTE:
+		RestoreMute(State);
+		break;
+	case UCODE_SOLO:
+		RestoreSolo(State);
 		break;
 	}
 }
@@ -1538,14 +1646,34 @@ void CPolymeterDoc::SetPosition(int nPos)
 	UpdateAllViews(NULL, HINT_SONG_POS, &hint);
 }
 
-void CPolymeterDoc::SetDubs(const CRect& rSelection, double fTicksPerCell)
+bool CPolymeterDoc::ShowGMDrums(int iTrack) const
+{
+	// if track uses drum channel, and track type is note, and showing General MIDI patch names
+	return (m_Seq.GetChannel(iTrack) == 9 && m_Seq.GetType(iTrack) == CTrack::TT_NOTE
+		&& theApp.m_Options.m_View_bShowGMNames);
+}
+
+void CPolymeterDoc::SetDubs(const CRect& rSelection, double fTicksPerCell, bool bMute)
 {
 	m_rStepSel = rSelection;	// for undo handler
 	NotifyUndoableEdit(0, UCODE_DUB);
 	SetModifiedFlag();
-	int	nTracks = GetTrackCount();
-	int	iEndTrack = min(rSelection.bottom, nTracks);
-	for (int iTrack = rSelection.top; iTrack < iEndTrack; iTrack++) {	// for each selected track
+	int	nStartTime = round(rSelection.left * fTicksPerCell);
+	int	nEndTime = round((rSelection.right) * fTicksPerCell);
+	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
+		m_Seq.SetDubs(iTrack, nStartTime, nEndTime, bMute);
+	}
+	m_Seq.ChaseDubsFromCurPos();
+	CRectSelPropHint	hint(rSelection);
+	UpdateAllViews(NULL, HINT_SONG_DUB, &hint);
+}
+
+void CPolymeterDoc::ToggleDubs(const CRect& rSelection, double fTicksPerCell)
+{
+	m_rStepSel = rSelection;	// for undo handler
+	NotifyUndoableEdit(0, UCODE_DUB);
+	SetModifiedFlag();
+	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
 		int	nRunStartTime = round(rSelection.left * fTicksPerCell);
 		int	nRunEndTime = round((rSelection.left + 1) * fTicksPerCell);
 		bool	bRunMute = m_Seq.GetDubs(iTrack, nRunStartTime, nRunEndTime);
@@ -1562,14 +1690,82 @@ void CPolymeterDoc::SetDubs(const CRect& rSelection, double fTicksPerCell)
 		}
 		m_Seq.SetDubs(iTrack, nRunStartTime, nRunEndTime, !bRunMute);
 	}
-	UpdateAllViews(NULL, HINT_SONG_DUB);
+	m_Seq.ChaseDubsFromCurPos();
+	CRectSelPropHint	hint(rSelection);
+	UpdateAllViews(NULL, HINT_SONG_DUB, &hint);
 }
 
-bool CPolymeterDoc::ShowGMDrums(int iTrack) const
+void CPolymeterDoc::CopyDubsToClipboard(const CRect& rSelection, double fTicksPerCell) const
 {
-	// if track uses drum channel, and track type is note, and showing General MIDI patch names
-	return (m_Seq.GetChannel(iTrack) == 9 && m_Seq.GetType(iTrack) == CTrack::TT_NOTE
-		&& theApp.m_Options.m_View_bShowGMNames);
+	int	nStartTime = round(rSelection.left * fTicksPerCell);
+	int	nEndTime = round((rSelection.right) * fTicksPerCell);
+	int	nCopyTracks = rSelection.bottom - rSelection.top;
+	theApp.m_arrSongClipboard.SetSize(nCopyTracks);
+	for (int iTrack = 0; iTrack < nCopyTracks; iTrack++) {	// for each selected track
+		m_Seq.GetDubs(rSelection.top + iTrack, nStartTime, nEndTime, theApp.m_arrSongClipboard[iTrack]);
+	}
+}
+
+void CPolymeterDoc::DeleteDubs(const CRect& rSelection, double fTicksPerCell, bool bCopyToClipboard)
+{
+	if (bCopyToClipboard)
+		CopyDubsToClipboard(rSelection, fTicksPerCell);
+	m_rStepSel = rSelection;	// for undo handler
+	NotifyUndoableEdit(0, UCODE_DUB);
+	SetModifiedFlag();
+	int	nStartTime = round(rSelection.left * fTicksPerCell);
+	int	nEndTime = round((rSelection.right) * fTicksPerCell);
+	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
+		m_Seq.DeleteDubs(iTrack, nStartTime, nEndTime);
+	}
+	m_Seq.ChaseDubsFromCurPos();
+	CRectSelPropHint	hint(CRect(0, rSelection.top, INT_MAX, rSelection.bottom));
+	UpdateAllViews(NULL, HINT_SONG_DUB, &hint);
+}
+
+void CPolymeterDoc::InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double fTicksPerCell, CRect& rSelection)
+{
+	int	nTracks = GetTrackCount();
+	// if source array has more tracks than will fit, truncate instead of failing
+	int	nInsTracks = min(arrDub.GetSize(), nTracks - ptInsert.y);
+	int	nInsCells = 0;
+	if (nInsTracks) {
+		int	nDubs = arrDub[0].GetSize();
+		if (nDubs)
+			nInsCells = round(arrDub[0][nDubs - 1].m_nTime / fTicksPerCell);
+	}
+	CRect	rInsert(ptInsert, CSize(nInsCells, nInsTracks));
+	rSelection = rInsert;
+	m_rStepSel = rInsert;	// for undo handler
+	NotifyUndoableEdit(0, UCODE_DUB);
+	SetModifiedFlag();
+	int	nInsTime = round(ptInsert.x * fTicksPerCell);
+	for (int iTrack = 0; iTrack < nInsTracks; iTrack++) {	// for each source row
+		m_Seq.InsertDubs(ptInsert.y + iTrack, nInsTime, arrDub[iTrack]);
+	}
+	m_Seq.ChaseDubsFromCurPos();
+	CRectSelPropHint	hint(CRect(0, ptInsert.y, INT_MAX, ptInsert.y + nInsTracks), true);
+	UpdateAllViews(NULL, HINT_SONG_DUB, &hint);
+}
+
+void CPolymeterDoc::InsertDubs(const CRect& rSelection, double fTicksPerCell)
+{
+	CDubArrayArray	arrDub;
+	int	nRows = rSelection.Height();
+	arrDub.SetSize(nRows);
+	int	nTicksPerCell = round(fTicksPerCell);
+	for (int iDub = 0; iDub < nRows; iDub++) {
+		arrDub[iDub].SetSize(2);
+		arrDub[iDub][0] = CTrack::CDub(0, true);
+		arrDub[iDub][1] = CTrack::CDub(nTicksPerCell, true);
+	}
+	CRect	rTemp;
+	InsertDubs(arrDub, rSelection.TopLeft(), fTicksPerCell, rTemp);
+}
+
+void CPolymeterDoc::PasteDubs(CPoint ptPaste, double fTicksPerCell, CRect& rSelection)
+{
+	InsertDubs(theApp.m_arrSongClipboard, ptPaste, fTicksPerCell, rSelection);
 }
 
 // CPolymeterDoc diagnostics
@@ -1635,6 +1831,10 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIME_TO_REPEAT, OnUpdateToolsTimeToRepeat)
 	ON_COMMAND(ID_TRACK_TRANSPOSE, OnEditTranspose)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_TRANSPOSE, OnUpdateEditTranspose)
+	ON_COMMAND(ID_TRACK_SOLO, OnTrackSolo)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_SOLO, OnUpdateTrackSolo)
+	ON_COMMAND(ID_TRACK_MUTE, OnTrackMute)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_MUTE, OnUpdateTrackMute)
 END_MESSAGE_MAP()
 
 // CPolymeterDoc commands
@@ -1865,6 +2065,28 @@ void CPolymeterDoc::OnTrackRotateLeft()
 void CPolymeterDoc::OnTrackRotateRight()
 {
 	RotateSteps(1);
+}
+
+void CPolymeterDoc::OnTrackMute()
+{
+	SetSelectedMutes(MB_TOGGLE);
+	Deselect();
+}
+
+void CPolymeterDoc::OnUpdateTrackMute(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(GetSelectedCount());
+}
+
+void CPolymeterDoc::OnTrackSolo()
+{
+	Solo();
+	Deselect();
+}
+
+void CPolymeterDoc::OnUpdateTrackSolo(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(GetSelectedCount());
 }
 
 void CPolymeterDoc::OnEditTranspose()

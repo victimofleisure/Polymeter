@@ -60,6 +60,7 @@ public:
 	COptions	m_Options;	// options data
 	CTrackArray	m_arrTrackClipboard;	// clipboard for tracks
 	CTrack::CStepArrayArray m_arrStepClipboard;	// clipboard for steps
+	CTrack::CDubArrayArray	m_arrSongClipboard;	// clipboard for song dubs
 	CMidiDevices	m_midiDevs;		// MIDI device information
 	bool	m_bTieNotes;	// if true, new notes are tied
 

@@ -23,6 +23,7 @@
 		13		02may18	add equality operators to non-template arrays
 		14		03may18	add InsertSortedUnique and refactor
 		15		18may18	move list of algorithms to header file
+		16		08jun18	add more fast methods to CArrayEx; add SetGrowBy
 
 		enhanced array with copy ctor, assignment, and fast const access
  
@@ -31,6 +32,9 @@
 #pragma once
 
 #include <afxtempl.h>
+
+// CArrayEx Fast* methods do NOT initialize elements to zero unless this is set
+#define CArrayEx_FastInitZero 0
 
 template<typename T> inline void CArrayEx_Swap(T& a, T& b)
 {
@@ -187,6 +191,7 @@ public:
 	int		GetSize() const;
 	W64INT	GetSize64() const;
 	W64INT	GetMaxSize() const;
+	void	SetGrowBy(INT_PTR nGrowBy);
 
 // Operations
 	TYPE& GetAt(W64INT nIndex);
@@ -199,8 +204,14 @@ public:
 	void	Detach(TYPE*& pData, W64INT& Size);
 	void	Attach(TYPE *pData, W64INT Size);
 	void	Swap(CArrayEx& src);
-	void	FastRemoveAll();	// destructors may not be called
-	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);	// ctors and dtors may not be called
+	// Fast* methods do NOT call constructors or destructors, and do NOT
+	// initialize elements to zero (unless CArrayEx_FastInitZero is set)
+	void	FastRemoveAll();
+	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);
+	void	FastSetAtGrow(INT_PTR nIndex, ARG_TYPE newElement);
+	INT_PTR	FastAdd(ARG_TYPE newElement);
+	void	FastInsertAt(INT_PTR nIndex, ARG_TYPE newElement, INT_PTR nCount = 1);
+	void	FastRemoveAt(INT_PTR nIndex, INT_PTR nCount);
 	bool	operator==(const CArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
 	bool	operator!=(const CArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
 	#define	ALGO_TYPE ARG_TYPE
@@ -318,6 +329,13 @@ AFX_INLINE W64INT CArrayEx<TYPE, ARG_TYPE>::GetMaxSize() const
 }
 
 template<class TYPE, class ARG_TYPE>
+AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::SetGrowBy(INT_PTR nGrowBy)
+{
+	ASSERT(nGrowBy >= 0);
+	m_nGrowBy = nGrowBy;
+}
+
+template<class TYPE, class ARG_TYPE>
 AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::FastRemoveAll()
 {
 	m_nSize = 0;	// set size without freeing memory
@@ -326,10 +344,106 @@ AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::FastRemoveAll()
 template<class TYPE, class ARG_TYPE>
 AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy)
 {
-	if (nNewSize <= m_nMaxSize)	// if new size fits in allocated memory
+	ASSERT_VALID(this);
+	ASSERT(nNewSize >= 0);
+	if (nNewSize <= m_nMaxSize) {	// if new size fits in allocated memory
 		m_nSize = nNewSize;	// set size without zeroing or freeing memory
-	else	// set size the usual way
-		SetSize(nNewSize, nGrowBy);
+	} else {	// new size doesn't fit
+		if (nGrowBy >= 0)
+			m_nGrowBy = nGrowBy;  // set new size
+		if (m_pData == NULL) {	// if array is unallocated
+			// create buffer big enough to hold number of requested elements or
+			// m_nGrowBy elements, whichever is larger.
+			size_t nAllocSize = __max(nNewSize, m_nGrowBy);
+			m_pData = (TYPE*) new BYTE[(size_t)nAllocSize * sizeof(TYPE)];
+#if CArrayEx_FastInitZero
+			memset((void*)m_pData, 0, (size_t)nAllocSize * sizeof(TYPE));
+#endif
+			m_nSize = nNewSize;
+			m_nMaxSize = nAllocSize;
+		} else {	// otherwise, grow array
+			nGrowBy = m_nGrowBy;
+			if (nGrowBy == 0) {
+				// heuristically determine growth when nGrowBy == 0
+				nGrowBy = m_nSize / 8;
+				nGrowBy = (nGrowBy < 4) ? 4 : ((nGrowBy > 1024) ? 1024 : nGrowBy);
+			}
+			INT_PTR nNewMax;
+			if (nNewSize < m_nMaxSize + nGrowBy)
+				nNewMax = m_nMaxSize + nGrowBy;  // granularity
+			else
+				nNewMax = nNewSize;  // no slush
+			ASSERT(nNewMax >= m_nMaxSize);  // no wrap around		
+			TYPE* pNewData = (TYPE*) new BYTE[(size_t)nNewMax * sizeof(TYPE)];
+			// copy new data from old
+			memcpy(pNewData, m_pData, (size_t)m_nSize * sizeof(TYPE));
+			// get rid of old stuff
+			delete[] (BYTE*)m_pData;
+			m_pData = pNewData;
+			m_nSize = nNewSize;
+			m_nMaxSize = nNewMax;
+		}
+	}
+}
+
+template<class TYPE, class ARG_TYPE>
+void CArrayEx<TYPE, ARG_TYPE>::FastSetAtGrow(INT_PTR nIndex, ARG_TYPE newElement)
+{
+	ASSERT_VALID(this);
+	ASSERT(nIndex >= 0);
+	if (nIndex >= m_nSize)
+		FastSetSize(nIndex + 1, -1);
+	m_pData[nIndex] = newElement;
+}
+
+template<class TYPE, class ARG_TYPE>
+AFX_INLINE INT_PTR CArrayEx<TYPE, ARG_TYPE>::FastAdd(ARG_TYPE newElement)
+{
+	INT_PTR nIndex = m_nSize;
+	FastSetAtGrow(nIndex, newElement);
+	return nIndex;
+}
+
+template<class TYPE, class ARG_TYPE>
+void CArrayEx<TYPE, ARG_TYPE>::FastInsertAt(INT_PTR nIndex, ARG_TYPE newElement, INT_PTR nCount)
+{
+	ASSERT_VALID(this);
+	ASSERT(nIndex >= 0);    // will expand to meet need
+	ASSERT(nCount > 0);     // zero or negative size not allowed
+	if (nIndex >= m_nSize) {
+		// adding after the end of the array
+		FastSetSize(nIndex + nCount, -1);   // grow so nIndex is valid
+	} else {
+		// inserting in the middle of the array
+		INT_PTR nOldSize = m_nSize;
+		FastSetSize(m_nSize + nCount, -1);  // grow it to new size
+		// shift old data up to fill gap
+		memmove(m_pData + nIndex + nCount, m_pData + nIndex, (nOldSize-nIndex) * sizeof(TYPE));
+		// re-init slots we copied from
+#if CArrayEx_FastInitZero
+		memset((void*)(m_pData + nIndex), 0, (size_t)nCount * sizeof(TYPE));
+#endif
+	}
+	// insert new value in the gap
+	ASSERT(nIndex + nCount <= m_nSize);
+	while (nCount--)
+		m_pData[nIndex++] = newElement;
+}
+
+template<class TYPE, class ARG_TYPE>
+void CArrayEx<TYPE, ARG_TYPE>::FastRemoveAt(INT_PTR nIndex, INT_PTR nCount)
+{
+	ASSERT_VALID(this);
+	ASSERT(nIndex >= 0);
+	ASSERT(nCount >= 0);
+	INT_PTR nUpperBound = nIndex + nCount;
+	ASSERT(nUpperBound <= m_nSize && nUpperBound >= nIndex && nUpperBound >= nCount);
+	// just remove a range
+	INT_PTR nMoveCount = m_nSize - (nUpperBound);
+	if (nMoveCount) {
+		memmove(m_pData + nIndex, m_pData + nUpperBound, (size_t)nMoveCount * sizeof(TYPE));
+	}
+	m_nSize -= nCount;
 }
 
 class CDWordArrayEx : public CDWordArray
@@ -341,6 +455,7 @@ public:
 	int		GetSize() const;
 	W64INT	GetSize64() const;
 	W64INT	GetMaxSize() const;
+	void	SetGrowBy(INT_PTR nGrowBy);
 	DWORD	GetAt(W64INT nIndex) const;
 	DWORD&	ElementAt(W64INT nIndex);
 	DWORD	operator[](W64INT nIndex) const;
@@ -385,6 +500,12 @@ AFX_INLINE W64INT CDWordArrayEx::GetSize64() const
 AFX_INLINE W64INT CDWordArrayEx::GetMaxSize() const
 {
 	return(m_nMaxSize);
+}
+
+AFX_INLINE void CDWordArrayEx::SetGrowBy(INT_PTR nGrowBy)
+{
+	ASSERT(nGrowBy >= 0);
+	m_nGrowBy = nGrowBy;
 }
 
 AFX_INLINE DWORD CDWordArrayEx::GetAt(W64INT nIndex) const
@@ -438,6 +559,7 @@ public:
 	int		GetSize() const;
 	W64INT	GetSize64() const;
 	W64INT	GetMaxSize() const;
+	void	SetGrowBy(INT_PTR nGrowBy);
 	int		GetAt(W64INT nIndex) const;
 	int&	ElementAt(W64INT nIndex);
 	int		operator[](W64INT nIndex) const;
@@ -484,6 +606,12 @@ AFX_INLINE W64INT CIntArrayEx::GetSize64() const
 AFX_INLINE W64INT CIntArrayEx::GetMaxSize() const
 {
 	return(m_nMaxSize);
+}
+
+AFX_INLINE void CIntArrayEx::SetGrowBy(INT_PTR nGrowBy)
+{
+	ASSERT(nGrowBy >= 0);
+	m_nGrowBy = nGrowBy;
 }
 
 AFX_INLINE int CIntArrayEx::GetAt(W64INT nIndex) const
@@ -547,6 +675,7 @@ public:
 	int		GetSize() const;
 	W64INT	GetSize64() const;
 	W64INT	GetMaxSize() const;
+	void	SetGrowBy(INT_PTR nGrowBy);
 	BYTE	GetAt(W64INT nIndex) const;
 	BYTE&	ElementAt(W64INT nIndex);
 	BYTE	operator[](W64INT nIndex) const;
@@ -591,6 +720,12 @@ AFX_INLINE W64INT CByteArrayEx::GetSize64() const
 AFX_INLINE W64INT CByteArrayEx::GetMaxSize() const
 {
 	return(m_nMaxSize);
+}
+
+AFX_INLINE void CByteArrayEx::SetGrowBy(INT_PTR nGrowBy)
+{
+	ASSERT(nGrowBy >= 0);
+	m_nGrowBy = nGrowBy;
 }
 
 AFX_INLINE BYTE CByteArrayEx::GetAt(W64INT nIndex) const
@@ -644,6 +779,7 @@ public:
 	int		GetSize() const;
 	W64INT	GetSize64() const;
 	W64INT	GetMaxSize() const;
+	void	SetGrowBy(INT_PTR nGrowBy);
 	bool	operator==(const CStringArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
 	bool	operator!=(const CStringArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
 	#define	ALGO_TYPE CString
@@ -679,4 +815,10 @@ AFX_INLINE W64INT CStringArrayEx::GetSize64() const
 AFX_INLINE W64INT CStringArrayEx::GetMaxSize() const
 {
 	return(m_nMaxSize);
+}
+
+AFX_INLINE void CStringArrayEx::SetGrowBy(INT_PTR nGrowBy)
+{
+	ASSERT(nGrowBy >= 0);
+	m_nGrowBy = nGrowBy;
 }

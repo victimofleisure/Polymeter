@@ -15,6 +15,7 @@
 
 #include "Track.h"
 #include "CritSec.h"
+#include "Midi.h"
 
 class CSeqTrackArray : protected CTrackArray, public CTrackBase {
 public:
@@ -57,6 +58,7 @@ public:
 	void	GetSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const;
 	void	SetSteps(const CRect& rSelection, const CStepArrayArray& arrStepArray);
 	void	SetSteps(const CRect& rSelection, STEP nStep);
+	void	ToggleSteps(const CRect& rSelection, UINT nFlags);
 	int		GetDubCount(int iTrack) const;
 	const CDub&	GetDub(int iTrack, int iDub) const;
 	void	GetTrackProperty(int iTrack, int iProp, CComVariant& var) const;
@@ -90,11 +92,15 @@ public:
 	void	AddDub(int iTrack, int nTime);
 	void	AddDub(int iTrack, int nTime, bool bMute);
 	void	AddDub(const CIntArrayEx& arrSelection, int nTime);
+	void	AddDub(int nTime);
 	int		FindDub(int iTrack, int nTime) const;
 	void	ChaseDubs(int nTime, bool bUpdateMutes = false);
 	bool	GetDubs(int iTrack, int nStartTime, int nEndTime) const;
+	void	GetDubs(int iTrack, int nStartTime, int nEndTime, CDubArray& arrDub) const;
 	void	SetDubs(int iTrack, int nStartTime, int nEndTime, bool bMute);
 	void	SetDubs(int iTrack, const CDubArray& arrDub);
+	void	DeleteDubs(int iTrack, int nStartTime, int nEndTime);
+	void	InsertDubs(int iTrack, int nTime, CDubArray& arrDub);
 
 protected:
 // Member data
@@ -127,9 +133,20 @@ inline CString CSeqTrackArray::GetName(int iTrack) const
 	return GetAt(iTrack).m_sName;
 }
 
+inline void CSeqTrackArray::SetName(int iTrack, const CString& sName)
+{
+	GetAt(iTrack).m_sName = sName;
+}
+
 inline int CSeqTrackArray::GetType(int iTrack) const
 {
 	return GetAt(iTrack).m_iType;
+}
+
+inline void CSeqTrackArray::SetType(int iTrack, int iType)
+{
+	ASSERT(iType >= 0 && iType < TRACK_TYPES);
+	GetAt(iTrack).m_iType = iType;
 }
 
 inline bool CSeqTrackArray::IsNote(int iTrack) const
@@ -142,14 +159,32 @@ inline int CSeqTrackArray::GetChannel(int iTrack) const
 	return GetAt(iTrack).m_nChannel;
 }
 
+inline void CSeqTrackArray::SetChannel(int iTrack, int nChannel)
+{
+	ASSERT(IsMidiChan(nChannel));
+	GetAt(iTrack).m_nChannel = nChannel;
+}
+
 inline int CSeqTrackArray::GetNote(int iTrack) const
 {
 	return GetAt(iTrack).m_nNote;
 }
 
+inline void CSeqTrackArray::SetNote(int iTrack, int nNote)
+{
+	ASSERT(IsMidiParam(nNote));
+	GetAt(iTrack).m_nNote = nNote;
+}
+
 inline int CSeqTrackArray::GetQuant(int iTrack) const
 {
 	return GetAt(iTrack).m_nQuant;
+}
+
+inline void CSeqTrackArray::SetQuant(int iTrack, int nQuant)
+{
+	ASSERT(nQuant > 0);
+	GetAt(iTrack).m_nQuant = nQuant;
 }
 
 inline int CSeqTrackArray::GetLength(int iTrack) const
@@ -162,9 +197,19 @@ inline int CSeqTrackArray::GetOffset(int iTrack) const
 	return GetAt(iTrack).m_nOffset;
 }
 
+inline void CSeqTrackArray::SetOffset(int iTrack, int nOffset)
+{
+	GetAt(iTrack).m_nOffset = nOffset;
+}
+
 inline int CSeqTrackArray::GetSwing(int iTrack) const
 {
 	return GetAt(iTrack).m_nSwing;
+}
+
+inline void CSeqTrackArray::SetSwing(int iTrack, int nSwing)
+{
+	GetAt(iTrack).m_nSwing = nSwing;
 }
 
 inline int CSeqTrackArray::GetVelocity(int iTrack) const
@@ -172,9 +217,19 @@ inline int CSeqTrackArray::GetVelocity(int iTrack) const
 	return GetAt(iTrack).m_nVelocity;
 }
 
+inline void CSeqTrackArray::SetVelocity(int iTrack, int nVelocity)
+{
+	GetAt(iTrack).m_nVelocity = nVelocity;
+}
+
 inline int CSeqTrackArray::GetDuration(int iTrack) const
 {
 	return GetAt(iTrack).m_nDuration;
+}
+
+inline void CSeqTrackArray::SetDuration(int iTrack, int nDuration)
+{
+	GetAt(iTrack).m_nDuration = nDuration;
 }
 
 inline bool CSeqTrackArray::GetMute(int iTrack) const
@@ -182,9 +237,19 @@ inline bool CSeqTrackArray::GetMute(int iTrack) const
 	return GetAt(iTrack).m_bMute;
 }
 
+inline void CSeqTrackArray::SetMute(int iTrack, bool bMute)
+{
+	GetAt(iTrack).m_bMute = bMute;
+}
+
 inline CTrackBase::STEP CSeqTrackArray::GetStep(int iTrack, int iStep) const
 {
 	return GetAt(iTrack).m_arrStep[iStep];
+}
+
+inline void CSeqTrackArray::SetStep(int iTrack, int iStep, STEP nStep)
+{
+	GetAt(iTrack).m_arrStep[iStep] = nStep;
 }
 
 inline void CSeqTrackArray::GetSteps(int iTrack, CStepArray& arrStep) const
@@ -215,4 +280,9 @@ inline int CSeqTrackArray::FindDub(int iTrack, int nTime) const
 bool inline CSeqTrackArray::GetDubs(int iTrack, int nStartTime, int nEndTime) const
 {
 	return GetAt(iTrack).m_arrDub.GetDubs(nStartTime, nEndTime);
+}
+
+void inline CSeqTrackArray::GetDubs(int iTrack, int nStartTime, int nEndTime, CDubArray& arrDub) const
+{
+	return GetAt(iTrack).m_arrDub.GetDubs(nStartTime, nEndTime, arrDub);
 }

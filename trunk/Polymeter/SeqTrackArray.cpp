@@ -14,7 +14,6 @@
 #include "stdafx.h"
 #include "SeqTrackArray.h"
 #include "VariantHelper.h"
-#include "Midi.h"
 
 // The sequencer's callback function runs in a different thread than the UI.
 // In order to safely allocate, reallocate or delete array elements, access
@@ -64,70 +63,11 @@ void CSeqTrackArray::SetTrack(int iTrack, const CTrack& track)
 	GetAt(iTrack).CopyKeepingID(track);
 }
 
-void CSeqTrackArray::SetName(int iTrack, const CString& sName)
-{
-	GetAt(iTrack).m_sName = sName;
-}
-
-void CSeqTrackArray::SetType(int iTrack, int iType)
-{
-	ASSERT(iType >= 0 && iType < TRACK_TYPES);
-	GetAt(iTrack).m_iType = iType;
-}
-
-void CSeqTrackArray::SetChannel(int iTrack, int nChannel)
-{
-	ASSERT(IsMidiChan(nChannel));
-	GetAt(iTrack).m_nChannel = nChannel;
-}
-
-void CSeqTrackArray::SetNote(int iTrack, int nNote)
-{
-	ASSERT(IsMidiParam(nNote));
-	GetAt(iTrack).m_nNote = nNote;
-}
-
-void CSeqTrackArray::SetQuant(int iTrack, int nQuant)
-{
-	ASSERT(nQuant > 0);
-	GetAt(iTrack).m_nQuant = nQuant;
-}
-
 void CSeqTrackArray::SetLength(int iTrack, int nLength)
 {
 	ASSERT(nLength > 0);
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	GetAt(iTrack).m_arrStep.SetSize(nLength);
-}
-
-void CSeqTrackArray::SetOffset(int iTrack, int nOffset)
-{
-	GetAt(iTrack).m_nOffset = nOffset;
-}
-
-void CSeqTrackArray::SetSwing(int iTrack, int nSwing)
-{
-	GetAt(iTrack).m_nSwing = nSwing;
-}
-
-void CSeqTrackArray::SetVelocity(int iTrack, int nVelocity)
-{
-	GetAt(iTrack).m_nVelocity = nVelocity;
-}
-
-void CSeqTrackArray::SetDuration(int iTrack, int nDuration)
-{
-	GetAt(iTrack).m_nDuration = nDuration;
-}
-
-void CSeqTrackArray::SetMute(int iTrack, bool bMute)
-{
-	GetAt(iTrack).m_bMute = bMute;
-}
-
-void CSeqTrackArray::SetStep(int iTrack, int iStep, STEP nStep)
-{
-	GetAt(iTrack).m_arrStep[iStep] = nStep;
 }
 
 void CSeqTrackArray::SetSteps(int iTrack, const CStepArray& arrStep)
@@ -173,6 +113,39 @@ void CSeqTrackArray::SetSteps(const CRect& rSelection, STEP nStep)
 		int	iEndStep = min(rSelection.right, GetLength(iTrack));
 		for (int iStep = rSelection.left; iStep < iEndStep; iStep++)	// for each step in range
 			GetAt(iTrack).m_arrStep[iStep] = nStep;
+	}
+}
+
+void CSeqTrackArray::ToggleSteps(const CRect& rSelection, UINT nFlags)
+{
+	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
+		bool	bToggleTie;
+		STEP	nStep;
+		if (GetType(iTrack) == TT_NOTE) {	// if track type is note
+			if (nFlags & SB_TOGGLE_TIE) {	// if toggling tie
+				bToggleTie = true;
+				nStep = 0;
+			} else {	// not toggling tie
+				bToggleTie = false;
+				nStep = nFlags & (SB_VELOCITY | SB_TIE);	// preserve tie bit
+			}
+		} else {	// track type isn't note
+			bToggleTie = false;
+			nStep = nFlags & SB_VELOCITY;	// velocity only; clear tie bit
+		}
+		CTrack&	trk = GetAt(iTrack);
+		int	iEndStep = min(rSelection.right, GetLength(iTrack));
+		for (int iStep = rSelection.left; iStep < iEndStep; iStep++) {	// for each step in range
+			if (bToggleTie) {	// if toggling tie
+				if (trk.m_arrStep[iStep])	// if step is on
+					trk.m_arrStep[iStep] ^= SB_TIE;	// invert tie bit
+			} else {	// not toggling tie
+				if (trk.m_arrStep[iStep])	// if step is on
+					trk.m_arrStep[iStep] = 0;	// clear step
+				else	// step is off
+					trk.m_arrStep[iStep] = nStep;	// set step
+			}
+		}
 	}
 }
 
@@ -330,7 +303,7 @@ bool CSeqTrackArray::GetNoteVelocity(int iTrack, int iStep, STEP& nStep) const
 		if (iPrevStep < 0)
 			iPrevStep = GetLength(iTrack) - 1;
 		STEP	nPrevStep = GetStep(iTrack, iPrevStep);
-		if (!(nPrevStep & NB_TIE)) {	// if previous step not tied
+		if (!(nPrevStep & SB_TIE)) {	// if previous step not tied
 			nStep = nCurStep;	// return current step's velocity
 			return true;
 		}
@@ -403,14 +376,14 @@ void CSeqTrackArray::AddDub(int iTrack, int nTime)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	CDub	dub(nTime, GetMute(iTrack));
-	GetAt(iTrack).m_arrDub.Add(dub);
+	GetAt(iTrack).m_arrDub.FastAdd(dub);
 }
 
 void CSeqTrackArray::AddDub(int iTrack, int nTime, bool bMute)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	CDub	dub(nTime, bMute);
-	GetAt(iTrack).m_arrDub.Add(dub);
+	GetAt(iTrack).m_arrDub.FastAdd(dub);
 }
 
 void CSeqTrackArray::AddDub(const CIntArrayEx& arrSelection, int nTime)
@@ -420,12 +393,23 @@ void CSeqTrackArray::AddDub(const CIntArrayEx& arrSelection, int nTime)
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = arrSelection[iSel];
 		CDub	dub(nTime, GetMute(iTrack));
-		GetAt(iTrack).m_arrDub.Add(dub);
+		GetAt(iTrack).m_arrDub.FastAdd(dub);
+	}
+}
+
+void CSeqTrackArray::AddDub(int nTime)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		CDub	dub(nTime, GetMute(iTrack));
+		GetAt(iTrack).m_arrDub.FastAdd(dub);
 	}
 }
 
 void CSeqTrackArray::ChaseDubs(int nTime, bool bUpdateMutes)
 {
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	int	nTracks = GetSize();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		CTrack& trk = GetAt(iTrack);
@@ -465,4 +449,16 @@ void CSeqTrackArray::SetDubs(int iTrack, const CDubArray& arrDub)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	GetAt(iTrack).m_arrDub = arrDub;
+}
+
+void CSeqTrackArray::DeleteDubs(int iTrack, int nStartTime, int nEndTime)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	GetAt(iTrack).m_arrDub.DeleteDubs(nStartTime, nEndTime);
+}
+
+void CSeqTrackArray::InsertDubs(int iTrack, int nTime, CDubArray& arrDub)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	GetAt(iTrack).m_arrDub.InsertDubs(nTime, arrDub);
 }
