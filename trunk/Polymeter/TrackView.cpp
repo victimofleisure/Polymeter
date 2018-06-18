@@ -34,8 +34,6 @@
 
 IMPLEMENT_DYNCREATE(CTrackView, CView)
 
-CTrackView::CListColumnState CTrackView::m_gColState;
-
 #define RK_TRACK_VIEW _T("TrackView")
 #define RK_COL_WIDTH _T("ColWidth")
 #define RK_COL_ORDER _T("ColOrder")
@@ -50,6 +48,8 @@ const CGridCtrl::COL_INFO CTrackView::m_arrColInfo[COLUMNS] = {
 	#define TRACKDEF_INT	// for integer track properties only
 	#include "TrackDef.h"	// generate column definitions
 };
+
+CTrackView::CListColumnState CTrackView::m_gColState;
 
 const LPCTSTR CTrackView::m_arrGMDrumName[] = {
 	#define MIDI_GM_DRUM_DEF(name) _T(name),
@@ -467,6 +467,16 @@ void CTrackView::UpdatePersistentState(bool bNoRedraw)
 			m_grid.SetRedraw();	// reenable drawing
 			m_grid.Invalidate();	// queue repaint
 		}
+	}
+}
+
+CTrackView::CListColumnState::CListColumnState()
+{
+	m_arrWidth.SetSize(COLUMNS);
+	m_arrOrder.SetSize(COLUMNS);
+	for (int iCol = 0; iCol < COLUMNS; iCol++) {
+		m_arrWidth[iCol] = m_arrColInfo[iCol].nWidth;
+		m_arrOrder[iCol] = iCol;
 	}
 }
 

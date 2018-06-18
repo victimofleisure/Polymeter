@@ -63,6 +63,7 @@ protected:
 	};
 	class CListColumnState {
 	public:
+		CListColumnState();
 		CIntArrayEx	m_arrWidth;		// column width array
 		CIntArrayEx	m_arrOrder;		// column order array
 		int		m_nWidthUpdates;	// number of column width updates
