@@ -1,6 +1,4 @@
 open	close	type	description	rev	user
-05/24/18		bug	export doesn't output channel setup		
-05/24/18		bug	export's skipping of muted tracks logic must account for dubs		
 03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -77,30 +75,36 @@ open	close	type	description	rev	user
 06/02/18	06/05/18	done	optionally show General MIDI patch and drum names instead of numbers (in Channels and Track views)	0.0.07.000	
 06/05/18	06/05/18	done	property lists weren't showing tooltips for partially visible property names, for all non-numeric property types	0.0.07.000	
 06/07/18	06/07/18	done	after recording, playback prompts to replace recording	0.0.07.002	
+05/19/18	06/09/18	done	toggling should behave consistently in step, mute, and song views	0.0.08.001	
+05/23/18	06/09/18	done	track solo	0.0.08.001	
+06/05/18	06/12/18	done	cut, copy, paste, delete and insert in song view	0.0.08.001	
+03/22/18	06/18/18	done	presets bar	0.0.08.001	
+06/13/18	06/18/18	done	page up / down and home / end keys should behave as usual in step and song views	0.0.08.001	
+06/18/18	06/18/18	done	track view columns disappear due to zero column widths	0.0.08.002	
 03/22/18		hold	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
-03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, or otherwise update step view		
+03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
+03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 03/25/18		hold	animated visualization		
 03/25/18		hold	playback can be slow to start, due to device open delay; keep output device open all the time?		
 03/25/18		hold	MIDI mapping of all parameters, with manual assignment and learn mode		
 03/25/18		hold	output timing is unreliable at start of playback; likely only fixable by keeping output device open all the time		
+04/09/18		hold	undoing track value or step edit should ensure track is visible		
 05/10/18		hold	left-click anywhere in step view should toggle steps or tracks, as in original app; too confusing?		
 05/10/18		hold	right-click in step view background with no selection should show context menu?		
-05/17/18		hold	in velocity pane, left-click on tool tip causes app to flash; all tool tips do this, derived tool tip doesn't help		
 05/17/18		hold	installed app's shortcut icon has poor resolution; VS2008 bug, use WiX toolset instead?		
 05/19/18		hold	note correction to chord changes, from ChordEase		
-05/21/18		hold	scroll positions should persist in document; more trouble than it's worth?		
 05/21/18		hold	song meter; affects position dialog, step view ruler, current position in status bar		
 05/21/18		hold	velocity pane visibility should be same for all documents?		
 05/23/18		hold	default note velocity should be configurable		
 05/30/18		hold	song view needs different menus?		
 06/04/18		hold	option to change track name font and thereby change track height		
-06/05/18		hold	optionally show tooltips in grid controls (Track and Channels views); use label tip extended style		
-03/22/18		todo	live performance view (similar to Jock)		
-03/22/18		todo	optional linear interpolation for controller tracks, with adjustable output density		
-04/09/18		todo	undoing track value or step edit should ensure track is visible		
-05/19/18		todo	notes don't toggle the same way they did in the original, very annoying		
-05/23/18		todo	track solo		
-06/04/18		todo	song view should indicate undersampling (multiple dubs per cell at current zoom)		
+06/04/18		hold	song view should indicate undersampling (multiple dubs per cell at current zoom)		
+06/05/18		hold	optionally show tooltips in grid controls (Track and Channels views) via label tip extended style		
+05/17/18		punt	in velocity pane, left-click on tool tip causes app to flash; all tool tips do this, derived tool tip doesn't help		
+05/21/18		punt	scroll positions should persist in document; more trouble than it's worth?		
+06/08/18		punt	untying note should set all steps to velocity of original tied note; better to preserve velocity		
+03/22/18		todo	live performance view (similar to Jock) with presets and tracks grouped by instrument		
+03/22/18		todo	track grouping and group mute/unmute		
+03/22/18		todo	inter-track modulation; start with mute/unmute, but also note, offset, swing, velocity, duration		
 06/04/18		todo	auto-record option, so that playback always records and recording is auto-saved to new file name; for live shows		
-06/04/18		todo	include live MIDI input in recording		
-06/05/18		todo	cut/copy/paste/delete in song view		
+06/04/18		todo	include live MIDI input in recording; but no way to view or edit it?		
