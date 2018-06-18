@@ -22,6 +22,7 @@
 		12		04apr15	add GetCompensatedDropPos
 		13		24apr18	standardize names
 		14		02jun18	in OnLButtonUp, fix x64 crash due to casting pointer to long
+		15		16jun18	make CompensateDropPos static
 
         virtual list control with drag reordering
  
@@ -104,11 +105,9 @@ void CDragVirtualListCtrl::CancelDrag()
 	}
 }
 
-bool CDragVirtualListCtrl::CompensateDropPos(int& iDropPos) const
+bool CDragVirtualListCtrl::CompensateDropPos(CIntArrayEx& arrSel, int& iDropPos)
 {
 	int	iPos = iDropPos;
-	CIntArrayEx	arrSel;
-	GetSelection(arrSel);
 	int	nSels = arrSel.GetSize();
 	if (!(nSels > 1 || (nSels == 1 && iPos != arrSel[0])))
 		return(FALSE);	// nothing changed
@@ -123,8 +122,10 @@ bool CDragVirtualListCtrl::CompensateDropPos(int& iDropPos) const
 
 int CDragVirtualListCtrl::GetCompensatedDropPos() const
 {
+	CIntArrayEx	arrSel;
+	GetSelection(arrSel);
 	int	iDropPos = GetDropPos();
-	if (!CompensateDropPos(iDropPos))
+	if (!CompensateDropPos(arrSel, iDropPos))
 		return(-1);	// nothing changed
 	return(iDropPos);
 }

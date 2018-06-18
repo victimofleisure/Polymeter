@@ -324,6 +324,12 @@
     <ClInclude Include="PreviewGridCtrl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PresetsBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Preset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Polymeter.cpp">
@@ -531,6 +537,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PreviewGridCtrl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PresetsBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Preset.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

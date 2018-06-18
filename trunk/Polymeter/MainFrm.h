@@ -18,6 +18,7 @@
 
 #include "PropertiesBar.h"
 #include "ChannelsBar.h"
+#include "PresetsBar.h"
 
 class CPolymeterDoc;
 
@@ -45,6 +46,7 @@ public:
 	CPolymeterDoc	*GetActiveMDIDoc();
 	bool	PropertiesBarHasFocus() const;
 	CChannelsBar&	GetChannelsBar();
+	CPresetsBar&	GetPresetsBar();
 
 // Operations
 public:
@@ -72,6 +74,7 @@ protected:  // control bar embedded members
 	CMFCToolBarImages m_UserImages;
 	CPropertiesBar	  m_wndPropertiesBar;
 	CChannelsBar	  m_wndChannelsBar;
+	CPresetsBar		  m_wndPresetsBar;
 
 // Data members
 	CPolymeterDoc	*m_pActiveDoc;		// pointer to active document, or NULL if none
@@ -113,6 +116,8 @@ protected:
 	afx_msg void OnUpdateViewChannels(CCmdUI *pCmdUI);
 	afx_msg void OnViewProperties();
 	afx_msg void OnUpdateViewProperties(CCmdUI *pCmdUI);
+	afx_msg void OnViewPresets();
+	afx_msg void OnUpdateViewPresets(CCmdUI *pCmdUI);
 };
 
 inline HACCEL CMainFrame::GetAccelTable() const
@@ -139,4 +144,9 @@ inline bool CMainFrame::PropertiesBarHasFocus() const
 inline CChannelsBar& CMainFrame::GetChannelsBar()
 {
 	return m_wndChannelsBar;
+}
+
+inline CPresetsBar& CMainFrame::GetPresetsBar()
+{
+	return m_wndPresetsBar;
 }

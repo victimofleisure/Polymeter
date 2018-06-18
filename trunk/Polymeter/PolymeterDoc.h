@@ -20,6 +20,7 @@
 #include "MasterProps.h"
 #include "Undoable.h"
 #include "Channel.h"
+#include "Preset.h"
 
 class COptions;
 
@@ -105,6 +106,7 @@ public:
 	CString	m_sGoToPosition;	// previous go to position string
 	CChannelArray	m_arrChannel;	// array of channels
 	CIntArrayEx	m_arrTrackSel;	// array of indices of selected tracks
+	CPresetArray	m_arrPreset;	// array of presets
 	int		m_iTrackSelMark;	// track selection mark
 	double	m_fStepZoom;		// step view zoom
 	double	m_fSongZoom;		// song view zoom
@@ -124,6 +126,11 @@ public:
 	bool	IsTrackView() const;
 	bool	IsSongView() const;
 	bool	ShowGMDrums(int iTrack) const;
+	void	CreatePreset();
+	void	DeletePresets(const CIntArrayEx& arrSelection);
+	void	MovePresets(const CIntArrayEx& arrSelection, int iDropPos);
+	void	UpdatePreset(int iPreset);
+	void	SetPresetName(int iPreset, CString sName);
 
 // Operations
 public:
@@ -173,6 +180,7 @@ public:
 	void	InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double fTicksPerCell, CRect& rSelection);
 	void	InsertDubs(const CRect& rSelection, double fTicksPerCell);
 	void	PasteDubs(CPoint ptPaste, double fTicksPerCell, CRect& rSelection);
+	void	ApplyPreset(int iPreset);
 
 // Overrides
 public:
@@ -195,11 +203,16 @@ protected:
 	public:
 		CIntArrayEx	m_arrSelection;	// indices of selected tracks
 	};
+	class CUndoAllPresets : public CRefObj {
+	public:
+		CPresetArray	m_arrPreset;	// array of presets
+	};
 	class CUndoClipboard : public CRefObj {
 	public:
 		CTrackArray	m_arrTrack;		// array of tracks
 		CIntArrayEx	m_arrSelection;	// indices of selected tracks
 		int		m_nSelMark;			// selection mark
+		CRefPtr<CUndoAllPresets>	m_pPresets;	// optional pointer to presets undo state
 	};
 	class CUndoMultiItemProp : public CRefObj {
 	public:
@@ -250,6 +263,19 @@ protected:
 	public:
 		CByteArrayEx	m_arrMute;	// array of mutes, one per track
 	};
+	class CUndoPreset : public CRefObj {
+	public:
+		CIntArrayEx	m_arrSelection;	// indices of selected presets
+		CPresetArray	m_arrPreset;	// array of presets
+	};
+	typedef CMap<UINT, UINT, int, int> CTrackIDMap;
+	class CTrackArrayEdit {
+	public:
+		CTrackArrayEdit(CPolymeterDoc *pDoc);
+		~CTrackArrayEdit();
+		CPolymeterDoc	*m_pDoc;	// pointer to parent document
+		CTrackIDMap	m_mapTrackID;	// map track IDs to track indices
+	};
 
 // Constants
 	static const int	m_nUndoTitleId[];	// array of string resource IDs for undo titles
@@ -258,7 +284,7 @@ protected:
 // Data members
 	CRect	m_rStepSel;			// rectangular step selection, used by undo handling
 	static CTrackSortInfo	m_infoTrackSort;	// state passed to track sort compare function
-	static const CIntArrayEx	*m_parrSortedSelection;	// pointer to sorted selection array for undo
+	static const CIntArrayEx	*m_parrSelection;	// pointer to selection array, used during undo
 
 // Overrides
 	virtual	BOOL	OnOpenDocument(LPCTSTR lpszPathName);
@@ -275,6 +301,8 @@ protected:
 	void	ApplyStepsArrayEdit(bool bSelect);
 	bool	MakePasteSelection(CSize szData, CRect& rSelection) const;
 	void	SetViewType(int nViewType);
+	void	GetTrackIDMap(CTrackIDMap& mapTrackID) const;
+	void	OnTrackArrayEdit(const CTrackIDMap& mapTrackID);
 	void	SaveTrackProperty(CUndoState& State) const;
 	void	RestoreTrackProperty(const CUndoState& State);
 	void	SaveMultiTrackProperty(CUndoState& State) const;
@@ -309,6 +337,10 @@ protected:
 	void	RestoreMute(const CUndoState& State);
 	void	SaveSolo(CUndoState& State) const;
 	void	RestoreSolo(const CUndoState& State);
+	void	SavePresetName(CUndoState& State) const;
+	void	RestorePresetName(const CUndoState& State);
+	void	SavePresets(CUndoState& State) const;
+	void	RestorePresets(const CUndoState& State);
 
 // Generated message map functions
 protected:
@@ -347,7 +379,7 @@ protected:
 	afx_msg void OnUpdateTrackReverse(CCmdUI *pCmdUI);
 	afx_msg void OnEditTranspose();
 	afx_msg void OnUpdateEditTranspose(CCmdUI *pCmdUI);
-	afx_msg void OnEditTrackSort();
+	afx_msg void OnTrackSort();
 	afx_msg void OnToolsTimeToRepeat();
 	afx_msg void OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI);
 	afx_msg void OnTrackShiftLeft();
@@ -358,6 +390,11 @@ protected:
 	afx_msg void OnUpdateTrackSolo(CCmdUI *pCmdUI);
 	afx_msg void OnTrackMute();
 	afx_msg void OnUpdateTrackMute(CCmdUI *pCmdUI);
+	afx_msg void OnTrackPresetCreate();
+	afx_msg void OnTrackPresetApply();
+	afx_msg void OnUpdateTrackPresetApply(CCmdUI *pCmdUI);
+	afx_msg void OnTrackPresetUpdate();
+	afx_msg void OnUpdateTrackPresetUpdate(CCmdUI *pCmdUI);
 };
 
 inline int CPolymeterDoc::GetTrackCount() const

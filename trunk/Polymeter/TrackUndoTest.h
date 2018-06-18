@@ -36,6 +36,7 @@ protected:
 // Data members
 	CPolymeterDoc	*m_pDoc;		// pointer to target document
 	int		m_iNextTrack;			// next track number for renaming
+	int		m_iNextPreset;			// next preset number for renaming
 
 // Overrides
 	virtual	bool	Create();

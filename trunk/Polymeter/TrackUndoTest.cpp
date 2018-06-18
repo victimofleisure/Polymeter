@@ -66,6 +66,13 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_ROTATE_RECT,			0.1f},
 	{UCODE_SHIFT,				0.1f},
 	{UCODE_SHIFT_RECT,			0.1f},
+	{UCODE_MUTE,				0.1f},
+	{UCODE_SOLO,				0.1f},
+	{UCODE_APPLY_PRESET,		0.1f},
+	{UCODE_CREATE_PRESET,		0.2f},
+	{UCODE_RENAME_PRESET,		0.1f},
+	{UCODE_DELETE_PRESETS,		0.1f},
+	{UCODE_MOVE_PRESETS,		0.1f},
 };
 
 CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
@@ -73,6 +80,7 @@ CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
 {
 	m_pDoc = NULL;
 	m_iNextTrack = 0;
+	m_iNextPreset = 0;
 #if 0
 	m_Cycles = 1;
 	m_Passes = 2;
@@ -251,13 +259,20 @@ LONGLONG CTrackUndoTest::GetSnapshot() const
 {
 	LONGLONG	nSum = 0;
 	int	nTracks = m_pDoc->GetTrackCount();
-	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		const CTrack&	trk = m_pDoc->m_Seq.GetTrack(iTrack);
 		nSum += Fletcher64(&trk.TRACK_VAR_FIRST, TRACK_VAR_SIZE);	// assumes vars are packed contiguously
-		nSum += Fletcher64(trk.m_arrStep.GetData(), trk.m_arrStep.GetSize());
+		nSum += Fletcher64(trk.m_arrStep.GetData(), trk.m_arrStep.GetSize());	// add track steps; assumes steps are bytes
 		LPCTSTR	pszName = trk.m_sName;
-		nSum += Fletcher64(pszName, trk.m_sName.GetLength());
-		nSum += trk.m_nUID;
+		nSum += Fletcher64(pszName, trk.m_sName.GetLength() * sizeof(TCHAR));	// add track's unique ID
+		nSum += trk.m_nUID;	// add track's unique ID
+	}
+	int	nPresets = m_pDoc->m_arrPreset.GetSize();
+	for (int iPreset = 0; iPreset < nPresets; iPreset++) {	// for each preset
+		const CPreset&	preset = m_pDoc->m_arrPreset[iPreset];
+		LPCTSTR	pszName = preset.m_sName;
+		nSum += Fletcher64(pszName, preset.m_sName.GetLength() * sizeof(TCHAR));	// add preset name
+		nSum += Fletcher64(preset.m_arrMute.GetData(), preset.m_arrMute.GetSize());	// add preset mutes
 	}
 //	_tprintf(_T("%I64x\n"), nSum);
 	return(nSum);
@@ -315,7 +330,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			m_pDoc->m_Seq.SetName(iTrack, sName);
 			CPolymeterDoc::CPropHint	hint(iTrack, PROP_Name);
 			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_PROP, &hint);
-			PRINTF(_T("%s %d\n"), sUndoTitle, iTrack);
+			PRINTF(_T("Track Name %d\n"), iTrack);
 		}
 		break;
 	case UCODE_TRACK_STEP:
@@ -564,6 +579,78 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			int	nOffset = Random(1) ? 1 : -1;
 			m_pDoc->ShiftSteps(rSelection, nOffset);
 			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(rSelection));
+		}
+		break;
+	case UCODE_MUTE:
+		{
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
+				return(DISABLED);
+			m_pDoc->Select(arrSelection);
+			m_pDoc->SetSelectedMutes(MB_TOGGLE);
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
+		}
+		break;
+	case UCODE_SOLO:
+		{
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
+				return(DISABLED);
+			m_pDoc->Select(arrSelection);
+			m_pDoc->Solo();
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
+		}
+		break;
+	case UCODE_APPLY_PRESET:
+		{
+			int	nPresets = m_pDoc->m_arrPreset.GetSize(); 
+			int	iPreset = Random(nPresets);
+			if (iPreset < 0)
+				return(DISABLED);
+			m_pDoc->ApplyPreset(iPreset);
+			PRINTF(_T("%s %d\n"), sUndoTitle, iPreset);
+		}
+		break;
+	case UCODE_CREATE_PRESET:
+		m_pDoc->CreatePreset();
+		PRINTF(_T("%s %d\n"), sUndoTitle, m_pDoc->m_arrPreset.GetSize());
+		break;
+	case UCODE_RENAME_PRESET:
+		{
+			int	nPresets = m_pDoc->m_arrPreset.GetSize(); 
+			int	iPreset = Random(nPresets);
+			if (iPreset < 0)
+				return(DISABLED);
+			CString	sName;
+			sName.Format(_T("PN%d"), m_iNextPreset);
+			m_iNextPreset++;
+			m_pDoc->SetPresetName(iPreset, sName);
+			PRINTF(_T("%s %d %s\n"), sUndoTitle, iPreset, sName);
+		}
+		break;
+	case UCODE_DELETE_PRESETS:
+		{
+			int	nPresets = m_pDoc->m_arrPreset.GetSize(); 
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(nPresets, arrSelection))
+				return(DISABLED);
+			m_pDoc->DeletePresets(arrSelection);
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
+		}
+		break;
+	case UCODE_MOVE_PRESETS:
+		{
+			int	nPresets = m_pDoc->m_arrPreset.GetSize(); 
+			if (nPresets < 2)
+				return(DISABLED);
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(nPresets, arrSelection))
+				return(DISABLED);
+			int	iDropPos = Random(nPresets + 1);
+			if (!CDragVirtualListCtrl::CompensateDropPos(arrSelection, iDropPos))
+				return(DISABLED);
+			m_pDoc->MovePresets(arrSelection, iDropPos);
+			PRINTF(_T("%s %s %d\n"), sUndoTitle, PrintSelection(arrSelection), iDropPos);
 		}
 		break;
 	default:

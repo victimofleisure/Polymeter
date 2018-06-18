@@ -43,6 +43,7 @@ public:
 
 // Operations
 	bool	HandleDlgKeyMsg(MSG* pMsg);
+	static	bool	HandleScrollViewKeys(MSG *pMsg, CScrollView *pView);
 	void	ApplyOptions(const COptions *pPrevOptions);
 	void	OnMidiError(MMRESULT nResult);
 	void	MidiInit();

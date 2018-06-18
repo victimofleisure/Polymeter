@@ -292,7 +292,7 @@ void CChannelsBar::OnSize(UINT nType, int cx, int cy)
 void CChannelsBar::OnSetFocus(CWnd* pOldWnd)
 {
 	CDockablePane::OnSetFocus(pOldWnd);
-	m_grid.SetFocus();	// delegate focus to primary child view
+	m_grid.SetFocus();	// delegate focus to child control
 }
 
 LRESULT CChannelsBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)

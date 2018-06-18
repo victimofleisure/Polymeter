@@ -124,6 +124,8 @@ protected:
 	afx_msg void OnListHdrEndTrack(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg LRESULT OnListHdrReorder(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnListColHdrReset();
+	afx_msg void OnEditRename();
+	afx_msg void OnUpdateEditRename(CCmdUI *pCmdUI);
 };
 
 inline CPolymeterDoc* CTrackView::GetDocument() const

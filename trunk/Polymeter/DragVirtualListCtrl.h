@@ -17,6 +17,7 @@
 		07		12jun14	add drag enable
 		08		04apr15	add GetCompensatedDropPos
 		09		24apr18	standardize names
+		10		16jun18	make CompensateDropPos static
 
         virtual list control with drag reordering
  
@@ -53,7 +54,7 @@ public:
 // Operations
 public:
 	void	CancelDrag();
-	bool	CompensateDropPos(int& DropPos) const;
+	static	bool	CompensateDropPos(CIntArrayEx& arrSel, int& DropPos);
 
 // Overrides
 	// ClassWizard generated virtual function overrides

@@ -505,6 +505,8 @@ BEGIN_MESSAGE_MAP(CTrackView, CView)
 	ON_NOTIFY(HDN_ENDTRACK, 0, OnListHdrEndTrack)
 	ON_NOTIFY(HDN_DIVIDERDBLCLICK, 0, OnListHdrEndTrack)
 	ON_MESSAGE(UWM_LIST_HDR_REORDER, OnListHdrReorder)
+	ON_COMMAND(ID_EDIT_RENAME, OnEditRename)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_RENAME, OnUpdateEditRename)
 END_MESSAGE_MAP()
 
 // CTrackView message handlers
@@ -693,4 +695,16 @@ void CTrackView::OnListColHdrReset()
 	OnListHdrReorder(0, 0);	// broadcast reset column order to other views
 	m_grid.SetRedraw();	// reenable drawing
 	m_grid.Invalidate();
+}
+
+void CTrackView::OnEditRename()
+{
+	int	iItem = m_grid.GetSelectionMark();
+	if (iItem >= 0)
+		m_grid.EditSubitem(iItem, COL_Name);
+}
+
+void CTrackView::OnUpdateEditRename(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_grid.GetSelectionMark() >= 0);
 }

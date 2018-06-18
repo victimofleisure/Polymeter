@@ -44,7 +44,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	3
+#define	FILE_VERSION	4
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -65,7 +65,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_EXPORT_DLG		REG_SETTINGS _T("\\Export")
 #define RK_EXPORT_DURATION	_T("nDuration")
 
-// define null title IDs for undo codes that have dynamic titles
+// define null title IDs for undo codes that have dynamic titles, or are insigificant
 #define IDS_EDIT_TRACK_PROP			0
 #define IDS_EDIT_MULTI_TRACK_PROP	0
 #define IDS_EDIT_TRACK_STEP			0
@@ -90,7 +90,7 @@ const int CPolymeterDoc::m_nTrackPropNameId[CTrackBase::PROPERTIES] = {
 };
 
 CPolymeterDoc::CTrackSortInfo CPolymeterDoc::m_infoTrackSort;
-const CIntArrayEx	*CPolymeterDoc::m_parrSortedSelection;
+const CIntArrayEx	*CPolymeterDoc::m_parrSelection;
 
 // CPolymeterDoc construction/destruction
 
@@ -281,6 +281,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 	if (m_nFileVersion < FILE_VERSION)	// if older format
 		ConvertLegacyFileFormat();
 	m_arrChannel.Read();	// read channels
+	m_arrPreset.Read(GetTrackCount());	// read presets
 	RdReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
 	RdReg(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
 }
@@ -319,6 +320,7 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 		}
 	}
 	m_arrChannel.Write();	// write channels
+	m_arrPreset.Write();	// write presets
 	WrReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
 	WrReg(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
 }
@@ -349,6 +351,7 @@ int CPolymeterDoc::GetInsertPos() const
 
 void CPolymeterDoc::DeleteTracks(bool bCopyToClipboard)
 {
+	CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 	int	nUndoCode;
 	if (bCopyToClipboard)
 		nUndoCode = UCODE_CUT_TRACKS;
@@ -371,6 +374,7 @@ void CPolymeterDoc::Drop(int iDropPos)
 	// if multiple selection, or single selection and track is actually moving
 	if (nSels == 1 && (iDropPos == m_iTrackSelMark || iDropPos == m_iTrackSelMark + 1))
 		return;	// nothing to do
+	CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 	int	nSelsBelowDrop = 0;
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		if (arrSelection[iSel] < iDropPos)	// if track's index is below drop position
@@ -389,6 +393,7 @@ void CPolymeterDoc::Drop(int iDropPos)
 
 void CPolymeterDoc::SortTracks(const CIntArrayEx& arrSortLevel)
 {
+	CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 	CIntArrayEx	arrSelection;
 	if (GetSelectedCount()) {	// if selection exists
 		arrSelection = m_arrTrackSel;	// sort selection
@@ -401,9 +406,9 @@ void CPolymeterDoc::SortTracks(const CIntArrayEx& arrSortLevel)
 	qsort(arrSorted.GetData(), arrSorted.GetSize(), sizeof(int), TrackSortCompare);	// sort track indices
 	m_infoTrackSort.m_parrTrack = NULL;	// reset sort info pointers to avoid confusion
 	m_infoTrackSort.m_parrLevel = NULL;
-	m_parrSortedSelection = &arrSorted;	// pass sorted selection to undo handler
+	m_parrSelection = &arrSorted;	// pass selection to undo handler
 	NotifyUndoableEdit(0, UCODE_TRACK_SORT);
-	m_parrSortedSelection = NULL;	// reset sorted selection pointer
+	m_parrSelection = NULL;	// reset selection pointer
 	CTrackArray	arrTrack;
 	m_Seq.GetTracks(arrSorted, arrTrack);
 	m_Seq.SetTracks(arrSelection, arrTrack);
@@ -487,6 +492,14 @@ void CPolymeterDoc::Solo()
 		m_Seq.SetMute(iTrack, !arrSolo[iTrack]);	// apply solo
 	if (m_Seq.IsRecording())
 		m_Seq.RecordDub();	// all tracks
+	SetModifiedFlag();
+	UpdateAllViews(NULL, HINT_SOLO);
+}
+
+void CPolymeterDoc::ApplyPreset(int iPreset)
+{
+	NotifyUndoableEdit(0, UCODE_APPLY_PRESET);
+	m_Seq.SetMutes(m_arrPreset[iPreset].m_arrMute);
 	SetModifiedFlag();
 	UpdateAllViews(NULL, HINT_SOLO);
 }
@@ -1012,6 +1025,12 @@ void CPolymeterDoc::SaveClipboardTracks(CUndoState& State) const
 		switch (LOWORD(State.GetCode())) {
 		case UCODE_CUT_TRACKS:
 		case UCODE_DELETE_TRACKS:
+			if (m_arrPreset.GetSize()) {
+				pClipboard->m_pPresets.CreateObj();
+				pClipboard->m_pPresets->m_arrPreset = m_arrPreset;
+			}
+			State.m_Val.p.x.i = CUndoManager::UA_UNDO;	// undo inserts, redo deletes
+			break;
 		case UCODE_MOVE_TRACKS:
 			State.m_Val.p.x.i = CUndoManager::UA_UNDO;	// undo inserts, redo deletes
 			break;
@@ -1023,15 +1042,27 @@ void CPolymeterDoc::SaveClipboardTracks(CUndoState& State) const
 
 void CPolymeterDoc::RestoreClipboardTracks(const CUndoState& State)
 {
+	bool	bIsUndoingDelete;
+	switch (LOWORD(State.GetCode())) {
+	case UCODE_CUT_TRACKS:
+	case UCODE_DELETE_TRACKS:
+		bIsUndoingDelete = IsUndoing();
+		break;
+	default:
+		bIsUndoingDelete = false;
+	}
+	CTrackIDMap	mapTrackID;
+	if (!bIsUndoingDelete)	// if not undoing delete
+		GetTrackIDMap(mapTrackID);	// begin track array transaction
 	CUndoClipboard	*pClipboard = static_cast<CUndoClipboard *>(State.GetObj());
 	bool	bIsMove = LOWORD(State.GetCode()) == UCODE_MOVE_TRACKS;
-	if (GetUndoAction() == State.m_Val.p.x.i) {	// if inserting
+	bool	bInserting = GetUndoAction() == State.m_Val.p.x.i; 
+	if (bInserting) {	// if inserting
 		if (bIsMove)
 			m_Seq.DeleteTracks(State.GetCtrlID(), pClipboard->m_arrTrack.GetSize());
 		m_Seq.InsertTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack, true);	// keep IDs
 		m_arrTrackSel = pClipboard->m_arrSelection;
 		m_iTrackSelMark = pClipboard->m_nSelMark;
-		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	} else {	// deleting
 		m_Seq.DeleteTracks(pClipboard->m_arrSelection);
 		if (bIsMove) {
@@ -1041,8 +1072,14 @@ void CPolymeterDoc::RestoreClipboardTracks(const CUndoState& State)
 			m_iTrackSelMark = iTrack;
 		} else
 			Deselect(false);	// don't update views
-		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	}
+	if (bIsUndoingDelete) {	// if undoing delete
+		// track dependencies must be explicitly restored
+		if (!pClipboard->m_pPresets.IsEmpty())	// if presets were allocated
+			m_arrPreset = pClipboard->m_pPresets->m_arrPreset;	// restore presets
+	} else	// not undoing delete
+		OnTrackArrayEdit(mapTrackID);	// end track array transaction
+	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 }
 
 void CPolymeterDoc::SaveChannelProperty(CUndoState& State) const
@@ -1101,7 +1138,7 @@ void CPolymeterDoc::RestoreMultiChannelProperty(const CUndoState& State)
 void CPolymeterDoc::SaveTrackSort(CUndoState& State) const
 {
 	if (UndoMgrIsIdle()) {	// if initial state
-		ASSERT(m_parrSortedSelection != NULL);
+		ASSERT(m_parrSelection != NULL);
 		CRefPtr<CUndoTrackSort>	pInfo;
 		pInfo.CreateObj();
 		int	nSels = GetSelectedCount(); 
@@ -1110,13 +1147,14 @@ void CPolymeterDoc::SaveTrackSort(CUndoState& State) const
 			pInfo->m_arrSelection = m_arrTrackSel;	// sort selection
 		else	// no selection
 			GetSelectAll(pInfo->m_arrSelection);	// sort all tracks
-		pInfo->m_arrSorted = *m_parrSortedSelection;
+		pInfo->m_arrSorted = *m_parrSelection;
 		State.SetObj(pInfo);
 	}
 }
 
 void CPolymeterDoc::RestoreTrackSort(const CUndoState& State)
 {
+	CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 	const CUndoTrackSort	*pInfo = static_cast<CUndoTrackSort*>(State.GetObj());
 	CTrackArray	arrTrack;
 	if (IsUndoing()) {	// if undoing
@@ -1130,6 +1168,7 @@ void CPolymeterDoc::RestoreTrackSort(const CUndoState& State)
 	State.GetVal(nSels);
 	if (nSels)	// if selection exists
 		m_arrTrackSel = pInfo->m_arrSelection;	// restore selection
+	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 }
 
 void CPolymeterDoc::SaveMultiStepRect(CUndoState& State) const
@@ -1178,13 +1217,13 @@ void CPolymeterDoc::SaveClipboardSteps(CUndoState& State) const
 void CPolymeterDoc::RestoreClipboardSteps(const CUndoState& State)
 {
 	CUndoMultiStepRect	*pClipboard = static_cast<CUndoMultiStepRect *>(State.GetObj());
-	bool	bIsInsert = GetUndoAction() == State.m_Val.p.x.i;
-	if (bIsInsert) {	// if inserting
+	bool	bInserting = GetUndoAction() == State.m_Val.p.x.i;
+	if (bInserting) {	// if inserting
 		m_Seq.InsertSteps(pClipboard->m_rSelection, pClipboard->m_arrStepArray);
 	} else {	// deleting
 		m_Seq.DeleteSteps(pClipboard->m_rSelection);
 	}
-	CRectSelPropHint	hint(pClipboard->m_rSelection, bIsInsert);
+	CRectSelPropHint	hint(pClipboard->m_rSelection, bInserting);
 	UpdateAllViews(NULL, HINT_STEPS_ARRAY, &hint);
 }
 
@@ -1331,10 +1370,7 @@ void CPolymeterDoc::SaveSolo(CUndoState& State) const
 {
 	CRefPtr<CUndoSolo>	pInfo;
 	pInfo.CreateObj();
-	int	nTracks = GetTrackCount();
-	pInfo->m_arrMute.SetSize(nTracks);
-	for (int iTrack = 0; iTrack < nTracks; iTrack++)
-		pInfo->m_arrMute[iTrack] = m_Seq.GetMute(iTrack);
+	m_Seq.GetMutes(pInfo->m_arrMute);
 	State.SetObj(pInfo);
 }
 
@@ -1347,6 +1383,72 @@ void CPolymeterDoc::RestoreSolo(const CUndoState& State)
 	UpdateAllViews(NULL, HINT_SOLO);
 	if (m_Seq.IsRecording())
 		m_Seq.RecordDub();	// all tracks
+}
+
+void CPolymeterDoc::SavePresetName(CUndoState& State) const
+{
+	int	iPreset = State.GetCtrlID();
+	State.SetVal(m_arrPreset[iPreset].m_sName);
+}
+
+void CPolymeterDoc::RestorePresetName(const CUndoState& State)
+{
+	int	iPreset = State.GetCtrlID();
+	State.GetVal(m_arrPreset[iPreset].m_sName);
+	CPresetsBar&	wndPresetsBar = theApp.GetMainFrame()->GetPresetsBar();
+	wndPresetsBar.Update(iPreset);
+	wndPresetsBar.SelectOnly(iPreset);
+}
+
+void CPolymeterDoc::SavePresets(CUndoState& State) const
+{
+	if (UndoMgrIsIdle()) {	// if initial state
+		ASSERT(m_parrSelection != NULL);
+		CRefPtr<CUndoPreset>	pInfo;
+		pInfo.CreateObj();
+		pInfo->m_arrSelection = *m_parrSelection;
+		int	nSels = m_parrSelection->GetSize();
+		pInfo->m_arrPreset.SetSize(nSels);
+		for (int iSel = 0; iSel < nSels; iSel++) {
+			int	iPreset = (*m_parrSelection)[iSel];
+			pInfo->m_arrPreset[iSel] = m_arrPreset[iPreset];
+		}
+		State.SetObj(pInfo);
+		switch (LOWORD(State.GetCode())) {
+		case UCODE_DELETE_PRESETS:
+		case UCODE_MOVE_PRESETS:
+			State.m_Val.p.x.i = CUndoManager::UA_UNDO;	// undo inserts, redo deletes
+			break;
+		default:
+			State.m_Val.p.x.i = CUndoManager::UA_REDO;	// undo deletes, redo inserts
+		}
+	}
+}
+
+void CPolymeterDoc::RestorePresets(const CUndoState& State)
+{
+	CUndoPreset	*pInfo = static_cast<CUndoPreset*>(State.GetObj());
+	bool	bIsMove = LOWORD(State.GetCode()) == UCODE_MOVE_PRESETS;
+	bool	bInserting = GetUndoAction() == State.m_Val.p.x.i; 
+	if (bInserting) {	// if inserting
+		if (bIsMove)
+			m_arrPreset.RemoveAt(State.GetCtrlID(), pInfo->m_arrPreset.GetSize());
+		m_arrPreset.Insert(pInfo->m_arrSelection, pInfo->m_arrPreset);
+	} else {	// deleting
+		m_arrPreset.Delete(pInfo->m_arrSelection);
+		if (bIsMove)
+			m_arrPreset.InsertAt(State.GetCtrlID(), &pInfo->m_arrPreset);
+	}
+	CPresetsBar&	wndPresetsBar = theApp.GetMainFrame()->GetPresetsBar();
+	wndPresetsBar.Update();
+	if (bInserting)	// if inserting
+		wndPresetsBar.SetSelection(pInfo->m_arrSelection);
+	else {	// deleting
+		if (bIsMove)	// if edit is move
+			wndPresetsBar.SelectRange(State.GetCtrlID(), pInfo->m_arrPreset.GetSize());
+		else
+			wndPresetsBar.Deselect();
+	}
 }
 
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
@@ -1416,7 +1518,16 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		SaveMute(State);
 		break;
 	case UCODE_SOLO:
+	case UCODE_APPLY_PRESET:
 		SaveSolo(State);
+		break;
+	case UCODE_RENAME_PRESET:
+		SavePresetName(State);
+		break;
+	case UCODE_CREATE_PRESET:
+	case UCODE_DELETE_PRESETS:
+	case UCODE_MOVE_PRESETS:
+		SavePresets(State);
 		break;
 	}
 }
@@ -1457,7 +1568,6 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		break;
 	case UCODE_TRACK_SORT:
 		RestoreTrackSort(State);
-		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 		break;
 	case UCODE_MULTI_STEP_RECT:
 	case UCODE_SHIFT_RECT:
@@ -1489,7 +1599,16 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		RestoreMute(State);
 		break;
 	case UCODE_SOLO:
+	case UCODE_APPLY_PRESET:
 		RestoreSolo(State);
+		break;
+	case UCODE_RENAME_PRESET:
+		RestorePresetName(State);
+		break;
+	case UCODE_CREATE_PRESET:
+	case UCODE_DELETE_PRESETS:
+	case UCODE_MOVE_PRESETS:
+		RestorePresets(State);
 		break;
 	}
 }
@@ -1768,6 +1887,101 @@ void CPolymeterDoc::PasteDubs(CPoint ptPaste, double fTicksPerCell, CRect& rSele
 	InsertDubs(theApp.m_arrSongClipboard, ptPaste, fTicksPerCell, rSelection);
 }
 
+CPolymeterDoc::CTrackArrayEdit::CTrackArrayEdit(CPolymeterDoc *pDoc)
+{
+	ASSERT(pDoc != NULL);
+	m_pDoc = pDoc;
+	pDoc->GetTrackIDMap(m_mapTrackID);
+}
+
+CPolymeterDoc::CTrackArrayEdit::~CTrackArrayEdit()
+{
+	ASSERT(m_pDoc != NULL);
+	m_pDoc->OnTrackArrayEdit(m_mapTrackID);
+}
+
+void CPolymeterDoc::GetTrackIDMap(CTrackIDMap& mapTrackID) const
+{
+	int	nTracks = GetTrackCount();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)
+		mapTrackID.SetAt(m_Seq.GetID(iTrack), iTrack);
+}
+
+void CPolymeterDoc::OnTrackArrayEdit(const CTrackIDMap& mapTrackID)
+{
+	CIntArrayEx	arrTrackMap;
+	INT_PTR	nOldTracks = mapTrackID.GetCount();
+	arrTrackMap.SetSize(nOldTracks);
+	memset(arrTrackMap.GetData(), 0xff, nOldTracks * sizeof(int));	// init indices to -1 
+	int	nNewTracks = GetTrackCount();
+	for (int iNewTrack = 0; iNewTrack < nNewTracks; iNewTrack++) {	// for each post-edit track
+		int	iOldTrack;
+		if (mapTrackID.Lookup(m_Seq.GetID(iNewTrack), iOldTrack))	// if track's ID found in map
+			arrTrackMap[iOldTrack] = iNewTrack;	// store track's new location in mapping table
+	}
+	m_arrPreset.OnTrackArrayEdit(arrTrackMap, nNewTracks);
+}
+
+void CPolymeterDoc::CreatePreset()
+{
+	CPreset	preset;
+	m_Seq.GetMutes(preset.m_arrMute);
+	preset.m_sName.Format(_T("Preset-%d"), GetTickCount());
+	int	iPreset = INT64TO32(m_arrPreset.Add(preset));
+	SetModifiedFlag();
+	CIntArrayEx	arrSelection;
+	arrSelection.Add(iPreset);
+	m_parrSelection = &arrSelection;
+	NotifyUndoableEdit(0, UCODE_CREATE_PRESET);
+	m_parrSelection = NULL;	// reset selection pointer
+	CPresetsBar&	wndPresetsBar = theApp.GetMainFrame()->GetPresetsBar();
+	wndPresetsBar.Update();
+	wndPresetsBar.SetSelection(arrSelection);
+}
+
+void CPolymeterDoc::DeletePresets(const CIntArrayEx& arrSelection)
+{
+	m_parrSelection = &arrSelection;
+	NotifyUndoableEdit(0, UCODE_DELETE_PRESETS);
+	m_parrSelection = NULL;	// reset selection pointer
+	m_arrPreset.Delete(arrSelection);
+	SetModifiedFlag();
+	CPresetsBar&	wndPresetsBar = theApp.GetMainFrame()->GetPresetsBar();
+	wndPresetsBar.Update();
+	wndPresetsBar.Deselect();
+}
+
+void CPolymeterDoc::MovePresets(const CIntArrayEx& arrSelection, int iDropPos)
+{
+	m_parrSelection = &arrSelection;
+	NotifyUndoableEdit(iDropPos, UCODE_MOVE_PRESETS);
+	m_parrSelection = NULL;	// reset selection pointer
+	m_arrPreset.Move(arrSelection, iDropPos);
+	SetModifiedFlag();
+	CPresetsBar&	wndPresetsBar = theApp.GetMainFrame()->GetPresetsBar();
+	wndPresetsBar.Update();
+	wndPresetsBar.SelectRange(iDropPos, arrSelection.GetSize());
+}
+
+void CPolymeterDoc::UpdatePreset(int iPreset)
+{
+	CIntArrayEx	arrSelection;
+	arrSelection.Add(iPreset);
+	m_parrSelection = &arrSelection;
+	NotifyUndoableEdit(0, UCODE_CREATE_PRESET);
+	m_parrSelection = NULL;	// reset selection pointer
+	CPreset&	preset = m_arrPreset[iPreset];
+	m_Seq.GetMutes(preset.m_arrMute);
+}
+
+void CPolymeterDoc::SetPresetName(int iPreset, CString sName)
+{
+	NotifyUndoableEdit(iPreset, UCODE_RENAME_PRESET);
+	m_arrPreset[iPreset].m_sName = sName;
+	SetModifiedFlag();
+	theApp.GetMainFrame()->GetPresetsBar().Update(iPreset);
+}
+
 // CPolymeterDoc diagnostics
 
 #ifdef _DEBUG
@@ -1825,16 +2039,21 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_LEFT, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TRACK_ROTATE_RIGHT, OnTrackRotateRight)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_RIGHT, OnUpdateTrackReverse)
-	ON_COMMAND(ID_EDIT_TRACK_SORT, OnEditTrackSort)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_TRACK_SORT, OnUpdateEditSelectAll)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_SORT, OnUpdateEditSelectAll)
 	ON_COMMAND(ID_TOOLS_TIME_TO_REPEAT, OnToolsTimeToRepeat)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIME_TO_REPEAT, OnUpdateToolsTimeToRepeat)
 	ON_COMMAND(ID_TRACK_TRANSPOSE, OnEditTranspose)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_TRANSPOSE, OnUpdateEditTranspose)
+	ON_COMMAND(ID_TRACK_SORT, OnTrackSort)
 	ON_COMMAND(ID_TRACK_SOLO, OnTrackSolo)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_SOLO, OnUpdateTrackSolo)
 	ON_COMMAND(ID_TRACK_MUTE, OnTrackMute)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_MUTE, OnUpdateTrackMute)
+	ON_COMMAND(ID_TRACK_PRESET_CREATE, OnTrackPresetCreate)
+	ON_COMMAND(ID_TRACK_PRESET_APPLY, OnTrackPresetApply)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_PRESET_APPLY, OnUpdateTrackPresetApply)
+	ON_COMMAND(ID_TRACK_PRESET_UPDATE, OnTrackPresetUpdate)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_PRESET_UPDATE, OnUpdateTrackPresetUpdate)
 END_MESSAGE_MAP()
 
 // CPolymeterDoc commands
@@ -1976,6 +2195,7 @@ void CPolymeterDoc::OnEditPaste()
 	if (!CFocusEdit::Paste()) {
 		if (m_Seq.GetTrackCount() + theApp.m_arrTrackClipboard.GetSize() > MAX_TRACKS)
 			AfxThrowNotSupportedException();
+		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 		int	iInsPos = GetInsertPos();
 		m_Seq.InsertTracks(iInsPos, theApp.m_arrTrackClipboard);
 		SetModifiedFlag();
@@ -2010,6 +2230,7 @@ void CPolymeterDoc::OnEditInsert()
 {
 	if (m_Seq.GetTrackCount() >= MAX_TRACKS)
 		AfxThrowNotSupportedException();
+	CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 	int	iInsPos = GetInsertPos();
 	m_Seq.InsertTracks(iInsPos);
 	SetModifiedFlag();
@@ -2105,16 +2326,6 @@ void CPolymeterDoc::OnUpdateEditTranspose(CCmdUI *pCmdUI)
 	pCmdUI->Enable(IsTrackView() && GetSelectedCount());
 }
 
-void CPolymeterDoc::OnEditTrackSort()
-{
-	CTrackSortDlg	dlg;
-	if (dlg.DoModal() == IDOK) {
-		CIntArrayEx	arrLevel;
-		dlg.GetSortLevels(arrLevel);
-		SortTracks(arrLevel);
-	}
-}
-
 void CPolymeterDoc::OnTransportPlay()
 {
 	Play(!m_Seq.IsPlaying());
@@ -2183,6 +2394,41 @@ void CPolymeterDoc::OnViewTypeSong()
 void CPolymeterDoc::OnUpdateViewTypeSong(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetRadio(IsSongView());
+}
+
+void CPolymeterDoc::OnTrackSort()
+{
+	CTrackSortDlg	dlg;
+	if (dlg.DoModal() == IDOK) {
+		CIntArrayEx	arrLevel;
+		dlg.GetSortLevels(arrLevel);
+		SortTracks(arrLevel);
+	}
+}
+
+void CPolymeterDoc::OnTrackPresetCreate()
+{
+	CreatePreset();
+}
+
+void CPolymeterDoc::OnTrackPresetApply()
+{
+	theApp.GetMainFrame()->GetPresetsBar().Apply();
+}
+
+void CPolymeterDoc::OnUpdateTrackPresetApply(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(theApp.GetMainFrame()->GetPresetsBar().HasFocusAndSelection());
+}
+
+void CPolymeterDoc::OnTrackPresetUpdate()
+{
+	theApp.GetMainFrame()->GetPresetsBar().UpdateMutes();
+}
+
+void CPolymeterDoc::OnUpdateTrackPresetUpdate(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(theApp.GetMainFrame()->GetPresetsBar().HasFocusAndSelection());
 }
 
 void CPolymeterDoc::OnToolsStatistics()

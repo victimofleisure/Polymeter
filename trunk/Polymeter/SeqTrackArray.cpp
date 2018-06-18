@@ -52,7 +52,7 @@ void CSeqTrackArray::SetTracks(const CIntArrayEx& arrSelection, const CTrackArra
 	int	nSels = arrSelection.GetSize();
 	int	iTrack = 0;
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		GetAt(arrSelection[iSel]).CopyKeepingID(arrTrack[iTrack]);
+		GetAt(arrSelection[iSel]) = arrTrack[iTrack];
 		iTrack++;
 	}
 }
@@ -74,6 +74,22 @@ void CSeqTrackArray::SetSteps(int iTrack, const CStepArray& arrStep)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	GetAt(iTrack).m_arrStep = arrStep;
+}
+
+void CSeqTrackArray::GetMutes(CByteArrayEx& arrMute) const
+{
+	int	nTracks = GetSize();
+	arrMute.SetSize(nTracks);
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)
+		arrMute[iTrack] = GetMute(iTrack);
+}
+
+void CSeqTrackArray::SetMutes(const CByteArrayEx& arrMute)
+{
+	ASSERT(GetSize() == arrMute.GetSize());	// else logic error
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)
+		SetMute(iTrack, arrMute[iTrack] != 0);
 }
 
 void CSeqTrackArray::GetSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const

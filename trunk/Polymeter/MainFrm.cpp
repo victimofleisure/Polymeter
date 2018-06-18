@@ -69,6 +69,7 @@ enum {	// docking bar IDs; don't change, else bar placement won't be restored
 	ID_APP_CONTROL_BAR_FIRST = AFX_IDW_CONTROLBAR_FIRST + 40,
 	ID_BAR_PROPERTIES,
 	ID_BAR_CHANNELS,
+	ID_BAR_PRESETS,
 };
 
 #define ID_VIEW_APPLOOK_FIRST ID_VIEW_APPLOOK_OFF_2003
@@ -158,6 +159,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	DockPane(&m_wndPropertiesBar);
 	m_wndChannelsBar.EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_wndChannelsBar);
+	m_wndPresetsBar.EnableDocking(CBRS_ALIGN_ANY);
+	DockPane(&m_wndPresetsBar);
 
 	// enable Visual Studio 2005 style docking window behavior
 	CDockingManager::SetDockingMode(DT_SMART);
@@ -284,6 +287,13 @@ BOOL CMainFrame::CreateDockingWindows()
 		TRACE0("Failed to create channels bar\n");
 		return FALSE; // failed to create
 	}
+	sTitle.LoadString(IDS_PRESETS_BAR);
+	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
+	if (!m_wndPresetsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_PRESETS, dwStyle))
+	{
+		TRACE0("Failed to create presets bar\n");
+		return FALSE; // failed to create
+	}
 	SetDockingWindowIcons(theApp.m_bHiColorIcons);
 	return TRUE;
 }
@@ -375,6 +385,7 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		case CPolymeterDoc::HINT_NONE:
 			m_wndPropertiesBar.SetProperties(*pDoc);	// update properties bar
 			m_wndChannelsBar.Update();	// update channels bar
+			m_wndPresetsBar.Update();
 			break;
 		case CPolymeterDoc::HINT_MASTER_PROP:
 			if (pSender != reinterpret_cast<CView *>(&m_wndPropertiesBar)) {	// if sender isn't properties bar
@@ -553,6 +564,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_CHANNELS, OnUpdateViewChannels)
 	ON_COMMAND(ID_VIEW_PROPERTIES, OnViewProperties)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_PROPERTIES, OnUpdateViewProperties)
+	ON_COMMAND(ID_VIEW_PRESETS, OnViewPresets)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_PRESETS, OnUpdateViewPresets)
 END_MESSAGE_MAP()
 
 // CMainFrame message handlers
@@ -822,6 +835,17 @@ void CMainFrame::OnViewProperties()
 void CMainFrame::OnUpdateViewProperties(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_wndPropertiesBar.IsVisible());
+}
+
+void CMainFrame::OnViewPresets()
+{
+	bool	bShow = !m_wndPresetsBar.IsVisible();
+	m_wndPresetsBar.ShowPane(bShow, 0, TRUE);
+}
+
+void CMainFrame::OnUpdateViewPresets(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_wndPresetsBar.IsVisible());
 }
 
 void CMainFrame::OnToolsOptions()

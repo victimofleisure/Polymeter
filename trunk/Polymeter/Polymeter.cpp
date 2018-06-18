@@ -245,6 +245,40 @@ bool CPolymeterApp::HandleDlgKeyMsg(MSG* pMsg)
 	return(FALSE);	// continue dispatching
 }
 
+bool CPolymeterApp::HandleScrollViewKeys(MSG *pMsg, CScrollView *pView)
+{
+	if (pMsg->message == WM_KEYDOWN) {
+		int	nScrollCode;
+		switch (pMsg->wParam) {
+		case VK_NEXT:
+			nScrollCode = MAKEWORD(-1, SB_PAGEDOWN);
+			break;
+		case VK_PRIOR:
+			nScrollCode = MAKEWORD(-1, SB_PAGEUP);
+			break;
+		case VK_HOME:
+			if (GetKeyState(VK_CONTROL) & GKS_DOWN)	// if control key down
+				nScrollCode = MAKEWORD(SB_LEFT, SB_TOP);
+			else
+				nScrollCode = MAKEWORD(-1, SB_TOP);
+			break;
+		case VK_END:
+			if (GetKeyState(VK_CONTROL) & GKS_DOWN)	// if control key down
+				nScrollCode = MAKEWORD(SB_RIGHT, SB_BOTTOM);
+			else
+				nScrollCode = MAKEWORD(-1, SB_BOTTOM);
+			break;
+		default:
+			nScrollCode = -1;
+		}
+		if (nScrollCode >= 0) {
+			pView->OnScroll(nScrollCode, 0, 1);				
+			return true;
+		}
+	}
+	return false;
+}
+
 void CPolymeterApp::ApplyOptions(const COptions *pPrevOptions)
 {
 	m_midiDevs.SetIdx(CMidiDevices::INPUT, m_Options.m_Midi_iInputDevice - 1);

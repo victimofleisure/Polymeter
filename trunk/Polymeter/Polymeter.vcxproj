@@ -238,6 +238,8 @@
     <ClInclude Include="Persist.h" />
     <ClInclude Include="Polymeter.h" />
     <ClInclude Include="PolymeterDoc.h" />
+    <ClInclude Include="Preset.h" />
+    <ClInclude Include="PresetsBar.h" />
     <ClInclude Include="PreviewGridCtrl.h" />
     <ClInclude Include="RulerCtrl.h" />
     <ClInclude Include="Scale.h" />
@@ -328,6 +330,8 @@
     <ClCompile Include="Persist.cpp" />
     <ClCompile Include="Polymeter.cpp" />
     <ClCompile Include="PolymeterDoc.cpp" />
+    <ClCompile Include="Preset.cpp" />
+    <ClCompile Include="PresetsBar.cpp" />
     <ClCompile Include="PreviewGridCtrl.cpp" />
     <ClCompile Include="RulerCtrl.cpp" />
     <ClCompile Include="Scale.cpp" />

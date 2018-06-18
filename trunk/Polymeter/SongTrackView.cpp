@@ -166,6 +166,8 @@ BOOL CSongTrackView::PreTranslateMessage(MSG* pMsg)
 		//  give main frame a try
 		if (theApp.GetMainFrame()->SendMessage(UWM_HANDLE_DLG_KEY, reinterpret_cast<WPARAM>(pMsg)))
 			return TRUE;	// key was handled so don't process further
+		if (CPolymeterApp::HandleScrollViewKeys(pMsg, m_pSongView))
+			return TRUE;
 	}
 	return CView::PreTranslateMessage(pMsg);
 }
