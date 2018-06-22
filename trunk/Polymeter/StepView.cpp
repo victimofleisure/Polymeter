@@ -240,8 +240,10 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		}
 		break;
 	case CPolymeterDoc::HINT_VIEW_TYPE:
-		if (GetDocument()->IsTrackView()) {
+		if (GetDocument()->IsTrackView()) {	// if track view
 			UpdateSongPosition();
+		} else if (GetDocument()->IsLiveView()) {	// else if live view
+			ResetStepSelection();	// disable most editing commands
 		}
 		break;
 	case CPolymeterDoc::HINT_SOLO:

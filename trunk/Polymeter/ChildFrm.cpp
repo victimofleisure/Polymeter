@@ -84,7 +84,7 @@ void CChildFrame::SetViewType(int nViewType)
 			m_pSongParent->ShowWindow(SW_HIDE);
 			m_pLiveView->ShowWindow(SW_HIDE);
 			m_wndSplitter.ShowWindow(SW_SHOW);
-			m_pTrackView->SetFocus();
+			SetActiveView(m_pTrackView);
 		}
 		break;
 	case CPolymeterDoc::VIEW_SONG:
@@ -95,7 +95,7 @@ void CChildFrame::SetViewType(int nViewType)
 			GetClientRect(rc);
 			m_pSongParent->MoveWindow(0, 0, rc.Width(), rc.Height());
 			m_pSongParent->ShowWindow(SW_SHOW);
-			m_pSongParent->m_pSongView->SetFocus();
+			SetActiveView(m_pSongParent->m_pSongView);
 		}
 		break;
 	case CPolymeterDoc::VIEW_LIVE:
@@ -107,7 +107,7 @@ void CChildFrame::SetViewType(int nViewType)
 			m_pLiveView->MoveWindow(0, 0, rc.Width(), rc.Height());
 			m_pLiveView->Update();
 			m_pLiveView->ShowWindow(SW_SHOW);
-			m_pLiveView->SetFocus();
+			SetActiveView(m_pLiveView);
 		}
 		break;
 	}

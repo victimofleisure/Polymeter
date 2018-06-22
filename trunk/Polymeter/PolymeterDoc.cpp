@@ -790,6 +790,8 @@ void CPolymeterDoc::SetViewType(int nViewType)
 	CFrameWnd	*pFrame = pView->GetParentFrame();
 	CChildFrame	*pChildFrame = STATIC_DOWNCAST(CChildFrame, pFrame);
 	pChildFrame->SetViewType(nViewType);
+	if (nViewType == VIEW_LIVE)
+		Deselect();	// disable most editing commands
 }
 
 bool CPolymeterDoc::ValidateTrackLength(int nLength, int nQuant) const

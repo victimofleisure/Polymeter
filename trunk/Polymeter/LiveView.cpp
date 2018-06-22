@@ -69,6 +69,8 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	if (pDoc->IsLiveView()) {
 		switch (lHint) {
 		case CPolymeterDoc::HINT_TRACK_ARRAY:
+			PostMessage(UWM_DEFERRED_UPDATE);	// handle after OnTrackArrayEdit runs
+			break;
 		case CPolymeterDoc::HINT_PART_ARRAY:
 			Update();
 			break;
@@ -149,6 +151,41 @@ bool CLiveView::GetMute(int iItem) const
 	if (iTrack < 0)
 		return true;
 	return GetDocument()->m_Seq.GetMute(iTrack);
+}
+
+void CLiveView::SetMute(int iItem, bool bEnable, bool bDeferUpdate)
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	int	iPart = m_arrPart[iItem];
+	if (iPart & PART_GROUP_MASK) {	// if part is a group
+		const CTrackGroup&	part = pDoc->m_arrPart[iPart & ~PART_GROUP_MASK];
+		int	nMbrs = part.m_arrTrackIdx.GetSize();
+		for (int iMbr = 0; iMbr < nMbrs; iMbr++) {	// for each part member
+			int	iTrack = part.m_arrTrackIdx[iMbr];	// get member's track index
+			pDoc->m_Seq.SetMute(iTrack, bEnable);
+		}
+	} else {	// part isn't a group; part index is track index
+		pDoc->m_Seq.SetMute(iPart, bEnable);
+	}
+	if (!bDeferUpdate) {	// if not deferring update
+		if (pDoc->m_Seq.IsRecording())	// if recording
+			pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
+		m_list[LIST_PARTS].RedrawItem(iItem);
+	}
+}
+
+void CLiveView::SetSelectedMutes(bool bEnable)
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	CIntArrayEx	arrSelection;
+	m_list[LIST_PARTS].GetSelection(arrSelection);
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected item
+		SetMute(arrSelection[iSel], bEnable, true);	// defer update until after this loop
+	}
+	if (pDoc->m_Seq.IsRecording())	// if recording
+		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
+	m_list[LIST_PARTS].Deselect();
 }
 
 void CLiveView::ToggleMute(int iItem, bool bDeferUpdate)
@@ -237,10 +274,18 @@ void CLiveView::OnDraw(CDC* pDC)
 BEGIN_MESSAGE_MAP(CLiveView, CView)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
+	ON_MESSAGE(UWM_DEFERRED_UPDATE, OnDeferredUpdate)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_RBUTTONDOWN()
 	ON_NOTIFY_RANGE(LVN_GETDISPINFO, IDC_LIST_FIRST, IDC_LIST_LAST, OnListGetdispinfo)
 	ON_NOTIFY_RANGE(CLiveListCtrl::ULVN_LBUTTONDOWN, IDC_LIST_FIRST, IDC_LIST_LAST, OnListLButtonDown)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditDisable)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditDisable)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDisable)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditDisable)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditDisable)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditDisable)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_RENAME, OnUpdateEditDisable)
 END_MESSAGE_MAP()
 
 // CLiveView message handlers
@@ -278,6 +323,14 @@ void CLiveView::OnSize(UINT nType, int cx, int cy)
 		CLiveListCtrl&	list = m_list[iList];
 		list.MoveWindow((LIST_WIDTH + LIST_GUTTER) * iList, 0, LIST_WIDTH, cy);
 	}
+}
+
+LRESULT CLiveView::OnDeferredUpdate(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	Update();
+	return 0;
 }
 
 void CLiveView::OnLButtonDown(UINT nFlags, CPoint point)
@@ -335,7 +388,7 @@ void CLiveView::OnListGetdispinfo(UINT id, NMHDR* pNMHDR, LRESULT* pResult)
 			bIsActive = !GetMute(iItem);
 			break;
 		default:
-			bIsActive = false;
+			bIsActive = false;	// avoids warning
 		}
 		item.stateMask = LVIS_ACTIVATING;
 		if (bIsActive)
@@ -357,17 +410,30 @@ void CLiveView::OnListLButtonDown(UINT id, NMHDR* pNMHDR, LRESULT* pResult)
 	} else {	// no presets selected
 		switch (iList) {
 		case LIST_PRESETS:
-			ApplyPreset(iItem);
+			if (iItem >= 0)
+				ApplyPreset(iItem);
 			break;
 		case LIST_PARTS:
 			if (m_list[LIST_PARTS].GetSelectedCount()) {	// if parts selected
-				ToggleSelectedMutes();
+				if (pNMLV->uNewState & MK_CONTROL)	// if control key is down
+					SetSelectedMutes(true);	// mute selected parts
+				else	// control key is up
+					ToggleSelectedMutes();	// toggle selected parts
 			} else {	// no parts selected
 				if (iItem >= 0) {	// if valid item
-					ToggleMute(iItem);
+					if (pNMLV->uNewState & MK_CONTROL)	// if control key is down
+						SetMute(iItem, true);	// mute this part
+					else	// control key is up
+						ToggleMute(iItem);	// toggle this part
 				}
 			}
 			break;
 		}
 	}
 }
+
+void CLiveView::OnUpdateEditDisable(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(false);
+}
+

@@ -33,6 +33,8 @@ public:
 	CPolymeterDoc* GetDocument() const;
 	int		GetTrackIdx(int iItem) const;
 	bool	GetMute(int iItem) const;
+	void	SetMute(int iItem, bool bEnable, bool bDeferUpdate = false);
+	void	SetSelectedMutes(bool bEnable);
 
 // Operations
 public:
@@ -95,6 +97,8 @@ protected:
 	afx_msg void OnListLButtonDown(UINT id, NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
+	afx_msg LRESULT OnDeferredUpdate(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnUpdateEditDisable(CCmdUI *pCmdUI);
 };
 
 inline CPolymeterDoc* CLiveView::GetDocument() const
