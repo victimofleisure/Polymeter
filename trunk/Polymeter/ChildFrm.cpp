@@ -26,6 +26,8 @@
 #include "MuteView.h"
 #include "SongView.h"
 #include "SongParent.h"
+#include "LiveView.h"
+#include "DocIter.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -47,6 +49,7 @@ CChildFrame::CChildFrame()
 	m_pTrackView = NULL;
 	m_pStepParent = NULL;
 	m_pSongParent = NULL;
+	m_pLiveView = NULL;
 	m_nViewType = CPolymeterDoc::VIEW_TRACK;
 	m_nSplitPos = INIT_SPLIT_POS;
 }
@@ -75,17 +78,38 @@ void CChildFrame::SetViewType(int nViewType)
 {
 	if (nViewType == m_nViewType)
 		return;
-	if (nViewType == CPolymeterDoc::VIEW_SONG) {
-		m_wndSplitter.ShowWindow(SW_HIDE);
-		CRect	rc;
-		GetClientRect(rc);
-		m_pSongParent->MoveWindow(0, 0, rc.Width(), rc.Height());
-		m_pSongParent->ShowWindow(SW_SHOW);
-		m_pSongParent->m_pSongView->SetFocus();
-	} else {
-		m_pSongParent->ShowWindow(SW_HIDE);
-		m_wndSplitter.ShowWindow(SW_SHOW);
-		m_pTrackView->SetFocus();
+	switch (nViewType) {
+	case CPolymeterDoc::VIEW_TRACK:
+		{
+			m_pSongParent->ShowWindow(SW_HIDE);
+			m_pLiveView->ShowWindow(SW_HIDE);
+			m_wndSplitter.ShowWindow(SW_SHOW);
+			m_pTrackView->SetFocus();
+		}
+		break;
+	case CPolymeterDoc::VIEW_SONG:
+		{
+			m_wndSplitter.ShowWindow(SW_HIDE);
+			m_pLiveView->ShowWindow(SW_HIDE);
+			CRect	rc;
+			GetClientRect(rc);
+			m_pSongParent->MoveWindow(0, 0, rc.Width(), rc.Height());
+			m_pSongParent->ShowWindow(SW_SHOW);
+			m_pSongParent->m_pSongView->SetFocus();
+		}
+		break;
+	case CPolymeterDoc::VIEW_LIVE:
+		{
+			m_wndSplitter.ShowWindow(SW_HIDE);
+			m_pSongParent->ShowWindow(SW_HIDE);
+			CRect	rc;
+			GetClientRect(rc);
+			m_pLiveView->MoveWindow(0, 0, rc.Width(), rc.Height());
+			m_pLiveView->Update();
+			m_pLiveView->ShowWindow(SW_SHOW);
+			m_pLiveView->SetFocus();
+		}
+		break;
 	}
 	m_nViewType = nViewType;
 	m_pTrackView->GetDocument()->UpdateAllViews(NULL, CPolymeterDoc::HINT_VIEW_TYPE);
@@ -121,6 +145,7 @@ inline void CChildFrame::UpdatePersistentState()
 	m_pTrackView->UpdatePersistentState();
 	m_pStepParent->UpdatePersistentState();
 	m_pSongParent->UpdatePersistentState();
+	m_pLiveView->UpdatePersistentState();
 }
 
 void CChildFrame::LoadPersistentState()
@@ -190,7 +215,14 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	CRuntimeClass* pSongClass = RUNTIME_CLASS(CSongParent);
 	m_pSongParent = (CSongParent *)pSongClass->CreateObject();
 	DWORD	dwSongStyle = WS_CHILD;
-	if (!m_pSongParent->Create(NULL, NULL, dwSongStyle, CRect(0, 0, 0, 0), this, 100, pContext))
+	int	nSongID = VIEW_FIRST_ID + CPolymeterDoc::VIEW_SONG;
+	if (!m_pSongParent->Create(NULL, NULL, dwSongStyle, CRect(0, 0, 0, 0), this, nSongID, pContext))
+		return false;
+	CRuntimeClass* pLiveClass = RUNTIME_CLASS(CLiveView);
+	m_pLiveView = (CLiveView *)pLiveClass->CreateObject();
+	DWORD	dwLiveStyle = WS_CHILD;
+	int	nLiveID = VIEW_FIRST_ID + CPolymeterDoc::VIEW_LIVE;
+	if (!m_pLiveView->Create(NULL, NULL, dwLiveStyle, CRect(0, 0, 0, 0), this, nLiveID, pContext))
 		return false;
 	return true;
 }
@@ -202,10 +234,15 @@ BOOL CChildFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO
 	case ID_VIEW_ZOOM_OUT:
 	case ID_VIEW_ZOOM_RESET:
 	case ID_VIEW_VELOCITIES:
-		if (m_nViewType == CPolymeterDoc::VIEW_TRACK)
+		switch (m_nViewType) {
+		case CPolymeterDoc::VIEW_TRACK:
 			return m_pStepParent->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
-		else
+		case CPolymeterDoc::VIEW_SONG:
 			return m_pSongParent->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+		case CPolymeterDoc::VIEW_LIVE:
+			return m_pLiveView->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+		}
+		break;
 	case ID_NEXT_PANE:
 	case ID_PREV_PANE:
 		if (m_nViewType == CPolymeterDoc::VIEW_TRACK) {
@@ -250,6 +287,12 @@ void CChildFrame::OnUpdateTrackLength(CCmdUI *pCmdUI)
 void CChildFrame::OnSize(UINT nType, int cx, int cy)
 {
 	CMDIChildWndEx::OnSize(nType, cx, cy);
-	if (m_nViewType == CPolymeterDoc::VIEW_SONG)
+	switch (m_nViewType) {
+	case CPolymeterDoc::VIEW_SONG:
 		m_pSongParent->MoveWindow(0, 0, cx, cy);
+		break;
+	case CPolymeterDoc::VIEW_LIVE:
+		m_pLiveView->MoveWindow(0, 0, cx, cy);
+		break;
+	}
 }

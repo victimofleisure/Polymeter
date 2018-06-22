@@ -19,6 +19,7 @@
 class CTrackView;
 class CStepParent;
 class CSongParent;
+class CLiveView;
 
 class CChildFrame : public CMDIChildWndEx
 {
@@ -34,6 +35,7 @@ public:
 	};
 	enum {
 		INIT_SPLIT_POS = 700,
+		VIEW_FIRST_ID = 1000,
 	};
 
 // Attributes
@@ -63,6 +65,7 @@ public:
 	CTrackView		*m_pTrackView;
 	CStepParent		*m_pStepParent;
 	CSongParent		*m_pSongParent;
+	CLiveView		*m_pLiveView;
 
 protected:
 // Types

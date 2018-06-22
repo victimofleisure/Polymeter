@@ -19,6 +19,7 @@
 #include "PropertiesBar.h"
 #include "ChannelsBar.h"
 #include "PresetsBar.h"
+#include "PartsBar.h"
 
 class CPolymeterDoc;
 
@@ -47,12 +48,14 @@ public:
 	bool	PropertiesBarHasFocus() const;
 	CChannelsBar&	GetChannelsBar();
 	CPresetsBar&	GetPresetsBar();
+	CPartsBar&	GetPartsBar();
 
 // Operations
 public:
 	void	OnActivateView(CView *pView);
 	void	OnUpdate(CView* pSender, LPARAM lHint = 0, CObject* pHint = NULL);
 	void	UpdateSongPosition();
+	void	FullScreen(bool bEnable);
 
 // Overrides
 public:
@@ -75,6 +78,7 @@ protected:  // control bar embedded members
 	CPropertiesBar	  m_wndPropertiesBar;
 	CChannelsBar	  m_wndChannelsBar;
 	CPresetsBar		  m_wndPresetsBar;
+	CPartsBar		  m_wndPartsBar;
 
 // Data members
 	CPolymeterDoc	*m_pActiveDoc;		// pointer to active document, or NULL if none
@@ -118,6 +122,9 @@ protected:
 	afx_msg void OnUpdateViewProperties(CCmdUI *pCmdUI);
 	afx_msg void OnViewPresets();
 	afx_msg void OnUpdateViewPresets(CCmdUI *pCmdUI);
+	afx_msg void OnViewParts();
+	afx_msg void OnUpdateViewParts(CCmdUI *pCmdUI);
+	afx_msg void OnWindowFullScreen();
 };
 
 inline HACCEL CMainFrame::GetAccelTable() const
@@ -149,4 +156,9 @@ inline CChannelsBar& CMainFrame::GetChannelsBar()
 inline CPresetsBar& CMainFrame::GetPresetsBar()
 {
 	return m_wndPresetsBar;
+}
+
+inline CPartsBar& CMainFrame::GetPartsBar()
+{
+	return m_wndPartsBar;
 }

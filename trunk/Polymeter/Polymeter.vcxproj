@@ -210,6 +210,10 @@
     <ClInclude Include="Globals.h" />
     <ClInclude Include="GoToPositionDlg.h" />
     <ClInclude Include="GridCtrl.h" />
+    <ClInclude Include="ListBar.h" />
+    <ClInclude Include="LiveListCtrl.h" />
+    <ClInclude Include="LiveView.h" />
+    <ClInclude Include="PartsBar.h" />
     <ClInclude Include="HeptatonicDef.h" />
     <ClInclude Include="Hyperlink.h" />
     <ClInclude Include="ILockRingBuf.h" />
@@ -310,6 +314,10 @@
     <ClCompile Include="GDIUtils.cpp" />
     <ClCompile Include="GoToPositionDlg.cpp" />
     <ClCompile Include="GridCtrl.cpp" />
+    <ClCompile Include="ListBar.cpp" />
+    <ClCompile Include="LiveListCtrl.cpp" />
+    <ClCompile Include="LiveView.cpp" />
+    <ClCompile Include="PartsBar.cpp" />
     <ClCompile Include="Hyperlink.cpp" />
     <ClCompile Include="IniFile.cpp" />
     <ClCompile Include="ListCtrlExSel.cpp" />

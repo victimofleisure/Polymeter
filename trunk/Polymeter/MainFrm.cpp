@@ -70,6 +70,7 @@ enum {	// docking bar IDs; don't change, else bar placement won't be restored
 	ID_BAR_PROPERTIES,
 	ID_BAR_CHANNELS,
 	ID_BAR_PRESETS,
+	ID_BAR_PARTS,
 };
 
 #define ID_VIEW_APPLOOK_FIRST ID_VIEW_APPLOOK_OFF_2003
@@ -161,6 +162,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	DockPane(&m_wndChannelsBar);
 	m_wndPresetsBar.EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_wndPresetsBar);
+	m_wndPartsBar.EnableDocking(CBRS_ALIGN_ANY);
+	// combine presets and parts bars into one tabbed bar
+	m_wndPartsBar.AttachToTabWnd(&m_wndPresetsBar, DM_SHOW);
 
 	// enable Visual Studio 2005 style docking window behavior
 	CDockingManager::SetDockingMode(DT_SMART);
@@ -294,6 +298,13 @@ BOOL CMainFrame::CreateDockingWindows()
 		TRACE0("Failed to create presets bar\n");
 		return FALSE; // failed to create
 	}
+	sTitle.LoadString(IDS_PARTS_BAR);
+	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
+	if (!m_wndPartsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_PARTS, dwStyle))
+	{
+		TRACE0("Failed to create groups bar\n");
+		return FALSE; // failed to create
+	}
 	SetDockingWindowIcons(theApp.m_bHiColorIcons);
 	return TRUE;
 }
@@ -386,6 +397,7 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			m_wndPropertiesBar.SetProperties(*pDoc);	// update properties bar
 			m_wndChannelsBar.Update();	// update channels bar
 			m_wndPresetsBar.Update();
+			m_wndPartsBar.Update();
 			break;
 		case CPolymeterDoc::HINT_MASTER_PROP:
 			if (pSender != reinterpret_cast<CView *>(&m_wndPropertiesBar)) {	// if sender isn't properties bar
@@ -523,6 +535,24 @@ UINT CMainFrame::CheckForUpdatesThreadFunc(LPVOID Param)
 	return(0);
 }
 
+void CMainFrame::FullScreen(bool bEnable)
+{
+	if (bEnable == (IsFullScreen() != 0))	// if already in requested state
+		return;	// nothing to do
+	SetRedraw(false);	// disable painting to reduce flicker
+	if (bEnable) {	// if entering full screen mode
+		EnableFullScreenMode(ID_WINDOW_FULL_SCREEN);
+		EnableFullScreenMainMenu(false);
+	}
+	ShowFullScreen();	// toggle full screen mode
+	if (bEnable) {	// if entering full screen mode
+		CWnd	*pFullScreenDlg = GetWindow(GW_ENABLEDPOPUP);	// find full screen dialog
+		if (pFullScreenDlg != NULL)
+			pFullScreenDlg->ShowWindow(SW_HIDE);	// hide full screen dialog
+	}
+	SetRedraw(true);	// reenable painting
+}
+
 // CMainFrame diagnostics
 
 #ifdef _DEBUG
@@ -566,6 +596,9 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_PROPERTIES, OnUpdateViewProperties)
 	ON_COMMAND(ID_VIEW_PRESETS, OnViewPresets)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_PRESETS, OnUpdateViewPresets)
+	ON_COMMAND(ID_VIEW_PARTS, OnViewParts)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_PARTS, OnUpdateViewParts)
+	ON_COMMAND(ID_WINDOW_FULL_SCREEN, OnWindowFullScreen)
 END_MESSAGE_MAP()
 
 // CMainFrame message handlers
@@ -848,6 +881,17 @@ void CMainFrame::OnUpdateViewPresets(CCmdUI *pCmdUI)
 	pCmdUI->SetCheck(m_wndPresetsBar.IsVisible());
 }
 
+void CMainFrame::OnViewParts()
+{
+	bool	bShow = !m_wndPartsBar.IsVisible();
+	m_wndPartsBar.ShowPane(bShow, 0, TRUE);
+}
+
+void CMainFrame::OnUpdateViewParts(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_wndPartsBar.IsVisible());
+}
+
 void CMainFrame::OnToolsOptions()
 {
 	COptions	m_optsPrev(theApp.m_Options);
@@ -862,4 +906,9 @@ void CMainFrame::OnToolsDevices()
 	CString	sMsg;
 	theApp.m_midiDevs.DumpSystemState(sMsg);
 	AfxMessageBox(sMsg, MB_ICONINFORMATION);
+}
+
+void CMainFrame::OnWindowFullScreen()
+{
+	FullScreen(!IsFullScreen());
 }

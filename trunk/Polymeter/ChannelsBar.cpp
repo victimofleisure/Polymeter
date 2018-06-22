@@ -205,7 +205,7 @@ void CChannelsBar::Update()
 
 void CChannelsBar::Update(int iChan)
 {
-	m_grid.RedrawItems(iChan, iChan);
+	m_grid.RedrawItem(iChan);
 }
 
 void CChannelsBar::Update(int iChan, int iProp)

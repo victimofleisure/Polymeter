@@ -184,3 +184,18 @@ inline void CTrack::CopyKeepingID(const CTrack& track)
 class CTrackArray : public CArrayEx<CTrack, CTrack&> {
 public:
 };
+
+class CTrackGroup {
+public:
+	CString	m_sName;				// group name
+	CIntArrayEx	m_arrTrackIdx;		// array of track indices
+};
+
+class CTrackGroupArray : public CArrayEx<CTrackGroup, CTrackGroup&> {
+public:
+	void	OnTrackArrayEdit(const CIntArrayEx& arrTrackMap);
+	void	Read(LPCTSTR pszSection);
+	void	Write(LPCTSTR pszSection) const;
+	void	Dump() const;
+	void	GetTrackRefs(CIntArrayEx& arrTrackIdx) const;
+};

@@ -109,9 +109,8 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_TRACK_ARRAY:
 		{
 			int	nTracks = pDoc->GetTrackCount();
-			m_grid.SetItemCountEx(nTracks);
+			m_grid.SetItemCountEx(nTracks, 0);	// invalidate all
 			m_grid.SetSelection(pDoc->m_arrTrackSel);
-			m_grid.Invalidate();
 		}
 		break;
 	case CPolymeterDoc::HINT_TRACK_PROP:
@@ -123,7 +122,7 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				m_grid.RedrawSubItem(iTrack, iProp + 1);	// account for track number
 				UpdateDependencies(iTrack, iProp);
 			} else	// update all properties
-				m_grid.RedrawItems(iTrack, iTrack);
+				m_grid.RedrawItem(iTrack);
 		}
 		break;
 	case CPolymeterDoc::HINT_MULTI_TRACK_PROP:

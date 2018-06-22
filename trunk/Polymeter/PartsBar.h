@@ -7,7 +7,7 @@
  
 		revision history:
 		rev		date	comments
-        00		14jun18	initial version
+        00		19jun18	initial version
 		
 */
 
@@ -15,12 +15,12 @@
 
 #include "ListBar.h"
 
-class CPresetsBar : public CListBar
+class CPartsBar : public CListBar
 {
-	DECLARE_DYNAMIC(CPresetsBar)
+	DECLARE_DYNAMIC(CPartsBar)
 // Construction
 public:
-	CPresetsBar();
+	CPartsBar();
 
 // Attributes
 public:
@@ -28,7 +28,6 @@ public:
 // Operations
 public:
 	void	Update();
-	void	UpdateMutes();
 
 // Overrides
 	virtual	LPCTSTR GetItemText(int iItem);
@@ -39,7 +38,7 @@ public:
 
 // Implementation
 public:
-	virtual ~CPresetsBar();
+	virtual ~CPartsBar();
 
 protected:
 // Types
@@ -53,9 +52,6 @@ protected:
 // Generated message map functions
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
-	afx_msg void OnTrackPresetCreate();
-	afx_msg void OnTrackPresetApply();
-	afx_msg void OnUpdateTrackPresetApply(CCmdUI *pCmdUI);
-	afx_msg void OnTrackPresetUpdate();
-	afx_msg void OnUpdateTrackPresetUpdate(CCmdUI *pCmdUI);
+	afx_msg void OnTrackPartCreate();
+	afx_msg void OnUpdateTrackPartCreate(CCmdUI *pCmdUI);
 };

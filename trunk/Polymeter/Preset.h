@@ -48,9 +48,6 @@ public:
 	static	void	PackBools(const CByteArrayEx& arrSrc, CByteArrayEx& arrDst);
 	static	void	UnpackBools(const CByteArrayEx& arrSrc, CByteArrayEx& arrDst);
 	static	int		CalcPackedSize(UINT nBits);
-	void	Delete(const CIntArrayEx& arrSelection);
-	void	Insert(const CIntArrayEx& arrSelection, CPresetArray& arrPreset);
-	void	Move(const CIntArrayEx& arrSelection, int iDropPos);
 	void	Read(int nTracks);
 	void	Write() const;
 	void	OnTrackArrayEdit(const CIntArrayEx& arrTrackMap, int nNewTracks);

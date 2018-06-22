@@ -52,38 +52,6 @@ void CPresetArray::UnpackBools(const CByteArrayEx& arrSrc, CByteArrayEx& arrDst)
 		arrDst[iBit] = (arrSrc[iBit >> 3] & (1 << (iBit & 7))) != 0;
 }
 
-void CPresetArray::Delete(const CIntArrayEx& arrSelection)
-{
-	int	nSels = arrSelection.GetSize();
-	for (int iSel = nSels - 1; iSel >= 0; iSel--) {	// reverse iterate for deletion stability
-		int	iPreset = arrSelection[iSel];
-		RemoveAt(iPreset);
-	}
-}
-
-void CPresetArray::Insert(const CIntArrayEx& arrSelection, CPresetArray& arrPreset)
-{
-	int	nSels = arrSelection.GetSize();
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		int	iPreset = arrSelection[iSel];
-		InsertAt(iPreset, arrPreset[iSel]);
-	}
-}
-
-void CPresetArray::Move(const CIntArrayEx& arrSelection, int iDropPos)
-{
-	// assume drop position is already compensated for deletions
-	int	nSels = arrSelection.GetSize();
-	CPresetArray	arrInsert;
-	arrInsert.SetSize(nSels);
-	for (int iSel = nSels - 1; iSel >= 0; iSel--) {	// reverse iterate for deletion stability
-		int	iPreset = arrSelection[iSel];
-		arrInsert[iSel] = GetAt(iPreset);
-		RemoveAt(iPreset);
-	}
-	InsertAt(iDropPos, &arrInsert);
-}
-
 void CPresetArray::Read(int nTracks)
 {
 	int	nPresets = 0;

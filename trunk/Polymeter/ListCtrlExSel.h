@@ -17,6 +17,7 @@
 		07		24apr18	standardize names
 		08		25apr18	add GetSelected
 		09		05jun18	make LoadArray public
+		10		21jun18	add RedrawItem
 
 		extended selection list control
  
@@ -77,6 +78,7 @@ public:
 	bool	ResetColumnOrder();
 	void	FixContextMenuPoint(CPoint& point);
 	void	EnableToolTips(BOOL bEnable = TRUE);
+	BOOL	RedrawItem(int iItem);
 	void	RedrawSubItem(int iItem, int iSubItem);
 	static	bool	LoadArray(LPCTSTR pszSection, LPCTSTR pszKey, CIntArrayEx& arr, int nElems);
 
@@ -106,6 +108,11 @@ inline int CListCtrlExSel::GetColumnCount() const
 inline bool CListCtrlExSel::GetSelected(int iItem) const
 {
 	return GetItemState(iItem, LVIS_SELECTED) != 0;
+}
+
+inline BOOL CListCtrlExSel::RedrawItem(int iItem)
+{
+	return RedrawItems(iItem, iItem);
 }
 
 /////////////////////////////////////////////////////////////////////////////

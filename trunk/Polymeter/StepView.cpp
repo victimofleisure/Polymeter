@@ -93,13 +93,13 @@ BOOL CStepView::PreCreateWindow(CREATESTRUCT& cs)
 
 void CStepView::OnInitialUpdate()
 {
-	CScrollView::OnInitialUpdate();
 	double	fDocZoom = GetDocument()->m_fStepZoom;
 	double	fZoomDelta = theApp.m_Options.GetZoomDeltaFrac();
 	m_nMaxZoomSteps = round(InvPow(fZoomDelta, MAX_ZOOM_SCALE));
 	m_nZoom = round(InvPow(fZoomDelta, fDocZoom));
 	m_fZoom = fDocZoom;
 	m_fZoomDelta = fZoomDelta;
+	CScrollView::OnInitialUpdate();
 }
 
 void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)

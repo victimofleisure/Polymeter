@@ -24,6 +24,7 @@
 		14		03may18	add InsertSortedUnique and refactor
 		15		18may18	move list of algorithms to header file
 		16		08jun18	add more fast methods to CArrayEx; add SetGrowBy
+		17		19jun18	add insert, delete, and move selection
 
 		enhanced array with copy ctor, assignment, and fast const access
  
@@ -179,6 +180,8 @@ __forceinline void CArrayEx_Shift(ARRAY& arr, W64INT iStart, W64INT nElems, W64I
 	}
 }
 
+class CIntArrayEx;
+
 template<class TYPE, class ARG_TYPE>
 class CArrayEx : public CArray<TYPE, ARG_TYPE> {
 public:
@@ -216,6 +219,9 @@ public:
 	bool	operator!=(const CArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
 	#define	ALGO_TYPE ARG_TYPE
 	#include "ArrayExAlgoDef.h"
+	void	InsertSelection(const CIntArrayEx& arrSelection, CArrayEx& arrInsert);
+	void	DeleteSelection(const CIntArrayEx& arrSelection);
+	void	MoveSelection(const CIntArrayEx& arrSelection, int iDropPos);
 };
 
 template<class TYPE, class ARG_TYPE>
@@ -821,4 +827,39 @@ AFX_INLINE void CStringArrayEx::SetGrowBy(INT_PTR nGrowBy)
 {
 	ASSERT(nGrowBy >= 0);
 	m_nGrowBy = nGrowBy;
+}
+
+template<class TYPE, class ARG_TYPE>
+AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::InsertSelection(const CIntArrayEx& arrSelection, CArrayEx& arrInsert)
+{
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iItem = arrSelection[iSel];
+		InsertAt(iItem, arrInsert[iSel]);
+	}
+}
+
+template<class TYPE, class ARG_TYPE>
+AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::DeleteSelection(const CIntArrayEx& arrSelection)
+{
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = nSels - 1; iSel >= 0; iSel--) {	// reverse iterate for deletion stability
+		int	iItem = arrSelection[iSel];
+		RemoveAt(iItem);
+	}
+}
+
+template<class TYPE, class ARG_TYPE>
+AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::MoveSelection(const CIntArrayEx& arrSelection, int iDropPos)
+{
+	// assume drop position is already compensated for deletions
+	int	nSels = arrSelection.GetSize();
+	CArrayEx	arrInsert;
+	arrInsert.SetSize(nSels);
+	for (int iSel = nSels - 1; iSel >= 0; iSel--) {	// reverse iterate for deletion stability
+		int	iItem = arrSelection[iSel];
+		arrInsert[iSel] = GetAt(iItem);
+		RemoveAt(iItem);
+	}
+	InsertAt(iDropPos, &arrInsert);
 }

@@ -1,19 +1,19 @@
 // Copyleft 2018 Chris Korda
 // This program is free software; you can redistribute it and/or modify it
-// under the terms of the GNU General Public License as published by the FreeCPresetsBar
+// under the terms of the GNU General Public License as published by the FreeCPartsBar
 // Software Foundation; either version 2 of the License, or any later version.
 /*
         chris korda
  
 		revision history:
 		rev		date	comments
-        00		14jun18	initial version
+        00		19jun18	initial version
 		
 */
 
 #include "stdafx.h"
 #include "Polymeter.h"
-#include "PresetsBar.h"
+#include "PartsBar.h"
 #include "MainFrm.h"
 #include "PolymeterDoc.h"
 #include "UndoCodes.h"
@@ -25,94 +25,82 @@ static char THIS_FILE[]=__FILE__;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
-// CPresetsBar
+// CPartsBar
 
-IMPLEMENT_DYNAMIC(CPresetsBar, CListBar)
+IMPLEMENT_DYNAMIC(CPartsBar, CListBar)
 
-CPresetsBar::CPresetsBar()
+CPartsBar::CPartsBar()
 {
 }
 
-CPresetsBar::~CPresetsBar()
+CPartsBar::~CPartsBar()
 {
 }
 
-void CPresetsBar::Update()
+void CPartsBar::Update()
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
 	int	nItems;
 	if (pDoc != NULL)	// if active document
-		nItems = pDoc->m_arrPreset.GetSize();
+		nItems = pDoc->m_arrPart.GetSize();
 	else
 		nItems = 0;
 	m_list.SetItemCountEx(nItems, 0);	// invalidate all
 }
 
-LPCTSTR CPresetsBar::GetItemText(int iItem)
+LPCTSTR CPartsBar::GetItemText(int iItem)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
-	return pDoc->m_arrPreset[iItem].m_sName;
+	return pDoc->m_arrPart[iItem].m_sName;
 }
 
-void CPresetsBar::SetItemText(int iItem, LPCTSTR pszText)
+void CPartsBar::SetItemText(int iItem, LPCTSTR pszText)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
-	pDoc->SetPresetName(iItem, pszText);
+	pDoc->SetPartName(iItem, pszText);
 }
 
-void CPresetsBar::ApplyItem(int iItem)
+void CPartsBar::ApplyItem(int iItem)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
-	pDoc->ApplyPreset(iItem);
+	pDoc->Select(pDoc->m_arrPart[iItem].m_arrTrackIdx);
 }
 
-void CPresetsBar::Delete()
-{
-	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	ASSERT(pDoc != NULL);
-	CIntArrayEx	arrSelection;
-	m_list.GetSelection(arrSelection);
-	pDoc->DeletePresets(arrSelection);
-}
-
-void CPresetsBar::Move(int iDropPos)
+void CPartsBar::Delete()
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
 	CIntArrayEx	arrSelection;
 	m_list.GetSelection(arrSelection);
-	pDoc->MovePresets(arrSelection, iDropPos);
+	pDoc->DeleteParts(arrSelection);
 }
 
-void CPresetsBar::UpdateMutes()
+void CPartsBar::Move(int iDropPos)
 {
-	int	iItem = m_list.GetSelectionMark();
-	if (iItem >= 0) {
-		CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-		ASSERT(pDoc != NULL);
-		pDoc->UpdatePreset(iItem);
-	}
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	ASSERT(pDoc != NULL);
+	CIntArrayEx	arrSelection;
+	m_list.GetSelection(arrSelection);
+	pDoc->MoveParts(arrSelection, iDropPos);
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CPresetsBar message map
+// CPartsBar message map
 
-BEGIN_MESSAGE_MAP(CPresetsBar, CListBar)
+BEGIN_MESSAGE_MAP(CPartsBar, CListBar)
 	ON_WM_CONTEXTMENU()
-	ON_COMMAND(ID_TRACK_PRESET_APPLY, OnTrackPresetApply)
-	ON_UPDATE_COMMAND_UI(ID_TRACK_PRESET_APPLY, OnUpdateTrackPresetApply)
-	ON_COMMAND(ID_TRACK_PRESET_UPDATE, OnTrackPresetUpdate)
-	ON_UPDATE_COMMAND_UI(ID_TRACK_PRESET_UPDATE, OnUpdateTrackPresetUpdate)
+	ON_COMMAND(ID_TRACK_PART_CREATE, OnTrackPartCreate)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_PART_CREATE, OnUpdateTrackPartCreate)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
-// CPresetsBar message handlers
+// CPartsBar message handlers
 
-void CPresetsBar::OnContextMenu(CWnd* pWnd, CPoint point)
+void CPartsBar::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	UNREFERENCED_PARAMETER(pWnd);
 	if (point.x == -1 && point.y == -1) {
@@ -122,34 +110,21 @@ void CPresetsBar::OnContextMenu(CWnd* pWnd, CPoint point)
 		ClientToScreen(&point);
 	}
 	CMenu	menu;
-	menu.LoadMenu(IDR_PRESETS_CTX);
+	menu.LoadMenu(IDR_PARTS_CTX);
 	UpdateMenu(this, &menu);
 	menu.GetSubMenu(0)->TrackPopupMenu(0, point.x, point.y, this);
 }
 
-void CPresetsBar::OnTrackPresetCreate()
+void CPartsBar::OnTrackPartCreate()
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	ASSERT(pDoc != NULL);
-	pDoc->CreatePreset();
+	if (pDoc != NULL)
+		pDoc->CreatePart();
 }
 
-void CPresetsBar::OnTrackPresetApply()
+void CPartsBar::OnUpdateTrackPartCreate(CCmdUI *pCmdUI)
 {
-	Apply();
-}
-
-void CPresetsBar::OnUpdateTrackPresetApply(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable(m_list.GetSelectionMark() >= 0);
-}
-
-void CPresetsBar::OnTrackPresetUpdate()
-{
-	UpdateMutes();
-}
-
-void CPresetsBar::OnUpdateTrackPresetUpdate(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable(m_list.GetSelectionMark() >= 0);
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	bool	bEnable = pDoc != NULL && pDoc->GetSelectedCount();
+	pCmdUI->Enable(bEnable);
 }

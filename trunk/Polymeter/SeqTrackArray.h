@@ -51,6 +51,7 @@ public:
 	void	SetDuration(int iTrack, int nDuration);
 	bool	GetMute(int iTrack) const;
 	void	SetMute(int iTrack, bool bMute);
+	void	ToggleMute(int iTrack);
 	void	GetMutes(CByteArrayEx& arrMute) const;
 	void	SetMutes(const CByteArrayEx& arrMute);
 	STEP	GetStep(int iTrack, int iStep) const;
@@ -242,6 +243,11 @@ inline bool CSeqTrackArray::GetMute(int iTrack) const
 inline void CSeqTrackArray::SetMute(int iTrack, bool bMute)
 {
 	GetAt(iTrack).m_bMute = bMute;
+}
+
+inline void CSeqTrackArray::ToggleMute(int iTrack)
+{
+	GetAt(iTrack).m_bMute ^= 1;
 }
 
 inline CTrackBase::STEP CSeqTrackArray::GetStep(int iTrack, int iStep) const

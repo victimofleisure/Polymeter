@@ -184,7 +184,11 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Properties",                 ID_VIEW_PROPERTIES
         MENUITEM "&Channels",                   ID_VIEW_CHANNELS
-        MENUITEM "Pr&esets",                    ID_VIEW_PRESETS
+        POPUP "&Groups"
+        BEGIN
+            MENUITEM "&Presets",                    ID_VIEW_PRESETS
+            MENUITEM "P&arts",                      ID_VIEW_PARTS
+        END
     END
     POPUP "&Tools"
     BEGIN
@@ -258,11 +262,16 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Properties",                 ID_VIEW_PROPERTIES
         MENUITEM "&Channels",                   ID_VIEW_CHANNELS
-        MENUITEM "Pr&esets",                    ID_VIEW_PRESETS
+        POPUP "&Groups"
+        BEGIN
+            MENUITEM "&Presets",                    ID_VIEW_PRESETS
+            MENUITEM "P&arts",                      ID_VIEW_PARTS
+        END
         MENUITEM "&Velocities",                 ID_VIEW_VELOCITIES
         MENUITEM SEPARATOR
         MENUITEM "&Track",                      ID_VIEW_TYPE_TRACK
         MENUITEM "&Song",                       ID_VIEW_TYPE_SONG
+        MENUITEM "&Live",                       ID_VIEW_TYPE_LIVE
     END
     POPUP "Tr&ack"
     BEGIN
@@ -292,6 +301,7 @@ BEGIN
         END
         MENUITEM SEPARATOR
         MENUITEM "&Sort...",                    ID_TRACK_SORT
+        MENUITEM "&Group",                      ID_TRACK_GROUP
     END
     POPUP "T&ransport"
     BEGIN
@@ -313,6 +323,7 @@ BEGIN
     POPUP "&Window"
     BEGIN
         MENUITEM "&New Window",                 ID_WINDOW_NEW
+        MENUITEM "&Full Screen",                ID_WINDOW_FULL_SCREEN
     END
     POPUP "&Help"
     BEGIN
@@ -357,7 +368,7 @@ BEGIN
     END
 END
 
-IDR_PRESET_CTX MENU
+IDR_PRESETS_CTX MENU
 BEGIN
     POPUP "Edit"
     BEGIN
@@ -366,6 +377,16 @@ BEGIN
         MENUITEM "&Delete",                     ID_EDIT_DELETE
         MENUITEM "&Rename",                     ID_EDIT_RENAME
         MENUITEM "&Update",                     ID_TRACK_PRESET_UPDATE
+    END
+END
+
+IDR_PARTS_CTX MENU
+BEGIN
+    POPUP "Edit"
+    BEGIN
+        MENUITEM "&Create",                     ID_TRACK_PART_CREATE
+        MENUITEM "&Delete",                     ID_EDIT_DELETE
+        MENUITEM "&Rename",                     ID_EDIT_RENAME
     END
 END
 
@@ -383,6 +404,7 @@ BEGIN
     VK_INSERT,      ID_EDIT_INSERT,         VIRTKEY, NOINVERT
     "V",            ID_EDIT_PASTE,          VIRTKEY, CONTROL, NOINVERT
     "Y",            ID_EDIT_REDO,           VIRTKEY, CONTROL, NOINVERT
+    VK_F2,          ID_EDIT_RENAME,         VIRTKEY, NOINVERT
     "A",            ID_EDIT_SELECT_ALL,     VIRTKEY, CONTROL, NOINVERT
     "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL, NOINVERT
     "E",            ID_FILE_EXPORT,         VIRTKEY, CONTROL, NOINVERT
@@ -392,9 +414,10 @@ BEGIN
     VK_F6,          ID_NEXT_PANE,           VIRTKEY, NOINVERT
     VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT, NOINVERT
     "O",            ID_TOOLS_OPTIONS,       VIRTKEY, SHIFT, CONTROL, NOINVERT
-    "P",            ID_TRACK_PRESET_CREATE, VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "G",            ID_TRACK_GROUP,         VIRTKEY, CONTROL, NOINVERT
     "L",            ID_TRACK_LENGTH,        VIRTKEY, CONTROL, NOINVERT
     "M",            ID_TRACK_MUTE,          VIRTKEY, CONTROL, NOINVERT
+    "P",            ID_TRACK_PRESET_CREATE, VIRTKEY, SHIFT, CONTROL, NOINVERT
     "3",            ID_TRACK_REVERSE,       VIRTKEY, CONTROL, NOINVERT
     "1",            ID_TRACK_ROTATE_LEFT,   VIRTKEY, SHIFT, CONTROL, NOINVERT
     "2",            ID_TRACK_ROTATE_RIGHT,  VIRTKEY, SHIFT, CONTROL, NOINVERT
@@ -408,13 +431,18 @@ BEGIN
     VK_SPACE,       ID_TRANSPORT_PLAY,      VIRTKEY, CONTROL, NOINVERT
     "R",            ID_TRANSPORT_RECORD,    VIRTKEY, CONTROL, NOINVERT
     "W",            ID_TRANSPORT_REWIND,    VIRTKEY, CONTROL, NOINVERT
+    VK_F9,          ID_VIEW_TYPE_LIVE,      VIRTKEY, CONTROL, NOINVERT
     VK_F9,          ID_VIEW_TYPE_SONG,      VIRTKEY, NOINVERT
     VK_F8,          ID_VIEW_TYPE_TRACK,     VIRTKEY, NOINVERT
     VK_F7,          ID_VIEW_VELOCITIES,     VIRTKEY, NOINVERT
     VK_OEM_PLUS,    ID_VIEW_ZOOM_IN,        VIRTKEY, CONTROL, NOINVERT
     VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
     "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
-    VK_F2,          ID_EDIT_RENAME,         VIRTKEY, NOINVERT
+    VK_F11,         ID_WINDOW_FULL_SCREEN,  VIRTKEY, NOINVERT
+    "C",            ID_VIEW_CHANNELS,       VIRTKEY, CONTROL, ALT, NOINVERT
+    "P",            ID_VIEW_PROPERTIES,     VIRTKEY, CONTROL, ALT, NOINVERT
+    "E",            ID_VIEW_PRESETS,        VIRTKEY, CONTROL, ALT, NOINVERT
+    "A",            ID_VIEW_PARTS,          VIRTKEY, CONTROL, ALT, NOINVERT
 END
 
 
@@ -661,25 +689,29 @@ BEGIN
     IDS_DOC_BAD_STEP_SELECTION "Invalid step selection."
     IDS_DOC_CANT_TRUNCATE_RECORDING 
                             "Can't set song length shorter than recording."
+    IDS_DOC_GROUP_OVERLAP   "One or more selected tracks already belongs to a group."
     IDS_DOC_NEWER_VERSION   "'%1' is from a newer document version. Some of its features may not be supported."
     IDS_DOC_REPLACE_RECORDING 
                             "Recording already exists.\nDo you want to replace it?"
     IDS_DOC_TRACK_TOO_LONG  "Track too long."
     IDS_EDIT_APPLY_PRESET   "Apply Preset"
+    IDS_EDIT_CREATE_PART    "Create Part"
     IDS_EDIT_CREATE_PRESET  "Create Preset"
     IDS_EDIT_CUT_STEPS      "Cut Steps"
     IDS_EDIT_CUT_TRACKS     "Cut Tracks"
-    IDS_EDIT_DELETE_PRESETS "Delete Presets"
-    IDS_EDIT_DELETE_STEPS   "Delete Steps"
-    IDS_EDIT_DELETE_TRACKS  "Delete Tracks"
+    IDS_EDIT_DELETE_PARTS   "Delete Parts"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_DELETE_PRESETS "Delete Presets"
+    IDS_EDIT_DELETE_STEPS   "Delete Steps"
+    IDS_EDIT_DELETE_TRACKS  "Delete Tracks"
     IDS_EDIT_DUB            "Dub"
     IDS_EDIT_INSERT_STEPS   "Insert Steps"
     IDS_EDIT_INSERT_TRACKS  "Insert Tracks"
     IDS_EDIT_MENU           "Edit"
+    IDS_EDIT_MOVE_PARTS     "Move Parts"
     IDS_EDIT_MOVE_PRESETS   "Move Presets"
     IDS_EDIT_MOVE_TRACKS    "Move Tracks"
     IDS_EDIT_MULTI_STEP_RECT "Multiple Steps"
@@ -687,15 +719,16 @@ BEGIN
     IDS_EDIT_PASTE_TRACKS   "Paste Tracks"
     IDS_EDIT_RECORD         "Record"
     IDS_EDIT_REDO_FMT       "&Redo %s"
+    IDS_EDIT_RENAME_PART    "Rename Part"
+END
+
+STRINGTABLE
+BEGIN
     IDS_EDIT_RENAME_PRESET  "Rename Preset"
     IDS_EDIT_REVERSE        "Reverse"
     IDS_EDIT_ROTATE         "Rotate"
     IDS_EDIT_SHIFT          "Shift"
     IDS_EDIT_SOLO           "Solo"
-END
-
-STRINGTABLE
-BEGIN
     IDS_EDIT_TRACK_SORT     "Track Sort"
     IDS_EDIT_UNDO_FMT       "&Undo %s"
     IDS_EDIT_VELOCITY       "Velocity"
@@ -708,15 +741,15 @@ BEGIN
     IDS_EXPORT_FILE_FILTER  "MIDI Files (*.mid)|*.mid|All Files (*.*)|*.*||"
     IDS_EXPORT_TOO_MANY_TRACKS "Too many tracks."
     IDS_GRID_ERR_BAD_TIME_FORMAT "Enter time in hh:mm:ss format."
+END
+
+STRINGTABLE
+BEGIN
     IDS_HLINK_CANT_LAUNCH   "Can't launch browser."
     IDS_MIDI_DEVICES_MISSING "MIDI devices are missing."
     IDS_MIDI_INPUT          "Input"
     IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
     IDS_MIDI_OUTPUT         "Output"
-END
-
-STRINGTABLE
-BEGIN
     IDS_NONE                "<None>"
     IDS_OPT_DESC_General_bCheckForUpdates 
                             "Automatically check for newer version of app during startup"
@@ -733,15 +766,15 @@ BEGIN
                             "Display notes as names instead of numbers"
     IDS_OPT_DESC_View_fUpdateFreq 
                             "Frequency at which view is updated, in Hertz"
+END
+
+STRINGTABLE
+BEGIN
     IDS_OPT_DESC_View_fZoomDelta "Zoom step size, as a percentage"
     IDS_OPT_GROUP_General   "General"
     IDS_OPT_GROUP_Midi      "MIDI"
     IDS_OPT_GROUP_View      "View"
     IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
-END
-
-STRINGTABLE
-BEGIN
     IDS_OPT_NAME_Midi_bThru "Thru"
     IDS_OPT_NAME_Midi_iInputDevice "Input Device"
     IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
@@ -752,16 +785,17 @@ BEGIN
     IDS_OPT_NAME_View_bShowNoteNames "Show Note Names"
     IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
     IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
+    IDS_PARTS_BAR           "Parts"
+END
+
+STRINGTABLE
+BEGIN
     IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
     IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
     IDS_PDR_DESC_nSongLength "Song duration in HH:MM:SS format"
     IDS_PDR_DESC_nTimeDiv   "Time division, in pulses per quarter note"
     IDS_PDR_GROUP_Master    "Master"
     IDS_PDR_NAME_fTempo     "Tempo"
-END
-
-STRINGTABLE
-BEGIN
     IDS_PDR_NAME_nKeySig    "Key Signature"
     IDS_PDR_NAME_nSongLength "Song Length"
     IDS_PDR_NAME_nTimeDiv   "PPQ"
@@ -772,16 +806,16 @@ BEGIN
     IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format"
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
+END
+
+STRINGTABLE
+BEGIN
     IDS_SORT_DIR_ASCENDING  "Ascending"
     IDS_SORT_DIR_DESCENDING "Descending"
     IDS_STATUS_PANE1        "Pane 1"
     IDS_STATUS_PANE2        "Pane 2"
     IDS_TIME_TO_REPEAT_DAYS "days"
     IDS_TIME_TO_REPEAT_FMT  "%s beats\n%s\nGreatest prime factor is %s"
-END
-
-STRINGTABLE
-BEGIN
     IDS_TOOLBAR_CUSTOMIZE   "Customize..."
     IDS_TOOLBAR_STANDARD    "Standard"
     IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
@@ -792,16 +826,16 @@ BEGIN
     IDS_TRACK_TYPE_WHEEL    "Wheel"
     IDS_TRK_Channel         "Channel"
     IDS_TRK_Duration        "Duration"
+END
+
+STRINGTABLE
+BEGIN
     IDS_TRK_Length          "Length"
     IDS_TRK_Mute            "Mute"
     IDS_TRK_Name            "Name"
     IDS_TRK_Note            "Note"
     IDS_TRK_Number          "#"
     IDS_TRK_Offset          "Offset"
-END
-
-STRINGTABLE
-BEGIN
     IDS_TRK_Quant           "Quant"
     IDS_TRK_STEP            "Step"
     IDS_TRK_Swing           "Swing"
@@ -823,52 +857,61 @@ BEGIN
     ID_EDIT_DELETE          "Delete the selection\nDelete"
     ID_EDIT_INSERT          "Insert a new item\nInsert"
     ID_EDIT_RENAME          "Rename the selected item\nRename"
-    ID_FILE_EXPORT          "Export MIDI file\nExport"
+    ID_FILE_EXPORT          "Export to a MIDI file\nExport"
     ID_INDICATOR_SONG_POS   "000000000.000"
     ID_INDICATOR_SONG_TIME  "0000000:00:00"
     ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
-    ID_TOOLS_OPTIONS        "Edit options\nOptions"
+    ID_TOOLS_OPTIONS        "Edit the options\nOptions"
     ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
     ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for selected tracks to repeat\nTime to Repeat"
 END
 
 STRINGTABLE
 BEGIN
-    ID_TRACK_LENGTH         "Set length of one or more tracks\nLength"
-    ID_TRACK_MUTE           "Mute or unmute selected tracks\nMute"
-    ID_TRACK_PRESET_APPLY   "Apply selected preset to track mutes\nApply Preset"
-    ID_TRACK_PRESET_CREATE  "Create new preset from current track mutes\nCreate Preset"
-    ID_TRACK_PRESET_UPDATE  "Update selected preset from current mutes\nUpdate Preset"
-    ID_TRACK_REVERSE        "Reverse selected tracks or steps\nReverse"
-    ID_TRACK_ROTATE_LEFT    "Rotate selected tracks or steps left\nRotate Left"
-    ID_TRACK_ROTATE_RIGHT   "Rotate selected tracks or steps right\nRotate Right"
-    ID_TRACK_SHIFT_LEFT     "Shift selected tracks or steps left\nShift Left"
-    ID_TRACK_SHIFT_RIGHT    "Shift selected tracks or steps right\nShift Right"
-    ID_TRACK_SOLO           "Solo selected tracks\nSolo"
-    ID_TRACK_SORT           "Sort selected tracks\nTrack Sort"
+    ID_TRACK_GROUP          "Group the selected tracks into a part\nGroup"
+    ID_TRACK_LENGTH         "Set the length of one or more tracks\nLength"
+    ID_TRACK_MUTE           "Mute or unmute the selected tracks\nMute"
+    ID_TRACK_PART_CREATE    "Create new part from the selected tracks\nCreate Part"
+    ID_TRACK_PRESET_APPLY   "Apply the selected preset to the track mutes\nApply Preset"
+    ID_TRACK_PRESET_CREATE  "Create a new preset from the track mutes\nCreate Preset"
+    ID_TRACK_PRESET_UPDATE  "Update the selected preset from the track mutes\nUpdate Preset"
+    ID_TRACK_REVERSE        "Reverse the selected tracks or steps\nReverse"
+    ID_TRACK_ROTATE_LEFT    "Rotate the selected tracks or steps left\nRotate Left"
+    ID_TRACK_ROTATE_RIGHT   "Rotate the selected tracks or steps right\nRotate Right"
+    ID_TRACK_SHIFT_LEFT     "Shift the selected tracks or steps left\nShift Left"
+    ID_TRACK_SHIFT_RIGHT    "Shift the selected tracks or steps right\nShift Right"
+    ID_TRACK_SOLO           "Solo the selected tracks\nSolo"
+    ID_TRACK_SORT           "Sort the selected tracks\nTrack Sort"
     ID_TRACK_TIE_NOTES      "Toggle tie notes mode; if on, new notes are tied\nTie Notes"
-    ID_TRACK_TRANSPOSE      "Transpose selected tracks\nTranspose"
+    ID_TRACK_TRANSPOSE      "Transpose the selected tracks\nTranspose"
+END
+
+STRINGTABLE
+BEGIN
     ID_TRANSPORT_GO_TO_POSITION 
                             "Go to specified position within song\nGo To Position"
     ID_TRANSPORT_PAUSE      "Pause or continue playback\nPause"
-END
-
-STRINGTABLE
-BEGIN
     ID_TRANSPORT_PLAY       "Start or stop playback\nPlay"
     ID_TRANSPORT_RECORD     "Start or stop recording\nRecord"
     ID_TRANSPORT_REWIND     "Rewind to start of song\nRewind"
-    ID_VIEW_CHANNELS        "Show or hide channels bar\nChannels"
-    ID_VIEW_CUSTOMIZE       " "
 END
 
 STRINGTABLE
 BEGIN
-    ID_VIEW_PRESETS         "Show or hide presets bar\nPresets "
-    ID_VIEW_TYPE_SONG       "Show song view\nSong View"
-    ID_VIEW_TYPE_TRACK      "Show track view\nTrack View"
+    ID_VIEW_CHANNELS        "Show or hide the channels bar\nChannels"
+    ID_VIEW_CUSTOMIZE       " "
+    ID_VIEW_PRESETS         "Show or hide the presets bar\nPresets"
+    ID_VIEW_PROPERTIES      "Show or hide the properties bar\nProperties"
+    ID_VIEW_TYPE_SONG       "Show the song view\nSong View"
+    ID_VIEW_TYPE_TRACK      "Show the track view\nTrack View"
     ID_VIEW_VELOCITIES      "Show or hide velocities pane\nVelocities"
+    ID_VIEW_ZOOM_IN         "Zoom in\nZoom In"
+    ID_VIEW_ZOOM_OUT        "Zoom out\nZoom Out"
+    ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
+    ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "&Windows..."
+    ID_VIEW_TYPE_LIVE       "Show the live view\nLive View"
+    ID_VIEW_PARTS           "Show or hide the parts bar\nParts"
 END
 
 STRINGTABLE
@@ -898,7 +941,7 @@ END
 
 STRINGTABLE
 BEGIN
-    ID_APP_ABOUT            "Display program information, version number and copyright\nAbout"
+    ID_APP_ABOUT            "Display program information, version number and copyleft\nAbout"
     ID_APP_EXIT             "Quit the application; prompts to save documents\nExit"
 END
 

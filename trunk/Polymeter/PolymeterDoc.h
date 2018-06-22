@@ -56,11 +56,16 @@ public:
 		HINT_VIEW_TYPE,			// view type change
 		HINT_SONG_DUB,			// song dub edit; pHint is CRectSelPropHint
 		HINT_SOLO,				// track solo
+		HINT_PRESET_NAME,		// preset name edit; pHint is CPropHint
+		HINT_PRESET_ARRAY,		// preset array edit
+		HINT_PART_NAME,			// part name edit; pHint is CPropHint
+		HINT_PART_ARRAY,		// part array edit
 		HINTS
 	};
 	enum {	// view types
 		VIEW_TRACK,
 		VIEW_SONG,
+		VIEW_LIVE,
 		VIEW_TYPES
 	};
 
@@ -107,6 +112,7 @@ public:
 	CChannelArray	m_arrChannel;	// array of channels
 	CIntArrayEx	m_arrTrackSel;	// array of indices of selected tracks
 	CPresetArray	m_arrPreset;	// array of presets
+	CTrackGroupArray	m_arrPart;	// array of parts
 	int		m_iTrackSelMark;	// track selection mark
 	double	m_fStepZoom;		// step view zoom
 	double	m_fSongZoom;		// song view zoom
@@ -125,12 +131,10 @@ public:
 	void	SetPosition(int nPos);
 	bool	IsTrackView() const;
 	bool	IsSongView() const;
+	bool	IsLiveView() const;
 	bool	ShowGMDrums(int iTrack) const;
-	void	CreatePreset();
-	void	DeletePresets(const CIntArrayEx& arrSelection);
-	void	MovePresets(const CIntArrayEx& arrSelection, int iDropPos);
-	void	UpdatePreset(int iPreset);
 	void	SetPresetName(int iPreset, CString sName);
+	void	SetPartName(int iPart, CString sName);
 
 // Operations
 public:
@@ -181,6 +185,13 @@ public:
 	void	InsertDubs(const CRect& rSelection, double fTicksPerCell);
 	void	PasteDubs(CPoint ptPaste, double fTicksPerCell, CRect& rSelection);
 	void	ApplyPreset(int iPreset);
+	void	CreatePreset();
+	void	DeletePresets(const CIntArrayEx& arrSelection);
+	void	MovePresets(const CIntArrayEx& arrSelection, int iDropPos);
+	void	UpdatePreset(int iPreset);
+	void	CreatePart();
+	void	DeleteParts(const CIntArrayEx& arrSelection);
+	void	MoveParts(const CIntArrayEx& arrSelection, int iDropPos);
 
 // Overrides
 public:
@@ -207,12 +218,17 @@ protected:
 	public:
 		CPresetArray	m_arrPreset;	// array of presets
 	};
+	class CUndoGroups : public CRefObj {
+	public:
+		CTrackGroupArray	m_arrGroup;	// array of groups
+	};
 	class CUndoClipboard : public CRefObj {
 	public:
 		CTrackArray	m_arrTrack;		// array of tracks
 		CIntArrayEx	m_arrSelection;	// indices of selected tracks
 		int		m_nSelMark;			// selection mark
 		CRefPtr<CUndoAllPresets>	m_pPresets;	// optional pointer to presets undo state
+		CRefPtr<CUndoGroups>	m_pParts;	// optional pointer to parts undo state
 	};
 	class CUndoMultiItemProp : public CRefObj {
 	public:
@@ -267,6 +283,10 @@ protected:
 	public:
 		CIntArrayEx	m_arrSelection;	// indices of selected presets
 		CPresetArray	m_arrPreset;	// array of presets
+	};
+	class CUndoGroup : public CRefObj {
+	public:
+		CTrackGroupArray	m_arrGroup;	// array of groups
 	};
 	typedef CMap<UINT, UINT, int, int> CTrackIDMap;
 	class CTrackArrayEdit {
@@ -341,6 +361,10 @@ protected:
 	void	RestorePresetName(const CUndoState& State);
 	void	SavePresets(CUndoState& State) const;
 	void	RestorePresets(const CUndoState& State);
+	void	SavePartName(CUndoState& State) const;
+	void	RestorePartName(const CUndoState& State);
+	void	SaveParts(CUndoState& State) const;
+	void	RestoreParts(const CUndoState& State);
 
 // Generated message map functions
 protected:
@@ -359,10 +383,12 @@ protected:
 	afx_msg void OnUpdateTransportRecord(CCmdUI *pCmdUI);
 	afx_msg void OnTransportRewind();
 	afx_msg void OnTransportGoToPosition();
-	afx_msg void OnViewTypeSong();
 	afx_msg void OnViewTypeTrack();
+	afx_msg void OnViewTypeSong();
+	afx_msg void OnViewTypeLive();
 	afx_msg void OnUpdateViewTypeSong(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateViewTypeTrack(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateViewTypeLive(CCmdUI *pCmdUI);
 	afx_msg void OnEditCopy();
 	afx_msg void OnEditCut();
 	afx_msg void OnEditDelete();
@@ -395,6 +421,8 @@ protected:
 	afx_msg void OnUpdateTrackPresetApply(CCmdUI *pCmdUI);
 	afx_msg void OnTrackPresetUpdate();
 	afx_msg void OnUpdateTrackPresetUpdate(CCmdUI *pCmdUI);
+	afx_msg void OnTrackGroup();
+	afx_msg void OnUpdateTrackGroup(CCmdUI *pCmdUI);
 };
 
 inline int CPolymeterDoc::GetTrackCount() const
@@ -426,4 +454,9 @@ inline bool CPolymeterDoc::IsTrackView() const
 inline bool CPolymeterDoc::IsSongView() const
 {
 	return m_nViewType == VIEW_SONG;
+}
+
+inline bool CPolymeterDoc::IsLiveView() const
+{
+	return m_nViewType == VIEW_LIVE;
 }

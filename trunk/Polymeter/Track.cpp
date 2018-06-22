@@ -14,6 +14,8 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "Track.h"
+#include "RegTempl.h"
+#include "Persist.h"
 
 const CProperties::OPTION_INFO CTrackBase::m_oiTrackType[TRACK_TYPES] = {
 	#define TRACKTYPEDEF(name) {_T(#name), IDS_TRACK_TYPE_##name},
@@ -213,4 +215,89 @@ void CTrackBase::CDubArray::Dump() const
 	printf("%d dubs\n", nDubs);
 	for (int iDub = 0; iDub < nDubs; iDub++)
 		printf("%d: %d %d\n", iDub, GetAt(iDub).m_nTime, GetAt(iDub).m_bMute);
+}
+
+void CTrackGroupArray::OnTrackArrayEdit(const CIntArrayEx& arrTrackMap)
+{
+	int	nGroups = GetSize();
+	for (int iGroup = 0; iGroup < nGroups; iGroup++) {	// for each of our groups
+		CTrackGroup&	group = GetAt(iGroup);
+		int	nLinks = group.m_arrTrackIdx.GetSize();
+		for (int iLink = nLinks - 1; iLink >= 0; iLink--) {	// reverse iterate for deletion stability
+			int	iTrack = group.m_arrTrackIdx[iLink];
+			if (arrTrackMap[iTrack] >= 0)
+				group.m_arrTrackIdx[iLink] = arrTrackMap[iTrack];
+			else
+				group.m_arrTrackIdx.RemoveAt(iLink);
+		}
+	}
+}
+
+#define RK_GROUP_COUNT _T("Count")
+#define RK_GROUP_NAME _T("Name")
+#define RK_GROUP_TRACK_COUNT _T("Tracks")
+#define RK_GROUP_TRACK_IDX _T("TrackIdx")
+
+void CTrackGroupArray::Read(LPCTSTR pszSection)
+{
+	int	nGroups = 0;
+	RdReg(pszSection, RK_GROUP_COUNT, nGroups);
+	SetSize(nGroups);
+	CString	sKey;
+	for (int iGroup = 0; iGroup < nGroups; iGroup++) {
+		CTrackGroup& Group = GetAt(iGroup);
+		sKey.Format(_T("%s\\%d"), pszSection, iGroup);
+		RdReg(sKey, RK_GROUP_NAME, Group.m_sName);
+		int	nTracks;
+		RdReg(sKey, RK_GROUP_TRACK_COUNT, nTracks);
+		Group.m_arrTrackIdx.SetSize(nTracks);
+		DWORD	nTrackIdxSize = nTracks * sizeof(int);
+		CPersist::GetBinary(sKey, RK_GROUP_TRACK_IDX, Group.m_arrTrackIdx.GetData(), &nTrackIdxSize);
+	}
+}
+
+void CTrackGroupArray::Write(LPCTSTR pszSection) const
+{
+	int	nGroups = GetSize();
+	WrReg(pszSection, RK_GROUP_COUNT, nGroups);
+	CString	sKey;
+	for (int iGroup = 0; iGroup < nGroups; iGroup++) {
+		const CTrackGroup& Group = GetAt(iGroup);
+		sKey.Format(_T("%s\\%d"), pszSection, iGroup);
+		WrReg(sKey, RK_GROUP_NAME, Group.m_sName);
+		int	nTracks = Group.m_arrTrackIdx.GetSize();
+		WrReg(sKey, RK_GROUP_TRACK_COUNT, nTracks);
+		CPersist::WriteBinary(sKey, RK_GROUP_TRACK_IDX, Group.m_arrTrackIdx.GetData(), nTracks * sizeof(int));
+	}
+}
+
+void CTrackGroupArray::Dump() const
+{
+	int	nGroups = GetSize();
+	printf("nGroups=%d\n", nGroups);
+	for (int iGroup = 0; iGroup < nGroups; iGroup++) {
+		const CTrackGroup&	group = GetAt(iGroup);
+		_tprintf(_T("%d '%s':"), iGroup, group.m_sName);
+		int	nLinks = group.m_arrTrackIdx.GetSize();
+		printf(" %d [", nLinks);
+		for (int iLink = 0; iLink < nLinks; iLink++) {
+			printf(" %d", group.m_arrTrackIdx[iLink]); 
+		}
+		printf(" ]\n");
+	}
+}
+
+void CTrackGroupArray::GetTrackRefs(CIntArrayEx& arrTrackIdx) const
+{
+	int	nTracks = arrTrackIdx.GetSize();
+	arrTrackIdx.SetSize(nTracks);
+	memset(arrTrackIdx.GetData(), 0xff, nTracks * sizeof(int));	// init track indices to -1
+	int	nGroups = GetSize();
+	for (int iGroup = 0; iGroup < nGroups; iGroup++) {	// for each group
+		int	nMbrs = GetAt(iGroup).m_arrTrackIdx.GetSize();
+		for (int iMbr = 0; iMbr < nMbrs; iMbr++) {	// for each of group's members
+			int	iTrack = GetAt(iGroup).m_arrTrackIdx[iMbr];
+			arrTrackIdx[iTrack] = iGroup;
+		}
+	}
 }
