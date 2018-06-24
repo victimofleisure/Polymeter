@@ -247,6 +247,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 	#include "MasterPropsDef.h"	// generate code to read master properties
 	m_Seq.SetTempo(m_fTempo);
 	m_Seq.SetTimeDivision(CMasterProps::GetTimeDivisionTicks(m_nTimeDiv));
+	m_Seq.SetMeter(m_nMeter);
 	int	nTracks = 0;
 	RdReg(RK_TRACK_COUNT, nTracks);
 	ASSERT(!GetTrackCount());	// track array should be empty for proper initialization

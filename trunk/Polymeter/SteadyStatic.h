@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      01jun14	initial version
+        01      23jun18	derive from CWnd instead of CStatic so device context clips
 		
 		flicker-free static control suitable for rapid updates
  
@@ -25,7 +26,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // CSteadyStatic window
 
-class CSteadyStatic : public CStatic
+class CSteadyStatic : public CWnd
 {
 	DECLARE_DYNAMIC(CSteadyStatic);
 // Construction

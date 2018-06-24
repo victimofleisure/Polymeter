@@ -337,7 +337,7 @@ int CLiveView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	static const DWORD	arrListStyle[LISTS] = {dwListStyle | LVS_SINGLESEL, dwListStyle};
 	LOGFONT	lfList = {FONT_HEIGHT};
 	m_fontList.CreateFontIndirect(&lfList);
-	LOGFONT	lfTime = {FONT_HEIGHT, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 0, FIXED_PITCH | FF_SWISS};
+	LOGFONT	lfTime = {FONT_HEIGHT, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 0, FIXED_PITCH | FF_MODERN};
 	m_fontTime.CreateFontIndirect(&lfTime);
 	for (int iList = 0; iList < LISTS; iList++) {	// for each list
 		CLiveListCtrl&	list = m_list[iList];
@@ -353,7 +353,7 @@ int CLiveView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		list.SetFont(&m_fontList);
 	}
 	DWORD	dwStaticStyle = WS_CHILD | WS_VISIBLE | SS_RIGHT | SS_CENTERIMAGE;
-	if (!m_wndSongPos.Create(_T(""), dwStaticStyle, CRect(0, 0, 0, 0), this, IDC_SONG_POS))
+	if (!m_wndSongPos.Create(NULL, _T(""), dwStaticStyle, CRect(0, 0, 0, 0), this, IDC_SONG_POS))
 		return -1;
 	m_wndSongPos.SetFont(&m_fontTime);
 	return 0;
@@ -366,7 +366,9 @@ void CLiveView::OnSize(UINT nType, int cx, int cy)
 		CLiveListCtrl&	list = m_list[iList];
 		list.MoveWindow((LIST_WIDTH + LIST_GUTTER) * iList, 0, LIST_WIDTH, cy);
 	}
-	CRect	rSongPos(CPoint((LIST_WIDTH + LIST_GUTTER) * LISTS, 0), CSize(LIST_WIDTH, 36));
+	CRect	rHdr;
+	m_list[0].GetHeaderCtrl()->GetWindowRect(rHdr);
+	CRect	rSongPos(CPoint((LIST_WIDTH + LIST_GUTTER) * LISTS, 0), CSize(LIST_WIDTH, rHdr.Height()));
 	m_wndSongPos.MoveWindow(rSongPos);
 }
 

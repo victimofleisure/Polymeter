@@ -30,7 +30,7 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CSteadyStatic
 
-IMPLEMENT_DYNAMIC(CSteadyStatic, CStatic);
+IMPLEMENT_DYNAMIC(CSteadyStatic, CWnd);
 
 CSteadyStatic::CSteadyStatic()
 {
@@ -55,7 +55,7 @@ void CSteadyStatic::SetWindowText(CString sText)
 	UpdateWindow();	// don't defer update
 }
 
-BEGIN_MESSAGE_MAP(CSteadyStatic, CStatic)
+BEGIN_MESSAGE_MAP(CSteadyStatic, CWnd)
 	//{{AFX_MSG_MAP(CSteadyStatic)
 	ON_WM_PAINT()
 	ON_WM_ERASEBKGND()
@@ -73,9 +73,6 @@ void CSteadyStatic::OnPaint()
 	HGDIOBJ	hPrevFont = dc.SelectObject(m_Font);	// select our font
 	CRect	rClient;
 	GetClientRect(rClient);
-	CRgn	rgn;
-	rgn.CreateRectRgnIndirect(rClient);
-	dc.SelectClipRgn(&rgn);	// set clipping region to client rectangle
 	DWORD	dwStyle = GetStyle();
 	CPoint	pt;
 	CSize	szText = dc.GetTextExtent(m_sText);	// measure text
