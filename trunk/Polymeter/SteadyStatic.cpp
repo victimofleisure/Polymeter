@@ -50,11 +50,9 @@ void CSteadyStatic::SetWindowText(LPCTSTR lpszString)
 
 void CSteadyStatic::SetWindowText(CString sText)
 {
-	BENCH_START
 	m_sText = sText;
 	Invalidate();
 	UpdateWindow();	// don't defer update
-	BENCH_STOP
 }
 
 BEGIN_MESSAGE_MAP(CSteadyStatic, CStatic)
@@ -72,14 +70,15 @@ END_MESSAGE_MAP()
 void CSteadyStatic::OnPaint() 
 {
 	CPaintDC dc(this); // device context for painting
-	COLORREF	cBkgnd = GetSysColor(COLOR_3DFACE);
 	HGDIOBJ	hPrevFont = dc.SelectObject(m_Font);	// select our font
 	CRect	rClient;
 	GetClientRect(rClient);
-	dc.SetBkColor(cBkgnd);	// set background color
+	CRgn	rgn;
+	rgn.CreateRectRgnIndirect(rClient);
+	dc.SelectClipRgn(&rgn);	// set clipping region to client rectangle
 	DWORD	dwStyle = GetStyle();
 	CPoint	pt;
-	CSize	szText = dc.GetTextExtent(m_sText);
+	CSize	szText = dc.GetTextExtent(m_sText);	// measure text
 	if (dwStyle & SS_RIGHT)
 		pt.x = rClient.Width() - szText.cx;
 	else if (dwStyle & SS_CENTER)
@@ -90,11 +89,9 @@ void CSteadyStatic::OnPaint()
 		pt.y = (rClient.Height() - szText.cy) / 2;
 	else
 		pt.y = 0;
+	dc.TextOut(pt.x, pt.y, m_sText);	// draw text
 	CRect	rText(pt, szText);
-	rText.IntersectRect(rText, rClient);	// clip text rectangle to client rectangle
-	UINT	nFormat = DT_NOPREFIX;
-	dc.DrawText(m_sText, rText, nFormat);	// draw clipped text
-	dc.ExcludeClipRect(rText);
+	dc.ExcludeClipRect(rText);	// exclude text from clipping region
 	dc.FillSolidRect(rClient, dc.GetBkColor());	// fill rest of window with background color
 	dc.SelectObject(hPrevFont);	// restore previous font
 }
