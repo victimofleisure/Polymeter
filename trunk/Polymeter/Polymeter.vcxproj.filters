@@ -342,6 +342,9 @@
     <ClInclude Include="LiveListCtrl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SteadyStatic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Polymeter.cpp">
@@ -567,6 +570,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="LiveListCtrl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SteadyStatic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

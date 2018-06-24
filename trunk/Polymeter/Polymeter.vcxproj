@@ -252,6 +252,7 @@
     <ClInclude Include="SongTrackView.h" />
     <ClInclude Include="SongView.h" />
     <ClInclude Include="SplitView.h" />
+    <ClInclude Include="SteadyStatic.h" />
     <ClInclude Include="StepParent.h" />
     <ClInclude Include="StepView.h" />
     <ClInclude Include="PopupCombo.h" />
@@ -348,6 +349,7 @@
     <ClCompile Include="SongTrackView.cpp" />
     <ClCompile Include="SongView.cpp" />
     <ClCompile Include="SplitView.cpp" />
+    <ClCompile Include="SteadyStatic.cpp" />
     <ClCompile Include="StepParent.cpp" />
     <ClCompile Include="StepView.cpp" />
     <ClCompile Include="PopupCombo.cpp" />

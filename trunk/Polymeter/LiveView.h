@@ -17,6 +17,7 @@
 #pragma once
 
 #include "LiveListCtrl.h"
+#include "SteadyStatic.h"
 
 class CLiveView : public CView
 {
@@ -83,7 +84,7 @@ protected:
 	CFont	m_fontList;				// list font
 	CFont	m_fontTime;				// time font
 	int		m_iPreset;				// index of current preset, or -1 if none
-	CStatic	m_wndSongPos;			// song position static control
+	CSteadyStatic	m_wndSongPos;	// song position static control
 
 // Helpers
 

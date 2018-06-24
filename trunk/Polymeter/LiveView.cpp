@@ -366,7 +366,7 @@ void CLiveView::OnSize(UINT nType, int cx, int cy)
 		CLiveListCtrl&	list = m_list[iList];
 		list.MoveWindow((LIST_WIDTH + LIST_GUTTER) * iList, 0, LIST_WIDTH, cy);
 	}
-	CRect	rSongPos(CPoint((LIST_WIDTH + LIST_GUTTER) * LISTS, 0), CSize(200, 36));
+	CRect	rSongPos(CPoint((LIST_WIDTH + LIST_GUTTER) * LISTS, 0), CSize(LIST_WIDTH, 36));
 	m_wndSongPos.MoveWindow(rSongPos);
 }
 
