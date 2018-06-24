@@ -69,8 +69,6 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	if (pDoc->IsLiveView()) {
 		switch (lHint) {
 		case CPolymeterDoc::HINT_TRACK_ARRAY:
-			PostMessage(UWM_DEFERRED_UPDATE);	// handle after OnTrackArrayEdit runs
-			break;
 		case CPolymeterDoc::HINT_PART_ARRAY:
 			Update();
 			break;
@@ -89,6 +87,12 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				int	iItem = FindPart(pPropHint->m_iItem);
 				if (iItem >= 0)
 					m_list[LIST_PARTS].RedrawItem(iItem);
+			}
+			break;
+		case CPolymeterDoc::HINT_SONG_POS:
+			{
+				CMainFrame	*pMain = theApp.GetMainFrame();
+				m_wndSongPos.SetWindowText(pMain->GetSongPositionString());
 			}
 			break;
 		}
@@ -252,6 +256,36 @@ void CLiveView::DeselectAll()
 	}
 }
 
+void CLiveView::SoloSelectedParts()
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	int	nTracks = pDoc->GetTrackCount();
+	CByteArrayEx	arrMute;
+	arrMute.SetSize(nTracks);
+	memset(arrMute.GetData(), true, nTracks);	// init mutes to true
+	CIntArrayEx	arrSelection;
+	m_list[LIST_PARTS].GetSelection(arrSelection);
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected part
+		int	iPart = m_arrPart[arrSelection[iSel]];
+		if (iPart & PART_GROUP_MASK) {	// if part is a group
+			const CTrackGroup&	part = pDoc->m_arrPart[iPart & ~PART_GROUP_MASK];
+			int	nMbrs = part.m_arrTrackIdx.GetSize();
+			for (int iMbr = 0; iMbr < nMbrs; iMbr++) {	// for each part member
+				int	iTrack = part.m_arrTrackIdx[iMbr];	// get member's track index
+				arrMute[iTrack] = false;
+			}
+		} else {	// part isn't a group; part index is track index
+			arrMute[iPart] = false;
+		}
+	}
+	pDoc->m_Seq.SetMutes(arrMute);
+	if (pDoc->m_Seq.IsRecording())	// if recording
+		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
+	m_list[LIST_PARTS].Deselect();
+	m_list[LIST_PARTS].Invalidate();
+}
+
 BOOL CLiveView::PreTranslateMessage(MSG* pMsg)
 {
 	if (pMsg->message >= WM_KEYFIRST && pMsg->message <= WM_KEYLAST) {
@@ -274,11 +308,14 @@ void CLiveView::OnDraw(CDC* pDC)
 BEGIN_MESSAGE_MAP(CLiveView, CView)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
-	ON_MESSAGE(UWM_DEFERRED_UPDATE, OnDeferredUpdate)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_RBUTTONDOWN()
 	ON_NOTIFY_RANGE(LVN_GETDISPINFO, IDC_LIST_FIRST, IDC_LIST_LAST, OnListGetdispinfo)
 	ON_NOTIFY_RANGE(CLiveListCtrl::ULVN_LBUTTONDOWN, IDC_LIST_FIRST, IDC_LIST_LAST, OnListLButtonDown)
+	ON_COMMAND(ID_TRACK_MUTE, OnTrackMute)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_MUTE, OnUpdateTrackMute)
+	ON_COMMAND(ID_TRACK_SOLO, OnTrackSolo)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_SOLO, OnUpdateTrackMute)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditDisable)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditDisable)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDisable)
@@ -294,12 +331,14 @@ int CLiveView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CView::OnCreate(lpCreateStruct) == -1)
 		return -1;
-	static const int arrListNameID[LISTS] = {IDS_PRESETS_BAR, IDS_PARTS_BAR};
+	static const int arrListNameID[LISTS] = {IDS_BAR_PRESETS, IDS_BAR_PARTS};
 	DWORD	dwListStyle = WS_CHILD | WS_VISIBLE 
 		| LVS_REPORT | LVS_OWNERDATA | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER;
 	static const DWORD	arrListStyle[LISTS] = {dwListStyle | LVS_SINGLESEL, dwListStyle};
-	LOGFONT	lf = {FONT_HEIGHT};
-	m_font.CreateFontIndirect(&lf);
+	LOGFONT	lfList = {FONT_HEIGHT};
+	m_fontList.CreateFontIndirect(&lfList);
+	LOGFONT	lfTime = {FONT_HEIGHT, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 0, FIXED_PITCH | FF_SWISS};
+	m_fontTime.CreateFontIndirect(&lfTime);
 	for (int iList = 0; iList < LISTS; iList++) {	// for each list
 		CLiveListCtrl&	list = m_list[iList];
 		DWORD	dwStyle = arrListStyle[iList];
@@ -311,8 +350,12 @@ int CLiveView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		list.SetExtendedStyle(dwListExStyle);
 		list.InsertColumn(0, LDS(arrListNameID[iList]), LVCFMT_LEFT, LIST_WIDTH);
 		list.SetBkColor(0);
-		list.SetFont(&m_font);
+		list.SetFont(&m_fontList);
 	}
+	DWORD	dwStaticStyle = WS_CHILD | WS_VISIBLE | SS_RIGHT | SS_CENTERIMAGE;
+	if (!m_wndSongPos.Create(_T(""), dwStaticStyle, CRect(0, 0, 0, 0), this, IDC_SONG_POS))
+		return -1;
+	m_wndSongPos.SetFont(&m_fontTime);
 	return 0;
 }
 
@@ -323,14 +366,8 @@ void CLiveView::OnSize(UINT nType, int cx, int cy)
 		CLiveListCtrl&	list = m_list[iList];
 		list.MoveWindow((LIST_WIDTH + LIST_GUTTER) * iList, 0, LIST_WIDTH, cy);
 	}
-}
-
-LRESULT CLiveView::OnDeferredUpdate(WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
-	Update();
-	return 0;
+	CRect	rSongPos(CPoint((LIST_WIDTH + LIST_GUTTER) * LISTS, 0), CSize(200, 36));
+	m_wndSongPos.MoveWindow(rSongPos);
 }
 
 void CLiveView::OnLButtonDown(UINT nFlags, CPoint point)
@@ -437,3 +474,17 @@ void CLiveView::OnUpdateEditDisable(CCmdUI *pCmdUI)
 	pCmdUI->Enable(false);
 }
 
+void CLiveView::OnTrackMute()
+{
+	ToggleSelectedMutes();
+}
+
+void CLiveView::OnUpdateTrackMute(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_list[LIST_PARTS].GetSelectedCount());
+}
+
+void CLiveView::OnTrackSolo()
+{
+	SoloSelectedParts();
+}

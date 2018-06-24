@@ -27,6 +27,7 @@ CSequencer::CSequencer()
 	m_fTempo = 120;
 	m_iOutputDevice = 0;
 	m_nTimeDiv = 120;
+	m_nMeter = 1;
 	m_nCBTime = 0;
 	m_nCBLen = 0;
 	m_nLatency = 50;
@@ -627,7 +628,7 @@ bool CSequencer::OutputLiveEvent(DWORD dwEvent)
 	return m_qLiveEvent.Push(dwEvent);	// fails if queue is full
 }
 
-void CSequencer::ConvertPositionToBeat(LONGLONG nPos, LONGLONG& nBeat, LONGLONG& nTick) const
+void CSequencer::ConvertPositionToBeat(LONGLONG nPos, LONGLONG& nMeasure, LONGLONG& nBeat, LONGLONG& nTick) const
 {
 	nBeat = nPos / m_nTimeDiv;
 	nTick = nPos % m_nTimeDiv;
@@ -635,26 +636,80 @@ void CSequencer::ConvertPositionToBeat(LONGLONG nPos, LONGLONG& nBeat, LONGLONG&
 		nBeat--;	// compensate beat
 		nTick += m_nTimeDiv;	// wrap tick to make it positive
 	}
+	if (m_nMeter > 1) {	// if valid meter
+		nMeasure = nBeat / m_nMeter;
+		nBeat = nBeat % m_nMeter;
+	} else	// measure doesn't apply
+		nMeasure = -1;
 }
 
-void CSequencer::ConvertBeatToPosition(LONGLONG nBeat, LONGLONG nTick, LONGLONG& nPos) const
+void CSequencer::ConvertBeatToPosition(LONGLONG nMeasure, LONGLONG nBeat, LONGLONG nTick, LONGLONG& nPos) const
 {
-	nPos = nBeat * m_nTimeDiv + nTick;
+	if (m_nMeter > 1)	// if valid meter
+		nPos = (nMeasure * m_nMeter + nBeat) * m_nTimeDiv + nTick;
+	else	// measure doesn't apply
+		nPos = nBeat * m_nTimeDiv + nTick;
 }
 
 void CSequencer::ConvertPositionToString(LONGLONG nPos, CString& sPos) const
 {
-	LONGLONG	nBeat, nTick;
-	ConvertPositionToBeat(nPos, nBeat, nTick);
-	sPos.Format(_T("%lld:%03lld"), nBeat + 1, nTick);	// convert beat from zero-origin to one-origin
+	LONGLONG	nMeasure, nBeat, nTick;
+	ConvertPositionToBeat(nPos, nMeasure, nBeat, nTick);
+	// convert measure and beat from zero-origin to one-origin
+	if (nMeasure >= 0)	// if valid meter
+		sPos.Format(_T("%lld:%lld:%03lld"), nMeasure + 1, nBeat + 1, nTick);
+	else	// measure doesn't apply
+		sPos.Format(_T("%lld:%03lld"), nBeat + 1, nTick);
 }
 
 bool CSequencer::ConvertStringToPosition(const CString& sPosition, LONGLONG& nPos) const
 {
-	LONGLONG	nBeat, nTick = 0;	// tick is optional, so initialize it
-	if (_stscanf_s(sPosition, _T("%lld:%lld"), &nBeat, &nTick) < 1)	// if no fields converted
-		return false;
-	ConvertBeatToPosition(nBeat - 1, nTick, nPos);	// convert beat from one-origin to zero-origin
+	LONGLONG	nFld[3];
+	int	nFields = _stscanf_s(sPosition, _T("%lld:%lld:%lld"), &nFld[0], &nFld[1], &nFld[2]);
+	LONGLONG	nMeasure, nBeat, nTick;
+	if (m_nMeter > 1) {	// if valid meter
+		switch (nFields) {
+		case 1:	// one field converted
+			nMeasure = nFld[0];	// format is measure
+			nBeat = 1;
+			nTick = 0;
+			break;
+		case 2:	// two fields converted
+			nMeasure = nFld[0];	// format is measure:beat
+			nBeat = nFld[1];
+			nTick = 0;
+			break;
+		case 3:	// three fields converted
+			nMeasure = nFld[0];	// format is measure:beat:tick
+			nBeat = nFld[1];
+			nTick = nFld[2];
+			break;
+		default:
+			return false;	// no fields converted
+		}
+	} else {	// invalid meter
+		switch (nFields) {
+		case 1:	// one field converted
+			nMeasure = 1;
+			nBeat = nFld[0];	// format is beat
+			nTick = 0;
+			break;
+		case 2:	// two fields converted
+			nMeasure = 1;
+			nBeat = nFld[0];	// format is beat:tick
+			nTick = nFld[1];
+			break;
+		case 3:	// three fields converted
+			nMeasure = 1;	// could return error, but presume 4/4 instead
+			nBeat = nFld[0] * 4 + nFld[1];	// format is measure:beat:tick
+			nTick = nFld[2];
+			break;
+		default:
+			return false;	// no fields converted
+		}
+	}
+	// convert measure and beat from one-origin to zero-origin
+	ConvertBeatToPosition(nMeasure - 1, nBeat - 1, nTick, nPos);
 	return true;
 }
 

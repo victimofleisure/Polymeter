@@ -49,6 +49,8 @@ public:
 	CChannelsBar&	GetChannelsBar();
 	CPresetsBar&	GetPresetsBar();
 	CPartsBar&	GetPartsBar();
+	CString	GetSongPositionString() const;
+	CString	GetSongTimeString() const;
 
 // Operations
 public:
@@ -161,4 +163,14 @@ inline CPresetsBar& CMainFrame::GetPresetsBar()
 inline CPartsBar& CMainFrame::GetPartsBar()
 {
 	return m_wndPartsBar;
+}
+
+inline CString CMainFrame::GetSongPositionString() const
+{
+	return m_sSongPos;
+}
+
+inline CString CMainFrame::GetSongTimeString() const
+{
+	return m_sSongTime;
 }

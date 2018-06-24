@@ -354,7 +354,6 @@ int CPolymeterDoc::GetInsertPos() const
 
 void CPolymeterDoc::DeleteTracks(bool bCopyToClipboard)
 {
-	CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 	int	nUndoCode;
 	if (bCopyToClipboard)
 		nUndoCode = UCODE_CUT_TRACKS;
@@ -363,7 +362,10 @@ void CPolymeterDoc::DeleteTracks(bool bCopyToClipboard)
 	NotifyUndoableEdit(0, nUndoCode);
 	if (bCopyToClipboard)
 		m_Seq.GetTracks(m_arrTrackSel, theApp.m_arrTrackClipboard);
-	m_Seq.DeleteTracks(m_arrTrackSel);
+	{
+		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
+		m_Seq.DeleteTracks(m_arrTrackSel);
+	}	// dtor ends transaction
 	Deselect(false);	// don't update views
 	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	SetModifiedFlag();
@@ -377,7 +379,6 @@ void CPolymeterDoc::Drop(int iDropPos)
 	// if multiple selection, or single selection and track is actually moving
 	if (nSels == 1 && (iDropPos == m_iTrackSelMark || iDropPos == m_iTrackSelMark + 1))
 		return;	// nothing to do
-	CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 	int	nSelsBelowDrop = 0;
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		if (arrSelection[iSel] < iDropPos)	// if track's index is below drop position
@@ -387,8 +388,11 @@ void CPolymeterDoc::Drop(int iDropPos)
 	NotifyUndoableEdit(iDropPos, UCODE_MOVE_TRACKS);
 	CTrackArray	arrTrack;
 	m_Seq.GetTracks(arrSelection, arrTrack);
-	m_Seq.DeleteTracks(arrSelection);
-	m_Seq.InsertTracks(iDropPos, arrTrack, true);	// keep IDs
+	{
+		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
+		m_Seq.DeleteTracks(arrSelection);
+		m_Seq.InsertTracks(iDropPos, arrTrack, true);	// keep IDs
+	}	// dtor ends transaction
 	SelectRange(iDropPos, nSels, false);	// don't update views
 	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	SetModifiedFlag();
@@ -396,7 +400,6 @@ void CPolymeterDoc::Drop(int iDropPos)
 
 void CPolymeterDoc::SortTracks(const CIntArrayEx& arrSortLevel)
 {
-	CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 	CIntArrayEx	arrSelection;
 	if (GetSelectedCount()) {	// if selection exists
 		arrSelection = m_arrTrackSel;	// sort selection
@@ -414,7 +417,10 @@ void CPolymeterDoc::SortTracks(const CIntArrayEx& arrSortLevel)
 	m_parrSelection = NULL;	// reset selection pointer
 	CTrackArray	arrTrack;
 	m_Seq.GetTracks(arrSorted, arrTrack);
-	m_Seq.SetTracks(arrSelection, arrTrack);
+	{
+		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
+		m_Seq.SetTracks(arrSelection, arrTrack);
+	}	// dtor ends transaction
 	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	SetModifiedFlag();
 }
@@ -1006,6 +1012,9 @@ void CPolymeterDoc::RestoreMasterProperty(const CUndoState& State)
 	case CMasterProps::PROP_fTempo:
 		m_Seq.SetTempo(m_fTempo);
 		break;
+	case CMasterProps::PROP_nMeter:
+		m_Seq.SetMeter(m_nMeter);
+		break;
 	case CMasterProps::PROP_nTimeDiv:
 		// convert time division preset index to time division value in ticks
 		m_Seq.SetTimeDivision(GetTimeDivisionTicks(m_nTimeDiv));
@@ -1162,16 +1171,18 @@ void CPolymeterDoc::SaveTrackSort(CUndoState& State) const
 
 void CPolymeterDoc::RestoreTrackSort(const CUndoState& State)
 {
-	CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 	const CUndoTrackSort	*pInfo = static_cast<CUndoTrackSort*>(State.GetObj());
 	CTrackArray	arrTrack;
-	if (IsUndoing()) {	// if undoing
-		m_Seq.GetTracks(pInfo->m_arrSelection, arrTrack);
-		m_Seq.SetTracks(pInfo->m_arrSorted, arrTrack);
-	} else {	// redoing
-		m_Seq.GetTracks(pInfo->m_arrSorted, arrTrack);
-		m_Seq.SetTracks(pInfo->m_arrSelection, arrTrack);
-	}
+	{
+		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
+		if (IsUndoing()) {	// if undoing
+			m_Seq.GetTracks(pInfo->m_arrSelection, arrTrack);
+			m_Seq.SetTracks(pInfo->m_arrSorted, arrTrack);
+		} else {	// redoing
+			m_Seq.GetTracks(pInfo->m_arrSorted, arrTrack);
+			m_Seq.SetTracks(pInfo->m_arrSelection, arrTrack);
+		}
+	}	// dtor ends transaction
 	int	nSels;
 	State.GetVal(nSels);
 	if (nSels)	// if selection exists
@@ -1949,14 +1960,14 @@ void CPolymeterDoc::PasteDubs(CPoint ptPaste, double fTicksPerCell, CRect& rSele
 	InsertDubs(theApp.m_arrSongClipboard, ptPaste, fTicksPerCell, rSelection);
 }
 
-CPolymeterDoc::CTrackArrayEdit::CTrackArrayEdit(CPolymeterDoc *pDoc)
+inline CPolymeterDoc::CTrackArrayEdit::CTrackArrayEdit(CPolymeterDoc *pDoc)
 {
 	ASSERT(pDoc != NULL);
 	m_pDoc = pDoc;
 	pDoc->GetTrackIDMap(m_mapTrackID);
 }
 
-CPolymeterDoc::CTrackArrayEdit::~CTrackArrayEdit()
+inline CPolymeterDoc::CTrackArrayEdit::~CTrackArrayEdit()
 {
 	ASSERT(m_pDoc != NULL);
 	m_pDoc->OnTrackArrayEdit(m_mapTrackID);
@@ -2052,6 +2063,9 @@ void CPolymeterDoc::SetPresetName(int iPreset, CString sName)
 
 void CPolymeterDoc::CreatePart()
 {
+	ASSERT(GetSelectedCount());	// selection must exist
+	if (!GetSelectedCount())
+		return;
 	CIntArrayEx	arrTrackIdx;
 	arrTrackIdx.SetSize(GetTrackCount());
 	m_arrPart.GetTrackRefs(arrTrackIdx);
@@ -2065,7 +2079,9 @@ void CPolymeterDoc::CreatePart()
 	}
 	NotifyUndoableEdit(0, UCODE_CREATE_PART);
 	CTrackGroup	part;
-	part.m_sName.Format(_T("Part-%d"), GetTickCount());
+	part.m_sName = m_Seq.GetName(m_arrTrackSel[0]);	// name part after its first track
+	if (part.m_sName.IsEmpty())	// if name is empty
+		part.m_sName.Format(_T("Part-%d"), GetTickCount());	// generate name
 	part.m_arrTrackIdx = m_arrTrackSel;
 	int	iPreset = INT64TO32(m_arrPart.Add(part));
 	SetModifiedFlag();
@@ -2326,9 +2342,11 @@ void CPolymeterDoc::OnEditPaste()
 	if (!CFocusEdit::Paste()) {
 		if (m_Seq.GetTrackCount() + theApp.m_arrTrackClipboard.GetSize() > MAX_TRACKS)
 			AfxThrowNotSupportedException();
-		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 		int	iInsPos = GetInsertPos();
-		m_Seq.InsertTracks(iInsPos, theApp.m_arrTrackClipboard);
+		{
+			CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
+			m_Seq.InsertTracks(iInsPos, theApp.m_arrTrackClipboard);
+		}	// dtor ends transaction
 		SetModifiedFlag();
 		SelectRange(iInsPos, theApp.m_arrTrackClipboard.GetSize(), false);	// don't update views
 		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
@@ -2361,9 +2379,11 @@ void CPolymeterDoc::OnEditInsert()
 {
 	if (m_Seq.GetTrackCount() >= MAX_TRACKS)
 		AfxThrowNotSupportedException();
-	CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 	int	iInsPos = GetInsertPos();
-	m_Seq.InsertTracks(iInsPos);
+	{
+		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
+		m_Seq.InsertTracks(iInsPos);
+	}	// dtor ends transaction
 	SetModifiedFlag();
 	SelectOnly(iInsPos, false);	// don't update views
 	UpdateAllViews(NULL, HINT_TRACK_ARRAY);

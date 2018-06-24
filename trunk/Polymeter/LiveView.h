@@ -46,6 +46,7 @@ public:
 	void	ApplySelectedPreset();
 	void	DeselectAll();
 	int		FindPart(int iPart) const;
+	void	SoloSelectedParts();
 
 // Overrides
 public:
@@ -70,6 +71,7 @@ protected:
 		PART_GROUP_MASK = 0x80000000,
 		IDC_LIST_FIRST = 1980,
 		IDC_LIST_LAST = IDC_LIST_FIRST + LISTS - 1,
+		IDC_SONG_POS = 2000,
 		LIST_WIDTH = 300,
 		LIST_GUTTER = 2,
 		FONT_HEIGHT = 30,
@@ -78,8 +80,10 @@ protected:
 // Member data
 	CLiveListCtrl	m_list[LISTS];	// array of list controls
 	CIntArrayEx	m_arrPart;			// array of part or track indices, one per track
-	CFont	m_font;					// custom font
+	CFont	m_fontList;				// list font
+	CFont	m_fontTime;				// time font
 	int		m_iPreset;				// index of current preset, or -1 if none
+	CStatic	m_wndSongPos;			// song position static control
 
 // Helpers
 
@@ -97,8 +101,10 @@ protected:
 	afx_msg void OnListLButtonDown(UINT id, NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
-	afx_msg LRESULT OnDeferredUpdate(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnUpdateEditDisable(CCmdUI *pCmdUI);
+	afx_msg void OnTrackMute();
+	afx_msg void OnUpdateTrackMute(CCmdUI *pCmdUI);
+	afx_msg void OnTrackSolo();
 };
 
 inline CPolymeterDoc* CLiveView::GetDocument() const

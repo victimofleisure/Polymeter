@@ -180,6 +180,12 @@ void CTrackUndoTest::MakeRandomMasterProperty(int iProp, CComVariant& var)
 			var = nTimeDiv;
 		}
 		break;
+	case CMasterProps::PROP_nMeter:
+		{
+			int	nMeter = Random(100) + 1;
+			var = nMeter;
+		}
+		break;
 	case CMasterProps::PROP_nKeySig:
 		{
 			int	nKeySig = Random(NOTES);

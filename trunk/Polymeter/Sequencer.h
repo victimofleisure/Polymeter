@@ -58,6 +58,8 @@ public:
 	void	SetTempo(double fTempo);
 	int		GetTimeDivision() const;
 	bool	SetTimeDivision(int nTimeDiv);
+	int		GetMeter() const;
+	void	SetMeter(int nMeter);
 	int		GetLatency() const;
 	void	SetLatency(int nLatency);
 	int		GetBufferSize() const;
@@ -76,8 +78,8 @@ public:
 	void	Abort();
 	bool	Export(LPCTSTR pszPath, int nDuration, bool bSongMode);
 	bool	OutputLiveEvent(DWORD dwEvent);
-	void	ConvertPositionToBeat(LONGLONG nPos, LONGLONG& nBeat, LONGLONG& nTick) const;
-	void	ConvertBeatToPosition(LONGLONG nBeat, LONGLONG nTick, LONGLONG& nPos) const;
+	void	ConvertPositionToBeat(LONGLONG nPos, LONGLONG& nMeasure, LONGLONG& nBeat, LONGLONG& nTick) const;
+	void	ConvertBeatToPosition(LONGLONG nMeasure, LONGLONG nBeat, LONGLONG nTick, LONGLONG& nPos) const;
 	void	ConvertPositionToString(LONGLONG nPos, CString& sPos) const;
 	bool	ConvertStringToPosition(const CString& sPos, LONGLONG& nPos) const;
 	LONGLONG	ConvertPositionToSeconds(LONGLONG nPos) const;
@@ -124,6 +126,7 @@ protected:
 	double	m_fTempo;				// tempo, in beats per minute
 	int		m_iOutputDevice;		// index of output MIDI device
 	int		m_nTimeDiv;				// time division, in pulses per quarter note
+	int		m_nMeter;				// number of beats in a measure
 	int		m_nCBTime;				// time at start of next callback, in ticks
 	int		m_nCBLen;				// length of a callback period, in ticks
 	int		m_nLatency;				// desired latency of playback in milliseconds
@@ -255,6 +258,16 @@ inline int CSequencer::GetCallbackLength() const
 inline int CSequencer::GetTimeDivision() const
 {
 	return m_nTimeDiv;
+}
+
+inline int CSequencer::GetMeter() const
+{
+	return m_nMeter;
+}
+
+inline void CSequencer::SetMeter(int nMeter)
+{
+	m_nMeter = nMeter;
 }
 
 inline int CSequencer::GetLatency() const

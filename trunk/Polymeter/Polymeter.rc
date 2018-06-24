@@ -672,16 +672,19 @@ STRINGTABLE
 BEGIN
     IDS_APP_LICENSE         "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.  You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA."
     IDS_APP_UNKNOWN_SYSTEM_ERROR "Unknown system error %d (0x%X)"
-    IDS_CHANNELS_BAR        "Channels"
+    IDS_BAR_CHANNELS        "Channels"
+    IDS_BAR_PARTS           "Parts"
+    IDS_BAR_PRESETS         "Presets"
+    IDS_BAR_PROPERTIES      "Properties"
     IDS_CHANNEL_COL_BankLSB "Bank LSB"
     IDS_CHANNEL_COL_BankMSB "Bank MSB"
-    IDS_CHANNEL_COL_Number  "#"
-    IDS_CHANNEL_COL_Pan     "Pan"
-    IDS_CHANNEL_COL_Patch   "Patch"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_CHANNEL_COL_Number  "#"
+    IDS_CHANNEL_COL_Pan     "Pan"
+    IDS_CHANNEL_COL_Patch   "Patch"
     IDS_CHANNEL_COL_Volume  "Volume"
     IDS_CKUP_CANT_GET_ADDR  "Can't get address '%1'.\n%2"
     IDS_CKUP_CANT_LOAD_DLL  "Can't load library '%1'.\n%2"
@@ -697,13 +700,13 @@ BEGIN
     IDS_EDIT_APPLY_PRESET   "Apply Preset"
     IDS_EDIT_CREATE_PART    "Create Part"
     IDS_EDIT_CREATE_PRESET  "Create Preset"
-    IDS_EDIT_CUT_STEPS      "Cut Steps"
-    IDS_EDIT_CUT_TRACKS     "Cut Tracks"
-    IDS_EDIT_DELETE_PARTS   "Delete Parts"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_CUT_STEPS      "Cut Steps"
+    IDS_EDIT_CUT_TRACKS     "Cut Tracks"
+    IDS_EDIT_DELETE_PARTS   "Delete Parts"
     IDS_EDIT_DELETE_PRESETS "Delete Presets"
     IDS_EDIT_DELETE_STEPS   "Delete Steps"
     IDS_EDIT_DELETE_TRACKS  "Delete Tracks"
@@ -717,13 +720,13 @@ BEGIN
     IDS_EDIT_MULTI_STEP_RECT "Multiple Steps"
     IDS_EDIT_PASTE_STEPS    "Paste Steps"
     IDS_EDIT_PASTE_TRACKS   "Paste Tracks"
-    IDS_EDIT_RECORD         "Record"
-    IDS_EDIT_REDO_FMT       "&Redo %s"
-    IDS_EDIT_RENAME_PART    "Rename Part"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_RECORD         "Record"
+    IDS_EDIT_REDO_FMT       "&Redo %s"
+    IDS_EDIT_RENAME_PART    "Rename Part"
     IDS_EDIT_RENAME_PRESET  "Rename Preset"
     IDS_EDIT_REVERSE        "Reverse"
     IDS_EDIT_ROTATE         "Rotate"
@@ -738,13 +741,13 @@ BEGIN
     IDS_EXPORT_BAD_DURATION "Invalid duration. Time format is HH:MM:SS and duration must be greater than zero."
     IDS_EXPORT_EMPTY_FILE   "Nothing to export."
     IDS_EXPORT_ERROR        "Error during export."
-    IDS_EXPORT_FILE_FILTER  "MIDI Files (*.mid)|*.mid|All Files (*.*)|*.*||"
-    IDS_EXPORT_TOO_MANY_TRACKS "Too many tracks."
-    IDS_GRID_ERR_BAD_TIME_FORMAT "Enter time in hh:mm:ss format."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EXPORT_FILE_FILTER  "MIDI Files (*.mid)|*.mid|All Files (*.*)|*.*||"
+    IDS_EXPORT_TOO_MANY_TRACKS "Too many tracks."
+    IDS_GRID_ERR_BAD_TIME_FORMAT "Enter time in hh:mm:ss format."
     IDS_HLINK_CANT_LAUNCH   "Can't launch browser."
     IDS_MIDI_DEVICES_MISSING "MIDI devices are missing."
     IDS_MIDI_INPUT          "Input"
@@ -760,16 +763,16 @@ BEGIN
     IDS_OPT_DESC_Midi_nLatency "Desired MIDI latency, in milliseconds"
     IDS_OPT_DESC_View_bShowCurPos 
                             "Indicate current position within each track"
+END
+
+STRINGTABLE
+BEGIN
     IDS_OPT_DESC_View_bShowGMNames 
                             "Display General MIDI patch and drum names instead of numbers"
     IDS_OPT_DESC_View_bShowNoteNames 
                             "Display notes as names instead of numbers"
     IDS_OPT_DESC_View_fUpdateFreq 
                             "Frequency at which view is updated, in Hertz"
-END
-
-STRINGTABLE
-BEGIN
     IDS_OPT_DESC_View_fZoomDelta "Zoom step size, as a percentage"
     IDS_OPT_GROUP_General   "General"
     IDS_OPT_GROUP_Midi      "MIDI"
@@ -783,13 +786,12 @@ BEGIN
     IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
     IDS_OPT_NAME_View_bShowGMNames "Show General MIDI Names"
     IDS_OPT_NAME_View_bShowNoteNames "Show Note Names"
-    IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
-    IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
-    IDS_PARTS_BAR           "Parts"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
+    IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
     IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
     IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
     IDS_PDR_DESC_nSongLength "Song duration in HH:MM:SS format"
@@ -799,8 +801,6 @@ BEGIN
     IDS_PDR_NAME_nKeySig    "Key Signature"
     IDS_PDR_NAME_nSongLength "Song Length"
     IDS_PDR_NAME_nTimeDiv   "PPQ"
-    IDS_PRESETS_BAR         "Presets"
-    IDS_PROPERTIES_BAR      "Properties"
     IDS_PROPS_MORE_COLORS   "More Colors..."
     IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
     IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format"
@@ -842,6 +842,8 @@ BEGIN
     IDS_TRK_Type            "Type"
     IDS_TRK_Velocity        "Velocity"
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
+    IDS_PDR_NAME_nMeter     "Meter"
+    IDS_PDR_DESC_nMeter     "Number of beats in a measure"
 END
 
 STRINGTABLE
@@ -900,8 +902,10 @@ STRINGTABLE
 BEGIN
     ID_VIEW_CHANNELS        "Show or hide the channels bar\nChannels"
     ID_VIEW_CUSTOMIZE       " "
+    ID_VIEW_PARTS           "Show or hide the parts bar\nParts"
     ID_VIEW_PRESETS         "Show or hide the presets bar\nPresets"
     ID_VIEW_PROPERTIES      "Show or hide the properties bar\nProperties"
+    ID_VIEW_TYPE_LIVE       "Show the live view\nLive View"
     ID_VIEW_TYPE_SONG       "Show the song view\nSong View"
     ID_VIEW_TYPE_TRACK      "Show the track view\nTrack View"
     ID_VIEW_VELOCITIES      "Show or hide velocities pane\nVelocities"
@@ -910,8 +914,6 @@ BEGIN
     ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "&Windows..."
-    ID_VIEW_TYPE_LIVE       "Show the live view\nLive View"
-    ID_VIEW_PARTS           "Show or hide the parts bar\nParts"
 END
 
 STRINGTABLE

@@ -275,7 +275,7 @@ BOOL CMainFrame::CreateDockingWindows()
 {
 	// create properties bar
 	CString sTitle;
-	sTitle.LoadString(IDS_PROPERTIES_BAR);
+	sTitle.LoadString(IDS_BAR_PROPERTIES);
 	DWORD	dwStyle = WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT | CBRS_FLOAT_MULTI;
 	CMasterProps	props;
 	m_wndPropertiesBar.SetInitialProperties(props);
@@ -284,21 +284,21 @@ BOOL CMainFrame::CreateDockingWindows()
 		TRACE0("Failed to create properties bar\n");
 		return FALSE; // failed to create
 	}
-	sTitle.LoadString(IDS_CHANNELS_BAR);
+	sTitle.LoadString(IDS_BAR_CHANNELS);
 	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
 	if (!m_wndChannelsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_CHANNELS, dwStyle))
 	{
 		TRACE0("Failed to create channels bar\n");
 		return FALSE; // failed to create
 	}
-	sTitle.LoadString(IDS_PRESETS_BAR);
+	sTitle.LoadString(IDS_BAR_PRESETS);
 	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
 	if (!m_wndPresetsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_PRESETS, dwStyle))
 	{
 		TRACE0("Failed to create presets bar\n");
 		return FALSE; // failed to create
 	}
-	sTitle.LoadString(IDS_PARTS_BAR);
+	sTitle.LoadString(IDS_BAR_PARTS);
 	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
 	if (!m_wndPartsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_PARTS, dwStyle))
 	{
@@ -400,6 +400,14 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			m_wndPartsBar.Update();
 			break;
 		case CPolymeterDoc::HINT_MASTER_PROP:
+			{
+				const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+				switch (pPropHint->m_iProp) {
+				case CMasterProps::PROP_nMeter:
+					UpdateSongPosition();	// update song position in status bar
+					break;
+				}
+			}
 			if (pSender != reinterpret_cast<CView *>(&m_wndPropertiesBar)) {	// if sender isn't properties bar
 				m_wndPropertiesBar.SetProperties(*pDoc);	// update properties bar
 			}
@@ -771,6 +779,10 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 			ASSERT(!pDoc->m_Seq.IsPlaying());
 			// convert time division preset index to time division value in ticks
 			pDoc->m_Seq.SetTimeDivision(CMasterProps::GetTimeDivisionTicks(pDoc->m_nTimeDiv));
+			break;
+		case CMasterProps::PROP_nMeter:
+			pDoc->m_Seq.SetMeter(pDoc->m_nMeter);
+			UpdateSongPosition();	// update song position in status bar
 			break;
 		case CMasterProps::PROP_nSongLength:
 			if (pDoc->m_Seq.HasDubs()) {
