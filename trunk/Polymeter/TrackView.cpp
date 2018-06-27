@@ -101,6 +101,7 @@ void CTrackView::OnInitialUpdate()
 
 void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
+	UNREFERENCED_PARAMETER(pSender);
 //	printf("CPolymeterView::OnUpdate %x %d %x\n", pSender, lHint, pHint);
 	CSaveObj<bool>	save(m_bIsUpdating, true);
 	CPolymeterDoc	*pDoc = GetDocument();
@@ -166,7 +167,6 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		}
 		break;
 	}
-	theApp.GetMainFrame()->OnUpdate(pSender, lHint, pHint);	// notify main frame
 }
 
 void CTrackView::UpdateDependencies(int iTrack, int iProp)

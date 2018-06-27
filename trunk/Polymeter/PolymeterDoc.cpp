@@ -136,6 +136,12 @@ void CPolymeterDoc::OnCloseDocument()
 	CDocument::OnCloseDocument();
 }
 
+void CPolymeterDoc::UpdateAllViews(CView* pSender, LPARAM lHint, CObject* pHint)
+{
+	CDocument::UpdateAllViews(pSender, lHint, pHint);
+	theApp.GetMainFrame()->OnUpdate(pSender, lHint, pHint);	// notify main frame
+}
+
 void CPolymeterDoc::ApplyOptions(const COptions *pPrevOptions)
 {
 	m_Seq.SetOutputDevice(theApp.m_midiDevs.GetIdx(CMidiDevices::OUTPUT));

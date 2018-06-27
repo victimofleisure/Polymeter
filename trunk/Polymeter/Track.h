@@ -141,6 +141,7 @@ public:
 	CTrack(bool bInit);
 
 // Types
+
 // Public data
 	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) type m_##prefix##name;
 	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length

@@ -82,6 +82,7 @@ CMainFrame::CMainFrame()
 {
 	// TODO: add member initialization code here
 	theApp.m_nAppLook = theApp.GetInt(_T("ApplicationLook"), APPLOOK_VS_2008);
+	theApp.m_pMainWnd = this;
 	m_pActiveDoc = NULL;
 }
 

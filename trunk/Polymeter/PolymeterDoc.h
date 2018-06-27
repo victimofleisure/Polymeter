@@ -195,6 +195,7 @@ public:
 
 // Overrides
 public:
+	void	UpdateAllViews(CView* pSender, LPARAM lHint = 0L, CObject* pHint = NULL);	// not virtual!
 	virtual BOOL OnNewDocument();
 	virtual void Serialize(CArchive& ar);
 	virtual	CString	GetUndoTitle(const CUndoState& State);

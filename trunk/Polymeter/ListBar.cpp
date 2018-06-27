@@ -106,7 +106,8 @@ int CListBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	DWORD	dwStyle = WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_OWNERDATA
 		| LVS_SHOWSELALWAYS | LVS_NOCOLUMNHEADER | LVS_EDITLABELS;
-	m_list.Create(dwStyle, CRect(0, 0, 0, 0), this, IDC_LIST);
+	if (!m_list.Create(dwStyle, CRect(0, 0, 0, 0), this, IDC_LIST))
+		return -1;
 	m_list.SetExtendedStyle(LVS_EX_LABELTIP);
 	m_list.InsertColumn(0, _T(""));
 	m_list.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
