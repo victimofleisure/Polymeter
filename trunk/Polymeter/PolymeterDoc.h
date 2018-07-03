@@ -57,9 +57,9 @@ public:
 		HINT_SONG_DUB,			// song dub edit; pHint is CRectSelPropHint
 		HINT_SOLO,				// track solo
 		HINT_PRESET_NAME,		// preset name edit; pHint is CPropHint
-		HINT_PRESET_ARRAY,		// preset array edit
+		HINT_PRESET_ARRAY,		// preset array edit; pHint is CSelectionHint
 		HINT_PART_NAME,			// part name edit; pHint is CPropHint
-		HINT_PART_ARRAY,		// part array edit
+		HINT_PART_ARRAY,		// part array edit; pHint is CSelectionHint
 		HINTS
 	};
 	enum {	// view types
@@ -102,6 +102,15 @@ public:
 	public:
 		CSongPosHint(LONGLONG nSongPos) : m_nSongPos(nSongPos) {}
 		LONGLONG	m_nSongPos;		// song position in ticks
+	};
+	class CSelectionHint : public CObject {
+	public:
+		CSelectionHint(const CIntArrayEx *parrSelection, int iFirstItem = 0, int nItems = 0) :
+			m_parrSelection(parrSelection), m_iFirstItem(iFirstItem), m_nItems(nItems) {}
+		CSelectionHint() : m_parrSelection(NULL), m_iFirstItem(0), m_nItems(0) {} 
+		const CIntArrayEx	*m_parrSelection;	// pointer to indices of selected items
+		int		m_iFirstItem;	// if selection range, index of first selected item
+		int		m_nItems;		// if selection range, number of selected items
 	};
 
 // Public data
@@ -215,21 +224,18 @@ protected:
 	public:
 		CIntArrayEx	m_arrSelection;	// indices of selected tracks
 	};
-	class CUndoAllPresets : public CRefObj {
-	public:
-		CPresetArray	m_arrPreset;	// array of presets
-	};
-	class CUndoGroups : public CRefObj {
-	public:
-		CTrackGroupArray	m_arrGroup;	// array of groups
-	};
 	class CUndoClipboard : public CRefObj {
 	public:
 		CTrackArray	m_arrTrack;		// array of tracks
 		CIntArrayEx	m_arrSelection;	// indices of selected tracks
-		int		m_nSelMark;			// selection mark
-		CRefPtr<CUndoAllPresets>	m_pPresets;	// optional pointer to presets undo state
-		CRefPtr<CUndoGroups>	m_pParts;	// optional pointer to parts undo state
+		int		m_iSelMark;			// selection mark
+		CPresetArray	m_arrPreset;	// array of presets
+		CTrackGroupArray	m_arrPart;	// array of parts
+	};
+	class CUndoMove : public CRefObj {
+	public:
+		CIntArrayEx	m_arrSelection;	// indices of selected tracks
+		int		m_iSelMark;			// selection mark
 	};
 	class CUndoMultiItemProp : public CRefObj {
 	public:
@@ -285,9 +291,10 @@ protected:
 		CIntArrayEx	m_arrSelection;	// indices of selected presets
 		CPresetArray	m_arrPreset;	// array of presets
 	};
-	class CUndoGroup : public CRefObj {
+	class CUndoPart : public CRefObj {
 	public:
-		CTrackGroupArray	m_arrGroup;	// array of groups
+		CIntArrayEx	m_arrSelection;	// indices of selected parts
+		CTrackGroupArray	m_arrPart;	// array of parts
 	};
 	typedef CMap<UINT, UINT, int, int> CTrackIDMap;
 	class CTrackArrayEdit {
@@ -336,6 +343,8 @@ protected:
 	void	RestoreMultiTrackSteps(const CUndoState& State);
 	void	SaveClipboardTracks(CUndoState& State) const;
 	void	RestoreClipboardTracks(const CUndoState& State);
+	void	SaveTrackMove(CUndoState& State) const;
+	void	RestoreTrackMove(const CUndoState& State);
 	void	SaveMasterProperty(CUndoState& State) const;
 	void	RestoreMasterProperty(const CUndoState& State);
 	void	SaveChannelProperty(CUndoState& State) const;
@@ -362,10 +371,13 @@ protected:
 	void	RestorePresetName(const CUndoState& State);
 	void	SavePresets(CUndoState& State) const;
 	void	RestorePresets(const CUndoState& State);
+	void	SavePresetMove(CUndoState& State) const;
+	void	RestorePresetMove(const CUndoState& State);
 	void	SavePartName(CUndoState& State) const;
 	void	RestorePartName(const CUndoState& State);
 	void	SaveParts(CUndoState& State) const;
 	void	RestoreParts(const CUndoState& State);
+	void	RestorePartMove(const CUndoState& State);
 
 // Generated message map functions
 protected:

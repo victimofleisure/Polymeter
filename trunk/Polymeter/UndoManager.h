@@ -62,6 +62,7 @@ public:
 	int		GetPos() const;
 	void	SetPos(int iPos);
 	const	CUndoState& GetState(int iPos) const;
+	CUndoState& GetState(int iPos);
 
 // Operations
 	void	Undo();
@@ -177,6 +178,11 @@ inline int CUndoManager::GetPos() const
 }
 
 inline const CUndoState& CUndoManager::GetState(int iPos) const
+{
+	return(m_arrState[iPos]);
+}
+
+inline CUndoState& CUndoManager::GetState(int iPos)
 {
 	return(m_arrState[iPos]);
 }

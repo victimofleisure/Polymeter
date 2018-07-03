@@ -1038,22 +1038,13 @@ void CPolymeterDoc::SaveClipboardTracks(CUndoState& State) const
 		pClipboard.CreateObj();
 		pClipboard->m_arrSelection = m_arrTrackSel;
 		m_Seq.GetTracks(m_arrTrackSel, pClipboard->m_arrTrack); 
-		pClipboard->m_nSelMark = m_iTrackSelMark;
+		pClipboard->m_iSelMark = m_iTrackSelMark;
+		pClipboard->m_arrPreset = m_arrPreset;
+		pClipboard->m_arrPart = m_arrPart;
 		State.SetObj(pClipboard);
 		switch (LOWORD(State.GetCode())) {
 		case UCODE_CUT_TRACKS:
 		case UCODE_DELETE_TRACKS:
-			if (m_arrPreset.GetSize()) {
-				pClipboard->m_pPresets.CreateObj();
-				pClipboard->m_pPresets->m_arrPreset = m_arrPreset;
-			}
-			if (m_arrPart.GetSize()) {
-				pClipboard->m_pParts.CreateObj();
-				pClipboard->m_pParts->m_arrGroup = m_arrPart;
-			}
-			State.m_Val.p.x.i = CUndoManager::UA_UNDO;	// undo inserts, redo deletes
-			break;
-		case UCODE_MOVE_TRACKS:
 			State.m_Val.p.x.i = CUndoManager::UA_UNDO;	// undo inserts, redo deletes
 			break;
 		default:
@@ -1064,45 +1055,68 @@ void CPolymeterDoc::SaveClipboardTracks(CUndoState& State) const
 
 void CPolymeterDoc::RestoreClipboardTracks(const CUndoState& State)
 {
-	bool	bIsUndoingDelete;
-	switch (LOWORD(State.GetCode())) {
-	case UCODE_CUT_TRACKS:
-	case UCODE_DELETE_TRACKS:
-		bIsUndoingDelete = IsUndoing();
-		break;
-	default:
-		bIsUndoingDelete = false;
-	}
-	CTrackIDMap	mapTrackID;
-	if (!bIsUndoingDelete)	// if not undoing delete
-		GetTrackIDMap(mapTrackID);	// begin track array transaction
 	CUndoClipboard	*pClipboard = static_cast<CUndoClipboard *>(State.GetObj());
-	bool	bIsMove = LOWORD(State.GetCode()) == UCODE_MOVE_TRACKS;
 	bool	bInserting = GetUndoAction() == State.m_Val.p.x.i; 
 	if (bInserting) {	// if inserting
-		if (bIsMove)
-			m_Seq.DeleteTracks(State.GetCtrlID(), pClipboard->m_arrTrack.GetSize());
 		m_Seq.InsertTracks(pClipboard->m_arrSelection, pClipboard->m_arrTrack, true);	// keep IDs
-		m_arrTrackSel = pClipboard->m_arrSelection;
-		m_iTrackSelMark = pClipboard->m_nSelMark;
+		m_arrTrackSel = pClipboard->m_arrSelection;	// restore selection
+		m_iTrackSelMark = pClipboard->m_iSelMark;	// restore selection mark
+		m_arrPreset = pClipboard->m_arrPreset;	// restore presets
+		m_arrPart = pClipboard->m_arrPart;	// restore parts
 	} else {	// deleting
-		m_Seq.DeleteTracks(pClipboard->m_arrSelection);
-		if (bIsMove) {
-			m_Seq.InsertTracks(State.GetCtrlID(), pClipboard->m_arrTrack, true);	// keep IDs
-			int	iTrack = State.GetCtrlID();
-			SelectRange(iTrack, pClipboard->m_arrTrack.GetSize(), false);	// don't update views
-			m_iTrackSelMark = iTrack;
-		} else
-			Deselect(false);	// don't update views
+		{
+			CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
+			m_Seq.DeleteTracks(pClipboard->m_arrSelection);
+		}	// dtor ends transaction
+		Deselect(false);	// don't update views
 	}
-	if (bIsUndoingDelete) {	// if undoing delete
-		// track dependencies must be explicitly restored
-		if (!pClipboard->m_pPresets.IsEmpty())	// if presets were allocated
-			m_arrPreset = pClipboard->m_pPresets->m_arrPreset;	// restore presets
-		if (!pClipboard->m_pParts.IsEmpty())	// if parts were allocated
-			m_arrPart = pClipboard->m_pParts->m_arrGroup;	// restore parts
-	} else	// not undoing delete
-		OnTrackArrayEdit(mapTrackID);	// end track array transaction
+	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
+}
+
+void CPolymeterDoc::SaveTrackMove(CUndoState& State) const
+{
+	const CIntArrayEx	*parrSelection;
+	int	iSelMark;
+	if (State.IsEmpty()) {	// if initial state
+		parrSelection = &m_arrTrackSel;	// get fresh selection
+		iSelMark = m_iTrackSelMark;
+	} else {	// undoing or redoing; selection may have changed, so don't rely on it
+		const CUndoMove	*pInfo = static_cast<CUndoMove*>(State.GetObj());
+		parrSelection = &pInfo->m_arrSelection;	// use edit's original selection
+		iSelMark = pInfo->m_iSelMark;
+	}
+	CRefPtr<CUndoMove>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrSelection = *parrSelection;
+	pInfo->m_iSelMark = iSelMark;
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreTrackMove(const CUndoState& State)
+{
+	int	iDropPos = State.GetCtrlID();
+	const CUndoMove	*pInfo = static_cast<CUndoMove*>(State.GetObj());
+	int	nSels = pInfo->m_arrSelection.GetSize();
+	CTrackArray	arrTrack;
+	if (IsUndoing()) {	// if undoing
+		m_Seq.GetTracks(iDropPos, nSels, arrTrack);
+		{
+			CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
+			m_Seq.DeleteTracks(iDropPos, nSels);
+			m_Seq.InsertTracks(pInfo->m_arrSelection, arrTrack, true);	// keep IDs
+		}	// dtor ends transaction
+		m_arrTrackSel = pInfo->m_arrSelection;
+		m_iTrackSelMark = pInfo->m_iSelMark;
+	} else {	// redoing
+		m_Seq.GetTracks(pInfo->m_arrSelection, arrTrack);
+		{
+			CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
+			m_Seq.DeleteTracks(pInfo->m_arrSelection);
+			m_Seq.InsertTracks(iDropPos, arrTrack, true);	// keep IDs
+		}	// dtor ends transaction
+		SelectRange(iDropPos, nSels, false);
+		m_iTrackSelMark = iDropPos + nSels - 1;
+	}
 	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 }
 
@@ -1421,9 +1435,6 @@ void CPolymeterDoc::RestorePresetName(const CUndoState& State)
 {
 	int	iPreset = State.GetCtrlID();
 	State.GetVal(m_arrPreset[iPreset].m_sName);
-	CPresetsBar&	wndPresetsBar = theApp.GetMainFrame()->GetPresetsBar();
-	wndPresetsBar.RedrawItem(iPreset);
-	wndPresetsBar.SelectOnly(iPreset);
 	CPropHint	hint(iPreset);
 	UpdateAllViews(NULL, HINT_PRESET_NAME, &hint);
 }
@@ -1435,16 +1446,10 @@ void CPolymeterDoc::SavePresets(CUndoState& State) const
 		CRefPtr<CUndoPreset>	pInfo;
 		pInfo.CreateObj();
 		pInfo->m_arrSelection = *m_parrSelection;
-		int	nSels = m_parrSelection->GetSize();
-		pInfo->m_arrPreset.SetSize(nSels);
-		for (int iSel = 0; iSel < nSels; iSel++) {
-			int	iPreset = (*m_parrSelection)[iSel];
-			pInfo->m_arrPreset[iSel] = m_arrPreset[iPreset];
-		}
+		m_arrPreset.GetSelection(*m_parrSelection, pInfo->m_arrPreset);
 		State.SetObj(pInfo);
 		switch (LOWORD(State.GetCode())) {
 		case UCODE_DELETE_PRESETS:
-		case UCODE_MOVE_PRESETS:
 			State.m_Val.p.x.i = CUndoManager::UA_UNDO;	// undo inserts, redo deletes
 			break;
 		default:
@@ -1456,28 +1461,51 @@ void CPolymeterDoc::SavePresets(CUndoState& State) const
 void CPolymeterDoc::RestorePresets(const CUndoState& State)
 {
 	CUndoPreset	*pInfo = static_cast<CUndoPreset*>(State.GetObj());
-	bool	bIsMove = LOWORD(State.GetCode()) == UCODE_MOVE_PRESETS;
 	bool	bInserting = GetUndoAction() == State.m_Val.p.x.i; 
+	CSelectionHint	hint;
 	if (bInserting) {	// if inserting
-		if (bIsMove)
-			m_arrPreset.RemoveAt(State.GetCtrlID(), pInfo->m_arrPreset.GetSize());
 		m_arrPreset.InsertSelection(pInfo->m_arrSelection, pInfo->m_arrPreset);
-	} else {	// deleting
+		hint.m_parrSelection = &pInfo->m_arrSelection;	// set selection
+	} else	// deleting
 		m_arrPreset.DeleteSelection(pInfo->m_arrSelection);
-		if (bIsMove)
-			m_arrPreset.InsertAt(State.GetCtrlID(), &pInfo->m_arrPreset);
+	UpdateAllViews(NULL, HINT_PRESET_ARRAY, &hint);
+}
+
+void CPolymeterDoc::SavePresetMove(CUndoState& State) const
+{
+	const CIntArrayEx	*parrSelection;
+	if (State.IsEmpty()) {	// if initial state
+		parrSelection = m_parrSelection;	// get fresh selection
+	} else {	// undoing or redoing; selection may have changed, so don't rely on it
+		const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
+		parrSelection = &pInfo->m_arrSelection;	// use edit's original selection
 	}
-	CPresetsBar&	wndPresetsBar = theApp.GetMainFrame()->GetPresetsBar();
-	wndPresetsBar.Update();
-	if (bInserting)	// if inserting
-		wndPresetsBar.SetSelection(pInfo->m_arrSelection);
-	else {	// deleting
-		if (bIsMove)	// if edit is move
-			wndPresetsBar.SelectRange(State.GetCtrlID(), pInfo->m_arrPreset.GetSize());
-		else
-			wndPresetsBar.Deselect();
+	CRefPtr<CUndoSelection>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrSelection = *parrSelection;
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestorePresetMove(const CUndoState& State)
+{
+	int	iDropPos = State.GetCtrlID();
+	const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
+	int	nSels = pInfo->m_arrSelection.GetSize();
+	CPresetArray	arrPreset;
+	CSelectionHint	hint;
+	if (IsUndoing()) {	// if undoing
+		m_arrPreset.GetRange(iDropPos, nSels, arrPreset);
+		m_arrPreset.RemoveAt(iDropPos, nSels);
+		m_arrPreset.InsertSelection(pInfo->m_arrSelection, arrPreset);
+		hint.m_parrSelection = &pInfo->m_arrSelection;	// set selection
+	} else {	// redoing
+		m_arrPreset.GetSelection(pInfo->m_arrSelection, arrPreset);
+		m_arrPreset.DeleteSelection(pInfo->m_arrSelection);
+		m_arrPreset.InsertAt(iDropPos, &arrPreset);
+		hint.m_iFirstItem = iDropPos;	// select range
+		hint.m_nItems = nSels;
 	}
-	UpdateAllViews(NULL, HINT_PRESET_ARRAY);
+	UpdateAllViews(NULL, HINT_PRESET_ARRAY, &hint);
 }
 
 void CPolymeterDoc::SavePartName(CUndoState& State) const
@@ -1490,29 +1518,62 @@ void CPolymeterDoc::RestorePartName(const CUndoState& State)
 {
 	int	iPart = State.GetCtrlID();
 	State.GetVal(m_arrPart[iPart].m_sName);
-	CPartsBar&	wndPartsBar = theApp.GetMainFrame()->GetPartsBar();
-	wndPartsBar.RedrawItem(iPart);
-	wndPartsBar.SelectOnly(iPart);
 	CPropHint	hint(iPart);
 	UpdateAllViews(NULL, HINT_PART_NAME, &hint);
 }
 
 void CPolymeterDoc::SaveParts(CUndoState& State) const
 {
-	CRefPtr<CUndoGroup>	pInfo;
-	pInfo.CreateObj();
-	pInfo->m_arrGroup = m_arrPart;
-	State.SetObj(pInfo);
+	if (UndoMgrIsIdle()) {	// if initial state
+		ASSERT(m_parrSelection != NULL);
+		CRefPtr<CUndoPart>	pInfo;
+		pInfo.CreateObj();
+		pInfo->m_arrSelection = *m_parrSelection;
+		m_arrPart.GetSelection(*m_parrSelection, pInfo->m_arrPart);
+		State.SetObj(pInfo);
+		switch (LOWORD(State.GetCode())) {
+		case UCODE_DELETE_PARTS:
+			State.m_Val.p.x.i = CUndoManager::UA_UNDO;	// undo inserts, redo deletes
+			break;
+		default:
+			State.m_Val.p.x.i = CUndoManager::UA_REDO;	// undo deletes, redo inserts
+		}
+	}
 }
 
 void CPolymeterDoc::RestoreParts(const CUndoState& State)
 {
-	CUndoGroup	*pInfo = static_cast<CUndoGroup*>(State.GetObj());
-	m_arrPart = pInfo->m_arrGroup;
-	CPartsBar&	wndPartsBar = theApp.GetMainFrame()->GetPartsBar();
-	wndPartsBar.Update();
-	wndPartsBar.Deselect();
-	UpdateAllViews(NULL, HINT_PART_ARRAY);
+	CUndoPart	*pInfo = static_cast<CUndoPart*>(State.GetObj());
+	bool	bInserting = GetUndoAction() == State.m_Val.p.x.i; 
+	CSelectionHint	hint;
+	if (bInserting) {	// if inserting
+		m_arrPart.InsertSelection(pInfo->m_arrSelection, pInfo->m_arrPart);
+		hint.m_parrSelection = &pInfo->m_arrSelection;	// set selection
+	} else	// deleting
+		m_arrPart.DeleteSelection(pInfo->m_arrSelection);
+	UpdateAllViews(NULL, HINT_PART_ARRAY, &hint);
+}
+
+void CPolymeterDoc::RestorePartMove(const CUndoState& State)
+{
+	int	iDropPos = State.GetCtrlID();
+	const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
+	int	nSels = pInfo->m_arrSelection.GetSize();
+	CTrackGroupArray	arrPart;
+	CSelectionHint	hint;
+	if (IsUndoing()) {	// if undoing
+		m_arrPart.GetRange(iDropPos, nSels, arrPart);
+		m_arrPart.RemoveAt(iDropPos, nSels);
+		m_arrPart.InsertSelection(pInfo->m_arrSelection, arrPart);
+		hint.m_parrSelection = &pInfo->m_arrSelection;	// set selection
+	} else {	// redoing
+		m_arrPart.GetSelection(pInfo->m_arrSelection, arrPart);
+		m_arrPart.DeleteSelection(pInfo->m_arrSelection);
+		m_arrPart.InsertAt(iDropPos, &arrPart);
+		hint.m_iFirstItem = iDropPos;	// select range
+		hint.m_nItems = nSels;
+	}
+	UpdateAllViews(NULL, HINT_PART_ARRAY, &hint);
 }
 
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
@@ -1540,8 +1601,10 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 	case UCODE_PASTE_TRACKS:
 	case UCODE_INSERT_TRACKS:
 	case UCODE_DELETE_TRACKS:
-	case UCODE_MOVE_TRACKS:
 		SaveClipboardTracks(State);
+		break;
+	case UCODE_MOVE_TRACKS:
+		SaveTrackMove(State);
 		break;
 	case UCODE_CHANNEL_PROP:
 		SaveChannelProperty(State);
@@ -1590,16 +1653,20 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		break;
 	case UCODE_CREATE_PRESET:
 	case UCODE_DELETE_PRESETS:
-	case UCODE_MOVE_PRESETS:
 		SavePresets(State);
+		break;
+	case UCODE_MOVE_PRESETS:
+		SavePresetMove(State);
 		break;
 	case UCODE_RENAME_PART:
 		SavePartName(State);
 		break;
 	case UCODE_CREATE_PART:
 	case UCODE_DELETE_PARTS:
-	case UCODE_MOVE_PARTS:
 		SaveParts(State);
+		break;
+	case UCODE_MOVE_PARTS:
+		SavePresetMove(State);	// reuse, not an error
 		break;
 	}
 }
@@ -1629,8 +1696,10 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_PASTE_TRACKS:
 	case UCODE_INSERT_TRACKS:
 	case UCODE_DELETE_TRACKS:
-	case UCODE_MOVE_TRACKS:
 		RestoreClipboardTracks(State);
+		break;
+	case UCODE_MOVE_TRACKS:
+		RestoreTrackMove(State);
 		break;
 	case UCODE_CHANNEL_PROP:
 		RestoreChannelProperty(State);
@@ -1679,16 +1748,20 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		break;
 	case UCODE_CREATE_PRESET:
 	case UCODE_DELETE_PRESETS:
-	case UCODE_MOVE_PRESETS:
 		RestorePresets(State);
+		break;
+	case UCODE_MOVE_PRESETS:
+		RestorePresetMove(State);
 		break;
 	case UCODE_RENAME_PART:
 		RestorePartName(State);
 		break;
 	case UCODE_CREATE_PART:
 	case UCODE_DELETE_PARTS:
-	case UCODE_MOVE_PARTS:
 		RestoreParts(State);
+		break;
+	case UCODE_MOVE_PARTS:
+		RestorePartMove(State);
 		break;
 	}
 }
@@ -2015,10 +2088,8 @@ void CPolymeterDoc::CreatePreset()
 	m_parrSelection = &arrSelection;
 	NotifyUndoableEdit(0, UCODE_CREATE_PRESET);
 	m_parrSelection = NULL;	// reset selection pointer
-	CPresetsBar&	wndPresetsBar = theApp.GetMainFrame()->GetPresetsBar();
-	wndPresetsBar.Update();
-	wndPresetsBar.SetSelection(arrSelection);
-	UpdateAllViews(NULL, HINT_PRESET_ARRAY);
+	CSelectionHint	hint(&arrSelection);	// set selection
+	UpdateAllViews(NULL, HINT_PRESET_ARRAY, &hint);
 }
 
 void CPolymeterDoc::DeletePresets(const CIntArrayEx& arrSelection)
@@ -2028,10 +2099,8 @@ void CPolymeterDoc::DeletePresets(const CIntArrayEx& arrSelection)
 	m_parrSelection = NULL;	// reset selection pointer
 	m_arrPreset.DeleteSelection(arrSelection);
 	SetModifiedFlag();
-	CPresetsBar&	wndPresetsBar = theApp.GetMainFrame()->GetPresetsBar();
-	wndPresetsBar.Update();
-	wndPresetsBar.Deselect();
-	UpdateAllViews(NULL, HINT_PRESET_ARRAY);
+	CSelectionHint	hint;	// deselect
+	UpdateAllViews(NULL, HINT_PRESET_ARRAY, &hint);
 }
 
 void CPolymeterDoc::MovePresets(const CIntArrayEx& arrSelection, int iDropPos)
@@ -2041,10 +2110,8 @@ void CPolymeterDoc::MovePresets(const CIntArrayEx& arrSelection, int iDropPos)
 	m_parrSelection = NULL;	// reset selection pointer
 	m_arrPreset.MoveSelection(arrSelection, iDropPos);
 	SetModifiedFlag();
-	CPresetsBar&	wndPresetsBar = theApp.GetMainFrame()->GetPresetsBar();
-	wndPresetsBar.Update();
-	wndPresetsBar.SelectRange(iDropPos, arrSelection.GetSize());
-	UpdateAllViews(NULL, HINT_PRESET_ARRAY);
+	CSelectionHint	hint(NULL, iDropPos, arrSelection.GetSize());	// select range
+	UpdateAllViews(NULL, HINT_PRESET_ARRAY, &hint);
 }
 
 void CPolymeterDoc::UpdatePreset(int iPreset)
@@ -2063,7 +2130,6 @@ void CPolymeterDoc::SetPresetName(int iPreset, CString sName)
 	NotifyUndoableEdit(iPreset, UCODE_RENAME_PRESET);
 	m_arrPreset[iPreset].m_sName = sName;
 	SetModifiedFlag();
-	theApp.GetMainFrame()->GetPresetsBar().RedrawItem(iPreset);
 	CPropHint	hint(iPreset);
 	UpdateAllViews(NULL, HINT_PRESET_NAME, &hint);
 }
@@ -2076,6 +2142,7 @@ void CPolymeterDoc::CreatePart()
 	CIntArrayEx	arrTrackIdx;
 	arrTrackIdx.SetSize(GetTrackCount());
 	m_arrPart.GetTrackRefs(arrTrackIdx);
+#if !TRACK_UNDO_TEST
 	int	nSels = GetSelectedCount();
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = m_arrTrackSel[iSel];
@@ -2084,42 +2151,43 @@ void CPolymeterDoc::CreatePart()
 			return;	// user error; track can't belong to multiple parts
 		}
 	}
-	NotifyUndoableEdit(0, UCODE_CREATE_PART);
+#endif
+	m_parrSelection = NULL;	// reset selection pointer
 	CTrackGroup	part;
 	part.m_sName = m_Seq.GetName(m_arrTrackSel[0]);	// name part after its first track
 	if (part.m_sName.IsEmpty())	// if name is empty
 		part.m_sName.Format(_T("Part-%d"), GetTickCount());	// generate name
 	part.m_arrTrackIdx = m_arrTrackSel;
-	int	iPreset = INT64TO32(m_arrPart.Add(part));
+	int	iPart = INT64TO32(m_arrPart.Add(part));
 	SetModifiedFlag();
 	CIntArrayEx	arrSelection;
-	arrSelection.Add(iPreset);
-	CPartsBar&	wndPartsBar = theApp.GetMainFrame()->GetPartsBar();
-	wndPartsBar.Update();
-	wndPartsBar.SetSelection(arrSelection);
-	UpdateAllViews(NULL, HINT_PART_ARRAY);
+	arrSelection.Add(iPart);
+	m_parrSelection = &arrSelection;
+	NotifyUndoableEdit(0, UCODE_CREATE_PART);
+	CSelectionHint	hint(&arrSelection);
+	UpdateAllViews(NULL, HINT_PART_ARRAY, &hint);
 }
 
 void CPolymeterDoc::DeleteParts(const CIntArrayEx& arrSelection)
 {
+	m_parrSelection = &arrSelection;
 	NotifyUndoableEdit(0, UCODE_DELETE_PARTS);
+	m_parrSelection = NULL;	// reset selection pointer
 	m_arrPart.DeleteSelection(arrSelection);
 	SetModifiedFlag();
-	CPartsBar&	wndPartsBar = theApp.GetMainFrame()->GetPartsBar();
-	wndPartsBar.Update();
-	wndPartsBar.Deselect();
-	UpdateAllViews(NULL, HINT_PART_ARRAY);
+	CSelectionHint	hint;
+	UpdateAllViews(NULL, HINT_PART_ARRAY, &hint);
 }
 
 void CPolymeterDoc::MoveParts(const CIntArrayEx& arrSelection, int iDropPos)
 {
+	m_parrSelection = &arrSelection;
 	NotifyUndoableEdit(iDropPos, UCODE_MOVE_PARTS);
+	m_parrSelection = NULL;	// reset selection pointer
 	m_arrPart.MoveSelection(arrSelection, iDropPos);
 	SetModifiedFlag();
-	CPartsBar&	wndPartsBar = theApp.GetMainFrame()->GetPartsBar();
-	wndPartsBar.Update();
-	wndPartsBar.SelectRange(iDropPos, arrSelection.GetSize());
-	UpdateAllViews(NULL, HINT_PART_ARRAY);
+	CSelectionHint	hint(NULL, iDropPos, arrSelection.GetSize());
+	UpdateAllViews(NULL, HINT_PART_ARRAY, &hint);
 }
 
 void CPolymeterDoc::SetPartName(int iPart, CString sName)
@@ -2127,7 +2195,6 @@ void CPolymeterDoc::SetPartName(int iPart, CString sName)
 	NotifyUndoableEdit(iPart, UCODE_RENAME_PART);
 	m_arrPart[iPart].m_sName = sName;
 	SetModifiedFlag();
-	theApp.GetMainFrame()->GetPartsBar().RedrawItem(iPart);
 	CPropHint	hint(iPart);
 	UpdateAllViews(NULL, HINT_PART_NAME, &hint);
 }

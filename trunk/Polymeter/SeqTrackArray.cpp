@@ -35,26 +35,10 @@ void CSeqTrackArray::SetTrackCount(int nTracks)
 	}
 }
 
-void CSeqTrackArray::GetTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const
-{
-	int	nSels = arrSelection.GetSize();
-	arrTrack.SetSize(nSels);
-	int	iTrack = 0;
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		arrTrack[iTrack] = GetAt(arrSelection[iSel]);
-		iTrack++;
-	}
-}
-
 void CSeqTrackArray::SetTracks(const CIntArrayEx& arrSelection, const CTrackArray& arrTrack)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
-	int	nSels = arrSelection.GetSize();
-	int	iTrack = 0;
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		GetAt(arrSelection[iSel]) = arrTrack[iTrack];
-		iTrack++;
-	}
+	SetSelection(arrSelection, arrTrack);
 }
 
 void CSeqTrackArray::SetTrack(int iTrack, const CTrack& track)
@@ -268,10 +252,7 @@ void CSeqTrackArray::DeleteTracks(int iTrack, int nCount)
 void CSeqTrackArray::DeleteTracks(const CIntArrayEx& arrSelection)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
-	// assume selection array's track indices are in ascending order
-	int	nSels = arrSelection.GetSize();	// reverse iterate for deletion stability
-	for (int iSel = nSels - 1; iSel >= 0; iSel--)	// for each selected track
-		RemoveAt(arrSelection[iSel]);
+	DeleteSelection(arrSelection);
 }
 
 void CSeqTrackArray::InsertStep(const CRect& rSelection)

@@ -63,7 +63,7 @@ protected:
 
 // Member data
 	int		m_nTrackHeight;		// track height, in client coords
-	int		m_nSelMark;			// selection mark
+	int		m_iSelMark;			// selection mark
 	int		m_nScrollPos;		// scroll position
 
 // Helpers

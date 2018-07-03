@@ -23,6 +23,7 @@ public:
 	int		GetTrackCount() const;
 	void	SetTrackCount(int nTracks);
 	const CTrackArray&	GetTracks() const;
+	void	GetTracks(int iFirstTrack, int nTracks, CTrackArray& arrTrack) const;
 	void	GetTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const;
 	void	SetTracks(const CIntArrayEx& arrSelection, const CTrackArray& arrTrack);
 	const CTrack&	GetTrack(int iTrack) const;
@@ -119,6 +120,16 @@ inline int CSeqTrackArray::GetTrackCount() const
 inline const CTrackArray& CSeqTrackArray::GetTracks() const
 {
 	return *this;
+}
+
+inline void CSeqTrackArray::GetTracks(int iFirstTrack, int nTracks, CTrackArray& arrTrack) const
+{
+	GetRange(iFirstTrack, nTracks, arrTrack);
+}
+
+inline void CSeqTrackArray::GetTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const
+{
+	GetSelection(arrSelection, arrTrack);
 }
 
 inline const CTrack& CSeqTrackArray::GetTrack(int iTrack) const

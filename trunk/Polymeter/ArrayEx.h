@@ -219,6 +219,10 @@ public:
 	bool	operator!=(const CArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
 	#define	ALGO_TYPE ARG_TYPE
 	#include "ArrayExAlgoDef.h"
+	void	GetRange(int iFirstElem, int nElems, CArrayEx& arrDest) const;
+	void	SetRange(int iFirstElem, const CArrayEx& arrDest);
+	void	GetSelection(const CIntArrayEx& arrSelection, CArrayEx& arrDest) const;
+	void	SetSelection(const CIntArrayEx& arrSelection, const CArrayEx& arrDest);
 	void	InsertSelection(const CIntArrayEx& arrSelection, CArrayEx& arrInsert);
 	void	DeleteSelection(const CIntArrayEx& arrSelection);
 	void	MoveSelection(const CIntArrayEx& arrSelection, int iDropPos);
@@ -830,23 +834,52 @@ AFX_INLINE void CStringArrayEx::SetGrowBy(INT_PTR nGrowBy)
 }
 
 template<class TYPE, class ARG_TYPE>
+AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::GetRange(int iFirstElem, int nElems, CArrayEx& arrDest) const
+{
+	arrDest.SetSize(nElems);
+	for (int iElem = 0; iElem < nElems; iElem++)	// for each element in range
+		arrDest[iElem] = GetAt(iFirstElem + iElem);
+}
+
+template<class TYPE, class ARG_TYPE>
+AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::SetRange(int iFirstElem, const CArrayEx& arrDest)
+{
+	int	nElems = arrDest.GetSize();
+	for (int iElem = 0; iElem < nElems; iElem++)	// for each element in range
+		GetAt(iFirstElem + iElem) = arrDest[iElem];
+}
+
+template<class TYPE, class ARG_TYPE>
+AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::GetSelection(const CIntArrayEx& arrSelection, CArrayEx& arrDest) const
+{
+	int	nSels = arrSelection.GetSize();
+	arrDest.SetSize(nSels);
+	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected item
+		arrDest[iSel] = GetAt(arrSelection[iSel]);
+}
+
+template<class TYPE, class ARG_TYPE>
+AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::SetSelection(const CIntArrayEx& arrSelection, const CArrayEx& arrDest)
+{
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected item
+		GetAt(arrSelection[iSel]) = arrDest[iSel];
+}
+
+template<class TYPE, class ARG_TYPE>
 AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::InsertSelection(const CIntArrayEx& arrSelection, CArrayEx& arrInsert)
 {
 	int	nSels = arrSelection.GetSize();
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		int	iItem = arrSelection[iSel];
-		InsertAt(iItem, arrInsert[iSel]);
-	}
+	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected item
+		InsertAt(arrSelection[iSel], arrInsert[iSel]);
 }
 
 template<class TYPE, class ARG_TYPE>
 AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::DeleteSelection(const CIntArrayEx& arrSelection)
 {
 	int	nSels = arrSelection.GetSize();
-	for (int iSel = nSels - 1; iSel >= 0; iSel--) {	// reverse iterate for deletion stability
-		int	iItem = arrSelection[iSel];
-		RemoveAt(iItem);
-	}
+	for (int iSel = nSels - 1; iSel >= 0; iSel--)	// reverse iterate for deletion stability
+		RemoveAt(arrSelection[iSel]);
 }
 
 template<class TYPE, class ARG_TYPE>

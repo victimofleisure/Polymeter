@@ -73,6 +73,10 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_RENAME_PRESET,		0.1f},
 	{UCODE_DELETE_PRESETS,		0.1f},
 	{UCODE_MOVE_PRESETS,		0.1f},
+	{UCODE_CREATE_PART,			0.2f},
+	{UCODE_RENAME_PART,			0.1f},
+	{UCODE_DELETE_PARTS,		0.1f},
+	{UCODE_MOVE_PARTS,			0.1f},
 };
 
 CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
@@ -80,7 +84,6 @@ CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
 {
 	m_pDoc = NULL;
 	m_iNextTrack = 0;
-	m_iNextPreset = 0;
 #if 0
 	m_Cycles = 1;
 	m_Passes = 2;
@@ -279,6 +282,13 @@ LONGLONG CTrackUndoTest::GetSnapshot() const
 		LPCTSTR	pszName = preset.m_sName;
 		nSum += Fletcher64(pszName, preset.m_sName.GetLength() * sizeof(TCHAR));	// add preset name
 		nSum += Fletcher64(preset.m_arrMute.GetData(), preset.m_arrMute.GetSize());	// add preset mutes
+	}
+	int	nParts = m_pDoc->m_arrPart.GetSize();
+	for (int iPart = 0; iPart < nParts; iPart++) {	// for each part
+		const CTrackGroup&	preset = m_pDoc->m_arrPart[iPart];
+		LPCTSTR	pszName = preset.m_sName;
+		nSum += Fletcher64(pszName, preset.m_sName.GetLength() * sizeof(TCHAR));	// add preset name
+		nSum += Fletcher64(preset.m_arrTrackIdx.GetData(), preset.m_arrTrackIdx.GetSize());	// add preset track indices
 	}
 //	_tprintf(_T("%I64x\n"), nSum);
 	return(nSum);
@@ -628,8 +638,8 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (iPreset < 0)
 				return(DISABLED);
 			CString	sName;
-			sName.Format(_T("PN%d"), m_iNextPreset);
-			m_iNextPreset++;
+			sName.Format(_T("PRESET%d"), m_iNextTrack);
+			m_iNextTrack++;
 			m_pDoc->SetPresetName(iPreset, sName);
 			PRINTF(_T("%s %d %s\n"), sUndoTitle, iPreset, sName);
 		}
@@ -656,6 +666,54 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (!CDragVirtualListCtrl::CompensateDropPos(arrSelection, iDropPos))
 				return(DISABLED);
 			m_pDoc->MovePresets(arrSelection, iDropPos);
+			PRINTF(_T("%s %s %d\n"), sUndoTitle, PrintSelection(arrSelection), iDropPos);
+		}
+		break;
+	case UCODE_CREATE_PART:
+		{
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
+				return(DISABLED);
+			m_pDoc->m_arrTrackSel = arrSelection;
+			m_pDoc->CreatePart();
+			PRINTF(_T("%s %d\n"), sUndoTitle, m_pDoc->m_arrPart.GetSize());
+		}
+		break;
+	case UCODE_RENAME_PART:
+		{
+			int	nParts = m_pDoc->m_arrPart.GetSize(); 
+			int	iPart = Random(nParts);
+			if (iPart < 0)
+				return(DISABLED);
+			CString	sName;
+			sName.Format(_T("PART%d"), m_iNextTrack);
+			m_iNextTrack++;
+			m_pDoc->SetPartName(iPart, sName);
+			PRINTF(_T("%s %d %s\n"), sUndoTitle, iPart, sName);
+		}
+		break;
+	case UCODE_DELETE_PARTS:
+		{
+			int	nParts = m_pDoc->m_arrPart.GetSize(); 
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(nParts, arrSelection))
+				return(DISABLED);
+			m_pDoc->DeleteParts(arrSelection);
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
+		}
+		break;
+	case UCODE_MOVE_PARTS:
+		{
+			int	nParts = m_pDoc->m_arrPart.GetSize(); 
+			if (nParts < 2)
+				return(DISABLED);
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(nParts, arrSelection))
+				return(DISABLED);
+			int	iDropPos = Random(nParts + 1);
+			if (!CDragVirtualListCtrl::CompensateDropPos(arrSelection, iDropPos))
+				return(DISABLED);
+			m_pDoc->MoveParts(arrSelection, iDropPos);
 			PRINTF(_T("%s %s %d\n"), sUndoTitle, PrintSelection(arrSelection), iDropPos);
 		}
 		break;

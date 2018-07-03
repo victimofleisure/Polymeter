@@ -38,7 +38,7 @@ CSongTrackView::CSongTrackView()
 	m_pSongView = NULL;
 	m_pStepView = NULL;
 	m_nTrackHeight = 20;
-	m_nSelMark = -1;
+	m_iSelMark = -1;
 	m_nScrollPos = 0;
 }
 
@@ -190,14 +190,14 @@ void CSongTrackView::OnLButtonDown(UINT nFlags, CPoint point)
 			pDoc->ToggleSelection(iTrack);
 		} else {	// control key up
 			if (nFlags & MK_SHIFT) {	// if shift key down
-				if (m_nSelMark >= 0 && m_nSelMark < nTracks) {	// if selection mark valid
-					CRange<int>	rng(m_nSelMark, iTrack);
+				if (m_iSelMark >= 0 && m_iSelMark < nTracks) {	// if selection mark valid
+					CRange<int>	rng(m_iSelMark, iTrack);
 					rng.Normalize();
 					pDoc->SelectRange(rng.Start, rng.Length() + 1);
 				}
 			} else {	// no modifier keys
 				pDoc->SelectOnly(iTrack);
-				m_nSelMark = iTrack;
+				m_iSelMark = iTrack;
 			}
 		}
 	} else {	// not on track

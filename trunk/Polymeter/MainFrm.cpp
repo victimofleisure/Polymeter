@@ -450,6 +450,46 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 					m_wndChannelsBar.Update();	// update channels bar so patches are redisplayed in new format
 			}
 			break;
+		case CPolymeterDoc::HINT_PRESET_NAME:
+			{
+				const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+				int	iPreset = pPropHint->m_iItem;
+				m_wndPresetsBar.RedrawItem(iPreset);
+				m_wndPresetsBar.SelectOnly(iPreset);
+			}
+			break;
+		case CPolymeterDoc::HINT_PRESET_ARRAY:
+			{
+				const CPolymeterDoc::CSelectionHint *pSelHint = static_cast<CPolymeterDoc::CSelectionHint *>(pHint);
+				m_wndPresetsBar.Update();
+				if (pSelHint->m_parrSelection != NULL)	// if selection array exists
+					m_wndPresetsBar.SetSelection(*pSelHint->m_parrSelection);	// set selection
+				else if (pSelHint->m_nItems)	// if selection range exists
+					m_wndPresetsBar.SelectRange(pSelHint->m_iFirstItem, pSelHint->m_nItems);	// select range
+				else	// no selection
+					m_wndPresetsBar.Deselect();	// deselect
+			}
+			break;
+		case CPolymeterDoc::HINT_PART_NAME:
+			{
+				const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+				int	iPart = pPropHint->m_iItem;
+				m_wndPartsBar.RedrawItem(iPart);
+				m_wndPartsBar.SelectOnly(iPart);
+			}
+			break;
+		case CPolymeterDoc::HINT_PART_ARRAY:
+			{
+				const CPolymeterDoc::CSelectionHint *pSelHint = static_cast<CPolymeterDoc::CSelectionHint *>(pHint);
+				m_wndPartsBar.Update();
+				if (pSelHint->m_parrSelection != NULL)	// if selection array exists
+					m_wndPartsBar.SetSelection(*pSelHint->m_parrSelection);	// set selection
+				else if (pSelHint->m_nItems)	// if selection range exists
+					m_wndPartsBar.SelectRange(pSelHint->m_iFirstItem, pSelHint->m_nItems);	// select range
+				else	// no selection
+					m_wndPartsBar.Deselect();	// deselect
+			}
+			break;
 		}
 		bool	bIsPlaying = pDoc->m_Seq.IsPlaying();
 		m_wndPropertiesBar.Enable(CMasterProps::PROP_nTimeDiv, !bIsPlaying);
