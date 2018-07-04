@@ -54,6 +54,8 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_TRACK_STEP	_T("Step")
 #define RK_TRACK_DUB_ARRAY	_T("Dub")
 #define RK_TRACK_DUB_COUNT	_T("Dubs")
+#define RK_TRACK_MODULATIONS	_T("Mods")
+
 #define RK_MASTER		_T("Master")
 #define RK_STEP_VIEW	_T("StepView")
 #define RK_STEP_ZOOM	_T("Zoom")
@@ -284,6 +286,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 			nReadSize = nDubs * sizeof(CDub);
 			CPersist::GetBinary(sTrkID, RK_TRACK_DUB_ARRAY, trk.m_arrDub.GetData(), &nReadSize);
 		}
+		ReadTrackModulations(sTrkID, trk);	// read modulations if any
 		m_Seq.SetTrack(iTrack, trk);
 	}
 	if (m_nFileVersion < FILE_VERSION)	// if older format
@@ -327,12 +330,49 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 			theApp.WriteProfileInt(sTrkID, RK_TRACK_DUB_COUNT, nDubs);
 			CPersist::WriteBinary(sTrkID, RK_TRACK_DUB_ARRAY, trk.m_arrDub.GetData(), nDubs * sizeof(CDub));
 		}
+		if (trk.IsModulated())	// if track has modulations
+			WriteTrackModulations(sTrkID, trk);	// write modulations
 	}
 	m_arrChannel.Write();	// write channels
 	m_arrPreset.Write();	// write presets
 	m_arrPart.Write(RK_PART_SECTION);	// write parts
 	WrReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
 	WrReg(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
+}
+
+__forceinline void CPolymeterDoc::ReadTrackModulations(CString sTrkID, CTrack& trk)
+{
+	CString	sModList(CPersist::GetString(sTrkID, RK_TRACK_MODULATIONS));
+	if (!sModList.IsEmpty()) {	// if any modulations
+		CString	sMod;
+		int	iToken = 0;
+		while (!(sMod = sModList.Tokenize(_T(","), iToken)).IsEmpty()) {	// for each modulation token
+			int	iDelim = sMod.Find(':');	// find operator
+			if (iDelim >= 0) {	// if operator found
+				int	iType = FindModulationTypeInternalName(sMod.Left(iDelim));
+				if (iType >= 0) {	// if valid modulation type name found
+					int	iModTrack = _ttoi(sMod.Mid(iDelim + 1));	// get index of modulator track
+					if (iModTrack >= 0 && iModTrack < m_Seq.GetTrackCount())	// if valid track index
+						trk.m_arrModulator[iType] = iModTrack;	// store modulator track index
+				}
+			}
+		}
+	}
+}
+
+__forceinline void CPolymeterDoc::WriteTrackModulations(CString sTrkID, const CTrack& trk) const
+{
+	CString	sModTrack, sModList;
+	for (int iType = 0; iType < MODULATION_TYPES; iType++) {	// for each modulation type
+		int	iModTrack = trk.m_arrModulator[iType];
+		if (iModTrack >= 0) {	// if modulation type applies
+			if (!sModList.IsEmpty())	// if not first token
+				sModList += ',';	// append token separator
+			sModTrack.Format(_T(":%d"), iModTrack);
+			sModList += GetModulationTypeInternalName(iType) + sModTrack;
+		}
+	}
+	CPersist::WriteString(sTrkID, RK_TRACK_MODULATIONS, sModList);
 }
 
 void CPolymeterDoc::ConvertLegacyFileFormat()
@@ -1041,6 +1081,7 @@ void CPolymeterDoc::SaveClipboardTracks(CUndoState& State) const
 		pClipboard->m_iSelMark = m_iTrackSelMark;
 		pClipboard->m_arrPreset = m_arrPreset;
 		pClipboard->m_arrPart = m_arrPart;
+		m_Seq.GetModulations(pClipboard->m_arrMod);
 		State.SetObj(pClipboard);
 		switch (LOWORD(State.GetCode())) {
 		case UCODE_CUT_TRACKS:
@@ -1063,6 +1104,7 @@ void CPolymeterDoc::RestoreClipboardTracks(const CUndoState& State)
 		m_iTrackSelMark = pClipboard->m_iSelMark;	// restore selection mark
 		m_arrPreset = pClipboard->m_arrPreset;	// restore presets
 		m_arrPart = pClipboard->m_arrPart;	// restore parts
+		m_Seq.SetModulations(pClipboard->m_arrMod);	// restore modulations
 	} else {	// deleting
 		{
 			CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
@@ -1576,6 +1618,38 @@ void CPolymeterDoc::RestorePartMove(const CUndoState& State)
 	UpdateAllViews(NULL, HINT_PART_ARRAY, &hint);
 }
 
+void CPolymeterDoc::SaveModulation(CUndoState& State) const
+{
+	const CIntArrayEx	*parrSelection;
+	if (State.IsEmpty()) {	// if initial state
+		parrSelection = &m_arrTrackSel;	// get fresh selection
+	} else {	// undoing or redoing; selection may have changed, so don't rely on it
+		const CUndoModulation	*pInfo = static_cast<CUndoModulation*>(State.GetObj());
+		parrSelection = &pInfo->m_arrSelection;	// use edit's original selection
+	}
+	CRefPtr<CUndoModulation>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrSelection = *parrSelection;
+	int	nSels = parrSelection->GetSize();
+	pInfo->m_arrModulator.SetSize(nSels);
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = parrSelection->GetAt(iSel);
+		m_Seq.GetModulations(iTrack, pInfo->m_arrModulator[iSel]);
+	}
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreModulation(const CUndoState& State)
+{
+	const CUndoModulation	*pInfo = static_cast<CUndoModulation*>(State.GetObj());
+	int	nSels = pInfo->m_arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = pInfo->m_arrSelection[iSel];
+		m_Seq.SetModulations(iTrack, pInfo->m_arrModulator[iSel]);
+	}
+	UpdateAllViews(NULL, HINT_MODULATION);
+}
+
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
 {
 	switch (LOWORD(State.GetCode())) {
@@ -1667,6 +1741,9 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		break;
 	case UCODE_MOVE_PARTS:
 		SavePresetMove(State);	// reuse, not an error
+		break;
+	case UCODE_MODULATION:
+		SaveModulation(State);
 		break;
 	}
 }
@@ -1762,6 +1839,9 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		break;
 	case UCODE_MOVE_PARTS:
 		RestorePartMove(State);
+		break;
+	case UCODE_MODULATION:
+		RestoreModulation(State);
 		break;
 	}
 }
@@ -2072,6 +2152,7 @@ void CPolymeterDoc::OnTrackArrayEdit(const CTrackIDMap& mapTrackID)
 		if (mapTrackID.Lookup(m_Seq.GetID(iNewTrack), iOldTrack))	// if track's ID found in map
 			arrTrackMap[iOldTrack] = iNewTrack;	// store track's new location in mapping table
 	}
+	m_Seq.OnTrackArrayEdit(arrTrackMap);	// fix modulators ASAP to reduce chance of glitches
 	m_arrPreset.OnTrackArrayEdit(arrTrackMap, nNewTracks);
 	m_arrPart.OnTrackArrayEdit(arrTrackMap);
 }

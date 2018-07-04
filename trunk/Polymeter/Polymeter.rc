@@ -262,6 +262,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Properties",                 ID_VIEW_PROPERTIES
         MENUITEM "&Channels",                   ID_VIEW_CHANNELS
+        MENUITEM "&Modulations",                ID_VIEW_MODULATIONS
         POPUP "&Groups"
         BEGIN
             MENUITEM "&Presets",                    ID_VIEW_PRESETS
@@ -673,15 +674,16 @@ BEGIN
     IDS_APP_LICENSE         "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.  You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA."
     IDS_APP_UNKNOWN_SYSTEM_ERROR "Unknown system error %d (0x%X)"
     IDS_BAR_CHANNELS        "Channels"
+    IDS_BAR_MODULATIONS     "Modulations"
     IDS_BAR_PARTS           "Parts"
     IDS_BAR_PRESETS         "Presets"
     IDS_BAR_PROPERTIES      "Properties"
     IDS_CHANNEL_COL_BankLSB "Bank LSB"
-    IDS_CHANNEL_COL_BankMSB "Bank MSB"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_CHANNEL_COL_BankMSB "Bank MSB"
     IDS_CHANNEL_COL_Number  "#"
     IDS_CHANNEL_COL_Pan     "Pan"
     IDS_CHANNEL_COL_Patch   "Patch"
@@ -696,14 +698,15 @@ BEGIN
     IDS_DOC_NEWER_VERSION   "'%1' is from a newer document version. Some of its features may not be supported."
     IDS_DOC_REPLACE_RECORDING 
                             "Recording already exists.\nDo you want to replace it?"
+    IDS_DOC_SELF_MODULATION "Track can't modulate itself."
     IDS_DOC_TRACK_TOO_LONG  "Track too long."
     IDS_EDIT_APPLY_PRESET   "Apply Preset"
-    IDS_EDIT_CREATE_PART    "Create Part"
-    IDS_EDIT_CREATE_PRESET  "Create Preset"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_CREATE_PART    "Create Part"
+    IDS_EDIT_CREATE_PRESET  "Create Preset"
     IDS_EDIT_CUT_STEPS      "Cut Steps"
     IDS_EDIT_CUT_TRACKS     "Cut Tracks"
     IDS_EDIT_DELETE_PARTS   "Delete Parts"
@@ -714,16 +717,17 @@ BEGIN
     IDS_EDIT_INSERT_STEPS   "Insert Steps"
     IDS_EDIT_INSERT_TRACKS  "Insert Tracks"
     IDS_EDIT_MENU           "Edit"
+    IDS_EDIT_MODULATION     "Modulation"
     IDS_EDIT_MOVE_PARTS     "Move Parts"
     IDS_EDIT_MOVE_PRESETS   "Move Presets"
     IDS_EDIT_MOVE_TRACKS    "Move Tracks"
-    IDS_EDIT_MULTI_STEP_RECT "Multiple Steps"
-    IDS_EDIT_PASTE_STEPS    "Paste Steps"
-    IDS_EDIT_PASTE_TRACKS   "Paste Tracks"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_MULTI_STEP_RECT "Multiple Steps"
+    IDS_EDIT_PASTE_STEPS    "Paste Steps"
+    IDS_EDIT_PASTE_TRACKS   "Paste Tracks"
     IDS_EDIT_RECORD         "Record"
     IDS_EDIT_REDO_FMT       "&Redo %s"
     IDS_EDIT_RENAME_PART    "Rename Part"
@@ -738,13 +742,13 @@ BEGIN
     IDS_ERR_TRACK_LENGTH_CURSOR 
                             "Cursor must be over track step to indicate desired length."
     IDS_EXPORT              "Export"
-    IDS_EXPORT_BAD_DURATION "Invalid duration. Time format is HH:MM:SS and duration must be greater than zero."
-    IDS_EXPORT_EMPTY_FILE   "Nothing to export."
-    IDS_EXPORT_ERROR        "Error during export."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EXPORT_BAD_DURATION "Invalid duration. Time format is HH:MM:SS and duration must be greater than zero."
+    IDS_EXPORT_EMPTY_FILE   "Nothing to export."
+    IDS_EXPORT_ERROR        "Error during export."
     IDS_EXPORT_FILE_FILTER  "MIDI Files (*.mid)|*.mid|All Files (*.*)|*.*||"
     IDS_EXPORT_TOO_MANY_TRACKS "Too many tracks."
     IDS_GRID_ERR_BAD_TIME_FORMAT "Enter time in hh:mm:ss format."
@@ -753,20 +757,21 @@ BEGIN
     IDS_MIDI_INPUT          "Input"
     IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
     IDS_MIDI_OUTPUT         "Output"
+    IDS_MOD_SOURCE          "Source"
     IDS_NONE                "<None>"
     IDS_OPT_DESC_General_bCheckForUpdates 
                             "Automatically check for newer version of app during startup"
     IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
     IDS_OPT_DESC_Midi_iInputDevice "Selected MIDI input device"
+END
+
+STRINGTABLE
+BEGIN
     IDS_OPT_DESC_Midi_iOutputDevice "Selected MIDI output device"
     IDS_OPT_DESC_Midi_nBufferSize "Size of MIDI event buffer, in bytes"
     IDS_OPT_DESC_Midi_nLatency "Desired MIDI latency, in milliseconds"
     IDS_OPT_DESC_View_bShowCurPos 
                             "Indicate current position within each track"
-END
-
-STRINGTABLE
-BEGIN
     IDS_OPT_DESC_View_bShowGMNames 
                             "Display General MIDI patch and drum names instead of numbers"
     IDS_OPT_DESC_View_bShowNoteNames 
@@ -782,34 +787,36 @@ BEGIN
     IDS_OPT_NAME_Midi_iInputDevice "Input Device"
     IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
     IDS_OPT_NAME_Midi_nBufferSize "Buffer Size"
-    IDS_OPT_NAME_Midi_nLatency "Latency"
-    IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
-    IDS_OPT_NAME_View_bShowGMNames "Show General MIDI Names"
-    IDS_OPT_NAME_View_bShowNoteNames "Show Note Names"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_Midi_nLatency "Latency"
+    IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
+    IDS_OPT_NAME_View_bShowGMNames "Show General MIDI Names"
+    IDS_OPT_NAME_View_bShowNoteNames "Show Note Names"
     IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
     IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
     IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
     IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
+    IDS_PDR_DESC_nMeter     "Number of beats in a measure"
     IDS_PDR_DESC_nSongLength "Song duration in HH:MM:SS format"
     IDS_PDR_DESC_nTimeDiv   "Time division, in pulses per quarter note"
     IDS_PDR_GROUP_Master    "Master"
     IDS_PDR_NAME_fTempo     "Tempo"
     IDS_PDR_NAME_nKeySig    "Key Signature"
+    IDS_PDR_NAME_nMeter     "Meter"
     IDS_PDR_NAME_nSongLength "Song Length"
+END
+
+STRINGTABLE
+BEGIN
     IDS_PDR_NAME_nTimeDiv   "PPQ"
     IDS_PROPS_MORE_COLORS   "More Colors..."
     IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
     IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format"
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
-END
-
-STRINGTABLE
-BEGIN
     IDS_SORT_DIR_ASCENDING  "Ascending"
     IDS_SORT_DIR_DESCENDING "Descending"
     IDS_STATUS_PANE1        "Pane 1"
@@ -820,16 +827,16 @@ BEGIN
     IDS_TOOLBAR_STANDARD    "Standard"
     IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
     IDS_TRACK_TYPE_CONTROL  "Control"
+END
+
+STRINGTABLE
+BEGIN
     IDS_TRACK_TYPE_KEY_AFT  "Key Aftertouch"
     IDS_TRACK_TYPE_NOTE     "Note"
     IDS_TRACK_TYPE_PATCH    "Patch"
     IDS_TRACK_TYPE_WHEEL    "Wheel"
     IDS_TRK_Channel         "Channel"
     IDS_TRK_Duration        "Duration"
-END
-
-STRINGTABLE
-BEGIN
     IDS_TRK_Length          "Length"
     IDS_TRK_Mute            "Mute"
     IDS_TRK_Name            "Name"
@@ -840,10 +847,14 @@ BEGIN
     IDS_TRK_STEP            "Step"
     IDS_TRK_Swing           "Swing"
     IDS_TRK_Type            "Type"
+END
+
+STRINGTABLE
+BEGIN
     IDS_TRK_Velocity        "Velocity"
+    IDS_TYPE_TRACK          "Track"
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
-    IDS_PDR_NAME_nMeter     "Meter"
-    IDS_PDR_DESC_nMeter     "Number of beats in a measure"
+    IDS_TRACK_TYPE_MODULATOR "Modulator"
 END
 
 STRINGTABLE
@@ -902,6 +913,7 @@ STRINGTABLE
 BEGIN
     ID_VIEW_CHANNELS        "Show or hide the channels bar\nChannels"
     ID_VIEW_CUSTOMIZE       " "
+    ID_VIEW_MODULATIONS     "Show or hide the modulations bar\nModulations"
     ID_VIEW_PARTS           "Show or hide the parts bar\nParts"
     ID_VIEW_PRESETS         "Show or hide the presets bar\nPresets"
     ID_VIEW_PROPERTIES      "Show or hide the properties bar\nProperties"

@@ -364,6 +364,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 		iStep += nLength;	// wrap step index
 	nEvtTime = -nEvtTime;	// start far enough back to discard up to two events
 	bool	bIsOdd = false;	// starting on even step, due to pair of quants logic
+	int	nTracks = GetTrackCount();
 	while (nEvtTime < m_nCBLen) {	// while event time within callback period
 		if (nEvtTime >= 0) {	// discard already played events
 			if (m_bIsSongMode) {	// if applying track dubs
@@ -374,18 +375,32 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 					trk.m_iDub++;
 				}
 			}
-			if (!trk.m_bMute) {
+			int	arrMod[MODULATION_TYPES];
+			for (int iModType = 0; iModType < MODULATION_TYPES; iModType++) {	// for each modulation type
+				int	iModTrack = trk.m_arrModulator[iModType];
+				if (iModTrack >= 0 && iModTrack < nTracks && !GetMute(iModTrack)) {	// if track is modulated
+					int	iModStep = GetStepIndex(iModTrack, nCBStart + nEvtTime);
+					int	nStepVal = GetTrack(iModTrack).m_arrStep[iModStep] & SB_VELOCITY;
+					if (iModType != MT_Mute)	// if modulation isn't mute
+						nStepVal = nStepVal - MIDI_NOTES / 2;	// convert step value to signed offset
+					arrMod[iModType] = nStepVal;
+				} else	// track doesn't have this type of modulation
+					arrMod[iModType] = 0;
+			}
+			if (!trk.m_bMute && !arrMod[MT_Mute]) {	// if track isn't muted
 				if (trk.m_iType == TT_NOTE) {	// if track type is note
-					if (trk.m_arrStep[iStep]) {
+					if (trk.m_arrStep[iStep]) {	// if step isn't empty
 						int	nDurSteps = GetNoteDuration(trk.m_arrStep, nLength, iStep);
 						if (nDurSteps) {	// if at start of note
 							CEvent	evt;
 							evt.m_dwTime = nEvtTime;
-							int	nVel = (trk.m_arrStep[iStep] & SB_VELOCITY) + trk.m_nVelocity;
+							int	nVel = (trk.m_arrStep[iStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
 							nVel = CLAMP(nVel, 0, MIDI_NOTE_MAX);
-							evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, trk.m_nNote, nVel);
+							int	nNote = trk.m_nNote + arrMod[MT_Note];
+							nNote = CLAMP(nNote, 0, MIDI_NOTE_MAX);
+							evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, nNote, nVel);
 							m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
-							int	nDuration = nDurSteps * nQuant + trk.m_nDuration;	// add duration offset
+							int	nDuration = nDurSteps * nQuant + trk.m_nDuration + arrMod[MT_Duration];	// add duration offset
 							if (nDurSteps & 1) {	// if odd duration
 								if (bIsOdd)	// if odd step
 									nDuration -= nSwing;	// subtract swing from duration
@@ -398,8 +413,8 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 							m_arrNoteOff.InsertSorted(evt);	// add pending note off to array
 						}
 					}
-				} else {	// track type isn't note
-					int	nVal = (trk.m_arrStep[iStep] & SB_VELOCITY) + trk.m_nVelocity;
+				} else if (trk.m_iType != TT_MODULATOR) {	// track type isn't note or modulator
+					int	nVal = (trk.m_arrStep[iStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
 					nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
 					if (nVal != trk.m_nCachedParam) {	// if value differs from cached parameter
  						trk.m_nCachedParam = nVal;	// update cached parameter

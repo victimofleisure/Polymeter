@@ -11,7 +11,9 @@
 
 */
 
-// to stay compatible with previously saved documents, don't change existing track types
+// to stay compatible with previously saved documents, don't change existing types
+
+#ifdef TRACKTYPEDEF
 
 TRACKTYPEDEF(NOTE)
 TRACKTYPEDEF(KEY_AFT)
@@ -19,5 +21,17 @@ TRACKTYPEDEF(CONTROL)
 TRACKTYPEDEF(PATCH)
 TRACKTYPEDEF(CHAN_AFT)
 TRACKTYPEDEF(WHEEL)
+TRACKTYPEDEF(MODULATOR)
 
 #undef TRACKTYPEDEF
+#endif	// TRACKTYPEDEF
+
+#ifdef MODTYPEDEF
+
+MODTYPEDEF(Mute)
+MODTYPEDEF(Note)
+MODTYPEDEF(Velocity)
+MODTYPEDEF(Duration)
+
+#undef MODTYPEDEF
+#endif	// MODTYPEDEF

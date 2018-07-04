@@ -459,3 +459,77 @@ void CSeqTrackArray::InsertDubs(int iTrack, int nTime, CDubArray& arrDub)
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	GetAt(iTrack).m_arrDub.InsertDubs(nTime, arrDub);
 }
+
+void CSeqTrackArray::SetModulations(int iTrack, const CModulationArray& arrMod)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	GetAt(iTrack).m_arrModulator = arrMod;
+}
+
+int CSeqTrackArray::GetModulationCount() const
+{
+	int	nMods = 0;
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		for (int iType = 0; iType < MODULATION_TYPES; iType++) {	// for each modulation type
+			if (GetAt(iTrack).m_arrModulator[iType] >= 0)	// if modulation exists
+				nMods++;
+		}
+	}
+	return nMods;
+}
+
+void CSeqTrackArray::GetModulations(CPackedModulationArray& arrMod) const
+{
+	int	nMods = GetModulationCount();
+	arrMod.SetSize(nMods);	// preallocate destination array
+	int	iMod = 0;
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		const CTrack&	trk = GetAt(iTrack);
+		for (int iType = 0; iType < MODULATION_TYPES; iType++) {	// for each modulation type
+			if (trk.m_arrModulator[iType] >= 0) {	// if modulation exists
+				PACKED_MODULATION	mod;
+				mod.iType = iType;
+				mod.iSource = trk.m_arrModulator[iType];
+				mod.iTarget = iTrack;
+				arrMod[iMod] = mod;	// copy modulation info to destination array
+				iMod++;
+			}
+		}
+	}
+}
+
+void CSeqTrackArray::SetModulations(const CPackedModulationArray& arrMod)
+{
+	int	nMods = arrMod.GetSize();
+	int	nTracks = GetSize();
+	CModulationArrayArray	arrTrackMod;
+	arrTrackMod.SetSize(nTracks);
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
+		arrTrackMod[iTrack].Reset();	// reset all modulations to none
+	for (int iMod = 0; iMod < nMods; iMod++) {	// for each packed modulation
+		const PACKED_MODULATION&	mod = arrMod[iMod];
+		arrTrackMod[mod.iTarget][mod.iType] = mod.iSource;	// modulate target track
+	}
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
+		GetAt(iTrack).m_arrModulator = arrTrackMod[iTrack];		// set modulations
+}
+
+void CSeqTrackArray::OnTrackArrayEdit(const CIntArrayEx& arrTrackMap)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	int	nTracks = GetSize();
+	int	nMapTracks = arrTrackMap.GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		CTrack& trk = GetAt(iTrack);
+		for (int iType = 0; iType < MODULATION_TYPES; iType++) {	// for each modulation type
+			int	iModTrack = trk.m_arrModulator[iType];
+			if (iModTrack >= 0 && iModTrack < nMapTracks)	// if modulator index within track map
+				trk.m_arrModulator[iType] = arrTrackMap[iModTrack];
+			else	// modulator index is unspecified or invalid
+				trk.m_arrModulator[iType] = -1;
+		}
+	}
+}

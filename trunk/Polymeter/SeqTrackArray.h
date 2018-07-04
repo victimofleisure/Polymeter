@@ -72,6 +72,13 @@ public:
 	bool	GetNoteVelocity(int iTrack, int iStep, STEP& nStep) const;
 	bool	HasDubs() const;
 	int		GetSongDuration() const;
+	int		GetModulation(int iTrack, int iModType) const;
+	void	SetModulation(int iTrack, int iModType, int iModTrack);
+	void	GetModulations(int iTrack, CModulationArray& arrMod) const;
+	void	SetModulations(int iTrack, const CModulationArray& arrMod);
+	int		GetModulationCount() const;
+	void	GetModulations(CPackedModulationArray& arrMod) const;
+	void	SetModulations(const CPackedModulationArray& arrMod);
 
 // Operations
 	void	AssignID(int iTrack);
@@ -105,6 +112,7 @@ public:
 	void	SetDubs(int iTrack, const CDubArray& arrDub);
 	void	DeleteDubs(int iTrack, int nStartTime, int nEndTime);
 	void	InsertDubs(int iTrack, int nTime, CDubArray& arrDub);
+	void	OnTrackArrayEdit(const CIntArrayEx& arrTrackMap);
 
 protected:
 // Member data
@@ -304,4 +312,19 @@ bool inline CSeqTrackArray::GetDubs(int iTrack, int nStartTime, int nEndTime) co
 void inline CSeqTrackArray::GetDubs(int iTrack, int nStartTime, int nEndTime, CDubArray& arrDub) const
 {
 	return GetAt(iTrack).m_arrDub.GetDubs(nStartTime, nEndTime, arrDub);
+}
+
+inline int CSeqTrackArray::GetModulation(int iTrack, int iModType) const
+{
+	return GetAt(iTrack).m_arrModulator[iModType];
+}
+
+inline void CSeqTrackArray::SetModulation(int iTrack, int iModType, int iModTrack)
+{
+	GetAt(iTrack).m_arrModulator[iModType] = iModTrack;
+}
+
+inline void CSeqTrackArray::GetModulations(int iTrack, CModulationArray& arrMod) const
+{
+	arrMod = GetAt(iTrack).m_arrModulator;
 }

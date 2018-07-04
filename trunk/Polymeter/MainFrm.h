@@ -20,6 +20,7 @@
 #include "ChannelsBar.h"
 #include "PresetsBar.h"
 #include "PartsBar.h"
+#include "ModulationsBar.h"
 
 class CPolymeterDoc;
 
@@ -49,6 +50,7 @@ public:
 	CChannelsBar&	GetChannelsBar();
 	CPresetsBar&	GetPresetsBar();
 	CPartsBar&	GetPartsBar();
+	CModulationsBar&	GetModulationsBar();
 	CString	GetSongPositionString() const;
 	CString	GetSongTimeString() const;
 
@@ -81,6 +83,7 @@ protected:  // control bar embedded members
 	CChannelsBar	  m_wndChannelsBar;
 	CPresetsBar		  m_wndPresetsBar;
 	CPartsBar		  m_wndPartsBar;
+	CModulationsBar	  m_wndModulationsBar;
 
 // Data members
 	CPolymeterDoc	*m_pActiveDoc;		// pointer to active document, or NULL if none
@@ -126,6 +129,8 @@ protected:
 	afx_msg void OnUpdateViewPresets(CCmdUI *pCmdUI);
 	afx_msg void OnViewParts();
 	afx_msg void OnUpdateViewParts(CCmdUI *pCmdUI);
+	afx_msg void OnViewModulations();
+	afx_msg void OnUpdateViewModulations(CCmdUI *pCmdUI);
 	afx_msg void OnWindowFullScreen();
 };
 
@@ -163,6 +168,11 @@ inline CPresetsBar& CMainFrame::GetPresetsBar()
 inline CPartsBar& CMainFrame::GetPartsBar()
 {
 	return m_wndPartsBar;
+}
+
+inline CModulationsBar& CMainFrame::GetModulationsBar()
+{
+	return m_wndModulationsBar;
 }
 
 inline CString CMainFrame::GetSongPositionString() const

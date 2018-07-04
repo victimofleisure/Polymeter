@@ -71,6 +71,7 @@ enum {	// docking bar IDs; don't change, else bar placement won't be restored
 	ID_BAR_CHANNELS,
 	ID_BAR_PRESETS,
 	ID_BAR_PARTS,
+	ID_BAR_MODULATIONS,
 };
 
 #define ID_VIEW_APPLOOK_FIRST ID_VIEW_APPLOOK_OFF_2003
@@ -166,6 +167,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_wndPartsBar.EnableDocking(CBRS_ALIGN_ANY);
 	// combine presets and parts bars into one tabbed bar
 	m_wndPartsBar.AttachToTabWnd(&m_wndPresetsBar, DM_SHOW);
+	m_wndModulationsBar.EnableDocking(CBRS_ALIGN_ANY);
+	DockPane(&m_wndModulationsBar);
 
 	// enable Visual Studio 2005 style docking window behavior
 	CDockingManager::SetDockingMode(DT_SMART);
@@ -270,6 +273,7 @@ void CMainFrame::OnActivateView(CView *pView)
 		m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);	// update song position in status bar
 		m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);	// update song time in status bar
 	}
+	m_wndModulationsBar.OnDocumentChange();
 }
 
 BOOL CMainFrame::CreateDockingWindows()
@@ -304,6 +308,13 @@ BOOL CMainFrame::CreateDockingWindows()
 	if (!m_wndPartsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_PARTS, dwStyle))
 	{
 		TRACE0("Failed to create groups bar\n");
+		return FALSE; // failed to create
+	}
+	sTitle.LoadString(IDS_BAR_MODULATIONS);
+	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
+	if (!m_wndModulationsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_MODULATIONS, dwStyle))
+	{
+		TRACE0("Failed to create modulations bar\n");
 		return FALSE; // failed to create
 	}
 	SetDockingWindowIcons(theApp.m_bHiColorIcons);
@@ -500,6 +511,7 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		m_wndChannelsBar.Update();	// update channels bar
 		SetViewTimer(false);
 	}
+	m_wndModulationsBar.OnUpdate(pSender, lHint, pHint);	// update modulation bar
 }
 
 void CMainFrame::UpdateSongPosition()
@@ -647,6 +659,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_PRESETS, OnUpdateViewPresets)
 	ON_COMMAND(ID_VIEW_PARTS, OnViewParts)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_PARTS, OnUpdateViewParts)
+	ON_COMMAND(ID_VIEW_MODULATIONS, OnViewModulations)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_MODULATIONS, OnUpdateViewModulations)
 	ON_COMMAND(ID_WINDOW_FULL_SCREEN, OnWindowFullScreen)
 END_MESSAGE_MAP()
 
@@ -943,6 +957,19 @@ void CMainFrame::OnViewParts()
 void CMainFrame::OnUpdateViewParts(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_wndPartsBar.IsVisible());
+}
+
+void CMainFrame::OnViewModulations()
+{
+	bool	bShow = !m_wndModulationsBar.IsVisible();
+	m_wndModulationsBar.ShowPane(bShow, 0, TRUE);
+	if (bShow)
+		m_wndModulationsBar.SetFocus();	// ShowPane's activate flag doesn't work
+}
+
+void CMainFrame::OnUpdateViewModulations(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_wndModulationsBar.IsVisible());
 }
 
 void CMainFrame::OnToolsOptions()

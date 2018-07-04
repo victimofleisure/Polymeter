@@ -60,6 +60,7 @@ public:
 		HINT_PRESET_ARRAY,		// preset array edit; pHint is CSelectionHint
 		HINT_PART_NAME,			// part name edit; pHint is CPropHint
 		HINT_PART_ARRAY,		// part array edit; pHint is CSelectionHint
+		HINT_MODULATION,		// modulation edit
 		HINTS
 	};
 	enum {	// view types
@@ -231,6 +232,7 @@ protected:
 		int		m_iSelMark;			// selection mark
 		CPresetArray	m_arrPreset;	// array of presets
 		CTrackGroupArray	m_arrPart;	// array of parts
+		CPackedModulationArray	m_arrMod;	// array of modulations
 	};
 	class CUndoMove : public CRefObj {
 	public:
@@ -296,6 +298,11 @@ protected:
 		CIntArrayEx	m_arrSelection;	// indices of selected parts
 		CTrackGroupArray	m_arrPart;	// array of parts
 	};
+	class CUndoModulation : public CRefObj {
+	public:
+		CIntArrayEx	m_arrSelection;	// indices of selected items
+		CModulationArrayArray	m_arrModulator;	// array of modulator arrays
+	};
 	typedef CMap<UINT, UINT, int, int> CTrackIDMap;
 	class CTrackArrayEdit {
 	public:
@@ -321,6 +328,8 @@ protected:
 	virtual	void	RestoreUndoState(const CUndoState& State);
 
 // Helpers
+	void	ReadTrackModulations(CString sTrkID, CTrack& trk);
+	void	WriteTrackModulations(CString sTrkID, const CTrack& trk) const;
 	void	ConvertLegacyFileFormat();
 	int		GetInsertPos() const;
 	void	DeleteTracks(bool bCopyToClipboard);
@@ -378,6 +387,8 @@ protected:
 	void	SaveParts(CUndoState& State) const;
 	void	RestoreParts(const CUndoState& State);
 	void	RestorePartMove(const CUndoState& State);
+	void	SaveModulation(CUndoState& State) const;
+	void	RestoreModulation(const CUndoState& State);
 
 // Generated message map functions
 protected:

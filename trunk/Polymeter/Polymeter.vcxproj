@@ -213,6 +213,7 @@
     <ClInclude Include="ListBar.h" />
     <ClInclude Include="LiveListCtrl.h" />
     <ClInclude Include="LiveView.h" />
+    <ClInclude Include="ModulationsBar.h" />
     <ClInclude Include="PartsBar.h" />
     <ClInclude Include="HeptatonicDef.h" />
     <ClInclude Include="Hyperlink.h" />
@@ -318,6 +319,7 @@
     <ClCompile Include="ListBar.cpp" />
     <ClCompile Include="LiveListCtrl.cpp" />
     <ClCompile Include="LiveView.cpp" />
+    <ClCompile Include="ModulationsBar.cpp" />
     <ClCompile Include="PartsBar.cpp" />
     <ClCompile Include="Hyperlink.cpp" />
     <ClCompile Include="IniFile.cpp" />

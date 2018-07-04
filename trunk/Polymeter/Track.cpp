@@ -22,6 +22,11 @@ const CProperties::OPTION_INFO CTrackBase::m_oiTrackType[TRACK_TYPES] = {
 	#include "TrackTypeDef.h"	// generate track type name resource IDs
 };
 
+const CProperties::OPTION_INFO CTrackBase::m_oiModulationType[MODULATION_TYPES] = {
+	#define MODTYPEDEF(name) {_T(#name), IDS_TRK_##name},
+	#include "TrackTypeDef.h"	// generate modulation type name resource IDs
+};
+
 void CTrack::SetDefaults()
 {
 	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) m_##prefix##name = defval;
@@ -31,6 +36,7 @@ void CTrack::SetDefaults()
 	m_nCachedParam = -1;	// reset cached parameter
 	m_nUID = 0;
 	m_iDub = 0;
+	m_arrModulator.Reset();
 }
 
 int CTrack::GetUsedStepCount() const
@@ -215,6 +221,14 @@ void CTrackBase::CDubArray::Dump() const
 	printf("%d dubs\n", nDubs);
 	for (int iDub = 0; iDub < nDubs; iDub++)
 		printf("%d: %d %d\n", iDub, GetAt(iDub).m_nTime, GetAt(iDub).m_bMute);
+}
+
+void CTrack::DumpModulations() const
+{
+	printf("[");
+	for (int iType = 0; iType < MODULATION_TYPES; iType++)
+		printf("%d ", m_arrModulator[iType]);
+	printf("]\n");
 }
 
 void CTrackGroupArray::OnTrackArrayEdit(const CIntArrayEx& arrTrackMap)

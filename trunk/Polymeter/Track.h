@@ -14,6 +14,7 @@
 #pragma once
 
 #include "ArrayEx.h"
+#include "FixedArray.h"
 #include "Properties.h"	// for option info
 
 class CTrackBase {
@@ -44,6 +45,11 @@ public:
 		#define TRACKTYPEDEF(name) TT_##name,
 		#include "TrackTypeDef.h"	// generate track type enum
 		TRACK_TYPES
+	};
+	enum {	// modulation types
+		#define MODTYPEDEF(name) MT_##name,
+		#include "TrackTypeDef.h"	// generate modulation type enum
+		MODULATION_TYPES
 	};
 
 // Types
@@ -77,14 +83,29 @@ public:
 		void	Dump() const;
 	};
 	typedef CArrayEx<CDubArray, CDubArray&> CDubArrayArray;	// array of dub arrays
+	class CModulationArray : public CFixedArray<int, MODULATION_TYPES> {
+	public:
+		void	Reset();
+	};
+	typedef CArrayEx<CModulationArray, CModulationArray&> CModulationArrayArray;
+	struct PACKED_MODULATION {
+		int		iType;		// index of modulation type
+		int		iSource;	// index of source track
+		int		iTarget;	// index of target track
+	};
+	typedef CArrayEx<PACKED_MODULATION, PACKED_MODULATION&> CPackedModulationArray;
 
 // Attributes
 	static	CString	GetTrackTypeName(int iType);
 	static	LPCTSTR	GetTrackTypeInternalName(int iType);
+	static	CString	GetModulationTypeName(int iType);
+	static	LPCTSTR	GetModulationTypeInternalName(int iType);
+	static	int		FindModulationTypeInternalName(LPCTSTR sName);
 
 protected:
 // Constants
 	static const CProperties::OPTION_INFO m_oiTrackType[TRACK_TYPES];
+	static const CProperties::OPTION_INFO m_oiModulationType[MODULATION_TYPES];
 };
 
 inline CString CTrackBase::GetTrackTypeName(int iType)
@@ -97,6 +118,27 @@ inline LPCTSTR CTrackBase::GetTrackTypeInternalName(int iType)
 {
 	ASSERT(iType >= 0 && iType < TRACK_TYPES);
 	return m_oiTrackType[iType].pszName;
+}
+
+inline CString CTrackBase::GetModulationTypeName(int iType)
+{
+	ASSERT(iType >= 0 && iType < MODULATION_TYPES);
+	return LDS(m_oiModulationType[iType].nNameID);
+}
+
+inline LPCTSTR CTrackBase::GetModulationTypeInternalName(int iType)
+{
+	ASSERT(iType >= 0 && iType < MODULATION_TYPES);
+	return m_oiModulationType[iType].pszName;
+}
+
+inline int CTrackBase::FindModulationTypeInternalName(LPCTSTR sName)
+{
+	for (int iType = 0; iType < MODULATION_TYPES; iType++) {	// for each modulation type
+		if (!_tcscmp(sName, m_oiModulationType[iType].pszName))
+			return iType;
+	}
+	return -1;
 }
 
 inline CTrackBase::CDub::CDub()
@@ -134,6 +176,12 @@ inline void CTrackBase::CDubArray::InsertDub(int iDub, int nTime, bool bMute)
 	InsertAt(iDub, dub);
 }
 
+inline void CTrackBase::CModulationArray::Reset()
+{
+	#define MODTYPEDEF(name) (*this)[MT_##name] = -1;
+	#include "TrackTypeDef.h"	// generate modulation array init
+}
+
 class CTrack : public CTrackBase {
 public:
 // Construction
@@ -151,15 +199,18 @@ public:
 	int		m_nCachedParam;		// cached parameter, for track types other than note
 	UINT	m_nUID;				// unique ID
 	int		m_iDub;				// index of current dub
+	CModulationArray	m_arrModulator;	// array of track indices of modulators
 
 // Attributes
 	int		GetUsedStepCount() const;
 	void	SetDefaults();
+	bool	IsModulated() const;
 
 // Operations
 	int		CompareProperty(int iProp, const CTrack& track) const;
 	template<class T> static int Compare(const T& a, const T& b);
 	void	CopyKeepingID(const CTrack& track);
+	void	DumpModulations() const;
 };
 
 inline CTrack::CTrack()
@@ -167,6 +218,7 @@ inline CTrack::CTrack()
 	m_nCachedParam = -1;	// reset cached parameter
 	m_nUID = 0;
 	m_iDub = 0;
+	m_arrModulator.Reset();
 }
 
 inline CTrack::CTrack(bool bInit)
@@ -180,6 +232,15 @@ inline void CTrack::CopyKeepingID(const CTrack& track)
 	UINT	nUID = m_nUID;	// save our ID
 	*this = track;	// copy overwrites our ID
 	m_nUID = nUID;	// restore our ID
+}
+
+inline bool CTrack::IsModulated() const
+{
+	for (int iType = 0; iType < MODULATION_TYPES; iType++) {	// for each modulation type
+		if (m_arrModulator[iType] >= 0)
+			return true;
+	}
+	return false;
 }
 
 class CTrackArray : public CArrayEx<CTrack, CTrack&> {
