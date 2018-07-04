@@ -81,9 +81,15 @@ open	close	type	description	rev	user
 03/22/18	06/18/18	done	presets bar	0.0.08.001	
 06/13/18	06/18/18	done	page up / down and home / end keys should behave as usual in step and song views	0.0.08.001	
 06/18/18	06/18/18	done	track view columns disappear due to zero column widths	0.0.08.002	
+03/22/18	06/20/18	done	parts bar for grouping tracks; part members display as a single entity in live view and mute/unmute together	0.0.09.000	
+06/20/18	06/20/18	done	on opening doc, step or song view size is initially incorrect if doc was saved with any zoom other than one	0.0.09.000	
+06/20/18	06/20/18	done	full screen mode	0.0.09.000	
+03/22/18	06/21/18	done	live performance view (similar to Jock) with presets and grouped parts	0.0.09.000	
+05/21/18	06/23/18	done	song meter	0.0.09.002	
+03/22/18	07/03/18	done	inter-track modulation; modulation types are mute, note, velocity, and duration	0.0.09.004	
 03/22/18		hold	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
-03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
+03/22/18		hold	offset and swing modulation; may not be feasible		
 03/25/18		hold	animated visualization		
 03/25/18		hold	playback can be slow to start, due to device open delay; keep output device open all the time?		
 03/25/18		hold	MIDI mapping of all parameters, with manual assignment and learn mode		
@@ -91,20 +97,21 @@ open	close	type	description	rev	user
 04/09/18		hold	undoing track value or step edit should ensure track is visible		
 05/10/18		hold	left-click anywhere in step view should toggle steps or tracks, as in original app; too confusing?		
 05/10/18		hold	right-click in step view background with no selection should show context menu?		
-05/17/18		hold	installed app's shortcut icon has poor resolution; VS2008 bug, use WiX toolset instead?		
+05/17/18		hold	installed app's shortcut icon has poor resolution; VS2008 installer bug, use WiX toolset instead?		
 05/19/18		hold	note correction to chord changes, from ChordEase		
-05/21/18		hold	song meter; affects position dialog, step view ruler, current position in status bar		
 05/21/18		hold	velocity pane visibility should be same for all documents?		
 05/23/18		hold	default note velocity should be configurable		
 05/30/18		hold	song view needs different menus?		
 06/04/18		hold	option to change track name font and thereby change track height		
 06/04/18		hold	song view should indicate undersampling (multiple dubs per cell at current zoom)		
 06/05/18		hold	optionally show tooltips in grid controls (Track and Channels views) via label tip extended style		
+06/21/18		hold	track merge command; combine tracks that have identical settings and non-overlapping steps		
 05/17/18		punt	in velocity pane, left-click on tool tip causes app to flash; all tool tips do this, derived tool tip doesn't help		
 05/21/18		punt	scroll positions should persist in document; more trouble than it's worth?		
 06/08/18		punt	untying note should set all steps to velocity of original tied note; better to preserve velocity		
-03/22/18		todo	live performance view (similar to Jock) with presets and tracks grouped by instrument		
-03/22/18		todo	track grouping and group mute/unmute		
-03/22/18		todo	inter-track modulation; start with mute/unmute, but also note, offset, swing, velocity, duration		
-06/04/18		todo	auto-record option, so that playback always records and recording is auto-saved to new file name; for live shows		
+03/22/18		todo	optional linear interpolation for controller tracks, with adjustable output density		
+03/22/18		todo	radio groups; member tracks automatically mute each other so that only one member sounds at a time		
+03/22/18		todo	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
+05/21/18		todo	if meter is specified, step and song view rulers should show measure:beat instead of just beat		
+06/04/18		todo	auto-record option, so playback always records and recording is auto-saved to new file name; for live shows		
 06/04/18		todo	include live MIDI input in recording; but no way to view or edit it?		
