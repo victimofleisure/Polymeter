@@ -1015,41 +1015,46 @@ void CStepView::OnLButtonDown(UINT nFlags, CPoint point)
 	if (iTrack >= 0) {	// if hit track
 		if (iStep >= 0) {	// if hit step
 			STEP	nStep = pDoc->m_Seq.GetStep(iTrack, iStep);	// get hit step
-			if (nFlags & MK_SHIFT) {	// if shift key down
-				// if track type is note and step is on
-				if (pDoc->m_Seq.GetType(iTrack) == TT_NOTE && nStep)
-					nStep ^= SB_TIE;	// invert tie bit
-			} else {	// shift key up
-				if (nFlags & MK_CONTROL) {	// if control key down
-					nStep = 0;	// clear step
-				} else {	// control key up
-					if (nStep)	// if step is on
+			if (nFlags & MK_CONTROL) {	// if control key is down
+				nStep = 0;	// clear step
+			} else {	// control key is up
+				// if shift key is down and track type is note, toggle tie state
+				if ((nFlags & MK_SHIFT) && pDoc->m_Seq.GetType(iTrack) == TT_NOTE) {
+					if (nStep) {	// if step is on
+						nStep ^= SB_TIE;	// invert tie bit
+					} else {	// step is off
+						if (theApp.m_bTieNotes)	// if notes default to tied
+							nStep = DEFAULT_VELOCITY;	// create untied note (inverse)
+						else	// notes default to tied
+							nStep = DEFAULT_VELOCITY | SB_TIE;	// create tied note (inverse)
+					}
+				} else {	// shift key is up
+					if (nStep) {	// if step is on
 						nStep = 0;	// clear step
-					else {	// step is off
-						// if track type is note and notes should be tied
+					} else {	// step is off
+						// if track type is note and notes default to tied
 						if (pDoc->m_Seq.GetType(iTrack) == TT_NOTE && theApp.m_bTieNotes)
-							nStep = DEFAULT_VELOCITY | SB_TIE;
-						else	// track type isn't note, or notes shouldn't be tied
-							nStep = DEFAULT_VELOCITY;
+							nStep = DEFAULT_VELOCITY | SB_TIE;	// create tied note
+						else	// track type isn't note, or notes default to untied
+							nStep = DEFAULT_VELOCITY;	// create untied note
 					}
 				}
 			}
 			if (HaveStepSelection()) {	// if step selection exists
 				UINT	nToggleFlags;
-				if (nFlags & MK_SHIFT) {	// if shift key down
-					nToggleFlags = SB_TOGGLE_TIE;	// toggle tie
-				} else {	// no shift key
-					if (nFlags & MK_CONTROL) {	// if control key down
-						nToggleFlags = 0;
-					} else {	// control key up
-						nToggleFlags = DEFAULT_VELOCITY;
-						if (theApp.m_bTieNotes)	// if notes should be tied
-							nToggleFlags |= SB_TIE;
-					}
+				if (nFlags & MK_CONTROL) {	// if control key down
+					nToggleFlags = 0;
+				} else {	// control key up
+					if (nFlags & MK_SHIFT)	// if shift key down
+						nToggleFlags = SB_TOGGLE_TIE | DEFAULT_VELOCITY;	// toggle tie state
+					else	// no shift key
+						nToggleFlags = DEFAULT_VELOCITY;	// velocity only
+					if (theApp.m_bTieNotes)	// if notes default to tied
+						nToggleFlags |= SB_TIE;	// set tie bit
 				}
-				if (nToggleFlags)	// if toggle
+				if (nToggleFlags)	// if toggling
 					pDoc->ToggleTrackSteps(m_rStepSel, nToggleFlags);	// toggle selected steps
-				else
+				else	// not toggling
 					pDoc->SetTrackSteps(m_rStepSel, nStep);	// set selected steps
 				m_rStepSel.SetRectEmpty();	// reset step selection
 			} else {	// no step selection

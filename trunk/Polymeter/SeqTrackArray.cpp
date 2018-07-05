@@ -122,12 +122,12 @@ void CSeqTrackArray::ToggleSteps(const CRect& rSelection, UINT nFlags)
 		bool	bToggleTie;
 		STEP	nStep;
 		if (GetType(iTrack) == TT_NOTE) {	// if track type is note
+			nStep = nFlags & (SB_VELOCITY | SB_TIE);	// preserve tie bit
 			if (nFlags & SB_TOGGLE_TIE) {	// if toggling tie
 				bToggleTie = true;
-				nStep = 0;
+				nStep ^= SB_TIE;	// invert tie bit
 			} else {	// not toggling tie
 				bToggleTie = false;
-				nStep = nFlags & (SB_VELOCITY | SB_TIE);	// preserve tie bit
 			}
 		} else {	// track type isn't note
 			bToggleTie = false;
@@ -136,14 +136,13 @@ void CSeqTrackArray::ToggleSteps(const CRect& rSelection, UINT nFlags)
 		CTrack&	trk = GetAt(iTrack);
 		int	iEndStep = min(rSelection.right, GetLength(iTrack));
 		for (int iStep = rSelection.left; iStep < iEndStep; iStep++) {	// for each step in range
-			if (bToggleTie) {	// if toggling tie
-				if (trk.m_arrStep[iStep])	// if step is on
+			if (trk.m_arrStep[iStep]) {	// if note is on
+				if (bToggleTie)	// if toggling tie
 					trk.m_arrStep[iStep] ^= SB_TIE;	// invert tie bit
-			} else {	// not toggling tie
-				if (trk.m_arrStep[iStep])	// if step is on
+				else	// not toggling tie
 					trk.m_arrStep[iStep] = 0;	// clear step
-				else	// step is off
-					trk.m_arrStep[iStep] = nStep;	// set step
+			} else {	// note is off
+				trk.m_arrStep[iStep] = nStep;	// set step
 			}
 		}
 	}
