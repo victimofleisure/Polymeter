@@ -39,6 +39,8 @@ protected:
 	public:
 		virtual void OnPropertyChanged(CMFCPropertyGridProperty* pProp) const;
 		virtual void OnChangeSelection(CMFCPropertyGridProperty* pNewSel, CMFCPropertyGridProperty* pOldSel);
+		virtual	void GetValue(int iProp, CComVariant& varProp, CMFCPropertyGridProperty *pProp) const;
+		virtual	void SetValue(int iProp, const CComVariant& varProp, CMFCPropertyGridProperty *pProp);
 	};
 
 // Data members

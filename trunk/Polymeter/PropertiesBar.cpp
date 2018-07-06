@@ -15,6 +15,7 @@
 #include "Polymeter.h"
 #include "PropertiesBar.h"
 #include "MainFrm.h"
+#include "PolymeterDoc.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -77,6 +78,40 @@ void CPropertiesBar::CMyPropertiesGridCtrl::OnChangeSelection(CMFCPropertyGridPr
 	else
 		iProp = -1;
 	AfxGetMainWnd()->SendMessage(UWM_PROPERTY_SELECT, iProp, reinterpret_cast<LPARAM>(GetParent()));
+}
+
+void CPropertiesBar::CMyPropertiesGridCtrl::GetValue(int iProp, CComVariant& varProp, CMFCPropertyGridProperty *pProp) const
+{
+	switch (iProp) {
+	case CMasterProps::PROP_nStartPos:
+		{
+			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+			LONGLONG	nPos = 0;
+			if (pDoc != NULL && pDoc->m_Seq.ConvertStringToPosition(pProp->GetValue(), nPos)) {
+				varProp.intVal = static_cast<int>(nPos);
+				CString	sPos;
+				pDoc->m_Seq.ConvertPositionToString(varProp.intVal, sPos);
+				pProp->SetValue(sPos);	// display reformatted position
+			} else
+				varProp.intVal = 0;
+		}
+		break;
+	}
+}
+
+void CPropertiesBar::CMyPropertiesGridCtrl::SetValue(int iProp, const CComVariant& varProp, CMFCPropertyGridProperty *pProp)
+{
+	switch (iProp) {
+	case CMasterProps::PROP_nStartPos:
+		{
+			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+			CString	sPos;
+			if (pDoc != NULL)
+				pDoc->m_Seq.ConvertPositionToString(varProp.intVal, sPos);
+			pProp->SetValue(sPos);
+		}
+		break;
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////

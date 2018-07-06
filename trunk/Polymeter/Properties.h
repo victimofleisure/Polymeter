@@ -58,6 +58,7 @@ public:
 		PT_COLOR,		// color picker; value is COLORREF
 		PT_FILE,		// file picker; value is CString
 		PT_TIME,		// time in hh:mm:ss format; value is int
+		PT_CUSTOM,		// user-defined format
 		PROP_TYPES
 	};
 

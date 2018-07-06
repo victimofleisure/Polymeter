@@ -551,6 +551,9 @@ void CPropertiesGridCtrl::GetProperties(CProperties& Props) const
 				arrVar[iProp].intVal = static_cast<int>(ts.GetTimeSpan());
 			}
 			break;
+		case CProperties::PT_CUSTOM:
+			GetValue(iProp, arrVar[iProp], pProp);
+			break;
 		default:
 			arrVar[iProp] = pProp->GetValue();
 		}
@@ -590,10 +593,27 @@ void CPropertiesGridCtrl::SetProperties(const CProperties& Props)
 				pProp->SetValue(sTime);
 			}
 			break;
+		case CProperties::PT_CUSTOM:
+			SetValue(iProp, arrVar[iProp], pProp);
+			break;
 		default:
 			pProp->SetValue(arrVar[iProp]);
 		}
 	}
+}
+
+void CPropertiesGridCtrl::GetValue(int iProp, CComVariant& varProp, CMFCPropertyGridProperty *pProp) const
+{
+	UNREFERENCED_PARAMETER(iProp);
+	UNREFERENCED_PARAMETER(varProp);
+	UNREFERENCED_PARAMETER(pProp);
+}
+
+void CPropertiesGridCtrl::SetValue(int iProp, const CComVariant& varProp, CMFCPropertyGridProperty *pProp)
+{
+	UNREFERENCED_PARAMETER(iProp);
+	UNREFERENCED_PARAMETER(varProp);
+	UNREFERENCED_PARAMETER(pProp);
 }
 
 void CPropertiesGridCtrl::InitPropList(const CProperties& Props)
@@ -665,6 +685,7 @@ void CPropertiesGridCtrl::InitPropList(const CProperties& Props)
 			}
 			break;
 		case CProperties::PT_TIME:
+		case CProperties::PT_CUSTOM:
 			{
 				CValidPropertyGridProperty	*pNumProp = 
 					new CValidPropertyGridProperty(sPropName, _T(""), sPropDescrip, iProp);

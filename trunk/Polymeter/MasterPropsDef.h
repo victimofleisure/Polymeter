@@ -26,6 +26,7 @@ PROPDEF(	Master,		NONE,		ENUM,		int,		nTimeDiv,			TIME_DIV_120,	0,			0,			m_Time
 PROPDEF(	Master,		NONE,		VAR,		int,		nMeter,				1,				1,			INT_MAX,	NULL,		0)
 PROPDEF(	Master,		NONE,		ENUM,		int,		nKeySig,			0,				0,			0,			m_KeySig,	_countof(m_KeySig))
 PROPDEF(	Master,		NONE,		TIME,		int,		nSongLength,		600,			0,			0,			NULL,		0)
+PROPDEF(	Master,		NONE,		CUSTOM,		int,		nStartPos,			0,				INT_MIN,	INT_MAX,	NULL,		0)
 
 #undef PROPDEF
 #endif

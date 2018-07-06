@@ -35,6 +35,7 @@ PROPDEF(	View,		NONE,		VAR,		bool,		bShowCurPos,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowNoteNames,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowGMNames,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		float,		fZoomDelta,			100.0f,		1.0f,		100.0f,		NULL,		0)
+PROPDEF(	General,	NONE,		VAR,		bool,		bPropertyDescrips,	1,			0,			0,			NULL,		0)
 PROPDEF(	General,	NONE,		VAR,		bool,		bCheckForUpdates,	1,			0,			0,			NULL,		0)
 
 #undef PROPDEF

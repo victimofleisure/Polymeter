@@ -338,6 +338,9 @@ void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 			}
 		}
 	}
+	bool	bPropDescs = theApp.m_Options.m_General_bPropertyDescrips;
+	if (pPrevOptions == NULL || bPropDescs != pPrevOptions->m_General_bPropertyDescrips)
+		m_wndPropertiesBar.EnableDescriptionArea(bPropDescs);
 }
 
 void CMainFrame::SetViewTimer(bool bEnable)
@@ -838,6 +841,7 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 		case CMasterProps::PROP_nMeter:
 			pDoc->m_Seq.SetMeter(pDoc->m_nMeter);
 			UpdateSongPosition();	// update song position in status bar
+			m_wndPropertiesBar.SetProperties(*pDoc);	// update start position's format
 			break;
 		case CMasterProps::PROP_nSongLength:
 			if (pDoc->m_Seq.HasDubs()) {

@@ -118,7 +118,6 @@ public:
 	CMySequencer	m_Seq;		// sequencer instance
 	int		m_nFileVersion;		// file version number
 	CUndoManager	m_UndoMgr;	// undo manager
-	CString	m_sGoToPosition;	// previous go to position string
 	CChannelArray	m_arrChannel;	// array of channels
 	CIntArrayEx	m_arrTrackSel;	// array of indices of selected tracks
 	CPresetArray	m_arrPreset;	// array of presets

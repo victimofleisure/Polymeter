@@ -28,6 +28,16 @@ inline void GetVariant(const CComVariant& var, DWORD& val)
 	val = var.uintVal;
 }
 
+inline void GetVariant(const CComVariant& var, LONGLONG& val)
+{
+	val = var.llVal;
+}
+
+inline void GetVariant(const CComVariant& var, ULONGLONG& val)
+{
+	val = var.ullVal;
+}
+
 inline void GetVariant(const CComVariant& var, float& val)
 {
 	val = var.fltVal;

@@ -126,6 +126,10 @@ public:
 	void	InitPropList(const CProperties& Props);
 	void	UpdateOptions(const CProperties& Props, int iProp);
 
+// Overrideables
+	virtual	void	GetValue(int iProp, CComVariant& varProp, CMFCPropertyGridProperty *pProp) const;
+	virtual	void	SetValue(int iProp, const CComVariant& varProp, CMFCPropertyGridProperty *pProp);
+
 protected:
 // Types
 	typedef CArrayEx<CMFCPropertyGridProperty *, CMFCPropertyGridProperty *> CPropertyPtrArray;

@@ -654,6 +654,10 @@ void CSequencer::ConvertPositionToBeat(LONGLONG nPos, LONGLONG& nMeasure, LONGLO
 	if (m_nMeter > 1) {	// if valid meter
 		nMeasure = nBeat / m_nMeter;
 		nBeat = nBeat % m_nMeter;
+		if (nBeat < 0) {	// if negative beat
+			nMeasure--;	// compensate measure
+			nBeat += m_nMeter;	// wrap beat to make it positive
+		}
 	} else	// measure doesn't apply
 		nMeasure = -1;
 }
@@ -671,7 +675,7 @@ void CSequencer::ConvertPositionToString(LONGLONG nPos, CString& sPos) const
 	LONGLONG	nMeasure, nBeat, nTick;
 	ConvertPositionToBeat(nPos, nMeasure, nBeat, nTick);
 	// convert measure and beat from zero-origin to one-origin
-	if (nMeasure >= 0)	// if valid meter
+	if (m_nMeter > 1)	// if valid meter
 		sPos.Format(_T("%lld:%lld:%03lld"), nMeasure + 1, nBeat + 1, nTick);
 	else	// measure doesn't apply
 		sPos.Format(_T("%lld:%03lld"), nBeat + 1, nTick);
@@ -741,12 +745,18 @@ LONGLONG CSequencer::ConvertSecondsToPosition(LONGLONG nSecs) const
 void CSequencer::ConvertPositionToTimeString(LONGLONG nPos, CString& sTime) const
 {
 	LONGLONG	nTime = ConvertPositionToSeconds(nPos);
+	LPCTSTR	pszFormat;
+	if (nTime < 0) {	// if negative time
+		pszFormat = _T("-%lld:%02lld:%02lld");
+		nTime = -nTime;
+	} else
+		pszFormat = _T("%lld:%02lld:%02lld");
 	LONGLONG	nSecs = nTime % 60;
 	nTime /= 60;
 	LONGLONG	nMins = nTime % 60;
 	nTime /= 60;
 	LONGLONG	nHours = nTime;
-	sTime.Format(_T("%lld:%02lld:%02lld"), nHours, nMins, nSecs);
+	sTime.Format(pszFormat, nHours, nMins, nSecs);
 }
 
 int CSequencer::GetSongDurationSeconds() const

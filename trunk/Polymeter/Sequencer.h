@@ -71,6 +71,7 @@ public:
 	bool	GetSongMode() const;
 	void	SetSongMode(bool bEnable);
 	int		GetSongDurationSeconds() const;
+	int		GetStartPosition() const;
 
 // Operations
 	bool	Play(bool bEnable, bool bRecord = false);
@@ -305,3 +306,7 @@ inline void CSequencer::SetSongMode(bool bEnable)
 	m_bIsSongMode = bEnable;
 }
 
+inline int CSequencer::GetStartPosition() const
+{
+	return m_nStartPos;
+}

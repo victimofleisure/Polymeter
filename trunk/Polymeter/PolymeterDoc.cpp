@@ -98,7 +98,6 @@ const CIntArrayEx	*CPolymeterDoc::m_parrSelection;
 // CPolymeterDoc construction/destruction
 
 CPolymeterDoc::CPolymeterDoc() 
-	: m_sGoToPosition("1")
 {
 	m_nFileVersion = FILE_VERSION;
 	m_UndoMgr.SetRoot(this);
@@ -256,6 +255,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 	m_Seq.SetTempo(m_fTempo);
 	m_Seq.SetTimeDivision(CMasterProps::GetTimeDivisionTicks(m_nTimeDiv));
 	m_Seq.SetMeter(m_nMeter);
+	m_Seq.SetPosition(m_nStartPos);
 	int	nTracks = 0;
 	RdReg(RK_TRACK_COUNT, nTracks);
 	ASSERT(!GetTrackCount());	// track array should be empty for proper initialization
@@ -1988,7 +1988,7 @@ void CPolymeterDoc::UpdateSongLength()
 	m_nSongLength = m_Seq.GetSongDurationSeconds();
 	CPropHint	hint(0, CMasterProps::PROP_nSongLength);
 	UpdateAllViews(NULL, HINT_MASTER_PROP, &hint);
-	SetPosition(0);	// rewind
+	SetPosition(m_nStartPos);	// rewind
 }
 
 void CPolymeterDoc::SetPosition(int nPos)
@@ -2666,15 +2666,14 @@ void CPolymeterDoc::OnUpdateTransportRecord(CCmdUI *pCmdUI)
 
 void CPolymeterDoc::OnTransportRewind()
 {
-	SetPosition(0);
+	SetPosition(m_nStartPos);
 }
 
 void CPolymeterDoc::OnTransportGoToPosition()
 {
 	CGoToPositionDlg	dlg;
-	dlg.m_sPos = m_sGoToPosition;
+	m_Seq.ConvertPositionToString(m_Seq.GetStartPosition(), dlg.m_sPos);
 	if (dlg.DoModal() == IDOK) {
-		m_sGoToPosition = dlg.m_sPos;
 		LONGLONG	nPos;
 		if (m_Seq.ConvertStringToPosition(dlg.m_sPos, nPos)) {
 			SetPosition(static_cast<int>(nPos));
