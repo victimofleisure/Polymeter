@@ -28,6 +28,7 @@ public:
 // Operations
 public:
 	void	Update();
+	void	UpdateMembers();
 
 // Overrides
 	virtual	LPCTSTR GetItemText(int iItem);
@@ -54,4 +55,6 @@ protected:
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnTrackPartCreate();
 	afx_msg void OnUpdateTrackPartCreate(CCmdUI *pCmdUI);
+	afx_msg void OnTrackPartUpdate();
+	afx_msg void OnUpdateTrackPartUpdate(CCmdUI *pCmdUI);
 };

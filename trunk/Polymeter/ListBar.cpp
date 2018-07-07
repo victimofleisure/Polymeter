@@ -206,5 +206,5 @@ void CListBar::OnEditRename()
 
 void CListBar::OnUpdateEditRename(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_list.GetSelectionMark() >= 0);
+	pCmdUI->Enable(m_list.GetSelectedCount() == 1);
 }

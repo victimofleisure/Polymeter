@@ -88,6 +88,16 @@ void CPartsBar::Move(int iDropPos)
 	pDoc->MoveParts(arrSelection, iDropPos);
 }
 
+void CPartsBar::UpdateMembers()
+{
+	int	iItem = m_list.GetSelectionMark();
+	if (iItem >= 0) {
+		CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+		ASSERT(pDoc != NULL);
+		pDoc->UpdatePart(iItem);
+	}
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CPartsBar message map
 
@@ -95,6 +105,8 @@ BEGIN_MESSAGE_MAP(CPartsBar, CListBar)
 	ON_WM_CONTEXTMENU()
 	ON_COMMAND(ID_TRACK_PART_CREATE, OnTrackPartCreate)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_PART_CREATE, OnUpdateTrackPartCreate)
+	ON_COMMAND(ID_TRACK_PART_UPDATE, OnTrackPartUpdate)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_PART_UPDATE, OnUpdateTrackPartUpdate)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -126,5 +138,17 @@ void CPartsBar::OnUpdateTrackPartCreate(CCmdUI *pCmdUI)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	bool	bEnable = pDoc != NULL && pDoc->GetSelectedCount();
+	pCmdUI->Enable(bEnable);
+}
+
+void CPartsBar::OnTrackPartUpdate()
+{
+	UpdateMembers();
+}
+
+void CPartsBar::OnUpdateTrackPartUpdate(CCmdUI *pCmdUI)
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	bool	bEnable = pDoc != NULL && pDoc->GetSelectedCount() && m_list.GetSelectedCount() == 1;
 	pCmdUI->Enable(bEnable);
 }

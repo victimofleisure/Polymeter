@@ -39,21 +39,6 @@ CPropertiesBar::~CPropertiesBar()
 {
 }
 
-void CPropertiesBar::SetInitialProperties(const CMasterProps& Props)
-{
-	m_pInitialProps = &Props;
-}
-
-void CPropertiesBar::GetProperties(CMasterProps& Props) const
-{
-	m_Grid.GetProperties(Props);
-}
-
-void CPropertiesBar::SetProperties(const CMasterProps& Props)
-{
-	m_Grid.SetProperties(Props);
-}
-
 void CPropertiesBar::InitPropList(const CProperties& Props)
 {
 	m_Grid.EnableHeaderCtrl(FALSE);
@@ -80,7 +65,7 @@ void CPropertiesBar::CMyPropertiesGridCtrl::OnChangeSelection(CMFCPropertyGridPr
 	AfxGetMainWnd()->SendMessage(UWM_PROPERTY_SELECT, iProp, reinterpret_cast<LPARAM>(GetParent()));
 }
 
-void CPropertiesBar::CMyPropertiesGridCtrl::GetValue(int iProp, CComVariant& varProp, CMFCPropertyGridProperty *pProp) const
+void CPropertiesBar::CMyPropertiesGridCtrl::GetCustomValue(int iProp, CComVariant& varProp, CMFCPropertyGridProperty *pProp) const
 {
 	switch (iProp) {
 	case CMasterProps::PROP_nStartPos:
@@ -99,7 +84,7 @@ void CPropertiesBar::CMyPropertiesGridCtrl::GetValue(int iProp, CComVariant& var
 	}
 }
 
-void CPropertiesBar::CMyPropertiesGridCtrl::SetValue(int iProp, const CComVariant& varProp, CMFCPropertyGridProperty *pProp)
+void CPropertiesBar::CMyPropertiesGridCtrl::SetCustomValue(int iProp, const CComVariant& varProp, CMFCPropertyGridProperty *pProp)
 {
 	switch (iProp) {
 	case CMasterProps::PROP_nStartPos:

@@ -13,6 +13,26 @@
 
 #pragma once
 
+inline void GetVariant(const CComVariant& var, char& val)
+{
+	val = var.cVal;
+}
+
+inline void GetVariant(const CComVariant& var, BYTE& val)
+{
+	val = var.bVal;
+}
+
+inline void GetVariant(const CComVariant& var, short& val)
+{
+	val = var.iVal;
+}
+
+inline void GetVariant(const CComVariant& var, USHORT& val)
+{
+	val = var.uiVal;
+}
+
 inline void GetVariant(const CComVariant& var, int& val)
 {
 	val = var.intVal;

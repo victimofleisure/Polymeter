@@ -44,7 +44,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	5
+#define	FILE_VERSION	6
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -377,6 +377,7 @@ __forceinline void CPolymeterDoc::WriteTrackModulations(CString sTrkID, const CT
 
 void CPolymeterDoc::ConvertLegacyFileFormat()
 {
+	const STEP	nLegacyDefaultVelocity = 64;
 	if (!m_nFileVersion) {	// if file version 0
 		// steps were boolean; for non-zero steps, substitute default velocity
 		int	nTracks = GetTrackCount();
@@ -384,7 +385,7 @@ void CPolymeterDoc::ConvertLegacyFileFormat()
 			int	nSteps = m_Seq.GetLength(iTrack);
 			for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
 				if (m_Seq.GetStep(iTrack, iStep))
-					m_Seq.SetStep(iTrack, iStep, DEFAULT_VELOCITY);
+					m_Seq.SetStep(iTrack, iStep, nLegacyDefaultVelocity);
 			}
 		}
 	}
@@ -1481,11 +1482,27 @@ void CPolymeterDoc::RestorePresetName(const CUndoState& State)
 	UpdateAllViews(NULL, HINT_PRESET_NAME, &hint);
 }
 
-void CPolymeterDoc::SavePresets(CUndoState& State) const
+void CPolymeterDoc::SavePreset(CUndoState& State) const
+{
+	int	iPreset = State.GetCtrlID();
+	CRefPtr<CUndoSolo>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrMute = m_arrPreset[iPreset].m_arrMute;
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestorePreset(const CUndoState& State)
+{
+	int	iPreset = State.GetCtrlID();
+	const CUndoSolo	*pInfo = static_cast<CUndoSolo*>(State.GetObj());	
+	m_arrPreset[iPreset].m_arrMute = pInfo->m_arrMute;
+}
+
+void CPolymeterDoc::SaveSelectedPresets(CUndoState& State) const
 {
 	if (UndoMgrIsIdle()) {	// if initial state
 		ASSERT(m_parrSelection != NULL);
-		CRefPtr<CUndoPreset>	pInfo;
+		CRefPtr<CUndoSelectedPresets>	pInfo;
 		pInfo.CreateObj();
 		pInfo->m_arrSelection = *m_parrSelection;
 		m_arrPreset.GetSelection(*m_parrSelection, pInfo->m_arrPreset);
@@ -1500,9 +1517,9 @@ void CPolymeterDoc::SavePresets(CUndoState& State) const
 	}
 }
 
-void CPolymeterDoc::RestorePresets(const CUndoState& State)
+void CPolymeterDoc::RestoreSelectedPresets(const CUndoState& State)
 {
-	CUndoPreset	*pInfo = static_cast<CUndoPreset*>(State.GetObj());
+	CUndoSelectedPresets	*pInfo = static_cast<CUndoSelectedPresets*>(State.GetObj());
 	bool	bInserting = GetUndoAction() == State.m_Val.p.x.i; 
 	CSelectionHint	hint;
 	if (bInserting) {	// if inserting
@@ -1564,11 +1581,27 @@ void CPolymeterDoc::RestorePartName(const CUndoState& State)
 	UpdateAllViews(NULL, HINT_PART_NAME, &hint);
 }
 
-void CPolymeterDoc::SaveParts(CUndoState& State) const
+void CPolymeterDoc::SavePart(CUndoState& State) const
+{
+	int	iPart = State.GetCtrlID();
+	CRefPtr<CUndoSelection>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrSelection = m_arrPart[iPart].m_arrTrackIdx;
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestorePart(const CUndoState& State)
+{
+	int	iPart = State.GetCtrlID();
+	const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
+	m_arrPart[iPart].m_arrTrackIdx = pInfo->m_arrSelection;
+}
+
+void CPolymeterDoc::SaveSelectedParts(CUndoState& State) const
 {
 	if (UndoMgrIsIdle()) {	// if initial state
 		ASSERT(m_parrSelection != NULL);
-		CRefPtr<CUndoPart>	pInfo;
+		CRefPtr<CUndoSelectedParts>	pInfo;
 		pInfo.CreateObj();
 		pInfo->m_arrSelection = *m_parrSelection;
 		m_arrPart.GetSelection(*m_parrSelection, pInfo->m_arrPart);
@@ -1583,9 +1616,9 @@ void CPolymeterDoc::SaveParts(CUndoState& State) const
 	}
 }
 
-void CPolymeterDoc::RestoreParts(const CUndoState& State)
+void CPolymeterDoc::RestoreSelectedParts(const CUndoState& State)
 {
-	CUndoPart	*pInfo = static_cast<CUndoPart*>(State.GetObj());
+	CUndoSelectedParts	*pInfo = static_cast<CUndoSelectedParts*>(State.GetObj());
 	bool	bInserting = GetUndoAction() == State.m_Val.p.x.i; 
 	CSelectionHint	hint;
 	if (bInserting) {	// if inserting
@@ -1725,9 +1758,12 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 	case UCODE_RENAME_PRESET:
 		SavePresetName(State);
 		break;
+	case UCODE_UPDATE_PRESET:
+		SavePreset(State);
+		break;
 	case UCODE_CREATE_PRESET:
 	case UCODE_DELETE_PRESETS:
-		SavePresets(State);
+		SaveSelectedPresets(State);
 		break;
 	case UCODE_MOVE_PRESETS:
 		SavePresetMove(State);
@@ -1735,9 +1771,12 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 	case UCODE_RENAME_PART:
 		SavePartName(State);
 		break;
+	case UCODE_UPDATE_PART:
+		SavePart(State);
+		break;
 	case UCODE_CREATE_PART:
 	case UCODE_DELETE_PARTS:
-		SaveParts(State);
+		SaveSelectedParts(State);
 		break;
 	case UCODE_MOVE_PARTS:
 		SavePresetMove(State);	// reuse, not an error
@@ -1823,9 +1862,12 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_RENAME_PRESET:
 		RestorePresetName(State);
 		break;
+	case UCODE_UPDATE_PRESET:
+		RestorePreset(State);
+		break;
 	case UCODE_CREATE_PRESET:
 	case UCODE_DELETE_PRESETS:
-		RestorePresets(State);
+		RestoreSelectedPresets(State);
 		break;
 	case UCODE_MOVE_PRESETS:
 		RestorePresetMove(State);
@@ -1833,9 +1875,12 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_RENAME_PART:
 		RestorePartName(State);
 		break;
+	case UCODE_UPDATE_PART:
+		RestorePart(State);
+		break;
 	case UCODE_CREATE_PART:
 	case UCODE_DELETE_PARTS:
-		RestoreParts(State);
+		RestoreSelectedParts(State);
 		break;
 	case UCODE_MOVE_PARTS:
 		RestorePartMove(State);
@@ -1944,6 +1989,8 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 {
 	if (bPlay == m_Seq.IsPlaying())	// if already in requested state
 		return true;	// nothing to do
+	if (theApp.m_Options.m_General_bAlwaysRecord)	// if always recording
+		bRecord = true;
 	if (bPlay) {	// if starting playback
 		if (bRecord && m_Seq.HasDubs()) {	// if recording already exists
 			UINT	nType = MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION;
@@ -1980,7 +2027,38 @@ void CPolymeterDoc::OnPlay(bool bPlay, bool bRecord)
 {
 	if (!bPlay && bRecord) {	// if ending a recording
 		UpdateSongLength();
+		if (theApp.m_Options.m_General_bAlwaysRecord) {	// if always recording
+			CString	sPath;
+			if (CreateAutoSavePath(sPath)) {	// if auto-save path created
+				WriteProperties(sPath);	// automatically save document
+				SetModifiedFlag(false);
+			}
+		}
 	}
+}
+
+bool CPolymeterDoc::CreateAutoSavePath(CString& sPath) const
+{
+	CPathStr	sFolder;
+	if (!theApp.GetAppDataFolder(sFolder)) {
+		AfxMessageBox(GetLastErrorString());
+		return false;
+	}
+	// if destination folder doesn't already exist, create it
+	if (!PathFileExists(sFolder) && !theApp.CreateFolder(sFolder)) {
+		AfxMessageBox(GetLastErrorString());
+		return false;
+	}
+	CPathStr	sFileName(GetTitle());
+	sFileName.RemoveExtension();
+	CString	sTimestamp(CTime::GetCurrentTime().Format(_T("_%Y_%m_%d_%H_%M_%S")));
+	sFileName += sTimestamp;	// ensure unique file name
+	CString	sDocExt;
+	GetDocTemplate()->GetDocString(sDocExt, CDocTemplate::filterExt);
+	sFileName += sDocExt;	// add document extension
+	sFolder.Append(sFileName);	// append file name to folder
+	sPath = sFolder;	// return path to caller
+	return true;
 }
 
 void CPolymeterDoc::UpdateSongLength()
@@ -2200,7 +2278,7 @@ void CPolymeterDoc::UpdatePreset(int iPreset)
 	CIntArrayEx	arrSelection;
 	arrSelection.Add(iPreset);
 	m_parrSelection = &arrSelection;
-	NotifyUndoableEdit(0, UCODE_CREATE_PRESET);
+	NotifyUndoableEdit(iPreset, UCODE_UPDATE_PRESET);
 	m_parrSelection = NULL;	// reset selection pointer
 	CPreset&	preset = m_arrPreset[iPreset];
 	m_Seq.GetMutes(preset.m_arrMute);
@@ -2215,23 +2293,31 @@ void CPolymeterDoc::SetPresetName(int iPreset, CString sName)
 	UpdateAllViews(NULL, HINT_PRESET_NAME, &hint);
 }
 
+bool CPolymeterDoc::CheckForPartOverlap(int iTargetPart) const
+{
+	CIntArrayEx	arrTrackIdx;
+	arrTrackIdx.SetSize(GetTrackCount());
+	m_arrPart.GetTrackRefs(arrTrackIdx);
+	int	nSels = GetSelectedCount();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = m_arrTrackSel[iSel];
+		int	iPart = arrTrackIdx[iTrack];
+		if (iPart >= 0 && iPart != iTargetPart) {	// if track already belongs to a part other than target
+			AfxMessageBox(IDS_DOC_GROUP_OVERLAP);
+			return false;	// user error; track can't belong to multiple parts
+		}
+	}
+	return true;
+}
+
 void CPolymeterDoc::CreatePart()
 {
 	ASSERT(GetSelectedCount());	// selection must exist
 	if (!GetSelectedCount())
 		return;
-	CIntArrayEx	arrTrackIdx;
-	arrTrackIdx.SetSize(GetTrackCount());
-	m_arrPart.GetTrackRefs(arrTrackIdx);
 #if !TRACK_UNDO_TEST
-	int	nSels = GetSelectedCount();
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		int	iTrack = m_arrTrackSel[iSel];
-		if (arrTrackIdx[iTrack] >= 0) {	// if track already belongs to a part
-			AfxMessageBox(IDS_DOC_GROUP_OVERLAP);
-			return;	// user error; track can't belong to multiple parts
-		}
-	}
+	if (!CheckForPartOverlap())
+		return;
 #endif
 	m_parrSelection = NULL;	// reset selection pointer
 	CTrackGroup	part;
@@ -2247,6 +2333,19 @@ void CPolymeterDoc::CreatePart()
 	NotifyUndoableEdit(0, UCODE_CREATE_PART);
 	CSelectionHint	hint(&arrSelection);
 	UpdateAllViews(NULL, HINT_PART_ARRAY, &hint);
+}
+
+void CPolymeterDoc::UpdatePart(int iPart)
+{
+	ASSERT(GetSelectedCount());	// selection must exist
+	if (!GetSelectedCount())
+		return;
+#if !TRACK_UNDO_TEST
+	if (!CheckForPartOverlap(iPart))
+		return;
+#endif
+	NotifyUndoableEdit(iPart, UCODE_UPDATE_PART);
+	m_arrPart[iPart].m_arrTrackIdx = m_arrTrackSel;
 }
 
 void CPolymeterDoc::DeleteParts(const CIntArrayEx& arrSelection)

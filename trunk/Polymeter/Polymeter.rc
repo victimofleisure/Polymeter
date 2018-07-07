@@ -388,6 +388,7 @@ BEGIN
         MENUITEM "&Create",                     ID_TRACK_PART_CREATE
         MENUITEM "&Delete",                     ID_EDIT_DELETE
         MENUITEM "&Rename",                     ID_EDIT_RENAME
+        MENUITEM "&Update",                     32831
     END
 END
 
@@ -474,15 +475,15 @@ BEGIN
     COMBOBOX        IDC_MASTER_OUT_DEVICE,53,13,96,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_OPTIONS DIALOGEX 0, 0, 311, 227
+IDD_OPTIONS DIALOGEX 0, 0, 311, 250
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Options"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "",IDC_OPTIONS_GRID,"MfcPropertyGrid",WS_TABSTOP | 0x100,7,7,297,193
-    DEFPUSHBUTTON   "OK",IDOK,199,206,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,254,206,50,14
-    PUSHBUTTON      "&Reset All",IDC_OPTIONS_RESET_ALL,7,206,50,14
+    CONTROL         "",IDC_OPTIONS_GRID,"MfcPropertyGrid",WS_TABSTOP | 0x100,7,7,297,216
+    DEFPUSHBUTTON   "OK",IDOK,199,229,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,254,229,50,14
+    PUSHBUTTON      "&Reset All",IDC_OPTIONS_RESET_ALL,7,229,50,14
 END
 
 IDD_PROGRESS DIALOG 0, 0, 186, 49
@@ -578,7 +579,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 304
         TOPMARGIN, 7
-        BOTTOMMARGIN, 220
+        BOTTOMMARGIN, 243
     END
 
     IDD_PROGRESS, DIALOG
@@ -738,14 +739,15 @@ BEGIN
     IDS_EDIT_SOLO           "Solo"
     IDS_EDIT_TRACK_SORT     "Track Sort"
     IDS_EDIT_UNDO_FMT       "&Undo %s"
+    IDS_EDIT_UPDATE_PRESET  "Update Preset"
     IDS_EDIT_VELOCITY       "Velocity"
     IDS_ERR_TRACK_LENGTH_CURSOR 
                             "Cursor must be over track step to indicate desired length."
-    IDS_EXPORT              "Export"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EXPORT              "Export"
     IDS_EXPORT_BAD_DURATION "Invalid duration. Time format is HH:MM:SS and duration must be greater than zero."
     IDS_EXPORT_EMPTY_FILE   "Nothing to export."
     IDS_EXPORT_ERROR        "Error during export."
@@ -759,18 +761,22 @@ BEGIN
     IDS_MIDI_OUTPUT         "Output"
     IDS_MOD_SOURCE          "Source"
     IDS_NONE                "<None>"
+    IDS_OPT_DESC_General_bAlwaysRecord 
+                            "Always record dubs during playback and automatically save the recordings"
     IDS_OPT_DESC_General_bCheckForUpdates 
                             "Automatically check for newer version of app during startup"
-    IDS_OPT_DESC_General_bPropertyDescrips 
-                            "If true, show descriptions area in properties bar"
-    IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_General_bPropertyDescrips 
+                            "If true, show descriptions area in properties bar"
+    IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
     IDS_OPT_DESC_Midi_iInputDevice "Selected MIDI input device"
     IDS_OPT_DESC_Midi_iOutputDevice "Selected MIDI output device"
     IDS_OPT_DESC_Midi_nBufferSize "Size of MIDI event buffer, in bytes"
+    IDS_OPT_DESC_Midi_nDefaultVelocity 
+                            "Default note velocity or controller value for new steps"
     IDS_OPT_DESC_Midi_nLatency "Desired MIDI latency, in milliseconds"
     IDS_OPT_DESC_View_bShowCurPos 
                             "Indicate current position within each track"
@@ -784,16 +790,18 @@ BEGIN
     IDS_OPT_GROUP_General   "General"
     IDS_OPT_GROUP_Midi      "MIDI"
     IDS_OPT_GROUP_View      "View"
-    IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
-    IDS_OPT_NAME_General_bPropertyDescrips "Show Property Descriptions"
-    IDS_OPT_NAME_Midi_bThru "Thru"
-    IDS_OPT_NAME_Midi_iInputDevice "Input Device"
+    IDS_OPT_NAME_General_bAlwaysRecord "Always Record"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
+    IDS_OPT_NAME_General_bPropertyDescrips "Show Property Descriptions"
+    IDS_OPT_NAME_Midi_bThru "Thru"
+    IDS_OPT_NAME_Midi_iInputDevice "Input Device"
     IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
     IDS_OPT_NAME_Midi_nBufferSize "Buffer Size"
+    IDS_OPT_NAME_Midi_nDefaultVelocity "Default Velocity"
     IDS_OPT_NAME_Midi_nLatency "Latency"
     IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
     IDS_OPT_NAME_View_bShowGMNames "Show General MIDI Names"
@@ -803,15 +811,15 @@ BEGIN
     IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
     IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
     IDS_PDR_DESC_nMeter     "Number of beats in a measure"
+END
+
+STRINGTABLE
+BEGIN
     IDS_PDR_DESC_nSongLength "Song duration in HH:MM:SS format"
     IDS_PDR_DESC_nStartPos  "Starting position of song in beats and ticks"
     IDS_PDR_DESC_nTimeDiv   "Time division, in pulses per quarter note"
     IDS_PDR_GROUP_Master    "Master"
     IDS_PDR_NAME_fTempo     "Tempo"
-END
-
-STRINGTABLE
-BEGIN
     IDS_PDR_NAME_nKeySig    "Key Signature"
     IDS_PDR_NAME_nMeter     "Meter"
     IDS_PDR_NAME_nSongLength "Song Length"
@@ -823,15 +831,15 @@ BEGIN
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
     IDS_SORT_DIR_ASCENDING  "Ascending"
+END
+
+STRINGTABLE
+BEGIN
     IDS_SORT_DIR_DESCENDING "Descending"
     IDS_STATUS_PANE1        "Pane 1"
     IDS_STATUS_PANE2        "Pane 2"
     IDS_TIME_TO_REPEAT_DAYS "days"
     IDS_TIME_TO_REPEAT_FMT  "%s beats\n%s\nGreatest prime factor is %s"
-END
-
-STRINGTABLE
-BEGIN
     IDS_TOOLBAR_CUSTOMIZE   "Customize..."
     IDS_TOOLBAR_STANDARD    "Standard"
     IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
@@ -843,15 +851,15 @@ BEGIN
     IDS_TRACK_TYPE_WHEEL    "Wheel"
     IDS_TRK_Channel         "Channel"
     IDS_TRK_Duration        "Duration"
+END
+
+STRINGTABLE
+BEGIN
     IDS_TRK_Length          "Length"
     IDS_TRK_Mute            "Mute"
     IDS_TRK_Name            "Name"
     IDS_TRK_Note            "Note"
     IDS_TRK_Number          "#"
-END
-
-STRINGTABLE
-BEGIN
     IDS_TRK_Offset          "Offset"
     IDS_TRK_Quant           "Quant"
     IDS_TRK_STEP            "Step"
@@ -860,6 +868,7 @@ BEGIN
     IDS_TRK_Velocity        "Velocity"
     IDS_TYPE_TRACK          "Track"
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
+    IDS_EDIT_UPDATE_PART    "Update Part"
 END
 
 STRINGTABLE
@@ -931,6 +940,7 @@ BEGIN
     ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "&Windows..."
+    ID_TRACK_PART_UPDATE    "Update the selected part from the selected tracks\nUpdate Part"
 END
 
 STRINGTABLE

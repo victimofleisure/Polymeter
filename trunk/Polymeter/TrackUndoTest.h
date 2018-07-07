@@ -48,7 +48,7 @@ protected:
 	int		GetRandomInsertPos() const;
 	bool	MakeRandomSelection(int nItems, CIntArrayEx& arrSelection) const;
 	void	MakeRandomTrackProperty(int iTrack, int iProp, CComVariant& var);
-	void	MakeRandomMasterProperty(int iProp, CComVariant& var);
+	bool	MakeRandomMasterProperty(int iProp, CComVariant& var);
 	bool	GetRandomStep(CPoint& ptStep) const;
 	bool	MakeRandomStepSelection(CRect& rSelection) const;
 	CString	PrintSelection(CIntArrayEx& arrSelection) const;

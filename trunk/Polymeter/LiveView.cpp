@@ -28,6 +28,8 @@
 
 IMPLEMENT_DYNCREATE(CLiveView, CView)
 
+const COLORREF CLiveView::m_clrSoloBtn = RGB(128, 255, 128);
+
 // CLiveView construction/destruction
 
 CLiveView::CLiveView()
@@ -90,13 +92,21 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			}
 			break;
 		case CPolymeterDoc::HINT_SONG_POS:
-			{
-				CMainFrame	*pMain = theApp.GetMainFrame();
-				m_wndSongPos.SetWindowText(pMain->GetSongPositionString());
-			}
+			UpdateSongCounters();
+			break;
+		case CPolymeterDoc::HINT_VIEW_TYPE:
+			if (pDoc->m_nViewType == CPolymeterDoc::VIEW_LIVE)
+				UpdateSongCounters();
 			break;
 		}
 	}
+}
+
+void CLiveView::UpdateSongCounters()
+{
+	CMainFrame	*pMain = theApp.GetMainFrame();
+	m_wndSongCounter[SONG_COUNTER_POS].SetWindowText(pMain->GetSongPositionString());
+	m_wndSongCounter[SONG_COUNTER_TIME].SetWindowText(pMain->GetSongTimeString());
 }
 
 void CLiveView::Update()
@@ -323,6 +333,9 @@ BEGIN_MESSAGE_MAP(CLiveView, CView)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditDisable)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditDisable)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_RENAME, OnUpdateEditDisable)
+	ON_WM_CTLCOLOR()
+	ON_STN_CLICKED(IDC_SOLO_BTN, OnSoloBtnClicked)
+	ON_STN_DBLCLK(IDC_SOLO_BTN, OnSoloBtnClicked)
 END_MESSAGE_MAP()
 
 // CLiveView message handlers
@@ -352,10 +365,18 @@ int CLiveView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		list.SetBkColor(0);
 		list.SetFont(&m_fontList);
 	}
-	DWORD	dwStaticStyle = WS_CHILD | WS_VISIBLE | SS_RIGHT | SS_CENTERIMAGE;
-	if (!m_wndSongPos.Create(NULL, _T(""), dwStaticStyle, CRect(0, 0, 0, 0), this, IDC_SONG_POS))
+	DWORD	dwCounterStyle = WS_CHILD | WS_VISIBLE | SS_RIGHT | SS_CENTERIMAGE;
+	for (int iCount = 0; iCount < SONG_COUNTERS; iCount++) {
+		CSteadyStatic&	wnd = m_wndSongCounter[iCount];
+		if (!wnd.Create(NULL, _T(""), dwCounterStyle, CRect(0, 0, 0, 0), this, IDC_SONG_POS + iCount))
+			return -1;
+		wnd.SetFont(&m_fontTime);
+	}
+	DWORD	dwBtnStyle = WS_CHILD | WS_VISIBLE | WS_BORDER | SS_CENTER | SS_CENTERIMAGE | SS_NOTIFY;
+	if (!m_wndSoloBtn.Create(LDS(IDS_EDIT_SOLO), dwBtnStyle, CRect(0, 0, 0, 0), this, IDC_SOLO_BTN))
 		return -1;
-	m_wndSongPos.SetFont(&m_fontTime);
+	m_wndSoloBtn.SetFont(&m_fontList);
+	m_brSoloBtn.CreateSolidBrush(m_clrSoloBtn);
 	return 0;
 }
 
@@ -368,8 +389,15 @@ void CLiveView::OnSize(UINT nType, int cx, int cy)
 	}
 	CRect	rHdr;
 	m_list[0].GetHeaderCtrl()->GetWindowRect(rHdr);
-	CRect	rSongPos(CPoint((LIST_WIDTH + LIST_GUTTER) * LISTS, 0), CSize(LIST_WIDTH, rHdr.Height()));
-	m_wndSongPos.MoveWindow(rSongPos);
+	int	x = (LIST_WIDTH + LIST_GUTTER) * LISTS;
+	int	nHeight = rHdr.Height();
+	CRect	rSoloBtn(CPoint(x, 0), CSize(SOLO_WIDTH, nHeight));
+	m_wndSoloBtn.MoveWindow(rSoloBtn);
+	CRect	rSongPos(CPoint(x + SOLO_WIDTH, 0), CSize(COUNTER_WIDTH, nHeight));
+	for (int iCount = 0; iCount < SONG_COUNTERS; iCount++) {
+		m_wndSongCounter[iCount].MoveWindow(rSongPos);
+		rSongPos.OffsetRect(COUNTER_WIDTH, 0);
+	}
 }
 
 void CLiveView::OnLButtonDown(UINT nFlags, CPoint point)
@@ -489,4 +517,20 @@ void CLiveView::OnUpdateTrackMute(CCmdUI *pCmdUI)
 void CLiveView::OnTrackSolo()
 {
 	SoloSelectedParts();
+}
+
+HBRUSH CLiveView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CView::OnCtlColor(pDC, pWnd, nCtlColor);
+	if (pWnd == &m_wndSoloBtn) {
+		pDC->SetBkColor(m_clrSoloBtn);
+		return m_brSoloBtn;
+	}
+	return hbr;
+}
+
+void CLiveView::OnSoloBtnClicked()
+{
+	if (m_list[LIST_PARTS].GetSelectedCount())
+		SoloSelectedParts();
 }

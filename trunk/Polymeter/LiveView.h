@@ -73,10 +73,19 @@ protected:
 		IDC_LIST_FIRST = 1980,
 		IDC_LIST_LAST = IDC_LIST_FIRST + LISTS - 1,
 		IDC_SONG_POS = 2000,
+		IDC_SOLO_BTN = 2010,
 		LIST_WIDTH = 300,
 		LIST_GUTTER = 2,
 		FONT_HEIGHT = 30,
+		SOLO_WIDTH = 100,
+		COUNTER_WIDTH = 250,
 	};
+	enum {	// song counters
+		SONG_COUNTER_POS,
+		SONG_COUNTER_TIME,
+		SONG_COUNTERS
+	};
+	static const COLORREF	m_clrSoloBtn;		// solo button color
 
 // Member data
 	CLiveListCtrl	m_list[LISTS];	// array of list controls
@@ -84,9 +93,12 @@ protected:
 	CFont	m_fontList;				// list font
 	CFont	m_fontTime;				// time font
 	int		m_iPreset;				// index of current preset, or -1 if none
-	CSteadyStatic	m_wndSongPos;	// song position static control
+	CStatic	m_wndSoloBtn;			// solo button static control
+	CSteadyStatic	m_wndSongCounter[SONG_COUNTERS];	// array of song position static controls
+	CBrush	m_brSoloBtn;			// solo button brush
 
 // Helpers
+	void	UpdateSongCounters();
 
 // Overrides
 	virtual void OnInitialUpdate();
@@ -106,6 +118,8 @@ protected:
 	afx_msg void OnTrackMute();
 	afx_msg void OnUpdateTrackMute(CCmdUI *pCmdUI);
 	afx_msg void OnTrackSolo();
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnSoloBtnClicked();
 };
 
 inline CPolymeterDoc* CLiveView::GetDocument() const

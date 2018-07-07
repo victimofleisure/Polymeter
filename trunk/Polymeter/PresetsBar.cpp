@@ -141,7 +141,7 @@ void CPresetsBar::OnTrackPresetApply()
 
 void CPresetsBar::OnUpdateTrackPresetApply(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_list.GetSelectionMark() >= 0);
+	pCmdUI->Enable(m_list.GetSelectedCount() == 1);
 }
 
 void CPresetsBar::OnTrackPresetUpdate()
@@ -151,5 +151,5 @@ void CPresetsBar::OnTrackPresetUpdate()
 
 void CPresetsBar::OnUpdateTrackPresetUpdate(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_list.GetSelectionMark() >= 0);
+	pCmdUI->Enable(m_list.GetSelectedCount() == 1);
 }

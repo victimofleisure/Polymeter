@@ -32,6 +32,8 @@
 
 #define USE_GRADIENT_FILL 0
 
+#define DEFAULT_VELOCITY static_cast<STEP>(theApp.m_Options.m_Midi_nDefaultVelocity)
+
 const COLORREF CStepView::m_arrStepColor[STEP_STATES] = {
 							//	select	mute	hot		on
 	RGB(255, 255, 255),		//	N		N		N		N

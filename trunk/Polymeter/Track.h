@@ -27,7 +27,6 @@ public:
 	};
 	enum {
 		INIT_STEPS = 32,			// initial number of steps
-		DEFAULT_VELOCITY = 64,		// default note velocity
 	};
 	enum {	// step bitmasks; these define the layout of a sequencer step
 		// for track types other than note, the velocity carries the event's

@@ -27,6 +27,8 @@ public:
 	void	SetInitialProperties(const CMasterProps& Props);
 	void	GetProperties(CMasterProps& Props) const;
 	void	SetProperties(const CMasterProps& Props);
+	void	GetProperty(CMasterProps& Props, int iProp) const;
+	void	SetProperty(const CMasterProps& Props, int iProp);
 	void	EnableDescriptionArea(bool bEnable = true);
 	bool	IsEnabled(int iProp) const;
 	void	Enable(int iProp, bool bEnable);
@@ -39,8 +41,8 @@ protected:
 	public:
 		virtual void OnPropertyChanged(CMFCPropertyGridProperty* pProp) const;
 		virtual void OnChangeSelection(CMFCPropertyGridProperty* pNewSel, CMFCPropertyGridProperty* pOldSel);
-		virtual	void GetValue(int iProp, CComVariant& varProp, CMFCPropertyGridProperty *pProp) const;
-		virtual	void SetValue(int iProp, const CComVariant& varProp, CMFCPropertyGridProperty *pProp);
+		virtual	void GetCustomValue(int iProp, CComVariant& varProp, CMFCPropertyGridProperty *pProp) const;
+		virtual	void SetCustomValue(int iProp, const CComVariant& varProp, CMFCPropertyGridProperty *pProp);
 	};
 
 // Data members
@@ -99,4 +101,29 @@ inline bool CPropertiesBar::IsEnabled(int iProp) const
 inline void CPropertiesBar::Enable(int iProp, bool bEnable)
 {
 	m_Grid.Enable(iProp, bEnable);
+}
+
+inline void CPropertiesBar::SetInitialProperties(const CMasterProps& Props)
+{
+	m_pInitialProps = &Props;
+}
+
+inline void CPropertiesBar::GetProperties(CMasterProps& Props) const
+{
+	m_Grid.GetProperties(Props);
+}
+
+inline void CPropertiesBar::SetProperties(const CMasterProps& Props)
+{
+	m_Grid.SetProperties(Props);
+}
+
+inline void CPropertiesBar::GetProperty(CMasterProps& Props, int iProp) const
+{
+	m_Grid.GetProperty(Props, iProp);
+}
+
+inline void CPropertiesBar::SetProperty(const CMasterProps& Props, int iProp)
+{
+	m_Grid.SetProperty(Props, iProp);
 }

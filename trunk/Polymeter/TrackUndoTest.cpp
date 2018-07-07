@@ -70,10 +70,12 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_SOLO,				0.1f},
 	{UCODE_APPLY_PRESET,		0.1f},
 	{UCODE_CREATE_PRESET,		0.2f},
+	{UCODE_UPDATE_PRESET,		0.1f},
 	{UCODE_RENAME_PRESET,		0.1f},
 	{UCODE_DELETE_PRESETS,		0.1f},
 	{UCODE_MOVE_PRESETS,		0.1f},
 	{UCODE_CREATE_PART,			0.2f},
+	{UCODE_UPDATE_PART,			0.1f},
 	{UCODE_RENAME_PART,			0.1f},
 	{UCODE_DELETE_PARTS,		0.1f},
 	{UCODE_MOVE_PARTS,			0.1f},
@@ -169,7 +171,7 @@ void CTrackUndoTest::MakeRandomTrackProperty(int iTrack, int iProp, CComVariant&
 	}
 }
 
-void CTrackUndoTest::MakeRandomMasterProperty(int iProp, CComVariant& var)
+bool CTrackUndoTest::MakeRandomMasterProperty(int iProp, CComVariant& var)
 {
 	switch (iProp) {
 	case CMasterProps::PROP_fTempo:
@@ -202,9 +204,12 @@ void CTrackUndoTest::MakeRandomMasterProperty(int iProp, CComVariant& var)
 			var = nSongLength;
 		}
 		break;
+	case CMasterProps::PROP_nStartPos:
+		return false;
 	default:
 		NODEFAULTCASE;
 	}
+	return true;
 }
 
 bool CTrackUndoTest::GetRandomStep(CPoint& ptStep) const
@@ -369,9 +374,10 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 	case UCODE_MASTER_PROP:
 		{
 			int	iProp = Random(CMasterProps::PROPERTIES);
-			m_pDoc->NotifyUndoableEdit(iProp, UCODE_MASTER_PROP);
 			CComVariant	var;
-			MakeRandomMasterProperty(iProp, var);
+			if (!MakeRandomMasterProperty(iProp, var))
+				return(DISABLED);
+			m_pDoc->NotifyUndoableEdit(iProp, UCODE_MASTER_PROP);
 			m_pDoc->SetProperty(iProp, var);
 			CPolymeterDoc::CPropHint	hint(0, iProp);
 			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MASTER_PROP, &hint);
@@ -633,6 +639,16 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 		m_pDoc->CreatePreset();
 		PRINTF(_T("%s %d\n"), sUndoTitle, m_pDoc->m_arrPreset.GetSize());
 		break;
+	case UCODE_UPDATE_PRESET:
+		{
+			int	nPresets = m_pDoc->m_arrPreset.GetSize(); 
+			int	iPreset = Random(nPresets);
+			if (iPreset < 0)
+				return(DISABLED);
+			m_pDoc->UpdatePreset(iPreset);
+			PRINTF(_T("%s %d\n"), sUndoTitle, iPreset);
+		}
+		break;
 	case UCODE_RENAME_PRESET:
 		{
 			int	nPresets = m_pDoc->m_arrPreset.GetSize(); 
@@ -679,6 +695,20 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			m_pDoc->m_arrTrackSel = arrSelection;
 			m_pDoc->CreatePart();
 			PRINTF(_T("%s %d\n"), sUndoTitle, m_pDoc->m_arrPart.GetSize());
+		}
+		break;
+	case UCODE_UPDATE_PART:
+		{
+			int	nParts = m_pDoc->m_arrPart.GetSize(); 
+			int	iPart = Random(nParts);
+			if (iPart < 0)
+				return(DISABLED);
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
+				return(DISABLED);
+			m_pDoc->m_arrTrackSel = arrSelection;
+			m_pDoc->UpdatePart(iPart);
+			PRINTF(_T("%s %d\n"), sUndoTitle, iPart);
 		}
 		break;
 	case UCODE_RENAME_PART:

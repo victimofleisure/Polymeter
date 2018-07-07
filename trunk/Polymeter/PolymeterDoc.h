@@ -201,6 +201,9 @@ public:
 	void	CreatePart();
 	void	DeleteParts(const CIntArrayEx& arrSelection);
 	void	MoveParts(const CIntArrayEx& arrSelection, int iDropPos);
+	void	UpdatePart(int iPart);
+	bool	CheckForPartOverlap(int iTargetPart = -1) const;
+	bool	CreateAutoSavePath(CString& sPath) const;
 
 // Overrides
 public:
@@ -287,12 +290,12 @@ protected:
 	public:
 		CByteArrayEx	m_arrMute;	// array of mutes, one per track
 	};
-	class CUndoPreset : public CRefObj {
+	class CUndoSelectedPresets : public CRefObj {
 	public:
 		CIntArrayEx	m_arrSelection;	// indices of selected presets
 		CPresetArray	m_arrPreset;	// array of presets
 	};
-	class CUndoPart : public CRefObj {
+	class CUndoSelectedParts : public CRefObj {
 	public:
 		CIntArrayEx	m_arrSelection;	// indices of selected parts
 		CTrackGroupArray	m_arrPart;	// array of parts
@@ -377,14 +380,18 @@ protected:
 	void	RestoreSolo(const CUndoState& State);
 	void	SavePresetName(CUndoState& State) const;
 	void	RestorePresetName(const CUndoState& State);
-	void	SavePresets(CUndoState& State) const;
-	void	RestorePresets(const CUndoState& State);
+	void	SavePreset(CUndoState& State) const;
+	void	RestorePreset(const CUndoState& State);
+	void	SaveSelectedPresets(CUndoState& State) const;
+	void	RestoreSelectedPresets(const CUndoState& State);
 	void	SavePresetMove(CUndoState& State) const;
 	void	RestorePresetMove(const CUndoState& State);
 	void	SavePartName(CUndoState& State) const;
 	void	RestorePartName(const CUndoState& State);
-	void	SaveParts(CUndoState& State) const;
-	void	RestoreParts(const CUndoState& State);
+	void	SavePart(CUndoState& State) const;
+	void	RestorePart(const CUndoState& State);
+	void	SaveSelectedParts(CUndoState& State) const;
+	void	RestoreSelectedParts(const CUndoState& State);
 	void	RestorePartMove(const CUndoState& State);
 	void	SaveModulation(CUndoState& State) const;
 	void	RestoreModulation(const CUndoState& State);

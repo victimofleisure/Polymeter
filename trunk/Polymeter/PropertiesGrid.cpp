@@ -526,37 +526,7 @@ void CPropertiesGridCtrl::GetProperties(CProperties& Props) const
 	CVariantArray	arrVar;
 	arrVar.SetSize(nProps);
 	for (int iProp = 0; iProp < nProps; iProp++) {	// for each property
-		CMFCPropertyGridProperty* pProp = m_arrProp[iProp];
-		switch (Props.GetPropertyType(iProp)) {
-		case CProperties::PT_ENUM:
-			{
-				int	iOption = static_cast<const CEnumPropertyGridProperty *>(pProp)->m_iCurSel;
-				arrVar[iProp] = max(iOption, 0);	// avoid negative enum
-			}
-			break;
-		case CProperties::PT_COLOR:
-			arrVar[iProp].uintVal = static_cast<const CMFCPropertyGridColorProperty *>(pProp)->GetColor();
-			break;
-		case CProperties::PT_TIME:
-			{
-				CString	sTime(pProp->GetValue());
-				COleDateTime dt;
-				CTimeSpan	ts;
-				if (dt.ParseDateTime(sTime, VAR_TIMEVALUEONLY))
-					ts = CTimeSpan(0, dt.GetHour(), dt.GetMinute(), dt.GetSecond());
-				else
-					AfxMessageBox(IDS_GRID_ERR_BAD_TIME_FORMAT);
-				sTime = ts.Format(_T("%H:%M:%S"));	// reformat time
-				pProp->SetValue(sTime);	// display reformatted time
-				arrVar[iProp].intVal = static_cast<int>(ts.GetTimeSpan());
-			}
-			break;
-		case CProperties::PT_CUSTOM:
-			GetValue(iProp, arrVar[iProp], pProp);
-			break;
-		default:
-			arrVar[iProp] = pProp->GetValue();
-		}
+		GetProperty(Props, iProp, m_arrProp[iProp], arrVar[iProp]);
 	}
 	Props.SetVariants(arrVar);
 }
@@ -567,53 +537,103 @@ void CPropertiesGridCtrl::SetProperties(const CProperties& Props)
 	Props.GetVariants(arrVar);
 	int	nProps = Props.GetPropertyCount();
 	for (int iProp = 0; iProp < nProps; iProp++) {	// for each property
-		CMFCPropertyGridProperty* pProp = m_arrProp[iProp];
-		switch (Props.GetPropertyType(iProp)) {
-		case CProperties::PT_ENUM:
-			{
-				int	iOption = arrVar[iProp].intVal;
-				LPCTSTR	szOption;
-				if (iOption >= 0)
-					szOption = pProp->GetOption(iOption);
-				else
-					szOption = NULL;
-				pProp->SetValue(szOption);
-				static_cast<CEnumPropertyGridProperty *>(pProp)->m_iCurSel = iOption;
-			}
-			break;
-		case CProperties::PT_COLOR:
-			static_cast<CMFCPropertyGridColorProperty *>(pProp)->SetColor(arrVar[iProp].uintVal);
-			break;
-		case CProperties::PT_TIME:
-			{
-				CComVariant	var;
-				Props.GetProperty(iProp, var);
-				CTimeSpan	ts(var.intVal);
-				CString	sTime(ts.Format(_T("%H:%M:%S")));
-				pProp->SetValue(sTime);
-			}
-			break;
-		case CProperties::PT_CUSTOM:
-			SetValue(iProp, arrVar[iProp], pProp);
-			break;
-		default:
-			pProp->SetValue(arrVar[iProp]);
-		}
+		SetProperty(Props, iProp, m_arrProp[iProp], arrVar[iProp]);
 	}
 }
 
-void CPropertiesGridCtrl::GetValue(int iProp, CComVariant& varProp, CMFCPropertyGridProperty *pProp) const
+void CPropertiesGridCtrl::GetProperty(CProperties& Props, int iProp) const
+{
+	CComVariant	var;
+	GetProperty(Props, iProp, m_arrProp[iProp], var);
+	Props.SetProperty(iProp, var);
+}
+
+void CPropertiesGridCtrl::SetProperty(const CProperties& Props, int iProp)
+{
+	CComVariant	var;
+	Props.GetProperty(iProp, var);
+	SetProperty(Props, iProp, m_arrProp[iProp], var);
+}
+
+void CPropertiesGridCtrl::GetCustomValue(int iProp, CComVariant& varProp, CMFCPropertyGridProperty *pProp) const
 {
 	UNREFERENCED_PARAMETER(iProp);
 	UNREFERENCED_PARAMETER(varProp);
 	UNREFERENCED_PARAMETER(pProp);
 }
 
-void CPropertiesGridCtrl::SetValue(int iProp, const CComVariant& varProp, CMFCPropertyGridProperty *pProp)
+void CPropertiesGridCtrl::SetCustomValue(int iProp, const CComVariant& varProp, CMFCPropertyGridProperty *pProp)
 {
 	UNREFERENCED_PARAMETER(iProp);
 	UNREFERENCED_PARAMETER(varProp);
 	UNREFERENCED_PARAMETER(pProp);
+}
+
+void CPropertiesGridCtrl::GetProperty(CProperties& Props, int iProp, CMFCPropertyGridProperty *pProp, CComVariant& var) const
+{
+	switch (Props.GetPropertyType(iProp)) {
+	case CProperties::PT_ENUM:
+		{
+			int	iOption = static_cast<const CEnumPropertyGridProperty *>(pProp)->m_iCurSel;
+			var = max(iOption, 0);	// avoid negative enum
+		}
+		break;
+	case CProperties::PT_COLOR:
+		var.uintVal = static_cast<const CMFCPropertyGridColorProperty *>(pProp)->GetColor();
+		break;
+	case CProperties::PT_TIME:
+		{
+			CString	sTime(pProp->GetValue());
+			COleDateTime dt;
+			CTimeSpan	ts;
+			if (dt.ParseDateTime(sTime, VAR_TIMEVALUEONLY))
+				ts = CTimeSpan(0, dt.GetHour(), dt.GetMinute(), dt.GetSecond());
+			else
+				AfxMessageBox(IDS_GRID_ERR_BAD_TIME_FORMAT);
+			sTime = ts.Format(_T("%H:%M:%S"));	// reformat time
+			pProp->SetValue(sTime);	// display reformatted time
+			var.intVal = static_cast<int>(ts.GetTimeSpan());
+		}
+		break;
+	case CProperties::PT_CUSTOM:
+		GetCustomValue(iProp, var, pProp);
+		break;
+	default:
+		var = pProp->GetValue();
+	}
+}
+
+void CPropertiesGridCtrl::SetProperty(const CProperties& Props, int iProp, CMFCPropertyGridProperty *pProp, CComVariant& var)
+{
+	switch (Props.GetPropertyType(iProp)) {
+	case CProperties::PT_ENUM:
+		{
+			int	iOption = var.intVal;
+			LPCTSTR	szOption;
+			if (iOption >= 0)
+				szOption = pProp->GetOption(iOption);
+			else
+				szOption = NULL;
+			pProp->SetValue(szOption);
+			static_cast<CEnumPropertyGridProperty *>(pProp)->m_iCurSel = iOption;
+		}
+		break;
+	case CProperties::PT_COLOR:
+		static_cast<CMFCPropertyGridColorProperty *>(pProp)->SetColor(var.uintVal);
+		break;
+	case CProperties::PT_TIME:
+		{
+			CTimeSpan	ts(var.intVal);
+			CString	sTime(ts.Format(_T("%H:%M:%S")));
+			pProp->SetValue(sTime);
+		}
+		break;
+	case CProperties::PT_CUSTOM:
+		SetCustomValue(iProp, var, pProp);
+		break;
+	default:
+		pProp->SetValue(var);
+	}
 }
 
 void CPropertiesGridCtrl::InitPropList(const CProperties& Props)

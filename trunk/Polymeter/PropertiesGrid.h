@@ -116,6 +116,8 @@ public:
 // Attributes
 	void	GetProperties(CProperties& Props) const;
 	void	SetProperties(const CProperties& Props);
+	void	GetProperty(CProperties& Props, int iProp) const;
+	void	SetProperty(const CProperties& Props, int iProp);
 	int		GetCurSelIdx() const;
 	void	SetCurSelIdx(int iProp);
 	bool	IsEnabled(int iProp) const;
@@ -127,8 +129,8 @@ public:
 	void	UpdateOptions(const CProperties& Props, int iProp);
 
 // Overrideables
-	virtual	void	GetValue(int iProp, CComVariant& varProp, CMFCPropertyGridProperty *pProp) const;
-	virtual	void	SetValue(int iProp, const CComVariant& varProp, CMFCPropertyGridProperty *pProp);
+	virtual	void	GetCustomValue(int iProp, CComVariant& varProp, CMFCPropertyGridProperty *pProp) const;
+	virtual	void	SetCustomValue(int iProp, const CComVariant& varProp, CMFCPropertyGridProperty *pProp);
 
 protected:
 // Types
@@ -136,6 +138,10 @@ protected:
 
 // Data members
 	CPropertyPtrArray	m_arrProp;	// pointers to value properties
+
+// Helpers
+	void	GetProperty(CProperties& Props, int iProp, CMFCPropertyGridProperty *pProp, CComVariant& var) const;
+	void	SetProperty(const CProperties& Props, int iProp, CMFCPropertyGridProperty *pProp, CComVariant& var);
 };
 
 inline bool CPropertiesGridCtrl::IsEnabled(int iProp) const
