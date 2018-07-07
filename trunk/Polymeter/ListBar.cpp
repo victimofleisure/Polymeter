@@ -131,6 +131,7 @@ LRESULT CListBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
+	AfxGetApp()->WinHelp(GetDlgCtrlID());
 	return TRUE;
 }
 

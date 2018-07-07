@@ -121,7 +121,7 @@ void CSeqTrackArray::ToggleSteps(const CRect& rSelection, UINT nFlags)
 	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
 		bool	bToggleTie;
 		STEP	nStep;
-		if (GetType(iTrack) == TT_NOTE) {	// if track type is note
+		if (IsNote(iTrack)) {	// if track type is note
 			nStep = nFlags & (SB_VELOCITY | SB_TIE);	// preserve tie bit
 			if (nFlags & SB_TOGGLE_TIE) {	// if toggling tie
 				bToggleTie = true;

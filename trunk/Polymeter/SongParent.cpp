@@ -160,6 +160,7 @@ BEGIN_MESSAGE_MAP(CSongParent, CSplitView)
 	ON_WM_PARENTNOTIFY()
 	ON_WM_MOUSEWHEEL()
 	ON_WM_MOUSEMOVE()
+	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 END_MESSAGE_MAP()
 
 // CSongParent message handlers
@@ -209,6 +210,14 @@ BOOL CSongParent::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO
 	if (m_pSongView->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
 		return true;
 	return CSplitView::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+}
+
+LRESULT CSongParent::OnCommandHelp(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	theApp.WinHelp(GetDlgCtrlID());
+	return TRUE;
 }
 
 void CSongParent::OnSetFocus(CWnd* pOldWnd)

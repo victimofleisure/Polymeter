@@ -318,6 +318,7 @@ void CLiveView::OnDraw(CDC* pDC)
 BEGIN_MESSAGE_MAP(CLiveView, CView)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
+	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_RBUTTONDOWN()
 	ON_NOTIFY_RANGE(LVN_GETDISPINFO, IDC_LIST_FIRST, IDC_LIST_LAST, OnListGetdispinfo)
@@ -398,6 +399,14 @@ void CLiveView::OnSize(UINT nType, int cx, int cy)
 		m_wndSongCounter[iCount].MoveWindow(rSongPos);
 		rSongPos.OffsetRect(COUNTER_WIDTH, 0);
 	}
+}
+
+LRESULT CLiveView::OnCommandHelp(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	theApp.WinHelp(GetDlgCtrlID());
+	return TRUE;
 }
 
 void CLiveView::OnLButtonDown(UINT nFlags, CPoint point)

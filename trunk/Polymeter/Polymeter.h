@@ -50,10 +50,13 @@ public:
 	bool	OpenMidiInputDevice(bool bEnable);
 	void	ResetMidiInputDevice();
 	void	OnDeviceChange();
+	static	int		FindHelpID(int nResID);
 
 // Overrides
 	virtual BOOL InitInstance();
 	virtual int ExitInstance();
+	virtual void WinHelp(DWORD_PTR dwData, UINT nCmd = HELP_CONTEXT);
+	virtual void WinHelpInternal(DWORD_PTR dwData, UINT nCmd = HELP_CONTEXT);
 
 // Public data
 	UINT  m_nAppLook;
@@ -66,9 +69,19 @@ public:
 	bool	m_bTieNotes;	// if true, new notes are tied
 
 protected:
+// Types
+	struct HELP_RES_MAP {
+		WORD	nResID;		// resource identifier
+		WORD	nHelpID;	// identifier of corresponding help topic
+	};
+
+// Constants
+	static const HELP_RES_MAP	m_HelpResMap[];	// map resource IDs to help IDs
+
 // Protected data
 	CMidiIn	m_midiIn;			// MIDI input device
 	bool	m_bInMsgBox;		// true if displaying message box
+	bool	m_bHelpInit;		// true if help was initialized
 
 // Helpers
 	static void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2);

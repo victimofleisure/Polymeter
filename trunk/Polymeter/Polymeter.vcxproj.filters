@@ -348,6 +348,15 @@
     <ClInclude Include="ModulationsBar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="HelpIDs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HelpResMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MainDockBarDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Polymeter.cpp">

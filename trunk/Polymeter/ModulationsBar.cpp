@@ -206,6 +206,7 @@ BEGIN_MESSAGE_MAP(CModulationsBar, CDockablePane)
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_MOD_LIST, OnListGetdispinfo)
 	ON_MESSAGE(UWM_DEFERRED_UPDATE, OnDeferredUpdate)
 	ON_WM_CONTEXTMENU()
+	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 	ON_COMMAND(ID_LIST_COL_HDR_RESET, OnListColHdrReset)
 END_MESSAGE_MAP()
 
@@ -298,6 +299,14 @@ void CModulationsBar::OnContextMenu(CWnd* pWnd, CPoint point)
 	if (CChannelsBar::ShowListColumnHeaderMenu(this, &m_grid, point))
 		return;
 	CDockablePane::OnContextMenu(pWnd, point);
+}
+
+LRESULT CModulationsBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	theApp.WinHelp(GetDlgCtrlID());
+	return TRUE;
 }
 
 void CModulationsBar::OnListColHdrReset()

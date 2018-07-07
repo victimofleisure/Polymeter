@@ -189,8 +189,8 @@ void CTrackView::UpdateNotes()
 	int	iStartTrack = m_grid.GetTopIndex();
 	int	iEndTrack = min(iStartTrack + m_grid.GetCountPerPage(), pDoc->m_Seq.GetTrackCount());
 	for (int iTrack = iStartTrack; iTrack < iEndTrack; iTrack++) {	// for each visible track
-		if (pDoc->m_Seq.GetType(iTrack) == TT_NOTE)
-			m_grid.RedrawSubItem(iTrack, COL_Note);
+		if (pDoc->m_Seq.IsNote(iTrack))	// if track type is note
+			m_grid.RedrawSubItem(iTrack, COL_Note);	// redraw note
 	}
 }
 
@@ -310,14 +310,17 @@ DefaultCreateEditCtrl:
 			pEdit->SetRange(1, 16);
 			break;
 		case COL_Note:
-			pEdit->SetRange(0, MIDI_NOTE_MAX);
-			pEdit->SetKeySignature(static_cast<BYTE>(pDoc->m_nKeySig));
-			pEdit->SetNoteEntry(theApp.m_Options.m_View_bShowNoteNames);
-			if (pEdit->IsNoteEntry()) {	// if showing note names
-				CNote	note;
-				if (note.ParseMidi(pszText)) {	// convert note name to integer
-					m_varPreEdit = note;	// set pre-edit value
-					bIsCustomType = true;	// prevent default integer conversion
+			{
+				pEdit->SetRange(0, MIDI_NOTE_MAX);
+				pEdit->SetKeySignature(static_cast<BYTE>(pDoc->m_nKeySig));
+				bool	bShowNoteNames = pDoc->m_Seq.IsNote(iTrack) && theApp.m_Options.m_View_bShowNoteNames;
+				pEdit->SetNoteEntry(bShowNoteNames);
+				if (bShowNoteNames) {	// if showing note names
+					CNote	note;
+					if (note.ParseMidi(pszText)) {	// convert note name to integer
+						m_varPreEdit = note;	// set pre-edit value
+						bIsCustomType = true;	// prevent default integer conversion
+					}
 				}
 			}
 			break;
@@ -502,6 +505,7 @@ BEGIN_MESSAGE_MAP(CTrackView, CView)
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
 	ON_WM_CONTEXTMENU()
+	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_TRACK_GRID, OnListGetdispinfo)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_TRACK_GRID, OnListItemChanged)
 	ON_NOTIFY(ULVN_REORDER, IDC_TRACK_GRID, OnListReorder)
@@ -554,6 +558,14 @@ void CTrackView::OnContextMenu(CWnd* pWnd, CPoint point)
 	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE);
 }
 
+LRESULT CTrackView::OnCommandHelp(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	theApp.WinHelp(GetDlgCtrlID());
+	return TRUE;
+}
+
 void CTrackView::OnSetFocus(CWnd* pOldWnd)
 {
 	CView::OnSetFocus(pOldWnd);
@@ -603,7 +615,7 @@ DefaultDisplayItem:
 				nVal = 0;
 			}
 			// if note column, and track type is note, and showing notes as names
-			if (item.iSubItem == COL_Note && pDoc->m_Seq.GetType(iTrack) == TT_NOTE
+			if (item.iSubItem == COL_Note && pDoc->m_Seq.IsNote(iTrack)
 			&& theApp.m_Options.m_View_bShowNoteNames) {
 				_tcscpy_s(item.pszText, item.cchTextMax, CNote(nVal).MidiName(pDoc->m_nKeySig));
 			} else {	// default case

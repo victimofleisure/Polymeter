@@ -205,6 +205,7 @@ BEGIN_MESSAGE_MAP(CStepParent, CSplitView)
 	ON_WM_MOUSEWHEEL()
 	ON_COMMAND(ID_VIEW_VELOCITIES, OnViewVelocities)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_VELOCITIES, OnUpdateViewVelocities)
+	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 END_MESSAGE_MAP()
 
 // CStepParent message handlers
@@ -260,6 +261,14 @@ BOOL CStepParent::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO
 	if (m_pStepView->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
 		return true;
 	return CSplitView::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+}
+
+LRESULT CStepParent::OnCommandHelp(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	theApp.WinHelp(GetDlgCtrlID());
+	return TRUE;
 }
 
 void CStepParent::OnSetFocus(CWnd* pOldWnd)

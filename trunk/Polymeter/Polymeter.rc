@@ -197,6 +197,10 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
+        MENUITEM "&Help Topics",                ID_HELP_FINDER
+        MENUITEM "Polymeter on the &Web",       ID_APP_HOME_PAGE
+        MENUITEM "Check for &Updates...",       ID_APP_CHECK_FOR_UPDATES
+        MENUITEM SEPARATOR
         MENUITEM "&About Polymeter...",         ID_APP_ABOUT
     END
 END
@@ -328,9 +332,11 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "&About Polymeter...",         ID_APP_ABOUT
+        MENUITEM "&Help Topics",                ID_HELP_FINDER
         MENUITEM "Polymeter on the &Web",       ID_APP_HOME_PAGE
         MENUITEM "Check for &Updates...",       ID_APP_CHECK_FOR_UPDATES
+        MENUITEM SEPARATOR
+        MENUITEM "&About Polymeter...",         ID_APP_ABOUT
     END
 END
 
@@ -345,11 +351,6 @@ BEGIN
         MENUITEM "&Insert",                     ID_EDIT_INSERT
         MENUITEM "&Delete",                     ID_EDIT_DELETE
     END
-END
-
-IDR_HELP_MENU MENU
-BEGIN
-    MENUITEM "&About Polymeter...",         ID_APP_ABOUT
 END
 
 IDR_THEME_MENU MENU
@@ -433,6 +434,10 @@ BEGIN
     VK_SPACE,       ID_TRANSPORT_PLAY,      VIRTKEY, CONTROL, NOINVERT
     "R",            ID_TRANSPORT_RECORD,    VIRTKEY, CONTROL, NOINVERT
     "W",            ID_TRANSPORT_REWIND,    VIRTKEY, CONTROL, NOINVERT
+    "C",            ID_VIEW_CHANNELS,       VIRTKEY, CONTROL, ALT, NOINVERT
+    "A",            ID_VIEW_PARTS,          VIRTKEY, CONTROL, ALT, NOINVERT
+    "E",            ID_VIEW_PRESETS,        VIRTKEY, CONTROL, ALT, NOINVERT
+    "P",            ID_VIEW_PROPERTIES,     VIRTKEY, CONTROL, ALT, NOINVERT
     VK_F9,          ID_VIEW_TYPE_LIVE,      VIRTKEY, CONTROL, NOINVERT
     VK_F9,          ID_VIEW_TYPE_SONG,      VIRTKEY, NOINVERT
     VK_F8,          ID_VIEW_TYPE_TRACK,     VIRTKEY, NOINVERT
@@ -441,10 +446,7 @@ BEGIN
     VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
     "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
     VK_F11,         ID_WINDOW_FULL_SCREEN,  VIRTKEY, NOINVERT
-    "C",            ID_VIEW_CHANNELS,       VIRTKEY, CONTROL, ALT, NOINVERT
-    "P",            ID_VIEW_PROPERTIES,     VIRTKEY, CONTROL, ALT, NOINVERT
-    "E",            ID_VIEW_PRESETS,        VIRTKEY, CONTROL, ALT, NOINVERT
-    "A",            ID_VIEW_PARTS,          VIRTKEY, CONTROL, ALT, NOINVERT
+    VK_F1,          ID_HELP_FINDER,         VIRTKEY, NOINVERT
 END
 
 
@@ -672,6 +674,7 @@ IDC_CURSOR_DRAG_SINGLE  CURSOR                  "res\\dragsingle.cur"
 
 STRINGTABLE
 BEGIN
+    IDS_APP_HELP_FILE_MISSING "Can't find help file '%1'"
     IDS_APP_LICENSE         "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.  You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA."
     IDS_APP_UNKNOWN_SYSTEM_ERROR "Unknown system error %d (0x%X)"
     IDS_BAR_CHANNELS        "Channels"
@@ -679,11 +682,11 @@ BEGIN
     IDS_BAR_PARTS           "Parts"
     IDS_BAR_PRESETS         "Presets"
     IDS_BAR_PROPERTIES      "Properties"
-    IDS_CHANNEL_COL_BankLSB "Bank LSB"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_CHANNEL_COL_BankLSB "Bank LSB"
     IDS_CHANNEL_COL_BankMSB "Bank MSB"
     IDS_CHANNEL_COL_Number  "#"
     IDS_CHANNEL_COL_Pan     "Pan"
@@ -701,11 +704,11 @@ BEGIN
                             "Recording already exists.\nDo you want to replace it?"
     IDS_DOC_SELF_MODULATION "Track can't modulate itself."
     IDS_DOC_TRACK_TOO_LONG  "Track too long."
-    IDS_EDIT_APPLY_PRESET   "Apply Preset"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_APPLY_PRESET   "Apply Preset"
     IDS_EDIT_CREATE_PART    "Create Part"
     IDS_EDIT_CREATE_PRESET  "Create Preset"
     IDS_EDIT_CUT_STEPS      "Cut Steps"
@@ -721,11 +724,11 @@ BEGIN
     IDS_EDIT_MODULATION     "Modulation"
     IDS_EDIT_MOVE_PARTS     "Move Parts"
     IDS_EDIT_MOVE_PRESETS   "Move Presets"
-    IDS_EDIT_MOVE_TRACKS    "Move Tracks"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_MOVE_TRACKS    "Move Tracks"
     IDS_EDIT_MULTI_STEP_RECT "Multiple Steps"
     IDS_EDIT_PASTE_STEPS    "Paste Steps"
     IDS_EDIT_PASTE_TRACKS   "Paste Tracks"
@@ -739,14 +742,15 @@ BEGIN
     IDS_EDIT_SOLO           "Solo"
     IDS_EDIT_TRACK_SORT     "Track Sort"
     IDS_EDIT_UNDO_FMT       "&Undo %s"
+    IDS_EDIT_UPDATE_PART    "Update Part"
     IDS_EDIT_UPDATE_PRESET  "Update Preset"
-    IDS_EDIT_VELOCITY       "Velocity"
-    IDS_ERR_TRACK_LENGTH_CURSOR 
-                            "Cursor must be over track step to indicate desired length."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_VELOCITY       "Velocity"
+    IDS_ERR_TRACK_LENGTH_CURSOR 
+                            "Cursor must be over track step to indicate desired length."
     IDS_EXPORT              "Export"
     IDS_EXPORT_BAD_DURATION "Invalid duration. Time format is HH:MM:SS and duration must be greater than zero."
     IDS_EXPORT_EMPTY_FILE   "Nothing to export."
@@ -761,14 +765,14 @@ BEGIN
     IDS_MIDI_OUTPUT         "Output"
     IDS_MOD_SOURCE          "Source"
     IDS_NONE                "<None>"
-    IDS_OPT_DESC_General_bAlwaysRecord 
-                            "Always record dubs during playback and automatically save the recordings"
-    IDS_OPT_DESC_General_bCheckForUpdates 
-                            "Automatically check for newer version of app during startup"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_General_bAlwaysRecord 
+                            "Always record dubs during playback and automatically save the recordings"
+    IDS_OPT_DESC_General_bCheckForUpdates 
+                            "Automatically check for newer version of app during startup"
     IDS_OPT_DESC_General_bPropertyDescrips 
                             "If true, show descriptions area in properties bar"
     IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
@@ -789,12 +793,12 @@ BEGIN
     IDS_OPT_DESC_View_fZoomDelta "Zoom step size, as a percentage"
     IDS_OPT_GROUP_General   "General"
     IDS_OPT_GROUP_Midi      "MIDI"
-    IDS_OPT_GROUP_View      "View"
-    IDS_OPT_NAME_General_bAlwaysRecord "Always Record"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_GROUP_View      "View"
+    IDS_OPT_NAME_General_bAlwaysRecord "Always Record"
     IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
     IDS_OPT_NAME_General_bPropertyDescrips "Show Property Descriptions"
     IDS_OPT_NAME_Midi_bThru "Thru"
@@ -809,12 +813,12 @@ BEGIN
     IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
     IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
     IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
-    IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
-    IDS_PDR_DESC_nMeter     "Number of beats in a measure"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
+    IDS_PDR_DESC_nMeter     "Number of beats in a measure"
     IDS_PDR_DESC_nSongLength "Song duration in HH:MM:SS format"
     IDS_PDR_DESC_nStartPos  "Starting position of song in beats and ticks"
     IDS_PDR_DESC_nTimeDiv   "Time division, in pulses per quarter note"
@@ -829,12 +833,12 @@ BEGIN
     IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
     IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format"
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
-    IDS_SEQ_MIDI_ERROR      "MIDI error %d."
-    IDS_SORT_DIR_ASCENDING  "Ascending"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_SEQ_MIDI_ERROR      "MIDI error %d."
+    IDS_SORT_DIR_ASCENDING  "Ascending"
     IDS_SORT_DIR_DESCENDING "Descending"
     IDS_STATUS_PANE1        "Pane 1"
     IDS_STATUS_PANE2        "Pane 2"
@@ -849,12 +853,12 @@ BEGIN
     IDS_TRACK_TYPE_NOTE     "Note"
     IDS_TRACK_TYPE_PATCH    "Patch"
     IDS_TRACK_TYPE_WHEEL    "Wheel"
-    IDS_TRK_Channel         "Channel"
-    IDS_TRK_Duration        "Duration"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_Channel         "Channel"
+    IDS_TRK_Duration        "Duration"
     IDS_TRK_Length          "Length"
     IDS_TRK_Mute            "Mute"
     IDS_TRK_Name            "Name"
@@ -868,7 +872,6 @@ BEGIN
     IDS_TRK_Velocity        "Velocity"
     IDS_TYPE_TRACK          "Track"
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
-    IDS_EDIT_UPDATE_PART    "Update Part"
 END
 
 STRINGTABLE
@@ -899,6 +902,7 @@ BEGIN
     ID_TRACK_LENGTH         "Set the length of one or more tracks\nLength"
     ID_TRACK_MUTE           "Mute or unmute the selected tracks\nMute"
     ID_TRACK_PART_CREATE    "Create new part from the selected tracks\nCreate Part"
+    ID_TRACK_PART_UPDATE    "Update the selected part from the selected tracks\nUpdate Part"
     ID_TRACK_PRESET_APPLY   "Apply the selected preset to the track mutes\nApply Preset"
     ID_TRACK_PRESET_CREATE  "Create a new preset from the track mutes\nCreate Preset"
     ID_TRACK_PRESET_UPDATE  "Update the selected preset from the track mutes\nUpdate Preset"
@@ -910,11 +914,11 @@ BEGIN
     ID_TRACK_SOLO           "Solo the selected tracks\nSolo"
     ID_TRACK_SORT           "Sort the selected tracks\nTrack Sort"
     ID_TRACK_TIE_NOTES      "Toggle tie notes mode; if on, new notes are tied\nTie Notes"
-    ID_TRACK_TRANSPOSE      "Transpose the selected tracks\nTranspose"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_TRANSPOSE      "Transpose the selected tracks\nTranspose"
     ID_TRANSPORT_GO_TO_POSITION 
                             "Go to specified position within song\nGo To Position"
     ID_TRANSPORT_PAUSE      "Pause or continue playback\nPause"
@@ -940,7 +944,6 @@ BEGIN
     ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "&Windows..."
-    ID_TRACK_PART_UPDATE    "Update the selected part from the selected tracks\nUpdate Part"
 END
 
 STRINGTABLE
@@ -972,6 +975,7 @@ STRINGTABLE
 BEGIN
     ID_APP_ABOUT            "Display program information, version number and copyleft\nAbout"
     ID_APP_EXIT             "Quit the application; prompts to save documents\nExit"
+    ID_HELP_FINDER          "List help topics\nHelp Topics"
 END
 
 STRINGTABLE

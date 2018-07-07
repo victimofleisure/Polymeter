@@ -39,7 +39,7 @@ const int  iMaxUserToolbars = 10;
 const UINT uiFirstUserToolBarId = AFX_IDW_CONTROLBAR_FIRST + 40;
 const UINT uiLastUserToolBarId = uiFirstUserToolBarId + iMaxUserToolbars - 1;
 
-static UINT indicators[] =
+const UINT CMainFrame::m_arrIndicatorID[] =
 {
 	ID_SEPARATOR,           // status line indicator
 	ID_INDICATOR_SONG_POS,
@@ -62,16 +62,6 @@ enum {	// application looks; alpha order to match corresponding resource IDs
 	APPLOOK_WIN_2000,
 	APPLOOK_WIN_XP,
 	APP_LOOKS
-};
-
-// docking bar IDs are relative to AFX_IDW_CONTROLBAR_FIRST
-enum {	// docking bar IDs; don't change, else bar placement won't be restored
-	ID_APP_CONTROL_BAR_FIRST = AFX_IDW_CONTROLBAR_FIRST + 40,
-	ID_BAR_PROPERTIES,
-	ID_BAR_CHANNELS,
-	ID_BAR_PRESETS,
-	ID_BAR_PARTS,
-	ID_BAR_MODULATIONS,
 };
 
 #define ID_VIEW_APPLOOK_FIRST ID_VIEW_APPLOOK_OFF_2003
@@ -143,7 +133,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		TRACE0("Failed to create status bar\n");
 		return -1;      // fail to create
 	}
-	m_wndStatusBar.SetIndicators(indicators, sizeof(indicators)/sizeof(UINT));
+	m_wndStatusBar.SetIndicators(m_arrIndicatorID, _countof(m_arrIndicatorID));
 
 	// TODO: Delete these five lines if you don't want the toolbar and menubar to be dockable
 	m_wndMenuBar.EnableDocking(CBRS_ALIGN_ANY);
@@ -284,35 +274,35 @@ BOOL CMainFrame::CreateDockingWindows()
 	DWORD	dwStyle = WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT | CBRS_FLOAT_MULTI;
 	CMasterProps	props;
 	m_wndPropertiesBar.SetInitialProperties(props);
-	if (!m_wndPropertiesBar.Create(sTitle, this, CRect(0, 0, 200, 200), TRUE, ID_BAR_PROPERTIES, dwStyle))
+	if (!m_wndPropertiesBar.Create(sTitle, this, CRect(0, 0, 200, 200), TRUE, ID_BAR_Properties, dwStyle))
 	{
 		TRACE0("Failed to create properties bar\n");
 		return FALSE; // failed to create
 	}
 	sTitle.LoadString(IDS_BAR_CHANNELS);
 	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
-	if (!m_wndChannelsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_CHANNELS, dwStyle))
+	if (!m_wndChannelsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_Channels, dwStyle))
 	{
 		TRACE0("Failed to create channels bar\n");
 		return FALSE; // failed to create
 	}
 	sTitle.LoadString(IDS_BAR_PRESETS);
 	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
-	if (!m_wndPresetsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_PRESETS, dwStyle))
+	if (!m_wndPresetsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_Presets, dwStyle))
 	{
 		TRACE0("Failed to create presets bar\n");
 		return FALSE; // failed to create
 	}
 	sTitle.LoadString(IDS_BAR_PARTS);
 	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
-	if (!m_wndPartsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_PARTS, dwStyle))
+	if (!m_wndPartsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_Parts, dwStyle))
 	{
 		TRACE0("Failed to create groups bar\n");
 		return FALSE; // failed to create
 	}
 	sTitle.LoadString(IDS_BAR_MODULATIONS);
 	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
-	if (!m_wndModulationsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_MODULATIONS, dwStyle))
+	if (!m_wndModulationsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_Modulations, dwStyle))
 	{
 		TRACE0("Failed to create modulations bar\n");
 		return FALSE; // failed to create

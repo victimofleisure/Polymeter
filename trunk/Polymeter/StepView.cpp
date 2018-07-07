@@ -1021,7 +1021,7 @@ void CStepView::OnLButtonDown(UINT nFlags, CPoint point)
 				nStep = 0;	// clear step
 			} else {	// control key is up
 				// if shift key is down and track type is note, toggle tie state
-				if ((nFlags & MK_SHIFT) && pDoc->m_Seq.GetType(iTrack) == TT_NOTE) {
+				if ((nFlags & MK_SHIFT) && pDoc->m_Seq.IsNote(iTrack)) {
 					if (nStep) {	// if step is on
 						nStep ^= SB_TIE;	// invert tie bit
 					} else {	// step is off
@@ -1035,7 +1035,7 @@ void CStepView::OnLButtonDown(UINT nFlags, CPoint point)
 						nStep = 0;	// clear step
 					} else {	// step is off
 						// if track type is note and notes default to tied
-						if (pDoc->m_Seq.GetType(iTrack) == TT_NOTE && theApp.m_bTieNotes)
+						if (pDoc->m_Seq.IsNote(iTrack) && theApp.m_bTieNotes)
 							nStep = DEFAULT_VELOCITY | SB_TIE;	// create tied note
 						else	// track type isn't note, or notes default to untied
 							nStep = DEFAULT_VELOCITY;	// create untied note

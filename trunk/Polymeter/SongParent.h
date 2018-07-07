@@ -98,6 +98,7 @@ protected:
 	afx_msg void OnParentNotify(UINT message, LPARAM lParam);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
 };
 
 inline void CSongParent::SetRulerHeight(int nHeight)

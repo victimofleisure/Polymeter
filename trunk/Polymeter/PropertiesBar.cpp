@@ -199,5 +199,12 @@ LRESULT CPropertiesBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
+	int	iProp = m_Grid.GetCurSelIdx();
+	int	nID = 0;
+	if (iProp >= 0 && iProp < CMasterProps::PROPERTIES)	// if valid property index
+		nID = CMasterProps::m_Info[iProp].nNameID;	// get property name resource ID
+	else
+		nID = IDS_BAR_PROPERTIES;
+	theApp.WinHelp(nID);
 	return TRUE;
 }

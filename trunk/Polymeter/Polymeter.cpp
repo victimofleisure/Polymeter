@@ -41,6 +41,11 @@
 
 #define RK_TIE_NOTES _T("bTieNotes")
 
+#include "HelpIDs.h"
+const CPolymeterApp::HELP_RES_MAP CPolymeterApp::m_HelpResMap[] = {
+	#include "HelpResMap.h"
+};
+
 // CPolymeterApp construction
 
 CPolymeterApp::CPolymeterApp()
@@ -55,6 +60,7 @@ CPolymeterApp::CPolymeterApp()
 	// Place all significant initialization in InitInstance
 	m_bInMsgBox = false;
 	m_bTieNotes = false;
+	m_bHelpInit = false;
 }
 
 // The one and only CPolymeterApp object
@@ -287,6 +293,45 @@ void CPolymeterApp::ApplyOptions(const COptions *pPrevOptions)
 		OpenMidiInputDevice(m_midiDevs.GetIdx(CMidiDevices::INPUT) >= 0);
 }
 
+int CPolymeterApp::FindHelpID(int nResID)
+{
+	int	nElems = _countof(m_HelpResMap);
+	for (int iElem = 0; iElem < nElems; iElem++) {	// for each map element
+		if (nResID == m_HelpResMap[iElem].nResID)	// if resource ID found
+			return(m_HelpResMap[iElem].nHelpID);	// return context help ID
+	}
+	return(0);
+}
+
+void CPolymeterApp::WinHelp(DWORD_PTR dwData, UINT nCmd) 
+{
+	UNREFERENCED_PARAMETER(nCmd);
+//printf("dwData=%d:%d nCmd=%d\n", HIWORD(dwData), LOWORD(dwData), nCmd);
+	CPathStr	HelpPath(GetAppFolder());
+	HelpPath.Append(CString(m_pszAppName) + _T(".chm"));
+	HWND	hMainWnd = GetMainFrame()->m_hWnd;
+	UINT	nResID = LOWORD(dwData);
+	int	nHelpID = FindHelpID(nResID);
+	HWND	hWnd = 0;	// assume failure
+	if (nHelpID)	// if context help ID was found
+		hWnd = ::HtmlHelp(hMainWnd, HelpPath, HH_HELP_CONTEXT, nHelpID);
+	if (!hWnd) {	// if context help wasn't available or failed
+		hWnd = ::HtmlHelp(hMainWnd, HelpPath, HH_DISPLAY_TOC, 0);	// show contents
+		if (!hWnd) {	// if help file not found
+			CString	s;
+			AfxFormatString1(s, IDS_APP_HELP_FILE_MISSING, HelpPath);
+			AfxMessageBox(s);
+			return;
+		}
+	}
+	m_bHelpInit = true;
+}
+
+void CPolymeterApp::WinHelpInternal(DWORD_PTR dwData, UINT nCmd)
+{
+	WinHelp(dwData, nCmd);	// route to our WinHelp override
+}
+
 // CPolymeterApp message handlers
 
 // App command to run the dialog
@@ -425,6 +470,8 @@ BEGIN_MESSAGE_MAP(CPolymeterApp, CWinAppEx)
 	// Standard file based document commands
 	ON_COMMAND(ID_FILE_NEW, &CWinAppEx::OnFileNew)
 	ON_COMMAND(ID_FILE_OPEN, &CWinAppEx::OnFileOpen)
+	ON_COMMAND(ID_HELP_FINDER, &CWinAppEx::OnHelp)
+	ON_COMMAND(ID_HELP, &CWinAppEx::OnHelp)
 	ON_COMMAND(ID_APP_HOME_PAGE, OnAppHomePage)
 	ON_COMMAND(ID_TRACK_TIE_NOTES, OnTrackTieNotes)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_TIE_NOTES, OnUpdateTrackTieNotes)

@@ -22,6 +22,13 @@
 #include "PartsBar.h"
 #include "ModulationsBar.h"
 
+// docking bar IDs are relative to AFX_IDW_CONTROLBAR_FIRST
+enum {	// docking bar IDs; don't change, else bar placement won't be restored
+	ID_APP_CONTROL_BAR_FIRST = AFX_IDW_CONTROLBAR_FIRST + 40,
+	#define MAINDOCKBARDEF(name) ID_BAR_##name,
+	#include "MainDockBarDef.h"	// generate docking bar IDs
+};
+
 class CPolymeterDoc;
 
 class CMainFrame : public CMDIFrameWndEx
@@ -84,6 +91,9 @@ protected:  // control bar embedded members
 	CPresetsBar		  m_wndPresetsBar;
 	CPartsBar		  m_wndPartsBar;
 	CModulationsBar	  m_wndModulationsBar;
+
+// Constants
+	static const UINT m_arrIndicatorID[];	// array of status bar indicator IDs
 
 // Data members
 	CPolymeterDoc	*m_pActiveDoc;		// pointer to active document, or NULL if none
