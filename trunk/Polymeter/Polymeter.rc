@@ -389,7 +389,7 @@ BEGIN
         MENUITEM "&Create",                     ID_TRACK_PART_CREATE
         MENUITEM "&Delete",                     ID_EDIT_DELETE
         MENUITEM "&Rename",                     ID_EDIT_RENAME
-        MENUITEM "&Update",                     32831
+        MENUITEM "&Update",                     ID_TRACK_PART_UPDATE
     END
 END
 
