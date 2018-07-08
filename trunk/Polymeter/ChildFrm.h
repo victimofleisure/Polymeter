@@ -33,9 +33,10 @@ public:
 		PANE_STEP,
 		PANES
 	};
-	enum {
-		INIT_SPLIT_POS = 700,
-		VIEW_FIRST_ID = 1000,
+	enum {	// view IDs
+		ID_VIEW_FIRST = 8000,
+		ID_VIEW_SONG,
+		ID_VIEW_LIVE,
 	};
 
 // Attributes
@@ -62,16 +63,21 @@ public:
 	virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
 
 // Public data
-	CTrackView		*m_pTrackView;
-	CStepParent		*m_pStepParent;
-	CSongParent		*m_pSongParent;
-	CLiveView		*m_pLiveView;
+	CTrackView		*m_pTrackView;		// pointer to track view
+	CStepParent		*m_pStepParent;		// pointer to parent step view
+	CSongParent		*m_pSongParent;		// pointer to parent song view
+	CLiveView		*m_pLiveView;		// pointer to live view
 
 protected:
 // Types
 	class CMySplitterWnd : public CSplitterWndEx {
 	public:
 		virtual void StopTracking(BOOL bAccept);
+	};
+
+// Constants
+	enum {
+		INIT_SPLIT_POS = 700,
 	};
 
 // Member data

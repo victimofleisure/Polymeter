@@ -215,14 +215,12 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	CRuntimeClass* pSongClass = RUNTIME_CLASS(CSongParent);
 	m_pSongParent = (CSongParent *)pSongClass->CreateObject();
 	DWORD	dwSongStyle = WS_CHILD;
-	int	nSongID = VIEW_FIRST_ID + CPolymeterDoc::VIEW_SONG;
-	if (!m_pSongParent->Create(NULL, NULL, dwSongStyle, CRect(0, 0, 0, 0), this, nSongID, pContext))
+	if (!m_pSongParent->Create(NULL, NULL, dwSongStyle, CRect(0, 0, 0, 0), this, ID_VIEW_SONG, pContext))
 		return false;
 	CRuntimeClass* pLiveClass = RUNTIME_CLASS(CLiveView);
 	m_pLiveView = (CLiveView *)pLiveClass->CreateObject();
 	DWORD	dwLiveStyle = WS_CHILD;
-	int	nLiveID = VIEW_FIRST_ID + CPolymeterDoc::VIEW_LIVE;
-	if (!m_pLiveView->Create(NULL, NULL, dwLiveStyle, CRect(0, 0, 0, 0), this, nLiveID, pContext))
+	if (!m_pLiveView->Create(NULL, NULL, dwLiveStyle, CRect(0, 0, 0, 0), this, ID_VIEW_LIVE, pContext))
 		return false;
 	return true;
 }

@@ -177,12 +177,13 @@ int CPolymeterApp::ExitInstance()
 
 	m_midiDevs.Write();	// save MIDI device state to registry
 
-	//TODO: handle additional resources you may have added
 	AfxOleTerm(FALSE);
 
 	WriteProfileInt(REG_SETTINGS, RK_TIE_NOTES, m_bTieNotes);
 
 	CChildFrame::SavePersistentState();
+
+	CloseHtmlHelp();
 
 	return CWinAppEx::ExitInstance();
 }
@@ -318,9 +319,12 @@ void CPolymeterApp::WinHelp(DWORD_PTR dwData, UINT nCmd)
 	if (!hWnd) {	// if context help wasn't available or failed
 		hWnd = ::HtmlHelp(hMainWnd, HelpPath, HH_DISPLAY_TOC, 0);	// show contents
 		if (!hWnd) {	// if help file not found
-			CString	s;
-			AfxFormatString1(s, IDS_APP_HELP_FILE_MISSING, HelpPath);
-			AfxMessageBox(s);
+			if (!m_bInMsgBox) {	// if not already displaying message box
+				CSaveObj<bool>	save(m_bInMsgBox, true);
+				CString	s;
+				AfxFormatString1(s, IDS_APP_HELP_FILE_MISSING, HelpPath);
+				AfxMessageBox(s);
+			}
 			return;
 		}
 	}
@@ -330,6 +334,15 @@ void CPolymeterApp::WinHelp(DWORD_PTR dwData, UINT nCmd)
 void CPolymeterApp::WinHelpInternal(DWORD_PTR dwData, UINT nCmd)
 {
 	WinHelp(dwData, nCmd);	// route to our WinHelp override
+}
+
+void CPolymeterApp::CloseHtmlHelp()
+{
+	// if HTML help was initialized, close all topics
+	if (m_bHelpInit) {
+		::HtmlHelp(NULL, NULL, HH_CLOSE_ALL, 0);
+		m_bHelpInit = FALSE;
+	}
 }
 
 // CPolymeterApp message handlers

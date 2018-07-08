@@ -85,6 +85,7 @@ protected:
 
 // Helpers
 	static void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2);
+	void	CloseHtmlHelp();
 
 // Overrides
 	virtual void PreLoadState();

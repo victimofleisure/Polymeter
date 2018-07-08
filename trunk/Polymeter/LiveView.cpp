@@ -405,8 +405,7 @@ LRESULT CLiveView::OnCommandHelp(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
-	theApp.WinHelp(GetDlgCtrlID());
-	return TRUE;
+	return TRUE;	// disable help in live view to avoid disrupting performance
 }
 
 void CLiveView::OnLButtonDown(UINT nFlags, CPoint point)
