@@ -25,6 +25,7 @@
 		15		18may18	move list of algorithms to header file
 		16		08jun18	add more fast methods to CArrayEx; add SetGrowBy
 		17		19jun18	add insert, delete, and move selection
+		18		09jul18	add array find template
 
 		enhanced array with copy ctor, assignment, and fast const access
  
@@ -896,3 +897,26 @@ AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::MoveSelection(const CIntArrayEx& arrSe
 	}
 	InsertAt(iDropPos, &arrInsert);
 }
+
+// template to find an element in an array
+template<typename T> inline int ArrayFind(const T arr[], int nItems, T target)
+{
+	for (int iItem = 0; iItem < nItems; iItem++) {
+		if (arr[iItem] == target)
+			return iItem;
+	}
+	return -1;
+}
+
+// array find template specialized for strings
+inline int ArrayFind(const LPCTSTR arr[], int nItems, LPCTSTR target)
+{
+	for (int iItem = 0; iItem < nItems; iItem++) {
+		if (!_tcscmp(arr[iItem], target))
+			return iItem;
+	}
+	return -1;
+}
+
+// array find template simplified for static arrays
+#define ARRAY_FIND(arr, target) ArrayFind(arr, _countof(arr), target)

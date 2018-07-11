@@ -39,8 +39,10 @@ public:
 
 // Operations
 public:
-	void	Update();
+	static	void	LoadPersistentState();
+	static	void	SavePersistentState();
 	void	UpdatePersistentState();
+	void	Update();
 	void	ToggleMute(int iItem, bool bDeferUpdate = false);
 	void	ToggleSelectedMutes();
 	void	ApplyPreset(int iPreset);
@@ -74,11 +76,12 @@ protected:
 		IDC_LIST_LAST = IDC_LIST_FIRST + LISTS - 1,
 		IDC_SONG_POS = 2000,
 		IDC_SOLO_BTN = 2010,
-		LIST_WIDTH = 300,
+		INIT_LIST_WIDTH = 300,
 		LIST_GUTTER = 2,
-		FONT_HEIGHT = 30,
 		SOLO_WIDTH = 100,
 		COUNTER_WIDTH = 250,
+		POS_BAR_WIDTH = 300,
+		POS_BAR_GUTTER = 3,
 	};
 	enum {	// song counters
 		SONG_COUNTER_POS,
@@ -86,19 +89,38 @@ protected:
 		SONG_COUNTERS
 	};
 	static const COLORREF	m_clrSoloBtn;		// solo button color
+	static	const LPCTSTR	m_nListName[LISTS];	// array of list names
 
 // Member data
 	CLiveListCtrl	m_list[LISTS];	// array of list controls
 	CIntArrayEx	m_arrPart;			// array of part or track indices, one per track
 	CFont	m_fontList;				// list font
 	CFont	m_fontTime;				// time font
+	int		m_nListWidth[LISTS];	// array of list widths, in logical coords
+	static	int		m_nGlobListWidth[LISTS];	// array of global list widths
+	int		m_nListTotalWidth;		// total width of all lists, in logical coords
+	int		m_nListHdrHeight;		// list header height, in logical coords
+	int		m_nListItemHeight;		// list item height, in logical coords
 	int		m_iPreset;				// index of current preset, or -1 if none
+	int		m_iTopPart;				// index of top part, indicating parts list scrolling if any
 	CStatic	m_wndSoloBtn;			// solo button static control
 	CSteadyStatic	m_wndSongCounter[SONG_COUNTERS];	// array of song position static controls
 	CBrush	m_brSoloBtn;			// solo button brush
+	CIntArrayEx	m_arrPartLength;	// length of each part in ticks
+	CIntArrayEx	m_arrPartCurPos;	// current position of each part in ticks
+	CDC		m_dcPos;				// client device context, for drawing positions
 
 // Helpers
 	void	UpdateSongCounters();
+	void	UpdatePartLengths();
+	void	UpdateBars(int nSongPos);
+	void	InvalidateBar(int iItem);
+	void	InvalidateAllBars();
+	void	CreateFonts();
+	void	UpdateFonts();
+	void	RecalcLayout();
+	void	UpdateListItemHeight();
+	int		ListHitTest(CPoint point) const;
 
 // Overrides
 	virtual void OnInitialUpdate();
@@ -111,8 +133,10 @@ protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnListGetdispinfo(UINT id, NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnListLButtonDown(UINT id, NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnListHdrEndTrack(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnUpdateEditDisable(CCmdUI *pCmdUI);
@@ -121,6 +145,8 @@ protected:
 	afx_msg void OnTrackSolo();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnSoloBtnClicked();
+	afx_msg void OnListColHdrReset();
+	afx_msg void OnPartsListEndScroll(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 inline CPolymeterDoc* CLiveView::GetDocument() const

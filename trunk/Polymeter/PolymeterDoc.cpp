@@ -44,7 +44,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	6
+#define	FILE_VERSION	7
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -61,6 +61,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_STEP_ZOOM	_T("Zoom")
 #define RK_SONG_VIEW	_T("SongView")
 #define RK_SONG_ZOOM	_T("Zoom")
+#define RK_VIEW_TYPE	_T("ViewType")
 
 #define RK_TRANSPOSE_DLG	REG_SETTINGS _T("\\Transpose")
 #define RK_TRANSPOSE_NOTES	_T("nNotes")
@@ -82,14 +83,20 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define IDS_EDIT_SHIFT_RECT			IDS_EDIT_SHIFT
 #define IDS_EDIT_MUTE				IDS_TRK_Mute
 
-const int CPolymeterDoc::m_nUndoTitleId[UNDO_CODES] = {
+const int CPolymeterDoc::m_arrUndoTitleId[UNDO_CODES] = {
 	#define UCODE_DEF(name) IDS_EDIT_##name,
 	#include "UndoCodeData.h"	
 };
 
-const int CPolymeterDoc::m_nTrackPropNameId[CTrackBase::PROPERTIES] = {
+const int CPolymeterDoc::m_arrTrackPropNameId[CTrackBase::PROPERTIES] = {
 	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) IDS_TRK_##name,
 	#include "TrackDef.h"		// generate enumeration
+};
+
+const LPCTSTR CPolymeterDoc::m_arrViewTypeName[VIEW_TYPES] = {
+	_T("Track"),
+	_T("Song"),
+	_T("Live"),
 };
 
 CPolymeterDoc::CTrackSortInfo CPolymeterDoc::m_infoTrackSort;
@@ -106,7 +113,7 @@ CPolymeterDoc::CPolymeterDoc()
 	m_iTrackSelMark = -1;
 	m_fStepZoom = 1;
 	m_fSongZoom = 1;
-	m_nViewType = VIEW_TRACK;
+	m_nViewType = DEFAULT_VIEW_TYPE;
 }
 
 CPolymeterDoc::~CPolymeterDoc()
@@ -296,6 +303,12 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 	m_arrPart.Read(RK_PART_SECTION);		// read parts
 	RdReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
 	RdReg(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
+	CString	sViewTypeName;
+	RdReg(RK_VIEW_TYPE, sViewTypeName);
+	LPCTSTR	pszViewTypeName = sViewTypeName;
+	int	nViewType = ARRAY_FIND(m_arrViewTypeName, pszViewTypeName);
+	if (nViewType >= 0)
+		m_nViewType = nViewType;
 }
 
 void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
@@ -338,6 +351,7 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 	m_arrPart.Write(RK_PART_SECTION);	// write parts
 	WrReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
 	WrReg(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
+	WrReg(RK_VIEW_TYPE, CString(m_arrViewTypeName[m_nViewType]));
 }
 
 __forceinline void CPolymeterDoc::ReadTrackModulations(CString sTrkID, CTrack& trk)
@@ -549,14 +563,6 @@ void CPolymeterDoc::Solo()
 		m_Seq.SetMute(iTrack, !arrSolo[iTrack]);	// apply solo
 	if (m_Seq.IsRecording())
 		m_Seq.RecordDub();	// all tracks
-	SetModifiedFlag();
-	UpdateAllViews(NULL, HINT_SOLO);
-}
-
-void CPolymeterDoc::ApplyPreset(int iPreset)
-{
-	NotifyUndoableEdit(0, UCODE_APPLY_PRESET);
-	m_Seq.SetMutes(m_arrPreset[iPreset].m_arrMute);
 	SetModifiedFlag();
 	UpdateAllViews(NULL, HINT_SOLO);
 }
@@ -1898,13 +1904,13 @@ CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 	case UCODE_TRACK_PROP:
 		{
 			int	iProp = HIWORD(State.GetCode());
-			sTitle.LoadString(m_nTrackPropNameId[iProp]);
+			sTitle.LoadString(m_arrTrackPropNameId[iProp]);
 		}
 		break;
 	case UCODE_MULTI_TRACK_PROP:
 		{
 			int	iProp = State.GetCtrlID();
-			sTitle.LoadString(m_nTrackPropNameId[iProp]);
+			sTitle.LoadString(m_arrTrackPropNameId[iProp]);
 		}
 		break;
 	case UCODE_TRACK_STEP:
@@ -1926,7 +1932,7 @@ CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 		}
 		break;
 	default:
-		sTitle.LoadString(m_nUndoTitleId[LOWORD(State.GetCode())]);
+		sTitle.LoadString(m_arrUndoTitleId[LOWORD(State.GetCode())]);
 	}
 	return sTitle;
 }
@@ -2235,6 +2241,14 @@ void CPolymeterDoc::OnTrackArrayEdit(const CTrackIDMap& mapTrackID)
 	m_arrPart.OnTrackArrayEdit(arrTrackMap);
 }
 
+void CPolymeterDoc::ApplyPreset(int iPreset)
+{
+	NotifyUndoableEdit(0, UCODE_APPLY_PRESET);
+	m_Seq.SetMutes(m_arrPreset[iPreset].m_arrMute);
+	SetModifiedFlag();
+	UpdateAllViews(NULL, HINT_SOLO);
+}
+
 void CPolymeterDoc::CreatePreset()
 {
 	CPreset	preset;
@@ -2282,6 +2296,13 @@ void CPolymeterDoc::UpdatePreset(int iPreset)
 	m_parrSelection = NULL;	// reset selection pointer
 	CPreset&	preset = m_arrPreset[iPreset];
 	m_Seq.GetMutes(preset.m_arrMute);
+}
+
+int CPolymeterDoc::FindCurrentPreset() const
+{
+	CByteArrayEx	arrMute;
+	m_Seq.GetMutes(arrMute);
+	return m_arrPreset.Find(arrMute);
 }
 
 void CPolymeterDoc::SetPresetName(int iPreset, CString sName)
@@ -2463,6 +2484,11 @@ BOOL CPolymeterDoc::OnOpenDocument(LPCTSTR lpszPathName)
 {
 	TRY {
 		ReadProperties(lpszPathName);
+		if (m_nViewType != DEFAULT_VIEW_TYPE) {	// if view type isn't default
+			int	nViewType = m_nViewType;
+			m_nViewType = DEFAULT_VIEW_TYPE;	// spoof no-op test
+			SetViewType(nViewType);
+		}
 	}
 	CATCH(CFileException, e) {
 		e->ReportError();

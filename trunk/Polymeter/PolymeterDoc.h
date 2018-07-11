@@ -67,7 +67,8 @@ public:
 		VIEW_TRACK,
 		VIEW_SONG,
 		VIEW_LIVE,
-		VIEW_TYPES
+		VIEW_TYPES,
+		DEFAULT_VIEW_TYPE = VIEW_TRACK
 	};
 
 // Types
@@ -198,6 +199,7 @@ public:
 	void	DeletePresets(const CIntArrayEx& arrSelection);
 	void	MovePresets(const CIntArrayEx& arrSelection, int iDropPos);
 	void	UpdatePreset(int iPreset);
+	int		FindCurrentPreset() const;
 	void	CreatePart();
 	void	DeleteParts(const CIntArrayEx& arrSelection);
 	void	MoveParts(const CIntArrayEx& arrSelection, int iDropPos);
@@ -315,8 +317,9 @@ protected:
 	};
 
 // Constants
-	static const int	m_nUndoTitleId[];	// array of string resource IDs for undo titles
-	static const int	m_nTrackPropNameId[];	// array of string resource IDs for track property names
+	static const int	m_arrUndoTitleId[];	// array of string resource IDs for undo titles
+	static const int	m_arrTrackPropNameId[];	// array of string resource IDs for track property names
+	static const LPCTSTR	m_arrViewTypeName[];	// array of view type names
 
 // Data members
 	CRect	m_rStepSel;			// rectangular step selection, used by undo handling
@@ -473,7 +476,7 @@ inline bool CPolymeterDoc::GetSelected(int iTrack) const
 inline int CPolymeterDoc::GetTrackPropertyNameID(int iProp)
 {
 	ASSERT(iProp >= 0 && iProp < CTrackBase::PROPERTIES);
-	return m_nTrackPropNameId[iProp];
+	return m_arrTrackPropNameId[iProp];
 }
 
 inline bool CPolymeterDoc::IsTrackView() const

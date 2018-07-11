@@ -113,3 +113,13 @@ void CPresetArray::Dump() const
 		GetAt(iPreset).Dump();
 	}
 }
+
+int CPresetArray::Find(const CByteArrayEx& arrMute) const
+{
+	int	nPresets = GetSize();
+	for (int iPreset = 0; iPreset < nPresets; iPreset++) {
+		if (GetAt(iPreset).m_arrMute == arrMute)
+			return iPreset;
+	}
+	return -1;
+}

@@ -36,9 +36,10 @@ PROPDEF(	View,		NONE,		VAR,		bool,		bShowCurPos,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowNoteNames,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowGMNames,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		float,		fZoomDelta,			100.0f,		1.0f,		100.0f,		NULL,		0)
+PROPDEF(	View,		NONE,		VAR,		int,		nLiveFontHeight,	30,			10,			100,		NULL,		0)
 PROPDEF(	General,	NONE,		VAR,		bool,		bPropertyDescrips,	1,			0,			0,			NULL,		0)
 PROPDEF(	General,	NONE,		VAR,		bool,		bCheckForUpdates,	1,			0,			0,			NULL,		0)
-PROPDEF(	General,	NONE,		VAR,		bool,		bAlwaysRecord,	0,			0,			0,			NULL,		0)
+PROPDEF(	General,	NONE,		VAR,		bool,		bAlwaysRecord,		0,			0,			0,			NULL,		0)
 
 #undef PROPDEF
 #undef OPTS_EXCLUDE_MIDI_DEVICES

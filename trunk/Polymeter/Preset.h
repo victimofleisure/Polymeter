@@ -52,4 +52,5 @@ public:
 	void	Write() const;
 	void	OnTrackArrayEdit(const CIntArrayEx& arrTrackMap, int nNewTracks);
 	void	Dump() const;
+	int		Find(const CByteArrayEx& arrMute) const;
 };

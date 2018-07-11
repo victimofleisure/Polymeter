@@ -37,7 +37,9 @@ CLiveListCtrl::CLiveListCtrl()
 BEGIN_MESSAGE_MAP(CLiveListCtrl, CListCtrlExSel)
 	ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, OnCustomDraw)
 	ON_WM_LBUTTONDOWN()
+	ON_WM_LBUTTONDBLCLK()
 	ON_WM_RBUTTONDOWN()
+	ON_WM_RBUTTONDBLCLK()
 	ON_WM_RBUTTONUP()
 	ON_WM_MOUSEMOVE()
 END_MESSAGE_MAP()
@@ -84,6 +86,11 @@ void CLiveListCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 	GetParent()->SendMessage(WM_NOTIFY, nmlv.hdr.idFrom, reinterpret_cast<LPARAM>(&nmlv));
 }
 
+void CLiveListCtrl::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+	OnLButtonDown(nFlags, point);
+}
+
 void CLiveListCtrl::OnRButtonDown(UINT nFlags, CPoint point)
 {
 	UNREFERENCED_PARAMETER(nFlags);
@@ -97,6 +104,11 @@ void CLiveListCtrl::OnRButtonDown(UINT nFlags, CPoint point)
 		m_rngSelect = CIntRange(iItem, iItem);
 	} else
 		Deselect();
+}
+
+void CLiveListCtrl::OnRButtonDblClk(UINT nFlags, CPoint point)
+{
+	OnRButtonDown(nFlags, point);
 }
 
 void CLiveListCtrl::OnRButtonUp(UINT nFlags, CPoint point)

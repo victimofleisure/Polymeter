@@ -105,7 +105,6 @@ void CChildFrame::SetViewType(int nViewType)
 			CRect	rc;
 			GetClientRect(rc);
 			m_pLiveView->MoveWindow(0, 0, rc.Width(), rc.Height());
-			m_pLiveView->Update();
 			m_pLiveView->ShowWindow(SW_SHOW);
 			SetActiveView(m_pLiveView);
 		}
@@ -154,6 +153,7 @@ void CChildFrame::LoadPersistentState()
 	CTrackView::LoadPersistentState();
 	CStepParent::LoadPersistentState();
 	CSongParent::LoadPersistentState();
+	CLiveView::LoadPersistentState();
 }
 
 void CChildFrame::SavePersistentState()
@@ -162,6 +162,7 @@ void CChildFrame::SavePersistentState()
 	CTrackView::SavePersistentState();
 	CStepParent::SavePersistentState();
 	CSongParent::SavePersistentState();
+	CLiveView::SavePersistentState();
 }
 
 void CChildFrame::CMySplitterWnd::StopTracking(BOOL bAccept)

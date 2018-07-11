@@ -872,6 +872,7 @@ BEGIN
     IDS_TRK_Velocity        "Velocity"
     IDS_TYPE_TRACK          "Track"
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
+    IDS_OPT_NAME_View_nLiveFontHeight "Live View Font Height"
 END
 
 STRINGTABLE
@@ -1050,6 +1051,11 @@ BEGIN
     AFX_IDS_SCRESTORE       "Restore the window to normal size"
     AFX_IDS_SCTASKLIST      "Activate Task List"
     AFX_IDS_MDICHILD        "Activate this window"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_OPT_DESC_View_nLiveFontHeight "Height of live view font, in pixels"
 END
 
 #endif    // English (United States) resources
