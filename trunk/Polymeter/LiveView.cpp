@@ -346,6 +346,7 @@ void CLiveView::ApplyPreset(int iPreset)
 		list.Deselect();
 		list.Invalidate();
 	}
+	m_wndPosBar.InvalidateAllBars();
 	if (!pDoc->m_Seq.IsPlaying())	// if stopped
 		m_wndPosBar.UpdateBars();
 }
