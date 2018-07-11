@@ -63,6 +63,42 @@ public:
 
 protected:
 // Types
+	class CPosBarCtrl : public CWnd {
+	public:
+	// Types
+		struct PART_INFO {
+			int		nLength;			// length of part in ticks
+			int		nCurPos;			// current position of bar in pixels
+		};
+		typedef CArrayEx<PART_INFO, PART_INFO&> CPartInfoArray;
+
+	// Data members
+		CPolymeterDoc	*m_pDoc;		// pointer to parent view's document
+		CLiveView	*m_pLiveView;		// pointer to parent view
+		CPartInfoArray	m_arrPartInfo;	// array of state information for each part
+		CDC		m_dcPos;				// client device context, for drawing bars
+
+	// Helpers
+		void	UpdateBars();
+		void	UpdateBars(int nSongPos);
+		void	InvalidateBar(int iItem);
+		void	InvalidateAllBars();
+		void	UpdateDeviceContext();
+
+	// Message handlers
+		DECLARE_MESSAGE_MAP()
+		afx_msg void OnSize(UINT nType, int cx, int cy);
+		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+		afx_msg void OnPaint();
+	};
+	class CSimpleButton : public CStatic {
+	public:
+		CSimpleButton();
+		bool	m_bMouseTracking;
+		DECLARE_MESSAGE_MAP()
+		afx_msg void OnMouseMove(UINT nFlags, CPoint point)	;
+		afx_msg LRESULT OnMouseLeave(WPARAM wParam, LPARAM lParam);	
+	};
 
 // Constants
 	enum {	// lists
@@ -76,19 +112,22 @@ protected:
 		IDC_LIST_LAST = IDC_LIST_FIRST + LISTS - 1,
 		IDC_SONG_POS = 2000,
 		IDC_SOLO_BTN = 2010,
+		IDC_POS_BARS = 2020,
 		INIT_LIST_WIDTH = 300,
 		LIST_GUTTER = 2,
 		SOLO_WIDTH = 100,
 		COUNTER_WIDTH = 250,
 		POS_BAR_WIDTH = 300,
 		POS_BAR_GUTTER = 3,
+		POS_BAR_HMARGIN = 1,
 	};
 	enum {	// song counters
 		SONG_COUNTER_POS,
 		SONG_COUNTER_TIME,
 		SONG_COUNTERS
 	};
-	static const COLORREF	m_clrSoloBtn;		// solo button color
+	static const COLORREF	m_clrSoloBtnHover;	// solo button hover color
+	static const COLORREF	m_clrBkgnd;			// background color
 	static	const LPCTSTR	m_nListName[LISTS];	// array of list names
 
 // Member data
@@ -103,19 +142,14 @@ protected:
 	int		m_nListItemHeight;		// list item height, in logical coords
 	int		m_iPreset;				// index of current preset, or -1 if none
 	int		m_iTopPart;				// index of top part, indicating parts list scrolling if any
-	CStatic	m_wndSoloBtn;			// solo button static control
+	CSimpleButton	m_wndSoloBtn;	// solo button static control
 	CSteadyStatic	m_wndSongCounter[SONG_COUNTERS];	// array of song position static controls
-	CBrush	m_brSoloBtn;			// solo button brush
-	CIntArrayEx	m_arrPartLength;	// length of each part in ticks
-	CIntArrayEx	m_arrPartCurPos;	// current position of each part in ticks
-	CDC		m_dcPos;				// client device context, for drawing positions
+	CBrush	m_brSoloBtnHover;		// solo button hover brush
+	CPosBarCtrl	m_wndPosBar;		// position bar control
 
 // Helpers
 	void	UpdateSongCounters();
 	void	UpdatePartLengths();
-	void	UpdateBars(int nSongPos);
-	void	InvalidateBar(int iItem);
-	void	InvalidateAllBars();
 	void	CreateFonts();
 	void	UpdateFonts();
 	void	RecalcLayout();
