@@ -66,6 +66,8 @@ public:
 
 // Operations
 	int		HitTest(CPoint point, int& iCell) const;
+	int		ConvertXToSongPos(int x) const;
+	int		ConvertSongPosToX(int nSongPos) const;
 
 protected:
 // Types
@@ -117,8 +119,6 @@ protected:
 	static	double	InvPow(double fBase, double fVal);
 	void	UpdateSongPos(int nSongPos);
 	double	GetTicksPerCellImpl() const;
-	int		ConvertXToSongPos(int x) const;
-	int		ConvertSongPosToX(int nSongPos) const;
 	static	int		Mod(int Val, int Modulo);
 	void	GetCellRect(int iTrack, int iCell, CRect& rCell) const;
 	void	GetCellsRect(int iTrack, CIntRange rngCells, CRect& rCells) const;

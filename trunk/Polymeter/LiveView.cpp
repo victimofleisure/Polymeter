@@ -478,6 +478,7 @@ int CLiveView::ListHitTest(CPoint point) const
 BEGIN_MESSAGE_MAP(CLiveView, CView)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
+	ON_WM_PARENTNOTIFY()
 	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 	ON_WM_CONTEXTMENU()
 	ON_WM_LBUTTONDOWN()
@@ -572,6 +573,29 @@ void CLiveView::OnSize(UINT nType, int cx, int cy)
 	hDWP = DeferWindowPos(hDWP, m_wndPosBar.m_hWnd, NULL, m_nListTotalWidth, nHeight, POS_BAR_WIDTH, cy - nHeight, dwFlags);
 	EndDeferWindowPos(hDWP);
 	m_iTopPart = m_list[LIST_PARTS].GetTopIndex();	// order matters: after resizing lists
+}
+
+void CLiveView::OnParentNotify(UINT message, LPARAM lParam)
+{
+	CView::OnParentNotify(message, lParam);
+	switch (message) {
+	case WM_RBUTTONDOWN:
+		{
+			CPoint	ptCursor(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+			if (ptCursor.x >= m_nListTotalWidth && ptCursor.y >= m_nListHdrHeight) {
+				OnRButtonDown(0, ptCursor);
+			}
+		}
+		break;
+	case WM_LBUTTONDOWN:
+		{
+			CPoint	ptCursor(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+			if (ptCursor.x >= m_nListTotalWidth && ptCursor.y >= m_nListHdrHeight) {
+				OnLButtonDown(0, ptCursor);
+			}
+		}
+		break;
+	}
 }
 
 LRESULT CLiveView::OnCommandHelp(WPARAM wParam, LPARAM lParam)

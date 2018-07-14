@@ -291,14 +291,12 @@ void CSongView::UpdateSongPos(int nSongPos)
 
 int CSongView::HitTest(CPoint point, int& iCell) const
 {
-	if (point.y >= 0) {
-		CPoint	ptScroll(GetScrollPosition());
-		int	iTrack = (point.y + ptScroll.y) / m_nTrackHeight;
-		int	nTracks = GetDocument()->GetTrackCount();
-		if (iTrack >= 0 && iTrack < nTracks) {
-			iCell = (point.x + ptScroll.x) / m_nCellWidth;
-			return iTrack;
-		}
+	CPoint	ptScroll(GetScrollPosition());
+	int	iTrack = (point.y + ptScroll.y) / m_nTrackHeight;
+	int	nTracks = GetDocument()->GetTrackCount();
+	if (iTrack >= 0 && iTrack < nTracks) {
+		iCell = (point.x + ptScroll.x) / m_nCellWidth;
+		return iTrack;
 	}
 	iCell = -1;
 	return -1;
@@ -567,24 +565,19 @@ BOOL CSongView::PreTranslateMessage(MSG* pMsg)
 void CSongView::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	CPolymeterDoc	*pDoc = GetDocument();
-	if (point.y < 0) {	// if click on ruler
-		int	nPos = ConvertXToSongPos(point.x + GetScrollPosition().x);
-		pDoc->SetPosition(nPos);
-	} else {
-		double	fTicksPerCell = GetTicksPerCell();
-		if (HaveSelection()) {	// if selection exists
-			if (nFlags & MK_CONTROL)
-				pDoc->SetDubs(m_rCellSel, fTicksPerCell, true);
-			else
-				pDoc->ToggleDubs(m_rCellSel, fTicksPerCell);
-			ResetSelection();
-		} else {	// no selection
-			int	iCell;
-			int	iTrack = HitTest(point, iCell);
-			if (iTrack >= 0 && iCell >= 0) {	// if hit on cell
-				CRect	rCell(CPoint(iCell, iTrack), CSize(1, 1));
-				pDoc->ToggleDubs(rCell, fTicksPerCell);
-			}
+	double	fTicksPerCell = GetTicksPerCell();
+	if (HaveSelection()) {	// if selection exists
+		if (nFlags & MK_CONTROL)
+			pDoc->SetDubs(m_rCellSel, fTicksPerCell, true);
+		else
+			pDoc->ToggleDubs(m_rCellSel, fTicksPerCell);
+		ResetSelection();
+	} else {	// no selection
+		int	iCell;
+		int	iTrack = HitTest(point, iCell);
+		if (iTrack >= 0 && iCell >= 0) {	// if hit on cell
+			CRect	rCell(CPoint(iCell, iTrack), CSize(1, 1));
+			pDoc->ToggleDubs(rCell, fTicksPerCell);
 		}
 	}
 	CScrollView::OnLButtonDown(nFlags, point);

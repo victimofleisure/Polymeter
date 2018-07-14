@@ -41,6 +41,7 @@ protected: // create from serialization only
 
 // Attributes
 public:
+	CPolymeterDoc* GetDocument() const;
 	void	SetRulerHeight(int nHeight);
 	int		GetTrackHeight() const;
 	void	SetTrackHeight(int nHeight);
@@ -93,6 +94,7 @@ protected:
 // Helpers
 	void	RecalcLayout(int cx, int cy);
 	void	RecalcLayout();
+	BOOL	PtInRuler(CPoint point) const;
 
 // Overrides
 	virtual	void GetSplitRect(CRect& rSplit) const;
@@ -111,6 +113,11 @@ protected:
 	afx_msg void OnViewVelocities();
 	afx_msg void OnUpdateViewVelocities(CCmdUI *pCmdUI);
 };
+
+inline CPolymeterDoc* CStepParent::GetDocument() const
+{
+	return reinterpret_cast<CPolymeterDoc*>(m_pDocument);
+}
 
 inline void CStepParent::SetRulerHeight(int nHeight)
 {

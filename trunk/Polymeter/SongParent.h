@@ -38,6 +38,7 @@ protected: // create from serialization only
 
 // Attributes
 public:
+	CPolymeterDoc* GetDocument() const;
 	void	SetRulerHeight(int nHeight);
 
 // Public data
@@ -86,6 +87,7 @@ protected:
 // Helpers
 	void	RecalcLayout(int cx, int cy);
 	void	RecalcLayout();
+	BOOL	PtInRuler(CPoint point) const;
 
 // Overrides
 	virtual	void GetSplitRect(CRect& rSplit) const;
@@ -100,6 +102,11 @@ protected:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
 };
+
+inline CPolymeterDoc* CSongParent::GetDocument() const
+{
+	return reinterpret_cast<CPolymeterDoc*>(m_pDocument);
+}
 
 inline void CSongParent::SetRulerHeight(int nHeight)
 {

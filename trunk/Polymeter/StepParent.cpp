@@ -181,6 +181,14 @@ void CStepParent::RecalcLayout()
 	Invalidate();
 }
 
+BOOL CStepParent::PtInRuler(CPoint point) const
+{
+	CRect	rc;
+	m_wndRuler.GetWindowRect(rc);
+	ScreenToClient(rc);
+	return rc.PtInRect(point);	// true if point within ruler
+}
+
 void CStepParent::OnDraw(CDC* pDC)
 {
 	if (m_bIsShowSplit) {	// if showing velocities
@@ -281,17 +289,12 @@ void CStepParent::OnParentNotify(UINT message, LPARAM lParam)
 {
 	CSplitView::OnParentNotify(message, lParam);
 	switch (message) {
-	case WM_LBUTTONDOWN:
 	case WM_RBUTTONDOWN:
-	case WM_MBUTTONDOWN:
 		{
-			CRect	rc;
-			m_wndRuler.GetWindowRect(rc);
-			ScreenToClient(rc);
 			CPoint	ptCursor(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-			if (rc.PtInRect(ptCursor)) {	// if clicked within ruler
-				MapWindowPoints(m_pStepView, &ptCursor, 1);	// map cursor position to step view's coords
-				m_pStepView->SendMessage(message, 0, POINTTOPOINTS(ptCursor));	// relay message to step view
+			if (PtInRuler(ptCursor)) {	// if clicked within ruler
+				m_pStepView->ResetStepSelection();	// reset step selection
+				GetDocument()->Deselect();	// reset track selection
 				m_pStepView->SetFocus();	// focus step view
 			}
 		}

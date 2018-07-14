@@ -146,6 +146,14 @@ void CSongParent::RecalcLayout()
 	Invalidate();
 }
 
+BOOL CSongParent::PtInRuler(CPoint point) const
+{
+	CRect	rc;
+	m_wndRuler.GetWindowRect(rc);
+	ScreenToClient(rc);
+	return rc.PtInRect(point);	// true if point within ruler
+}
+
 void CSongParent::OnDraw(CDC* pDC)
 {
 	CSplitView::OnDraw(pDC);
@@ -231,17 +239,23 @@ void CSongParent::OnParentNotify(UINT message, LPARAM lParam)
 	CSplitView::OnParentNotify(message, lParam);
 	switch (message) {
 	case WM_LBUTTONDOWN:
-	case WM_RBUTTONDOWN:
-	case WM_MBUTTONDOWN:
 		{
-			CRect	rc;
-			m_wndRuler.GetWindowRect(rc);
-			ScreenToClient(rc);
 			CPoint	ptCursor(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-			if (rc.PtInRect(ptCursor)) {	// if clicked within ruler
+			if (PtInRuler(ptCursor)) {	// if clicked within ruler
 				MapWindowPoints(m_pSongView, &ptCursor, 1);	// map cursor position to song view's coords
-				m_pSongView->SendMessage(message, 0, POINTTOPOINTS(ptCursor));	// relay message to song view
-				m_pSongView->SetFocus();	// focus song view
+				int	x = ptCursor.x + m_pSongView->GetScrollPosition().x;	// account for scrolling
+				int	nPos = m_pSongView->ConvertXToSongPos(x);	// convert to song position
+				GetDocument()->SetPosition(nPos);	// set song position
+			}
+		}
+		break;
+	case WM_RBUTTONDOWN:
+		{
+			CPoint	ptCursor(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+			if (PtInRuler(ptCursor)) {	// if clicked within ruler
+				m_pSongView->ResetSelection();	// reset song selection
+				GetDocument()->Deselect();	// reset track selection
+				m_pSongView->SetFocus();	// focus step view
 			}
 		}
 		break;
