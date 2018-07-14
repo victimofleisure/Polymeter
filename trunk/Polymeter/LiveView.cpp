@@ -395,6 +395,7 @@ void CLiveView::SoloSelectedParts()
 		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 	m_list[LIST_PARTS].Deselect();
 	m_list[LIST_PARTS].Invalidate();
+	m_wndPosBar.InvalidateAllBars();
 	if (!pDoc->m_Seq.IsPlaying())	// if stopped
 		m_wndPosBar.UpdateBars();
 }
