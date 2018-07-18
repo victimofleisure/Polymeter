@@ -342,15 +342,19 @@ void CSongView::UpdateCell(int iTrack, int iCell)
 
 void CSongView::UpdateCells(const CRect& rSelection)
 {
-	CIntRange	rngHorz;
-	if (rSelection.right == INT_MAX)	// if full width of view
-		rngHorz = CIntRange(0, GetTotalSize().cx / m_nCellWidth);
-	else	// normal case
-		rngHorz = CIntRange(rSelection.left, rSelection.right);
-	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
+	if (rSelection.right == INT_MAX) {	// if full width of view
 		CRect	rCells;
-		GetCellsRect(iTrack, rngHorz, rCells);
+		GetClientRect(rCells);
+		rCells.top = rSelection.top * m_nTrackHeight - GetScrollPosition().y;
+		rCells.bottom = rCells.top + rSelection.Height() * m_nTrackHeight;
 		InvalidateRect(rCells);
+	} else {	// normal case
+		CIntRange	rngHorz(rSelection.left, rSelection.right);
+		for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
+			CRect	rCells;
+			GetCellsRect(iTrack, rngHorz, rCells);
+			InvalidateRect(rCells);
+		}
 	}
 }
 

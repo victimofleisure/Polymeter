@@ -344,15 +344,19 @@ void CSeqTrackArray::RotateSteps(int iTrack, int iStep, int nSteps, int nOffset)
 	GetAt(iTrack).m_arrStep.Rotate(iStep, nSteps, nOffset);
 }
 
-void CSeqTrackArray::OnRecordStart()
+void CSeqTrackArray::OnRecordStart(int nStartTime)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	int	nTracks = GetSize();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		CTrack&	trk = GetAt(iTrack);
-		trk.m_arrDub.RemoveAll();
-		CDub	dub(0, trk.m_bMute);	// add initial mute state
-		trk.m_arrDub.Add(dub);
+		if (nStartTime > 0 && trk.m_arrDub.GetSize()) {	// if overdubbing
+			trk.m_arrDub.DeleteDubs(nStartTime, INT_MAX);
+		} else {	// not overdubbing
+			trk.m_arrDub.RemoveAll();
+			CDub	dub(0, trk.m_bMute);	// add initial mute state
+			trk.m_arrDub.Add(dub);
+		}
 	}
 }
 

@@ -156,18 +156,24 @@ CWnd *CModulationsBar::CModGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwSty
 		return NULL;
 	int	nTracks = pDoc->GetTrackCount();
 	pCombo->AddString(LDS(IDS_NONE));
+	pCombo->SetItemData(0, DWORD_PTR(-1));	// assign invalid track index to none item
 	CModulationsBar	*pParent = STATIC_DOWNCAST(CModulationsBar, GetParent());
 	CString	sTrackNum;
-	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
-		CString	sName = pDoc->m_Seq.GetName(iTrack);
-		if (sName.IsEmpty()) {
-			sTrackNum.Format(_T("%d"), iTrack + 1);
-			sName = pParent->m_sTrack + sTrackNum;
+	int	iSelItem = 0;	// index of selected item; defaults to none
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		if (!pDoc->GetSelected(iTrack)) {	// if track isn't selected (avoids self-modulation)
+			CString	sName = pDoc->m_Seq.GetName(iTrack);
+			if (sName.IsEmpty()) {	// if empty name
+				sTrackNum.Format(_T("%d"), iTrack + 1);	// synthesize name from track number
+				sName = pParent->m_sTrack + sTrackNum;
+			}
+			int	iItem = pCombo->AddString(sName);
+			pCombo->SetItemData(iItem, iTrack);
+			if (iTrack == pParent->m_arrModulator[m_iEditRow])	// if track is currently selected modulator
+				iSelItem = iItem;	// set selected item
 		}
-		pCombo->AddString(sName);
 	}
-	int	iModSel = pParent->m_arrModulator[m_iEditRow] + 1;	// offset for none item
-	pCombo->SetCurSel(iModSel);
+	pCombo->SetCurSel(iSelItem);
 	pCombo->ShowDropDown();
 	return pCombo;
 }
@@ -178,20 +184,20 @@ void CModulationsBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL && pDoc->GetSelectedCount()) {
 		CPopupCombo	*pCombo = STATIC_DOWNCAST(CPopupCombo, m_pEditCtrl);
-		int	iModSel = pCombo->GetCurSel() - 1;	// offset for none item
-		if (pDoc->m_arrTrackSel.Find(iModSel) >= 0) {	// check for self-modulation
-			AfxMessageBox(IDS_DOC_SELF_MODULATION);
-			return;
-		}
-		pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
+		int	iModSel = pCombo->GetCurSel();	// index of selected item
+		if (iModSel >= 0)	// if valid item
+			iModSel = static_cast<int>(pCombo->GetItemData(iModSel));	// convert to track index
 		CModulationsBar	*pParent = STATIC_DOWNCAST(CModulationsBar, GetParent());
-		pParent->m_arrModulator[m_iEditRow] = iModSel;
-		int	nSels = pDoc->GetSelectedCount();
-		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-			int	iTrack = pDoc->m_arrTrackSel[iSel];
-			pDoc->m_Seq.SetModulation(iTrack, m_iEditRow, iModSel);
+		if (iModSel != pParent->m_arrModulator[m_iEditRow]) {	// if modulator actually changed
+			pParent->m_arrModulator[m_iEditRow] = iModSel;
+			pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
+			int	nSels = pDoc->GetSelectedCount();
+			for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+				int	iTrack = pDoc->m_arrTrackSel[iSel];
+				pDoc->m_Seq.SetModulation(iTrack, m_iEditRow, iModSel);
+			}
+			pDoc->SetModifiedFlag();
 		}
-		pDoc->SetModifiedFlag();
 	}
 }
 

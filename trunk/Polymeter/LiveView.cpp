@@ -337,7 +337,7 @@ void CLiveView::ToggleSelectedMutes()
 void CLiveView::ApplyPreset(int iPreset)
 {
 	CPolymeterDoc	*pDoc = GetDocument();
-	pDoc->ApplyPreset(iPreset);
+	pDoc->m_Seq.SetMutes(pDoc->m_arrPreset[iPreset].m_arrMute);
 	if (pDoc->m_Seq.IsRecording())	// if recording
 		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 	m_iPreset = iPreset;

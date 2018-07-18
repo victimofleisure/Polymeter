@@ -98,7 +98,7 @@ public:
 	void	ShiftSteps(int iTrack, int iStep, int nSteps, int nOffset);
 	void	RotateSteps(int iTrack, int nOffset);
 	void	RotateSteps(int iTrack, int iStep, int nSteps, int nOffset);
-	void	OnRecordStart();
+	void	OnRecordStart(int nStartTime);
 	void	OnRecordStop(int nEndTime);
 	void	AddDub(int iTrack, int nTime);
 	void	AddDub(int iTrack, int nTime, bool bMute);

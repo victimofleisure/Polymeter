@@ -170,7 +170,7 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 		return true;	// nothing to do
 	if (bEnable) {	// if playing
 		if (bRecord)	// if recording
-			OnRecordStart();
+			OnRecordStart(m_nStartPos);
 		ZeroMemory(&m_stats, sizeof(m_stats));
 		m_stats.fCBTimeMin = DBL_MAX;
 		UpdateCallbackLength();

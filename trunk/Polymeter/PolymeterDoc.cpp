@@ -1998,17 +1998,12 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 	if (theApp.m_Options.m_General_bAlwaysRecord)	// if always recording
 		bRecord = true;
 	if (bPlay) {	// if starting playback
-		if (bRecord && m_Seq.HasDubs()) {	// if recording already exists
-			UINT	nType = MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION;
-			if (AfxMessageBox(IDS_DOC_REPLACE_RECORDING, nType) != IDYES)
-				return false;
-			m_rStepSel = CRect(0, 0, 0, m_Seq.GetTrackCount());
-			NotifyUndoableEdit(0, UCODE_RECORD);
-		}
 		if (m_Seq.GetOutputDevice() < 0) {	// if no output MIDI device selected
 			AfxMessageBox(IDS_MIDI_NO_OUTPUT_DEVICE);
 			return false;
 		}
+		m_rStepSel = CRect(0, 0, 0, m_Seq.GetTrackCount());
+		NotifyUndoableEdit(0, UCODE_RECORD);
 		CAllDocIter	iter;	// iterate all documents
 		CPolymeterDoc	*pOtherDoc;
 		while ((pOtherDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
@@ -2039,7 +2034,8 @@ void CPolymeterDoc::OnPlay(bool bPlay, bool bRecord)
 				WriteProperties(sPath);	// automatically save document
 				SetModifiedFlag(false);
 			}
-		}
+		} else	// normal recording
+			SetModifiedFlag();
 	}
 }
 
