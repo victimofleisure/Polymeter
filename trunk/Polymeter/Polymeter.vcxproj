@@ -285,7 +285,7 @@
     <ClInclude Include="TrackTypeDef.h" />
     <ClInclude Include="TrackUndoTest.h" />
     <ClInclude Include="TrackView.h" />
-    <ClInclude Include="TransposeDlg.h" />
+    <ClInclude Include="OffsetDlg.h" />
     <ClInclude Include="Undoable.h" />
     <ClInclude Include="UndoCodeData.h" />
     <ClInclude Include="UndoCodes.h" />
@@ -376,7 +376,7 @@
     <ClCompile Include="TrackSortDlg.cpp" />
     <ClCompile Include="TrackUndoTest.cpp" />
     <ClCompile Include="TrackView.cpp" />
-    <ClCompile Include="TransposeDlg.cpp" />
+    <ClCompile Include="OffsetDlg.cpp" />
     <ClCompile Include="Undoable.cpp" />
     <ClCompile Include="UndoManager.cpp" />
     <ClCompile Include="UndoState.cpp" />

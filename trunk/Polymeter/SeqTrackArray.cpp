@@ -463,6 +463,17 @@ void CSeqTrackArray::InsertDubs(int iTrack, int nTime, CDubArray& arrDub)
 	GetAt(iTrack).m_arrDub.InsertDubs(nTime, arrDub);
 }
 
+void CSeqTrackArray::RemoveAllDubs()
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		CTrack& trk = GetAt(iTrack);
+		trk.m_arrDub.RemoveAll();
+		trk.m_iDub = 0;
+	}
+}
+
 void CSeqTrackArray::SetModulations(int iTrack, const CModulationArray& arrMod)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
@@ -535,4 +546,43 @@ void CSeqTrackArray::OnTrackArrayEdit(const CIntArrayEx& arrTrackMap)
 				trk.m_arrModulator[iType] = -1;
 		}
 	}
+}
+
+bool CSeqTrackArray::CalcDynamicRange(int iTrack, int& nMinStep, int& nMaxStep, bool IsModulator) const
+{
+	const CTrack&	trk = GetAt(iTrack);
+	int	nMin = MIDI_NOTE_MAX;
+	int	nMax = 0;
+	int	nSteps = trk.m_arrStep.GetSize();
+	bool	bRetVal = true;
+	if (trk.m_iType == TT_NOTE && !IsModulator) {	// if track type is note and track isn't a modulator
+		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
+			STEP	nStep = trk.m_arrStep[iStep] & SB_VELOCITY;
+			if (nStep) {	// if step isn't empty
+				int	iPrevStep = iStep - 1;
+				if (iPrevStep < 0)
+					iPrevStep = nSteps - 1;
+				STEP	nPrevStep = trk.m_arrStep[iPrevStep];	// examine previous step
+				if (!(nPrevStep & SB_TIE)) {	// if start of note
+					if (nStep < nMin)
+						nMin = nStep;
+					if (nStep > nMax)
+						nMax = nStep;
+				}
+			}
+		}
+		if (!nMax)	// zero reserved for note off
+			bRetVal = false;	// no notes found
+	} else {	// track type isn't note
+		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
+			int	nStep = trk.m_arrStep[iStep];
+			if (nStep < nMin)
+				nMin = nStep;
+			if (nStep > nMax)
+				nMax = nStep;
+		}
+	}
+	nMinStep = nMin;
+	nMaxStep = nMax;
+	return bRetVal;
 }

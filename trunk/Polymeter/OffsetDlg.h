@@ -13,24 +13,29 @@
 
 #pragma once
 
-// CTransposeDlg dialog
+#include "Range.h"
 
-class CTransposeDlg : public CDialog
+// COffsetDlg dialog
+
+class COffsetDlg : public CDialog
 {
-	DECLARE_DYNAMIC(CTransposeDlg)
+	DECLARE_DYNAMIC(COffsetDlg)
 
 public:
-	CTransposeDlg(CWnd* pParent = NULL);   // standard constructor
-	virtual ~CTransposeDlg();
+	COffsetDlg(CWnd* pParent = NULL);   // standard constructor
+	virtual ~COffsetDlg();
 
 // Dialog Data
-	enum { IDD = IDD_TRANSPOSE };
+	enum { IDD = IDD_OFFSET };
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	DECLARE_MESSAGE_MAP()
 public:
-	int m_nNotes;
+	int		m_nDlgCaptionID;
+	int		m_nEditCaptionID;
+	CRange<int>	m_rngOffset;
+	int		m_nOffset;
 	virtual BOOL OnInitDialog();
 };

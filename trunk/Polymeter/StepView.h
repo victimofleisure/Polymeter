@@ -173,6 +173,8 @@ protected:
 	static	double	InvPow(double fBase, double fVal);
 
 // Generated message map functionsq
+public:
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -188,7 +190,6 @@ protected:
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnEditCut();
 	afx_msg void OnUpdateEditCut(CCmdUI *pCmdUI);
@@ -204,9 +205,11 @@ protected:
 	afx_msg void OnUpdateTrackReverse(CCmdUI *pCmdUI);
 	afx_msg void OnTrackShiftLeft();
 	afx_msg void OnTrackShiftRight();
+	afx_msg void OnTrackShiftSteps();
 	afx_msg void OnUpdateTrackShift(CCmdUI *pCmdUI);
 	afx_msg void OnTrackRotateLeft();
 	afx_msg void OnTrackRotateRight();
+	afx_msg void OnTrackRotateSteps();
 };
 
 inline CPolymeterDoc* CStepView::GetDocument() const

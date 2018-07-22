@@ -21,6 +21,7 @@
 #include "Undoable.h"
 #include "Channel.h"
 #include "Preset.h"
+#include "Range.h"
 
 class COptions;
 
@@ -180,7 +181,10 @@ public:
 	void	ShiftSteps(const CRect& rSelection, int nOffset);
 	bool	RotateSteps(int nOffset);
 	void	RotateSteps(const CRect& rSelection, int nOffset);
+	bool	IsTranspositionSafe(int nNoteDelta) const;
 	bool	Transpose(int nNoteDelta);
+	bool	IsVelocityOffsetSafe(int nVelocityDelta, CRange<int> *prngVelocity = NULL) const;
+	bool	OffsetVelocity(int nVelocityDelta);
 	bool	ValidateTrackLength(int nLength, int nQuant) const;
 	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
 	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
@@ -206,6 +210,7 @@ public:
 	void	UpdatePart(int iPart);
 	bool	CheckForPartOverlap(int iTargetPart = -1) const;
 	bool	CreateAutoSavePath(CString& sPath) const;
+	static	bool	DoShiftDialog(int& nSteps, bool bIsRotate = false);
 
 // Overrides
 public:
@@ -436,15 +441,19 @@ protected:
 	afx_msg void OnUpdateEditSelectAll(CCmdUI *pCmdUI);
 	afx_msg void OnTrackReverse();
 	afx_msg void OnUpdateTrackReverse(CCmdUI *pCmdUI);
-	afx_msg void OnEditTranspose();
-	afx_msg void OnUpdateEditTranspose(CCmdUI *pCmdUI);
+	afx_msg void OnTrackTranspose();
+	afx_msg void OnUpdateTrackTranspose(CCmdUI *pCmdUI);
+	afx_msg void OnTrackVelocity();
 	afx_msg void OnTrackSort();
 	afx_msg void OnToolsTimeToRepeat();
+	afx_msg void OnToolsVelocityRange();
 	afx_msg void OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI);
 	afx_msg void OnTrackShiftLeft();
 	afx_msg void OnTrackShiftRight();
+	afx_msg void OnTrackShiftSteps();
 	afx_msg void OnTrackRotateLeft();
 	afx_msg void OnTrackRotateRight();
+	afx_msg void OnTrackRotateSteps();
 	afx_msg void OnTrackSolo();
 	afx_msg void OnUpdateTrackSolo(CCmdUI *pCmdUI);
 	afx_msg void OnTrackMute();

@@ -134,6 +134,8 @@ protected:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
 // Generated message map functions
+public:
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -144,11 +146,11 @@ protected:
 	afx_msg void OnUpdateViewZoomOut(CCmdUI *pCmdUI);
 	afx_msg void OnViewZoomReset();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnEditSelectAll();
 	afx_msg void OnEditCut();
 	afx_msg void OnUpdateEditCut(CCmdUI *pCmdUI);
 	afx_msg void OnEditCopy();

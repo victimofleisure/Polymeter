@@ -492,11 +492,7 @@ void CVelocityView::OnMouseMove(UINT nFlags, CPoint point)
 
 BOOL CVelocityView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
-	UNREFERENCED_PARAMETER(nFlags);
-	UNREFERENCED_PARAMETER(zDelta);
-	UNREFERENCED_PARAMETER(pt);
-	const MSG *pMsg = GetCurrentMessage();
-	return m_pStepView->SendMessage(pMsg->message, pMsg->wParam, pMsg->lParam) != 0;	// forward to step view
+	return m_pStepView->OnMouseWheel(nFlags, zDelta, pt);	// forward to step view
 }
 
 void CVelocityView::OnContextMenu(CWnd* pWnd, CPoint point)

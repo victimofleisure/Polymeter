@@ -67,6 +67,8 @@ int CTrack::CompareProperty(int iProp, const CTrack& track) const
 	#include "TrackDef.h"		// generate code to compare track properties
 	case PROP_Length:
 		return Compare(m_arrStep.GetSize(), track.m_arrStep.GetSize());
+	case PROPERTIES:
+		return Compare(m_nUID, track.m_nUID);	// sort by track ID
 	}
 	return 0;
 }

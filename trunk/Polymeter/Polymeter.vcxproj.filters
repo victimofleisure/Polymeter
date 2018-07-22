@@ -306,9 +306,6 @@
     <ClInclude Include="NoteDef.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TransposeDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SongView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -355,6 +352,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MainDockBarDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OffsetDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -548,9 +548,6 @@
     <ClCompile Include="MuteView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TransposeDlg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SongView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -588,6 +585,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ModulationsBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OffsetDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

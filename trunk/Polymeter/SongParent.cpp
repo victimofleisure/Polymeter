@@ -246,6 +246,7 @@ void CSongParent::OnParentNotify(UINT message, LPARAM lParam)
 				int	x = ptCursor.x + m_pSongView->GetScrollPosition().x;	// account for scrolling
 				int	nPos = m_pSongView->ConvertXToSongPos(x);	// convert to song position
 				GetDocument()->SetPosition(nPos);	// set song position
+				m_pSongView->SetFocus();	// focus step view
 			}
 		}
 		break;
@@ -264,11 +265,7 @@ void CSongParent::OnParentNotify(UINT message, LPARAM lParam)
 
 BOOL CSongParent::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
-	UNREFERENCED_PARAMETER(nFlags);
-	UNREFERENCED_PARAMETER(zDelta);
-	UNREFERENCED_PARAMETER(pt);
-	const MSG *pMsg = GetCurrentMessage();
-	return m_pSongView->SendMessage(pMsg->message, pMsg->wParam, pMsg->lParam) != 0;	// forward to song view
+	return m_pSongView->OnMouseWheel(nFlags, zDelta, pt);	// forward to song view
 }
 
 void CSongParent::OnMouseMove(UINT nFlags, CPoint point)

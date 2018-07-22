@@ -37,7 +37,8 @@ CTrackSortDlg::CTrackSortDlg(CWnd* pParent /*=NULL*/)
 	ResetLevels();
 	RdReg(RK_TRACK_SORT, m_arrLevel);	// restore sort levels from registry
 	for (int iLevel = 0; iLevel < SORT_LEVELS; iLevel++) {	// for each sort level
-		if (m_arrLevel[iLevel].iProp >= CTrack::PROPERTIES)	// if property index out of range
+		// range test uses > instead of >= because PROPERTIES indicates sort by track ID
+		if (m_arrLevel[iLevel].iProp > CTrack::PROPERTIES)	// if property index out of range
 			m_arrLevel[iLevel].iProp = -1;	// reset sort level
 	}
 }
@@ -106,6 +107,7 @@ BOOL CTrackSortDlg::OnInitDialog()
 		}
 	}
 	for (int iLevel = 0; iLevel < SORT_LEVELS; iLevel++) {	// for each sort level
+		m_cbProp[iLevel].AddString(_T("ID"));	// add item for sort by track ID
 		SORT_LEVEL	level = m_arrLevel[iLevel];
 		if (iLevel)	// if level other than first
 			level.iProp++;	// compensate property index for none option

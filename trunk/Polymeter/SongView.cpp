@@ -523,6 +523,7 @@ BEGIN_MESSAGE_MAP(CSongView, CScrollView)
 	ON_WM_MOUSEMOVE()
 	ON_WM_RBUTTONDOWN()
 	ON_WM_RBUTTONUP()
+	ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
 	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditCut)
 	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
@@ -716,6 +717,12 @@ void CSongView::OnViewZoomReset()
 {
 	SetZoom(0);
 	UpdateViewSize();
+	Invalidate();
+}
+
+void CSongView::OnEditSelectAll()
+{
+	m_rCellSel = CRect(0, 0, INT_MAX, GetDocument()->GetTrackCount());	// all cells in all tracks
 	Invalidate();
 }
 

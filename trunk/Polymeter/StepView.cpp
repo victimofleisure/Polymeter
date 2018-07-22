@@ -966,10 +966,14 @@ BEGIN_MESSAGE_MAP(CStepView, CScrollView)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_LEFT, OnUpdateTrackShift)
 	ON_COMMAND(ID_TRACK_SHIFT_RIGHT, OnTrackShiftRight)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_RIGHT, OnUpdateTrackShift)
+	ON_COMMAND(ID_TRACK_SHIFT_STEPS, OnTrackShiftSteps)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_STEPS, OnUpdateTrackShift)
 	ON_COMMAND(ID_TRACK_ROTATE_LEFT, OnTrackRotateLeft)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_LEFT, OnUpdateTrackShift)
 	ON_COMMAND(ID_TRACK_ROTATE_RIGHT, OnTrackRotateRight)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_RIGHT, OnUpdateTrackShift)
+	ON_COMMAND(ID_TRACK_ROTATE_STEPS, OnTrackRotateSteps)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_STEPS, OnUpdateTrackShift)
 END_MESSAGE_MAP()
 
 // CStepView message handlers
@@ -1307,6 +1311,13 @@ void CStepView::OnTrackShiftRight()
 	ShiftSteps(1);
 }
 
+void CStepView::OnTrackShiftSteps()
+{
+	int	nSteps;
+	if (CPolymeterDoc::DoShiftDialog(nSteps))
+		ShiftSteps(nSteps);
+}
+
 void CStepView::OnUpdateTrackShift(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(HaveEitherSelection());
@@ -1320,4 +1331,11 @@ void CStepView::OnTrackRotateLeft()
 void CStepView::OnTrackRotateRight()
 {
 	RotateSteps(1);
+}
+
+void CStepView::OnTrackRotateSteps()
+{
+	int	nSteps;
+	if (CPolymeterDoc::DoShiftDialog(nSteps, true))	// change caption to rotate
+		RotateSteps(nSteps);
 }

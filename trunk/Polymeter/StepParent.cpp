@@ -289,6 +289,9 @@ void CStepParent::OnParentNotify(UINT message, LPARAM lParam)
 {
 	CSplitView::OnParentNotify(message, lParam);
 	switch (message) {
+	case WM_LBUTTONDOWN:
+		m_pStepView->SetFocus();	// focus step view
+		break;
 	case WM_RBUTTONDOWN:
 		{
 			CPoint	ptCursor(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
@@ -333,11 +336,7 @@ void CStepParent::OnMouseMove(UINT nFlags, CPoint point)
 
 BOOL CStepParent::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
-	UNREFERENCED_PARAMETER(nFlags);
-	UNREFERENCED_PARAMETER(zDelta);
-	UNREFERENCED_PARAMETER(pt);
-	const MSG *pMsg = GetCurrentMessage();
-	return m_pStepView->SendMessage(pMsg->message, pMsg->wParam, pMsg->lParam) != 0;	// forward to step view
+	return m_pStepView->OnMouseWheel(nFlags, zDelta, pt);	// forward to step view
 }
 
 void CStepParent::OnViewVelocities()

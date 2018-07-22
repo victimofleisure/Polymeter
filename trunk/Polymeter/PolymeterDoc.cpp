@@ -31,7 +31,7 @@
 #include "NumberTheory.h"
 #include "VariantHelper.h"
 #include "TrackSortDlg.h"
-#include "TransposeDlg.h"
+#include "OffsetDlg.h"
 #include "ChildFrm.h"
 #include "Range.h"
 
@@ -65,6 +65,10 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define RK_TRANSPOSE_DLG	REG_SETTINGS _T("\\Transpose")
 #define RK_TRANSPOSE_NOTES	_T("nNotes")
+#define RK_VELOCITY_DLG	REG_SETTINGS _T("\\Velocity")
+#define RK_VELOCITY_OFFSET	_T("nOffset")
+#define RK_SHIFT_DLG		REG_SETTINGS _T("\\Shift")
+#define RK_SHIFT_STEPS		_T("nSteps")
 #define RK_EXPORT_DLG		REG_SETTINGS _T("\\Export")
 #define RK_EXPORT_DURATION	_T("nDuration")
 #define RK_PART_SECTION		_T("Part")
@@ -821,6 +825,27 @@ void CPolymeterDoc::RotateSteps(const CRect& rSelection, int nOffset)
 	SetModifiedFlag();
 }
 
+bool CPolymeterDoc::IsTranspositionSafe(int nNoteDelta) const
+{
+	int	nSels = GetSelectedCount();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = m_arrTrackSel[iSel];
+		const CTrack&	trk = m_Seq.GetTrack(iTrack);
+		int	nMinNote = m_Seq.GetNote(iTrack) + nNoteDelta;
+		int	nMaxNote = nMinNote;
+		int	iModTrack = trk.m_arrModulator[MT_Note];
+		if (iModTrack >= 0) {	// if track's note is modulated
+			int	nMinMod, nMaxMod;	// offset note range to account for modulation
+			m_Seq.CalcDynamicRange(iModTrack, nMinMod, nMaxMod, true);	// modulator track
+			nMinNote += nMinMod - MIDI_NOTES / 2;	// convert step value to signed offset
+			nMaxNote += nMaxMod - MIDI_NOTES / 2;
+		}
+		if (nMinNote < 0 || nMaxNote > MIDI_NOTE_MAX)	// if note would clip
+			return false;	// early out, no need to check remaining tracks
+	}
+	return true;
+}
+
 bool CPolymeterDoc::Transpose(int nNoteDelta)
 {
 	if (!GetSelectedCount())
@@ -834,6 +859,70 @@ bool CPolymeterDoc::Transpose(int nNoteDelta)
 	}
 	CMultiItemPropHint	hint(m_arrTrackSel, PROP_Note);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
+	SetModifiedFlag();
+	return true;
+}
+
+bool CPolymeterDoc::IsVelocityOffsetSafe(int nVelocityDelta, CRange<int> *prngVelocity) const
+{
+	CRange<int>	rngVel(0, 0);
+	bool	bIsInitialRange = true;
+	bool	bIsSafe = true;
+	int	nSels = GetSelectedCount();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = m_arrTrackSel[iSel];
+		const CTrack&	trk = m_Seq.GetTrack(iTrack);
+		int	nMinVel = m_Seq.GetVelocity(iTrack) + nVelocityDelta;
+		int	nMaxVel = nMinVel;
+		int	nMinStep, nMaxStep;	// account for velocity range of track's steps
+		if (!m_Seq.CalcDynamicRange(iTrack, nMinStep, nMaxStep))	// if can't get range
+			continue;	// skip this track; assume empty note track
+		nMinVel += nMinStep;
+		nMaxVel += nMaxStep;
+		int	iModTrack = trk.m_arrModulator[MT_Velocity];
+		if (iModTrack >= 0) {	// if track's velocity is modulated
+			int	nMinMod, nMaxMod;	// offset velocity range to account for modulation
+			m_Seq.CalcDynamicRange(iModTrack, nMinMod, nMaxMod, true);	// modulator track
+			nMinVel += nMinMod - MIDI_NOTES / 2;	// convert step value to signed offset
+			nMaxVel += nMaxMod - MIDI_NOTES / 2;
+		}
+		int	nLowerRail;
+		if (trk.m_iType == TT_NOTE)	// if track type is note
+			nLowerRail = 1;	// zero is reserved for note off
+		else	// track type isn't note
+			nLowerRail = 0;	// zero is fine
+		if (nMinVel < nLowerRail || nMaxVel > MIDI_NOTE_MAX) {	// if velocity would clip
+			if (prngVelocity == NULL)	// if caller doesn't want velocity range
+				return false;	// early out, no need to check remaining tracks
+			bIsSafe = false;
+		}
+		if (prngVelocity != NULL) {	// if caller wants velocity range
+			if (bIsInitialRange) {	// if initial range
+				rngVel = CRange<int>(nMinVel, nMaxVel);	// assign initial range
+				bIsInitialRange = false;	// reset flag
+			} else	// not initial range
+				rngVel.Include(CRange<int>(nMinVel, nMaxVel));	// accumulate range
+		}
+	}
+	if (prngVelocity != NULL)	// if caller wants velocity range
+		*prngVelocity = rngVel;	// pass range back to caller
+	return bIsSafe;
+}
+
+bool CPolymeterDoc::OffsetVelocity(int nVelocityDelta)
+{
+	if (!GetSelectedCount())
+		return false;
+	NotifyUndoableEdit(PROP_Velocity, UCODE_MULTI_TRACK_PROP);
+	int	nSels = GetSelectedCount();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = m_arrTrackSel[iSel];
+		int	nVel = m_Seq.GetVelocity(iTrack) + nVelocityDelta;
+		m_Seq.SetVelocity(iTrack, CLAMP(nVel, 0, MIDI_NOTE_MAX));
+	}
+	CMultiItemPropHint	hint(m_arrTrackSel, PROP_Velocity);
+	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
+	SetModifiedFlag();
 	return true;
 }
 
@@ -2002,8 +2091,10 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 			AfxMessageBox(IDS_MIDI_NO_OUTPUT_DEVICE);
 			return false;
 		}
-		m_rStepSel = CRect(0, 0, 0, m_Seq.GetTrackCount());
-		NotifyUndoableEdit(0, UCODE_RECORD);
+		if (bRecord) {	// if recording
+			m_rStepSel = CRect(0, 0, 0, m_Seq.GetTrackCount());
+			NotifyUndoableEdit(0, UCODE_RECORD);
+		}
 		CAllDocIter	iter;	// iterate all documents
 		CPolymeterDoc	*pOtherDoc;
 		while ((pOtherDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
@@ -2145,12 +2236,16 @@ void CPolymeterDoc::DeleteDubs(const CRect& rSelection, double fTicksPerCell, bo
 	m_rStepSel = rSelection;	// for undo handler
 	NotifyUndoableEdit(0, UCODE_DUB);
 	SetModifiedFlag();
-	int	nStartTime = round(rSelection.left * fTicksPerCell);
-	int	nEndTime = round((rSelection.right) * fTicksPerCell);
-	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
-		m_Seq.DeleteDubs(iTrack, nStartTime, nEndTime);
+	if (rSelection.right == INT_MAX && !rSelection.left) {	// if select all
+		m_Seq.RemoveAllDubs();
+	} else {	// normal selection
+		int	nStartTime = round(rSelection.left * fTicksPerCell);
+		int	nEndTime = round((rSelection.right) * fTicksPerCell);
+		for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
+			m_Seq.DeleteDubs(iTrack, nStartTime, nEndTime);
+		}
+		m_Seq.ChaseDubsFromCurPos();
 	}
-	m_Seq.ChaseDubsFromCurPos();
 	CRectSelPropHint	hint(CRect(0, rSelection.top, INT_MAX, rSelection.bottom));
 	UpdateAllViews(NULL, HINT_SONG_DUB, &hint);
 }
@@ -2396,6 +2491,22 @@ void CPolymeterDoc::SetPartName(int iPart, CString sName)
 	UpdateAllViews(NULL, HINT_PART_NAME, &hint);
 }
 
+bool CPolymeterDoc::DoShiftDialog(int& nSteps, bool bIsRotate)
+{
+	COffsetDlg	dlg;
+	if (bIsRotate)
+		dlg.m_nDlgCaptionID = IDS_EDIT_ROTATE;
+	else
+		dlg.m_nDlgCaptionID = IDS_EDIT_SHIFT;
+	dlg.m_nEditCaptionID = IDS_OFFSET_STEPS;
+	dlg.m_nOffset = theApp.GetProfileInt(RK_SHIFT_DLG, RK_SHIFT_STEPS, 0);
+	if (dlg.DoModal() != IDOK)
+		return false;
+	theApp.WriteProfileInt(RK_SHIFT_DLG, RK_SHIFT_STEPS, dlg.m_nOffset);
+	nSteps = dlg.m_nOffset;
+	return nSteps != 0;
+}
+
 // CPolymeterDoc diagnostics
 
 #ifdef _DEBUG
@@ -2451,15 +2562,23 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_LEFT, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TRACK_SHIFT_RIGHT, OnTrackShiftRight)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_RIGHT, OnUpdateTrackReverse)
+	ON_COMMAND(ID_TRACK_SHIFT_STEPS, OnTrackShiftSteps)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_STEPS, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TRACK_ROTATE_LEFT, OnTrackRotateLeft)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_LEFT, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TRACK_ROTATE_RIGHT, OnTrackRotateRight)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_RIGHT, OnUpdateTrackReverse)
+	ON_COMMAND(ID_TRACK_ROTATE_STEPS, OnTrackRotateSteps)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_STEPS, OnUpdateTrackReverse)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_SORT, OnUpdateEditSelectAll)
 	ON_COMMAND(ID_TOOLS_TIME_TO_REPEAT, OnToolsTimeToRepeat)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIME_TO_REPEAT, OnUpdateToolsTimeToRepeat)
-	ON_COMMAND(ID_TRACK_TRANSPOSE, OnEditTranspose)
-	ON_UPDATE_COMMAND_UI(ID_TRACK_TRANSPOSE, OnUpdateEditTranspose)
+	ON_COMMAND(ID_TOOLS_VELOCITY_RANGE, OnToolsVelocityRange)
+	ON_UPDATE_COMMAND_UI(ID_TOOLS_VELOCITY_RANGE, OnUpdateToolsTimeToRepeat)
+	ON_COMMAND(ID_TRACK_TRANSPOSE, OnTrackTranspose)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_TRANSPOSE, OnUpdateTrackTranspose)
+	ON_COMMAND(ID_TRACK_VELOCITY, OnTrackVelocity)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_VELOCITY, OnUpdateTrackTranspose)
 	ON_COMMAND(ID_TRACK_SORT, OnTrackSort)
 	ON_COMMAND(ID_TRACK_SOLO, OnTrackSolo)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_SOLO, OnUpdateTrackSolo)
@@ -2705,6 +2824,13 @@ void CPolymeterDoc::OnTrackShiftRight()
 	ShiftSteps(1);
 }
 
+void CPolymeterDoc::OnTrackShiftSteps()
+{
+	int	nSteps;
+	if (DoShiftDialog(nSteps))
+		ShiftSteps(nSteps);
+}
+
 void CPolymeterDoc::OnTrackRotateLeft()
 {
 	RotateSteps(-1);
@@ -2713,6 +2839,13 @@ void CPolymeterDoc::OnTrackRotateLeft()
 void CPolymeterDoc::OnTrackRotateRight()
 {
 	RotateSteps(1);
+}
+
+void CPolymeterDoc::OnTrackRotateSteps()
+{
+	int	nSteps;
+	if (DoShiftDialog(nSteps, true))	// change caption to rotate
+		RotateSteps(nSteps);
 }
 
 void CPolymeterDoc::OnTrackMute()
@@ -2737,20 +2870,44 @@ void CPolymeterDoc::OnUpdateTrackSolo(CCmdUI *pCmdUI)
 	pCmdUI->Enable(GetSelectedCount());
 }
 
-void CPolymeterDoc::OnEditTranspose()
+void CPolymeterDoc::OnTrackTranspose()
 {
-	CTransposeDlg	dlg;
-	dlg.m_nNotes = theApp.GetProfileInt(RK_TRANSPOSE_DLG, RK_TRANSPOSE_NOTES, 0);
+	COffsetDlg	dlg;
+	dlg.m_nDlgCaptionID = IDS_EDIT_TRANSPOSE;
+	dlg.m_nEditCaptionID = IDS_OFFSET_NOTES;
+	dlg.m_rngOffset = CRange<int>(-MIDI_NOTE_MAX, MIDI_NOTE_MAX);
+	dlg.m_nOffset = theApp.GetProfileInt(RK_TRANSPOSE_DLG, RK_TRANSPOSE_NOTES, 0);
 	if (dlg.DoModal() == IDOK) {
-		if (dlg.m_nNotes)
-			Transpose(dlg.m_nNotes);
-		theApp.WriteProfileInt(RK_TRANSPOSE_DLG, RK_TRANSPOSE_NOTES, dlg.m_nNotes);
+		if (!IsTranspositionSafe(dlg.m_nOffset)) {	// check for clipping
+			if (AfxMessageBox(IDS_DOC_CLIP_WARNING, MB_OKCANCEL) != IDOK)
+				return;	// user canceled
+		}
+		if (dlg.m_nOffset)
+			Transpose(dlg.m_nOffset);
+		theApp.WriteProfileInt(RK_TRANSPOSE_DLG, RK_TRANSPOSE_NOTES, dlg.m_nOffset);
 	}
 }
 
-void CPolymeterDoc::OnUpdateEditTranspose(CCmdUI *pCmdUI)
+void CPolymeterDoc::OnUpdateTrackTranspose(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(IsTrackView() && GetSelectedCount());
+}
+
+void CPolymeterDoc::OnTrackVelocity()
+{
+	COffsetDlg	dlg;
+	dlg.m_nDlgCaptionID = IDS_TRK_Velocity;
+	dlg.m_rngOffset = CRange<int>(-MIDI_NOTE_MAX, MIDI_NOTE_MAX);
+	dlg.m_nOffset = theApp.GetProfileInt(RK_VELOCITY_DLG, RK_VELOCITY_OFFSET, 0);
+	if (dlg.DoModal() == IDOK) {
+		if (!IsVelocityOffsetSafe(dlg.m_nOffset)) {	// check for clipping
+			if (AfxMessageBox(IDS_DOC_CLIP_WARNING, MB_OKCANCEL) != IDOK)
+				return;	// user canceled
+		}
+		if (dlg.m_nOffset)
+			OffsetVelocity(dlg.m_nOffset);
+		theApp.WriteProfileInt(RK_VELOCITY_DLG, RK_VELOCITY_OFFSET, dlg.m_nOffset);
+	}
 }
 
 void CPolymeterDoc::OnTransportPlay()
@@ -2945,4 +3102,20 @@ void CPolymeterDoc::OnToolsTimeToRepeat()
 void CPolymeterDoc::OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(GetSelectedCount());
+}
+
+void CPolymeterDoc::OnToolsVelocityRange()
+{
+	CRange<int>	rngVel;
+	bool	bIsSafe = IsVelocityOffsetSafe(0, &rngVel);
+	CString	sMsg;
+	sMsg.Format(IDS_DOC_VELOCITY_RANGE, rngVel.Start, rngVel.End);
+	int	nFlags;
+	if (bIsSafe)
+		nFlags = MB_ICONINFORMATION;
+	else {	// clipping could occur
+		nFlags = MB_ICONEXCLAMATION;
+		sMsg += '\n' + LDS(IDS_DOC_CLIP_WARNING);
+	}
+	AfxMessageBox(sMsg, nFlags);
 }

@@ -79,6 +79,7 @@ public:
 	int		GetModulationCount() const;
 	void	GetModulations(CPackedModulationArray& arrMod) const;
 	void	SetModulations(const CPackedModulationArray& arrMod);
+	bool	CalcDynamicRange(int iTrack, int& nMinStep, int& nMaxStep, bool IsModulator = false) const;
 
 // Operations
 	void	AssignID(int iTrack);
@@ -112,6 +113,7 @@ public:
 	void	SetDubs(int iTrack, const CDubArray& arrDub);
 	void	DeleteDubs(int iTrack, int nStartTime, int nEndTime);
 	void	InsertDubs(int iTrack, int nTime, CDubArray& arrDub);
+	void	RemoveAllDubs();
 	void	OnTrackArrayEdit(const CIntArrayEx& arrTrackMap);
 
 protected:
