@@ -31,6 +31,22 @@
 
 <h1>Release Notes</h1>
 
+<h3>0.0.12.000 &emsp;<small>07/22/2018</small></h3>  
+
+<p><ol>
+<li>Allow overdubbing, i.e. adding dubs to an existing recording.
+<li>Add commands to shift or rotate by a given number of steps, specified via dialog.
+<li>The Song view now support the Select All command; useful for deleting an entire recording.
+<li>Allow sorting by track ID; useful for putting tracks back in their original order after sorting by something else.
+<li>Prevent self-modulation by excluding the selected tracks from modulator drop list.
+<li>Right-clicking in the Step view ruler caused spurious step selection; fixed.
+<li>Right-clicking in the Live view's progress bars didn't clear the selection; fixed.
+<li>In the Live view, applying a preset was marking the document as modified; fixed.
+<li>In the Modulation bar, don't create an undo state unless the modulator actually changes.
+<li>In the Song view, undoing dubs past end of song didn't update the view correctly; fixed.
+<li>Spinning the mouse wheel fast could potentially overflow the stack; fixed.
+</ol>
+
 <h3>0.0.11.000 &emsp;<small>07/11/2018</small></h3>  
 
 <p><ol>

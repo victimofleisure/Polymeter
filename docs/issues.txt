@@ -105,10 +105,22 @@ open	close	type	description	rev	user
 07/09/18	07/10/18	done	in live view, make list widths adjustable via dragging their headers; also make widths persistent	0.0.11.000	
 07/08/18	07/11/18	done	in live view, solo button should indicate mouse hover	0.0.11.000	
 07/09/18	07/11/18	done	in live view, part progress bars should scroll with parts list	0.0.11.000	
+07/13/18	07/13/18	done	right-click in step view ruler causes spurious step selection	0.0.12.000	
+07/13/18	07/16/18	done	right-click in live view's progress bars should clear selection	0.0.12.000	
+07/16/18	07/16/18	done	in live view, apply preset was setting document modified flag	0.0.12.000	
+03/22/18	07/17/18	done	overdubbing; add dubs to an existing recording	0.0.12.000	
+07/17/18	07/17/18	done	prevent self-modulation by excluding selected tracks from drop list of potential modulators; avoids error message	0.0.12.000	
+07/17/18	07/17/18	done	in modulation bar, don't notify undoable edit unless modulator has actually changed	0.0.12.000	
+07/17/18	07/17/18	done	in song view, undoing dubs past end of song doesn't update view correctly; affects recording too	0.0.12.000	
+07/17/18	07/18/18	done	add shift and rotate by specified number of steps	0.0.12.000	
+07/17/18	07/19/18	done	select all should work in song view	0.0.12.000	
+07/21/18	07/21/18	done	mouse wheel occasionally overflows stack; delegate by calling handler directly instead of sending message	0.0.12.000	
+07/21/18	07/21/18	done	add sort by track ID; useful for putting tracks back in their original order after sorting by something else	0.0.12.000	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 03/22/18		hold	offset and swing modulation; may not be feasible		
+03/22/18		hold	modulation of modulation; allowing multiple modulators of each type could make this unnecessary		
 03/25/18		hold	animated visualization		
 03/25/18		hold	playback can be slow to start, due to device open delay; keep output device open all the time?		
 03/25/18		hold	MIDI mapping of all parameters, with manual assignment and learn mode		
@@ -128,12 +140,17 @@ open	close	type	description	rev	user
 06/21/18		hold	track merge command; combine tracks that have identical settings and non-overlapping steps		
 07/05/18		hold	controller fill command		
 07/05/18		hold	change track, part and preset names to title case		
+07/14/18		hold	channel volume sliders in live view; solving wrong problem?		
+07/17/18		hold	live view list controls should have grid lines but default color is too bright; draw gridlines in custom draw?		
+07/19/18		hold	command to scale track length, stretching or squashing contents as needed		
 05/17/18		punt	in velocity pane, left-click on tool tip causes app to flash; all tool tips do this, derived tool tip doesn't help		
 05/21/18		punt	scroll positions should persist in document; more trouble than it's worth?		
 06/08/18		punt	untying note should set all steps to velocity of original tied note; better to preserve velocity		
 03/22/18		todo	optional linear interpolation for controller tracks, with adjustable output density		
 03/22/18		todo	radio groups; member tracks automatically mute each other so that only one member sounds at a time		
 03/22/18		todo	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
-03/22/18		todo	modulation of modulation; multiple mute modulators per track may be more useful		
-03/22/18		todo	overdubbing; add dubs to an existing recording		
 07/05/18		todo	cut and paste of tracks with modulations often behaves unexpectedly; store modulators as UIDs instead of indices		
+07/07/18		todo	record indicator in live view		
+07/14/18		todo	modulation wizard; drop lists are PITA		
+07/14/18		todo	multiple modulators of each type; easier to implement if limited to a fixed number		
+07/20/18		todo	add command to offset note velocities		
