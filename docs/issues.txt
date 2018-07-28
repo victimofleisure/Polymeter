@@ -116,6 +116,10 @@ open	close	type	description	rev	user
 07/17/18	07/19/18	done	select all should work in song view	0.0.12.000	
 07/21/18	07/21/18	done	mouse wheel occasionally overflows stack; delegate by calling handler directly instead of sending message	0.0.12.000	
 07/21/18	07/21/18	done	add sort by track ID; useful for putting tracks back in their original order after sorting by something else	0.0.12.000	
+07/07/18	07/27/18	done	record indicator in live view	0.0.12.001	
+07/23/18	07/27/18	done	live view should include tempo, key signature and meter	0.0.12.001	
+07/27/18	07/27/18	done	in live view, if parts are selected, clicking in presets list should toggle parts instead of applying preset	0.0.12.001	
+07/27/18	07/27/18	done	pitch bend gets stuck when switching between presets; cache MIDI parameter values instead of part values	0.0.12.001	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
@@ -141,8 +145,14 @@ open	close	type	description	rev	user
 07/05/18		hold	controller fill command		
 07/05/18		hold	change track, part and preset names to title case		
 07/14/18		hold	channel volume sliders in live view; solving wrong problem?		
+07/14/18		hold	modulation wizard; drop lists are PITA		
 07/17/18		hold	live view list controls should have grid lines but default color is too bright; draw gridlines in custom draw?		
 07/19/18		hold	command to scale track length, stretching or squashing contents as needed		
+07/23/18		hold	if key is Gb, note edit spin control drops an octave when Cb is incremented or decremented; error in ParseMidi		
+07/26/18		hold	live view should show approaching intersections between different loop lengths		
+07/26/18		hold	transpose within selected key; only doable if selected tracks are all in that key?		
+07/27/18		hold	velocity tooltip disappears if cursor leaves window while dragging velocity bar		
+07/27/18		hold	velocity tooltip occasionally disappears when velocity bar is left-clicked; hard to replicate, related to Pop		
 05/17/18		punt	in velocity pane, left-click on tool tip causes app to flash; all tool tips do this, derived tool tip doesn't help		
 05/21/18		punt	scroll positions should persist in document; more trouble than it's worth?		
 06/08/18		punt	untying note should set all steps to velocity of original tied note; better to preserve velocity		
@@ -150,7 +160,11 @@ open	close	type	description	rev	user
 03/22/18		todo	radio groups; member tracks automatically mute each other so that only one member sounds at a time		
 03/22/18		todo	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
 07/05/18		todo	cut and paste of tracks with modulations often behaves unexpectedly; store modulators as UIDs instead of indices		
-07/07/18		todo	record indicator in live view		
-07/14/18		todo	modulation wizard; drop lists are PITA		
 07/14/18		todo	multiple modulators of each type; easier to implement if limited to a fixed number		
-07/20/18		todo	add command to offset note velocities		
+07/20/18		todo	add command to offset note velocities; should work for controller values too		
+07/26/18		todo	replace steps, like paste but overwrite target steps instead shifting them to the right; insert vs. overwrite mode?		
+07/26/18		todo	command to shift selected steps up or down one or more tracks		
+07/26/18		todo	steps should indicate track selection to avoid confusion		
+07/27/18		todo	velocity pane's tooltips should optionally show signed values; context menu?		
+07/27/18		todo	velocity pane should indicate step selection if any, and track selection too		
+07/27/18		todo	unused space to left of velocity pane should include a close button		
