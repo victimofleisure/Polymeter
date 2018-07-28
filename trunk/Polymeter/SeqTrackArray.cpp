@@ -307,13 +307,6 @@ bool CSeqTrackArray::GetNoteVelocity(int iTrack, int iStep, STEP& nStep) const
 	return false;
 }
 
-void CSeqTrackArray::ResetCachedParameters()
-{
-	int	nTracks = GetSize();
-	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
-		GetAt(iTrack).m_nCachedParam = -1;	// reset cached parameter value
-}
-
 void CSeqTrackArray::ReverseSteps(int iTrack)
 {
 	GetAt(iTrack).m_arrStep.Reverse();

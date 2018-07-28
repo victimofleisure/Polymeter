@@ -120,6 +120,7 @@ protected:
 		POS_BAR_WIDTH = 300,
 		POS_BAR_GUTTER = 3,
 		POS_BAR_HMARGIN = 1,
+		STATUS_OFFSET = 50,
 	};
 	enum {	// song counters
 		SONG_COUNTER_POS,
@@ -155,6 +156,8 @@ protected:
 	void	RecalcLayout();
 	void	UpdateListItemHeight();
 	int		ListHitTest(CPoint point) const;
+	void	GetStatusRect(CRect& rStatus) const;
+	void	UpdateStatus();
 
 // Overrides
 	virtual void OnInitialUpdate();

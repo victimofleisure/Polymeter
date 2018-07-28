@@ -130,6 +130,21 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 					UpdateFonts();
 			}
 			break;
+		case CPolymeterDoc::HINT_MASTER_PROP:
+			{
+				const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+				switch (pPropHint->m_iProp) {
+				case CMasterProps::PROP_fTempo:
+				case CMasterProps::PROP_nMeter:
+				case CMasterProps::PROP_nKeySig:
+					UpdateStatus();
+					break;
+				}
+			}
+			break;
+		case CPolymeterDoc::HINT_PLAY:
+			UpdateStatus();
+			break;
 		}
 	}
 }
@@ -410,12 +425,59 @@ BOOL CLiveView::PreTranslateMessage(MSG* pMsg)
 	return CView::PreTranslateMessage(pMsg);
 }
 
+void CLiveView::GetStatusRect(CRect& rStatus) const
+{
+	CRect	rClient;
+	GetClientRect(rClient);
+	int	x = m_nListTotalWidth + SOLO_WIDTH + COUNTER_WIDTH * SONG_COUNTERS;
+	rStatus = CRect(CPoint(x, 0), CSize(rClient.Width() - x, m_nListHdrHeight));
+}
+
+void CLiveView::UpdateStatus()
+{
+	CRect	rStatus;
+	GetStatusRect(rStatus);
+	InvalidateRect(rStatus);
+}
+
 void CLiveView::OnDraw(CDC* pDC)
 {
 	CRect	rClip;
 	pDC->GetClipBox(rClip);
-	pDC->FillSolidRect(rClip, m_clrBkgnd);
-	m_wndPosBar.Invalidate();
+	CRect	rIntersect, rStatus;
+	GetStatusRect(rStatus);
+	if (rIntersect.IntersectRect(rClip, rStatus)) {	// if clip box intersects status area
+		static const COLORREF	clrStatusBkgnd = RGB(255, 255, 255);
+		static const LPCTSTR	pszSeparator = _T("   ");
+		CPolymeterDoc	*pDoc = GetDocument();
+		pDC->FillSolidRect(rStatus, clrStatusBkgnd);
+		HGDIOBJ	hPrevFont = pDC->SelectObject(m_fontList);
+		CString	sTempo;
+		sTempo.Format(_T("%g"), pDoc->m_Seq.GetTempo());
+		CString	sMeter;
+		sMeter.Format(_T("%d/4"), pDoc->m_nMeter);
+		CString	sStatus(sTempo + pszSeparator + CNote(pDoc->m_nKeySig).Name() + pszSeparator + sMeter);
+		CSize	szStatus = pDC->GetTextExtent(sStatus);
+		int	y = (m_nListHdrHeight - szStatus.cy) / 2;
+		pDC->TextOut(rStatus.left + STATUS_OFFSET, y, sStatus);
+		pDC->SelectObject(hPrevFont);	// restore previous font
+		if (pDoc->m_Seq.IsRecording()) {	// if recording
+			HGDIOBJ	hPrevBrush = pDC->SelectObject(GetStockObject(DC_BRUSH));
+			COLORREF	clrRecordIcon(RGB(255, 0, 0));
+			pDC->SetDCBrushColor(clrRecordIcon);
+			CSize	szRecord(m_nListHdrHeight / 2, m_nListHdrHeight / 2);
+			CPoint	ptRecord(rStatus.left + STATUS_OFFSET * 2 + szStatus.cx, 
+				(m_nListHdrHeight - szRecord.cx) / 2);
+			pDC->Ellipse(CRect(ptRecord, szRecord));	// draw record icon
+			pDC->SelectObject(hPrevBrush);	// restore previous brush
+		}
+		pDC->ExcludeClipRect(rStatus);	// exclude status area from background fill
+	}
+	// if status update only, don't draw anything else to avoid resetting position bars
+	if (rClip != rStatus) {	// if not status update
+		pDC->FillSolidRect(rClip, m_clrBkgnd);	// fill background
+		m_wndPosBar.Invalidate();	// update position bars
+	}
 }
 
 void CLiveView::CreateFonts()
@@ -689,26 +751,25 @@ void CLiveView::OnListLButtonDown(UINT id, NMHDR* pNMHDR, LRESULT* pResult)
 	if (m_list[LIST_PRESETS].GetSelectedCount()) {	// if presets selected
 		ApplySelectedPreset();	// selected preset trumps parts
 	} else {	// no presets selected
-		switch (iList) {
-		case LIST_PRESETS:
-			if (iItem >= 0)
-				ApplyPreset(iItem);
-			break;
-		case LIST_PARTS:
-			if (m_list[LIST_PARTS].GetSelectedCount()) {	// if parts selected
-				if (pNMLV->uNewState & MK_CONTROL)	// if control key is down
-					SetSelectedMutes(true);	// mute selected parts
-				else	// control key is up
-					ToggleSelectedMutes();	// toggle selected parts
-			} else {	// no parts selected
-				if (iItem >= 0) {	// if valid item
+		if (m_list[LIST_PARTS].GetSelectedCount()) {	// if parts selected
+			if (pNMLV->uNewState & MK_CONTROL)	// if control key is down
+				SetSelectedMutes(true);	// mute selected parts
+			else	// control key is up
+				ToggleSelectedMutes();	// toggle selected parts
+		} else {	// no parts selected
+			if (iItem >= 0) {	// if valid item
+				switch (iList) {
+				case LIST_PRESETS:
+					ApplyPreset(iItem);
+					break;
+				case LIST_PARTS:
 					if (pNMLV->uNewState & MK_CONTROL)	// if control key is down
 						SetMute(iItem, true);	// mute this part
 					else	// control key is up
 						ToggleMute(iItem);	// toggle this part
+					break;
 				}
 			}
-			break;
 		}
 	}
 }

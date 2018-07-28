@@ -164,6 +164,11 @@ void CSequencer::UpdateCallbackLength()
 	m_nCBLen = GetCallbackLength(m_nLatency);
 }
 
+inline void CSequencer::ResetCachedParameters()
+{
+	memset(&m_MidiCache, 0xff, sizeof(m_MidiCache));	// MIDI parameters are 7-bit so 0xff is unused
+}
+
 bool CSequencer::Play(bool bEnable, bool bRecord)
 {
 	if (bEnable == m_bIsPlaying)	// if already in requested state
@@ -316,31 +321,47 @@ __forceinline int CSequencer::GetNoteDuration(const CStepArray& arrStep, int nSt
 	return nSteps;	// degenerate case
 }
 
-__forceinline void CSequencer::CEvent::Create(const CTrack& trk, DWORD dwTime, int nVal)
+__forceinline void CSequencer::OutputControlEvent(const CTrack& trk, DWORD dwTime, int nVal)
 {
-	m_dwTime = dwTime;
+	CEvent	evt;
+	char	cVal = static_cast<char>(nVal);
 	switch (trk.m_iType) {
-	case TT_NOTE:
-		m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, trk.m_nNote, nVal);
-		break;
 	case TT_KEY_AFT:
-		m_dwEvent = MakeMidiMsg(KEY_AFT, trk.m_nChannel, trk.m_nNote, nVal);
+		if (cVal == m_MidiCache.arrKeyAft[trk.m_nChannel][trk.m_nNote])	// if value unchanged
+			return;	// no operation
+		m_MidiCache.arrKeyAft[trk.m_nChannel][trk.m_nNote] = cVal;	// update cache
+		evt.m_dwEvent = MakeMidiMsg(KEY_AFT, trk.m_nChannel, trk.m_nNote, nVal);
 		break;
 	case TT_CONTROL:
-		m_dwEvent = MakeMidiMsg(CONTROL, trk.m_nChannel, trk.m_nNote, nVal);
+		if (cVal == m_MidiCache.arrControl[trk.m_nChannel][trk.m_nNote])	// if value unchanged
+			return;	// no operation
+		m_MidiCache.arrControl[trk.m_nChannel][trk.m_nNote] = cVal;	// update cache
+		evt.m_dwEvent = MakeMidiMsg(CONTROL, trk.m_nChannel, trk.m_nNote, nVal);
 		break;
 	case TT_PATCH:
-		m_dwEvent = MakeMidiMsg(PATCH, trk.m_nChannel, nVal, 0);
+		if (cVal == m_MidiCache.arrPatch[trk.m_nChannel])	// if value unchanged
+			return;	// no operation
+		m_MidiCache.arrPatch[trk.m_nChannel] = cVal;	// update cache
+		evt.m_dwEvent = MakeMidiMsg(PATCH, trk.m_nChannel, nVal, 0);
 		break;
 	case TT_CHAN_AFT:
-		m_dwEvent = MakeMidiMsg(CHAN_AFT, trk.m_nChannel, nVal, 0);
+		if (cVal == m_MidiCache.arrChanAft[trk.m_nChannel])	// if value unchanged
+			return;	// no operation
+		m_MidiCache.arrChanAft[trk.m_nChannel] = cVal;	// update cache
+		evt.m_dwEvent = MakeMidiMsg(CHAN_AFT, trk.m_nChannel, nVal, 0);
 		break;
 	case TT_WHEEL:
-		m_dwEvent = MakeMidiMsg(WHEEL, trk.m_nChannel, trk.m_nNote, nVal);
+		if (cVal == m_MidiCache.arrWheel[trk.m_nChannel])	// if value unchanged
+			return;	// no operation
+		m_MidiCache.arrWheel[trk.m_nChannel] = cVal;	// update cache
+		// if above midpoint (zero in signed 7-bit), set LSB so bend upper limit is exact
+		evt.m_dwEvent = MakeMidiMsg(WHEEL, trk.m_nChannel, nVal > 0x40 ? 0x7f : 0, nVal);	// LSB, MSB
 		break;
 	default:
 		NODEFAULTCASE;
 	}
+	evt.m_dwTime = dwTime;
+	m_arrEvent.InsertSorted(evt);	// add event to sorted array for output
 }
 
 __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
@@ -416,12 +437,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 				} else if (trk.m_iType != TT_MODULATOR) {	// track type isn't note or modulator
 					int	nVal = (trk.m_arrStep[iStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
 					nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
-					if (nVal != trk.m_nCachedParam) {	// if value differs from cached parameter
- 						trk.m_nCachedParam = nVal;	// update cached parameter
-						CEvent	evt;
-						evt.Create(trk, nEvtTime, nVal);
-						m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
-					}
+					OutputControlEvent(trk, nEvtTime, nVal);
 				}
 			}
 		}

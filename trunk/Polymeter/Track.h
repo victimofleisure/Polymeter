@@ -195,7 +195,6 @@ public:
 	#include "TrackDef.h"		// generate definitions of track property member vars
 	CStepArray	m_arrStep;		// array of steps
 	CDubArray	m_arrDub;		// array of dubs
-	int		m_nCachedParam;		// cached parameter, for track types other than note
 	UINT	m_nUID;				// unique ID
 	int		m_iDub;				// index of current dub
 	CModulationArray	m_arrModulator;	// array of track indices of modulators
@@ -214,7 +213,6 @@ public:
 
 inline CTrack::CTrack()
 {
-	m_nCachedParam = -1;	// reset cached parameter
 	m_nUID = 0;
 	m_iDub = 0;
 	m_arrModulator.Reset();

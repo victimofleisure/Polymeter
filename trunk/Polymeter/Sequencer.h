@@ -105,7 +105,6 @@ protected:
 		bool	operator>=(const CEvent &evt) const;
 		int		m_dwTime;			// time in ticks
 		DWORD	m_dwEvent;			// MIDI event
-		void	Create(const CTrack& track, DWORD dwTime, int nVal); 
 	};
 	typedef CArrayEx<CEvent, CEvent&> CEventArray;
 	struct MIDI_STREAM_EVENT {
@@ -114,6 +113,14 @@ protected:
 		DWORD   dwEvent;			// event type and parameters
 	};
 	typedef CArrayEx<MIDI_STREAM_EVENT, MIDI_STREAM_EVENT&> CMidiEventStream;
+	struct MIDI_PARAMS {
+	public:
+		char	arrKeyAft[MIDI_CHANNELS][MIDI_NOTES];	// key aftertouch
+		char	arrControl[MIDI_CHANNELS][MIDI_NOTES];	// continuous controllers
+		char	arrPatch[MIDI_CHANNELS];	// program change
+		char	arrChanAft[MIDI_CHANNELS];	// channel aftertouch
+		char	arrWheel[MIDI_CHANNELS];	// pitch bend
+	};
 
 // Constants
 	enum {
@@ -148,6 +155,7 @@ protected:
 	CEventArray	m_arrNoteOff;		// array of pending note off events
 	CDWordArrayEx	m_arrInitMidiEvent;	// array of MIDI events to output at start of playback
 	CILockRingBuf<DWORD>	m_qLiveEvent;	// thread-safe queue of live events to be output
+	MIDI_PARAMS	m_MidiCache;		// cached values of MIDI parameters
 #if SEQ_DUMP_EVENTS
 	CArrayEx<CMidiEventStream, CMidiEventStream&>	m_arrDumpEvent;	// for debug only
 #endif	// SEQ_DUMP_EVENTS
@@ -167,6 +175,8 @@ protected:
 	int		GetCallbackLength(int nLatency) const;
 	void	UpdateCallbackLength();
 	bool	ExportImpl(LPCTSTR pszPath, int nDuration);
+	void	ResetCachedParameters();
+	void	OutputControlEvent(const CTrack& track, DWORD dwTime, int nVal);
 #if SEQ_DUMP_EVENTS
 	void	AddDumpEvent(const CMidiEventStream& arrEvt, int nEvents);
 	void	DumpEvents(LPCTSTR pszPath);

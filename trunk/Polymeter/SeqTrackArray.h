@@ -92,7 +92,6 @@ public:
 	void	InsertStep(const CRect& rSelection);
 	void	InsertSteps(const CRect& rSelection, CStepArrayArray& arrStepArray);
 	void	DeleteSteps(const CRect& rSelection);
-	void	ResetCachedParameters();
 	void	ReverseSteps(int iTrack);
 	void	ReverseSteps(int iTrack, int iStep, int nSteps);
 	void	ShiftSteps(int iTrack, int nOffset);
