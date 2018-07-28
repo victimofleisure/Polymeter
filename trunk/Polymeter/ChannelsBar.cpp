@@ -175,6 +175,9 @@ void CChannelsBar::CChannelsGridCtrl::OnItemChange(LPCTSTR pszText)
 void CChannelsBar::CChannelsGridCtrl::UpdateTarget(const CComVariant& var, UINT nFlags)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	ASSERT(pDoc != NULL);
+	if (pDoc == NULL)	// run-time check anyway
+		return;
 	int	nVal = var.intVal;
 	switch (m_iEditCol) {
 	case COL_Patch:

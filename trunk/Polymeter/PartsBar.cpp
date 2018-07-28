@@ -53,6 +53,8 @@ LPCTSTR CPartsBar::GetItemText(int iItem)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
+	if (pDoc == NULL)	// need run-time check when closing all windows
+		return _T("");
 	return pDoc->m_arrPart[iItem].m_sName;
 }
 
@@ -60,32 +62,38 @@ void CPartsBar::SetItemText(int iItem, LPCTSTR pszText)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
-	pDoc->SetPartName(iItem, pszText);
+	if (pDoc != NULL)	// run-time check for safety
+		pDoc->SetPartName(iItem, pszText);
 }
 
 void CPartsBar::ApplyItem(int iItem)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
-	pDoc->Select(pDoc->m_arrPart[iItem].m_arrTrackIdx);
+	if (pDoc != NULL)	// run-time check for safety
+		pDoc->Select(pDoc->m_arrPart[iItem].m_arrTrackIdx);
 }
 
 void CPartsBar::Delete()
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
-	CIntArrayEx	arrSelection;
-	m_list.GetSelection(arrSelection);
-	pDoc->DeleteParts(arrSelection);
+	if (pDoc != NULL) {	// run-time check for safety
+		CIntArrayEx	arrSelection;
+		m_list.GetSelection(arrSelection);
+		pDoc->DeleteParts(arrSelection);
+	}
 }
 
 void CPartsBar::Move(int iDropPos)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
-	CIntArrayEx	arrSelection;
-	m_list.GetSelection(arrSelection);
-	pDoc->MoveParts(arrSelection, iDropPos);
+	if (pDoc != NULL) {	// run-time check for safety
+		CIntArrayEx	arrSelection;
+		m_list.GetSelection(arrSelection);
+		pDoc->MoveParts(arrSelection, iDropPos);
+	}
 }
 
 void CPartsBar::UpdateMembers()
@@ -94,7 +102,8 @@ void CPartsBar::UpdateMembers()
 	if (iItem >= 0) {
 		CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 		ASSERT(pDoc != NULL);
-		pDoc->UpdatePart(iItem);
+		if (pDoc != NULL)	// run-time check for safety
+			pDoc->UpdatePart(iItem);
 	}
 }
 

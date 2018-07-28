@@ -274,11 +274,13 @@ void CModulationsBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 				if (iTrack > 0) {
 					CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 					ASSERT(pDoc != NULL);
-					sName = pDoc->m_Seq.GetName(m_arrModulator[iItem]);
-					if (sName.IsEmpty()) {
-						CString	sTrackNum;
-						sTrackNum.Format(_T("%d"), iTrack);
-						sName = m_sTrack + sTrackNum;
+					if (pDoc != NULL) {	// run-time check for safety
+						sName = pDoc->m_Seq.GetName(m_arrModulator[iItem]);
+						if (sName.IsEmpty()) {
+							CString	sTrackNum;
+							sTrackNum.Format(_T("%d"), iTrack);
+							sName = m_sTrack + sTrackNum;
+						}
 					}
 				} else {
 					if (!iTrack)

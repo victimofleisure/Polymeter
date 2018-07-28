@@ -53,6 +53,8 @@ LPCTSTR CPresetsBar::GetItemText(int iItem)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
+	if (pDoc == NULL)	// need run-time check when closing all windows
+		return _T("");
 	return pDoc->m_arrPreset[iItem].m_sName;
 }
 
@@ -60,32 +62,38 @@ void CPresetsBar::SetItemText(int iItem, LPCTSTR pszText)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
-	pDoc->SetPresetName(iItem, pszText);
+	if (pDoc != NULL)	// run-time check for safety
+		pDoc->SetPresetName(iItem, pszText);
 }
 
 void CPresetsBar::ApplyItem(int iItem)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
-	pDoc->ApplyPreset(iItem);
+	if (pDoc != NULL)	// run-time check for safety
+		pDoc->ApplyPreset(iItem);
 }
 
 void CPresetsBar::Delete()
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
-	CIntArrayEx	arrSelection;
-	m_list.GetSelection(arrSelection);
-	pDoc->DeletePresets(arrSelection);
+	if (pDoc != NULL) {	// run-time check for safety
+		CIntArrayEx	arrSelection;
+		m_list.GetSelection(arrSelection);
+		pDoc->DeletePresets(arrSelection);
+	}
 }
 
 void CPresetsBar::Move(int iDropPos)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
-	CIntArrayEx	arrSelection;
-	m_list.GetSelection(arrSelection);
-	pDoc->MovePresets(arrSelection, iDropPos);
+	if (pDoc != NULL) {	// run-time check for safety
+		CIntArrayEx	arrSelection;
+		m_list.GetSelection(arrSelection);
+		pDoc->MovePresets(arrSelection, iDropPos);
+	}
 }
 
 void CPresetsBar::UpdateMutes()
@@ -94,7 +102,8 @@ void CPresetsBar::UpdateMutes()
 	if (iItem >= 0) {
 		CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 		ASSERT(pDoc != NULL);
-		pDoc->UpdatePreset(iItem);
+		if (pDoc != NULL)	// run-time check for safety
+			pDoc->UpdatePreset(iItem);
 	}
 }
 
@@ -131,7 +140,8 @@ void CPresetsBar::OnTrackPresetCreate()
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
-	pDoc->CreatePreset();
+	if (pDoc != NULL)	// run-time check for safety
+		pDoc->CreatePreset();
 }
 
 void CPresetsBar::OnTrackPresetApply()
