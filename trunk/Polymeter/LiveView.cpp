@@ -86,7 +86,7 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	UNREFERENCED_PARAMETER(pHint);
 //	printf("CLiveView::OnUpdate %x %d %x\n", pSender, lHint, pHint);
 	CPolymeterDoc	*pDoc = GetDocument();
-	if (pDoc->IsLiveView()) {
+	if (pDoc->IsLiveView()) {	// if showing live view
 		switch (lHint) {
 		case CPolymeterDoc::HINT_TRACK_ARRAY:
 		case CPolymeterDoc::HINT_PART_ARRAY:
@@ -117,11 +117,11 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			}
 			break;
 		case CPolymeterDoc::HINT_VIEW_TYPE:
-			if (pDoc->m_nViewType == CPolymeterDoc::VIEW_LIVE) {
-				m_iPreset = pDoc->FindCurrentPreset();
-				Update();
-				UpdateSongCounters();
-			}
+			m_iPreset = pDoc->FindCurrentPreset();
+			Update();
+			UpdateSongCounters();
+			pDoc->MakePartMutesConsistent();
+			pDoc->MakePresetMutesConsistent();
 			break;
 		case CPolymeterDoc::HINT_OPTIONS:
 			{
@@ -385,7 +385,7 @@ void CLiveView::SoloSelectedParts()
 {
 	CPolymeterDoc	*pDoc = GetDocument();
 	int	nTracks = pDoc->GetTrackCount();
-	CByteArrayEx	arrMute;
+	CTrackBase::CMuteArray	arrMute;
 	arrMute.SetSize(nTracks);
 	memset(arrMute.GetData(), true, nTracks);	// init mutes to true
 	CIntArrayEx	arrSelection;

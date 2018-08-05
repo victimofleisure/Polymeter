@@ -53,8 +53,8 @@ public:
 	bool	GetMute(int iTrack) const;
 	void	SetMute(int iTrack, bool bMute);
 	void	ToggleMute(int iTrack);
-	void	GetMutes(CByteArrayEx& arrMute) const;
-	void	SetMutes(const CByteArrayEx& arrMute);
+	void	GetMutes(CMuteArray& arrMute) const;
+	void	SetMutes(const CMuteArray& arrMute);
 	STEP	GetStep(int iTrack, int iStep) const;
 	void	SetStep(int iTrack, int iStep, STEP nStep);
 	void	GetSteps(int iTrack, CStepArray& arrStep) const;

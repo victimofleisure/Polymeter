@@ -55,7 +55,10 @@ const COLORREF CStepView::m_arrStepColor[STEP_STATES] = {
 };
 
 const COLORREF CStepView::m_clrViewBkgnd = RGB(240, 240, 240);
-const COLORREF CStepView::m_clrStepOutline = RGB(160, 160, 160);
+const COLORREF CStepView::m_clrGridLine[GRID_STATES] = {
+	RGB(160, 160, 160), 	// unselected track
+	RGB(96, 96, 255),		// selected track
+};
 const COLORREF CStepView::m_clrBeatLine = RGB(208, 208, 255);
 
 IMPLEMENT_DYNCREATE(CStepView, CScrollView)
@@ -341,14 +344,20 @@ void CStepView::OnTrackSizeChange(int iTrack)
 void CStepView::OnTrackSelectionChange()
 {
 	int	nTracks = m_arrTrackState.GetSize();
-	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
-		m_arrTrackState[iTrack].m_bIsSelected = false;	// reset selected flag
+	CBoolArrayEx	arrNewSel;
+	arrNewSel.SetSize(nTracks);
 	CPolymeterDoc	*pDoc = GetDocument();
 	const CIntArrayEx&	arrSelection = pDoc->m_arrTrackSel;
 	int	nSels = arrSelection.GetSize();
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = arrSelection[iSel];
-		m_arrTrackState[iTrack].m_bIsSelected = true;	// set selected flag
+		arrNewSel[iTrack] = true;	// set selected flag
+	}
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		if (arrNewSel[iTrack] != m_arrTrackState[iTrack].m_bIsSelected) {	// if selection changed
+			UpdateTrack(iTrack);	// redraw corresponding row
+			m_arrTrackState[iTrack].m_bIsSelected = arrNewSel[iTrack];	// update cached value
+		}
 	}
 }
 
@@ -812,17 +821,32 @@ void CStepView::OnDraw(CDC* pDC)
 					int	y2 = y1 + m_nTrackHeight;
 					int	iTrackType = seq.GetType(iTrack);
 					bool	bMute = seq.GetMute(iTrack);
+					bool	bIsSelected = IsSelected(iTrack);
+					COLORREF	clrGridLine = m_clrGridLine[bIsSelected];
+					int	x2 = x1;
 					for (int iStep = iFirstStep; iStep <= iLastStep; iStep++) {	// for each invalid step
-						int	x2 = round((iStep + 1) * fStepWidth);
+						int	x = round((iStep + 1) * fStepWidth);
 						STEP	nStep = seq.GetStep(iTrack, iStep);
 						int	iStepColor = GetStepColorIdx(iTrack, iStep, nStep, bMute);
-						DrawStep(pDC, x1 + 1, y1 + 1, x2 - x1 - 1, y2 - y1 - 1, nStep, iStepColor, iTrackType);
-						pDC->FillSolidRect(x1, y1, x2 - x1, 1, m_clrStepOutline);
-						pDC->FillSolidRect(x1, y1, 1, m_nTrackHeight, m_clrStepOutline);
-						x1 = x2;
+						DrawStep(pDC, x2 + 1, y1 + 1, x - x2 - 1, y2 - y1 - 1, nStep, iStepColor, iTrackType);
+						pDC->FillSolidRect(x2, y1, 1, m_nTrackHeight, clrGridLine);
+						x2 = x;
 					}
-					pDC->FillSolidRect(x1, y1, 1, m_nTrackHeight, m_clrStepOutline);
-					pDC->FillSolidRect(0, y1 + m_nTrackHeight, x1 + 1, 1, m_clrStepOutline);
+					pDC->FillSolidRect(x2, y1, 1, m_nTrackHeight, clrGridLine);	// outline rightmost step side
+					pDC->FillSolidRect(x1, y1, x2 - x1 + 1, 1, clrGridLine);	// outline top of steps
+					bool	bIsSplitBottom = false;
+					// if this track isn't selected but next one is, may need to split bottom outline
+					if (!bIsSelected && iTrack < nTracks - 1 && IsSelected(iTrack + 1)) {
+						int	nNextX2 = round(GetStepWidth(iTrack + 1) * seq.GetLength(iTrack + 1));
+						if (nNextX2 < x2) {	// if next track is also shorter, must split bottom outline
+							pDC->FillSolidRect(x1, y2, nNextX2 + 1, 1, m_clrGridLine[GRID_SELECTED]);
+							pDC->FillSolidRect(nNextX2 + 1, y2, x2 - nNextX2, 1, m_clrGridLine[GRID_NORMAL]);
+							bIsSplitBottom = TRUE;
+						} else	// next track isn't shorter; no need to split bottom outline
+							clrGridLine = m_clrGridLine[GRID_SELECTED];	// but selection takes precedence
+					}
+					if (!bIsSplitBottom)	// if bottom outline wasn't split above
+						pDC->FillSolidRect(x1, y2, x2 - x1 + 1, 1, clrGridLine);	// outline bottom of steps
 				}
 				pDC->ExcludeClipRect(rSteps);	// exclude steps from clipping region
 				y1 += m_nTrackHeight;

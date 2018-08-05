@@ -55,6 +55,7 @@ public:
 	typedef BYTE STEP;				// sequencer step
 	typedef CByteArrayEx CStepArray;	// array of sequencer steps
 	typedef CArrayEx<CStepArray, CStepArray&> CStepArrayArray;	// array of step arrays
+	typedef CBoolArrayEx CMuteArray;	// array of mutes
 	class CDub {
 	public:
 	// Construction

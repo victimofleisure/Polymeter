@@ -60,7 +60,7 @@ void CSeqTrackArray::SetSteps(int iTrack, const CStepArray& arrStep)
 	GetAt(iTrack).m_arrStep = arrStep;
 }
 
-void CSeqTrackArray::GetMutes(CByteArrayEx& arrMute) const
+void CSeqTrackArray::GetMutes(CMuteArray& arrMute) const
 {
 	int	nTracks = GetSize();
 	arrMute.SetSize(nTracks);
@@ -68,12 +68,12 @@ void CSeqTrackArray::GetMutes(CByteArrayEx& arrMute) const
 		arrMute[iTrack] = GetMute(iTrack);
 }
 
-void CSeqTrackArray::SetMutes(const CByteArrayEx& arrMute)
+void CSeqTrackArray::SetMutes(const CMuteArray& arrMute)
 {
 	ASSERT(GetSize() == arrMute.GetSize());	// else logic error
 	int	nTracks = GetSize();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++)
-		SetMute(iTrack, arrMute[iTrack] != 0);
+		SetMute(iTrack, arrMute[iTrack]);
 }
 
 void CSeqTrackArray::GetSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const

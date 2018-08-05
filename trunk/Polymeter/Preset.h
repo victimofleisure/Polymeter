@@ -14,8 +14,9 @@
 #pragma once
 
 #include "ArrayEx.h"
+#include "Track.h"
 
-class CPreset
+class CPreset : public CTrackBase
 {
 // Construction
 public:
@@ -30,7 +31,7 @@ public:
 // Public data
 public:
 	CString	m_sName;			// preset name
-	CByteArrayEx	m_arrMute;	// array of boolean track mute flags
+	CMuteArray	m_arrMute;		// array of boolean track mute flags
 
 protected:
 // Types
@@ -45,12 +46,12 @@ protected:
 class CPresetArray : public CArrayEx<CPreset, CPreset&> {
 public:
 // Operations
-	static	void	PackBools(const CByteArrayEx& arrSrc, CByteArrayEx& arrDst);
-	static	void	UnpackBools(const CByteArrayEx& arrSrc, CByteArrayEx& arrDst);
+	static	void	PackBools(const CBoolArrayEx& arrSrc, CByteArrayEx& arrDst);
+	static	void	UnpackBools(const CByteArrayEx& arrSrc, CBoolArrayEx& arrDst);
 	static	int		CalcPackedSize(UINT nBits);
 	void	Read(int nTracks);
 	void	Write() const;
 	void	OnTrackArrayEdit(const CIntArrayEx& arrTrackMap, int nNewTracks);
 	void	Dump() const;
-	int		Find(const CByteArrayEx& arrMute) const;
+	int		Find(const CBoolArrayEx& arrMute) const;
 };

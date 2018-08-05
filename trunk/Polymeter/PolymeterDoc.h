@@ -208,6 +208,8 @@ public:
 	void	DeleteParts(const CIntArrayEx& arrSelection);
 	void	MoveParts(const CIntArrayEx& arrSelection, int iDropPos);
 	void	UpdatePart(int iPart);
+	void	MakePartMutesConsistent();
+	void	MakePresetMutesConsistent();
 	bool	CheckForPartOverlap(int iTargetPart = -1) const;
 	bool	CreateAutoSavePath(CString& sPath) const;
 	static	bool	DoShiftDialog(int& nSteps, bool bIsRotate = false);
@@ -291,11 +293,11 @@ protected:
 	class CUndoMute : public CRefObj {
 	public:
 		CIntArrayEx	m_arrSelection;	// indices of selected tracks
-		CByteArrayEx	m_arrMute;	// array of mutes, one per selected track
+		CMuteArray	m_arrMute;	// array of mutes, one per selected track
 	};
 	class CUndoSolo : public CRefObj {
 	public:
-		CByteArrayEx	m_arrMute;	// array of mutes, one per track
+		CMuteArray	m_arrMute;	// array of mutes, one per track
 	};
 	class CUndoSelectedPresets : public CRefObj {
 	public:

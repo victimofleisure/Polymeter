@@ -217,6 +217,7 @@ void CVelocityView::UpdateDragDataTip(int y)
 		CString	sTip;
 		sTip.Format(_T("%d"), nVel);
 		m_DataTip.UpdateTipText(sTip, this, DATA_TIP);
+		m_DataTip.Popup();	// need this to ensure tip is always shown
 	}
 }
 

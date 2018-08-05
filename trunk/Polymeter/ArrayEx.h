@@ -26,6 +26,7 @@
 		16		08jun18	add more fast methods to CArrayEx; add SetGrowBy
 		17		19jun18	add insert, delete, and move selection
 		18		09jul18	add array find template
+		19		31jul18	add boolean array
 
 		enhanced array with copy ctor, assignment, and fast const access
  
@@ -774,6 +775,110 @@ AFX_INLINE void CByteArrayEx::FastRemoveAll()
 }
 
 AFX_INLINE void CByteArrayEx::FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy)
+{
+	if (nNewSize <= m_nMaxSize)	// if new size fits in allocated memory
+		m_nSize = nNewSize;	// set size without zeroing or freeing memory
+	else	// set size the usual way
+		SetSize(nNewSize, nGrowBy);
+}
+
+class CBoolArrayEx : public CByteArray
+{
+public:
+	CBoolArrayEx();
+	CBoolArrayEx(const CBoolArrayEx& arr);
+	CBoolArrayEx& operator=(const CBoolArrayEx& arr);
+	int		GetSize() const;
+	W64INT	GetSize64() const;
+	W64INT	GetMaxSize() const;
+	void	SetGrowBy(INT_PTR nGrowBy);
+	bool	GetAt(W64INT nIndex) const;
+	bool&	ElementAt(W64INT nIndex);
+	bool	operator[](W64INT nIndex) const;
+	bool&	operator[](W64INT nIndex);
+	void	Detach(bool*& pData, W64INT& Size);
+	void	Attach(bool *pData, W64INT Size);
+	void	Swap(CBoolArrayEx& src);
+	void	FastRemoveAll();
+	void	FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy = -1);
+	bool	operator==(const CBoolArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
+	bool	operator!=(const CBoolArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
+	#define	ALGO_TYPE bool
+	#include "ArrayExAlgoDef.h"
+};
+
+AFX_INLINE CBoolArrayEx::CBoolArrayEx()
+{
+}
+
+AFX_INLINE CBoolArrayEx::CBoolArrayEx(const CBoolArrayEx& arr)
+{
+	*this = arr;
+}
+
+AFX_INLINE CBoolArrayEx& CBoolArrayEx::operator=(const CBoolArrayEx& arr)
+{
+	if (this != &arr)
+		Copy(arr);
+	return *this;
+}
+
+AFX_INLINE int CBoolArrayEx::GetSize() const
+{
+	return(INT64TO32(m_nSize));	// W64: force to 32-bit
+}
+
+AFX_INLINE W64INT CBoolArrayEx::GetSize64() const
+{
+	return(m_nSize);
+}
+
+AFX_INLINE W64INT CBoolArrayEx::GetMaxSize() const
+{
+	return(m_nMaxSize);
+}
+
+AFX_INLINE void CBoolArrayEx::SetGrowBy(INT_PTR nGrowBy)
+{
+	ASSERT(nGrowBy >= 0);
+	m_nGrowBy = nGrowBy;
+}
+
+AFX_INLINE bool CBoolArrayEx::GetAt(W64INT nIndex) const
+{
+	ASSERT(nIndex >= 0 && nIndex < m_nSize);
+	return reinterpret_cast<bool *>(m_pData)[nIndex];
+}
+
+AFX_INLINE bool& CBoolArrayEx::ElementAt(W64INT nIndex)
+{ 
+	ASSERT(nIndex >= 0 && nIndex < m_nSize);
+	return reinterpret_cast<bool *>(m_pData)[nIndex];
+}
+
+AFX_INLINE bool CBoolArrayEx::operator[](W64INT nIndex) const
+{ 
+	return GetAt(nIndex);
+}
+
+AFX_INLINE bool& CBoolArrayEx::operator[](W64INT nIndex)
+{ 
+	return ElementAt(nIndex);
+}
+
+AFX_INLINE void CBoolArrayEx::Swap(CBoolArrayEx& src)
+{
+	CArrayEx_Swap(m_pData, src.m_pData);
+	CArrayEx_Swap(m_nSize, src.m_nSize);
+	CArrayEx_Swap(m_nMaxSize, src.m_nMaxSize);
+}
+
+AFX_INLINE void CBoolArrayEx::FastRemoveAll()
+{
+	m_nSize = 0;	// set size without freeing memory
+}
+
+AFX_INLINE void CBoolArrayEx::FastSetSize(INT_PTR nNewSize, INT_PTR nGrowBy)
 {
 	if (nNewSize <= m_nMaxSize)	// if new size fits in allocated memory
 		m_nSize = nNewSize;	// set size without zeroing or freeing memory

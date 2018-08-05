@@ -558,7 +558,7 @@ void CPolymeterDoc::Solo()
 {
 	NotifyUndoableEdit(0, UCODE_SOLO);
 	int	nTracks = GetTrackCount();
-	CByteArrayEx	arrSolo;
+	CMuteArray	arrSolo;
 	arrSolo.SetSize(nTracks);
 	int	nSels = m_arrTrackSel.GetSize();
 	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected track
@@ -1536,7 +1536,7 @@ void CPolymeterDoc::RestoreMute(const CUndoState& State)
 	int	nSels = pInfo->m_arrSelection.GetSize();
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = pInfo->m_arrSelection[iSel];
-		m_Seq.SetMute(iTrack, pInfo->m_arrMute[iSel] != 0);
+		m_Seq.SetMute(iTrack, pInfo->m_arrMute[iSel]);
 	}
 	if (m_Seq.IsRecording())
 		m_Seq.RecordDub(pInfo->m_arrSelection);
@@ -1557,7 +1557,7 @@ void CPolymeterDoc::RestoreSolo(const CUndoState& State)
 	const CUndoSolo	*pInfo = static_cast<CUndoSolo*>(State.GetObj());
 	int	nTracks = GetTrackCount();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++)
-		m_Seq.SetMute(iTrack, pInfo->m_arrMute[iTrack] != 0);
+		m_Seq.SetMute(iTrack, pInfo->m_arrMute[iTrack]);
 	UpdateAllViews(NULL, HINT_SOLO);
 	if (m_Seq.IsRecording())
 		m_Seq.RecordDub();	// all tracks
@@ -2391,7 +2391,7 @@ void CPolymeterDoc::UpdatePreset(int iPreset)
 
 int CPolymeterDoc::FindCurrentPreset() const
 {
-	CByteArrayEx	arrMute;
+	CMuteArray	arrMute;
 	m_Seq.GetMutes(arrMute);
 	return m_arrPreset.Find(arrMute);
 }
@@ -2489,6 +2489,56 @@ void CPolymeterDoc::SetPartName(int iPart, CString sName)
 	SetModifiedFlag();
 	CPropHint	hint(iPart);
 	UpdateAllViews(NULL, HINT_PART_NAME, &hint);
+}
+
+void CPolymeterDoc::MakePartMutesConsistent()
+{
+	int	nParts = m_arrPart.GetSize();
+	for (int iPart = 0; iPart < nParts; iPart++) {	// for each part
+		const CTrackGroup&	part = m_arrPart[iPart];
+		int	nMbrs = part.m_arrTrackIdx.GetSize();
+		int	nMutes = 0;
+		for (int iMbr = 0; iMbr < nMbrs; iMbr++) {	// for each part member track
+			int	iTrack = part.m_arrTrackIdx[iMbr];
+			nMutes += m_Seq.GetMute(iTrack);	// count muted tracks
+		}
+		if (nMutes && nMutes != nMbrs) {	// if part's tracks are inconsistently muted
+			bool	bIsMute = nMutes > nMbrs / 2;	// take a vote; majority mute wins
+			for (int iMbr = 0; iMbr < nMbrs; iMbr++) {	// for each part member track
+				int	iTrack = part.m_arrTrackIdx[iMbr];
+				m_Seq.SetMute(iTrack, bIsMute);	// make mutes consistent
+			}
+		}
+	}
+}
+
+void CPolymeterDoc::MakePresetMutesConsistent()
+{
+	bool	bModified = false;
+	int	nPresets = m_arrPreset.GetSize();
+	int	nParts = m_arrPart.GetSize();
+	for (int iPreset = 0; iPreset < nPresets; iPreset++) {	// for each preset
+		CPreset&	preset = m_arrPreset[iPreset];
+		for (int iPart = 0; iPart < nParts; iPart++) {	// for each part
+			const CTrackGroup&	part = m_arrPart[iPart];
+			int	nMbrs = part.m_arrTrackIdx.GetSize();
+			int	nMutes = 0;
+			for (int iMbr = 0; iMbr < nMbrs; iMbr++) {	// for each part member track
+				int	iTrack = part.m_arrTrackIdx[iMbr];
+				nMutes += preset.m_arrMute[iTrack];	// count muted tracks
+			}
+			if (nMutes && nMutes != nMbrs) {	// if part's tracks are inconsistently muted
+				bool	bIsMute = nMutes > nMbrs / 2;	// take a vote; majority mute wins
+				for (int iMbr = 0; iMbr < nMbrs; iMbr++) {	// for each part member track
+					int	iTrack = part.m_arrTrackIdx[iMbr];
+					preset.m_arrMute[iTrack] = bIsMute;	// make mutes consistent
+				}
+				bModified = true;
+			}
+		}
+	}
+	if (bModified)
+		SetModifiedFlag();
 }
 
 bool CPolymeterDoc::DoShiftDialog(int& nSteps, bool bIsRotate)

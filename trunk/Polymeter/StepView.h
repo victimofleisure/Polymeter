@@ -52,7 +52,7 @@ public:
 	int		GetBeatWidth() const;
 	double	GetStepWidthEx(int iTrack) const;
 	COLORREF	GetBeatLineColor() const;
-	COLORREF	GetStepOutlineColor() const;
+	COLORREF	GetGridLineColor(bool bIsSelected) const;
 	COLORREF	GetViewBkgndColor() const;
 	bool	IsSelected(int iTrack) const;
 	bool	HaveStepSelection() const;
@@ -102,6 +102,11 @@ protected:
 		SF_SELECT	= 0x08,		// step is selected
 		STEP_STATES	= 16,		// power of two
 	};
+	enum {	// gridline states
+		GRID_NORMAL,			// track isn't selected
+		GRID_SELECTED,			// track is selected
+		GRID_STATES,
+	};
 	enum {	// drag states
 		DS_NONE,			// inactive
 		DS_TRACK,			// monitoring for start of drag
@@ -109,7 +114,7 @@ protected:
 	};
 	static const COLORREF	m_arrStepColor[];
 	static const COLORREF	m_clrViewBkgnd;
-	static const COLORREF	m_clrStepOutline;
+	static const COLORREF	m_clrGridLine[GRID_STATES];
 	static const COLORREF	m_clrBeatLine;
 
 // Member data
@@ -252,9 +257,9 @@ inline COLORREF CStepView::GetBeatLineColor() const
 	return m_clrBeatLine;
 }
 
-inline COLORREF CStepView::GetStepOutlineColor() const
+inline COLORREF CStepView::GetGridLineColor(bool bIsSelected) const
 {
-	return m_clrStepOutline;
+	return m_clrGridLine[bIsSelected];
 }
 
 inline COLORREF CStepView::GetViewBkgndColor() const

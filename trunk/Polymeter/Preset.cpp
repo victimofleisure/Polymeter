@@ -34,17 +34,17 @@ int CPresetArray::CalcPackedSize(UINT nBits)
 	return ((nBits - 1) >> 3) + 1;
 }
 
-void CPresetArray::PackBools(const CByteArrayEx& arrSrc, CByteArrayEx& arrDst)
+void CPresetArray::PackBools(const CBoolArrayEx& arrSrc, CByteArrayEx& arrDst)
 {
 	UINT	nBits = arrSrc.GetSize();
 	UINT	nDstSize = ((nBits - 1) >> 3) + 1;
 	arrDst.RemoveAll();
 	arrDst.SetSize(nDstSize);
 	for (UINT iBit = 0; iBit < nBits; iBit++)
-		arrDst[iBit >> 3] |= (arrSrc[iBit] != 0) << (iBit & 7);
+		arrDst[iBit >> 3] |= arrSrc[iBit] << (iBit & 7);
 }
 
-void CPresetArray::UnpackBools(const CByteArrayEx& arrSrc, CByteArrayEx& arrDst)
+void CPresetArray::UnpackBools(const CByteArrayEx& arrSrc, CBoolArrayEx& arrDst)
 {
 	UINT nBits = arrDst.GetSize();
 	arrDst.SetSize(nBits);
@@ -88,7 +88,7 @@ void CPresetArray::Write() const
 
 void CPresetArray::OnTrackArrayEdit(const CIntArrayEx& arrTrackMap, int nNewTracks)
 {
-	CByteArrayEx	arrNewMute;
+	CBoolArrayEx	arrNewMute;
 	int	nOldTracks = arrTrackMap.GetSize();	// mapping table has one entry for each pre-edit track
 	int	nPresets = GetSize();
 	for (int iPreset = 0; iPreset < nPresets; iPreset++) {	// for each of our presets
@@ -114,7 +114,7 @@ void CPresetArray::Dump() const
 	}
 }
 
-int CPresetArray::Find(const CByteArrayEx& arrMute) const
+int CPresetArray::Find(const CBoolArrayEx& arrMute) const
 {
 	int	nPresets = GetSize();
 	for (int iPreset = 0; iPreset < nPresets; iPreset++) {

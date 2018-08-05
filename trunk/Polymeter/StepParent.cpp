@@ -120,6 +120,7 @@ void CStepParent::ShowVelocityView(bool bShow)
 	else
 		nShowCmd = SW_HIDE;
 	m_pVeloView->ShowWindow(nShowCmd);
+	m_btnVeloClose.ShowWindow(nShowCmd);
 	RecalcLayout();
 }
 
@@ -155,11 +156,11 @@ void CStepParent::OnStepZoom()
 
 void CStepParent::RecalcLayout(int cx, int cy)
 {
-	int	nWnds = 2;
+	int	nWnds = 3;	// ruler, step view, mute view 
 	CSize	szStepView(cx - m_nMuteWidth, cy - m_nRulerHeight);
 	if (m_bIsShowSplit) {	// if showing velocities
 		szStepView.cy -= m_nVeloHeight + m_nSplitBarWidth;
-		nWnds++;
+		nWnds += 2;	// add velocity view, velocity close button
 	}
 	UINT	dwFlags = SWP_NOACTIVATE | SWP_NOZORDER;
 	HDWP	hDWP;
@@ -167,8 +168,12 @@ void CStepParent::RecalcLayout(int cx, int cy)
 	hDWP = DeferWindowPos(hDWP, m_wndRuler.m_hWnd, NULL, 0, 0, cx, m_nRulerHeight, dwFlags);
 	hDWP = DeferWindowPos(hDWP, m_pMuteView->m_hWnd, NULL, 0, m_nRulerHeight, m_nMuteWidth, szStepView.cy, dwFlags);
 	hDWP = DeferWindowPos(hDWP, m_pStepView->m_hWnd, NULL, m_nMuteWidth, m_nRulerHeight, szStepView.cx, szStepView.cy, dwFlags);
-	if (m_bIsShowSplit)	// if showing velocities
+	if (m_bIsShowSplit) {	// if showing velocities
 		hDWP = DeferWindowPos(hDWP, m_pVeloView->m_hWnd, NULL, m_nMuteWidth, cy - m_nVeloHeight, szStepView.cx, m_nVeloHeight, dwFlags);
+		m_btnVeloClose.SizeToContent();	// size velocity close button to its icon
+		CPoint	ptBtn(VELO_CLOSE_BTN_MARGIN, VELO_CLOSE_BTN_MARGIN);
+		DeferWindowPos(hDWP, m_btnVeloClose.m_hWnd, NULL, ptBtn.x, cy - m_nVeloHeight + ptBtn.y, 0, 0, dwFlags | SWP_NOSIZE);
+	}
 	EndDeferWindowPos(hDWP);
 	m_nGlobVeloHeight = m_nVeloHeight;	// update global velocity pane height
 }
@@ -214,6 +219,7 @@ BEGIN_MESSAGE_MAP(CStepParent, CSplitView)
 	ON_COMMAND(ID_VIEW_VELOCITIES, OnViewVelocities)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_VELOCITIES, OnUpdateViewVelocities)
 	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
+	ON_BN_CLICKED(VELO_CLOSE_BTN_ID, OnVelocityCloseBtnClicked)
 END_MESSAGE_MAP()
 
 // CStepParent message handlers
@@ -247,6 +253,11 @@ BOOL CStepParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 		dwVeloStyle |= WS_VISIBLE;	// add visible style
 	if (!m_pVeloView->Create(NULL, _T("Velocity"), dwVeloStyle, rInit, this, PANE_ID(PANE_VELOCITY), pContext))
 		return false;
+	if (!m_btnVeloClose.Create(_T(""), WS_CHILD | WS_VISIBLE, rInit, this, VELO_CLOSE_BTN_ID))
+		return false;
+	m_btnVeloClose.SetStdImage(CMenuImages::IdClose, CMenuImages::ImageBlack);
+	m_btnVeloClose.m_bDrawFocus = FALSE;
+	m_btnVeloClose.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
 	m_nMuteWidth = m_pMuteView->GetViewWidth();
 	m_wndRuler.SendMessage(WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)));
 	m_wndRuler.SetTickLengths(4, 0);
@@ -347,4 +358,9 @@ void CStepParent::OnViewVelocities()
 void CStepParent::OnUpdateViewVelocities(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bIsShowSplit);
+}
+
+void CStepParent::OnVelocityCloseBtnClicked()
+{
+	ShowVelocityView(false);
 }

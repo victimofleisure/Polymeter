@@ -81,6 +81,8 @@ protected:
 	enum {
 		PANE_ID_FIRST = 2000,
 		INIT_VELO_HEIGHT = 100,
+		VELO_CLOSE_BTN_ID = 2100,
+		VELO_CLOSE_BTN_MARGIN = 3,
 	};
 
 // Member data
@@ -89,6 +91,7 @@ protected:
 	bool	m_bIsScrolling;		// true while handling scroll message; prevents reentrance
 	int		m_nVeloHeight;		// height of velocity view
 	int		m_nMuteWidth;		// width of mute view
+	CMFCButton	m_btnVeloClose;	// velocity close button
 	static	int		m_nGlobVeloHeight;	// global velocity pane height for all documents
 
 // Helpers
@@ -112,6 +115,7 @@ protected:
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnViewVelocities();
 	afx_msg void OnUpdateViewVelocities(CCmdUI *pCmdUI);
+	afx_msg void OnVelocityCloseBtnClicked();
 };
 
 inline CPolymeterDoc* CStepParent::GetDocument() const
