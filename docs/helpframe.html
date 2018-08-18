@@ -55,14 +55,30 @@
 <li>To set the same value for multiple tracks, first select the tracks, and then edit the desired field in any one of the tracks; when you end the edit, the new value is applied to all the selected tracks.
 <li>Columns can be resized or reordered via the column header.
 
-<p>Step view;
+<p>Step view:
 
 <p>
 <li>Left-click a step to create an event. Left-click the step again to empty it.
 <li>To create a tied note, use Shift+left-click. Multiple adjacent steps can be tied together to create long notes, but at least one step in each track must be empty or untied, otherwise the track will be silent.
+<li>You can specify whether tied or untied steps are created by default, using the Tie Notes command (Track menu or toolbar).
 <li>Right-clicking behaves differently than usual. In the step area, right-click and drag creates a rectangular step selection.
 <li>Rectangular step selections can be cut, copied, pasted, deleted, and inserted, using the standard editing commands.
-<li>Right-click and drag vertically over the mute buttons selects the corresponding tracks. Left-click within the selection toggles the selected track mutes. Shift+left-click within the selection toggles the track mute you clicked on, and sets all the other selected track mutes to the same state.
+<li>Right-click and drag vertically over the mute buttons selects the corresponding tracks. Left-click within the selection toggles the selected track mutes. Ctrl+left-click within the selection mutes the selected tracks regardless of their current state.
+
+<p>Velocity pane:
+
+
+<p><li>To show or hide the velocity pane, use View/Velocities or F7. Velocities are represented by vertical bars.
+<li>At least one track must be selected, otherwise the pane is empty. Multiple tracks can be selected, in which case their events are combined.
+<li>To edit a velocity, left-click on its bar at the point where you want it to be, or left-click and drag the bar up or down until it's where you want it.
+<li>To edit multiple velocities, left-click and drag the cursor over the bars you want to change.
+<li>To make all the velocities the same, hold down the Shift key while dragging.
+<li>To make the velocities fit a straight line, hold down the Ctrl key while dragging.
+<li>To make the velocities fit a triangle wave, hold down the Alt key while dragging.
+<li>To make the velocities fit a sine wave, hold down the Alt and Shift keys while dragging.
+<li>The triangle and sine functions are sensitive to the drawing direction. Drawing from top to bottom inverts the wave vertically. Drawing from right to left shifts the wave's phase by 90 degrees.
+<li>To know a velocity's exact value, hold the cursor stationary over its bar for at least half a second, and the value will appear in a tool tip. The tool tip is also shown continuously while a drag is in progress.
+<li>The velocity pane is also used to edit values for track types other than note, including controller, aftertouch, patch change, wheel and modulator tracks.
 
 <p>Back to <a href="index.html">Polymeter home page</a>
 

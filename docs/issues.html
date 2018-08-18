@@ -38,6 +38,22 @@
 <TD>user</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>07/23/18</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>if key is Gb, note edit spin control drops an octave when Cb is incremented or decremented; error in ParseMidi</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/31/18</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>invalid step selection error can occur unexpectedly if drag overshoots into area to the right of a shorter track</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>03/25/18</TD>
 <TD>done</TD>
@@ -1014,6 +1030,70 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>07/26/18</TD>
+<TD>07/31/18</TD>
+<TD>done</TD>
+<TD>step view should indicate track selection</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/27/18</TD>
+<TD>07/31/18</TD>
+<TD>done</TD>
+<TD>velocity tooltip disappears if cursor leaves window while dragging velocity bar; must call Popup</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/27/18</TD>
+<TD>07/31/18</TD>
+<TD>done</TD>
+<TD>velocity tooltip occasionally disappears when velocity bar is left-clicked; calling Popup seems to fix it</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/30/18</TD>
+<TD>07/31/18</TD>
+<TD>done</TD>
+<TD>in CLiveView::OnUpdate view type case, no need to test view type, it's already filtered outside switch</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/30/18</TD>
+<TD>07/31/18</TD>
+<TD>done</TD>
+<TD>step view grid should draw each row's top grid line all at once instead of step by step</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/27/18</TD>
+<TD>08/01/18</TD>
+<TD>done</TD>
+<TD>velocity pane close button, in slack area left of velocities</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/28/18</TD>
+<TD>08/02/18</TD>
+<TD>done</TD>
+<TD>on entering live view, parts must have consistent mute states, otherwise part toggling behaves unexpectedly</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/29/18</TD>
+<TD>08/05/18</TD>
+<TD>done</TD>
+<TD>after adding tracks to a part, presets can give unexpected results; make preset mutes consistent in live view</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -1238,14 +1318,6 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>07/23/18</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>if key is Gb, note edit spin control drops an octave when Cb is incremented or decremented; error in ParseMidi</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>07/26/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -1262,18 +1334,42 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>07/27/18</TD>
+<TD>07/26/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>velocity tooltip disappears if cursor leaves window while dragging velocity bar</TD>
+<TD>in step view, steps should indicate whether track is muted; could be overdoing it, pink gives me a headache</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>07/27/18</TD>
+<TD>07/30/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>velocity tooltip occasionally disappears when velocity bar is left-clicked; hard to replicate, related to Pop</TD>
+<TD>optional tool tip in step view showing step's position and value; position in what format?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>08/02/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>mute tracks in song view; complicates sequencer and song view UI</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>08/02/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>should be able to loop a given time range of sequence, especially in song view, even approximately</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/10/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1329,7 +1425,7 @@
 <TD>07/05/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>cut and paste of tracks with modulations often behaves unexpectedly; store modulators as UIDs instead of indices</TD>
+<TD>cut and paste of modulated tracks often behaves unexpectedly; store modulators as UIDs instead of indices</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1345,15 +1441,7 @@
 <TD>07/20/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>add command to offset note velocities; should work for controller values too</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>07/26/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>replace steps, like paste but overwrite target steps instead shifting them to the right; insert vs. overwrite mode?</TD>
+<TD>add command to offset note/step velocities; should work for controller values too</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1369,7 +1457,7 @@
 <TD>07/26/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>steps should indicate track selection to avoid confusion; complicates color scheme</TD>
+<TD>replace steps, like paste but overwrite steps at insert position instead of shifting them; command or mode?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1377,23 +1465,15 @@
 <TD>07/27/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>velocity pane's tooltips should optionally show signed values; context menu?</TD>
+<TD>velocity pane's tooltips should optionally show signed values; enabled how? context menu?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>07/27/18</TD>
+<TD>07/30/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>velocity pane should indicate step selection if any, and track selection too</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>07/27/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>unused space to left of velocity pane should include a close button</TD>
+<TD>add command to scale step values by a percentage; boosts track velocity without reducing dynamics</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
