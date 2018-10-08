@@ -153,7 +153,7 @@ protected:
 	void	UpdatePartLengths();
 	void	CreateFonts();
 	void	UpdateFonts();
-	void	RecalcLayout();
+	void	RecalcLayout(bool bResizing = false);
 	void	UpdateListItemHeight();
 	int		ListHitTest(CPoint point) const;
 	void	GetStatusRect(CRect& rStatus) const;

@@ -119,6 +119,7 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		case CPolymeterDoc::HINT_VIEW_TYPE:
 			m_iPreset = pDoc->FindCurrentPreset();
 			Update();
+			RecalcLayout();
 			UpdateSongCounters();
 			pDoc->MakePartMutesConsistent();
 			pDoc->MakePresetMutesConsistent();
@@ -510,19 +511,26 @@ void CLiveView::UpdateListItemHeight()
 		m_nListItemHeight = rItem.Height();
 }
 
-void CLiveView::RecalcLayout()
+void CLiveView::RecalcLayout(bool bResizing)
 {
 	UpdateListItemHeight();
 	m_nListTotalWidth = 0;
 	for (int iList = 0; iList < LISTS; iList++) {	// for each list
-		m_list[iList].SetColumnWidth(0, m_nListWidth[iList]);
-		m_nListTotalWidth += m_nListWidth[iList] + LIST_GUTTER;
+		CLiveListCtrl&	list = m_list[iList];
+		int	nListWidth = m_nListWidth[iList];
+		int	nColWidth = nListWidth;
+		if (list.GetItemCount() > list.GetCountPerPage())	// if all items don't fit
+			nColWidth -= GetSystemMetrics(SM_CXVSCROLL);	// account for vertical scrollbar
+		list.SetColumnWidth(0, nColWidth);
+		m_nListTotalWidth += nListWidth + LIST_GUTTER;
 	}
-	CRect	rc;
-	GetClientRect(rc);
-	CSize	sz(rc.Size());
-	OnSize(0, sz.cx, sz.cy);
-	Invalidate();
+	if (!bResizing) {	// if not already resizing
+		CRect	rc;
+		GetClientRect(rc);
+		CSize	sz(rc.Size());
+		OnSize(0, sz.cx, sz.cy);	// resize child windows
+		Invalidate();
+	}
 }
 
 int CLiveView::ListHitTest(CPoint point) const
@@ -636,6 +644,7 @@ void CLiveView::OnSize(UINT nType, int cx, int cy)
 	hDWP = DeferWindowPos(hDWP, m_wndPosBar.m_hWnd, NULL, m_nListTotalWidth, nHeight, POS_BAR_WIDTH, cy - nHeight, dwFlags);
 	EndDeferWindowPos(hDWP);
 	m_iTopPart = m_list[LIST_PARTS].GetTopIndex();	// order matters: after resizing lists
+	RecalcLayout(true);	// set bResizing to avoid recursion; order matters, resize list columns last
 }
 
 void CLiveView::OnParentNotify(UINT message, LPARAM lParam)
@@ -785,15 +794,16 @@ void CLiveView::OnListHdrEndTrack(NMHDR* pNMHDR, LRESULT* pResult)
 	for (int iList = 0; iList < LISTS; iList++) {	// for each list
 		CLiveListCtrl&	list = m_list[iList];
 		if (hwndList == list.m_hWnd) {
-			int	nHdrWidth = pHdrItem->cxy;
-			m_nListWidth[iList] = nHdrWidth;
-			m_nGlobListWidth[iList] = nHdrWidth;
-			list.SetColumnWidth(0, nHdrWidth);
+			int	nListWidth = pHdrItem->cxy;
+			if (list.GetItemCount() > list.GetCountPerPage())	// if all items don't fit
+				nListWidth += GetSystemMetrics(SM_CXVSCROLL);	// account for vertical scrollbar
+			m_nListWidth[iList] = nListWidth;
+			m_nGlobListWidth[iList] = nListWidth;
 			RecalcLayout();
 			return;
 		}
 	}
-	ASSERT(0);	// shouldn't get here unless there's an expected child list
+	ASSERT(0);	// shouldn't get here unless there's an unexpected child list
 }
 
 void CLiveView::OnUpdateEditDisable(CCmdUI *pCmdUI)

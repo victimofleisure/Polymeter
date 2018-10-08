@@ -65,6 +65,7 @@ public:
 	int		HitTest(CPoint point, int& iStep, UINT nFlags = 0) const;
 	void	EndDrag();
 	void	OnTrackLength(CPoint point);
+	int		ConvertXToSongPos(int x) const;
 
 // Overrides
 public:
@@ -280,4 +281,9 @@ inline bool CStepView::IsSelected(int iTrack) const
 inline const CRect& CStepView::GetStepSelection()
 {
 	return m_rStepSel;
+}
+
+inline int CStepView::ConvertXToSongPos(int x) const
+{
+	return round(double(x) / GetBeatWidth() / GetZoom() * GetDocument()->m_Seq.GetTimeDivision());
 }

@@ -34,6 +34,7 @@
 #include "OffsetDlg.h"
 #include "ChildFrm.h"
 #include "Range.h"
+#include "StretchDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -44,7 +45,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	7
+#define	FILE_VERSION	8
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -71,6 +72,8 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_SHIFT_STEPS		_T("nSteps")
 #define RK_EXPORT_DLG		REG_SETTINGS _T("\\Export")
 #define RK_EXPORT_DURATION	_T("nDuration")
+#define RK_STRETCH_DLG		REG_SETTINGS _T("\\Stretch")
+#define RK_STRETCH_PERCENT	_T("fPercent")
 #define RK_PART_SECTION		_T("Part")
 
 // define null title IDs for undo codes that have dynamic titles, or are insigificant
@@ -264,7 +267,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 			RdReg(RK_MASTER, _T(#name), m_##name);
 	#include "MasterPropsDef.h"	// generate code to read master properties
 	m_Seq.SetTempo(m_fTempo);
-	m_Seq.SetTimeDivision(CMasterProps::GetTimeDivisionTicks(m_nTimeDiv));
+	m_Seq.SetTimeDivision(GetTimeDivisionTicks());
 	m_Seq.SetMeter(m_nMeter);
 	m_Seq.SetPosition(m_nStartPos);
 	int	nTracks = 0;
@@ -370,8 +373,10 @@ __forceinline void CPolymeterDoc::ReadTrackModulations(CString sTrkID, CTrack& t
 				int	iType = FindModulationTypeInternalName(sMod.Left(iDelim));
 				if (iType >= 0) {	// if valid modulation type name found
 					int	iModTrack = _ttoi(sMod.Mid(iDelim + 1));	// get index of modulator track
-					if (iModTrack >= 0 && iModTrack < m_Seq.GetTrackCount())	// if valid track index
-						trk.m_arrModulator[iType] = iModTrack;	// store modulator track index
+					if (iModTrack >= 0 && iModTrack < m_Seq.GetTrackCount()) {	// if valid track index
+						CModulation	mod(iType, iModTrack);
+						trk.m_arrModulator.Add(mod);	// add modulation to track
+					}
 				}
 			}
 		}
@@ -381,13 +386,15 @@ __forceinline void CPolymeterDoc::ReadTrackModulations(CString sTrkID, CTrack& t
 __forceinline void CPolymeterDoc::WriteTrackModulations(CString sTrkID, const CTrack& trk) const
 {
 	CString	sModTrack, sModList;
-	for (int iType = 0; iType < MODULATION_TYPES; iType++) {	// for each modulation type
-		int	iModTrack = trk.m_arrModulator[iType];
+	int	nMods = trk.m_arrModulator.GetSize();
+	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
+		const CModulation&	mod = trk.m_arrModulator[iMod];
+		int	iModTrack = mod.m_iSource;
 		if (iModTrack >= 0) {	// if modulation type applies
 			if (!sModList.IsEmpty())	// if not first token
 				sModList += ',';	// append token separator
 			sModTrack.Format(_T(":%d"), iModTrack);
-			sModList += GetModulationTypeInternalName(iType) + sModTrack;
+			sModList += GetModulationTypeInternalName(mod.m_iType) + sModTrack;
 		}
 	}
 	CPersist::WriteString(sTrkID, RK_TRACK_MODULATIONS, sModList);
@@ -833,12 +840,17 @@ bool CPolymeterDoc::IsTranspositionSafe(int nNoteDelta) const
 		const CTrack&	trk = m_Seq.GetTrack(iTrack);
 		int	nMinNote = m_Seq.GetNote(iTrack) + nNoteDelta;
 		int	nMaxNote = nMinNote;
-		int	iModTrack = trk.m_arrModulator[MT_Note];
-		if (iModTrack >= 0) {	// if track's note is modulated
-			int	nMinMod, nMaxMod;	// offset note range to account for modulation
-			m_Seq.CalcDynamicRange(iModTrack, nMinMod, nMaxMod, true);	// modulator track
-			nMinNote += nMinMod - MIDI_NOTES / 2;	// convert step value to signed offset
-			nMaxNote += nMaxMod - MIDI_NOTES / 2;
+		int	nMods = trk.m_arrModulator.GetSize();
+		for (int iMod = 0; iMod < nMods; iMod++) {
+			if (trk.m_arrModulator[iMod].m_iType == MT_Note) {
+				int	iModTrack = trk.m_arrModulator[iMod].m_iSource;
+				if (iModTrack >= 0) {	// if track's note is modulated
+					int	nMinMod, nMaxMod;	// offset note range to account for modulation
+					m_Seq.CalcDynamicRange(iModTrack, nMinMod, nMaxMod, true);	// modulator track
+					nMinNote += nMinMod - MIDI_NOTES / 2;	// convert step value to signed offset
+					nMaxNote += nMaxMod - MIDI_NOTES / 2;
+				}
+			}
 		}
 		if (nMinNote < 0 || nMaxNote > MIDI_NOTE_MAX)	// if note would clip
 			return false;	// early out, no need to check remaining tracks
@@ -879,15 +891,20 @@ bool CPolymeterDoc::IsVelocityOffsetSafe(int nVelocityDelta, CRange<int> *prngVe
 			continue;	// skip this track; assume empty note track
 		nMinVel += nMinStep;
 		nMaxVel += nMaxStep;
-		int	iModTrack = trk.m_arrModulator[MT_Velocity];
-		if (iModTrack >= 0) {	// if track's velocity is modulated
-			int	nMinMod, nMaxMod;	// offset velocity range to account for modulation
-			m_Seq.CalcDynamicRange(iModTrack, nMinMod, nMaxMod, true);	// modulator track
-			nMinVel += nMinMod - MIDI_NOTES / 2;	// convert step value to signed offset
-			nMaxVel += nMaxMod - MIDI_NOTES / 2;
+		int	nMods = trk.m_arrModulator.GetSize();
+		for (int iMod = 0; iMod < nMods; iMod++) {
+			if (trk.m_arrModulator[iMod].m_iType == MT_Velocity) {
+				int	iModTrack = trk.m_arrModulator[iMod].m_iSource;
+				if (iModTrack >= 0) {	// if track's velocity is modulated
+					int	nMinMod, nMaxMod;	// offset velocity range to account for modulation
+					m_Seq.CalcDynamicRange(iModTrack, nMinMod, nMaxMod, true);	// modulator track
+					nMinVel += nMinMod - MIDI_NOTES / 2;	// convert step value to signed offset
+					nMaxVel += nMaxMod - MIDI_NOTES / 2;
+				}
+			}
 		}
 		int	nLowerRail;
-		if (trk.m_iType == TT_NOTE)	// if track type is note
+		if (trk.IsNote())	// if track type is note
 			nLowerRail = 1;	// zero is reserved for note off
 		else	// track type isn't note
 			nLowerRail = 0;	// zero is fine
@@ -1160,7 +1177,7 @@ void CPolymeterDoc::RestoreMasterProperty(const CUndoState& State)
 		break;
 	case CMasterProps::PROP_nTimeDiv:
 		// convert time division preset index to time division value in ticks
-		m_Seq.SetTimeDivision(GetTimeDivisionTicks(m_nTimeDiv));
+		m_Seq.SetTimeDivision(GetTimeDivisionTicks());
 		break;
 	}
 	CPropHint	hint(0, iProp);
@@ -2172,7 +2189,7 @@ void CPolymeterDoc::SetPosition(int nPos)
 bool CPolymeterDoc::ShowGMDrums(int iTrack) const
 {
 	// if track uses drum channel, and track type is note, and showing General MIDI patch names
-	return (m_Seq.GetChannel(iTrack) == 9 && m_Seq.GetType(iTrack) == CTrack::TT_NOTE
+	return (m_Seq.GetChannel(iTrack) == 9 && m_Seq.IsNote(iTrack)
 		&& theApp.m_Options.m_View_bShowGMNames);
 }
 
@@ -2557,6 +2574,22 @@ bool CPolymeterDoc::DoShiftDialog(int& nSteps, bool bIsRotate)
 	return nSteps != 0;
 }
 
+void CPolymeterDoc::StretchTracks(double fScale)
+{
+	ASSERT(GetSelectedCount());
+	NotifyUndoableEdit(PROP_Length, UCODE_MULTI_TRACK_PROP);
+	int	nSels = GetSelectedCount();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = m_arrTrackSel[iSel];
+		CStepArray	arrStep;
+		if (m_Seq.GetTrack(iTrack).Stretch(fScale, arrStep))
+			m_Seq.SetSteps(iTrack, arrStep);	// update track's step array
+	}
+	SetModifiedFlag();
+	CMultiItemPropHint	hint(m_arrTrackSel, PROP_Length);
+	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
+}
+
 // CPolymeterDoc diagnostics
 
 #ifdef _DEBUG
@@ -2606,6 +2639,8 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditSelectAll)
+	ON_COMMAND(ID_EDIT_DESELECT, OnEditDeselect)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_DESELECT, OnUpdateEditDeselect)
 	ON_COMMAND(ID_TRACK_REVERSE, OnTrackReverse)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_REVERSE, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TRACK_SHIFT_LEFT, OnTrackShiftLeft)
@@ -2641,6 +2676,8 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_PRESET_UPDATE, OnUpdateTrackPresetUpdate)
 	ON_COMMAND(ID_TRACK_GROUP, OnTrackGroup)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_GROUP, OnUpdateTrackGroup)
+	ON_COMMAND(ID_TRACK_STRETCH, OnStretchTracks)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_STRETCH, OnUpdateTrackReverse)
 END_MESSAGE_MAP()
 
 // CPolymeterDoc commands
@@ -2715,7 +2752,7 @@ void CPolymeterDoc::OnFileExport()
 			theApp.WriteProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, dlg.m_nDuration);
 			CWaitCursor	wc;	// show wait cursor; export can take time
 			UpdateChannelEvents();	// queue channel events to be output at start of playback
-			if (!m_Seq.Export(fd.GetPathName(), dlg.m_nDuration, bHasDubs)) {
+			if (!m_Seq.Export(fd.GetPathName(), dlg.m_nDuration, bHasDubs, m_nStartPos)) {
 				AfxMessageBox(IDS_EXPORT_ERROR);
 			}
 		}
@@ -2852,6 +2889,16 @@ void CPolymeterDoc::OnUpdateEditSelectAll(CCmdUI *pCmdUI)
 	if (!CFocusEdit::UpdateSelectAll(pCmdUI)) {
 		pCmdUI->Enable(GetTrackCount());
 	}
+}
+
+void CPolymeterDoc::OnEditDeselect()
+{
+	Deselect();
+}
+
+void CPolymeterDoc::OnUpdateEditDeselect(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(GetSelectedCount());
 }
 
 void CPolymeterDoc::OnTrackReverse()
@@ -3082,6 +3129,17 @@ void CPolymeterDoc::OnTrackGroup()
 void CPolymeterDoc::OnUpdateTrackGroup(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(GetSelectedCount());
+}
+
+void CPolymeterDoc::OnStretchTracks()
+{
+	CStretchDlg	dlg;
+	dlg.m_rng = CRange<double>(1e-1, 1e5);
+	dlg.m_fVal = CPersist::GetDouble(RK_STRETCH_DLG, RK_STRETCH_PERCENT, 100);
+	if (dlg.DoModal() == IDOK) {
+		CPersist::WriteDouble(RK_STRETCH_DLG, RK_STRETCH_PERCENT, dlg.m_fVal);
+		StretchTracks(dlg.m_fVal / 100);
+	}
 }
 
 void CPolymeterDoc::OnToolsStatistics()

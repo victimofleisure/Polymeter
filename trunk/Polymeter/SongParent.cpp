@@ -154,6 +154,35 @@ BOOL CSongParent::PtInRuler(CPoint point) const
 	return rc.PtInRect(point);	// true if point within ruler
 }
 
+inline void CSongParent::UpdateRulerNumbers()
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	m_wndRuler.SetMidiParams(pDoc->GetTimeDivisionTicks(), pDoc->m_nMeter);
+}
+
+void CSongParent::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+{
+	UNREFERENCED_PARAMETER(pSender);
+//	printf("CSongParent::OnUpdate %x %d %x\n", pSender, lHint, pHint);
+	switch (lHint) {
+	case CPolymeterDoc::HINT_NONE:
+		UpdateRulerNumbers();
+		break;
+	case CPolymeterDoc::HINT_MASTER_PROP:
+		{
+			const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+			switch (pPropHint->m_iProp) {
+			case CMasterProps::PROP_nMeter:
+			case CMasterProps::PROP_nTimeDiv:
+				UpdateRulerNumbers();
+				m_wndRuler.Invalidate();
+				break;
+			}
+		}
+		break;
+	}
+}
+
 void CSongParent::OnDraw(CDC* pDC)
 {
 	CSplitView::OnDraw(pDC);
@@ -198,10 +227,10 @@ BOOL CSongParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 		return false;
 	int	nTrackHeight = m_pSongView->GetTrackHeight();
 	m_pSongTrackView->SetTrackHeight(nTrackHeight);
+	m_wndRuler.SetUnit(CRulerCtrl::UNIT_MIDI);
 	m_wndRuler.SendMessage(WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)));
 	m_wndRuler.SetTickLengths(4, 0);
 	m_wndRuler.SetMinMajorTickGap(m_pSongView->GetBeatWidth() - 1);
-	m_wndRuler.SetValueOffset(1);
 	m_bIsScrolling = false;
 	return true;
 }

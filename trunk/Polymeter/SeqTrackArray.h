@@ -72,11 +72,14 @@ public:
 	bool	GetNoteVelocity(int iTrack, int iStep, STEP& nStep) const;
 	bool	HasDubs() const;
 	int		GetSongDuration() const;
-	int		GetModulation(int iTrack, int iModType) const;
-	void	SetModulation(int iTrack, int iModType, int iModTrack);
+	int		GetModulationCount() const;
+	const CModulation&	GetModulation(int iTrack, int iMod) const;
+	void	SetModulation(int iTrack, int iMod, const CModulation& mod);
+	void	SetModulationType(int iTrack, int iMod, int iModType);
+	void	SetModulationSource(int iTrack, int iMod, int iModSource);
 	void	GetModulations(int iTrack, CModulationArray& arrMod) const;
 	void	SetModulations(int iTrack, const CModulationArray& arrMod);
-	int		GetModulationCount() const;
+	int		GetModulationCount(int iTrack) const;
 	void	GetModulations(CPackedModulationArray& arrMod) const;
 	void	SetModulations(const CPackedModulationArray& arrMod);
 	bool	CalcDynamicRange(int iTrack, int& nMinStep, int& nMaxStep, bool IsModulator = false) const;
@@ -113,6 +116,9 @@ public:
 	void	DeleteDubs(int iTrack, int nStartTime, int nEndTime);
 	void	InsertDubs(int iTrack, int nTime, CDubArray& arrDub);
 	void	RemoveAllDubs();
+	void	InsertModulation(int iTrack, int iMod, CModulation& mod);
+	void	RemoveModulation(int iTrack, int iMod);
+	void	MoveModulations(int iTrack, CIntArrayEx& arrSelection, int iDropPos);
 	void	OnTrackArrayEdit(const CIntArrayEx& arrTrackMap);
 
 protected:
@@ -174,7 +180,7 @@ inline void CSeqTrackArray::SetType(int iTrack, int iType)
 
 inline bool CSeqTrackArray::IsNote(int iTrack) const
 {
-	return GetAt(iTrack).m_iType == TT_NOTE;
+	return GetAt(iTrack).IsNote();
 }
 
 inline int CSeqTrackArray::GetChannel(int iTrack) const
@@ -315,14 +321,29 @@ void inline CSeqTrackArray::GetDubs(int iTrack, int nStartTime, int nEndTime, CD
 	return GetAt(iTrack).m_arrDub.GetDubs(nStartTime, nEndTime, arrDub);
 }
 
-inline int CSeqTrackArray::GetModulation(int iTrack, int iModType) const
+inline int CSeqTrackArray::GetModulationCount(int iTrack) const
 {
-	return GetAt(iTrack).m_arrModulator[iModType];
+	return GetAt(iTrack).m_arrModulator.GetSize();
 }
 
-inline void CSeqTrackArray::SetModulation(int iTrack, int iModType, int iModTrack)
+inline const CTrackBase::CModulation& CSeqTrackArray::GetModulation(int iTrack, int iMod) const
 {
-	GetAt(iTrack).m_arrModulator[iModType] = iModTrack;
+	return GetAt(iTrack).m_arrModulator[iMod];
+}
+
+inline void CSeqTrackArray::SetModulation(int iTrack, int iMod, const CModulation& mod)
+{
+	GetAt(iTrack).m_arrModulator[iMod] = mod;
+}
+
+inline void CSeqTrackArray::SetModulationType(int iTrack, int iMod, int iModType)
+{
+	GetAt(iTrack).m_arrModulator[iMod].m_iType = iModType;
+}
+
+inline void CSeqTrackArray::SetModulationSource(int iTrack, int iMod, int iModSource)
+{
+	GetAt(iTrack).m_arrModulator[iMod].m_iSource = iModSource;
 }
 
 inline void CSeqTrackArray::GetModulations(int iTrack, CModulationArray& arrMod) const

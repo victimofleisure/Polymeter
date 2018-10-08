@@ -76,6 +76,7 @@ void CLiveListCtrl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CLiveListCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 {
+	SetFocus();
 	NMLISTVIEW 	nmlv;
 	nmlv.hdr.hwndFrom = m_hWnd;
 	nmlv.hdr.idFrom = GetDlgCtrlID();

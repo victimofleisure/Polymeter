@@ -281,7 +281,7 @@ LONGLONG CTrackUndoTest::GetSnapshot() const
 		LPCTSTR	pszName = trk.m_sName;
 		nSum += Fletcher64(pszName, trk.m_sName.GetLength() * sizeof(TCHAR));	// add track's unique ID
 		nSum += trk.m_nUID;	// add track's unique ID
-		nSum += Fletcher64(&trk.m_arrModulator, MODULATION_TYPES * sizeof(int));	// add modulators if any
+		nSum += Fletcher64(trk.m_arrModulator.GetData(), trk.m_arrModulator.GetSize() * sizeof(CModulation));	// add modulators if any
 	}
 	int	nPresets = m_pDoc->m_arrPreset.GetSize();
 	for (int iPreset = 0; iPreset < nPresets; iPreset++) {	// for each preset
@@ -758,10 +758,11 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			m_pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
 			int	iModSource = GetRandomItem();
 			int	iModType = Random(MODULATION_TYPES);
+			CModulation	mod(iModType, iModSource);
 			int	nSels = arrSelection.GetSize();
 			for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 				int	iTrack = arrSelection[iSel];
-				m_pDoc->m_Seq.SetModulation(iTrack, iModType, iModSource);
+				m_pDoc->m_Seq.InsertModulation(iTrack, 0, mod);
 			}
 			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
 			PRINTF(_T("%s %s %d %d\n"), sUndoTitle, PrintSelection(arrSelection), iModType, iModSource);

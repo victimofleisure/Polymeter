@@ -14,6 +14,7 @@
 		04		16apr18	add get/set property
 		05		17may18	make get/set property mandatory
 		06		04jun18	add time property type
+		07		24sep18	in ReadEnum, move value assertion to after assignment
 		
 */
 
@@ -123,10 +124,10 @@ public:
 inline void CProperties::ReadEnum(LPCTSTR szSection, LPCTSTR szKey, int& Value, const CProperties::OPTION_INFO *pOption, int nOptions)
 {
 	ASSERT(pOption != NULL);
-	ASSERT(Value < nOptions);
 	Value = FindOption(AfxGetApp()->GetProfileString(szSection, szKey), pOption, nOptions);
 	if (Value < 0)	// if string not found
 		Value = 0;	// default to zero, not -1; avoids range errors downstream
+	ASSERT(Value < nOptions);
 }
 
 inline void CProperties::WriteEnum(LPCTSTR szSection, LPCTSTR szKey, const int& Value, const CProperties::OPTION_INFO *pOption, int nOptions)

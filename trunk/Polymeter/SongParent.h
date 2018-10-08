@@ -88,9 +88,11 @@ protected:
 	void	RecalcLayout(int cx, int cy);
 	void	RecalcLayout();
 	BOOL	PtInRuler(CPoint point) const;
+	void	UpdateRulerNumbers();
 
 // Overrides
 	virtual	void GetSplitRect(CRect& rSplit) const;
+	virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
 
 // Generated message map functionsq
 protected:

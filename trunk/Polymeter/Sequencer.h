@@ -77,7 +77,7 @@ public:
 	bool	Play(bool bEnable, bool bRecord = false);
 	bool	Pause(bool bEnable);
 	void	Abort();
-	bool	Export(LPCTSTR pszPath, int nDuration, bool bSongMode);
+	bool	Export(LPCTSTR pszPath, int nDuration, bool bSongMode, int nStartPos);
 	bool	OutputLiveEvent(DWORD dwEvent);
 	void	ConvertPositionToBeat(LONGLONG nPos, LONGLONG& nMeasure, LONGLONG& nBeat, LONGLONG& nTick) const;
 	void	ConvertBeatToPosition(LONGLONG nMeasure, LONGLONG nBeat, LONGLONG nTick, LONGLONG& nPos) const;

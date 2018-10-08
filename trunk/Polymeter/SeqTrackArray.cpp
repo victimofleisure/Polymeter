@@ -319,12 +319,14 @@ void CSeqTrackArray::ReverseSteps(int iTrack, int iStep, int nSteps)
 
 void CSeqTrackArray::ShiftSteps(int iTrack, int nOffset)
 {
-	GetAt(iTrack).m_arrStep.Shift(nOffset, 0);
+	STEP	nStep = 0;
+	GetAt(iTrack).m_arrStep.Shift(nOffset, nStep);
 }
 
 void CSeqTrackArray::ShiftSteps(int iTrack, int iStep, int nSteps, int nOffset)
 {
-	GetAt(iTrack).m_arrStep.Shift(iStep, nSteps, nOffset, 0);
+	STEP	nStep = 0;
+	GetAt(iTrack).m_arrStep.Shift(iStep, nSteps, nOffset, nStep);
 }
 
 void CSeqTrackArray::RotateSteps(int iTrack, int nOffset)
@@ -477,51 +479,63 @@ int CSeqTrackArray::GetModulationCount() const
 {
 	int	nMods = 0;
 	int	nTracks = GetSize();
-	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-		for (int iType = 0; iType < MODULATION_TYPES; iType++) {	// for each modulation type
-			if (GetAt(iTrack).m_arrModulator[iType] >= 0)	// if modulation exists
-				nMods++;
-		}
-	}
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
+		nMods += GetAt(iTrack).m_arrModulator.GetSize();
 	return nMods;
 }
 
 void CSeqTrackArray::GetModulations(CPackedModulationArray& arrMod) const
 {
-	int	nMods = GetModulationCount();
-	arrMod.SetSize(nMods);	// preallocate destination array
-	int	iMod = 0;
+	int	nPackedMods = GetModulationCount();
+	arrMod.SetSize(nPackedMods);	// preallocate destination array
 	int	nTracks = GetSize();
+	int	iPackedMod = 0;
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		const CTrack&	trk = GetAt(iTrack);
-		for (int iType = 0; iType < MODULATION_TYPES; iType++) {	// for each modulation type
-			if (trk.m_arrModulator[iType] >= 0) {	// if modulation exists
-				PACKED_MODULATION	mod;
-				mod.iType = iType;
-				mod.iSource = trk.m_arrModulator[iType];
-				mod.iTarget = iTrack;
-				arrMod[iMod] = mod;	// copy modulation info to destination array
-				iMod++;
-			}
+		int	nMods = trk.m_arrModulator.GetSize();
+		for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulations
+			PACKED_MODULATION	modPacked;
+			modPacked.iType = trk.m_arrModulator[iMod].m_iType;
+			modPacked.iSource = trk.m_arrModulator[iMod].m_iSource;
+			modPacked.iTarget = iTrack;
+			arrMod[iPackedMod] = modPacked;	// copy modulation info to destination array
+			iPackedMod++;
 		}
 	}
 }
 
 void CSeqTrackArray::SetModulations(const CPackedModulationArray& arrMod)
 {
-	int	nMods = arrMod.GetSize();
+	int	nPackedMods = arrMod.GetSize();
 	int	nTracks = GetSize();
 	CModulationArrayArray	arrTrackMod;
 	arrTrackMod.SetSize(nTracks);
-	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
-		arrTrackMod[iTrack].Reset();	// reset all modulations to none
-	for (int iMod = 0; iMod < nMods; iMod++) {	// for each packed modulation
-		const PACKED_MODULATION&	mod = arrMod[iMod];
-		arrTrackMod[mod.iTarget][mod.iType] = mod.iSource;	// modulate target track
+	for (int iPackedMod = 0; iPackedMod < nPackedMods; iPackedMod++) {	// for each packed modulation
+		const PACKED_MODULATION&	modPacked = arrMod[iPackedMod];
+		CModulation	mod(modPacked.iType, modPacked.iSource);
+		arrTrackMod[modPacked.iTarget].Add(mod);
 	}
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
 		GetAt(iTrack).m_arrModulator = arrTrackMod[iTrack];		// set modulations
+}
+
+void CSeqTrackArray::InsertModulation(int iTrack, int iMod, CModulation& mod)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	GetAt(iTrack).m_arrModulator.InsertAt(iMod, mod);
+}
+
+void CSeqTrackArray::RemoveModulation(int iTrack, int iMod)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	GetAt(iTrack).m_arrModulator.RemoveAt(iMod);
+}
+
+void CSeqTrackArray::MoveModulations(int iTrack, CIntArrayEx& arrSelection, int iDropPos)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	GetAt(iTrack).m_arrModulator.MoveSelection(arrSelection, iDropPos);
 }
 
 void CSeqTrackArray::OnTrackArrayEdit(const CIntArrayEx& arrTrackMap)
@@ -531,12 +545,18 @@ void CSeqTrackArray::OnTrackArrayEdit(const CIntArrayEx& arrTrackMap)
 	int	nMapTracks = arrTrackMap.GetSize();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		CTrack& trk = GetAt(iTrack);
-		for (int iType = 0; iType < MODULATION_TYPES; iType++) {	// for each modulation type
-			int	iModTrack = trk.m_arrModulator[iType];
-			if (iModTrack >= 0 && iModTrack < nMapTracks)	// if modulator index within track map
-				trk.m_arrModulator[iType] = arrTrackMap[iModTrack];
-			else	// modulator index is unspecified or invalid
-				trk.m_arrModulator[iType] = -1;
+		int	nMods = trk.m_arrModulator.GetSize();
+		for (int iMod = nMods - 1; iMod >= 0; iMod--) {	// for each modulation; reverse iterate for stability
+			int	iOldSource = trk.m_arrModulator[iMod].m_iSource;
+			int	iNewSource;
+			if (iOldSource >= 0 && iOldSource < nMapTracks)	// if old modulator index within track map
+				iNewSource = arrTrackMap[iOldSource];	// remap modulator index
+			else	// old modulator index is out of range
+				iNewSource = -1;
+			if (iNewSource >= 0)	// if new modulator index is valid
+				trk.m_arrModulator[iMod].m_iSource = iNewSource;	// update modulator source
+			else	// new modulator index is invalid
+				trk.m_arrModulator.RemoveAt(iMod);	// delete modulation from track's modulator array
 		}
 	}
 }
@@ -548,7 +568,7 @@ bool CSeqTrackArray::CalcDynamicRange(int iTrack, int& nMinStep, int& nMaxStep, 
 	int	nMax = 0;
 	int	nSteps = trk.m_arrStep.GetSize();
 	bool	bRetVal = true;
-	if (trk.m_iType == TT_NOTE && !IsModulator) {	// if track type is note and track isn't a modulator
+	if (trk.IsNote() && !IsModulator) {	// if track type is note and track isn't a modulator
 		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
 			STEP	nStep = trk.m_arrStep[iStep] & SB_VELOCITY;
 			if (nStep) {	// if step isn't empty

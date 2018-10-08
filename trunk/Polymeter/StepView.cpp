@@ -184,9 +184,11 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_MASTER_PROP:
 		{
 			const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
-			if (pPropHint->m_iProp == CMasterProps::PROP_nTimeDiv) {
+			switch (pPropHint->m_iProp) {
+			case CMasterProps::PROP_nTimeDiv:
 				UpdateViewSize();
 				Invalidate();
+				break;
 			}
 		}
 		break;

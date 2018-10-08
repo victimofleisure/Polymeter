@@ -83,10 +83,16 @@ public:
 		void	Dump() const;
 	};
 	typedef CArrayEx<CDubArray, CDubArray&> CDubArrayArray;	// array of dub arrays
-	class CModulationArray : public CFixedArray<int, MODULATION_TYPES> {
+	class CModulation {
 	public:
-		void	Reset();
+		CModulation();
+		CModulation(int iType, int iSource);
+		bool	operator==(const CModulation& mod) const;
+		bool	operator!=(const CModulation& mod) const;
+		int		m_iType;	// index of modulation type, enumerated above
+		int		m_iSource;	// index of modulation source in track array, or -1 if none
 	};
+	typedef public CArrayEx<CModulation, CModulation&> CModulationArray;
 	typedef CArrayEx<CModulationArray, CModulationArray&> CModulationArrayArray;
 	struct PACKED_MODULATION {
 		int		iType;		// index of modulation type
@@ -94,6 +100,12 @@ public:
 		int		iTarget;	// index of target track
 	};
 	typedef CArrayEx<PACKED_MODULATION, PACKED_MODULATION&> CPackedModulationArray;
+	struct STEP_EVENT {
+		int		nStart;		// event start time, as step index
+		int		nDuration;	// event duration, in steps (note events only)
+		int		nVelocity;	// event velocity, as MIDI value
+	};
+	typedef CArrayEx<STEP_EVENT, STEP_EVENT&> CStepEventArray;
 
 // Attributes
 	static	CString	GetTrackTypeName(int iType);
@@ -176,10 +188,24 @@ inline void CTrackBase::CDubArray::InsertDub(int iDub, int nTime, bool bMute)
 	InsertAt(iDub, dub);
 }
 
-inline void CTrackBase::CModulationArray::Reset()
+inline CTrackBase::CModulation::CModulation()
 {
-	#define MODTYPEDEF(name) (*this)[MT_##name] = -1;
-	#include "TrackTypeDef.h"	// generate modulation array init
+}
+
+inline CTrackBase::CModulation::CModulation(int iType, int iSource)
+{
+	m_iType = iType;
+	m_iSource = iSource;
+}
+
+inline bool CTrackBase::CModulation::operator==(const CModulation& mod) const
+{
+	return mod.m_iType == m_iType && mod.m_iSource == m_iSource;
+}
+
+inline bool CTrackBase::CModulation::operator!=(const CModulation& mod) const
+{
+	return !operator==(mod);
 }
 
 class CTrack : public CTrackBase {
@@ -203,6 +229,7 @@ public:
 // Attributes
 	int		GetUsedStepCount() const;
 	void	SetDefaults();
+	bool	IsNote() const;
 	bool	IsModulated() const;
 
 // Operations
@@ -210,13 +237,15 @@ public:
 	template<class T> static int Compare(const T& a, const T& b);
 	void	CopyKeepingID(const CTrack& track);
 	void	DumpModulations() const;
+	void	GetEvents(CStepEventArray& arrNote) const;
+	bool	Stretch(double fScale, CStepArray& arrStep) const;
+	static	void	Resample(const double *pInSamp, int nInSamps, double *pOutSamp, int nOutSamps);
 };
 
 inline CTrack::CTrack()
 {
 	m_nUID = 0;
 	m_iDub = 0;
-	m_arrModulator.Reset();
 }
 
 inline CTrack::CTrack(bool bInit)
@@ -232,13 +261,14 @@ inline void CTrack::CopyKeepingID(const CTrack& track)
 	m_nUID = nUID;	// restore our ID
 }
 
+inline bool CTrack::IsNote() const
+{
+	return m_iType == TT_NOTE;
+}
+
 inline bool CTrack::IsModulated() const
 {
-	for (int iType = 0; iType < MODULATION_TYPES; iType++) {	// for each modulation type
-		if (m_arrModulator[iType] >= 0)
-			return true;
-	}
-	return false;
+	return m_arrModulator.GetSize() > 0;
 }
 
 class CTrackArray : public CArrayEx<CTrack, CTrack&> {

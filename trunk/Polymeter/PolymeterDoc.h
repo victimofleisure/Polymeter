@@ -213,6 +213,7 @@ public:
 	bool	CheckForPartOverlap(int iTargetPart = -1) const;
 	bool	CreateAutoSavePath(CString& sPath) const;
 	static	bool	DoShiftDialog(int& nSteps, bool bIsRotate = false);
+	void	StretchTracks(double fScale);
 
 // Overrides
 public:
@@ -435,12 +436,14 @@ protected:
 	afx_msg void OnEditInsert();
 	afx_msg void OnEditPaste();
 	afx_msg void OnEditSelectAll();
+	afx_msg void OnEditDeselect();
 	afx_msg void OnUpdateEditCopy(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateEditCut(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateEditSelectAll(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateEditDeselect(CCmdUI *pCmdUI);
 	afx_msg void OnTrackReverse();
 	afx_msg void OnUpdateTrackReverse(CCmdUI *pCmdUI);
 	afx_msg void OnTrackTranspose();
@@ -467,6 +470,7 @@ protected:
 	afx_msg void OnUpdateTrackPresetUpdate(CCmdUI *pCmdUI);
 	afx_msg void OnTrackGroup();
 	afx_msg void OnUpdateTrackGroup(CCmdUI *pCmdUI);
+	afx_msg void OnStretchTracks();
 };
 
 inline int CPolymeterDoc::GetTrackCount() const

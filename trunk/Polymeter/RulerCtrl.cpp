@@ -16,6 +16,7 @@
 		06		09may18	add value offset and reticle color
 		07		09may18	standardize names
 		08		05jun18	in Create, set window name
+		09		20sep18	add MIDI unit
 
 		ruler control
 
@@ -67,6 +68,7 @@ const CRulerCtrl::UNIT_INFO CRulerCtrl::m_arrUnitInfo[UNITS] = {
 	{m_arrDivEnglish,	_countof(m_arrDivEnglish),	2},		// UNIT_ENGLISH
 	{m_arrDivTime,		_countof(m_arrDivTime),		60},	// UNIT_TIME
 	{m_arrDivEnglish,	_countof(m_arrDivEnglish),	10},	// UNIT_LOG
+	{m_arrDivEnglish,	_countof(m_arrDivEnglish),	2},		// UNIT_MIDI
 };
 
 const TCHAR CRulerCtrl::m_arrNumFmtCode[NUMERIC_FORMATS] = {'f', 'e', 'g'};
@@ -90,6 +92,8 @@ CRulerCtrl::CRulerCtrl()
 	m_szClient = CPoint(0, 0);
 	m_fValOffset = 0;
 	m_clrReticle = UINT_MAX;
+	m_nMidiTimeDiv = 120;
+	m_nMidiMeter = 4;
 }
 
 CRulerCtrl::~CRulerCtrl()
@@ -283,6 +287,38 @@ CString CRulerCtrl::FormatTime(double fTimeSecs)
 	return(sResult);
 }
 
+__forceinline void CRulerCtrl::FormatMidi(double fPos, CString& sResult) const
+{
+	int	nTimeDiv = m_nMidiTimeDiv;
+	int	nMeter = m_nMidiMeter;
+	LONGLONG	nPos = round64(fPos * nTimeDiv);
+	LONGLONG	nBeat = nPos / nTimeDiv;
+	LONGLONG	nTick = nPos % nTimeDiv;
+	if (nTick < 0) {	// if negative tick
+		nBeat--;	// compensate beat
+		nTick += nTimeDiv;	// wrap tick to make it positive
+	}
+	LONGLONG	nMeasure;
+	if (nMeter > 1) {	// if valid meter
+		nMeasure = nBeat / nMeter;
+		nBeat = nBeat % nMeter;
+		if (nBeat < 0) {	// if negative beat
+			nMeasure--;	// compensate measure
+			nBeat += nMeter;	// wrap beat to make it positive
+		}
+	} else	// measure doesn't apply
+		nMeasure = -1;
+	if (nMeter > 1)	// if valid meter
+		sResult.Format(_T("%lld:%lld"), nMeasure + 1, nBeat + 1);
+	else	// measure doesn't apply
+		sResult.Format(_T("%lld"), nBeat + 1);
+	if (nTick) {	// if nonzero tick
+		CString	sTick;
+		sTick.Format(_T(":%lld"), nTick);	// no leading zeros to save space
+		sResult += sTick;	// append tick string to result
+	}
+}
+
 CString CRulerCtrl::FormatValue(double fVal) const
 {
 	CString	s;
@@ -292,6 +328,9 @@ CString CRulerCtrl::FormatValue(double fVal) const
 		break;
 	case UNIT_LOG:
 		s.Format(m_sNumFormat, m_nPrecision, fVal);
+		break;
+	case UNIT_MIDI:
+		FormatMidi(fVal, s);
 		break;
 	default:
 		if (fabs(fVal) < fabs(m_fMajorTickStep) / 2)	// if too close to zero

@@ -71,6 +71,8 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu);
+	afx_msg void OnExitMenuLoop(BOOL bIsTrackPopupMenu);
 	afx_msg void OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnListDblClick(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnListEndLabelEdit(NMHDR* pNMHDR, LRESULT* pResult);

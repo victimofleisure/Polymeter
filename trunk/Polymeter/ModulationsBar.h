@@ -44,6 +44,7 @@ protected:
 		virtual	CWnd*	CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
 		virtual	void	OnItemChange(LPCTSTR pszText);
 	};
+	typedef CMap<CTrackBase::CModulation, CTrackBase::CModulation&, int, int> CModRefMap;
 
 // Constants
 	enum {
@@ -52,6 +53,7 @@ protected:
 		MOD_INVALID = -2,
 	};
 	enum {
+		COL_NUMBER,
 		COL_TYPE,
 		COL_TRACK,
 		COLUMNS
@@ -59,14 +61,20 @@ protected:
 	static const CGridCtrl::COL_INFO	m_arrColInfo[COLUMNS];
 
 // Member data
-	CModGridCtrl	m_grid;
-	CModulationArray	m_arrModulator;
-	bool	m_bUpdatePending;
-	CString	m_sTrack;
+	CModGridCtrl	m_grid;			// grid control
+	CModulationArray	m_arrModulator;	// array of cached modulations for current track selection
+	bool	m_bUpdatePending;		// true if an update is pending
+	bool	m_bModDifferences;		// true if selected tracks have differing modulations
+	bool	m_bShowDifferences;		// true if showing modulation differences
+	CString	m_sTrack;				// track caption for unnamed tracks
+	CIntArrayEx	m_arrModCount;		// in show differences mode, instance count for each cached modulation
 
 // Helpers
-	void	ResetCache();
-	void	InvalidateCache();
+	void	UpdateUnion();
+	static	int		ModPairSortCmp(const void *arg1, const void *arg2);
+
+// Overrides
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
 // Generated message map functions
 	DECLARE_MESSAGE_MAP()
@@ -75,8 +83,18 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnListCustomdraw(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg LRESULT OnDeferredUpdate(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu);
+	afx_msg void OnExitMenuLoop(BOOL bIsTrackPopupMenu);
 	afx_msg void OnListColHdrReset();
+	afx_msg void OnEditDelete();
+	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
+	afx_msg void OnEditInsert();
+	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
+	afx_msg void OnListReorder(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnUpdateShowDifferences(CCmdUI *pCmdUI);
+	afx_msg void OnShowDifferences();
 };

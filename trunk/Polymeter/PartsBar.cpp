@@ -116,6 +116,8 @@ BEGIN_MESSAGE_MAP(CPartsBar, CListBar)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_PART_CREATE, OnUpdateTrackPartCreate)
 	ON_COMMAND(ID_TRACK_PART_UPDATE, OnTrackPartUpdate)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_PART_UPDATE, OnUpdateTrackPartUpdate)
+	ON_COMMAND(ID_PARTS_SELECT_TRACKS, OnSelectTracks)
+	ON_UPDATE_COMMAND_UI(ID_PARTS_SELECT_TRACKS, OnUpdateSelectTracks)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -160,4 +162,26 @@ void CPartsBar::OnUpdateTrackPartUpdate(CCmdUI *pCmdUI)
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	bool	bEnable = pDoc != NULL && pDoc->GetSelectedCount() && m_list.GetSelectedCount() == 1;
 	pCmdUI->Enable(bEnable);
+}
+
+void CPartsBar::OnSelectTracks()
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	ASSERT(pDoc != NULL);
+	if (pDoc != NULL) {	// run-time check for safety
+		CIntArrayEx	arrPartSel;
+		m_list.GetSelection(arrPartSel);
+		int	nPartSels = arrPartSel.GetSize();
+		CIntArrayEx	arrTrackSel;
+		for (int iPartSel = 0; iPartSel < nPartSels; iPartSel++) {	// for each selected part
+			int	iPart = arrPartSel[iPartSel];
+			arrTrackSel.Append(pDoc->m_arrPart[iPart].m_arrTrackIdx);	// append part's member tracks
+		}
+		pDoc->Select(arrTrackSel);	// select member tracks
+	}
+}
+
+void CPartsBar::OnUpdateSelectTracks(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_list.GetSelectedCount());
 }

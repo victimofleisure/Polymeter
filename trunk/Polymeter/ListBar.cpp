@@ -85,6 +85,8 @@ BEGIN_MESSAGE_MAP(CListBar, CDockablePane)
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
 	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
+	ON_WM_MENUSELECT()
+	ON_WM_EXITMENULOOP()
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST, OnListGetdispinfo)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST, OnListDblClick)
 	ON_NOTIFY(LVN_ENDLABELEDIT, IDC_LIST, OnListEndLabelEdit)
@@ -135,6 +137,19 @@ LRESULT CListBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
+void CListBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
+{
+	UNREFERENCED_PARAMETER(hSysMenu);
+	if (!(nFlags & MF_SYSMENU))	// if not system menu item
+		AfxGetMainWnd()->SendMessage(WM_SETMESSAGESTRING, nItemID, 0);	// set status hint
+}
+
+void CListBar::OnExitMenuLoop(BOOL bIsTrackPopupMenu)
+{
+	if (bIsTrackPopupMenu)	// if exiting context menu, restore status idle message
+		AfxGetMainWnd()->SendMessage(WM_SETMESSAGESTRING, AFX_IDS_IDLEMESSAGE, 0);
+}
+
 void CListBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult) 
 {
 	UNREFERENCED_PARAMETER(pResult);
@@ -151,7 +166,8 @@ void CListBar::OnListDblClick(NMHDR* pNMHDR, LRESULT* pResult)
 	UNREFERENCED_PARAMETER(pResult);
 	NM_LISTVIEW* pNMListView = (NM_LISTVIEW*)pNMHDR;
 	int iItem = pNMListView->iItem;
-	ApplyItem(iItem);
+	if (iItem >= 0)
+		ApplyItem(iItem);
 }
 
 void CListBar::OnListEndLabelEdit(NMHDR* pNMHDR, LRESULT* pResult) 

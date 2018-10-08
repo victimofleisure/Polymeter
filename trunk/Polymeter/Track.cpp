@@ -16,6 +16,7 @@
 #include "Track.h"
 #include "RegTempl.h"
 #include "Persist.h"
+#include "math.h"	// for Resample
 
 const CProperties::OPTION_INFO CTrackBase::m_oiTrackType[TRACK_TYPES] = {
 	#define TRACKTYPEDEF(name) {_T(#name), IDS_TRACK_TYPE_##name},
@@ -35,7 +36,6 @@ void CTrack::SetDefaults()
 	m_arrStep.SetSize(INIT_STEPS);
 	m_nUID = 0;
 	m_iDub = 0;
-	m_arrModulator.Reset();
 }
 
 int CTrack::GetUsedStepCount() const
@@ -227,8 +227,9 @@ void CTrackBase::CDubArray::Dump() const
 void CTrack::DumpModulations() const
 {
 	printf("[");
-	for (int iType = 0; iType < MODULATION_TYPES; iType++)
-		printf("%d ", m_arrModulator[iType]);
+	int	nMods = m_arrModulator.GetSize();
+	for (int iMod = 0; iMod < nMods; iMod++)
+		printf("(%d,%d) ", m_arrModulator[iMod].m_iType, m_arrModulator[iMod].m_iSource);
 	printf("]\n");
 }
 
@@ -246,6 +247,131 @@ void CTrackGroupArray::OnTrackArrayEdit(const CIntArrayEx& arrTrackMap)
 				group.m_arrTrackIdx.RemoveAt(iLink);
 		}
 	}
+}
+
+void CTrack::GetEvents(CStepEventArray& arrNote) const
+{
+	ASSERT(!arrNote.GetSize());	// destination array must be empty
+	bool	bIsNote = false;
+	int	nDur = 0;
+	int	iStart = 0;
+	int	nVel = 0;
+	int	nSteps = m_arrStep.GetSize();
+	for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
+		STEP	nStep = m_arrStep[iStep];
+		if (!bIsNote) {	// if scanning for note
+			if (nStep) {	// if non-empty step
+				iStart = iStep;
+				nDur = 0;
+				nVel = nStep & SB_VELOCITY;
+				bIsNote = true;	// traversing note
+			}
+		}
+		if (bIsNote) {	// if traversing note
+			nDur++;	// increment duration
+			if (!(nStep & SB_TIE)) {	// if step is untied or empty
+				if (!nStep)	// if empty step
+					nDur--;	// duration is one less
+				STEP_EVENT	note;
+				note.nStart = iStart;
+				note.nDuration = nDur;
+				note.nVelocity = nVel;
+				arrNote.Add(note);	// add note to destination array
+				bIsNote = false;	// scanning for note
+			}
+		}
+	}
+	if (bIsNote) {	// if traversing note
+		STEP_EVENT	note;
+		note.nStart = iStart;
+		note.nDuration = nDur;
+		note.nVelocity = nVel;
+		if (arrNote.GetSize() && !arrNote[0].nStart) {	// if wraparound
+			note.nDuration += arrNote[0].nDuration;	// sum durations
+			arrNote.RemoveAt(0);	// remove false positive
+		}
+		arrNote.Add(note);	// add note to destination array
+	}
+}
+
+void CTrack::Resample(const double *pInSamp, int nInSamps, double *pOutSamp, int nOutSamps)
+{
+	ASSERT(pInSamp != NULL);
+	ASSERT(nInSamps > 0);
+	ASSERT(pOutSamp != NULL);
+	ASSERT(nOutSamps > 0);
+	if (nInSamps > 0) {	// if at least one input sample
+		double	fScale;
+		if (nOutSamps > 1)	// if at least two output samples
+			fScale = double(nInSamps - 1) / (nOutSamps - 1);
+		else	// too few output samples; degenerate case
+			fScale = 1;	// avoid divide by zero
+		for (int iOutSamp = 0; iOutSamp < nOutSamps; iOutSamp++) {	// for each output sample
+			double	fFrac, fInt;
+			fFrac = modf(iOutSamp * fScale, &fInt);
+			int	iInSamp1 = round(fInt);
+			int	iInSamp2 = min(iInSamp1 + 1, nInSamps - 1);
+			double	y1 = pInSamp[iInSamp1];
+			double	y2 = pInSamp[iInSamp2];
+			double	fDelta = y2 - y1;
+			pOutSamp[iOutSamp] = y1 + fDelta * fFrac;	// linear interpolation
+		}
+	} else {	// too few input samples; degenerate case
+		for (int iOutSamp = 0; iOutSamp < nOutSamps; iOutSamp++)
+			pOutSamp[iOutSamp] = 0;	// zero output sample
+	}
+}
+
+bool CTrack::Stretch(double fScale, CStepArray& arrStep) const
+{
+	ASSERT(fScale > 0);
+	ASSERT(!arrStep.GetSize());	// destination array must be empty
+	if (fScale <= 0)
+		return false;
+	int	nSteps = round(m_arrStep.GetSize() * fScale);
+	nSteps = max(nSteps, 1);	// step array can't be empty
+	arrStep.SetSize(nSteps);
+	if (IsNote()) {	// if track type is note
+		CStepEventArray	arrEvent;
+		GetEvents(arrEvent);	// convert steps to events
+		int	nEvents = arrEvent.GetSize();
+		int	iEnd = -1;
+		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
+			const STEP_EVENT&	evt = arrEvent[iEvent];
+			int	nDur = round(evt.nDuration * fScale);
+			if (nDur > 0) {	// duration can't be zero
+				int	iStart = round(evt.nStart * fScale);
+				if (iStart == iEnd) {	// if note abuts previous note
+					int	iPrev = iEnd ? iEnd - 1 : nSteps - 1;	// access previous note's last step
+					arrStep[iPrev] &= ~SB_TIE;	// clear last step's tie bit
+				}
+				for (int iDur = 0; iDur < nDur; iDur++) {	// for each step of duration
+					int	iStep = iStart + iDur;	// make index relative to start of note
+					if (iStep >= nSteps)	// if out of range
+						iStep -= nSteps;	// wrap
+					arrStep[iStep] = static_cast<STEP>(evt.nVelocity) | SB_TIE;
+				}
+				iEnd = iStart + nDur;
+				if (iEnd >= nSteps)	// if out of range
+					iEnd -= nSteps;	// wrap
+			}
+		}
+		if (iEnd >= 0 && arrStep[iEnd]) {	// if note abuts previous note (or itself)
+			int	iPrev = iEnd ? iEnd - 1 : nSteps - 1;	// access previous note's last step
+			arrStep[iPrev] &= ~SB_TIE;	// clear last step's tie bit
+		}
+	} else {	// track type isn't note; resample step array
+		CDoubleArray	fInSamp, fOutSamp;
+		int	nInSamps = m_arrStep.GetSize();
+		fInSamp.SetSize(nInSamps);
+		for (int iSamp = 0; iSamp < nInSamps; iSamp++)	// copy steps array into input data buffer
+			fInSamp[iSamp] = m_arrStep[iSamp];
+		fOutSamp.SetSize(nSteps);
+		Resample(fInSamp.GetData(), nInSamps, fOutSamp.GetData(), nSteps);
+		for (int iSamp = 0; iSamp < nSteps; iSamp++)	// retrieve resampled data into steps array
+			arrStep[iSamp] = static_cast<STEP>(round(fOutSamp[iSamp]));
+	}
+	return true;
 }
 
 #define RK_GROUP_COUNT _T("Count")
@@ -266,8 +392,10 @@ void CTrackGroupArray::Read(LPCTSTR pszSection)
 		int	nTracks;
 		RdReg(sKey, RK_GROUP_TRACK_COUNT, nTracks);
 		Group.m_arrTrackIdx.SetSize(nTracks);
-		DWORD	nTrackIdxSize = nTracks * sizeof(int);
-		CPersist::GetBinary(sKey, RK_GROUP_TRACK_IDX, Group.m_arrTrackIdx.GetData(), &nTrackIdxSize);
+		if (nTracks) {	// if group isn't empty
+			DWORD	nTrackIdxSize = nTracks * sizeof(int);
+			CPersist::GetBinary(sKey, RK_GROUP_TRACK_IDX, Group.m_arrTrackIdx.GetData(), &nTrackIdxSize);
+		}
 	}
 }
 

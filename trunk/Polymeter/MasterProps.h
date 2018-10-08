@@ -51,6 +51,7 @@ public:
 	static const PROPERTY_INFO	m_Info[PROPERTIES];	// fixed info for each property
 
 // Attributes
+	int		GetTimeDivisionTicks() const;
 	static	int		GetTimeDivisionTicks(int iTimeDiv);
 
 // Data members
@@ -74,6 +75,11 @@ public:
 // Operations
 	static	int		FindProperty(LPCTSTR szInternalName);
 };
+
+inline int CMasterProps::GetTimeDivisionTicks() const
+{
+	return GetTimeDivisionTicks(m_nTimeDiv);
+}
 
 inline int CMasterProps::GetTimeDivisionTicks(int iTimeDiv)
 {

@@ -20,6 +20,8 @@
 		10		17may18	add spin control for floating point values
 		11		04jun18	add time property type
 		12		05jun18	in TrackToolTip, fix cast to derived property
+		13		26sep18	in enum property, overload PushChar and OnDblClk
+		14		26sep18	in PreTranslateMessage, add Alt+Down to drop list
 
 */
 
@@ -65,12 +67,24 @@ BOOL CValidPropertyGridCtrl::PreTranslateMessage(MSG* pMsg)
 {
 	m_bInPreTranslateMsg = true;
 	m_bIsDataValidated = false;
-	if (pMsg->message == WM_MOUSEMOVE) {
-		pMsg->wParam = 0x10000;	// prevent base class from calling buggy TrackToolTip
-		CPoint ptCursor;
-		::GetCursorPos(&ptCursor);
-		ScreenToClient(&ptCursor);
-		TrackToolTip(ptCursor);	// call patched TrackToolTip instead
+	switch (pMsg->message) {
+	case WM_MOUSEMOVE:
+		{
+			pMsg->wParam = 0x10000;	// prevent base class from calling buggy TrackToolTip
+			CPoint ptCursor;
+			::GetCursorPos(&ptCursor);
+			ScreenToClient(&ptCursor);
+			TrackToolTip(ptCursor);	// call patched TrackToolTip instead
+		}
+		break;
+	case WM_SYSKEYDOWN:
+		if (pMsg->wParam == VK_DOWN) {	// Alt+Down to drop list is standard
+			CMFCPropertyGridProperty	*pProp = GetCurSel();
+			if (pProp != NULL && pProp->GetOptionCount() > 0) {
+				pProp->OnClickButton(NULL);	// drop options list
+			}
+		}
+		break;
 	}
 	BOOL	bResult = CMFCPropertyGridCtrl::PreTranslateMessage(pMsg);
 	m_bInPreTranslateMsg = false;
@@ -512,6 +526,76 @@ BOOL CEnumPropertyGridProperty::OnRotateListValue(BOOL bForward)
 	if (::IsWindow(pEdit->GetSafeHwnd()))
 		pEdit->SetSel(0, -1);
 	return TRUE;
+}
+
+BOOL CEnumPropertyGridProperty::PushChar(UINT nChar)
+{
+	// adapted from base class
+	ASSERT_VALID(this);
+	ASSERT_VALID(m_pWndList);
+	ASSERT_VALID(m_pWndInPlace);
+	ASSERT(!m_bAllowEdit);	// only drop list is supported
+	if (!m_bAllowEdit)
+	{
+		if (nChar == VK_SPACE)
+		{
+			OnRotateListValue(true);
+		}
+		else if (m_lstOptions.GetCount() > 1)
+		{
+			CString strText;
+			m_pWndInPlace->GetWindowText(strText);
+			POSITION pos = m_lstOptions.Find(strText);
+			if (pos == NULL)
+			{
+				return FALSE;
+			}
+			POSITION posSave = pos;
+			CString strChar((TCHAR) nChar);
+			strChar.MakeUpper();
+			m_lstOptions.GetNext(pos);
+			while (pos != posSave)
+			{
+				if (pos == NULL)
+				{
+					pos = m_lstOptions.GetHeadPosition();
+				}
+				if (pos == posSave)
+				{
+					break;
+				}
+				strText = m_lstOptions.GetAt(pos);
+				CString strUpper = strText;
+				strUpper.MakeUpper();
+				if (strUpper.Left(1) == strChar)
+				{
+					INT_PTR	nOptions = m_lstOptions.GetCount();
+					for (int iOpt = 0; iOpt < nOptions; iOpt++) {
+						if (strText == GetOption(iOpt)) {
+							m_iCurSel = iOpt;
+							break;
+						}
+					}
+					m_pWndInPlace->SetWindowText(strText);
+					OnUpdateValue();
+					break;
+				}
+				m_lstOptions.GetNext(pos);
+			}
+		}
+	}
+	OnEndEdit();
+	if (::GetCapture() == m_pWndList->GetSafeHwnd())
+	{
+		ReleaseCapture();
+	}
+	return FALSE;
+}
+
+BOOL CEnumPropertyGridProperty::OnDblClk(CPoint point)
+{
+	UNREFERENCED_PARAMETER(point);
+	return OnRotateListValue(true);
 }
 
 IMPLEMENT_DYNAMIC(CPropertiesGridCtrl, CValidPropertyGridCtrl)

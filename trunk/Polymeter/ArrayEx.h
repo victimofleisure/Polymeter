@@ -27,6 +27,7 @@
 		17		19jun18	add insert, delete, and move selection
 		18		09jul18	add array find template
 		19		31jul18	add boolean array
+		20		29sep18	in CArrayEx, change ALGO_TYPE to TYPE
 
 		enhanced array with copy ctor, assignment, and fast const access
  
@@ -157,7 +158,7 @@ __forceinline void CArrayEx_Rotate(ARRAY& arr, W64INT iStart, W64INT nElems, W64
 }
 
 template<class ARRAY, class TYPE>
-__forceinline void CArrayEx_Shift(ARRAY& arr, W64INT iStart, W64INT nElems, W64INT nOffset, TYPE val)
+__forceinline void CArrayEx_Shift(ARRAY& arr, W64INT iStart, W64INT nElems, W64INT nOffset, TYPE& val)
 {
 	ARRAY	arrSrc(arr);
 	W64INT	iEnd = iStart + nElems;
@@ -219,7 +220,7 @@ public:
 	void	FastRemoveAt(INT_PTR nIndex, INT_PTR nCount);
 	bool	operator==(const CArrayEx& arr) const { return CArrayEx_IsEqual(*this, arr); }
 	bool	operator!=(const CArrayEx& arr) const { return !CArrayEx_IsEqual(*this, arr); }
-	#define	ALGO_TYPE ARG_TYPE
+	#define	ALGO_TYPE TYPE
 	#include "ArrayExAlgoDef.h"
 	void	GetRange(int iFirstElem, int nElems, CArrayEx& arrDest) const;
 	void	SetRange(int iFirstElem, const CArrayEx& arrDest);

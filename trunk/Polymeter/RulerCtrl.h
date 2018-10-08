@@ -14,6 +14,7 @@
 		04		25mar13	add log unit and tick array
 		05		09may18	add value offset and reticle color
 		06		09may18	standardize names
+		07		20sep18	add MIDI unit
 
 		ruler control
 
@@ -61,6 +62,7 @@ public:
 		UNIT_ENGLISH,
 		UNIT_TIME,
 		UNIT_LOG,
+		UNIT_MIDI,
 		UNITS
 	};
 	enum {	// define numeric formats
@@ -97,6 +99,8 @@ public:
 	void	SetValueOffset(double fOffset);
 	COLORREF	GetReticleColor() const;
 	void	SetReticleColor(COLORREF clr);
+	void	GetMidiParams(int& nTimeDiv, int& nMeter) const;
+	void	SetMidiParams(int nTimeDiv, int nMeter);
 
 // Operations
 public:
@@ -108,6 +112,7 @@ public:
 	int		CalcMinHeight();
 	double	PositionToValue(double fPos) const;
 	static	CString	FormatTime(double TimeSecs);
+	void	FormatMidi(double fPos, CString& sResult) const;
 	static	int		TrimTrailingZeros(CString& Str);
 
 // Overrides
@@ -178,6 +183,8 @@ protected:
 	CSize	m_szClient;			// size of client area
 	double	m_fValOffset;		// numeric value offset
 	COLORREF	m_clrReticle;	// reticle color, or -1 to use text color
+	int		m_nMidiTimeDiv;		// time division for MIDI format
+	int		m_nMidiMeter;		// meter numerator for MIDI format
 
 // Overridables
 	virtual	void	OnDraw(CDC& dc);
@@ -296,6 +303,18 @@ inline COLORREF CRulerCtrl::GetReticleColor() const
 inline void CRulerCtrl::SetReticleColor(COLORREF clr)
 {
 	m_clrReticle = clr;
+}
+
+inline void CRulerCtrl::GetMidiParams(int& nTimeDiv, int& nMeter) const
+{
+	nTimeDiv = m_nMidiTimeDiv;
+	nMeter = m_nMidiMeter;
+}
+
+inline void CRulerCtrl::SetMidiParams(int nTimeDiv, int nMeter)
+{
+	m_nMidiTimeDiv = nTimeDiv;
+	m_nMidiMeter = nMeter;
 }
 
 /////////////////////////////////////////////////////////////////////////////

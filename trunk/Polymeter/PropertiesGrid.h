@@ -15,6 +15,7 @@
 		05		17may18	add enum property to allow duplicate options
 		06		17may18	add spin control for floating point values
 		07		04jun18	add time property type
+		08		26sep18	in enum property, overload PushChar and OnDblClk
 
 */
 
@@ -104,6 +105,8 @@ public:
 	virtual	void OnSelectCombo();
 	virtual void OnClickButton(CPoint point);
 	virtual BOOL OnRotateListValue(BOOL bForward);
+	virtual BOOL PushChar(UINT nChar);
+	virtual BOOL OnDblClk(CPoint point);
 };
 
 class CPropertiesGridCtrl : public CValidPropertyGridCtrl {

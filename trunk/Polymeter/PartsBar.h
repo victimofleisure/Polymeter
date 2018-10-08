@@ -57,4 +57,6 @@ protected:
 	afx_msg void OnUpdateTrackPartCreate(CCmdUI *pCmdUI);
 	afx_msg void OnTrackPartUpdate();
 	afx_msg void OnUpdateTrackPartUpdate(CCmdUI *pCmdUI);
+	afx_msg void OnSelectTracks();
+	afx_msg void OnUpdateSelectTracks(CCmdUI *pCmdUI);
 };

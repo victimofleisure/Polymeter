@@ -275,6 +275,30 @@ bool CPolymeterApp::HandleScrollViewKeys(MSG *pMsg, CScrollView *pView)
 			else
 				nScrollCode = MAKEWORD(-1, SB_BOTTOM);
 			break;
+		case VK_UP:
+			if (GetKeyState(VK_CONTROL) & GKS_DOWN)	// if control key down
+				nScrollCode =  MAKEWORD(-1, SB_PAGEUP);
+			else
+				nScrollCode = MAKEWORD(-1, SB_LINEUP);
+			break;
+		case VK_DOWN:
+			if (GetKeyState(VK_CONTROL) & GKS_DOWN)	// if control key down
+				nScrollCode =  MAKEWORD(-1, SB_PAGEDOWN);
+			else
+				nScrollCode = MAKEWORD(-1, SB_LINEDOWN);
+			break;
+		case VK_LEFT:
+			if (GetKeyState(VK_CONTROL) & GKS_DOWN)	// if control key down
+				nScrollCode =  MAKEWORD(SB_PAGELEFT, -1);
+			else
+				nScrollCode = MAKEWORD(SB_LINELEFT, -1);
+			break;
+		case VK_RIGHT:
+			if (GetKeyState(VK_CONTROL) & GKS_DOWN)	// if control key down
+				nScrollCode =  MAKEWORD(SB_PAGERIGHT, -1);
+			else
+				nScrollCode = MAKEWORD(SB_LINERIGHT, -1);
+			break;
 		default:
 			nScrollCode = -1;
 		}

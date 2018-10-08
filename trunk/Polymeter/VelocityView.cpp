@@ -21,6 +21,7 @@
 #include "MainFrm.h"
 #include "UndoCodes.h"
 #include "StepView.h"
+#include "StepParent.h"
 #define _USE_MATH_DEFINES	// for trig constants
 #include <math.h>
 
@@ -214,6 +215,8 @@ void CVelocityView::UpdateDragDataTip(int y)
 		GetClientRect(rClient);
 		double	ry = y;
 		int	nVel = round((1 - ry / rClient.Height()) * MIDI_NOTE_MAX);	// y-axis is reversed
+		if (m_pStepView->m_pParent->IsVelocitySigned())	// if showing signed velocities
+			nVel -= MIDI_NOTES / 2;	// convert to signed
 		CString	sTip;
 		sTip.Format(_T("%d"), nVel);
 		m_DataTip.UpdateTipText(sTip, this, DATA_TIP);
@@ -227,6 +230,10 @@ void CVelocityView::UpdateDataTip(CPoint point)
 		m_DataTip.Pop();
 		int	nMinVal, nMaxVal;
 		bool	bHit = GetStepVal(point, nMinVal, nMaxVal);
+		if (m_pStepView->m_pParent->IsVelocitySigned()) {	// if showing signed velocities
+			nMinVal -= MIDI_NOTES / 2;	// convert to signed
+			nMaxVal -= MIDI_NOTES / 2;
+		}
 		CString	sTip;
 		if (bHit) {	// if cursor over at least one bar
 			if (nMinVal != nMaxVal)	// if range of values

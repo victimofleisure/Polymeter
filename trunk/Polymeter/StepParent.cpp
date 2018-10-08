@@ -35,6 +35,8 @@ IMPLEMENT_DYNCREATE(CStepParent, CSplitView)
 
 int CStepParent::m_nGlobVeloHeight = INIT_VELO_HEIGHT;
 
+const LPCTSTR CStepParent::m_pszVeloOrigin[2] = {_T("64"), _T("0")};
+
 #define RK_STEP_VIEW _T("StepView")
 #define RK_VELO_HEIGHT _T("VeloHeight")
 
@@ -49,6 +51,7 @@ CStepParent::CStepParent()
 	m_pStepView = NULL;
 	m_nRulerHeight = 0;
 	m_bIsScrolling = true;	// prevents premature scrolling during creation
+	m_bIsVeloSigned = false;
 	m_nVeloHeight = m_nGlobVeloHeight;
 	m_nMuteWidth = 0;
 	m_hSplitCursor = NULL;
@@ -121,6 +124,7 @@ void CStepParent::ShowVelocityView(bool bShow)
 		nShowCmd = SW_HIDE;
 	m_pVeloView->ShowWindow(nShowCmd);
 	m_btnVeloClose.ShowWindow(nShowCmd);
+	m_btnVeloOrigin.ShowWindow(nShowCmd);
 	RecalcLayout();
 }
 
@@ -160,7 +164,7 @@ void CStepParent::RecalcLayout(int cx, int cy)
 	CSize	szStepView(cx - m_nMuteWidth, cy - m_nRulerHeight);
 	if (m_bIsShowSplit) {	// if showing velocities
 		szStepView.cy -= m_nVeloHeight + m_nSplitBarWidth;
-		nWnds += 2;	// add velocity view, velocity close button
+		nWnds += 3;	// add velocity view and its buttons
 	}
 	UINT	dwFlags = SWP_NOACTIVATE | SWP_NOZORDER;
 	HDWP	hDWP;
@@ -170,9 +174,14 @@ void CStepParent::RecalcLayout(int cx, int cy)
 	hDWP = DeferWindowPos(hDWP, m_pStepView->m_hWnd, NULL, m_nMuteWidth, m_nRulerHeight, szStepView.cx, szStepView.cy, dwFlags);
 	if (m_bIsShowSplit) {	// if showing velocities
 		hDWP = DeferWindowPos(hDWP, m_pVeloView->m_hWnd, NULL, m_nMuteWidth, cy - m_nVeloHeight, szStepView.cx, m_nVeloHeight, dwFlags);
-		m_btnVeloClose.SizeToContent();	// size velocity close button to its icon
-		CPoint	ptBtn(VELO_CLOSE_BTN_MARGIN, VELO_CLOSE_BTN_MARGIN);
-		DeferWindowPos(hDWP, m_btnVeloClose.m_hWnd, NULL, ptBtn.x, cy - m_nVeloHeight + ptBtn.y, 0, 0, dwFlags | SWP_NOSIZE);
+		CPoint	ptCloseBtn(VELO_CLOSE_BTN_MARGIN, cy - m_nVeloHeight + VELO_CLOSE_BTN_MARGIN);
+		DeferWindowPos(hDWP, m_btnVeloClose.m_hWnd, NULL, ptCloseBtn.x, ptCloseBtn.y, 0, 0, dwFlags | SWP_NOSIZE);
+		CRect	rOrgBtn;
+		m_btnVeloOrigin.GetWindowRect(rOrgBtn);
+		CSize	szOrgBtn = rOrgBtn.Size();
+		CPoint	ptOrgBtn(m_nMuteWidth - szOrgBtn.cx - VELO_CLOSE_BTN_MARGIN, 
+			cy - min((m_nVeloHeight + szOrgBtn.cy) / 2, m_nVeloHeight));
+		DeferWindowPos(hDWP, m_btnVeloOrigin.m_hWnd, NULL, ptOrgBtn.x, ptOrgBtn.y, 0, 0, dwFlags | SWP_NOSIZE);
 	}
 	EndDeferWindowPos(hDWP);
 	m_nGlobVeloHeight = m_nVeloHeight;	// update global velocity pane height
@@ -192,6 +201,35 @@ BOOL CStepParent::PtInRuler(CPoint point) const
 	m_wndRuler.GetWindowRect(rc);
 	ScreenToClient(rc);
 	return rc.PtInRect(point);	// true if point within ruler
+}
+
+inline void CStepParent::UpdateRulerNumbers()
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	m_wndRuler.SetMidiParams(pDoc->GetTimeDivisionTicks(), pDoc->m_nMeter);
+}
+
+void CStepParent::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+{
+	UNREFERENCED_PARAMETER(pSender);
+//	printf("CStepParent::OnUpdate %x %d %x\n", pSender, lHint, pHint);
+	switch (lHint) {
+	case CPolymeterDoc::HINT_NONE:
+		UpdateRulerNumbers();
+		break;
+	case CPolymeterDoc::HINT_MASTER_PROP:
+		{
+			const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+			switch (pPropHint->m_iProp) {
+			case CMasterProps::PROP_nMeter:
+			case CMasterProps::PROP_nTimeDiv:
+				UpdateRulerNumbers();
+				m_wndRuler.Invalidate();
+				break;
+			}
+		}
+		break;
+	}
 }
 
 void CStepParent::OnDraw(CDC* pDC)
@@ -220,6 +258,7 @@ BEGIN_MESSAGE_MAP(CStepParent, CSplitView)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_VELOCITIES, OnUpdateViewVelocities)
 	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 	ON_BN_CLICKED(VELO_CLOSE_BTN_ID, OnVelocityCloseBtnClicked)
+	ON_BN_CLICKED(VELO_ORIGIN_BTN_ID, OnVelocityOriginBtnClicked)
 END_MESSAGE_MAP()
 
 // CStepParent message handlers
@@ -253,16 +292,25 @@ BOOL CStepParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 		dwVeloStyle |= WS_VISIBLE;	// add visible style
 	if (!m_pVeloView->Create(NULL, _T("Velocity"), dwVeloStyle, rInit, this, PANE_ID(PANE_VELOCITY), pContext))
 		return false;
-	if (!m_btnVeloClose.Create(_T(""), WS_CHILD | WS_VISIBLE, rInit, this, VELO_CLOSE_BTN_ID))
+	UINT	nBtnStyle = WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS;
+	if (!m_btnVeloClose.Create(_T(""), nBtnStyle, rInit, this, VELO_CLOSE_BTN_ID))
 		return false;
 	m_btnVeloClose.SetStdImage(CMenuImages::IdClose, CMenuImages::ImageBlack);
 	m_btnVeloClose.m_bDrawFocus = FALSE;
 	m_btnVeloClose.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+	m_btnVeloClose.SizeToContent();	// size velocity close button to its icon
+	if (!m_btnVeloOrigin.Create(m_pszVeloOrigin[false], nBtnStyle, rInit, this, VELO_ORIGIN_BTN_ID))
+		return false;
+	m_btnVeloOrigin.m_bDrawFocus = FALSE;
+	m_btnVeloOrigin.m_nFlatStyle = CMFCButton::BUTTONSTYLE_FLAT;
+	m_btnVeloOrigin.SizeToContent();	// size velocity origin button to its text
+	if (m_bIsVeloSigned)
+		m_btnVeloOrigin.SetWindowText(m_pszVeloOrigin[true]);
 	m_nMuteWidth = m_pMuteView->GetViewWidth();
+	m_wndRuler.SetUnit(CRulerCtrl::UNIT_MIDI);
 	m_wndRuler.SendMessage(WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)));
 	m_wndRuler.SetTickLengths(4, 0);
 	m_wndRuler.SetMinMajorTickGap(m_pStepView->GetBeatWidth() - 1);
-	m_wndRuler.SetValueOffset(1);
 	m_wndRuler.SetReticleColor(m_pStepView->GetBeatLineColor());
 	m_bIsScrolling = false;
 	return true;
@@ -301,7 +349,16 @@ void CStepParent::OnParentNotify(UINT message, LPARAM lParam)
 	CSplitView::OnParentNotify(message, lParam);
 	switch (message) {
 	case WM_LBUTTONDOWN:
-		m_pStepView->SetFocus();	// focus step view
+		{
+			CPoint	ptCursor(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+			if (PtInRuler(ptCursor)) {	// if clicked within ruler
+				MapWindowPoints(m_pStepView, &ptCursor, 1);	// map cursor position to song view's coords
+				int	x = ptCursor.x + m_pStepView->GetScrollPosition().x;	// account for scrolling
+				int	nPos = m_pStepView->ConvertXToSongPos(x);	// convert to song position
+				GetDocument()->SetPosition(nPos);	// set song position
+			}
+			m_pStepView->SetFocus();	// focus step view
+		}
 		break;
 	case WM_RBUTTONDOWN:
 		{
@@ -363,4 +420,11 @@ void CStepParent::OnUpdateViewVelocities(CCmdUI *pCmdUI)
 void CStepParent::OnVelocityCloseBtnClicked()
 {
 	ShowVelocityView(false);
+}
+
+void CStepParent::OnVelocityOriginBtnClicked()
+{
+	m_bIsVeloSigned ^= 1;
+	m_btnVeloOrigin.SetWindowText(m_pszVeloOrigin[m_bIsVeloSigned]);
+	RecalcLayout();
 }

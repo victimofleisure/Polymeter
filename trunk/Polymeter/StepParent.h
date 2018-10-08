@@ -45,6 +45,7 @@ public:
 	void	SetRulerHeight(int nHeight);
 	int		GetTrackHeight() const;
 	void	SetTrackHeight(int nHeight);
+	bool	IsVelocitySigned() const;
 
 // Public data
 	CTrackView*	m_pTrackView;		// pointer to track view
@@ -82,26 +83,38 @@ protected:
 		PANE_ID_FIRST = 2000,
 		INIT_VELO_HEIGHT = 100,
 		VELO_CLOSE_BTN_ID = 2100,
+		VELO_ORIGIN_BTN_ID = 2101,
 		VELO_CLOSE_BTN_MARGIN = 3,
+	};
+	static const LPCTSTR m_pszVeloOrigin[2];
+
+// Types
+	class CTextButton : public CMFCButton {
+		virtual int GetImageHorzMargin() const { return 6; }
+		virtual int GetVertMargin() const { return 3; }
 	};
 
 // Member data
 	CRulerCtrl	m_wndRuler;		// ruler control
 	int		m_nRulerHeight;		// ruler height
 	bool	m_bIsScrolling;		// true while handling scroll message; prevents reentrance
+	bool	m_bIsVeloSigned;	// true if showing signed velocities
 	int		m_nVeloHeight;		// height of velocity view
 	int		m_nMuteWidth;		// width of mute view
 	CMFCButton	m_btnVeloClose;	// velocity close button
+	CTextButton	m_btnVeloOrigin;	// velocity origin button
 	static	int		m_nGlobVeloHeight;	// global velocity pane height for all documents
 
 // Helpers
 	void	RecalcLayout(int cx, int cy);
 	void	RecalcLayout();
 	BOOL	PtInRuler(CPoint point) const;
+	void	UpdateRulerNumbers();
 
 // Overrides
 	virtual	void GetSplitRect(CRect& rSplit) const;
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
+	virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
 
 // Generated message map functionsq
 protected:
@@ -116,6 +129,7 @@ protected:
 	afx_msg void OnViewVelocities();
 	afx_msg void OnUpdateViewVelocities(CCmdUI *pCmdUI);
 	afx_msg void OnVelocityCloseBtnClicked();
+	afx_msg void OnVelocityOriginBtnClicked();
 };
 
 inline CPolymeterDoc* CStepParent::GetDocument() const
@@ -127,3 +141,9 @@ inline void CStepParent::SetRulerHeight(int nHeight)
 {
 	m_nRulerHeight = nHeight;
 }
+
+inline bool CStepParent::IsVelocitySigned() const
+{
+	return m_bIsVeloSigned;
+}
+
