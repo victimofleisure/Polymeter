@@ -54,6 +54,14 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>09/07/18</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>song edits sometimes leave fragments, especially if zoom is changed while editing</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>03/25/18</TD>
 <TD>done</TD>
@@ -1094,6 +1102,150 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>07/14/18</TD>
+<TD>09/14/18</TD>
+<TD>done</TD>
+<TD>allow up to four mute modulators; temporary workaround until unlimited modulation is implemented</TD>
+<TD>0.0.14.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/18/18</TD>
+<TD>09/18/18</TD>
+<TD>done</TD>
+<TD>empty parts cause assertion in CTrackGroupArray::Read, due to null buffer pointer passed to GetBinary</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/18/18</TD>
+<TD>09/18/18</TD>
+<TD>done</TD>
+<TD>song MIDI export that includes dubbing and merges tracks by channel</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/18/18</TD>
+<TD>09/18/18</TD>
+<TD>done</TD>
+<TD>modulation dubbing in export differs from playback, due to different latency; use playback latency in export</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/14/18</TD>
+<TD>09/19/18</TD>
+<TD>done</TD>
+<TD>left-clicking in step view's ruler should move current position, just as with song view</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/21/18</TD>
+<TD>09/20/18</TD>
+<TD>done</TD>
+<TD>step and song view rulers should show beat:tick, or measure:beat:tick if meter is specified</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/19/18</TD>
+<TD>09/21/18</TD>
+<TD>done</TD>
+<TD>in step and song views, arrows should scroll similarly to list control; Ctrl for by page, else by line</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/06/18</TD>
+<TD>09/24/18</TD>
+<TD>done</TD>
+<TD>in live view, if list is too long to fit, auto-resizing unexpectedly creates horizontal scroll bar</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/06/18</TD>
+<TD>09/24/18</TD>
+<TD>done</TD>
+<TD>in live view, left-click in list must set focus, else mouse wheel doesn't scroll list</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/27/18</TD>
+<TD>09/25/18</TD>
+<TD>done</TD>
+<TD>velocity pane's tooltips should optionally show signed values; left-clicking origin label toggles signed mode</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/26/18</TD>
+<TD>09/26/18</TD>
+<TD>done</TD>
+<TD>in properties grid enum fields, typing a value doesn't updated target property; override PushChar</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/26/18</TD>
+<TD>09/26/18</TD>
+<TD>done</TD>
+<TD>in properties grid, for properties with options, Alt+Down should drop options list</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/14/18</TD>
+<TD>10/01/18</TD>
+<TD>done</TD>
+<TD>unlimited modulation, allowing track to have any number of modulators of each type</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/01/18</TD>
+<TD>10/01/18</TD>
+<TD>done</TD>
+<TD>double-click in parts or presets lists but not on an item crashes</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/17/18</TD>
+<TD>10/02/18</TD>
+<TD>done</TD>
+<TD>add deselect command</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>08/29/18</TD>
+<TD>10/03/18</TD>
+<TD>done</TD>
+<TD>status bar hints for Parts and Presets context menus</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>08/29/18</TD>
+<TD>10/03/18</TD>
+<TD>done</TD>
+<TD>add Tracks command to Parts bar context menu; select tracks belonging to selected parts</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/19/18</TD>
+<TD>10/08/18</TD>
+<TD>done</TD>
+<TD>stretch command; scale track length by percentage, stretching or squashing contents as needed</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -1129,7 +1281,7 @@
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>modulation of modulation; allowing multiple modulators of each type could make this unnecessary</TD>
+<TD>modulation of modulation; allowing multiple modulators of each type may make this unnecessary</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1177,7 +1329,7 @@
 <TD>05/10/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>left-click anywhere in step view should toggle steps or tracks, as in original app; too confusing?</TD>
+<TD>left-click anywhere in step view should toggle selected steps or mutes, as in original app; too confusing?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1214,14 +1366,6 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>05/21/18</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>if meter is specified, step and song view rulers should show measure:beat instead of just beat</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>05/30/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -1242,14 +1386,6 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>song view should indicate undersampling (multiple dubs per cell at current zoom)</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>06/04/18</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>include live MIDI input in recording; but no way to view or edit it?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1281,7 +1417,7 @@
 <TD>07/05/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>change track, part and preset names to title case</TD>
+<TD>command to change track, part and preset names to title case</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1297,7 +1433,7 @@
 <TD>07/14/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>modulation wizard; drop lists are PITA</TD>
+<TD>modulation wizard; drop lists are cumbersome for large numbers of tracks</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1306,14 +1442,6 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>live view list controls should have grid lines but default color is too bright; draw gridlines in custom draw?</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>07/19/18</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>command to scale track length, stretching or squashing contents as needed</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1366,6 +1494,30 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>09/17/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>step zoom via Ctrl + mouse wheel doesn't work when track view has focus</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/23/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>ReadEnum should report undefined strings as errors? More accurate, but less robust</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/25/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>pan column in channels bar should show signed values; conflicts with use of -1 as unspecified value</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>05/10/18</TD>
 <TD>&nbsp;</TD>
 <TD>punt</TD>
@@ -1398,6 +1550,14 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>09/18/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>modulation dubbing is sensitive to track order at longer latencies; also affects export</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
@@ -1422,18 +1582,18 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>07/05/18</TD>
+<TD>06/04/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>cut and paste of modulated tracks often behaves unexpectedly; store modulators as UIDs instead of indices</TD>
+<TD>include live MIDI input in recording; but no way to view or edit it? Unless events are converted to tracks</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>07/14/18</TD>
+<TD>07/05/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>multiple modulators of each type; easier to implement if limited to a fixed number</TD>
+<TD>cut and paste of modulated tracks often behaves unexpectedly; store modulators as UIDs instead of indices</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1462,18 +1622,34 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>07/27/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>velocity pane's tooltips should optionally show signed values; enabled how? context menu?</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>07/30/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
 <TD>add command to scale step values by a percentage; boosts track velocity without reducing dynamics</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/08/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>add song view command to move current position to next or previous dub; useful for finding unintended dubs</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>09/17/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>in step view, add command to select all steps of selected tracks</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/03/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>import MIDI file; convert to tracks</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
