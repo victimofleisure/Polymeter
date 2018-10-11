@@ -255,6 +255,8 @@ bool CPolymeterApp::HandleDlgKeyMsg(MSG* pMsg)
 bool CPolymeterApp::HandleScrollViewKeys(MSG *pMsg, CScrollView *pView)
 {
 	if (pMsg->message == WM_KEYDOWN) {
+		if (theApp.GetMainFrame()->GetActivePopup())	// if popup menu active
+			return false;	// don't interfere with menu key handling
 		int	nScrollCode;
 		switch (pMsg->wParam) {
 		case VK_NEXT:

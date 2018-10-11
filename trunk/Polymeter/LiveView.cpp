@@ -146,6 +146,9 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		case CPolymeterDoc::HINT_PLAY:
 			UpdateStatus();
 			break;
+		case CPolymeterDoc::HINT_SOLO:
+			OnTrackMuteChange();
+			break;
 		}
 	}
 }
@@ -357,13 +360,18 @@ void CLiveView::ApplyPreset(int iPreset)
 	if (pDoc->m_Seq.IsRecording())	// if recording
 		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 	m_iPreset = iPreset;
+	OnTrackMuteChange();
+}
+
+void CLiveView::OnTrackMuteChange()
+{
 	for (int iList = 0; iList < LISTS; iList++) {	// for each list
 		CLiveListCtrl&	list = m_list[iList];
 		list.Deselect();
 		list.Invalidate();
 	}
 	m_wndPosBar.InvalidateAllBars();
-	if (!pDoc->m_Seq.IsPlaying())	// if stopped
+	if (!GetDocument()->m_Seq.IsPlaying())	// if stopped
 		m_wndPosBar.UpdateBars();
 }
 

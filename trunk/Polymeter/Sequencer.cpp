@@ -573,8 +573,9 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 	CIntArrayEx	arrUsedTrack;
 	int	nUsedTracks;
 	int	nChunkDuration;
+	int	arrFirstTrack[MIDI_CHANNELS];
 	if (m_bIsSongMode) {	// if song mode
-		nUsedTracks = MIDI_CHANNELS;
+		nUsedTracks = GetChannelUsage(arrFirstTrack);
 		ChaseDubs(0, true);	// reset dub indices and update mutes
 		nChunkDuration = m_nLatency;	// same latency as playback to ensure identical dubbing
 	} else {	// track mode
@@ -627,15 +628,18 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 			nCBTime += nChunkLen;
 		}
 		for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each MIDI channel
-			int	nEvents = arrMidiEvent[iChan].GetSize();
-			int	nPrevTime = m_nStartPos;
-			for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each channel event
-				MIDI_EVENT&	midiEvt = arrMidiEvent[iChan][iEvent];
-				int	nTime = midiEvt.DeltaT;
-				midiEvt.DeltaT -= nPrevTime;	// convert to delta time
-				nPrevTime = nTime;
+			int	iTrack = arrFirstTrack[iChan];
+			if (iTrack >= 0) {	// if channel is used
+				int	nEvents = arrMidiEvent[iChan].GetSize();
+				int	nPrevTime = m_nStartPos;
+				for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each channel event
+					MIDI_EVENT&	midiEvt = arrMidiEvent[iChan][iEvent];
+					int	nTime = midiEvt.DeltaT;
+					midiEvt.DeltaT -= nPrevTime;	// convert to delta time
+					nPrevTime = nTime;
+				}
+				fMidi.WriteTrack(arrMidiEvent[iChan], GetName(iTrack));	// write track to MIDI file
 			}
-			fMidi.WriteTrack(arrMidiEvent[iChan]);	// write track to MIDI file
 		}
 	} else {	// track mode
 		for (int iUsed = 0; iUsed < nUsedTracks; iUsed++) {	// for each non-empty track

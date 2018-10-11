@@ -599,3 +599,24 @@ bool CSeqTrackArray::CalcDynamicRange(int iTrack, int& nMinStep, int& nMaxStep, 
 	nMaxStep = nMax;
 	return bRetVal;
 }
+
+int CSeqTrackArray::GetChannelUsage(int *parrFirstTrack) const
+{
+	ASSERT(parrFirstTrack != NULL);
+	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++)	// for each channel
+		parrFirstTrack[iChan] = -1;	// init to invalid track index
+	int	nTracks = GetSize();
+	int	nUsedChans = 0;
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		const CTrack&	trk = GetAt(iTrack);
+		if (trk.GetUsedStepCount()) {	// if track not empty
+			int	iChan = trk.m_nChannel;
+			ASSERT(iChan >= 0 && iChan < MIDI_CHANNELS);
+			if (parrFirstTrack[iChan] < 0) {	// if first track using this channel
+				parrFirstTrack[iChan] = iTrack;	// store track index
+				nUsedChans++;	// increment channel used count
+			}
+		}
+	}
+	return nUsedChans;
+}

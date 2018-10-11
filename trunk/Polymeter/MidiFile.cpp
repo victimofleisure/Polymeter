@@ -11,7 +11,8 @@
 		01		25apr02 set key signature
         02      07mar14	convert to MFC
         03      25apr18	standardize names
-		
+        04      10oct18 add read
+
 		MIDI file I/O
  
 */
@@ -21,6 +22,10 @@
 #include "Midi.h"
 #include "mmsystem.h"	// for MAKEFOURCC
 #include "atlconv.h"	// for Unicode conversion
+
+const UINT CMidiFile::m_nHeaderChunkID = MAKEFOURCC('M', 'T', 'h', 'd');
+const UINT CMidiFile::m_nTrackChunkID = MAKEFOURCC('M', 'T', 'r', 'k');
+const bool CMidiFile::m_bHasP2[8] = {1, 1, 1, 1, 0, 0, 1, 1};
 
 void CMidiFile::WriteByte(BYTE Val)
 {
@@ -39,6 +44,41 @@ void CMidiFile::WriteInt(int Val)
 	Write(&Val, sizeof(Val));
 }
 
+void CMidiFile::ReadCheck(void* lpBuf, UINT nCount)
+{
+	if (Read(lpBuf, nCount) != nCount)	// if requested bytes weren't obtained
+		AfxThrowFileException(CFileException::endOfFile);
+}
+
+void CMidiFile::ReadByte(BYTE& Val)
+{
+	ReadCheck(&Val, sizeof(Val));
+}
+
+void CMidiFile::ReadShort(short& Val)
+{
+	ReadCheck(&Val, sizeof(Val));
+	Reverse(Val);
+}
+
+void CMidiFile::ReadShort(USHORT& Val)
+{
+	ReadCheck(&Val, sizeof(Val));
+	Reverse(Val);
+}
+
+void CMidiFile::ReadInt(int& Val)
+{
+	ReadCheck(&Val, sizeof(Val));
+	Reverse(Val);
+}
+
+void CMidiFile::ReadInt(UINT& Val)
+{
+	ReadCheck(&Val, sizeof(Val));
+	Reverse(Val);
+}
+
 void CMidiFile::Reverse(void *pDst, void *pSrc, UINT Len)
 {
 	BYTE	*pByteDst = static_cast<BYTE *>(pDst);
@@ -49,7 +89,7 @@ void CMidiFile::Reverse(void *pDst, void *pSrc, UINT Len)
 
 void CMidiFile::WriteVarLen(UINT Val)
 {
-	const int BUF_SIZE = 4;	// maximum number of output bytes
+	const int BUF_SIZE = sizeof(UINT);	// maximum number of output bytes
 	ASSERT(Val < (1 << (BUF_SIZE * 7)));	// avoid buffer overrun
 	BYTE	buf[BUF_SIZE];
 	buf[BUF_SIZE - 1] = Val & 0x7f;
@@ -59,6 +99,21 @@ void CMidiFile::WriteVarLen(UINT Val)
 		buf[BUF_SIZE - len] = (Val & 0x7f) | 0x80;
 	}
 	Write(&buf[BUF_SIZE - len], len);	// output is big endian
+}
+
+void CMidiFile::ReadVarLen(UINT& Val)
+{
+	const int BUF_SIZE = sizeof(UINT);	// maximum number of output bytes
+	Val = 0;
+	BYTE	b;
+	int	nBytes = 0;
+	while (nBytes < BUF_SIZE) {
+		ReadCheck(&b, sizeof(b));
+		Val |= b & 0x7f;
+		if (!(b & 0x80))
+			break;
+		Val <<= 7;
+	}
 }
 
 void CMidiFile::WriteMeta(BYTE Type, UINT Len)
@@ -71,8 +126,7 @@ void CMidiFile::WriteMeta(BYTE Type, UINT Len)
 
 CMidiFile::FILE_POS CMidiFile::BeginTrack()
 {
-	UINT	ChunkID = MAKEFOURCC('M', 'T', 'r', 'k');	// track chunk ID
-	Write(&ChunkID, sizeof(ChunkID));	// write chunk ID
+	Write(&m_nTrackChunkID, sizeof(m_nTrackChunkID));	// write chunk ID
 	WriteInt(0);	// write dummy chunk size
 	return(GetPosition());	// return file position
 }
@@ -91,8 +145,7 @@ void CMidiFile::EndTrack(FILE_POS StartPos)
 void CMidiFile::WriteHeader(USHORT nTracks, USHORT nPPQ, double fTempo, const TIME_SIGNATURE* pTimeSig, const KEY_SIGNATURE* pKeySig)
 {
 	// write file header
-	UINT	ChunkID = MAKEFOURCC('M', 'T', 'h', 'd');	// header chunk ID
-	Write(&ChunkID, sizeof(ChunkID));	// write chunk ID
+	Write(&m_nHeaderChunkID, sizeof(m_nHeaderChunkID));	// write chunk ID
 	WriteInt(FILE_HEADER_LEN);	// write chunk size
 	WriteShort(MF_MULTI);	// write MIDI file format
 	WriteShort(nTracks + 1);	// write track count; one extra for song track
@@ -119,7 +172,6 @@ void CMidiFile::WriteHeader(USHORT nTracks, USHORT nPPQ, double fTempo, const TI
 
 void CMidiFile::WriteTrack(const CMidiEventArray& arrEvent, LPCTSTR pszName)
 {
-	static bool	bHasP2[8] = {1, 1, 1, 1, 0, 0, 1, 1};
 	FILE_POS	StartPos = BeginTrack();	// write track header
 	USES_CONVERSION;
 	if (pszName != NULL) {	// if track name specified
@@ -140,8 +192,95 @@ void CMidiFile::WriteTrack(const CMidiEventArray& arrEvent, LPCTSTR pszName)
 			nRunningStatus = nStatus;
 		}
 		WriteByte(MIDI_P1(ev.Msg));	// write message 1st parameter
-		if (bHasP2[(nStatus >> 4) - 8])	// if message has 2nd parameter
+		if (m_bHasP2[(nStatus >> 4) - 8])	// if message has 2nd parameter
 			WriteByte(MIDI_P2(ev.Msg));	// write message 2nd parameter
 	}
 	EndTrack(StartPos);	// finish track and fix header
+}
+
+void CMidiFile::ReadTracks(CMidiTrackArray& arrTrack, CStringArrayEx& arrTrackName, USHORT& nPPQ)
+{
+	UINT	nChunkID;
+	ReadCheck(&nChunkID, sizeof(nChunkID));	// read chunk ID
+	if (nChunkID != m_nHeaderChunkID)	// if not header chunk
+		AfxThrowFileException(CFileException::genericException);
+	UINT	nChunkSize;
+	ReadInt(nChunkSize);	// read chunk size
+	USHORT	nFormat;
+	ReadShort(nFormat);	// read MIDI file format
+	if (nFormat > MF_ASYNC)	// if unknown MIDI file format
+		AfxThrowFileException(CFileException::genericException);
+	USHORT	nTracks;
+	ReadShort(nTracks);	// read track count
+	ReadShort(nPPQ);	// read pulses per quarter note
+	CByteArrayEx	arrByte;
+	if (nChunkSize > FILE_HEADER_LEN) {	// if header longer than expected
+		UINT	nExtraLen = nChunkSize - FILE_HEADER_LEN;
+		arrByte.SetSize(nExtraLen);
+		ReadCheck(arrByte.GetData(), nExtraLen);	// ignore extra header bytes
+	}
+	arrTrack.SetSize(nTracks);	// allocate destination arrays
+	arrTrackName.SetSize(nTracks);
+	int	iTrack = 0;
+	while (Read(&nChunkID, sizeof(nChunkID)) == sizeof(nChunkID)) {	// read chunk ID
+		UINT	nChunkSize;
+		ReadInt(nChunkSize);	// read chunk size
+		if (nChunkID == m_nTrackChunkID) {	// if track chunk
+			BYTE	nRunningStatus = 0;	// init running status
+			BYTE	p1 = 0, p2 = 0;
+			while (1) {	// track processing loop, terminated by end track meta event
+				BYTE	nStatus;
+				UINT	nDeltaT;
+				ReadVarLen(nDeltaT);	// read delta time
+				ReadByte(nStatus);	// read status or data byte
+				if (nStatus == META_EVENT) {	// if meta event
+					nRunningStatus = 0;	// cancel running status
+					BYTE	nEventType;
+					UINT	nEventLen;
+					ReadByte(nEventType);	// read meta event type
+					ReadVarLen(nEventLen);	// read meta event data length
+					arrByte.SetSize(nEventType);	// allocate buffer for meta event
+					ReadCheck(arrByte.GetData(), nEventLen);	// read meta event
+					if (nEventType == ME_END_TRACK) {	// if end of track
+						iTrack++;	// increment track index
+						break;	// exit track processing loop
+					}
+					switch (nEventType) {
+					case ME_TRACK_NAME:
+						arrTrackName[iTrack] = CString(reinterpret_cast<char *>(arrByte.GetData()), nEventLen);
+						break;
+					}
+				} else {	// normal event
+					if (nStatus & 0x80) {	// if status byte
+						nRunningStatus = nStatus;	// update running status
+						ReadByte(p1);	// read first parameter
+					} else {	// data byte
+						p1 = nStatus;	// nStatus actually contains first parameter
+						nStatus = nRunningStatus;	// use running status
+					}
+					if (m_bHasP2[(nStatus >> 4) - 8])	// if message has second parameter
+						ReadByte(p2);	// read message second parameter
+					else	// no second parameter
+						p2 = 0;	// zero second parameter
+					if (nStatus >= 0xf0) {	// if system message
+						if (nStatus == 0xf0 || nStatus == 0xf7) {	// if system exclusive message
+							nRunningStatus = 0;	// cancel running status
+							UINT	nSysexLen;
+							ReadVarLen(nSysexLen);	// read sysex data length
+							arrByte.SetSize(nSysexLen);	// allocate buffer for sysex data
+							ReadCheck(arrByte.GetData(), nSysexLen);	// read sysex data and discard it
+						} else	// other system status
+							AfxThrowFileException(CFileException::genericException);	// not supported
+					}
+					MIDI_EVENT	evt;
+					evt.DeltaT = nDeltaT;
+					evt.Msg = nStatus | (p1 << 8) | (p2 << 16);
+					arrTrack[iTrack].Add(evt);	// add event to track's event array
+				}
+			}
+		} else {	// not track chunk; unexpected chunk ID
+			arrByte.SetSize(nChunkSize);	// allocate buffer for chunk
+			ReadCheck(arrByte.GetData(), nChunkSize);	// read chunk and discard it
+		}
+	}
 }

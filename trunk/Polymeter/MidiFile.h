@@ -11,6 +11,7 @@
 		01		25apr02 set key signature
         02      07mar14	convert to MFC
         03      25apr18	standardize names
+        04      10oct18	add read
 		
 		MIDI file I/O
  
@@ -27,6 +28,7 @@ struct MIDI_EVENT {
 };
 
 typedef CArrayEx<MIDI_EVENT, MIDI_EVENT> CMidiEventArray;
+typedef CArrayEx<CMidiEventArray, CMidiEventArray&> CMidiTrackArray;
 
 class CMidiFile : public CFile {
 public:
@@ -50,6 +52,7 @@ public:
 // Operations
 	void	WriteHeader(USHORT nTracks, USHORT nPPQ, double fTempo = 0, const TIME_SIGNATURE* pTimeSig = NULL, const KEY_SIGNATURE* pKeySig = NULL);
 	void	WriteTrack(const CMidiEventArray& arrEvent, LPCTSTR pszName = NULL);
+	void	ReadTracks(CMidiTrackArray& arrTrack, CStringArrayEx& arrTrackName, USHORT& nPPQ);
 
 protected:
 // Types
@@ -93,6 +96,9 @@ protected:
 		TIME_SIG_LEN		= 4,	// time signature metadata size
 		KEY_SIG_LEN			= 2,	// key signature metadata size
 	};
+	static const UINT	m_nHeaderChunkID;	// header chunk ID
+	static const UINT	m_nTrackChunkID;	// track chunk ID
+	static const bool	m_bHasP2[8];	// for each channel message, true if it has 2nd parameter
 
 // Helpers
 	void	WriteByte(BYTE Val);
@@ -100,6 +106,13 @@ protected:
 	void	WriteInt(int Val);
 	void	WriteVarLen(UINT Val);
 	void	WriteMeta(BYTE Type, UINT Len);
+	void	ReadCheck(void* lpBuf, UINT nCount);
+	void	ReadByte(BYTE& Val);
+	void	ReadShort(short& Val);
+	void	ReadShort(USHORT& Val);
+	void	ReadInt(int& Val);
+	void	ReadInt(UINT& Val);
+	void	ReadVarLen(UINT& Val);
 	FILE_POS	BeginTrack();
 	void	EndTrack(FILE_POS StartPos);
 	static	void	Reverse(void *pDst, void *pSrc, UINT Len);

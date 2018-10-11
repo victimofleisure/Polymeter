@@ -83,6 +83,7 @@ public:
 	void	GetModulations(CPackedModulationArray& arrMod) const;
 	void	SetModulations(const CPackedModulationArray& arrMod);
 	bool	CalcDynamicRange(int iTrack, int& nMinStep, int& nMaxStep, bool IsModulator = false) const;
+	int		GetChannelUsage(int *parrFirstTrack) const;
 
 // Operations
 	void	AssignID(int iTrack);

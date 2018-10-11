@@ -158,6 +158,7 @@ protected:
 	int		ListHitTest(CPoint point) const;
 	void	GetStatusRect(CRect& rStatus) const;
 	void	UpdateStatus();
+	void	OnTrackMuteChange();
 
 // Overrides
 	virtual void OnInitialUpdate();
