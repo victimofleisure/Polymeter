@@ -62,6 +62,8 @@ CSongView::CSongView()
 	m_nSongPosX = 0;
 	m_bIsSongPosVisible = false;
 	m_rCellSel.SetRectEmpty();
+	m_ptScrollDelta = CPoint(0, 0);
+	m_nScrollTimer = 0;
 }
 
 CSongView::~CSongView()
@@ -289,17 +291,21 @@ void CSongView::UpdateSongPos(int nSongPos)
 	}
 }
 
-int CSongView::HitTest(CPoint point, int& iCell) const
+int CSongView::HitTest(CPoint point, int& iCell, UINT nFlags) const
 {
-	CPoint	ptScroll(GetScrollPosition());
-	int	iTrack = (point.y + ptScroll.y) / m_nTrackHeight;
+	point += GetScrollPosition();
+	int	iTrack = point.y / m_nTrackHeight;
 	int	nTracks = GetDocument()->GetTrackCount();
-	if (iTrack >= 0 && iTrack < nTracks) {
-		iCell = (point.x + ptScroll.x) / m_nCellWidth;
-		return iTrack;
+	if (iTrack < 0 || iTrack >= nTracks) {	// if track out of range
+		if (nFlags & HTF_NO_TRACK_RANGE) {	// if not enforcing track range
+			iTrack = CLAMP(iTrack, 0, nTracks - 1);	// clamp track to range
+		} else {	// enforcing track range
+			iCell = -1;
+			return -1;	// return error
+		}
 	}
-	iCell = -1;
-	return -1;
+	iCell = max(point.x / m_nCellWidth, 0);
+	return iTrack;
 }
 
 void CSongView::EndDrag()
@@ -307,6 +313,8 @@ void CSongView::EndDrag()
 	if (m_nDragState) {
 		ReleaseCapture();
 		m_nDragState = DS_NONE;
+		KillTimer(m_nScrollTimer);
+		m_nScrollTimer = 0;
 	}
 }
 
@@ -356,6 +364,42 @@ void CSongView::UpdateCells(const CRect& rSelection)
 			InvalidateRect(rCells);
 		}
 	}
+}
+
+void CSongView::UpdateSelection(CPoint point)
+{
+	ASSERT(m_nDragState == DS_DRAG);	// must be dragging selection, else logic error
+	CIntRange	rngTrack;
+	CIntRange	rngCell;
+	// translate drag origin to account for scrolling during drag
+	rngTrack.Start = HitTest(m_ptDragOrigin - GetScrollPosition(), rngCell.Start);
+	rngTrack.End = HitTest(point, rngCell.End, HTF_NO_TRACK_RANGE);
+	rngTrack.Normalize();
+	if (rngCell.Start >= 0) {	// if original click was on cell
+		rngCell.Normalize();
+		// x is cell index and y is track index
+		CRect	rCellSel(CPoint(rngCell.Start, rngTrack.Start), CPoint(rngCell.End + 1, rngTrack.End + 1));
+		if (rCellSel != m_rCellSel) {	// if rectangular selection changed
+			CRgn	rgnOld, rgnNew;
+			rgnOld.CreateRectRgnIndirect(&m_rCellSel);
+			rgnNew.CreateRectRgnIndirect(&rCellSel);
+			m_rCellSel = rCellSel;
+			rgnNew.CombineRgn(&rgnOld, &rgnNew, RGN_XOR);	// remove overlapping areas
+			if (m_rgndCellSel.Create(rgnNew)) {	// if region data retrieved
+				int	nRects = m_rgndCellSel.GetRectCount();
+				for (int iRect = 0; iRect < nRects; iRect++)	// for each rect in region data
+					UpdateCells(m_rgndCellSel.GetRect(iRect));	// update corresponding cells
+			}
+		}
+	}
+}
+
+void CSongView::UpdateSelection()
+{
+	CPoint	point;
+	GetCursorPos(&point);
+	ScreenToClient(&point);
+	UpdateSelection(point);
 }
 
 void CSongView::DispatchToDocument()
@@ -521,6 +565,7 @@ BEGIN_MESSAGE_MAP(CSongView, CScrollView)
 	ON_COMMAND(ID_VIEW_ZOOM_RESET, OnViewZoomReset)
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
+	ON_WM_TIMER()
 	ON_WM_RBUTTONDOWN()
 	ON_WM_RBUTTONUP()
 	ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
@@ -561,8 +606,11 @@ BOOL CSongView::PreTranslateMessage(MSG* pMsg)
 		//  give main frame a try
 		if (theApp.GetMainFrame()->SendMessage(UWM_HANDLE_DLG_KEY, reinterpret_cast<WPARAM>(pMsg)))
 			return TRUE;	// key was handled so don't process further
-		if (CPolymeterApp::HandleScrollViewKeys(pMsg, this))
+		if (CPolymeterApp::HandleScrollViewKeys(pMsg, this)) {	// if scroll view key handled
+			if (m_nDragState == DS_DRAG)	// if drag in progress
+				UpdateSelection();
 			return TRUE;
+		}
 	}
 	return CScrollView::PreTranslateMessage(pMsg);
 }
@@ -601,7 +649,7 @@ void CSongView::OnRButtonDown(UINT nFlags, CPoint point)
 	if (iTrack >= 0 && iCell >= 0) {	// if hit on cell
 		SetCapture();
 		m_nDragState = DS_TRACK;
-		m_ptDragOrigin = point;
+		m_ptDragOrigin = point + GetScrollPosition();	// include scrolling
 		ResetSelection();	// reset selection
 		m_rCellSel = CRect(CPoint(iCell, iTrack), CSize(1, 1));
 		UpdateCell(iTrack, iCell);	// select hit cell
@@ -621,50 +669,32 @@ void CSongView::OnRButtonUp(UINT nFlags, CPoint point)
 void CSongView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	UNREFERENCED_PARAMETER(nFlags);
-	CPolymeterDoc	*pDoc = GetDocument();
 	if (m_nDragState == DS_TRACK) {	// if monitoring for start of drag
-		CSize	szDelta(point - m_ptDragOrigin);
+		CSize	szDelta(point + GetScrollPosition() - m_ptDragOrigin);
 		// if mouse motion exceeds either drag threshold
 		if (abs(szDelta.cx) > GetSystemMetrics(SM_CXDRAG)
 		|| abs(szDelta.cy) > GetSystemMetrics(SM_CYDRAG)) {
 			m_nDragState = DS_DRAG;	// start dragging
 		}
 	}
-	if (m_nDragState == DS_DRAG) {	// drag in progress
-		CIntRange	rngTrack;
-		CIntRange	rngCell;
-		rngTrack.Start = HitTest(m_ptDragOrigin, rngCell.Start);
-		rngTrack.End = HitTest(point, rngCell.End);
-		if (rngTrack.End < 0) {	// if current track is out of bounds
-			if (point.y < 0)	// if above tracks
-				rngTrack.End = 0;	// clamp to first track
-			else	// below tracks; clamp to last track
-				rngTrack.End = pDoc->GetTrackCount() - 1;
-		}
-		rngTrack.Normalize();
-		if (rngCell.Start >= 0) {	// if original click was on cell
-			if (rngCell.End < 0) {	// if current cell is out of bounds
-				if (m_rCellSel.left < rngCell.Start)	// if selection left of origin
-					rngCell.End = m_rCellSel.left;	// clamp to selection's left edge
-				else	// selection right of origin
-					rngCell.End = m_rCellSel.right - 1;	// clamp to selection's right edge
-			}
-			rngCell.Normalize();
-			// x is cell index and y is track index
-			CRect	rCellSel(CPoint(rngCell.Start, rngTrack.Start), CPoint(rngCell.End + 1, rngTrack.End + 1));
-			if (rCellSel != m_rCellSel) {	// if rectangular selection changed
-				CRgn	rgnOld, rgnNew;
-				rgnOld.CreateRectRgnIndirect(&m_rCellSel);
-				rgnNew.CreateRectRgnIndirect(&rCellSel);
-				m_rCellSel = rCellSel;
-				rgnNew.CombineRgn(&rgnOld, &rgnNew, RGN_XOR);	// remove overlapping areas
-				if (m_rgndCellSel.Create(rgnNew)) {	// if region data retrieved
-					int	nRects = m_rgndCellSel.GetRectCount();
-					for (int iRect = 0; iRect < nRects; iRect++)	// for each rect in region data
-						UpdateCells(m_rgndCellSel.GetRect(iRect));	// update corresponding cells
-				}
-			}
-		}
+	if (m_nDragState == DS_DRAG) {	// if drag in progress
+		CSize	szClient(GetClientSize());
+		if (point.x < 0)
+			m_ptScrollDelta.x = point.x;
+		else if (point.x > szClient.cx)
+			m_ptScrollDelta.x = point.x - szClient.cx;
+		else
+			m_ptScrollDelta.x = 0;
+		if (point.y < 0)
+			m_ptScrollDelta.y = point.y;
+		else if (point.y > szClient.cy)
+			m_ptScrollDelta.y = point.y - szClient.cy;
+		else
+			m_ptScrollDelta.y = 0;
+		// if auto-scroll needed and scroll timer not set
+		if ((m_ptScrollDelta.x || m_ptScrollDelta.y) && !m_nScrollTimer)
+			m_nScrollTimer = SetTimer(SCROLL_TIMER_ID, SCROLL_DELAY, NULL);
+		UpdateSelection(point);
 	}
 	CScrollView::OnMouseMove(nFlags, point);
 }
@@ -689,6 +719,24 @@ BOOL CSongView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 		return true;
 	}
 	return DoMouseWheel(nFlags, zDelta, pt);
+}
+
+void CSongView::OnTimer(W64UINT nIDEvent)
+{
+	if (nIDEvent == SCROLL_TIMER_ID) {	// if scroll timer
+		if (m_ptScrollDelta.x || m_ptScrollDelta.y) {	// if auto-scrolling
+			CPoint	ptScroll(GetScrollPosition());
+			ptScroll += m_ptScrollDelta;
+			CPoint	ptMaxScroll(GetMaxScrollPos());
+			ptScroll.x = CLAMP(ptScroll.x, 0, ptMaxScroll.x);
+			ptScroll.y = CLAMP(ptScroll.y, 0, ptMaxScroll.y);
+			ScrollToPosition(ptScroll);
+			if (m_ptScrollDelta.x)
+				m_pParent->OnSongScroll(CSize(1, 0));	// horizontal scroll
+			UpdateSelection();
+		}
+	} else
+		CScrollView::OnTimer(nIDEvent);
 }
 
 void CSongView::OnViewZoomIn()

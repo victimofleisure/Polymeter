@@ -33,7 +33,8 @@ protected: // create from serialization only
 		MIN_BEAT_LINE_SPACING = 4,
 	};
 	enum {	// hit test flags
-		HTF_NO_STEP_RANGE	= 0x01,		// don't enforce step range
+		HTF_NO_TRACK_RANGE	= 0x01,		// don't enforce track range
+		HTF_NO_STEP_RANGE	= 0x02,		// don't enforce step range
 	};
 
 // Public data
@@ -95,6 +96,8 @@ protected:
 // Constants
 	enum {
 		MAX_ZOOM_SCALE = 1024,
+		SCROLL_TIMER_ID = 1789,
+		SCROLL_DELAY = 50	// milliseconds
 	};
 	enum {	// step state flags
 		SF_ON		= 0x01,		// step is non-empty
@@ -126,11 +129,13 @@ protected:
 	int		m_nMaxZoomSteps;	// maximum number of zoom steps
 	double	m_fZoom;			// zoom scaling factor
 	double	m_fZoomDelta;		// zoom step size, as a fraction
-	CPoint	m_ptDragOrigin;		// drag origin
+	CPoint	m_ptDragOrigin;		// drag origin, in scrolled client coords
 	int		m_nDragState;		// drag state; see enum above
 	bool	m_bDoContextMenu;	// true if context menu should be displayed
 	CRect	m_rStepSel;			// rectangular step selection; x is step index, y is track index
 	CRgnData	m_rgndStepSel;	// region data for step selection overlap removal
+	CPoint	m_ptScrollDelta;	// scroll by this amount per timer tick
+	W64UINT	m_nScrollTimer;		// if non-zero, timer instance for scrolling
 
 // Helpers
 	CSize	GetClientSize() const;
@@ -154,6 +159,8 @@ protected:
 	void	UpdateGrid(int iTrack);
 	void	UpdateStep(int iTrack, int iStep);
 	void	UpdateSteps(const CRect& rSelection);
+	void	UpdateSelection(CPoint point);
+	void	UpdateSelection();
 	bool	HaveEitherSelection() const;
 	void	SetCurStep(int iTrack, int iStep);
 	void	UpdateSongPositionNoRedraw(int iTrack);
@@ -196,6 +203,7 @@ protected:
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnTimer(W64UINT nIDEvent);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnEditCut();
 	afx_msg void OnUpdateEditCut(CCmdUI *pCmdUI);
@@ -216,6 +224,7 @@ protected:
 	afx_msg void OnTrackRotateLeft();
 	afx_msg void OnTrackRotateRight();
 	afx_msg void OnTrackRotateSteps();
+	afx_msg void OnTrackFill();
 };
 
 inline CPolymeterDoc* CStepView::GetDocument() const

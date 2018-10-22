@@ -22,6 +22,7 @@
 #include <math.h>
 #include "UndoCodes.h"
 #include "StepView.h"
+#include "StepParent.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -45,6 +46,8 @@ CMuteView::CMuteView()
 	m_ptDragOrigin = CPoint(0, 0);
 	m_nDragState = DS_NONE;
 	m_rngMute.SetEmpty();
+	m_nScrollDelta = 0;
+	m_nScrollTimer = 0;
 }
 
 CMuteView::~CMuteView()
@@ -154,11 +157,50 @@ int CMuteView::HitTest(CPoint point, bool bIgnoreX) const
 	return -1;
 }
 
+void CMuteView::UpdateSelection(CPoint point)
+{
+	ASSERT(m_nDragState == DS_DRAG);	// must be dragging selection, else logic error
+	CPolymeterDoc	*pDoc = GetDocument();
+	CIntRange	rngTrack;
+	rngTrack.Start = HitTest(m_ptDragOrigin - m_pStepView->GetScrollPosition());
+	rngTrack.End = HitTest(point, true);	// ignore x
+	if (rngTrack.End < 0) {	// if current track is out of bounds
+		if (point.y < 0)	// if above tracks
+			rngTrack.End = 0;	// clamp to first track
+		else	// below tracks; clamp to last track
+			rngTrack.End = pDoc->GetTrackCount() - 1;
+	}
+	rngTrack.Normalize();
+	if (rngTrack != m_rngMute) {	// if mute range changed
+		CIntRange	rngAbove(rngTrack.Start, m_rngMute.Start);
+		rngAbove.Normalize();
+		int	iTrack;
+		for (iTrack = rngAbove.Start; iTrack < rngAbove.End; iTrack++)
+			pDoc->ToggleSelection(iTrack, false);	// don't update
+		CIntRange	rngBelow(rngTrack.End, m_rngMute.End);
+		rngBelow.Normalize();
+		for (iTrack = rngBelow.Start + 1; iTrack <= rngBelow.End; iTrack++)
+			pDoc->ToggleSelection(iTrack, false);	// don't update
+		pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_SELECTION);
+		m_rngMute = rngTrack;
+	}
+}
+
+void CMuteView::UpdateSelection()
+{
+	CPoint	point;
+	GetCursorPos(&point);
+	ScreenToClient(&point);
+	UpdateSelection(point);
+}
+
 void CMuteView::EndDrag()
 {
 	if (m_nDragState) {
 		ReleaseCapture();
 		m_nDragState = DS_NONE;
+		KillTimer(m_nScrollTimer);
+		m_nScrollTimer = 0;
 	}
 }
 
@@ -210,6 +252,7 @@ BEGIN_MESSAGE_MAP(CMuteView, CView)
 	ON_WM_MOUSEMOVE()
 	ON_WM_SIZE()
 	ON_WM_CONTEXTMENU()
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 // CMuteView message handlers
@@ -227,8 +270,11 @@ BOOL CMuteView::PreTranslateMessage(MSG* pMsg)
 		//  give main frame a try
 		if (theApp.GetMainFrame()->SendMessage(UWM_HANDLE_DLG_KEY, reinterpret_cast<WPARAM>(pMsg)))
 			return TRUE;	// key was handled so don't process further
-		if (CPolymeterApp::HandleScrollViewKeys(pMsg, m_pStepView))
+		if (CPolymeterApp::HandleScrollViewKeys(pMsg, m_pStepView)) {
+			if (m_nDragState == DS_DRAG)	// if drag in progress
+				UpdateSelection();
 			return TRUE;
+		}
 	}
 	return CView::PreTranslateMessage(pMsg);
 }
@@ -271,7 +317,7 @@ void CMuteView::OnRButtonDown(UINT nFlags, CPoint point)
 	if (iTrack >= 0) {	// if hit track
 		SetCapture();
 		m_nDragState = DS_TRACK;
-		m_ptDragOrigin = point;
+		m_ptDragOrigin = point + m_pStepView->GetScrollPosition();
 		m_rngMute.SetEmpty();
 		m_bOriginMute = pDoc->GetSelected(iTrack);
 		pDoc->ToggleSelection(iTrack);
@@ -291,9 +337,8 @@ void CMuteView::OnRButtonUp(UINT nFlags, CPoint point)
 void CMuteView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	UNREFERENCED_PARAMETER(nFlags);
-	CPolymeterDoc	*pDoc = GetDocument();
 	if (m_nDragState == DS_TRACK) {	// if monitoring for start of drag
-		CSize	szDelta(point - m_ptDragOrigin);
+		CSize	szDelta(point + m_pStepView->GetScrollPosition() - m_ptDragOrigin);
 		// if mouse motion exceeds either drag threshold
 		if (abs(szDelta.cx) > GetSystemMetrics(SM_CXDRAG)
 		|| abs(szDelta.cy) > GetSystemMetrics(SM_CYDRAG)) {
@@ -301,31 +346,35 @@ void CMuteView::OnMouseMove(UINT nFlags, CPoint point)
 		}
 	}
 	if (m_nDragState == DS_DRAG) {	// drag in progress
-		CIntRange	rngTrack;
-		rngTrack.End = HitTest(point, true);	// ignore x
-		rngTrack.Start = HitTest(m_ptDragOrigin);
-		if (rngTrack.End < 0) {	// if current track is out of bounds
-			if (point.y < 0)	// if above tracks
-				rngTrack.End = 0;	// clamp to first track
-			else	// below tracks; clamp to last track
-				rngTrack.End = pDoc->GetTrackCount() - 1;
-		}
-		rngTrack.Normalize();
-		if (rngTrack != m_rngMute) {	// if mute range changed
-			CIntRange	rngAbove(rngTrack.Start, m_rngMute.Start);
-			rngAbove.Normalize();
-			int	iTrack;
-			for (iTrack = rngAbove.Start; iTrack < rngAbove.End; iTrack++)
-				pDoc->ToggleSelection(iTrack, false);	// don't update
-			CIntRange	rngBelow(rngTrack.End, m_rngMute.End);
-			rngBelow.Normalize();
-			for (iTrack = rngBelow.Start + 1; iTrack <= rngBelow.End; iTrack++)
-				pDoc->ToggleSelection(iTrack, false);	// don't update
-			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_SELECTION);
-			m_rngMute = rngTrack;
-		}
+		CSize	szClient(GetClientSize());
+		if (point.y < 0)
+			m_nScrollDelta = point.y;
+		else if (point.y > szClient.cy)
+			m_nScrollDelta = point.y - szClient.cy;
+		else
+			m_nScrollDelta = 0;
+		// if auto-scroll needed and scroll timer not set
+		if (m_nScrollDelta && !m_nScrollTimer)
+			m_nScrollTimer = SetTimer(SCROLL_TIMER_ID, SCROLL_DELAY, NULL);
+		UpdateSelection(point);
 	}
 //	CView::OnMouseMove(nFlags, point);
+}
+
+void CMuteView::OnTimer(W64UINT nIDEvent)
+{
+	if (nIDEvent == SCROLL_TIMER_ID) {	// if scroll timer
+		if (m_nScrollDelta) {	// if auto-scrolling
+			CPoint	ptScroll(m_pStepView->GetScrollPosition());
+			ptScroll.y += m_nScrollDelta;
+			CPoint	ptMaxScroll(m_pStepView->GetMaxScrollPos());
+			ptScroll.y = CLAMP(ptScroll.y, 0, ptMaxScroll.y);
+			m_pStepView->ScrollToPosition(ptScroll);
+			m_pStepView->m_pParent->OnStepScroll(CSize(0, m_nScrollDelta));
+			UpdateSelection();
+		}
+	} else
+		CView::OnTimer(nIDEvent);
 }
 
 void CMuteView::OnContextMenu(CWnd* pWnd, CPoint point)

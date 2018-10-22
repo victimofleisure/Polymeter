@@ -216,6 +216,7 @@ BEGIN
         MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
         MENUITEM SEPARATOR
         MENUITEM "&Export...",                  ID_FILE_EXPORT
+        MENUITEM "&Import...",                  ID_FILE_IMPORT
         MENUITEM SEPARATOR
         MENUITEM "Recent File",                 ID_FILE_MRU_FILE1
         MENUITEM SEPARATOR
@@ -300,6 +301,7 @@ BEGIN
         MENUITEM "&Tie Notes",                  ID_TRACK_TIE_NOTES
         MENUITEM "Tr&anspose...",               ID_TRACK_TRANSPOSE
         MENUITEM "&Velocity...",                ID_TRACK_VELOCITY
+        MENUITEM "&Fill...",                    ID_TRACK_FILL
         MENUITEM SEPARATOR
         MENUITEM "&Mute",                       ID_TRACK_MUTE
         MENUITEM "S&olo",                       ID_TRACK_SOLO
@@ -444,6 +446,7 @@ BEGIN
     "2",            ID_TRACK_SHIFT_RIGHT,   VIRTKEY, CONTROL, NOINVERT
     "H",            ID_TRACK_SHIFT_STEPS,   VIRTKEY, CONTROL, NOINVERT
     VK_OEM_5,       ID_TRACK_SOLO,          VIRTKEY, CONTROL, NOINVERT
+    "L",            ID_TRACK_STRETCH,       VIRTKEY, SHIFT, CONTROL, NOINVERT
     "T",            ID_TRACK_TIE_NOTES,     VIRTKEY, CONTROL, NOINVERT
     "T",            ID_TRACK_TRANSPOSE,     VIRTKEY, SHIFT, CONTROL, NOINVERT
     "V",            ID_TRACK_VELOCITY,      VIRTKEY, SHIFT, CONTROL, NOINVERT
@@ -465,7 +468,7 @@ BEGIN
     VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
     "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
     VK_F11,         ID_WINDOW_FULL_SCREEN,  VIRTKEY, NOINVERT
-    "L",            ID_TRACK_STRETCH,       VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "F",            ID_TRACK_FILL,          VIRTKEY, SHIFT, CONTROL, NOINVERT
 END
 
 
@@ -585,6 +588,35 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,61,41,50,14
 END
 
+IDD_FILL DIALOGEX 0, 0, 229, 156
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Fill"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "&Value Range",IDC_STATIC,7,7,215,42,WS_GROUP
+    LTEXT           "Start:",IDC_STATIC,14,17,20,8
+    EDITTEXT        IDC_FILL_VALUE_START,14,27,40,14,ES_AUTOHSCROLL
+    LTEXT           "End:",IDC_STATIC,62,17,16,8
+    EDITTEXT        IDC_FILL_VALUE_END,62,27,40,14,ES_AUTOHSCROLL
+    CONTROL         "&Unsigned",IDC_FILL_SIGNED1,"Button",BS_AUTORADIOBUTTON | WS_GROUP,120,17,46,10
+    CONTROL         "Signe&d",IDC_FILL_SIGNED2,"Button",BS_AUTORADIOBUTTON,120,31,38,10
+    GROUPBOX        "&Step Range",IDC_STATIC,7,52,215,42,WS_GROUP
+    LTEXT           "Start:",IDC_STATIC,14,62,20,8
+    EDITTEXT        IDC_FILL_STEP_START,14,72,40,14,ES_AUTOHSCROLL
+    LTEXT           "End:",IDC_STATIC,62,62,16,8
+    EDITTEXT        IDC_FILL_STEP_END,62,72,40,14,ES_AUTOHSCROLL
+    LTEXT           "&Function:",IDC_STATIC,7,101,31,8
+    COMBOBOX        IDC_FILL_FUNCTION,7,111,70,89,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "F&requency:",IDC_STATIC,85,101,38,8
+    EDITTEXT        IDC_FILL_FREQUENCY,85,111,40,14,ES_AUTOHSCROLL
+    LTEXT           "&Phase:",IDC_STATIC,133,101,23,8
+    EDITTEXT        IDC_FILL_PHASE,133,111,40,14,ES_AUTOHSCROLL
+    LTEXT           "&Curviness:",IDC_STATIC,181,101,35,8
+    EDITTEXT        IDC_FILL_CURVINESS,181,111,40,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,116,135,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,172,135,50,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -657,6 +689,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 55
     END
+
+    IDD_FILL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 222
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 149
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -693,6 +733,23 @@ BEGIN
 0x303e, 0x2f3c, 0x464d, 0x5043, 0x6f72, 0x6570, 0x7472, 0x4779, 0x6972, 
 0x5f64, 0x6544, 0x6373, 0x6972, 0x7470, 0x6f69, 0x526e, 0x776f, 0x3e73, 
 
+    0
+END
+
+IDD_FILL DLGINIT
+BEGIN
+    IDC_FILL_FUNCTION, 0x403, 7, 0
+0x694c, 0x656e, 0x7261, "\000" 
+    IDC_FILL_FUNCTION, 0x403, 5, 0
+0x6953, 0x656e, "\000" 
+    IDC_FILL_FUNCTION, 0x403, 9, 0
+0x7254, 0x6169, 0x676e, 0x656c, "\000" 
+    IDC_FILL_FUNCTION, 0x403, 8, 0
+0x6152, 0x706d, 0x5520, 0x0070, 
+    IDC_FILL_FUNCTION, 0x403, 10, 0
+0x6152, 0x706d, 0x4420, 0x776f, 0x006e, 
+    IDC_FILL_FUNCTION, 0x403, 7, 0
+0x7153, 0x6175, 0x6572, "\000" 
     0
 END
 
@@ -755,16 +812,17 @@ BEGIN
     IDS_EDIT_DELETE_STEPS   "Delete Steps"
     IDS_EDIT_DELETE_TRACKS  "Delete Tracks"
     IDS_EDIT_DUB            "Dub"
+    IDS_EDIT_FILL_STEPS     "Fill Steps"
     IDS_EDIT_INSERT_STEPS   "Insert Steps"
     IDS_EDIT_INSERT_TRACKS  "Insert Tracks"
     IDS_EDIT_MENU           "Edit"
     IDS_EDIT_MODULATION     "Modulation"
     IDS_EDIT_MOVE_PARTS     "Move Parts"
-    IDS_EDIT_MOVE_PRESETS   "Move Presets"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_MOVE_PRESETS   "Move Presets"
     IDS_EDIT_MOVE_TRACKS    "Move Tracks"
     IDS_EDIT_MULTI_STEP_RECT "Multiple Steps"
     IDS_EDIT_PASTE_STEPS    "Paste Steps"
@@ -780,11 +838,11 @@ BEGIN
     IDS_EDIT_TRACK_SORT     "Track Sort"
     IDS_EDIT_TRANSPOSE      "Transpose"
     IDS_EDIT_UNDO_FMT       "&Undo %s"
-    IDS_EDIT_UPDATE_PART    "Update Part"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_UPDATE_PART    "Update Part"
     IDS_EDIT_UPDATE_PRESET  "Update Preset"
     IDS_EDIT_VELOCITY       "Velocity"
     IDS_ERR_TRACK_LENGTH_CURSOR 
@@ -797,15 +855,16 @@ BEGIN
     IDS_EXPORT_TOO_MANY_TRACKS "Too many tracks."
     IDS_GRID_ERR_BAD_TIME_FORMAT "Enter time in hh:mm:ss format."
     IDS_HLINK_CANT_LAUNCH   "Can't launch browser."
+    IDS_IMPORT              "Import"
     IDS_MIDI_DEVICES_MISSING "MIDI devices are missing."
     IDS_MIDI_INPUT          "Input"
     IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
-    IDS_MIDI_OUTPUT         "Output"
-    IDS_MOD_DIFFERENCES     "<Differences>"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDI_OUTPUT         "Output"
+    IDS_MOD_DIFFERENCES     "<Differences>"
     IDS_MOD_SOURCE          "Source"
     IDS_NONE                "<None>"
     IDS_OFFSET_NOTES        "Semitones:"
@@ -825,14 +884,14 @@ BEGIN
     IDS_OPT_DESC_Midi_nLatency "Desired MIDI latency, in milliseconds"
     IDS_OPT_DESC_View_bShowCurPos 
                             "Indicate current position within each track"
-    IDS_OPT_DESC_View_bShowGMNames 
-                            "Display General MIDI patch and drum names instead of numbers"
-    IDS_OPT_DESC_View_bShowNoteNames 
-                            "Display notes as names instead of numbers"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_View_bShowGMNames 
+                            "Display General MIDI patch and drum names instead of numbers"
+    IDS_OPT_DESC_View_bShowNoteNames 
+                            "Display notes as names instead of numbers"
     IDS_OPT_DESC_View_fUpdateFreq 
                             "Frequency at which view is updated, in Hertz"
     IDS_OPT_DESC_View_fZoomDelta "Zoom step size, as a percentage"
@@ -848,12 +907,12 @@ BEGIN
     IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
     IDS_OPT_NAME_Midi_nBufferSize "Buffer Size"
     IDS_OPT_NAME_Midi_nDefaultVelocity "Default Velocity"
-    IDS_OPT_NAME_Midi_nLatency "Latency"
-    IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_Midi_nLatency "Latency"
+    IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
     IDS_OPT_NAME_View_bShowGMNames "Show General MIDI Names"
     IDS_OPT_NAME_View_bShowNoteNames "Show Note Names"
     IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
@@ -868,12 +927,12 @@ BEGIN
     IDS_PDR_GROUP_Master    "Master"
     IDS_PDR_NAME_fTempo     "Tempo"
     IDS_PDR_NAME_nKeySig    "Key Signature"
-    IDS_PDR_NAME_nMeter     "Meter"
-    IDS_PDR_NAME_nSongLength "Song Length"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_NAME_nMeter     "Meter"
+    IDS_PDR_NAME_nSongLength "Song Length"
     IDS_PDR_NAME_nStartPos  "Start Position"
     IDS_PDR_NAME_nTimeDiv   "PPQ"
     IDS_PROPS_MORE_COLORS   "More Colors..."
@@ -888,12 +947,12 @@ BEGIN
     IDS_TIME_TO_REPEAT_DAYS "days"
     IDS_TIME_TO_REPEAT_FMT  "%s beats\n%s\nGreatest prime factor is %s"
     IDS_TOOLBAR_CUSTOMIZE   "Customize..."
-    IDS_TOOLBAR_STANDARD    "Standard"
-    IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TOOLBAR_STANDARD    "Standard"
+    IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
     IDS_TRACK_TYPE_CONTROL  "Control"
     IDS_TRACK_TYPE_KEY_AFT  "Key Aftertouch"
     IDS_TRACK_TYPE_MODULATOR "Modulator"
@@ -908,17 +967,20 @@ BEGIN
     IDS_TRK_Note            "Note"
     IDS_TRK_Number          "#"
     IDS_TRK_Offset          "Offset"
-    IDS_TRK_Quant           "Quant"
-    IDS_TRK_STEP            "Step"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_Quant           "Quant"
+    IDS_TRK_STEP            "Step"
     IDS_TRK_Swing           "Swing"
     IDS_TRK_Type            "Type"
     IDS_TRK_Velocity        "Velocity"
     IDS_TYPE_TRACK          "Track"
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
+    IDS_OPT_NAME_General_iInputQuant "Input Quantization"
+    IDS_OPT_DESC_General_iInputQuant 
+                            "Quantization for converting MIDI input to steps"
 END
 
 STRINGTABLE
@@ -936,20 +998,22 @@ BEGIN
     ID_EDIT_INSERT          "Insert a new item\nInsert"
     ID_EDIT_RENAME          "Rename the selected item\nRename"
     ID_FILE_EXPORT          "Export to a MIDI file\nExport"
+    ID_FILE_IMPORT          "Import tracks from a MIDI file\nImport"
     ID_INDICATOR_SONG_POS   "000000000.000"
     ID_INDICATOR_SONG_TIME  "0000000:00:00"
     ID_MODULATION_SHOW_DIFFERENCES 
                             "Show modulations that differ for selected tracks"
     ID_PARTS_SELECT_TRACKS  "Select tracks belonging to selected parts"
-    ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
     ID_TOOLS_OPTIONS        "Edit the options\nOptions"
     ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
     ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for the selected tracks to repeat\nTime to Repeat"
     ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks\nVelocity Range "
+    ID_TRACK_FILL           "Fill selected tracks or steps with a range of values"
     ID_TRACK_GROUP          "Group the selected tracks into a part\nGroup"
     ID_TRACK_LENGTH         "Set the length of one or more tracks\nLength"
     ID_TRACK_MUTE           "Mute or unmute the selected tracks\nMute"
@@ -960,12 +1024,12 @@ BEGIN
     ID_TRACK_PRESET_UPDATE  "Update the selected preset from the track mutes\nUpdate Preset"
     ID_TRACK_REVERSE        "Reverse the selected tracks or steps\nReverse"
     ID_TRACK_ROTATE_LEFT    "Rotate the selected tracks or steps left\nRotate Left"
-    ID_TRACK_ROTATE_RIGHT   "Rotate the selected tracks or steps right\nRotate Right"
-    ID_TRACK_ROTATE_STEPS   "Rotate the selection left or right a given number of steps\nRotate Steps"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_ROTATE_RIGHT   "Rotate the selected tracks or steps right\nRotate Right"
+    ID_TRACK_ROTATE_STEPS   "Rotate the selection left or right a given number of steps\nRotate Steps"
     ID_TRACK_SHIFT_LEFT     "Shift the selected tracks or steps left\nShift Left"
     ID_TRACK_SHIFT_RIGHT    "Shift the selected tracks or steps right\nShift Right"
     ID_TRACK_SHIFT_STEPS    "Shift the selection left or right a given number of steps\nShift Steps"
@@ -990,12 +1054,12 @@ BEGIN
     ID_VIEW_MODULATIONS     "Show or hide the modulations bar\nModulations"
     ID_VIEW_PARTS           "Show or hide the parts bar\nParts"
     ID_VIEW_PRESETS         "Show or hide the presets bar\nPresets"
-    ID_VIEW_PROPERTIES      "Show or hide the properties bar\nProperties"
-    ID_VIEW_TYPE_LIVE       "Show the live view\nLive View"
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_PROPERTIES      "Show or hide the properties bar\nProperties"
+    ID_VIEW_TYPE_LIVE       "Show the live view\nLive View"
     ID_VIEW_TYPE_SONG       "Show the song view\nSong View"
     ID_VIEW_TYPE_TRACK      "Show the track view\nTrack View"
     ID_VIEW_VELOCITIES      "Show or hide velocities pane\nVelocities"

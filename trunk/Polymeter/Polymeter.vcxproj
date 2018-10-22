@@ -204,6 +204,7 @@
     <ClInclude Include="DocIter.h" />
     <ClInclude Include="DragVirtualListCtrl.h" />
     <ClInclude Include="ExportDlg.h" />
+    <ClInclude Include="FillDlg.h" />
     <ClInclude Include="FixedArray.h" />
     <ClInclude Include="FocusEdit.h" />
     <ClInclude Include="GDIUtils.h" />
@@ -316,6 +317,7 @@
     <ClCompile Include="DocIter.cpp" />
     <ClCompile Include="DragVirtualListCtrl.cpp" />
     <ClCompile Include="ExportDlg.cpp" />
+    <ClCompile Include="FillDlg.cpp" />
     <ClCompile Include="FocusEdit.cpp" />
     <ClCompile Include="GDIUtils.cpp" />
     <ClCompile Include="GoToPositionDlg.cpp" />

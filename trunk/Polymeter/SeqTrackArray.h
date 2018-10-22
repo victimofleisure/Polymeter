@@ -82,7 +82,6 @@ public:
 	int		GetModulationCount(int iTrack) const;
 	void	GetModulations(CPackedModulationArray& arrMod) const;
 	void	SetModulations(const CPackedModulationArray& arrMod);
-	bool	CalcDynamicRange(int iTrack, int& nMinStep, int& nMaxStep, bool IsModulator = false) const;
 	int		GetChannelUsage(int *parrFirstTrack) const;
 
 // Operations
@@ -121,6 +120,9 @@ public:
 	void	RemoveModulation(int iTrack, int iMod);
 	void	MoveModulations(int iTrack, CIntArrayEx& arrSelection, int iDropPos);
 	void	OnTrackArrayEdit(const CIntArrayEx& arrTrackMap);
+	bool	CalcStepRange(int iTrack, int& nMinStep, int& nMaxStep, int iStartStep = 0, int nRangeSteps = 0, bool bIsModulator = false) const;
+	void	CalcNoteRange(int iTrack, int& nMinNote, int& nMaxNote) const;
+	bool	CalcVelocityRange(int iTrack, int& nMinVel, int& nMaxVel, int iStartStep = 0, int nRangeSteps = 0) const;
 
 protected:
 // Member data

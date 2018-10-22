@@ -44,6 +44,8 @@ public:
 public:
 	void	UpdateMute(int iTrack);
 	void	UpdateMutes(const CIntArrayEx& arrSelection);
+	void	UpdateSelection(CPoint point);
+	void	UpdateSelection();
 	int		HitTest(CPoint point, bool bIgnoreX = false) const;
 	void	EndDrag();
 
@@ -76,15 +78,21 @@ protected:
 		DS_TRACK,			// monitoring for start of drag
 		DS_DRAG,			// drag in progress
 	};
+	enum {
+		SCROLL_TIMER_ID = 1789,
+		SCROLL_DELAY = 50	// milliseconds
+	};
 	static const COLORREF	m_arrMuteColor[];
 
 // Member data
 	int		m_nTrackHeight;		// track height, in client coords
-	CPoint	m_ptDragOrigin;		// drag origin
+	CPoint	m_ptDragOrigin;		// drag origin, in scrolled client coords
 	int		m_nDragState;		// drag state; see enum above
 	bool	m_bOriginMute;		// true if original mute was set
 	CIntRange	m_rngMute;		// mute selection range
 	CRgnData	m_rgndStepSel;	// region data for step selection overlap removal
+	int		m_nScrollDelta;		// scroll by this amount per timer tick
+	W64UINT	m_nScrollTimer;		// if non-zero, timer instance for scrolling
 
 // Helpers
 	CSize	GetClientSize() const;
@@ -99,6 +107,7 @@ protected:
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnTimer(W64UINT nIDEvent);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 };
 

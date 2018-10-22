@@ -16,6 +16,7 @@
 #include "ArrayEx.h"
 #include "FixedArray.h"
 #include "Properties.h"	// for option info
+#include "MidiFile.h"	// for import track array class
 
 class CTrackBase {
 public:
@@ -273,6 +274,20 @@ inline bool CTrack::IsModulated() const
 
 class CTrackArray : public CArrayEx<CTrack, CTrack&> {
 public:
+};
+
+class CImportTrackArray : public CTrackArray {
+public:
+	void	ImportMidiFile(LPCTSTR szPath, int nOutTimeDiv, double fQuantization);
+	void	ImportMidiFile(const CMidiTrackArray& arrInTrack, const CStringArrayEx& arrInTrackName, int nInTimeDiv, int nOutTimeDiv, double fQuantization);
+
+protected:
+	struct TRACK_INFO {
+		int		iTrack;			// index in track array
+		int		nStartTime;		// current note's start time in ticks, or -1 if none
+		int		nVelocity;		// current note's velocity
+	};
+	static	int		ImportSortCmp(const void *arg1, const void *arg2);
 };
 
 class CTrackGroup {

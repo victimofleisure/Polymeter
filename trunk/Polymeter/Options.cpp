@@ -31,6 +31,11 @@ const COptions::PROPERTY_INFO COptions::m_Info[PROPERTIES] = {
 	#include "OptionsDef.h"
 };
 
+const int COptions::m_arrInputQuant[INPUT_QUANTS] = {
+	#define INPUTQUANTDEF(x) x,
+	#include "OptionsDef.h"	// generate input quantization array init
+};
+
 COptions::COptions()
 {
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
@@ -82,6 +87,8 @@ int COptions::GetOptionCount(int iProp) const
 		return theApp.m_midiDevs.GetCount(CMidiDevices::INPUT) + 1;	// add one for none option
 	case PROP_Midi_iOutputDevice:
 		return theApp.m_midiDevs.GetCount(CMidiDevices::OUTPUT) + 1;	// add one for none option
+	case PROP_General_iInputQuant:
+		return INPUT_QUANTS;
 	default:
 		return CProperties::GetOptionCount(iProp);
 	}
@@ -102,6 +109,12 @@ CString	COptions::GetOptionName(int iProp, int iOption) const
 			CString	sName(theApp.m_midiDevs.GetName(CMidiDevices::OUTPUT, iOption - 1));	// convert to zero-origin
 			if (sName.IsEmpty())
 				sName.LoadString(IDS_NONE);
+			return sName;
+		}
+	case PROP_General_iInputQuant:
+		{
+			CString	sName;
+			sName.Format(_T("1/%d"), GetInputQuantization(iOption));
 			return sName;
 		}
 	default:

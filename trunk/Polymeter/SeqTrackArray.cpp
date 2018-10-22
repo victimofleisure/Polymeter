@@ -561,15 +561,20 @@ void CSeqTrackArray::OnTrackArrayEdit(const CIntArrayEx& arrTrackMap)
 	}
 }
 
-bool CSeqTrackArray::CalcDynamicRange(int iTrack, int& nMinStep, int& nMaxStep, bool IsModulator) const
+bool CSeqTrackArray::CalcStepRange(int iTrack, int& nMinStep, int& nMaxStep, int iStartStep, int nRangeSteps, bool bIsModulator) const
 {
 	const CTrack&	trk = GetAt(iTrack);
 	int	nMin = MIDI_NOTE_MAX;
 	int	nMax = 0;
 	int	nSteps = trk.m_arrStep.GetSize();
+	int	iEndStep;
+	if (nRangeSteps)	// if step range specified
+		iEndStep = iStartStep + nRangeSteps;
+	else	// all steps
+		iEndStep = nSteps;
 	bool	bRetVal = true;
-	if (trk.IsNote() && !IsModulator) {	// if track type is note and track isn't a modulator
-		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
+	if (trk.IsNote() && !bIsModulator) {	// if track type is note and track isn't a modulator
+		for (int iStep = iStartStep; iStep < iEndStep; iStep++) {	// for each step
 			STEP	nStep = trk.m_arrStep[iStep] & SB_VELOCITY;
 			if (nStep) {	// if step isn't empty
 				int	iPrevStep = iStep - 1;
@@ -587,7 +592,7 @@ bool CSeqTrackArray::CalcDynamicRange(int iTrack, int& nMinStep, int& nMaxStep, 
 		if (!nMax)	// zero reserved for note off
 			bRetVal = false;	// no notes found
 	} else {	// track type isn't note
-		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
+		for (int iStep = iStartStep; iStep < iEndStep; iStep++) {	// for each step
 			int	nStep = trk.m_arrStep[iStep];
 			if (nStep < nMin)
 				nMin = nStep;
@@ -598,6 +603,50 @@ bool CSeqTrackArray::CalcDynamicRange(int iTrack, int& nMinStep, int& nMaxStep, 
 	nMinStep = nMin;
 	nMaxStep = nMax;
 	return bRetVal;
+}
+
+void CSeqTrackArray::CalcNoteRange(int iTrack, int& nMinNote, int& nMaxNote) const
+{
+	const CTrack&	trk = GetAt(iTrack);
+	nMinNote = trk.m_nNote;
+	nMaxNote = trk.m_nNote;
+	int	nMods = trk.m_arrModulator.GetSize();
+	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
+		if (trk.m_arrModulator[iMod].m_iType == MT_Note) {	// if note modulation
+			int	iModTrack = trk.m_arrModulator[iMod].m_iSource;
+			if (iModTrack >= 0) {	// if track's note is modulated
+				int	nMinMod, nMaxMod;	// offset note range to account for modulation
+				CalcStepRange(iModTrack, nMinMod, nMaxMod, 0, 0, true);	// modulator track
+				nMinNote += nMinMod - MIDI_NOTES / 2;	// convert step value to signed offset
+				nMaxNote += nMaxMod - MIDI_NOTES / 2;
+			}
+		}
+	}
+}
+
+bool CSeqTrackArray::CalcVelocityRange(int iTrack, int& nMinVel, int& nMaxVel, int iStartStep, int nRangeSteps) const
+{
+	const CTrack&	trk = GetAt(iTrack);
+	nMinVel = trk.m_nVelocity;
+	nMaxVel = trk.m_nVelocity;
+	int	nMinStep, nMaxStep;	// account for velocity range of track's steps
+	if (!CalcStepRange(iTrack, nMinStep, nMaxStep, iStartStep, nRangeSteps))	// if can't get range
+		return false;	// assume empty note track
+	nMinVel += nMinStep;
+	nMaxVel += nMaxStep;
+	int	nMods = trk.m_arrModulator.GetSize();
+	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
+		if (trk.m_arrModulator[iMod].m_iType == MT_Velocity) {	// if velocity modulation
+			int	iModTrack = trk.m_arrModulator[iMod].m_iSource;
+			if (iModTrack >= 0) {	// if track's velocity is modulated
+				int	nMinMod, nMaxMod;	// offset velocity range to account for modulation
+				CalcStepRange(iModTrack, nMinMod, nMaxMod, 0, 0, true);	// modulator track
+				nMinVel += nMinMod - MIDI_NOTES / 2;	// convert step value to signed offset
+				nMaxVel += nMaxMod - MIDI_NOTES / 2;
+			}
+		}
+	}
+	return true;
 }
 
 int CSeqTrackArray::GetChannelUsage(int *parrFirstTrack) const

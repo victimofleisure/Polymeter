@@ -214,6 +214,8 @@ public:
 	bool	CreateAutoSavePath(CString& sPath) const;
 	static	bool	DoShiftDialog(int& nSteps, bool bIsRotate = false);
 	void	StretchTracks(double fScale);
+	bool	TrackFill(const CRect *prStepSel);
+	void	TrackFill(const CIntArrayEx& arrTrackSel, CRange<int> rngStep, CRange<int> rngVal, int iFunction, double fFrequency, double fPhase, double fPower);
 
 // Overrides
 public:
@@ -353,6 +355,8 @@ protected:
 	void	SetViewType(int nViewType);
 	void	GetTrackIDMap(CTrackIDMap& mapTrackID) const;
 	void	OnTrackArrayEdit(const CTrackIDMap& mapTrackID);
+
+// Undo helpers
 	void	SaveTrackProperty(CUndoState& State) const;
 	void	RestoreTrackProperty(const CUndoState& State);
 	void	SaveMultiTrackProperty(CUndoState& State) const;
@@ -416,6 +420,7 @@ protected:
 	afx_msg void OnUpdateEditRedo(CCmdUI *pCmdUI);
 	afx_msg void OnToolsStatistics();
 	afx_msg void OnFileExport();
+	afx_msg void OnFileImport();
 	afx_msg void OnTransportPlay();
 	afx_msg void OnUpdateTransportPlay(CCmdUI *pCmdUI);
 	afx_msg void OnTransportPause();
@@ -471,6 +476,8 @@ protected:
 	afx_msg void OnTrackGroup();
 	afx_msg void OnUpdateTrackGroup(CCmdUI *pCmdUI);
 	afx_msg void OnStretchTracks();
+	afx_msg void OnTrackFill();
+	afx_msg void OnUpdateTrackFill(CCmdUI *pCmdUI);
 };
 
 inline int CPolymeterDoc::GetTrackCount() const

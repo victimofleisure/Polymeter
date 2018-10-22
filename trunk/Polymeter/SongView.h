@@ -28,6 +28,9 @@ protected: // create from serialization only
 	DECLARE_DYNCREATE(CSongView)
 
 // Constants
+	enum {	// hit test flags
+		HTF_NO_TRACK_RANGE	= 0x01,		// don't enforce track range
+	};
 
 // Public data
 	CSongParent	*m_pParent;
@@ -65,7 +68,7 @@ public:
 	int		GetTrackHeight() const;
 
 // Operations
-	int		HitTest(CPoint point, int& iCell) const;
+	int		HitTest(CPoint point, int& iCell, UINT nFlags = 0) const;
 	int		ConvertXToSongPos(int x) const;
 	int		ConvertSongPosToX(int nSongPos) const;
 
@@ -77,6 +80,8 @@ protected:
 	enum {
 		MAX_ZOOM_SCALE = 1024,
 		STEPS_PER_CELL = 4,		// make each cell a sixteenth note
+		SCROLL_TIMER_ID = 1789,
+		SCROLL_DELAY = 50	// milliseconds
 	};
 	enum {	// cell state flags
 		CF_ON		= 0x01,		// cell intersects one or more non-empty steps
@@ -101,13 +106,15 @@ protected:
 	int		m_nMaxZoomSteps;	// maximum number of zoom steps
 	double	m_fZoom;			// zoom scaling factor
 	double	m_fZoomDelta;		// zoom step size, as a fraction
-	CPoint	m_ptDragOrigin;		// drag origin
+	CPoint	m_ptDragOrigin;		// drag origin, in scrolled client coords
 	int		m_nDragState;		// drag state; see enum above
 	int		m_nSongPosX;		// song position x, in pixels
 	bool	m_bIsSongPosVisible;	// true if song position is visible
 	CByteArrayEx	m_arrCell;	// array of cell values
 	CRect	m_rCellSel;			// rectangular cell selection; x is step index, y is track index
 	CRgnData	m_rgndCellSel;	// region data for cell selection overlap removal
+	CPoint	m_ptScrollDelta;	// scroll by this amount per timer tick
+	W64UINT	m_nScrollTimer;		// if non-zero, timer instance for scrolling
 
 // Helpers
 	CSize	GetClientSize() const;
@@ -125,6 +132,8 @@ protected:
 	void	UpdateCell(int iTrack, int iCell);
 	void	UpdateCells(const CRect& rSelection);
 	void	DispatchToDocument();
+	void	UpdateSelection(CPoint point);
+	void	UpdateSelection();
 
 // Overrides
 	virtual void OnInitialUpdate();
@@ -148,6 +157,7 @@ protected:
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnTimer(W64UINT nIDEvent);
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnEditSelectAll();

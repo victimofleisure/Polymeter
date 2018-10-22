@@ -35,6 +35,10 @@
 #include "ChildFrm.h"
 #include "Range.h"
 #include "StretchDlg.h"
+#include <math.h>
+#include "FillDlg.h"
+#include "VelocityView.h"	// for waveforms in TrackFill
+#include "MidiFile.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -66,7 +70,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define RK_TRANSPOSE_DLG	REG_SETTINGS _T("\\Transpose")
 #define RK_TRANSPOSE_NOTES	_T("nNotes")
-#define RK_VELOCITY_DLG	REG_SETTINGS _T("\\Velocity")
+#define RK_VELOCITY_DLG		REG_SETTINGS _T("\\Velocity")
 #define RK_VELOCITY_OFFSET	_T("nOffset")
 #define RK_SHIFT_DLG		REG_SETTINGS _T("\\Shift")
 #define RK_SHIFT_STEPS		_T("nSteps")
@@ -75,6 +79,14 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_STRETCH_DLG		REG_SETTINGS _T("\\Stretch")
 #define RK_STRETCH_PERCENT	_T("fPercent")
 #define RK_PART_SECTION		_T("Part")
+#define RK_FILL				REG_SETTINGS _T("\\Fill")
+#define RK_FILL_VAL_START	_T("nValStart")
+#define RK_FILL_VAL_END		_T("nValEnd")
+#define RK_FILL_FUNCTION	_T("iFunction")
+#define RK_FILL_FREQUENCY	_T("fFrequency")
+#define RK_FILL_PHASE		_T("fPhase")
+#define RK_FILL_CURVINESS	_T("fCurviness")
+#define RK_FILL_SIGNED		_T("bSigned")
 
 // define null title IDs for undo codes that have dynamic titles, or are insigificant
 #define IDS_EDIT_TRACK_PROP			0
@@ -837,21 +849,10 @@ bool CPolymeterDoc::IsTranspositionSafe(int nNoteDelta) const
 	int	nSels = GetSelectedCount();
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = m_arrTrackSel[iSel];
-		const CTrack&	trk = m_Seq.GetTrack(iTrack);
-		int	nMinNote = m_Seq.GetNote(iTrack) + nNoteDelta;
-		int	nMaxNote = nMinNote;
-		int	nMods = trk.m_arrModulator.GetSize();
-		for (int iMod = 0; iMod < nMods; iMod++) {
-			if (trk.m_arrModulator[iMod].m_iType == MT_Note) {
-				int	iModTrack = trk.m_arrModulator[iMod].m_iSource;
-				if (iModTrack >= 0) {	// if track's note is modulated
-					int	nMinMod, nMaxMod;	// offset note range to account for modulation
-					m_Seq.CalcDynamicRange(iModTrack, nMinMod, nMaxMod, true);	// modulator track
-					nMinNote += nMinMod - MIDI_NOTES / 2;	// convert step value to signed offset
-					nMaxNote += nMaxMod - MIDI_NOTES / 2;
-				}
-			}
-		}
+		int	nMinNote, nMaxNote;
+		m_Seq.CalcNoteRange(iTrack, nMinNote, nMaxNote);
+		nMinNote += nNoteDelta;
+		nMaxNote += nNoteDelta;
 		if (nMinNote < 0 || nMaxNote > MIDI_NOTE_MAX)	// if note would clip
 			return false;	// early out, no need to check remaining tracks
 	}
@@ -884,25 +885,11 @@ bool CPolymeterDoc::IsVelocityOffsetSafe(int nVelocityDelta, CRange<int> *prngVe
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = m_arrTrackSel[iSel];
 		const CTrack&	trk = m_Seq.GetTrack(iTrack);
-		int	nMinVel = m_Seq.GetVelocity(iTrack) + nVelocityDelta;
-		int	nMaxVel = nMinVel;
-		int	nMinStep, nMaxStep;	// account for velocity range of track's steps
-		if (!m_Seq.CalcDynamicRange(iTrack, nMinStep, nMaxStep))	// if can't get range
+		int	nMinVel, nMaxVel;
+		if (!m_Seq.CalcVelocityRange(iTrack, nMinVel, nMaxVel))	// if can't get range
 			continue;	// skip this track; assume empty note track
-		nMinVel += nMinStep;
-		nMaxVel += nMaxStep;
-		int	nMods = trk.m_arrModulator.GetSize();
-		for (int iMod = 0; iMod < nMods; iMod++) {
-			if (trk.m_arrModulator[iMod].m_iType == MT_Velocity) {
-				int	iModTrack = trk.m_arrModulator[iMod].m_iSource;
-				if (iModTrack >= 0) {	// if track's velocity is modulated
-					int	nMinMod, nMaxMod;	// offset velocity range to account for modulation
-					m_Seq.CalcDynamicRange(iModTrack, nMinMod, nMaxMod, true);	// modulator track
-					nMinVel += nMinMod - MIDI_NOTES / 2;	// convert step value to signed offset
-					nMaxVel += nMaxMod - MIDI_NOTES / 2;
-				}
-			}
-		}
+		nMinVel += nVelocityDelta;
+		nMaxVel += nVelocityDelta;
 		int	nLowerRail;
 		if (trk.IsNote())	// if track type is note
 			nLowerRail = 1;	// zero is reserved for note off
@@ -935,7 +922,7 @@ bool CPolymeterDoc::OffsetVelocity(int nVelocityDelta)
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = m_arrTrackSel[iSel];
 		int	nVel = m_Seq.GetVelocity(iTrack) + nVelocityDelta;
-		m_Seq.SetVelocity(iTrack, CLAMP(nVel, 0, MIDI_NOTE_MAX));
+		m_Seq.SetVelocity(iTrack, CLAMP(nVel, -MIDI_NOTE_MAX, MIDI_NOTE_MAX));
 	}
 	CMultiItemPropHint	hint(m_arrTrackSel, PROP_Velocity);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
@@ -1846,6 +1833,7 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		break;
 	case UCODE_VELOCITY:
 	case UCODE_SHIFT:
+	case UCODE_FILL_STEPS:
 		SaveMultiTrackSteps(State);
 		break;
 	case UCODE_REVERSE:
@@ -1950,6 +1938,7 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		break;
 	case UCODE_VELOCITY:
 	case UCODE_SHIFT:
+	case UCODE_FILL_STEPS:
 		RestoreMultiTrackSteps(State);
 		break;
 	case UCODE_REVERSE:
@@ -2590,6 +2579,90 @@ void CPolymeterDoc::StretchTracks(double fScale)
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
 }
 
+void CPolymeterDoc::TrackFill(const CIntArrayEx& arrTrackSel, CRange<int> rngStep, CRange<int> rngVal, int iFunction, double fFrequency, double fPhase, double fPower)
+{
+	int	nSels = arrTrackSel.GetSize();
+	int	nSteps = rngStep.Length();
+	int	nDeltaVal = rngVal.Length();
+	double	fDeltaT;
+	if (fFrequency)
+		fDeltaT = nSteps / fFrequency;
+	else
+		fDeltaT = 0;	// avoid divide by zero
+	double	fScale = fPower - 1;
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = arrTrackSel[iSel];	// get track index
+		const CTrack&	trk = m_Seq.GetTrack(iTrack);	// reference track
+		CStepArray	arrStep(trk.m_arrStep);	// copy track's step array
+		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step in range
+			int	iVal;
+			if (iFunction < 0) {	// if function is linear
+				iVal = round(iStep * double(nDeltaVal) / (nSteps - 1)) + rngVal.Start;
+			} else {	// periodic function
+				double	fStepPhase = iStep / fDeltaT + fPhase;	// compute step's phase
+				double	r = CVelocityView::GetWave(iFunction, fStepPhase);	// compute periodic function
+				r = (r + 1) / 2;	// convert function result from bipolar to unipolar
+				if (fPower > 0)	// if power was specified
+					r = (pow(fPower, r) - 1) / fScale;	// apply power in normalized space
+				iVal = round(r * nDeltaVal) + rngVal.Start;	// scale, offset, and round
+			}
+			iVal = CLAMP(iVal, 0, MIDI_NOTE_MAX);	// clamp to step range just in case
+			if (iStep + rngStep.Start >= trk.m_arrStep.GetSize())	// if step index out of range
+				break;	// abort step loop to avoid access violation
+			arrStep[iStep + rngStep.Start] = static_cast<STEP>(iVal);	// store step
+		}
+		m_Seq.SetSteps(iTrack, arrStep);	// update track's step array
+	}
+}
+
+bool CPolymeterDoc::TrackFill(const CRect *prStepSel)
+{
+	CIntArrayEx	arrTrackSel;
+	bool	bIsRectSel = prStepSel != NULL && !prStepSel->IsRectEmpty();
+	if (bIsRectSel)	// if rectangular selection exists
+		MakeTrackSelection(*prStepSel, arrTrackSel);	// synthesize track selection
+	else	// no rectangular selection 
+		arrTrackSel = m_arrTrackSel;	// use current track selection
+	int	nSels = arrTrackSel.GetSize();
+	ASSERT(nSels > 0);	// at least one track required
+	if (nSels <= 0)	// if not enough tracks
+		return false;
+	CFillDlg	dlg;
+	dlg.m_nSteps = m_Seq.GetLength(arrTrackSel[0]);	// get first track's length
+	if (bIsRectSel) {	// if rectangular selection exists
+		dlg.m_rngStep.Start = prStepSel->left;	// get initial step range from rectangular selection
+		dlg.m_rngStep.End = prStepSel->right;
+	} else {	// no rectangular selection
+		dlg.m_rngStep.Start = 0;	// initial step range is entire track
+		dlg.m_rngStep.End = dlg.m_nSteps;
+	}
+	dlg.m_rngVal.Start = CPersist::GetInt(RK_FILL, RK_FILL_VAL_START, 0);
+	dlg.m_rngVal.End = CPersist::GetInt(RK_FILL, RK_FILL_VAL_END, MIDI_NOTE_MAX);
+	dlg.m_iFunction = CPersist::GetInt(RK_FILL, RK_FILL_FUNCTION, 0);	// default to linear
+	dlg.m_fFrequency = CPersist::GetDouble(RK_FILL, RK_FILL_FREQUENCY, 1);
+	dlg.m_fPhase = CPersist::GetDouble(RK_FILL, RK_FILL_PHASE, 0);
+	dlg.m_fCurviness = CPersist::GetDouble(RK_FILL, RK_FILL_CURVINESS, 0);
+	dlg.m_bSigned = CPersist::GetInt(RK_FILL, RK_FILL_SIGNED, 0);
+	if (dlg.DoModal() != IDOK)	// if user canceled
+		return false;
+	CPersist::WriteInt(RK_FILL, RK_FILL_VAL_START, dlg.m_rngVal.Start);
+	CPersist::WriteInt(RK_FILL, RK_FILL_VAL_END, dlg.m_rngVal.End);
+	CPersist::WriteInt(RK_FILL, RK_FILL_FUNCTION, dlg.m_iFunction);
+	CPersist::WriteDouble(RK_FILL, RK_FILL_FREQUENCY, dlg.m_fFrequency);
+	CPersist::WriteDouble(RK_FILL, RK_FILL_PHASE, dlg.m_fPhase);
+	CPersist::WriteDouble(RK_FILL, RK_FILL_CURVINESS, dlg.m_fCurviness);
+	CPersist::WriteInt(RK_FILL, RK_FILL_SIGNED, dlg.m_bSigned);
+	CIntArrayEx	arrPrevTrackSel(m_arrTrackSel);	// save track selection
+	m_arrTrackSel = arrTrackSel;	// undo handler uses member track selection
+	NotifyUndoableEdit(0, UCODE_FILL_STEPS);	// notify undo
+	m_arrTrackSel = arrPrevTrackSel;	// restore previous track selection
+	TrackFill(arrTrackSel, dlg.m_rngStep, dlg.m_rngVal, dlg.m_iFunction - 1, dlg.m_fFrequency, dlg.m_fPhase, dlg.m_fCurviness);
+	CMultiItemPropHint	hint(arrTrackSel);
+	UpdateAllViews(NULL, HINT_MULTI_TRACK_STEPS, &hint);
+	SetModifiedFlag();
+	return true;
+}
+
 // CPolymeterDoc diagnostics
 
 #ifdef _DEBUG
@@ -2613,6 +2686,7 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_REDO, OnUpdateEditRedo)
 	ON_COMMAND(ID_TOOLS_STATISTICS, OnToolsStatistics)
 	ON_COMMAND(ID_FILE_EXPORT, OnFileExport)
+	ON_COMMAND(ID_FILE_IMPORT, OnFileImport)
 	ON_COMMAND(ID_TRANSPORT_PLAY, OnTransportPlay)
 	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_PLAY, OnUpdateTransportPlay)
 	ON_COMMAND(ID_TRANSPORT_PAUSE, OnTransportPause)
@@ -2678,6 +2752,8 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_GROUP, OnUpdateTrackGroup)
 	ON_COMMAND(ID_TRACK_STRETCH, OnStretchTracks)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_STRETCH, OnUpdateTrackReverse)
+	ON_COMMAND(ID_TRACK_FILL, OnTrackFill)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_FILL, OnUpdateTrackFill)
 END_MESSAGE_MAP()
 
 // CPolymeterDoc commands
@@ -2756,6 +2832,31 @@ void CPolymeterDoc::OnFileExport()
 				AfxMessageBox(IDS_EXPORT_ERROR);
 			}
 		}
+	}
+}
+
+void CPolymeterDoc::OnFileImport()
+{
+	CString	sFilter(LPCTSTR(IDS_EXPORT_FILE_FILTER));
+	CPathStr	sDefName(GetTitle());
+	sDefName.RemoveExtension();
+	CFileDialog	fd(TRUE, _T(".mid"), sDefName, OFN_HIDEREADONLY, sFilter);
+	CString	sDlgTitle(LPCTSTR(IDS_IMPORT));
+	fd.m_ofn.lpstrTitle = sDlgTitle;
+	if (fd.DoModal() == IDOK) {
+		CImportTrackArray	arrTrack;	// destination array
+		double	fQuant = 4.0 / theApp.m_Options.GetInputQuantization();
+		arrTrack.ImportMidiFile(fd.GetPathName(), m_Seq.GetTimeDivision(), fQuant);
+		int	iInsTrack;
+		if (GetSelectedCount())	// if selection exists
+			iInsTrack = m_arrTrackSel[0];	// insert at selection
+		else	// no selection
+			iInsTrack = 0;	// default insert position
+		m_Seq.InsertTracks(iInsTrack, arrTrack);
+		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
+		SetModifiedFlag();
+		SelectRange(iInsTrack, arrTrack.GetSize());
+		NotifyUndoableEdit(0, UCODE_INSERT_TRACKS);
 	}
 }
 
@@ -3005,6 +3106,16 @@ void CPolymeterDoc::OnTrackVelocity()
 			OffsetVelocity(dlg.m_nOffset);
 		theApp.WriteProfileInt(RK_VELOCITY_DLG, RK_VELOCITY_OFFSET, dlg.m_nOffset);
 	}
+}
+
+void CPolymeterDoc::OnTrackFill()
+{
+	TrackFill(NULL);
+}
+
+void CPolymeterDoc::OnUpdateTrackFill(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(GetSelectedCount());
 }
 
 void CPolymeterDoc::OnTransportPlay()

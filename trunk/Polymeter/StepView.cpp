@@ -78,6 +78,8 @@ CStepView::CStepView()
 	m_nDragState = DS_NONE;
 	m_bDoContextMenu = false;
 	m_rStepSel.SetRectEmpty();
+	m_ptScrollDelta = CPoint(0, 0);
+	m_nScrollTimer = 0;
 }
 
 CStepView::~CStepView()
@@ -699,23 +701,26 @@ void CStepView::Zoom(int nZoom, int nOriginX)
 int CStepView::HitTest(CPoint point, int& iStep, UINT nFlags) const
 {
 	const CSequencer&	seq = GetDocument()->m_Seq;
-	int	nTracks = seq.GetTrackCount();
 	point += GetScrollPosition();
-	int	y = point.y;
-	if (y >= 0 && y < m_nTrackHeight * nTracks) {
-		int	iTrack = y / m_nTrackHeight;
-		int	x = point.x;
-		double	fStepWidth = GetStepWidth(iTrack);
-		int	nTrackWidth = round(fStepWidth * seq.GetLength(iTrack));
-		if ((x >= 0 && x < nTrackWidth) || (nFlags & HTF_NO_STEP_RANGE)) {
-			iStep = trunc(static_cast<double>(x) / fStepWidth);
-			return iTrack;
+	int	iTrack = point.y / m_nTrackHeight;
+	int	nTracks = seq.GetTrackCount();
+	if (iTrack < 0 || iTrack >= nTracks) {	// if track out of range
+		if (nFlags & HTF_NO_TRACK_RANGE) {	// if not enforcing track range
+			iTrack = CLAMP(iTrack, 0, nTracks - 1);	// clamp track to range
+		} else {	// enforcing track range
+			iStep = -1;	// pass step range error to caller
+			return -1;	// return track range error
 		}
-		iStep = -1;
-		return iTrack;
 	}
-	iStep = -1;
-	return -1;
+	int	x = point.x;
+	double	fStepWidth = GetStepWidth(iTrack);
+	int	nTrackWidth = round(fStepWidth * seq.GetLength(iTrack));
+	if ((x >= 0 && x < nTrackWidth) || (nFlags & HTF_NO_STEP_RANGE)) {	// x in range or not enforcing step range
+		iStep = max(trunc(static_cast<double>(x) / fStepWidth), 0);	// compute step index and pass to caller
+		return iTrack;	// return track index
+	}
+	iStep = -1;	// pass step range error to caller
+	return iTrack;	// return track index
 }
 
 void CStepView::EndDrag()
@@ -723,6 +728,8 @@ void CStepView::EndDrag()
 	if (m_nDragState) {
 		ReleaseCapture();
 		m_nDragState = DS_NONE;
+		KillTimer(m_nScrollTimer);
+		m_nScrollTimer = 0;
 	}
 }
 
@@ -915,7 +922,7 @@ void CStepView::OnTrackLength(CPoint point)
 		GetClientRect(rClient);
 		if (rClient.PtInRect(point)) {
 			int	iStep;
-			int	iTrack = HitTest(point, iStep, CStepView::HTF_NO_STEP_RANGE);
+			int	iTrack = HitTest(point, iStep, HTF_NO_STEP_RANGE);
 			if (iTrack >= 0 && iStep >= 0) {
 				int	nNewLength = iStep + 1;
 				int	nSels = pDoc->GetSelectedCount();
@@ -975,6 +982,7 @@ BEGIN_MESSAGE_MAP(CStepView, CScrollView)
 	ON_WM_RBUTTONDOWN()
 	ON_WM_RBUTTONUP()
 	ON_WM_MOUSEMOVE()
+	ON_WM_TIMER()
 	ON_WM_CONTEXTMENU()
 	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditCut)
@@ -1000,6 +1008,8 @@ BEGIN_MESSAGE_MAP(CStepView, CScrollView)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_RIGHT, OnUpdateTrackShift)
 	ON_COMMAND(ID_TRACK_ROTATE_STEPS, OnTrackRotateSteps)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_STEPS, OnUpdateTrackShift)
+	ON_COMMAND(ID_TRACK_FILL, OnTrackFill)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_FILL, OnUpdateTrackShift)
 END_MESSAGE_MAP()
 
 // CStepView message handlers
@@ -1019,8 +1029,11 @@ BOOL CStepView::PreTranslateMessage(MSG* pMsg)
 		//  give main frame a try
 		if (theApp.GetMainFrame()->SendMessage(UWM_HANDLE_DLG_KEY, reinterpret_cast<WPARAM>(pMsg)))
 			return TRUE;	// key was handled so don't process further
-		if (CPolymeterApp::HandleScrollViewKeys(pMsg, this))
+		if (CPolymeterApp::HandleScrollViewKeys(pMsg, this)) {	// if scroll view key handled
+			if (m_nDragState == DS_DRAG)	// if drag in progress
+				UpdateSelection();
 			return TRUE;
+		}
 	}
 	return CScrollView::PreTranslateMessage(pMsg);
 }
@@ -1111,7 +1124,7 @@ void CStepView::OnRButtonDown(UINT nFlags, CPoint point)
 	if (iTrack >= 0 && iStep >= 0) {	// if hit on step
 		SetCapture();
 		m_nDragState = DS_TRACK;
-		m_ptDragOrigin = point;
+		m_ptDragOrigin = point + GetScrollPosition();	// include scrolling
 		// if step selection exists and hit within selection
 		if (HaveStepSelection() && m_rStepSel.PtInRect(CPoint(iStep, iTrack))) {
 			m_bDoContextMenu = true;	// enable context menu on button up
@@ -1134,12 +1147,47 @@ void CStepView::OnRButtonUp(UINT nFlags, CPoint point)
 		CScrollView::OnRButtonUp(nFlags, point);
 }
 
+void CStepView::UpdateSelection(CPoint point)
+{
+	ASSERT(m_nDragState == DS_DRAG);	// must be dragging selection, else logic error
+	CIntRange	rngTrack;
+	CIntRange	rngStep;
+	// translate drag origin to account for scrolling during drag
+	rngTrack.Start = HitTest(m_ptDragOrigin - GetScrollPosition(), rngStep.Start);
+	rngTrack.End = HitTest(point, rngStep.End, HTF_NO_STEP_RANGE | HTF_NO_TRACK_RANGE);
+	rngTrack.Normalize();
+	if (rngStep.Start >= 0) {	// if original click was on step
+		rngStep.Normalize();
+		// x is step index and y is track index
+		CRect	rStepSel(CPoint(rngStep.Start, rngTrack.Start), CPoint(rngStep.End + 1, rngTrack.End + 1));
+		if (rStepSel != m_rStepSel) {	// if rectangular step selection changed
+			CRgn	rgnOld, rgnNew;
+			rgnOld.CreateRectRgnIndirect(&m_rStepSel);
+			rgnNew.CreateRectRgnIndirect(&rStepSel);
+			m_rStepSel = rStepSel;
+			rgnNew.CombineRgn(&rgnOld, &rgnNew, RGN_XOR);	// remove overlapping areas
+			if (m_rgndStepSel.Create(rgnNew)) {	// if region data retrieved
+				int	nRects = m_rgndStepSel.GetRectCount();
+				for (int iRect = 0; iRect < nRects; iRect++)	// for each rect in region data
+					UpdateSteps(m_rgndStepSel.GetRect(iRect));	// update corresponding steps
+			}
+		}
+	}
+}
+
+void CStepView::UpdateSelection()
+{
+	CPoint	point;
+	GetCursorPos(&point);
+	ScreenToClient(&point);
+	UpdateSelection(point);
+}
+
 void CStepView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	UNREFERENCED_PARAMETER(nFlags);
-	CPolymeterDoc	*pDoc = GetDocument();
 	if (m_nDragState == DS_TRACK) {	// if monitoring for start of drag
-		CSize	szDelta(point - m_ptDragOrigin);
+		CSize	szDelta(point + GetScrollPosition() - m_ptDragOrigin);
 		// if mouse motion exceeds either drag threshold
 		if (abs(szDelta.cx) > GetSystemMetrics(SM_CXDRAG)
 		|| abs(szDelta.cy) > GetSystemMetrics(SM_CYDRAG)) {
@@ -1148,40 +1196,23 @@ void CStepView::OnMouseMove(UINT nFlags, CPoint point)
 		}
 	}
 	if (m_nDragState == DS_DRAG) {	// drag in progress
-		CIntRange	rngTrack;
-		CIntRange	rngStep;
-		rngTrack.Start = HitTest(m_ptDragOrigin, rngStep.Start);
-		rngTrack.End = HitTest(point, rngStep.End);
-		if (rngTrack.End < 0) {	// if current track is out of bounds
-			if (point.y < 0)	// if above tracks
-				rngTrack.End = 0;	// clamp to first track
-			else	// below tracks; clamp to last track
-				rngTrack.End = pDoc->GetTrackCount() - 1;
-		}
-		rngTrack.Normalize();
-		if (rngStep.Start >= 0) {	// if original click was on step
-			if (rngStep.End < 0) {	// if current step is out of bounds
-				if (m_rStepSel.left < rngStep.Start)	// if selection left of origin
-					rngStep.End = m_rStepSel.left;	// clamp to selection's left edge
-				else	// selection right of origin
-					rngStep.End = m_rStepSel.right - 1;	// clamp to selection's right edge
-			}
-			rngStep.Normalize();
-			// x is step index and y is track index
-			CRect	rStepSel(CPoint(rngStep.Start, rngTrack.Start), CPoint(rngStep.End + 1, rngTrack.End + 1));
-			if (rStepSel != m_rStepSel) {	// if rectangular step selection changed
-				CRgn	rgnOld, rgnNew;
-				rgnOld.CreateRectRgnIndirect(&m_rStepSel);
-				rgnNew.CreateRectRgnIndirect(&rStepSel);
-				m_rStepSel = rStepSel;
-				rgnNew.CombineRgn(&rgnOld, &rgnNew, RGN_XOR);	// remove overlapping areas
-				if (m_rgndStepSel.Create(rgnNew)) {	// if region data retrieved
-					int	nRects = m_rgndStepSel.GetRectCount();
-					for (int iRect = 0; iRect < nRects; iRect++)	// for each rect in region data
-						UpdateSteps(m_rgndStepSel.GetRect(iRect));	// update corresponding steps
-				}
-			}
-		}
+		CSize	szClient(GetClientSize());
+		if (point.x < 0)
+			m_ptScrollDelta.x = point.x;
+		else if (point.x > szClient.cx)
+			m_ptScrollDelta.x = point.x - szClient.cx;
+		else
+			m_ptScrollDelta.x = 0;
+		if (point.y < 0)
+			m_ptScrollDelta.y = point.y;
+		else if (point.y > szClient.cy)
+			m_ptScrollDelta.y = point.y - szClient.cy;
+		else
+			m_ptScrollDelta.y = 0;
+		// if auto-scroll needed and scroll timer not set
+		if ((m_ptScrollDelta.x || m_ptScrollDelta.y) && !m_nScrollTimer)
+			m_nScrollTimer = SetTimer(SCROLL_TIMER_ID, SCROLL_DELAY, NULL);
+		UpdateSelection(point);
 	}
 //	CScrollView::OnMouseMove(nFlags, point);
 }
@@ -1206,6 +1237,23 @@ BOOL CStepView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 		return true;
 	}
 	return DoMouseWheel(nFlags, zDelta, pt);
+}
+
+void CStepView::OnTimer(W64UINT nIDEvent)
+{
+	if (nIDEvent == SCROLL_TIMER_ID) {	// if scroll timer
+		if (m_ptScrollDelta.x || m_ptScrollDelta.y) {	// if auto-scrolling
+			CPoint	ptScroll(GetScrollPosition());
+			ptScroll += m_ptScrollDelta;
+			CPoint	ptMaxScroll(GetMaxScrollPos());
+			ptScroll.x = CLAMP(ptScroll.x, 0, ptMaxScroll.x);
+			ptScroll.y = CLAMP(ptScroll.y, 0, ptMaxScroll.y);
+			ScrollToPosition(ptScroll);
+			m_pParent->OnStepScroll(m_ptScrollDelta);
+			UpdateSelection();
+		}
+	} else
+		CScrollView::OnTimer(nIDEvent);
 }
 
 void CStepView::OnContextMenu(CWnd* pWnd, CPoint point)
@@ -1364,4 +1412,10 @@ void CStepView::OnTrackRotateSteps()
 	int	nSteps;
 	if (CPolymeterDoc::DoShiftDialog(nSteps, true))	// change caption to rotate
 		RotateSteps(nSteps);
+}
+
+void CStepView::OnTrackFill()
+{
+	GetDocument()->TrackFill(&m_rStepSel);
+	ResetStepSelection();
 }
