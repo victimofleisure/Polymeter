@@ -89,12 +89,13 @@ void CPresetArray::Write() const
 void CPresetArray::OnTrackArrayEdit(const CIntArrayEx& arrTrackMap, int nNewTracks)
 {
 	CBoolArrayEx	arrNewMute;
-	int	nOldTracks = arrTrackMap.GetSize();	// mapping table has one entry for each pre-edit track
 	int	nPresets = GetSize();
 	for (int iPreset = 0; iPreset < nPresets; iPreset++) {	// for each of our presets
 		CPreset&	preset = GetAt(iPreset);
 		arrNewMute.SetSize(nNewTracks);
 		memset(arrNewMute.GetData(), true, nNewTracks);	// init preset's mutes to true
+		// mapping table has one entry for each pre-edit track, possibly followed by entries for pasted tracks
+		int	nOldTracks = preset.m_arrMute.GetSize();	// old mute array has one element for each pre-edit track
 		for (int iOldTrack = 0; iOldTrack < nOldTracks; iOldTrack++) {	// for each pre-edit track
 			int	iNewTrack = arrTrackMap[iOldTrack];	// get track's new index, if any
 			if (iNewTrack >= 0)	// if track still exists post-edit

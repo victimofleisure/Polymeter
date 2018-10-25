@@ -355,6 +355,8 @@ protected:
 	void	SetViewType(int nViewType);
 	void	GetTrackIDMap(CTrackIDMap& mapTrackID) const;
 	void	OnTrackArrayEdit(const CTrackIDMap& mapTrackID);
+	void	CopyTracksToClipboard();
+	void	PasteTracks();
 
 // Undo helpers
 	void	SaveTrackProperty(CUndoState& State) const;

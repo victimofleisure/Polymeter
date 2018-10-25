@@ -83,6 +83,7 @@ public:
 	void	GetModulations(CPackedModulationArray& arrMod) const;
 	void	SetModulations(const CPackedModulationArray& arrMod);
 	int		GetChannelUsage(int *parrFirstTrack) const;
+	static	UINT	GetCurrentID();
 
 // Operations
 	void	AssignID(int iTrack);
@@ -307,6 +308,11 @@ inline const CTrackBase::CDub& CSeqTrackArray::GetDub(int iTrack, int iDub) cons
 inline void CSeqTrackArray::AssignID(int iTrack)
 {
 	GetAt(iTrack).m_nUID = ++m_nNextUID;
+}
+
+inline UINT CSeqTrackArray::GetCurrentID()
+{
+	return m_nNextUID;
 }
 
 inline int CSeqTrackArray::FindDub(int iTrack, int nTime) const

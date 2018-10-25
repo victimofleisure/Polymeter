@@ -437,6 +437,65 @@ int CPolymeterDoc::GetInsertPos() const
 	return GetTrackCount();
 }
 
+void CPolymeterDoc::CopyTracksToClipboard()
+{
+	m_Seq.GetTracks(m_arrTrackSel, theApp.m_arrTrackClipboard);	// copy selected tracks to clipboard
+	// tracks in the clipboard may refer to other tracks, e.g. as modulation sources, and any such
+	// references must be converted from document-local track indices to globally unique track IDs
+	int	nTracks = theApp.m_arrTrackClipboard.GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each copied track
+		CTrack&	trk = theApp.m_arrTrackClipboard[iTrack];
+		int	nMods = trk.m_arrModulator.GetSize();
+		for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
+			CModulation&	mod	= trk.m_arrModulator[iMod];
+			if (mod.m_iSource >= 0)	// if modulation source is a valid track index
+				mod.m_iSource = m_Seq.GetID(mod.m_iSource);	// convert track index to unique ID
+		}
+	}
+}
+
+void CPolymeterDoc::PasteTracks()
+{
+	if (m_Seq.GetTrackCount() + theApp.m_arrTrackClipboard.GetSize() > MAX_TRACKS)	// if too many tracks
+		AfxThrowNotSupportedException();	// throw unsupported
+	int	iInsPos = GetInsertPos();
+	{
+		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
+		// for each clipboard track, add two map entries, one for the track's previous ID, and one for its
+		// new ID; the insert function assigns new IDs, but if the tracks refer to other tracks within the
+		// clipboard, they do so using the previous IDs, so both IDs need to be defined in the track map
+		int	nCBTracks = theApp.m_arrTrackClipboard.GetSize();
+		int	nTracks = GetTrackCount();
+		UINT	nNextID = m_Seq.GetCurrentID();
+		for (int iCBTrack = 0; iCBTrack < nCBTracks; iCBTrack++) {	// for each clipboard track
+			const CTrack&	trk = theApp.m_arrTrackClipboard[iCBTrack];
+			int	iCBPos = nTracks + iCBTrack;
+			TrackArrayEdit.m_mapTrackID.SetAt(trk.m_nUID, iCBPos);	// add track's previous ID
+			TrackArrayEdit.m_mapTrackID.SetAt(++nNextID, iCBPos);	// add track's new ID, mapped to same index
+		}
+		m_Seq.InsertTracks(iInsPos, theApp.m_arrTrackClipboard);	// insert clipboard tracks, assigning new IDs
+		for (int iCBTrack = 0; iCBTrack < nCBTracks; iCBTrack++) {	// for each clipboard track
+			int	iTrack = iInsPos + iCBTrack;
+			const CTrack&	trk = m_Seq.GetTrack(iTrack);
+			int	nMods = trk.m_arrModulator.GetSize();
+			for (int iMod = nMods - 1; iMod >= 0; iMod--) {	// for each modulation; reverse iterate for deletion stability
+				const CModulation&	mod	= trk.m_arrModulator[iMod];
+				if (mod.m_iSource >= 0) {	// if modulation source is a valid track ID
+					int	iModSource;
+					if (TrackArrayEdit.m_mapTrackID.Lookup(mod.m_iSource, iModSource))	// look up corresponding track index
+						m_Seq.SetModulationSource(iTrack, iMod, iModSource);	// convert track ID to track index
+					else	// track index not found; modulation source isn't in this document, nor in clipboard
+						m_Seq.RemoveModulation(iTrack, iMod);	// delete modulation from track
+				}
+			}
+		}
+	}	// dtor ends transaction
+	SetModifiedFlag();
+	SelectRange(iInsPos, theApp.m_arrTrackClipboard.GetSize(), false);	// don't update views
+	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
+	NotifyUndoableEdit(0, UCODE_PASTE_TRACKS);
+}
+
 void CPolymeterDoc::DeleteTracks(bool bCopyToClipboard)
 {
 	int	nUndoCode;
@@ -446,7 +505,7 @@ void CPolymeterDoc::DeleteTracks(bool bCopyToClipboard)
 		nUndoCode = UCODE_DELETE_TRACKS;
 	NotifyUndoableEdit(0, nUndoCode);
 	if (bCopyToClipboard)
-		m_Seq.GetTracks(m_arrTrackSel, theApp.m_arrTrackClipboard);
+		CopyTracksToClipboard();
 	{
 		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 		m_Seq.DeleteTracks(m_arrTrackSel);
@@ -2895,7 +2954,7 @@ void CPolymeterDoc::OnUpdateEditRedo(CCmdUI *pCmdUI)
 void CPolymeterDoc::OnEditCopy()
 {
 	if (!CFocusEdit::Copy()) {
-		m_Seq.GetTracks(m_arrTrackSel, theApp.m_arrTrackClipboard);
+		CopyTracksToClipboard();
 	}
 }
 
@@ -2923,17 +2982,7 @@ void CPolymeterDoc::OnUpdateEditCut(CCmdUI *pCmdUI)
 void CPolymeterDoc::OnEditPaste()
 {
 	if (!CFocusEdit::Paste()) {
-		if (m_Seq.GetTrackCount() + theApp.m_arrTrackClipboard.GetSize() > MAX_TRACKS)
-			AfxThrowNotSupportedException();
-		int	iInsPos = GetInsertPos();
-		{
-			CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
-			m_Seq.InsertTracks(iInsPos, theApp.m_arrTrackClipboard);
-		}	// dtor ends transaction
-		SetModifiedFlag();
-		SelectRange(iInsPos, theApp.m_arrTrackClipboard.GetSize(), false);	// don't update views
-		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
-		NotifyUndoableEdit(0, UCODE_PASTE_TRACKS);
+		PasteTracks();
 	}
 }
 
@@ -2960,8 +3009,8 @@ void CPolymeterDoc::OnUpdateEditDelete(CCmdUI *pCmdUI)
 
 void CPolymeterDoc::OnEditInsert()
 {
-	if (m_Seq.GetTrackCount() >= MAX_TRACKS)
-		AfxThrowNotSupportedException();
+	if (m_Seq.GetTrackCount() >= MAX_TRACKS)	// if too many tracks
+		AfxThrowNotSupportedException();	// throw unsupported
 	int	iInsPos = GetInsertPos();
 	{
 		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
