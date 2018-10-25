@@ -2382,16 +2382,17 @@ void CPolymeterDoc::GetTrackIDMap(CTrackIDMap& mapTrackID) const
 
 void CPolymeterDoc::OnTrackArrayEdit(const CTrackIDMap& mapTrackID)
 {
-	CIntArrayEx	arrTrackMap;
-	INT_PTR	nOldTracks = mapTrackID.GetCount();
-	arrTrackMap.SetSize(nOldTracks);
-	memset(arrTrackMap.GetData(), 0xff, nOldTracks * sizeof(int));	// init indices to -1 
+	CIntArrayEx	arrTrackMap;	// track index mapping table, built from track ID map
+	INT_PTR	nMapEntries = mapTrackID.GetCount();
+	arrTrackMap.SetSize(nMapEntries);
+	memset(arrTrackMap.GetData(), 0xff, nMapEntries * sizeof(int));	// init indices to -1 
 	int	nNewTracks = GetTrackCount();
 	for (int iNewTrack = 0; iNewTrack < nNewTracks; iNewTrack++) {	// for each post-edit track
 		int	iOldTrack;
 		if (mapTrackID.Lookup(m_Seq.GetID(iNewTrack), iOldTrack))	// if track's ID found in map
 			arrTrackMap[iOldTrack] = iNewTrack;	// store track's new location in mapping table
 	}
+	// mapping table has one entry for each pre-edit track, possibly followed by entries for pasted tracks
 	m_Seq.OnTrackArrayEdit(arrTrackMap);	// fix modulators ASAP to reduce chance of glitches
 	m_arrPreset.OnTrackArrayEdit(arrTrackMap, nNewTracks);
 	m_arrPart.OnTrackArrayEdit(arrTrackMap);

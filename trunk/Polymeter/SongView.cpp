@@ -104,15 +104,25 @@ void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_NONE:
 	case CPolymeterDoc::HINT_TRACK_PROP:
 	case CPolymeterDoc::HINT_MULTI_TRACK_PROP:
-	case CPolymeterDoc::HINT_TRACK_ARRAY:
 	case CPolymeterDoc::HINT_STEP:
 	case CPolymeterDoc::HINT_MULTI_STEP:
 	case CPolymeterDoc::HINT_MULTI_TRACK_STEPS:
 	case CPolymeterDoc::HINT_STEPS_ARRAY:
 		Invalidate();
 		break;
-	case CPolymeterDoc::HINT_MASTER_PROP:
+	case CPolymeterDoc::HINT_TRACK_ARRAY:
 		UpdateViewSize();
+		break;
+	case CPolymeterDoc::HINT_MASTER_PROP:
+		{
+			const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+			switch (pPropHint->m_iProp) {
+			case CMasterProps::PROP_nSongLength:
+			case CMasterProps::PROP_nTimeDiv:
+				UpdateViewSize();
+				break;
+			}
+		}
 		break;
 	case CPolymeterDoc::HINT_SONG_POS:
 		if (GetDocument()->IsSongView()) {
