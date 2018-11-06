@@ -2899,7 +2899,7 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_COMMAND(ID_TOOLS_TIME_TO_REPEAT, OnToolsTimeToRepeat)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIME_TO_REPEAT, OnUpdateToolsTimeToRepeat)
 	ON_COMMAND(ID_TOOLS_VELOCITY_RANGE, OnToolsVelocityRange)
-	ON_UPDATE_COMMAND_UI(ID_TOOLS_VELOCITY_RANGE, OnUpdateToolsTimeToRepeat)
+	ON_UPDATE_COMMAND_UI(ID_TOOLS_VELOCITY_RANGE, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TRACK_TRANSPOSE, OnTrackTranspose)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_TRANSPOSE, OnUpdateTrackTranspose)
 	ON_COMMAND(ID_TRACK_VELOCITY, OnTrackVelocity)
@@ -3270,39 +3270,45 @@ void CPolymeterDoc::OnTrackVelocity()
 	dlg.m_fScale = CPersist::GetDouble(RK_VELOCITY_DLG, RK_VELOCITY_SCALE, 1);
 	dlg.m_bHaveStepSelection = HaveStepSelection();	// determines whether target setting is enabled
 	if (dlg.DoModal() == IDOK) {
+		int	nTarget = 0;
+		int	nOffset = 0;
+		double	fScale = 1;	// if scale is one, transform is offset, else it's scaling
 		iDlgPage = dlg.GetActiveIndex();
 		switch (iDlgPage) {
 		case CVelocitySheet::PAGE_OFFSET:
-			if (!IsVelocityChangeSafe(dlg.m_nOffset)) {	// check offset for clipping
-				if (AfxMessageBox(IDS_DOC_CLIP_WARNING, MB_OKCANCEL) != IDOK)
-					return;	// user canceled
-			}
-			if (dlg.m_nOffset) {	// if valid offset
-				switch (dlg.m_nTarget) {
-				case CVelocitySheet::TARGET_TRACKS:
-					OffsetTrackVelocity(dlg.m_nOffset);
-					break;
-				case CVelocitySheet::TARGET_STEPS:
-					if (HaveStepSelection())
-						TransformStepVelocity(m_rStepSel, dlg.m_nOffset);
-					else
-						TransformStepVelocity(dlg.m_nOffset);
-					break;
-				}
-			}
+			nTarget = dlg.m_nTarget;
+			nOffset = dlg.m_nOffset;
 			break;
 		case CVelocitySheet::PAGE_SCALE:
-			if (!IsVelocityChangeSafe(0, dlg.m_fScale)) {	// check scale for clipping
-				if (AfxMessageBox(IDS_DOC_CLIP_WARNING, MB_OKCANCEL) != IDOK)
-					return;	// user canceled
-			}
-			if (dlg.m_fScale != 1) {	// if valid scale
-				if (HaveStepSelection())
-					TransformStepVelocity(m_rStepSel, 0, dlg.m_fScale);
-				else
-					TransformStepVelocity(0, dlg.m_fScale);
-			}
+			nTarget = CVelocitySheet::TARGET_STEPS;	// scaling supports steps target only
+			fScale = dlg.m_fScale;
 			break;
+		default:
+			NODEFAULTCASE;
+		}
+		const CRect	*prStepSel;
+		if (dlg.m_bHaveStepSelection)	// if step selection exists
+			prStepSel = &m_rStepSel;	// pass step selection to clipping check
+		else	// no step selection
+			prStepSel = NULL;
+		if (!IsVelocityChangeSafe(nOffset, fScale, prStepSel)) {	// check transform for clipping
+			if (AfxMessageBox(IDS_DOC_CLIP_WARNING, MB_OKCANCEL) != IDOK)
+				return;	// user canceled
+		}
+		if (nOffset || fScale != 1) {	// if transform is changing something
+			switch (nTarget) {
+			case CVelocitySheet::TARGET_TRACKS:
+				OffsetTrackVelocity(nOffset);	// offset velocity property for selected tracks
+				break;
+			case CVelocitySheet::TARGET_STEPS:
+				if (dlg.m_bHaveStepSelection)	// if step selection exists
+					TransformStepVelocity(m_rStepSel, nOffset, fScale);	// transform step selection
+				else	// no step selection
+					TransformStepVelocity(nOffset, fScale);	// transform all steps of selected tracks
+				break;
+			default:
+				NODEFAULTCASE;
+			}
 		}
 		CPersist::WriteInt(RK_VELOCITY_DLG, RK_VELOCITY_OFFSET, dlg.m_nOffset);
 		if (!dlg.m_bHaveStepSelection)	// only update target setting if it was enabled
@@ -3533,7 +3539,12 @@ void CPolymeterDoc::OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI)
 void CPolymeterDoc::OnToolsVelocityRange()
 {
 	CRange<int>	rngVel;
-	bool	bIsSafe = IsVelocityChangeSafe(0, 0, NULL, &rngVel);
+	const CRect	*prStepSel;
+	if (HaveStepSelection())	// if step selection exists
+		prStepSel = &m_rStepSel;	// pass step selection to range calculation
+	else	// no step selection
+		prStepSel = NULL;
+	bool	bIsSafe = IsVelocityChangeSafe(0, 1, prStepSel, &rngVel);	// no offset or scaling
 	CString	sMsg;
 	sMsg.Format(IDS_DOC_VELOCITY_RANGE, rngVel.Start, rngVel.End);
 	int	nFlags;

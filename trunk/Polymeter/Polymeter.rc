@@ -1050,7 +1050,7 @@ BEGIN
     ID_TOOLS_OPTIONS        "Edit the options\nOptions"
     ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
     ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for the selected tracks to repeat\nTime to Repeat"
-    ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks\nVelocity Range "
+    ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks or steps\nVelocity Range "
     ID_TRACK_FILL           "Fill selected tracks or steps with a range of values"
     ID_TRACK_GROUP          "Group the selected tracks into a part\nGroup"
     ID_TRACK_LENGTH         "Set the length of one or more tracks\nLength"
