@@ -31,6 +31,26 @@
 
 <h1>Release Notes</h1>
 
+<h3>0.0.16.002 &emsp;<small>11/05/2018</small></h3>  
+
+<p><ol>
+<li>Added an Import command that reads a MIDI file and converts its notes to tracks.
+<li>Added a Fill command that fills selected tracks or steps with a range of values.
+<li>The song MIDI export now only output tracks for channels that are actually used.
+<li>The velocity command can now offset or scale step velocities.
+<li>Modulation type and source can now be changed for multiple modulations at once.
+<li>The velocity origin setting is now persistent and consistent for all open documents.
+<li>The Song view's grid now indicates track selection, as in the Step view.
+<li>The Apply Preset command wasn't updating the Live view; fixed.
+<li>The arrow keys didn't navigate the main menus if a scroll view had focus; fixed.
+<li>The Velocity command had no effect if the offset was negative; fixed.
+<li>In the Track and Song Views, dragging a rectangular selection beyond the window boundaries now automatically scrolls the view.
+<li>Pasting tracks didn't update the Song view size; fixed.
+<li>Pasting modulated tracks often behaved unexpectedly; fixed.
+<li>When dragging a rectangular selection in the Step view, overshooting to the right of track's last step caused an an invalid step selection error; fixed.
+<li>Mouse capture wasn't released if a window lost focus during dragging; fixed.
+</ol>
+
 <h3>0.0.15.000 &emsp;<small>10/08/2018</small></h3>  
 
 <p><ol>

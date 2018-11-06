@@ -1,6 +1,5 @@
 open	close	type	description	rev	user
 07/23/18		bug	if key is Gb, note edit spin control drops an octave when Cb is incremented or decremented; error in ParseMidi		
-07/31/18		bug	invalid step selection error can occur unexpectedly if drag overshoots into area to the right of a shorter track		
 09/07/18		bug	song edits sometimes leave fragments, especially if zoom is changed while editing		
 03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
@@ -150,18 +149,38 @@ open	close	type	description	rev	user
 08/29/18	10/03/18	done	status bar hints for Parts and Presets context menus	0.0.15.000	
 08/29/18	10/03/18	done	add Tracks command to Parts bar context menu; select tracks belonging to selected parts	0.0.15.000	
 07/19/18	10/08/18	done	stretch command; scale track length by percentage, stretching or squashing contents as needed	0.0.15.000	
+10/09/18	10/10/18	done	Apply Preset command doesn't update live view	0.0.15.001	
+10/10/18	10/10/18	done	song MIDI export shouldn't contain empty tracks; only output tracks for channels that are actually used	0.0.15.001	
+10/10/18	10/10/18	done	arrow keys don't navigate main menus if scroll view has focus	0.0.15.001	
+07/05/18	10/15/18	done	step fill command	0.0.16.000	
+10/17/18	10/17/18	done	velocity command has no effect if offset is negative	0.0.16.000	
+10/03/18	10/18/18	done	import MIDI file, converting notes to tracks	0.0.16.000	
+10/17/18	10/20/18	done	in track, mute, and song views, dragging selection beyond window boundaries should scroll view	0.0.16.000	
+07/05/18	10/25/18	done	pasting modulated tracks often behaves unexpectedly; in clipboard, modulators must be unique IDs not indices	0.0.16.001	
+10/25/18	10/25/18	done	pasting tracks doesn't update song view size	0.0.16.001	
+10/22/18	10/27/18	done	refactor so that document's rectangular step selection is always current; step view shouldn't handle commands	0.0.16.002	
+10/21/18	10/29/18	done	change modulation type or source for multiple modulations at once	0.0.16.002	
+10/23/18	10/29/18	done	velocity origin state should be the same in all open documents and should persist	0.0.16.002	
+10/28/18	10/29/18	done	song view's grid should indicate track selection, as in step view	0.0.16.002	
+07/31/18	11/01/18	done	invalid step selection error occurs unexpectedly if drag overshoots to the right of track's last step	0.0.16.002	
+11/01/18	11/01/18	done	capture isn't released if window loses focus during drag	0.0.16.002	
+07/20/18	11/05/18	done	add command to offset note/step velocities; should work for controller and modulator tracks too	0.0.16.002	
+07/30/18	11/05/18	done	add command to scale step values by a multiplier; boosts track velocity without altering dynamics	0.0.16.002	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 03/22/18		hold	offset and swing modulation; may not be feasible		
 03/22/18		hold	modulation of modulation; allowing multiple modulators of each type may make this unnecessary		
+03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
+03/22/18		hold	radio groups; member tracks automatically mute each other so that only one member sounds at a time		
+03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
 03/25/18		hold	animated visualization		
 03/25/18		hold	playback can be slow to start, due to device open delay; keep output device open all the time?		
 03/25/18		hold	MIDI mapping of all parameters, with manual assignment and learn mode		
 03/25/18		hold	output timing is unreliable at start of playback; likely only fixable by keeping output device open all the time		
 04/09/18		hold	undoing track value or step edit should ensure track is visible		
-05/10/18		hold	left-click anywhere in step view should toggle selected steps or mutes, as in original app; too confusing?		
 05/10/18		hold	right-click in step view background with no selection should show context menu?		
+05/10/18		hold	left-click anywhere in step view should toggle selected steps or mutes, as in original app; too confusing?		
 05/17/18		hold	installed app's shortcut icon has poor resolution; VS2008 installer bug, use WiX toolset instead?		
 05/19/18		hold	note correction to chord changes, from ChordEase		
 05/21/18		hold	velocity pane visibility should be same for all documents?		
@@ -169,8 +188,6 @@ open	close	type	description	rev	user
 06/04/18		hold	option to change track name font and thereby change track height		
 06/04/18		hold	song view should indicate undersampling (multiple dubs per cell at current zoom)		
 06/05/18		hold	optionally show tooltips in grid controls (Track and Channels views) via label tip extended style		
-06/21/18		hold	track merge command; combine tracks that have identical settings and non-overlapping steps		
-07/05/18		hold	controller fill command		
 07/05/18		hold	command to change track, part and preset names to title case		
 07/14/18		hold	channel volume sliders in live view; solving wrong problem?		
 07/14/18		hold	modulation wizard; drop lists are cumbersome for large numbers of tracks		
@@ -182,22 +199,20 @@ open	close	type	description	rev	user
 08/02/18		hold	mute tracks in song view; complicates sequencer and song view UI		
 08/02/18		hold	should be able to loop a given time range of sequence, especially in song view, even approximately		
 09/17/18		hold	step zoom via Ctrl + mouse wheel doesn't work when track view has focus		
+09/17/18		hold	in step view, add command to select all steps of selected tracks		
 09/23/18		hold	ReadEnum should report undefined strings as errors? More accurate, but less robust		
 09/25/18		hold	pan column in channels bar should show signed values; conflicts with use of -1 as unspecified value		
+10/11/18		hold	any dubs recorded while song position is negative are lost, because minimum dub time is zero		
+10/27/18		hold	switching from song view to live view doesn't always update parts list to reflect dub state? Hard to replicate		
 05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
 06/08/18		punt	untying note should set all steps to velocity of original tied note; better to preserve velocity		
 09/18/18		punt	modulation dubbing is sensitive to track order at longer latencies; also affects export		
-03/22/18		todo	optional linear interpolation for controller tracks, with adjustable output density		
-03/22/18		todo	radio groups; member tracks automatically mute each other so that only one member sounds at a time		
-03/22/18		todo	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
 06/04/18		todo	include live MIDI input in recording; but no way to view or edit it? Unless events are converted to tracks		
-07/05/18		todo	cut and paste of modulated tracks often behaves unexpectedly; store modulators as UIDs instead of indices		
-07/20/18		todo	add command to offset note/step velocities; should work for controller values too		
+06/04/18		todo	record live MIDI input to tracks; useful for inputting melodies and chords intuitively, requires quantization setting		
+06/21/18		todo	track merge command; combine tracks that have identical settings and non-overlapping steps		
 07/26/18		todo	command to shift selected steps up or down one or more tracks		
 07/26/18		todo	replace steps, like paste but overwrite steps at insert position instead of shifting them; command or mode?		
-07/30/18		todo	add command to scale step values by a percentage; boosts track velocity without reducing dynamics		
 09/08/18		todo	add song view command to move current position to next or previous dub; useful for finding unintended dubs		
-09/17/18		todo	in step view, add command to select all steps of selected tracks		
-10/03/18		todo	import MIDI file; convert to tracks		
+10/17/18		todo	in live view, dragging list selection beyond window boundaries should scroll list		

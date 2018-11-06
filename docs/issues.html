@@ -46,14 +46,6 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>07/31/18</TD>
-<TD>&nbsp;</TD>
-<TD>bug</TD>
-<TD>invalid step selection error can occur unexpectedly if drag overshoots into area to the right of a shorter track</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>09/07/18</TD>
 <TD>&nbsp;</TD>
 <TD>bug</TD>
@@ -1246,6 +1238,142 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>10/09/18</TD>
+<TD>10/10/18</TD>
+<TD>done</TD>
+<TD>Apply Preset command doesn't update live view</TD>
+<TD>0.0.15.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/10/18</TD>
+<TD>10/10/18</TD>
+<TD>done</TD>
+<TD>song MIDI export shouldn't contain empty tracks; only output tracks for channels that are actually used</TD>
+<TD>0.0.15.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/10/18</TD>
+<TD>10/10/18</TD>
+<TD>done</TD>
+<TD>arrow keys don't navigate main menus if scroll view has focus</TD>
+<TD>0.0.15.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/05/18</TD>
+<TD>10/15/18</TD>
+<TD>done</TD>
+<TD>step fill command</TD>
+<TD>0.0.16.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/17/18</TD>
+<TD>10/17/18</TD>
+<TD>done</TD>
+<TD>velocity command has no effect if offset is negative</TD>
+<TD>0.0.16.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/03/18</TD>
+<TD>10/18/18</TD>
+<TD>done</TD>
+<TD>import MIDI file, converting notes to tracks</TD>
+<TD>0.0.16.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/17/18</TD>
+<TD>10/20/18</TD>
+<TD>done</TD>
+<TD>in track, mute, and song views, dragging selection beyond window boundaries should scroll view</TD>
+<TD>0.0.16.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/05/18</TD>
+<TD>10/25/18</TD>
+<TD>done</TD>
+<TD>pasting modulated tracks often behaves unexpectedly; in clipboard, modulators must be unique IDs not indices</TD>
+<TD>0.0.16.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/25/18</TD>
+<TD>10/25/18</TD>
+<TD>done</TD>
+<TD>pasting tracks doesn't update song view size</TD>
+<TD>0.0.16.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/22/18</TD>
+<TD>10/27/18</TD>
+<TD>done</TD>
+<TD>refactor so that document's rectangular step selection is always current; step view shouldn't handle commands</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/21/18</TD>
+<TD>10/29/18</TD>
+<TD>done</TD>
+<TD>change modulation type or source for multiple modulations at once</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/23/18</TD>
+<TD>10/29/18</TD>
+<TD>done</TD>
+<TD>velocity origin state should be the same in all open documents and should persist</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/28/18</TD>
+<TD>10/29/18</TD>
+<TD>done</TD>
+<TD>song view's grid should indicate track selection, as in step view</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/31/18</TD>
+<TD>11/01/18</TD>
+<TD>done</TD>
+<TD>invalid step selection error occurs unexpectedly if drag overshoots to the right of track's last step</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/01/18</TD>
+<TD>11/01/18</TD>
+<TD>done</TD>
+<TD>capture isn't released if window loses focus during drag</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/20/18</TD>
+<TD>11/05/18</TD>
+<TD>done</TD>
+<TD>add command to offset note/step velocities; should work for controller and modulator tracks too</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/30/18</TD>
+<TD>11/05/18</TD>
+<TD>done</TD>
+<TD>add command to scale step values by a multiplier; boosts track velocity without altering dynamics</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -1282,6 +1410,30 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>modulation of modulation; allowing multiple modulators of each type may make this unnecessary</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/22/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>optional linear interpolation for controller tracks, with adjustable output density</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/22/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>radio groups; member tracks automatically mute each other so that only one member sounds at a time</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/22/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1329,7 +1481,7 @@
 <TD>05/10/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>left-click anywhere in step view should toggle selected steps or mutes, as in original app; too confusing?</TD>
+<TD>right-click in step view background with no selection should show context menu?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1337,7 +1489,7 @@
 <TD>05/10/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>right-click in step view background with no selection should show context menu?</TD>
+<TD>left-click anywhere in step view should toggle selected steps or mutes, as in original app; too confusing?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1394,22 +1546,6 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>optionally show tooltips in grid controls (Track and Channels views) via label tip extended style</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>06/21/18</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>track merge command; combine tracks that have identical settings and non-overlapping steps</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>07/05/18</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>controller fill command</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1502,6 +1638,14 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>09/17/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>in step view, add command to select all steps of selected tracks</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>09/23/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -1514,6 +1658,22 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>pan column in channels bar should show signed values; conflicts with use of -1 as unspecified value</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/11/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>any dubs recorded while song position is negative are lost, because minimum dub time is zero</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/27/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>switching from song view to live view doesn't always update parts list to reflect dub state? Hard to replicate</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1558,30 +1718,6 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>03/22/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>optional linear interpolation for controller tracks, with adjustable output density</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>03/22/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>radio groups; member tracks automatically mute each other so that only one member sounds at a time</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>03/22/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>06/04/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
@@ -1590,18 +1726,18 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>07/05/18</TD>
+<TD>06/04/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>cut and paste of modulated tracks often behaves unexpectedly; store modulators as UIDs instead of indices</TD>
+<TD>record live MIDI input to tracks; useful for inputting melodies and chords intuitively, requires quantization setting</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>07/20/18</TD>
+<TD>06/21/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>add command to offset note/step velocities; should work for controller values too</TD>
+<TD>track merge command; combine tracks that have identical settings and non-overlapping steps</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1622,14 +1758,6 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>07/30/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>add command to scale step values by a percentage; boosts track velocity without reducing dynamics</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>09/08/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
@@ -1638,18 +1766,10 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>09/17/18</TD>
+<TD>10/17/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>in step view, add command to select all steps of selected tracks</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>10/03/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>import MIDI file; convert to tracks</TD>
+<TD>in live view, dragging list selection beyond window boundaries should scroll list</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
