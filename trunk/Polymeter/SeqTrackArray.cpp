@@ -593,7 +593,7 @@ bool CSeqTrackArray::CalcStepRange(int iTrack, int& nMinStep, int& nMaxStep, int
 			bRetVal = false;	// no notes found
 	} else {	// track type isn't note
 		for (int iStep = iStartStep; iStep < iEndStep; iStep++) {	// for each step
-			int	nStep = trk.m_arrStep[iStep];
+			int	nStep = trk.m_arrStep[iStep] & SB_VELOCITY;
 			if (nStep < nMin)
 				nMin = nStep;
 			if (nStep > nMax)
