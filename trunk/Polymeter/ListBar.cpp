@@ -113,6 +113,7 @@ int CListBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_list.SetExtendedStyle(LVS_EX_LABELTIP);
 	m_list.InsertColumn(0, _T(""));
 	m_list.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
+	m_list.TrackDropPos(true);
 	return 0;
 }
 

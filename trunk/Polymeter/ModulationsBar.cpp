@@ -80,7 +80,7 @@ void CModulationsBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				int	nMods = m_arrModulator.GetSize();
 				for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
 					if (m_arrModulator[iMod].m_iSource == pPropHint->m_iItem) {	// if selected track is modulator
-						m_grid.RedrawSubItem(iMod, COL_TRACK);
+						m_grid.RedrawSubItem(iMod, COL_SOURCE);
 					}
 				}
 			}
@@ -95,7 +95,7 @@ void CModulationsBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 					int	iSrcTrack = m_arrModulator[iMod].m_iSource;
 					if (iSrcTrack >= 0	// if modulation is valid, and selected track is modulator
 					&& pPropHint->m_arrSelection.Find(iSrcTrack) >= 0) {
-						m_grid.RedrawSubItem(iMod, COL_TRACK);
+						m_grid.RedrawSubItem(iMod, COL_SOURCE);
 					}
 				}
 			}
@@ -244,7 +244,7 @@ CWnd *CModulationsBar::CModGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwSty
 			pCombo->SetCurSel(pParent->m_arrModulator[m_iEditRow].m_iType);
 		}
 		break;
-	case COL_TRACK:
+	case COL_SOURCE:
 		{
 			pCombo->AddString(LDS(IDS_NONE));
 			pCombo->SetItemData(0, DWORD_PTR(-1));	// assign invalid track index to none item
@@ -277,38 +277,49 @@ void CModulationsBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL && pDoc->GetSelectedCount()) {	// if track selection exists
 		CPopupCombo	*pCombo = STATIC_DOWNCAST(CPopupCombo, m_pEditCtrl);
-		int	iSelItem = pCombo->GetCurSel();	// index of selected item
 		CModulationsBar	*pParent = STATIC_DOWNCAST(CModulationsBar, GetParent());
+		CModulation&	modSel = pParent->m_arrModulator[m_iEditRow];
+		CIntArrayEx	arrSelection;
+		GetSelection(arrSelection);	// get item indices of selected modulations
+		if (arrSelection.Find(m_iEditRow) < 0) {	// if changed item not found in selected modulations
+			arrSelection.SetSize(1);
+			arrSelection[0] = m_iEditRow;	// operate on changed item only, ignoring selected modulations
+		}
+		int	nModSels = arrSelection.GetSize();
+		int	nTrackSels = pDoc->GetSelectedCount();
+		int	iSelItem = pCombo->GetCurSel();	// index of changed item
 		switch (m_iEditCol) {
 		case COL_TYPE:
-			if (iSelItem != pParent->m_arrModulator[m_iEditRow].m_iType) {	// if modulation type actually changed
+			if (iSelItem != modSel.m_iType) {	// if modulation type actually changed
 				pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
-				CModulation&	modSel = pParent->m_arrModulator[m_iEditRow];
-				int	nTrackSels = pDoc->GetSelectedCount();
-				for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
-					int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
-					int	iMod = INT64TO32(pDoc->m_Seq.GetTrack(iTrack).m_arrModulator.Find(modSel));
-					if (iMod >= 0)	// if modulation found in track
-						pDoc->m_Seq.SetModulationType(iTrack, iMod, iSelItem);	// update modulation type
+				for (int iModSel = 0; iModSel < nModSels; iModSel++) {	// for each selected modulation
+					CModulation&	mod = pParent->m_arrModulator[arrSelection[iModSel]];
+					for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
+						int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
+						int	iMod = INT64TO32(pDoc->m_Seq.GetTrack(iTrack).m_arrModulator.Find(mod));
+						if (iMod >= 0)	// if modulation found in track
+							pDoc->m_Seq.SetModulationType(iTrack, iMod, iSelItem);	// update modulation type
+					}
+					mod.m_iType = iSelItem;	// update cached modulation type
 				}
-				modSel.m_iType = iSelItem;	// update cached modulation type
 				pDoc->SetModifiedFlag();
 			}
 			break;
-		case COL_TRACK:
+		case COL_SOURCE:
 			if (iSelItem >= 0)	// if valid item
 				iSelItem = static_cast<int>(pCombo->GetItemData(iSelItem));	// convert item index to track index
-			if (iSelItem != pParent->m_arrModulator[m_iEditRow].m_iSource) {	// if modulation source actually changed
+			if (iSelItem != modSel.m_iSource) {	// if modulation source actually changed
 				pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
-				CModulation&	modSel = pParent->m_arrModulator[m_iEditRow];
-				int	nTrackSels = pDoc->GetSelectedCount();
-				for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
-					int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
-					int	iMod = INT64TO32(pDoc->m_Seq.GetTrack(iTrack).m_arrModulator.Find(modSel));
-					if (iMod >= 0)	// if modulation found in track
-						pDoc->m_Seq.SetModulationSource(iTrack, iMod, iSelItem);	// update modulation source
+				for (int iModSel = 0; iModSel < nModSels; iModSel++) {	// for each selected modulation
+					CModulation&	mod = pParent->m_arrModulator[arrSelection[iModSel]];
+					for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
+						int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
+						int	iMod = INT64TO32(pDoc->m_Seq.GetTrack(iTrack).m_arrModulator.Find(mod));
+						if (iMod >= 0)	// if modulation found in track
+							pDoc->m_Seq.SetModulationSource(iTrack, iMod, iSelItem);	// update modulation source
+					}
+					mod.m_iSource = iSelItem;	// update cached modulation source (index of source track)
 				}
-				modSel.m_iSource = iSelItem;	// update cached modulation source
 				pDoc->SetModifiedFlag();
 			}
 			break;
@@ -405,7 +416,7 @@ void CModulationsBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 				_tcscpy_s(item.pszText, item.cchTextMax, CTrack::GetModulationTypeName(iType));
 			}
 			break;
-		case COL_TRACK:
+		case COL_SOURCE:
 			{
 				CString	sName;
 				int	iTrack = m_arrModulator[iItem].m_iSource;

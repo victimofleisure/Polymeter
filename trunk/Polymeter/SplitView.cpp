@@ -113,6 +113,14 @@ void CSplitView::OnDraw(CDC* pDC)
 	}
 }
 
+void CSplitView::EndSplitDrag()
+{
+	if (m_bIsSplitDrag) {	// if dragging splitter bar
+		ReleaseCapture();
+		m_bIsSplitDrag = false;
+	}
+}
+
 // CSplitView message map
 
 BEGIN_MESSAGE_MAP(CSplitView, CView)
@@ -121,6 +129,7 @@ BEGIN_MESSAGE_MAP(CSplitView, CView)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
+	ON_WM_KILLFOCUS()
 END_MESSAGE_MAP()
 
 // CSplitView message handlers
@@ -155,10 +164,7 @@ void CSplitView::OnLButtonDown(UINT nFlags, CPoint point)
 
 void CSplitView::OnLButtonUp(UINT nFlags, CPoint point)
 {
-	if (m_bIsSplitDrag) {	// if dragging splitter bar
-		ReleaseCapture();
-		m_bIsSplitDrag = false;
-	}
+	EndSplitDrag();
 	CView::OnLButtonUp(nFlags, point);
 }
 
@@ -174,4 +180,10 @@ void CSplitView::OnMouseMove(UINT nFlags, CPoint point)
 		}
 	}
 	CView::OnMouseMove(nFlags, point);
+}
+
+void CSplitView::OnKillFocus(CWnd* pNewWnd)
+{
+	EndSplitDrag();	// release capture before losing focus
+	CView::OnKillFocus(pNewWnd);
 }

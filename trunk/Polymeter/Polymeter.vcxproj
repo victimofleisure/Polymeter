@@ -296,6 +296,7 @@
     <ClInclude Include="UndoTest.h" />
     <ClInclude Include="UndoTypes.h" />
     <ClInclude Include="VariantHelper.h" />
+    <ClInclude Include="VelocityDlg.h" />
     <ClInclude Include="VelocityView.h" />
     <ClInclude Include="Version.h" />
     <ClInclude Include="VersionInfo.h" />
@@ -385,6 +386,7 @@
     <ClCompile Include="UndoManager.cpp" />
     <ClCompile Include="UndoState.cpp" />
     <ClCompile Include="UndoTest.cpp" />
+    <ClCompile Include="VelocityDlg.cpp" />
     <ClCompile Include="VelocityView.cpp" />
     <ClCompile Include="VersionInfo.cpp" />
     <ClCompile Include="Win32Console.cpp" />

@@ -320,6 +320,19 @@ void CVelocityView::UpdateVelocities(const CRect& rSpan, int iWaveform)
 	}
 }
 
+void CVelocityView::EndDrag()
+{
+	if (m_bIsDragging) {
+		if (m_bIsModified) {
+			CPolymeterDoc	*pDoc = GetDocument();
+			CPolymeterDoc::CMultiItemPropHint	hint(pDoc->m_arrTrackSel, 0);
+			pDoc->UpdateAllViews(this, CPolymeterDoc::HINT_VELOCITY, &hint);
+		}
+		ReleaseCapture();
+		m_bIsDragging = false;
+	}
+}
+
 void CVelocityView::OnDraw(CDC* pDC)
 {
 	CRect	rClip;
@@ -384,6 +397,7 @@ BEGIN_MESSAGE_MAP(CVelocityView, CView)
 	ON_WM_MOUSEMOVE()
 	ON_WM_CONTEXTMENU()
 	ON_WM_SIZE()
+	ON_WM_KILLFOCUS()
 END_MESSAGE_MAP()
 
 // CVelocityView message handlers
@@ -430,15 +444,7 @@ void CVelocityView::OnLButtonDown(UINT nFlags, CPoint point)
 
 void CVelocityView::OnLButtonUp(UINT nFlags, CPoint point)
 {
-	if (m_bIsDragging) {
-		if (m_bIsModified) {
-			CPolymeterDoc	*pDoc = GetDocument();
-			CPolymeterDoc::CMultiItemPropHint	hint(pDoc->m_arrTrackSel, 0);
-			pDoc->UpdateAllViews(this, CPolymeterDoc::HINT_VELOCITY, &hint);
-		}
-		ReleaseCapture();
-		m_bIsDragging = false;
-	}
+	EndDrag();
 	CView::OnLButtonUp(nFlags, point);
 }
 
@@ -503,8 +509,15 @@ BOOL CVelocityView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 	return m_pStepView->OnMouseWheel(nFlags, zDelta, pt);	// forward to step view
 }
 
+void CVelocityView::OnKillFocus(CWnd* pNewWnd)
+{
+	EndDrag();	// release capture before losing focus
+	CView::OnKillFocus(pNewWnd);
+}
+
 void CVelocityView::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	UNREFERENCED_PARAMETER(pWnd);
 	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE);
 }
+

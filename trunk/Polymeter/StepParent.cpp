@@ -34,11 +34,13 @@
 IMPLEMENT_DYNCREATE(CStepParent, CSplitView)
 
 int CStepParent::m_nGlobVeloHeight = INIT_VELO_HEIGHT;
+bool CStepParent::m_bGlobIsVeloSigned = false;
 
 const LPCTSTR CStepParent::m_pszVeloOrigin[2] = {_T("64"), _T("0")};
 
 #define RK_STEP_VIEW _T("StepView")
 #define RK_VELO_HEIGHT _T("VeloHeight")
+#define RK_VELO_SIGNED _T("VeloSigned")
 
 #define PANE_ID(n) (PANE_ID_FIRST + n)
 
@@ -51,7 +53,7 @@ CStepParent::CStepParent()
 	m_pStepView = NULL;
 	m_nRulerHeight = 0;
 	m_bIsScrolling = true;	// prevents premature scrolling during creation
-	m_bIsVeloSigned = false;
+	m_bIsVeloSigned = m_bGlobIsVeloSigned;
 	m_nVeloHeight = m_nGlobVeloHeight;
 	m_nMuteWidth = 0;
 	m_hSplitCursor = NULL;
@@ -80,16 +82,22 @@ void CStepParent::UpdatePersistentState()
 		m_nVeloHeight = m_nGlobVeloHeight;	// update our cached copy
 		RecalcLayout();
 	}
+	if (m_bIsVeloSigned != m_bGlobIsVeloSigned) {
+		m_bIsVeloSigned = m_bGlobIsVeloSigned;
+		m_btnVeloOrigin.SetWindowText(m_pszVeloOrigin[m_bIsVeloSigned]);
+	}
 }
 
 void CStepParent::LoadPersistentState()
 {
 	m_nGlobVeloHeight = theApp.GetProfileInt(RK_STEP_VIEW, RK_VELO_HEIGHT, INIT_VELO_HEIGHT);
+	m_bGlobIsVeloSigned = theApp.GetProfileInt(RK_STEP_VIEW, RK_VELO_SIGNED, false) != 0;
 }
 
 void CStepParent::SavePersistentState()
 {
 	theApp.WriteProfileInt(RK_STEP_VIEW, RK_VELO_HEIGHT, m_nGlobVeloHeight);
+	theApp.WriteProfileInt(RK_STEP_VIEW, RK_VELO_SIGNED, m_bGlobIsVeloSigned);
 }
 
 int CStepParent::GetTrackHeight() const
@@ -426,5 +434,6 @@ void CStepParent::OnVelocityOriginBtnClicked()
 {
 	m_bIsVeloSigned ^= 1;
 	m_btnVeloOrigin.SetWindowText(m_pszVeloOrigin[m_bIsVeloSigned]);
+	m_bGlobIsVeloSigned = m_bIsVeloSigned;
 	RecalcLayout();
 }

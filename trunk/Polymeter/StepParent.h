@@ -48,10 +48,10 @@ public:
 	bool	IsVelocitySigned() const;
 
 // Public data
-	CTrackView*	m_pTrackView;		// pointer to track view
-	CStepView*	m_pStepView;		// pointer to step view
-	CMuteView*	m_pMuteView;		// pointer to mute view
-	CVelocityView*	m_pVeloView;	// pointer to velocity view
+	CTrackView	*m_pTrackView;		// pointer to track view
+	CStepView	*m_pStepView;		// pointer to step view
+	CMuteView	*m_pMuteView;		// pointer to mute view
+	CVelocityView	*m_pVeloView;	// pointer to velocity view
 
 // Operations
 public:
@@ -104,6 +104,7 @@ protected:
 	CMFCButton	m_btnVeloClose;	// velocity close button
 	CTextButton	m_btnVeloOrigin;	// velocity origin button
 	static	int		m_nGlobVeloHeight;	// global velocity pane height for all documents
+	static	bool	m_bGlobIsVeloSigned;	// global signed velocities flag for all documents
 
 // Helpers
 	void	RecalcLayout(int cx, int cy);

@@ -649,6 +649,42 @@ bool CSeqTrackArray::CalcVelocityRange(int iTrack, int& nMinVel, int& nMaxVel, i
 	return true;
 }
 
+void CSeqTrackArray::OffsetSteps(int iTrack, int iStep, int nSteps, int nOffset)
+{
+	CTrack&	trk = GetAt(iTrack);
+	int	nLowerRail;
+	if (trk.IsNote())	// if track type is note
+		nLowerRail = 1;	// zero is reserved for note off
+	else	// track type isn't note
+		nLowerRail = 0;	// zero is fine
+	for (int iPos = 0; iPos < nSteps; iPos++) {	// for each step in range
+		STEP&	step = trk.m_arrStep[iStep + iPos]; 
+		if (step || !trk.IsNote()) {	// if non-zero step, or track type isn't note
+			int	nVel = (step & SB_VELOCITY) + nOffset;	// mask off velocity
+			step &= ~SB_VELOCITY;	// zero velocity, preserving tie bit
+			step |= static_cast<STEP>(CLAMP(nVel, nLowerRail, MIDI_NOTE_MAX));
+		}
+	}
+}
+
+void CSeqTrackArray::ScaleSteps(int iTrack, int iStep, int nSteps, double fScale)
+{
+	CTrack&	trk = GetAt(iTrack);
+	int	nLowerRail;
+	if (trk.IsNote())	// if track type is note
+		nLowerRail = 1;	// zero is reserved for note off
+	else	// track type isn't note
+		nLowerRail = 0;	// zero is fine
+	for (int iPos = 0; iPos < nSteps; iPos++) {	// for each step in range
+		STEP&	step = trk.m_arrStep[iStep + iPos]; 
+		if (step || !trk.IsNote()) {	// if non-zero step, or track type isn't note
+			int	nVel = round((step & SB_VELOCITY) * fScale);	// mask off velocity
+			step &= ~SB_VELOCITY;	// zero velocity, preserving tie bit
+			step |= static_cast<STEP>(CLAMP(nVel, nLowerRail, MIDI_NOTE_MAX));
+		}
+	}
+}
+
 int CSeqTrackArray::GetChannelUsage(int *parrFirstTrack) const
 {
 	ASSERT(parrFirstTrack != NULL);
@@ -668,4 +704,28 @@ int CSeqTrackArray::GetChannelUsage(int *parrFirstTrack) const
 		}
 	}
 	return nUsedChans;
+}
+
+int CSeqTrackArray::CalcMaxTrackLength(const CIntArrayEx& arrSelection) const
+{
+	int	nMaxSteps = 0;
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = arrSelection[iSel];
+		int	nSteps = GetLength(iTrack);
+		if (nSteps > nMaxSteps)
+			nMaxSteps = nSteps;
+	}
+	return nMaxSteps;
+}
+
+int CSeqTrackArray::CalcMaxTrackLength(const CRect& rSelection) const
+{
+	int	nMaxSteps = 0;
+	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
+		int	nSteps = GetLength(iTrack);
+		if (nSteps > nMaxSteps)
+			nMaxSteps = nSteps;
+	}
+	return nMaxSteps;
 }

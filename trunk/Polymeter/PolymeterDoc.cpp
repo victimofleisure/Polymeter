@@ -39,6 +39,7 @@
 #include "FillDlg.h"
 #include "VelocityView.h"	// for waveforms in TrackFill
 #include "MidiFile.h"
+#include "VelocityDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -72,6 +73,9 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_TRANSPOSE_NOTES	_T("nNotes")
 #define RK_VELOCITY_DLG		REG_SETTINGS _T("\\Velocity")
 #define RK_VELOCITY_OFFSET	_T("nOffset")
+#define RK_VELOCITY_SCALE	_T("fScale")
+#define RK_VELOCITY_TARGET	_T("nTarget")
+#define RK_VELOCITY_PAGE	_T("iPage")
 #define RK_SHIFT_DLG		REG_SETTINGS _T("\\Shift")
 #define RK_SHIFT_STEPS		_T("nSteps")
 #define RK_EXPORT_DLG		REG_SETTINGS _T("\\Export")
@@ -100,6 +104,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define IDS_EDIT_REVERSE_RECT		IDS_EDIT_REVERSE
 #define IDS_EDIT_ROTATE_RECT		IDS_EDIT_ROTATE
 #define IDS_EDIT_SHIFT_RECT			IDS_EDIT_SHIFT
+#define IDS_EDIT_VELOCITY_RECT		IDS_EDIT_VELOCITY
 #define IDS_EDIT_MUTE				IDS_TRK_Mute
 
 const int CPolymeterDoc::m_arrUndoTitleId[UNDO_CODES] = {
@@ -133,6 +138,8 @@ CPolymeterDoc::CPolymeterDoc()
 	m_fStepZoom = 1;
 	m_fSongZoom = 1;
 	m_nViewType = DEFAULT_VIEW_TYPE;
+	m_rUndoSel.SetRectEmpty();
+	m_rStepSel.SetRectEmpty();
 }
 
 CPolymeterDoc::~CPolymeterDoc()
@@ -461,17 +468,19 @@ void CPolymeterDoc::PasteTracks()
 	int	iInsPos = GetInsertPos();
 	{
 		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
-		// for each clipboard track, add two map entries, one for the track's previous ID, and one for its
-		// new ID; the insert function assigns new IDs, but if the tracks refer to other tracks within the
-		// clipboard, they do so using the previous IDs, so both IDs need to be defined in the track map
+		// the insert function assigns new IDs to the clipboard tracks, so the new IDs must be added to
+		// the track map; but if the clipboard tracks refer to other clipboard tracks, they do so using
+		// their previous IDs, so the previous IDs must also be added unless they're already in the map
 		int	nCBTracks = theApp.m_arrTrackClipboard.GetSize();
 		int	nTracks = GetTrackCount();
-		UINT	nNextID = m_Seq.GetCurrentID();
+		UINT	nNewID = m_Seq.GetCurrentID();
 		for (int iCBTrack = 0; iCBTrack < nCBTracks; iCBTrack++) {	// for each clipboard track
 			const CTrack&	trk = theApp.m_arrTrackClipboard[iCBTrack];
-			int	iCBPos = nTracks + iCBTrack;
-			TrackArrayEdit.m_mapTrackID.SetAt(trk.m_nUID, iCBPos);	// add track's previous ID
-			TrackArrayEdit.m_mapTrackID.SetAt(++nNextID, iCBPos);	// add track's new ID, mapped to same index
+			int	iCBPos = nTracks + iCBTrack;	// after document's tracks
+			TrackArrayEdit.m_mapTrackID.SetAt(++nNewID, iCBPos);	// add track's new ID to map; pre-increment ID
+			int	iTemp;
+			if (!TrackArrayEdit.m_mapTrackID.Lookup(trk.m_nUID, iTemp))	// if track's previous ID not found in map
+				TrackArrayEdit.m_mapTrackID.SetAt(trk.m_nUID, iCBPos);	// add track's previous ID to map
 		}
 		m_Seq.InsertTracks(iInsPos, theApp.m_arrTrackClipboard);	// insert clipboard tracks, assigning new IDs
 		for (int iCBTrack = 0; iCBTrack < nCBTracks; iCBTrack++) {	// for each clipboard track
@@ -494,6 +503,21 @@ void CPolymeterDoc::PasteTracks()
 	SelectRange(iInsPos, theApp.m_arrTrackClipboard.GetSize(), false);	// don't update views
 	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	NotifyUndoableEdit(0, UCODE_PASTE_TRACKS);
+}
+
+void CPolymeterDoc::InsertTracks()
+{
+	if (m_Seq.GetTrackCount() >= MAX_TRACKS)	// if too many tracks
+		AfxThrowNotSupportedException();	// throw unsupported
+	int	iInsPos = GetInsertPos();
+	{
+		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
+		m_Seq.InsertTracks(iInsPos);
+	}	// dtor ends transaction
+	SetModifiedFlag();
+	SelectOnly(iInsPos, false);	// don't update views
+	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
+	NotifyUndoableEdit(0, UCODE_INSERT_TRACKS);
 }
 
 void CPolymeterDoc::DeleteTracks(bool bCopyToClipboard)
@@ -660,7 +684,7 @@ void CPolymeterDoc::SetTrackStep(int iTrack, int iStep, STEP nStep)
 
 void CPolymeterDoc::SetTrackSteps(const CRect& rSelection, STEP nStep)
 {
-	m_rStepSel = rSelection;
+	m_rUndoSel = rSelection;
 	NotifyUndoableEdit(0, UCODE_MULTI_STEP_RECT);
 	m_Seq.SetSteps(rSelection, nStep);
 	SetModifiedFlag();
@@ -670,7 +694,7 @@ void CPolymeterDoc::SetTrackSteps(const CRect& rSelection, STEP nStep)
 
 void CPolymeterDoc::ToggleTrackSteps(const CRect& rSelection, UINT nFlags)
 {
-	m_rStepSel = rSelection;
+	m_rUndoSel = rSelection;
 	NotifyUndoableEdit(0, UCODE_MULTI_STEP_RECT);
 	m_Seq.ToggleSteps(rSelection, nFlags);
 	SetModifiedFlag();
@@ -690,12 +714,12 @@ bool CPolymeterDoc::DeleteSteps(const CRect& rSelection, bool bCopyToClipboard)
 {
 	if (!IsRectStepSelection(rSelection, true))	// deleting
 		return false;
-	m_rStepSel = rSelection;
+	m_rUndoSel = rSelection;
 	NotifyUndoableEdit(0, UCODE_DELETE_STEPS);
 	if (bCopyToClipboard)
 		m_Seq.GetSteps(rSelection, theApp.m_arrStepClipboard);
 	m_Seq.DeleteSteps(rSelection);
-	ApplyStepsArrayEdit(false);	// reset selection
+	ApplyStepsArrayEdit(rSelection, false);	// reset selection
 	return true;
 }
 
@@ -707,9 +731,9 @@ bool CPolymeterDoc::PasteSteps(const CRect& rSelection)
 	CSize	szData(theApp.m_arrStepClipboard[0].GetSize(), theApp.m_arrStepClipboard.GetSize());
 	if (!MakePasteSelection(szData, rPasteSel))
 		return false;
-	m_rStepSel = rPasteSel;
+	m_rUndoSel = rPasteSel;
 	m_Seq.InsertSteps(rPasteSel, theApp.m_arrStepClipboard);
-	ApplyStepsArrayEdit(true);	// select pasted steps
+	ApplyStepsArrayEdit(rPasteSel, true);	// select pasted steps
 	NotifyUndoableEdit(0, UCODE_PASTE_STEPS);
 	return true;
 }
@@ -722,17 +746,17 @@ bool CPolymeterDoc::InsertStep(const CRect& rSelection)
 	CSize	szData(1, rPasteSel.Height());
 	if (!MakePasteSelection(szData, rPasteSel))
 		return false;
-	m_rStepSel = rPasteSel;
+	m_rUndoSel = rPasteSel;
 	m_Seq.InsertStep(rPasteSel);
-	ApplyStepsArrayEdit(true);	// select inserted steps
+	ApplyStepsArrayEdit(rPasteSel, true);	// select inserted steps
 	NotifyUndoableEdit(0, UCODE_INSERT_STEPS);
 	return true;
 }
 
-void CPolymeterDoc::ApplyStepsArrayEdit(bool bSelect)
+void CPolymeterDoc::ApplyStepsArrayEdit(const CRect& rStepSel, bool bSelect)
 {
 	SetModifiedFlag();
-	CRectSelPropHint	hint(m_rStepSel, bSelect);
+	CRectSelPropHint	hint(rStepSel, bSelect);
 	UpdateAllViews(NULL, HINT_STEPS_ARRAY, &hint);
 }
 
@@ -822,7 +846,7 @@ void CPolymeterDoc::SetTrackLength(const CRect& rSelection, int nLength)
 	m_arrTrackSel = arrPrevTrackSel;	// restore previous track selection
 }
 
-bool CPolymeterDoc::ReverseSteps()
+bool CPolymeterDoc::ReverseTracks()
 {
 	if (!GetSelectedCount())
 		return false;
@@ -838,7 +862,7 @@ bool CPolymeterDoc::ReverseSteps()
 
 void CPolymeterDoc::ReverseSteps(const CRect& rSelection)
 {
-	m_rStepSel = rSelection;
+	m_rUndoSel = rSelection;
 	NotifyUndoableEdit(0, UCODE_REVERSE_RECT);
 	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each track
 		int	iEndStep = min(rSelection.right, m_Seq.GetLength(iTrack));
@@ -849,7 +873,7 @@ void CPolymeterDoc::ReverseSteps(const CRect& rSelection)
 	SetModifiedFlag();
 }
 
-bool CPolymeterDoc::ShiftSteps(int nOffset)
+bool CPolymeterDoc::ShiftTracks(int nOffset)
 {
 	if (!GetSelectedCount())
 		return false;
@@ -865,7 +889,7 @@ bool CPolymeterDoc::ShiftSteps(int nOffset)
 
 void CPolymeterDoc::ShiftSteps(const CRect& rSelection, int nOffset)
 {
-	m_rStepSel = rSelection;
+	m_rUndoSel = rSelection;
 	NotifyUndoableEdit(nOffset, UCODE_SHIFT_RECT);
 	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each track
 		int	iEndStep = min(rSelection.right, m_Seq.GetLength(iTrack));
@@ -876,7 +900,7 @@ void CPolymeterDoc::ShiftSteps(const CRect& rSelection, int nOffset)
 	SetModifiedFlag();
 }
 
-bool CPolymeterDoc::RotateSteps(int nOffset)
+bool CPolymeterDoc::RotateTracks(int nOffset)
 {
 	if (!GetSelectedCount())
 		return false;
@@ -892,7 +916,7 @@ bool CPolymeterDoc::RotateSteps(int nOffset)
 
 void CPolymeterDoc::RotateSteps(const CRect& rSelection, int nOffset)
 {
-	m_rStepSel = rSelection;
+	m_rUndoSel = rSelection;
 	NotifyUndoableEdit(nOffset, UCODE_ROTATE_RECT);
 	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each track
 		int	iEndStep = min(rSelection.right, m_Seq.GetLength(iTrack));
@@ -901,6 +925,22 @@ void CPolymeterDoc::RotateSteps(const CRect& rSelection, int nOffset)
 	CRectSelPropHint	hint(rSelection, true);	// set selection
 	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
 	SetModifiedFlag();
+}
+
+void CPolymeterDoc::ShiftTracksOrSteps(int nOffset)
+{
+	if (HaveStepSelection())	// if step selection
+		ShiftSteps(m_rStepSel, nOffset);
+	else	// track selection
+		ShiftTracks(nOffset);
+}
+
+void CPolymeterDoc::RotateTracksOrSteps(int nOffset)
+{
+	if (HaveStepSelection())	// if step selection
+		RotateSteps(m_rStepSel, nOffset);
+	else	// track selection
+		RotateTracks(nOffset);
 }
 
 bool CPolymeterDoc::IsTranspositionSafe(int nNoteDelta) const
@@ -935,20 +975,41 @@ bool CPolymeterDoc::Transpose(int nNoteDelta)
 	return true;
 }
 
-bool CPolymeterDoc::IsVelocityOffsetSafe(int nVelocityDelta, CRange<int> *prngVelocity) const
+bool CPolymeterDoc::IsVelocityChangeSafe(int nVelocityOffset, double fVelocityScale, const CRect *prStepSel, CRange<int> *prngVelocity) const
 {
 	CRange<int>	rngVel(0, 0);
 	bool	bIsInitialRange = true;
 	bool	bIsSafe = true;
-	int	nSels = GetSelectedCount();
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		int	iTrack = m_arrTrackSel[iSel];
+	bool	bIsScaling = fVelocityScale != 1;	// if scale isn't one, do scaling, otherwise offset
+	int	nRows;
+	int	iStartStep;
+	int	nRangeSteps = 0;
+	if (prStepSel != NULL) {	// if step selection specified
+		nRows = prStepSel->Height();
+		iStartStep = prStepSel->left;
+	} else {	// use track selection
+		nRows = GetSelectedCount();
+		iStartStep = 0;
+	}
+	for (int iRow = 0; iRow < nRows; iRow++) {	// for each row in selection
+		int	iTrack;
+		if (prStepSel != NULL) {	// if step selection specified
+			iTrack = prStepSel->top + iRow;
+			int	iEndStep = min(prStepSel->right, m_Seq.GetLength(iTrack));
+			nRangeSteps = max(iEndStep - iStartStep, 0);
+		} else	// use track selection
+			iTrack = m_arrTrackSel[iRow];
 		const CTrack&	trk = m_Seq.GetTrack(iTrack);
 		int	nMinVel, nMaxVel;
-		if (!m_Seq.CalcVelocityRange(iTrack, nMinVel, nMaxVel))	// if can't get range
+		if (!m_Seq.CalcVelocityRange(iTrack, nMinVel, nMaxVel, iStartStep, nRangeSteps))	// if can't get range
 			continue;	// skip this track; assume empty note track
-		nMinVel += nVelocityDelta;
-		nMaxVel += nVelocityDelta;
+		if (bIsScaling) {
+			nMinVel = round(nMinVel * fVelocityScale);
+			nMaxVel = round(nMaxVel * fVelocityScale);
+		} else {
+			nMinVel += nVelocityOffset;
+			nMaxVel += nVelocityOffset;
+		}
 		int	nLowerRail;
 		if (trk.IsNote())	// if track type is note
 			nLowerRail = 1;	// zero is reserved for note off
@@ -972,7 +1033,7 @@ bool CPolymeterDoc::IsVelocityOffsetSafe(int nVelocityDelta, CRange<int> *prngVe
 	return bIsSafe;
 }
 
-bool CPolymeterDoc::OffsetVelocity(int nVelocityDelta)
+bool CPolymeterDoc::OffsetTrackVelocity(int nVelocityOffset)
 {
 	if (!GetSelectedCount())
 		return false;
@@ -980,11 +1041,54 @@ bool CPolymeterDoc::OffsetVelocity(int nVelocityDelta)
 	int	nSels = GetSelectedCount();
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = m_arrTrackSel[iSel];
-		int	nVel = m_Seq.GetVelocity(iTrack) + nVelocityDelta;
+		int	nVel = m_Seq.GetVelocity(iTrack) + nVelocityOffset;
 		m_Seq.SetVelocity(iTrack, CLAMP(nVel, -MIDI_NOTE_MAX, MIDI_NOTE_MAX));
 	}
 	CMultiItemPropHint	hint(m_arrTrackSel, PROP_Velocity);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
+	SetModifiedFlag();
+	return true;
+}
+
+bool CPolymeterDoc::TransformStepVelocity(int nVelocityOffset, double fVelocityScale)
+{
+	if (!m_arrTrackSel.GetSize())
+		return false;
+	NotifyUndoableEdit(0, UCODE_VELOCITY);
+	bool	bIsScaling = fVelocityScale != 1;	// if scale isn't one, do scaling, otherwise offset
+	int	nSels = GetSelectedCount();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = m_arrTrackSel[iSel];
+		if (bIsScaling)	// if scaling
+			m_Seq.ScaleSteps(iTrack, 0, m_Seq.GetLength(iTrack), fVelocityScale);
+		else	// offset
+			m_Seq.OffsetSteps(iTrack, 0, m_Seq.GetLength(iTrack), nVelocityOffset);
+	}
+	CMultiItemPropHint	hint(m_arrTrackSel);
+	UpdateAllViews(NULL, HINT_MULTI_TRACK_STEPS, &hint);
+	SetModifiedFlag();
+	return true;
+}
+
+bool CPolymeterDoc::TransformStepVelocity(const CRect& rSelection, int nVelocityOffset, double fVelocityScale)
+{
+	if (rSelection.IsRectEmpty())
+		return false;
+	m_rUndoSel = rSelection;	// for undo handler
+	NotifyUndoableEdit(0, UCODE_VELOCITY_RECT);
+	bool	bIsScaling = fVelocityScale != 1;	// if scale isn't one, do scaling, otherwise offset
+	CSize	szSel = rSelection.Size();
+	for (int iRow = 0; iRow < szSel.cy; iRow++) {	// for each row in range
+		int	iTrack = rSelection.top + iRow;
+		int	iEndStep = min(rSelection.right, m_Seq.GetLength(iTrack));
+		int	nRangeSteps = max(iEndStep - rSelection.left, 0);
+		if (bIsScaling)	// if scaling
+			m_Seq.ScaleSteps(iTrack, rSelection.left, nRangeSteps, fVelocityScale);
+		else	// offset
+			m_Seq.OffsetSteps(iTrack, rSelection.left, nRangeSteps, nVelocityOffset);
+	}
+	CRectSelPropHint	hint(rSelection);
+	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
 	SetModifiedFlag();
 	return true;
 }
@@ -1416,7 +1520,7 @@ void CPolymeterDoc::SaveMultiStepRect(CUndoState& State) const
 {
 	CRect	rSelection;
 	if (State.IsEmpty()) {	// if initial state
-		rSelection = m_rStepSel;	// get fresh selection
+		rSelection = m_rUndoSel;	// get fresh selection
 	} else {	// undoing or redoing; selection may have changed, so don't rely on it
 		const CUndoMultiStepRect	*pInfo = static_cast<CUndoMultiStepRect*>(State.GetObj());
 		rSelection = pInfo->m_rSelection;	// use edit's original selection
@@ -1441,8 +1545,8 @@ void CPolymeterDoc::SaveClipboardSteps(CUndoState& State) const
 	if (UndoMgrIsIdle()) {	// if initial state
 		CRefPtr<CUndoMultiStepRect>	pClipboard;
 		pClipboard.CreateObj();
-		pClipboard->m_rSelection = m_rStepSel;
-		m_Seq.GetSteps(m_rStepSel, pClipboard->m_arrStepArray); 
+		pClipboard->m_rSelection = m_rUndoSel;
+		m_Seq.GetSteps(m_rUndoSel, pClipboard->m_arrStepArray); 
 		State.SetObj(pClipboard);
 		switch (LOWORD(State.GetCode())) {
 		case UCODE_CUT_STEPS:
@@ -1489,13 +1593,13 @@ void CPolymeterDoc::RestoreReverse(const CUndoState& State)
 	Select(pInfo->m_arrSelection);
 	switch (State.GetCode()) {
 	case UCODE_REVERSE:
-		ReverseSteps();
+		ReverseTracks();
 		break;
 	case UCODE_ROTATE:
 		int	nOffset = State.GetCtrlID(); 
 		if (IsUndoing())
 			nOffset = -nOffset;	// inverse rotation
-		RotateSteps(nOffset);
+		RotateTracks(nOffset);
 		break;
 	}
 }
@@ -1504,7 +1608,7 @@ void CPolymeterDoc::SaveReverseRect(CUndoState& State) const
 {
 	CRect	rSelection;
 	if (State.IsEmpty()) {	// if initial state
-		rSelection = m_rStepSel;	// get fresh selection
+		rSelection = m_rUndoSel;	// get fresh selection
 	} else {	// undoing or redoing; selection may have changed, so don't rely on it
 		const CUndoRectSel	*pInfo = static_cast<CUndoRectSel*>(State.GetObj());
 		rSelection  = pInfo->m_rSelection;	// use edit's original selection
@@ -1537,7 +1641,7 @@ void CPolymeterDoc::SaveDubs(CUndoState& State) const
 	pInfo.CreateObj();
 	int	iStartTrack, nTracks;
 	if (State.IsEmpty()) {	// if initial state
-		CRange<int>	rngTrack(m_rStepSel.top, m_rStepSel.bottom);
+		CRange<int>	rngTrack(m_rUndoSel.top, m_rUndoSel.bottom);
 		rngTrack.Normalize();
 		iStartTrack = rngTrack.Start;
 		nTracks = rngTrack.Length();
@@ -1882,6 +1986,7 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		break;
 	case UCODE_MULTI_STEP_RECT:
 	case UCODE_SHIFT_RECT:
+	case UCODE_VELOCITY_RECT:
 		SaveMultiStepRect(State);
 		break;
 	case UCODE_CUT_STEPS:
@@ -1987,6 +2092,7 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		break;
 	case UCODE_MULTI_STEP_RECT:
 	case UCODE_SHIFT_RECT:
+	case UCODE_VELOCITY_RECT:
 		RestoreMultiStepRect(State);
 		break;
 	case UCODE_CUT_STEPS:
@@ -2157,7 +2263,7 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 			return false;
 		}
 		if (bRecord) {	// if recording
-			m_rStepSel = CRect(0, 0, 0, m_Seq.GetTrackCount());
+			m_rUndoSel = CRect(0, 0, 0, m_Seq.GetTrackCount());
 			NotifyUndoableEdit(0, UCODE_RECORD);
 		}
 		CAllDocIter	iter;	// iterate all documents
@@ -2243,7 +2349,7 @@ bool CPolymeterDoc::ShowGMDrums(int iTrack) const
 
 void CPolymeterDoc::SetDubs(const CRect& rSelection, double fTicksPerCell, bool bMute)
 {
-	m_rStepSel = rSelection;	// for undo handler
+	m_rUndoSel = rSelection;	// for undo handler
 	NotifyUndoableEdit(0, UCODE_DUB);
 	SetModifiedFlag();
 	int	nStartTime = round(rSelection.left * fTicksPerCell);
@@ -2258,7 +2364,7 @@ void CPolymeterDoc::SetDubs(const CRect& rSelection, double fTicksPerCell, bool 
 
 void CPolymeterDoc::ToggleDubs(const CRect& rSelection, double fTicksPerCell)
 {
-	m_rStepSel = rSelection;	// for undo handler
+	m_rUndoSel = rSelection;	// for undo handler
 	NotifyUndoableEdit(0, UCODE_DUB);
 	SetModifiedFlag();
 	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
@@ -2298,7 +2404,7 @@ void CPolymeterDoc::DeleteDubs(const CRect& rSelection, double fTicksPerCell, bo
 {
 	if (bCopyToClipboard)
 		CopyDubsToClipboard(rSelection, fTicksPerCell);
-	m_rStepSel = rSelection;	// for undo handler
+	m_rUndoSel = rSelection;	// for undo handler
 	NotifyUndoableEdit(0, UCODE_DUB);
 	SetModifiedFlag();
 	if (rSelection.right == INT_MAX && !rSelection.left) {	// if select all
@@ -2328,7 +2434,7 @@ void CPolymeterDoc::InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double f
 	}
 	CRect	rInsert(ptInsert, CSize(nInsCells, nInsTracks));
 	rSelection = rInsert;
-	m_rStepSel = rInsert;	// for undo handler
+	m_rUndoSel = rInsert;	// for undo handler
 	NotifyUndoableEdit(0, UCODE_DUB);
 	SetModifiedFlag();
 	int	nInsTime = round(ptInsert.x * fTicksPerCell);
@@ -2797,7 +2903,7 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_COMMAND(ID_TRACK_TRANSPOSE, OnTrackTranspose)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_TRANSPOSE, OnUpdateTrackTranspose)
 	ON_COMMAND(ID_TRACK_VELOCITY, OnTrackVelocity)
-	ON_UPDATE_COMMAND_UI(ID_TRACK_VELOCITY, OnUpdateTrackTranspose)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_VELOCITY, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TRACK_SORT, OnTrackSort)
 	ON_COMMAND(ID_TRACK_SOLO, OnTrackSolo)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_SOLO, OnUpdateTrackSolo)
@@ -2955,72 +3061,83 @@ void CPolymeterDoc::OnUpdateEditRedo(CCmdUI *pCmdUI)
 void CPolymeterDoc::OnEditCopy()
 {
 	if (!CFocusEdit::Copy()) {
-		CopyTracksToClipboard();
+		if (HaveStepSelection()) {	// if step selection
+			if (!GetTrackSteps(m_rStepSel, theApp.m_arrStepClipboard))
+				AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+		} else	// track selection
+			CopyTracksToClipboard();
 	}
 }
 
 void CPolymeterDoc::OnUpdateEditCopy(CCmdUI *pCmdUI)
 {
 	if (!CFocusEdit::UpdateCopy(pCmdUI)) {
-		pCmdUI->Enable(GetSelectedCount() > 0);
+		pCmdUI->Enable(HaveTrackOrStepSelection());
 	}
 }
 
 void CPolymeterDoc::OnEditCut()
 {
 	if (!CFocusEdit::Cut()) {
-		DeleteTracks(true);	// copy to clipboard
+		if (HaveStepSelection()) {	// if step selection
+			if (!DeleteSteps(m_rStepSel, true))	// copy to clipboard
+				AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+		} else	// track selection
+			DeleteTracks(true);	// copy tracks to clipboard
 	}
 }
 
 void CPolymeterDoc::OnUpdateEditCut(CCmdUI *pCmdUI)
 {
 	if (!CFocusEdit::UpdateCut(pCmdUI)) {
-		pCmdUI->Enable(GetSelectedCount() > 0);
+		pCmdUI->Enable(HaveTrackOrStepSelection());
 	}
 }
 
 void CPolymeterDoc::OnEditPaste()
 {
 	if (!CFocusEdit::Paste()) {
-		PasteTracks();
+		if (HaveStepSelection()) {	// if step selection
+			if (!PasteSteps(m_rStepSel))
+				AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+		} else	// track selection
+			PasteTracks();
 	}
 }
 
 void CPolymeterDoc::OnUpdateEditPaste(CCmdUI *pCmdUI)
 {
 	if (!CFocusEdit::UpdatePaste(pCmdUI)) {
-		pCmdUI->Enable(theApp.m_arrTrackClipboard.GetSize() > 0);
+		pCmdUI->Enable(theApp.m_arrTrackClipboard.GetSize()
+			|| (HaveStepSelection() && theApp.m_arrStepClipboard.GetSize()));
 	}
 }
 
 void CPolymeterDoc::OnEditDelete()
 {
 	if (!CFocusEdit::Delete()) {
-		DeleteTracks(false);	// don't copy to clipboard
+		if (HaveStepSelection()) {	// if step selection
+			if (!DeleteSteps(m_rStepSel, false))	// don't copy to clipboard
+				AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+		} else	// track selection
+			DeleteTracks(false);	// don't copy to clipboard
 	}
 }
 
 void CPolymeterDoc::OnUpdateEditDelete(CCmdUI *pCmdUI)
 {
 	if (!CFocusEdit::UpdateDelete(pCmdUI)) {
-		pCmdUI->Enable(GetSelectedCount() > 0);
+		pCmdUI->Enable(HaveTrackOrStepSelection());
 	}
 }
 
 void CPolymeterDoc::OnEditInsert()
 {
-	if (m_Seq.GetTrackCount() >= MAX_TRACKS)	// if too many tracks
-		AfxThrowNotSupportedException();	// throw unsupported
-	int	iInsPos = GetInsertPos();
-	{
-		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
-		m_Seq.InsertTracks(iInsPos);
-	}	// dtor ends transaction
-	SetModifiedFlag();
-	SelectOnly(iInsPos, false);	// don't update views
-	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
-	NotifyUndoableEdit(0, UCODE_INSERT_TRACKS);
+	if (HaveStepSelection()) {	// if step selection
+		if (!InsertStep(m_rStepSel))
+			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+	} else	// track selection
+		InsertTracks();
 }
 
 void CPolymeterDoc::OnUpdateEditInsert(CCmdUI *pCmdUI)
@@ -3054,46 +3171,49 @@ void CPolymeterDoc::OnUpdateEditDeselect(CCmdUI *pCmdUI)
 
 void CPolymeterDoc::OnTrackReverse()
 {
-	ReverseSteps();
+	if (HaveStepSelection())	// if step selection
+		ReverseSteps(m_rStepSel);
+	else	// track selection
+		ReverseTracks();
 }
 
 void CPolymeterDoc::OnUpdateTrackReverse(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(IsTrackView() && GetSelectedCount());
+	pCmdUI->Enable(HaveTrackOrStepSelection());
 }
 
 void CPolymeterDoc::OnTrackShiftLeft()
 {
-	ShiftSteps(-1);
+	ShiftTracksOrSteps(-1);
 }
 
 void CPolymeterDoc::OnTrackShiftRight()
 {
-	ShiftSteps(1);
+	ShiftTracksOrSteps(1);
 }
 
 void CPolymeterDoc::OnTrackShiftSteps()
 {
 	int	nSteps;
 	if (DoShiftDialog(nSteps))
-		ShiftSteps(nSteps);
+		ShiftTracksOrSteps(nSteps);
 }
 
 void CPolymeterDoc::OnTrackRotateLeft()
 {
-	RotateSteps(-1);
+	RotateTracksOrSteps(-1);
 }
 
 void CPolymeterDoc::OnTrackRotateRight()
 {
-	RotateSteps(1);
+	RotateTracksOrSteps(1);
 }
 
 void CPolymeterDoc::OnTrackRotateSteps()
 {
 	int	nSteps;
 	if (DoShiftDialog(nSteps, true))	// change caption to rotate
-		RotateSteps(nSteps);
+		RotateTracksOrSteps(nSteps);
 }
 
 void CPolymeterDoc::OnTrackMute()
@@ -3143,29 +3263,66 @@ void CPolymeterDoc::OnUpdateTrackTranspose(CCmdUI *pCmdUI)
 
 void CPolymeterDoc::OnTrackVelocity()
 {
-	COffsetDlg	dlg;
-	dlg.m_nDlgCaptionID = IDS_TRK_Velocity;
-	dlg.m_rngOffset = CRange<int>(-MIDI_NOTE_MAX, MIDI_NOTE_MAX);
-	dlg.m_nOffset = theApp.GetProfileInt(RK_VELOCITY_DLG, RK_VELOCITY_OFFSET, 0);
+	int	iDlgPage = CPersist::GetInt(RK_VELOCITY_DLG, RK_VELOCITY_PAGE, 0);
+	CVelocitySheet	dlg(IDS_VELOCITY, NULL, CLAMP(iDlgPage, 0, CVelocitySheet::PAGES - 1));
+	dlg.m_nOffset = CPersist::GetInt(RK_VELOCITY_DLG, RK_VELOCITY_OFFSET, 0);
+	dlg.m_nTarget = CPersist::GetInt(RK_VELOCITY_DLG, RK_VELOCITY_TARGET, 0);
+	dlg.m_fScale = CPersist::GetDouble(RK_VELOCITY_DLG, RK_VELOCITY_SCALE, 1);
+	dlg.m_bHaveStepSelection = HaveStepSelection();	// determines whether target setting is enabled
 	if (dlg.DoModal() == IDOK) {
-		if (!IsVelocityOffsetSafe(dlg.m_nOffset)) {	// check for clipping
-			if (AfxMessageBox(IDS_DOC_CLIP_WARNING, MB_OKCANCEL) != IDOK)
-				return;	// user canceled
+		iDlgPage = dlg.GetActiveIndex();
+		switch (iDlgPage) {
+		case CVelocitySheet::PAGE_OFFSET:
+			if (!IsVelocityChangeSafe(dlg.m_nOffset)) {	// check offset for clipping
+				if (AfxMessageBox(IDS_DOC_CLIP_WARNING, MB_OKCANCEL) != IDOK)
+					return;	// user canceled
+			}
+			if (dlg.m_nOffset) {	// if valid offset
+				switch (dlg.m_nTarget) {
+				case CVelocitySheet::TARGET_TRACKS:
+					OffsetTrackVelocity(dlg.m_nOffset);
+					break;
+				case CVelocitySheet::TARGET_STEPS:
+					if (HaveStepSelection())
+						TransformStepVelocity(m_rStepSel, dlg.m_nOffset);
+					else
+						TransformStepVelocity(dlg.m_nOffset);
+					break;
+				}
+			}
+			break;
+		case CVelocitySheet::PAGE_SCALE:
+			if (!IsVelocityChangeSafe(0, dlg.m_fScale)) {	// check scale for clipping
+				if (AfxMessageBox(IDS_DOC_CLIP_WARNING, MB_OKCANCEL) != IDOK)
+					return;	// user canceled
+			}
+			if (dlg.m_fScale != 1) {	// if valid scale
+				if (HaveStepSelection())
+					TransformStepVelocity(m_rStepSel, 0, dlg.m_fScale);
+				else
+					TransformStepVelocity(0, dlg.m_fScale);
+			}
+			break;
 		}
-		if (dlg.m_nOffset)
-			OffsetVelocity(dlg.m_nOffset);
-		theApp.WriteProfileInt(RK_VELOCITY_DLG, RK_VELOCITY_OFFSET, dlg.m_nOffset);
+		CPersist::WriteInt(RK_VELOCITY_DLG, RK_VELOCITY_OFFSET, dlg.m_nOffset);
+		if (!dlg.m_bHaveStepSelection)	// only update target setting if it was enabled
+			CPersist::WriteInt(RK_VELOCITY_DLG, RK_VELOCITY_TARGET, dlg.m_nTarget);
+		CPersist::WriteDouble(RK_VELOCITY_DLG, RK_VELOCITY_SCALE, dlg.m_fScale);
+		CPersist::WriteInt(RK_VELOCITY_DLG, RK_VELOCITY_PAGE, iDlgPage);
 	}
 }
 
 void CPolymeterDoc::OnTrackFill()
 {
-	TrackFill(NULL);
+	if (HaveStepSelection())	// if step selection
+		TrackFill(&m_rStepSel);
+	else	// track selection
+		TrackFill(NULL);
 }
 
 void CPolymeterDoc::OnUpdateTrackFill(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(GetSelectedCount());
+	pCmdUI->Enable(HaveTrackOrStepSelection());
 }
 
 void CPolymeterDoc::OnTransportPlay()
@@ -3376,7 +3533,7 @@ void CPolymeterDoc::OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI)
 void CPolymeterDoc::OnToolsVelocityRange()
 {
 	CRange<int>	rngVel;
-	bool	bIsSafe = IsVelocityOffsetSafe(0, &rngVel);
+	bool	bIsSafe = IsVelocityChangeSafe(0, 0, NULL, &rngVel);
 	CString	sMsg;
 	sMsg.Format(IDS_DOC_VELOCITY_RANGE, rngVel.Start, rngVel.End);
 	int	nFlags;

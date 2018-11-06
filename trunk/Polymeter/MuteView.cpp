@@ -253,6 +253,7 @@ BEGIN_MESSAGE_MAP(CMuteView, CView)
 	ON_WM_SIZE()
 	ON_WM_CONTEXTMENU()
 	ON_WM_TIMER()
+	ON_WM_KILLFOCUS()
 END_MESSAGE_MAP()
 
 // CMuteView message handlers
@@ -381,4 +382,10 @@ void CMuteView::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	UNREFERENCED_PARAMETER(pWnd);
 	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE);
+}
+
+void CMuteView::OnKillFocus(CWnd* pNewWnd)
+{
+	EndDrag();	// release capture before losing focus
+	CView::OnKillFocus(pNewWnd);
 }

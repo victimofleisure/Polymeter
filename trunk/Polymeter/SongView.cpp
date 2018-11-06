@@ -22,6 +22,8 @@
 #include "SongParent.h"
 #include <math.h>
 #include "UndoCodes.h"
+#include "SongTrackView.h"
+#include "StepView.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -51,6 +53,7 @@ const COLORREF CSongView::m_clrSongPos = RGB(0, 0, 255);
 CSongView::CSongView()
 {
 	m_pParent = NULL;
+	m_pStepView = NULL;
 	m_nTrackHeight = 20;
 	m_nCellWidth = 20;
 	m_nZoom = 0;
@@ -108,6 +111,7 @@ void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_MULTI_STEP:
 	case CPolymeterDoc::HINT_MULTI_TRACK_STEPS:
 	case CPolymeterDoc::HINT_STEPS_ARRAY:
+	case CPolymeterDoc::HINT_TRACK_SELECTION:
 		Invalidate();
 		break;
 	case CPolymeterDoc::HINT_TRACK_ARRAY:
@@ -495,6 +499,18 @@ void CSongView::OnDraw(CDC* pDC)
 			bMute = trk.m_arrDub[iDub].m_bMute;
 		else
 			bMute = true;
+		COLORREF	clrGridVert, clrGridHorz;
+		bool	bSelected = m_pStepView->IsSelected(iTrack);
+		if (bSelected) {	// if track is selected
+			clrGridVert = m_clrSongPos;
+			clrGridHorz = m_clrSongPos;
+		} else {	// track isn't selected
+			clrGridVert = m_clrStepOutline;
+			if (iTrack > 0 && m_pStepView->IsSelected(iTrack - 1))	// if previous track is selected
+				clrGridHorz = m_clrSongPos;	// highlight previous track's bottom gridline
+			else	// previous track isn't selected either
+				clrGridHorz = m_clrStepOutline;
+		}
 		for (int iCell = iFirstCell; iCell <= iLastCell; iCell++) {	// for each cell that intersects clip box
 			bool	bIsFull;
 			if (bIsOverSamp) {	// if oversampling steps
@@ -512,8 +528,8 @@ void CSongView::OnDraw(CDC* pDC)
 			}
 			int	x = iCell * m_nCellWidth;
 			int	y = iTrack * m_nTrackHeight;
-			pDC->FillSolidRect(x, y, m_nCellWidth, 1, m_clrStepOutline);
-			pDC->FillSolidRect(x, y, 1, m_nTrackHeight, m_clrStepOutline);
+			pDC->FillSolidRect(x, y, m_nCellWidth, 1, clrGridHorz);
+			pDC->FillSolidRect(x, y, 1, m_nTrackHeight, clrGridVert);
 			CRect	rCell(CPoint(x + 1, y + 1), CSize(m_nCellWidth, m_nTrackHeight));
 			nCellTime = round(iCell * fTicksPerCell);
 			if (iDub >= 0) {
@@ -578,6 +594,7 @@ BEGIN_MESSAGE_MAP(CSongView, CScrollView)
 	ON_WM_TIMER()
 	ON_WM_RBUTTONDOWN()
 	ON_WM_RBUTTONUP()
+	ON_WM_KILLFOCUS()
 	ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
 	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditCut)
@@ -607,6 +624,7 @@ LRESULT	CSongView::OnDelayedCreate(WPARAM wParam, LPARAM lParam)
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
 	m_pParent->OnSongZoom();
+	m_pStepView = m_pParent->m_pSongTrackView->m_pStepView;
 	return(0);
 }
 
@@ -621,6 +639,8 @@ BOOL CSongView::PreTranslateMessage(MSG* pMsg)
 				UpdateSelection();
 			return TRUE;
 		}
+		if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_ESCAPE && HaveSelection())
+			ResetSelection();
 	}
 	return CScrollView::PreTranslateMessage(pMsg);
 }
@@ -741,12 +761,17 @@ void CSongView::OnTimer(W64UINT nIDEvent)
 			ptScroll.x = CLAMP(ptScroll.x, 0, ptMaxScroll.x);
 			ptScroll.y = CLAMP(ptScroll.y, 0, ptMaxScroll.y);
 			ScrollToPosition(ptScroll);
-			if (m_ptScrollDelta.x)
-				m_pParent->OnSongScroll(CSize(1, 0));	// horizontal scroll
+			m_pParent->OnSongScroll(m_ptScrollDelta);
 			UpdateSelection();
 		}
 	} else
 		CScrollView::OnTimer(nIDEvent);
+}
+
+void CSongView::OnKillFocus(CWnd* pNewWnd)
+{
+	EndDrag();	// release capture before losing focus
+	CScrollView::OnKillFocus(pNewWnd);
 }
 
 void CSongView::OnViewZoomIn()

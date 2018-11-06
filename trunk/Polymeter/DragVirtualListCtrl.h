@@ -74,6 +74,7 @@ protected:
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnTimer(W64UINT nIDEvent);
+	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 

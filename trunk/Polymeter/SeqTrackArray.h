@@ -102,6 +102,8 @@ public:
 	void	ShiftSteps(int iTrack, int iStep, int nSteps, int nOffset);
 	void	RotateSteps(int iTrack, int nOffset);
 	void	RotateSteps(int iTrack, int iStep, int nSteps, int nOffset);
+	void	OffsetSteps(int iTrack, int iStep, int nSteps, int nOffset);
+	void	ScaleSteps(int iTrack, int iStep, int nSteps, double fScale);
 	void	OnRecordStart(int nStartTime);
 	void	OnRecordStop(int nEndTime);
 	void	AddDub(int iTrack, int nTime);
@@ -124,6 +126,8 @@ public:
 	bool	CalcStepRange(int iTrack, int& nMinStep, int& nMaxStep, int iStartStep = 0, int nRangeSteps = 0, bool bIsModulator = false) const;
 	void	CalcNoteRange(int iTrack, int& nMinNote, int& nMaxNote) const;
 	bool	CalcVelocityRange(int iTrack, int& nMinVel, int& nMaxVel, int iStartStep = 0, int nRangeSteps = 0) const;
+	int		CalcMaxTrackLength(const CIntArrayEx& arrSelection) const;
+	int		CalcMaxTrackLength(const CRect& rSelection) const;
 
 protected:
 // Member data

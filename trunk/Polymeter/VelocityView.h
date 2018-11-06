@@ -49,6 +49,7 @@ public:
 	void	ShowDataTip(bool bShow);
 	bool	HaveDataTip() const;
 	static	double	GetWave(int iWaveform, double fPhase);
+	void	EndDrag();
 
 // Overrides
 public:
@@ -102,6 +103,7 @@ protected:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+	afx_msg void OnKillFocus(CWnd* pNewWnd);
 };
 
 inline CPolymeterDoc* CVelocityView::GetDocument() const

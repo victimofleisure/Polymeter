@@ -63,6 +63,7 @@ public:
 // Operations
 public:
 	void	ResetStepSelection();
+	void	SetStepSelection(const CRect& rStepSel, bool bUpdateSteps = true);
 	int		HitTest(CPoint point, int& iStep, UINT nFlags = 0) const;
 	void	EndDrag();
 	void	OnTrackLength(CPoint point);
@@ -180,9 +181,6 @@ protected:
 	static	void	InitTriangleVertex(TRIVERTEX& tv, int x, int y, COLORREF clr);
 	void	DrawStep(CDC* pDC, int x, int y, int cx, int cy, STEP nStep, int iStepColor, int iTrackType);
 	void	DrawClippedStep(CDC *pDC, const CRect& rClip, const CSequencer& seq, int iTrack, int iStep);
-	void	DispatchToDocument();
-	void	ShiftSteps(int nOffset);
-	void	RotateSteps(int nOffset);
 	static	double	InvPow(double fBase, double fVal);
 
 // Generated message map functionsq
@@ -205,26 +203,7 @@ protected:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnTimer(W64UINT nIDEvent);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
-	afx_msg void OnEditCut();
-	afx_msg void OnUpdateEditCut(CCmdUI *pCmdUI);
-	afx_msg void OnEditCopy();
-	afx_msg void OnUpdateEditCopy(CCmdUI *pCmdUI);
-	afx_msg void OnEditPaste();
-	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
-	afx_msg void OnEditInsert();
-	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
-	afx_msg void OnEditDelete();
-	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
-	afx_msg void OnTrackReverse();
-	afx_msg void OnUpdateTrackReverse(CCmdUI *pCmdUI);
-	afx_msg void OnTrackShiftLeft();
-	afx_msg void OnTrackShiftRight();
-	afx_msg void OnTrackShiftSteps();
-	afx_msg void OnUpdateTrackShift(CCmdUI *pCmdUI);
-	afx_msg void OnTrackRotateLeft();
-	afx_msg void OnTrackRotateRight();
-	afx_msg void OnTrackRotateSteps();
-	afx_msg void OnTrackFill();
+	afx_msg void OnKillFocus(CWnd* pNewWnd);
 };
 
 inline CPolymeterDoc* CStepView::GetDocument() const

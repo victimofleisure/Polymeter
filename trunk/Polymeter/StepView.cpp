@@ -209,10 +209,8 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		{
 			const CPolymeterDoc::CRectSelPropHint *pRectSelHint = static_cast<CPolymeterDoc::CRectSelPropHint *>(pHint);
 			UpdateSteps(pRectSelHint->m_rSelection);
-			if (pRectSelHint->m_bSelect) {
-				ResetStepSelection();
-				m_rStepSel = pRectSelHint->m_rSelection;
-			}
+			if (pRectSelHint->m_bSelect)
+				SetStepSelection(pRectSelHint->m_rSelection, false);	// skip update, selected steps are updated above
 		}
 		break;
 	case CPolymeterDoc::HINT_STEPS_ARRAY:
@@ -220,7 +218,7 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			const CPolymeterDoc::CRectSelPropHint *pRectSelHint = static_cast<CPolymeterDoc::CRectSelPropHint *>(pHint);
 			ResetStepSelection();
 			if (pRectSelHint->m_bSelect)
-				m_rStepSel = pRectSelHint->m_rSelection;
+				SetStepSelection(pRectSelHint->m_rSelection, false);	// skip update, selected steps are updated below
 			UpdateViewSize();
 			UpdateTracks(pRectSelHint->m_rSelection);
 			if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
@@ -487,7 +485,17 @@ void CStepView::ResetStepSelection()
 		CRect	rStepSel(m_rStepSel);
 		m_rStepSel.SetRectEmpty();
 		UpdateSteps(rStepSel);
+		GetDocument()->m_rStepSel.SetRectEmpty();	// reset document's step selection
 	}
+}
+
+void CStepView::SetStepSelection(const CRect& rStepSel, bool bUpdate)
+{
+	ResetStepSelection();
+	m_rStepSel = rStepSel;
+	GetDocument()->m_rStepSel = rStepSel;	// document mirrors step selection
+	if (bUpdate)
+		UpdateSteps(rStepSel);
 }
 
 bool CStepView::HaveEitherSelection() const
@@ -572,7 +580,7 @@ void CStepView::UpdateSongPosition(const CIntArrayEx& arrSelection)
 	LONGLONG	nPos;
 	if (seq.GetPosition(nPos)) {	// if valid position
 		int	nSels = arrSelection.GetSize();
-		for (int iSel = 0; iSel < nSels; iSel++) {
+		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 			int	iTrack = arrSelection[iSel];
 			int	iStep = seq.GetStepIndex(iTrack, nPos);
 			SetCurStep(iTrack, iStep);
@@ -730,6 +738,11 @@ void CStepView::EndDrag()
 		m_nDragState = DS_NONE;
 		KillTimer(m_nScrollTimer);
 		m_nScrollTimer = 0;
+		// clamp rectangular selection's right edge to longest track, to allow for overshoot
+		CPolymeterDoc	*pDoc = GetDocument();
+		int	nMaxSteps = pDoc->m_Seq.CalcMaxTrackLength(m_rStepSel);
+		m_rStepSel.right = min(m_rStepSel.right, nMaxSteps);
+		pDoc->m_rStepSel = m_rStepSel;	// update document's step selection
 	}
 }
 
@@ -903,13 +916,6 @@ BOOL CStepView::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
 	return bResult;
 }
 
-void CStepView::DispatchToDocument()
-{
-	const MSG	*pMsg = GetCurrentMessage();
-	ASSERT(pMsg != NULL);
-	GetDocument()->OnCmdMsg(LOWORD(pMsg->wParam), CN_COMMAND, NULL, NULL);	// low word is command ID
-}
-
 void CStepView::OnTrackLength(CPoint point)
 {
 	CPolymeterDoc	*pDoc = GetDocument();
@@ -949,20 +955,40 @@ void CStepView::OnTrackLength(CPoint point)
 	}
 }
 
-void CStepView::ShiftSteps(int nOffset)
+void CStepView::UpdateSelection(CPoint point)
 {
-	if (HaveStepSelection())
-		GetDocument()->ShiftSteps(m_rStepSel, nOffset);
-	else
-		GetDocument()->ShiftSteps(nOffset);
+	ASSERT(m_nDragState == DS_DRAG);	// must be dragging selection, else logic error
+	CIntRange	rngTrack;
+	CIntRange	rngStep;
+	// translate drag origin to account for scrolling during drag
+	rngTrack.Start = HitTest(m_ptDragOrigin - GetScrollPosition(), rngStep.Start);
+	rngTrack.End = HitTest(point, rngStep.End, HTF_NO_STEP_RANGE | HTF_NO_TRACK_RANGE);
+	rngTrack.Normalize();
+	if (rngStep.Start >= 0) {	// if original click was on step
+		rngStep.Normalize();
+		// x is step index and y is track index
+		CRect	rStepSel(CPoint(rngStep.Start, rngTrack.Start), CPoint(rngStep.End + 1, rngTrack.End + 1));
+		if (rStepSel != m_rStepSel) {	// if rectangular step selection changed
+			CRgn	rgnOld, rgnNew;
+			rgnOld.CreateRectRgnIndirect(&m_rStepSel);
+			rgnNew.CreateRectRgnIndirect(&rStepSel);
+			m_rStepSel = rStepSel;
+			rgnNew.CombineRgn(&rgnOld, &rgnNew, RGN_XOR);	// remove overlapping areas
+			if (m_rgndStepSel.Create(rgnNew)) {	// if region data retrieved
+				int	nRects = m_rgndStepSel.GetRectCount();
+				for (int iRect = 0; iRect < nRects; iRect++)	// for each rect in region data
+					UpdateSteps(m_rgndStepSel.GetRect(iRect));	// update corresponding steps
+			}
+		}
+	}
 }
 
-void CStepView::RotateSteps(int nOffset)
+void CStepView::UpdateSelection()
 {
-	if (HaveStepSelection())
-		GetDocument()->RotateSteps(m_rStepSel, nOffset);
-	else
-		GetDocument()->RotateSteps(nOffset);
+	CPoint	point;
+	GetCursorPos(&point);
+	ScreenToClient(&point);
+	UpdateSelection(point);
 }
 
 // CStepView message map
@@ -984,32 +1010,7 @@ BEGIN_MESSAGE_MAP(CStepView, CScrollView)
 	ON_WM_MOUSEMOVE()
 	ON_WM_TIMER()
 	ON_WM_CONTEXTMENU()
-	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditCut)
-	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditCopy)
-	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
-	ON_COMMAND(ID_EDIT_INSERT, OnEditInsert)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
-	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
-	ON_COMMAND(ID_TRACK_REVERSE, OnTrackReverse)
-	ON_UPDATE_COMMAND_UI(ID_TRACK_REVERSE, OnUpdateTrackReverse)
-	ON_COMMAND(ID_TRACK_SHIFT_LEFT, OnTrackShiftLeft)
-	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_LEFT, OnUpdateTrackShift)
-	ON_COMMAND(ID_TRACK_SHIFT_RIGHT, OnTrackShiftRight)
-	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_RIGHT, OnUpdateTrackShift)
-	ON_COMMAND(ID_TRACK_SHIFT_STEPS, OnTrackShiftSteps)
-	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_STEPS, OnUpdateTrackShift)
-	ON_COMMAND(ID_TRACK_ROTATE_LEFT, OnTrackRotateLeft)
-	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_LEFT, OnUpdateTrackShift)
-	ON_COMMAND(ID_TRACK_ROTATE_RIGHT, OnTrackRotateRight)
-	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_RIGHT, OnUpdateTrackShift)
-	ON_COMMAND(ID_TRACK_ROTATE_STEPS, OnTrackRotateSteps)
-	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_STEPS, OnUpdateTrackShift)
-	ON_COMMAND(ID_TRACK_FILL, OnTrackFill)
-	ON_UPDATE_COMMAND_UI(ID_TRACK_FILL, OnUpdateTrackShift)
+	ON_WM_KILLFOCUS()
 END_MESSAGE_MAP()
 
 // CStepView message handlers
@@ -1034,6 +1035,8 @@ BOOL CStepView::PreTranslateMessage(MSG* pMsg)
 				UpdateSelection();
 			return TRUE;
 		}
+		if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_ESCAPE && HaveStepSelection())
+			ResetStepSelection();
 	}
 	return CScrollView::PreTranslateMessage(pMsg);
 }
@@ -1102,6 +1105,7 @@ void CStepView::OnLButtonDown(UINT nFlags, CPoint point)
 				else	// not toggling
 					pDoc->SetTrackSteps(m_rStepSel, nStep);	// set selected steps
 				m_rStepSel.SetRectEmpty();	// reset step selection
+				pDoc->m_rStepSel.SetRectEmpty();	// reset document's step selection
 			} else {	// no step selection
 				pDoc->SetTrackStep(iTrack, iStep, nStep);	// set hit step
 			}
@@ -1145,42 +1149,6 @@ void CStepView::OnRButtonUp(UINT nFlags, CPoint point)
 	EndDrag();
 	if (m_bDoContextMenu)
 		CScrollView::OnRButtonUp(nFlags, point);
-}
-
-void CStepView::UpdateSelection(CPoint point)
-{
-	ASSERT(m_nDragState == DS_DRAG);	// must be dragging selection, else logic error
-	CIntRange	rngTrack;
-	CIntRange	rngStep;
-	// translate drag origin to account for scrolling during drag
-	rngTrack.Start = HitTest(m_ptDragOrigin - GetScrollPosition(), rngStep.Start);
-	rngTrack.End = HitTest(point, rngStep.End, HTF_NO_STEP_RANGE | HTF_NO_TRACK_RANGE);
-	rngTrack.Normalize();
-	if (rngStep.Start >= 0) {	// if original click was on step
-		rngStep.Normalize();
-		// x is step index and y is track index
-		CRect	rStepSel(CPoint(rngStep.Start, rngTrack.Start), CPoint(rngStep.End + 1, rngTrack.End + 1));
-		if (rStepSel != m_rStepSel) {	// if rectangular step selection changed
-			CRgn	rgnOld, rgnNew;
-			rgnOld.CreateRectRgnIndirect(&m_rStepSel);
-			rgnNew.CreateRectRgnIndirect(&rStepSel);
-			m_rStepSel = rStepSel;
-			rgnNew.CombineRgn(&rgnOld, &rgnNew, RGN_XOR);	// remove overlapping areas
-			if (m_rgndStepSel.Create(rgnNew)) {	// if region data retrieved
-				int	nRects = m_rgndStepSel.GetRectCount();
-				for (int iRect = 0; iRect < nRects; iRect++)	// for each rect in region data
-					UpdateSteps(m_rgndStepSel.GetRect(iRect));	// update corresponding steps
-			}
-		}
-	}
-}
-
-void CStepView::UpdateSelection()
-{
-	CPoint	point;
-	GetCursorPos(&point);
-	ScreenToClient(&point);
-	UpdateSelection(point);
 }
 
 void CStepView::OnMouseMove(UINT nFlags, CPoint point)
@@ -1256,6 +1224,12 @@ void CStepView::OnTimer(W64UINT nIDEvent)
 		CScrollView::OnTimer(nIDEvent);
 }
 
+void CStepView::OnKillFocus(CWnd* pNewWnd)
+{
+	EndDrag();	// release capture before losing focus
+	CScrollView::OnKillFocus(pNewWnd);
+}
+
 void CStepView::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	UNREFERENCED_PARAMETER(pWnd);
@@ -1289,133 +1263,4 @@ void CStepView::OnViewZoomReset()
 	SetZoom(0);
 	UpdateViewSize();
 	Invalidate();
-}
-
-void CStepView::OnEditCut()
-{
-	if (HaveStepSelection()) {
-		if (!GetDocument()->DeleteSteps(m_rStepSel, true))
-			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-	} else
-		DispatchToDocument();
-}
-
-void CStepView::OnUpdateEditCut(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable(HaveEitherSelection());
-}
-
-void CStepView::OnEditCopy()
-{
-	if (HaveStepSelection()) {
-		if (!GetDocument()->GetTrackSteps(m_rStepSel, theApp.m_arrStepClipboard))
-			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-	} else
-		DispatchToDocument();
-}
-
-void CStepView::OnUpdateEditCopy(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable(HaveEitherSelection());
-}
-
-void CStepView::OnEditPaste()
-{
-	if (HaveStepSelection()) {
-		if (!GetDocument()->PasteSteps(m_rStepSel))
-			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-	} else
-		DispatchToDocument();
-}
-
-void CStepView::OnUpdateEditPaste(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable((HaveStepSelection() && theApp.m_arrStepClipboard.GetSize())
-		|| theApp.m_arrTrackClipboard.GetSize());
-}
-
-void CStepView::OnEditInsert()
-{
-	if (HaveStepSelection()) {
-		if (!GetDocument()->InsertStep(m_rStepSel))
-			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-	} else
-		DispatchToDocument();
-}
-
-void CStepView::OnUpdateEditInsert(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable(HaveEitherSelection());
-}
-
-void CStepView::OnEditDelete()
-{
-	if (HaveStepSelection()) {
-		if (!GetDocument()->DeleteSteps(m_rStepSel, false))
-			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-	} else
-		DispatchToDocument();
-}
-
-void CStepView::OnUpdateEditDelete(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable(HaveEitherSelection());
-}
-
-void CStepView::OnTrackReverse()
-{
-	if (HaveStepSelection())
-		GetDocument()->ReverseSteps(m_rStepSel);
-	else
-		GetDocument()->ReverseSteps();
-}
-
-void CStepView::OnUpdateTrackReverse(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable(HaveEitherSelection());
-}
-
-void CStepView::OnTrackShiftLeft()
-{
-	ShiftSteps(-1);
-}
-
-void CStepView::OnTrackShiftRight()
-{
-	ShiftSteps(1);
-}
-
-void CStepView::OnTrackShiftSteps()
-{
-	int	nSteps;
-	if (CPolymeterDoc::DoShiftDialog(nSteps))
-		ShiftSteps(nSteps);
-}
-
-void CStepView::OnUpdateTrackShift(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable(HaveEitherSelection());
-}
-
-void CStepView::OnTrackRotateLeft()
-{
-	RotateSteps(-1);
-}
-
-void CStepView::OnTrackRotateRight()
-{
-	RotateSteps(1);
-}
-
-void CStepView::OnTrackRotateSteps()
-{
-	int	nSteps;
-	if (CPolymeterDoc::DoShiftDialog(nSteps, true))	// change caption to rotate
-		RotateSteps(nSteps);
-}
-
-void CStepView::OnTrackFill()
-{
-	GetDocument()->TrackFill(&m_rStepSel);
-	ResetStepSelection();
 }

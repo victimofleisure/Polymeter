@@ -55,7 +55,7 @@ protected:
 	enum {
 		COL_NUMBER,
 		COL_TYPE,
-		COL_TRACK,
+		COL_SOURCE,
 		COLUMNS
 	};
 	static const CGridCtrl::COL_INFO	m_arrColInfo[COLUMNS];

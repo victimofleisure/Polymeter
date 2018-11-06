@@ -23,6 +23,8 @@
 		13		24apr18	standardize names
 		14		02jun18	in OnLButtonUp, fix x64 crash due to casting pointer to long
 		15		16jun18	make CompensateDropPos static
+		16		01nov18	set focus when drag begins
+		17		01nov18	cancel drag if window loses focus
 
         virtual list control with drag reordering
  
@@ -98,9 +100,13 @@ void CDragVirtualListCtrl::CancelDrag()
 {
 	if (m_bDragging) {
 		m_bDragging = FALSE;
-		int	iItem = GetSelectionMark();
-		if (iItem >= 0)	// re-focus selection mark
-			SetItemState(iItem, LVIS_FOCUSED, LVIS_FOCUSED);
+		if (m_bTrackDropPos) {	// if tracking drop position
+			if (m_iDropPos >= 0)	// if previous drop position valid
+				SetItemState(m_iDropPos, 0, LVIS_FOCUSED);	// clear focused style
+			int	iItem = GetSelectionMark();
+			if (iItem >= 0)	// move focus rectangle back to selection mark
+				SetItemState(iItem, LVIS_FOCUSED, LVIS_FOCUSED);	// set focused style
+		}
 		ReleaseCapture();
 	}
 }
@@ -136,6 +142,7 @@ BEGIN_MESSAGE_MAP(CDragVirtualListCtrl, CListCtrlExSel)
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_WM_TIMER()
+	ON_WM_KILLFOCUS()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -150,8 +157,7 @@ BOOL CDragVirtualListCtrl::OnBegindrag(NMHDR* pNMHDR, LRESULT* pResult)
 		SetCapture();
 		UpdateCursor(pNMListView->ptAction);
 		m_iDropPos = -1;
-		if (m_bTrackDropPos)
-			SetFocus();
+		SetFocus();
 	}
 	*pResult = 0;
 	return(FALSE);	// let parent handle notification too
@@ -191,13 +197,13 @@ void CDragVirtualListCtrl::OnMouseMove(UINT nFlags, CPoint point)
 	if (m_bDragging) {
 		UpdateCursor(point);
 		AutoScroll(point);
-		if (m_bTrackDropPos) {
+		if (m_bTrackDropPos) {	// if tracking drop position
 			int	iItem = HitTest(point);
-			if (iItem != m_iDropPos) {
-				if (m_iDropPos >= 0)
-					SetItemState(m_iDropPos, 0, LVIS_FOCUSED);
-				if (iItem >= 0)
-					SetItemState(iItem, LVIS_FOCUSED, LVIS_FOCUSED);
+			if (iItem != m_iDropPos) {	// if hit item changed
+				if (m_iDropPos >= 0)	// if previous drop position valid
+					SetItemState(m_iDropPos, 0, LVIS_FOCUSED);	// clear focused style
+				if (iItem >= 0)	// show focus rectangle around hit item
+					SetItemState(iItem, LVIS_FOCUSED, LVIS_FOCUSED);	// set focused style
 				m_iDropPos = iItem;
 			}
 		}
@@ -223,4 +229,10 @@ BOOL CDragVirtualListCtrl::PreTranslateMessage(MSG* pMsg)
 		}
 	}
 	return CListCtrlExSel::PreTranslateMessage(pMsg);
+}
+
+void CDragVirtualListCtrl::OnKillFocus(CWnd* pNewWnd)
+{
+	CancelDrag();	// release capture before losing focus
+	CListCtrlExSel::OnKillFocus(pNewWnd);
 }

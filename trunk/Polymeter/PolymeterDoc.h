@@ -128,6 +128,7 @@ public:
 	double	m_fStepZoom;		// step view zoom
 	double	m_fSongZoom;		// song view zoom
 	int		m_nViewType;		// see view type enum
+	CRect	m_rStepSel;			// step view's rectangular step selection
 
 // Attributes
 	int		GetTrackCount() const;
@@ -146,6 +147,8 @@ public:
 	bool	ShowGMDrums(int iTrack) const;
 	void	SetPresetName(int iPreset, CString sName);
 	void	SetPartName(int iPart, CString sName);
+	bool	HaveStepSelection() const;
+	bool	HaveTrackOrStepSelection() const;
 
 // Operations
 public:
@@ -175,16 +178,20 @@ public:
 	void	SetTrackLength(int iTrack, int nLength);
 	void	SetTrackLength(const CIntArrayEx& arrLength);
 	void	SetTrackLength(const CRect& rSelection, int nLength);
-	bool	ReverseSteps();
+	bool	ReverseTracks();
 	void	ReverseSteps(const CRect& rSelection);
-	bool	ShiftSteps(int nOffset);
+	bool	ShiftTracks(int nOffset);
 	void	ShiftSteps(const CRect& rSelection, int nOffset);
-	bool	RotateSteps(int nOffset);
+	bool	RotateTracks(int nOffset);
 	void	RotateSteps(const CRect& rSelection, int nOffset);
+	void	ShiftTracksOrSteps(int nOffset);
+	void	RotateTracksOrSteps(int nOffset);
 	bool	IsTranspositionSafe(int nNoteDelta) const;
 	bool	Transpose(int nNoteDelta);
-	bool	IsVelocityOffsetSafe(int nVelocityDelta, CRange<int> *prngVelocity = NULL) const;
-	bool	OffsetVelocity(int nVelocityDelta);
+	bool	IsVelocityChangeSafe(int nVelocityOffset, double fVelocityScale = 1, const CRect *prStepSel = NULL, CRange<int> *prngVelocity = NULL) const;
+	bool	OffsetTrackVelocity(int nVelocityOffset);
+	bool	TransformStepVelocity(int nVelocityOffset, double fVelocityScale = 1);
+	bool	TransformStepVelocity(const CRect& rSelection, int nVelocityOffset, double fVelocityScale = 1);
 	bool	ValidateTrackLength(int nLength, int nQuant) const;
 	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
 	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
@@ -332,7 +339,7 @@ protected:
 	static const LPCTSTR	m_arrViewTypeName[];	// array of view type names
 
 // Data members
-	CRect	m_rStepSel;			// rectangular step selection, used by undo handling
+	CRect	m_rUndoSel;		// for passing rectangular step selection to undo handlers
 	static CTrackSortInfo	m_infoTrackSort;	// state passed to track sort compare function
 	static const CIntArrayEx	*m_parrSelection;	// pointer to selection array, used during undo
 
@@ -350,13 +357,14 @@ protected:
 	void	DeleteTracks(bool bCopyToClipboard);
 	static	int TrackSortCompare(const void *pElem1, const void *pElem2);
 	void	GetSelectAll(CIntArrayEx& arrSelection) const;
-	void	ApplyStepsArrayEdit(bool bSelect);
+	void	ApplyStepsArrayEdit(const CRect& rStepSel, bool bSelect);
 	bool	MakePasteSelection(CSize szData, CRect& rSelection) const;
 	void	SetViewType(int nViewType);
 	void	GetTrackIDMap(CTrackIDMap& mapTrackID) const;
 	void	OnTrackArrayEdit(const CTrackIDMap& mapTrackID);
 	void	CopyTracksToClipboard();
 	void	PasteTracks();
+	void	InsertTracks();
 
 // Undo helpers
 	void	SaveTrackProperty(CUndoState& State) const;
@@ -516,4 +524,14 @@ inline bool CPolymeterDoc::IsSongView() const
 inline bool CPolymeterDoc::IsLiveView() const
 {
 	return m_nViewType == VIEW_LIVE;
+}
+
+inline bool CPolymeterDoc::HaveStepSelection() const
+{
+	return !m_rStepSel.IsRectEmpty();
+}
+
+inline bool CPolymeterDoc::HaveTrackOrStepSelection() const
+{
+	return GetSelectedCount() || HaveStepSelection();
 }

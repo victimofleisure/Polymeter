@@ -617,6 +617,27 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,172,135,50,14
 END
 
+IDD_VELOCITY_OFFSET DIALOGEX 0, 0, 150, 70
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Offset"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "&Offset:",IDC_STATIC,7,7,23,8
+    EDITTEXT        IDC_VELOCITY_OFFSET_EDIT,7,17,40,14,ES_AUTOHSCROLL
+    GROUPBOX        "Apply to",IDC_STATIC,61,7,56,42
+    CONTROL         "&Tracks",IDC_VELOCITY_OFFSET_TARGET,"Button",BS_AUTORADIOBUTTON | WS_GROUP,70,19,38,10
+    CONTROL         "&Steps",IDC_VELOCITY_OFFSET_TARGET2,"Button",BS_AUTORADIOBUTTON,70,32,34,10
+END
+
+IDD_VELOCITY_SCALE DIALOGEX 0, 0, 150, 70
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Scale"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_VELOCITY_SCALE_EDIT,7,17,70,14,ES_AUTOHSCROLL
+    LTEXT           "Multiplier:",IDC_STATIC,7,7,34,8
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -696,6 +717,22 @@ BEGIN
         RIGHTMARGIN, 222
         TOPMARGIN, 7
         BOTTOMMARGIN, 149
+    END
+
+    IDD_VELOCITY_OFFSET, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 143
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 63
+    END
+
+    IDD_VELOCITY_SCALE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 143
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 63
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -875,6 +912,8 @@ BEGIN
                             "Automatically check for newer version of app during startup"
     IDS_OPT_DESC_General_bPropertyDescrips 
                             "If true, show descriptions area in properties bar"
+    IDS_OPT_DESC_General_iInputQuant 
+                            "Quantization for converting MIDI input to steps"
     IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
     IDS_OPT_DESC_Midi_iInputDevice "Selected MIDI input device"
     IDS_OPT_DESC_Midi_iOutputDevice "Selected MIDI output device"
@@ -882,12 +921,12 @@ BEGIN
     IDS_OPT_DESC_Midi_nDefaultVelocity 
                             "Default note velocity or controller value for new steps"
     IDS_OPT_DESC_Midi_nLatency "Desired MIDI latency, in milliseconds"
-    IDS_OPT_DESC_View_bShowCurPos 
-                            "Indicate current position within each track"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_View_bShowCurPos 
+                            "Indicate current position within each track"
     IDS_OPT_DESC_View_bShowGMNames 
                             "Display General MIDI patch and drum names instead of numbers"
     IDS_OPT_DESC_View_bShowNoteNames 
@@ -902,15 +941,16 @@ BEGIN
     IDS_OPT_NAME_General_bAlwaysRecord "Always Record"
     IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
     IDS_OPT_NAME_General_bPropertyDescrips "Show Property Descriptions"
+    IDS_OPT_NAME_General_iInputQuant "Input Quantization"
     IDS_OPT_NAME_Midi_bThru "Thru"
     IDS_OPT_NAME_Midi_iInputDevice "Input Device"
     IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
-    IDS_OPT_NAME_Midi_nBufferSize "Buffer Size"
-    IDS_OPT_NAME_Midi_nDefaultVelocity "Default Velocity"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_Midi_nBufferSize "Buffer Size"
+    IDS_OPT_NAME_Midi_nDefaultVelocity "Default Velocity"
     IDS_OPT_NAME_Midi_nLatency "Latency"
     IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
     IDS_OPT_NAME_View_bShowGMNames "Show General MIDI Names"
@@ -925,12 +965,12 @@ BEGIN
     IDS_PDR_DESC_nStartPos  "Starting position of song in beats and ticks"
     IDS_PDR_DESC_nTimeDiv   "Time division, in pulses per quarter note"
     IDS_PDR_GROUP_Master    "Master"
-    IDS_PDR_NAME_fTempo     "Tempo"
-    IDS_PDR_NAME_nKeySig    "Key Signature"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_NAME_fTempo     "Tempo"
+    IDS_PDR_NAME_nKeySig    "Key Signature"
     IDS_PDR_NAME_nMeter     "Meter"
     IDS_PDR_NAME_nSongLength "Song Length"
     IDS_PDR_NAME_nStartPos  "Start Position"
@@ -945,12 +985,12 @@ BEGIN
     IDS_STATUS_PANE1        "Pane 1"
     IDS_STATUS_PANE2        "Pane 2"
     IDS_TIME_TO_REPEAT_DAYS "days"
-    IDS_TIME_TO_REPEAT_FMT  "%s beats\n%s\nGreatest prime factor is %s"
-    IDS_TOOLBAR_CUSTOMIZE   "Customize..."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TIME_TO_REPEAT_FMT  "%s beats\n%s\nGreatest prime factor is %s"
+    IDS_TOOLBAR_CUSTOMIZE   "Customize..."
     IDS_TOOLBAR_STANDARD    "Standard"
     IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
     IDS_TRACK_TYPE_CONTROL  "Control"
@@ -965,22 +1005,20 @@ BEGIN
     IDS_TRK_Mute            "Mute"
     IDS_TRK_Name            "Name"
     IDS_TRK_Note            "Note"
-    IDS_TRK_Number          "#"
-    IDS_TRK_Offset          "Offset"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_Number          "#"
+    IDS_TRK_Offset          "Offset"
     IDS_TRK_Quant           "Quant"
     IDS_TRK_STEP            "Step"
     IDS_TRK_Swing           "Swing"
     IDS_TRK_Type            "Type"
     IDS_TRK_Velocity        "Velocity"
     IDS_TYPE_TRACK          "Track"
+    IDS_VELOCITY            "Velocity"
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
-    IDS_OPT_NAME_General_iInputQuant "Input Quantization"
-    IDS_OPT_DESC_General_iInputQuant 
-                            "Quantization for converting MIDI input to steps"
 END
 
 STRINGTABLE
@@ -1038,7 +1076,7 @@ BEGIN
     ID_TRACK_STRETCH        "Stretch or shrink the selected tracks\nStretch"
     ID_TRACK_TIE_NOTES      "Toggle tie notes mode; if on, new notes are tied\nTie Notes"
     ID_TRACK_TRANSPOSE      "Transpose the selected tracks\nTranspose"
-    ID_TRACK_VELOCITY       "Offset the velocities of the selected tracks\nVelocity"
+    ID_TRACK_VELOCITY       "Transform the velocities of the selected tracks or steps\nVelocity"
     ID_TRANSPORT_GO_TO_POSITION 
                             "Go to specified position within song\nGo To Position"
     ID_TRANSPORT_PAUSE      "Pause or continue playback\nPause"

@@ -32,6 +32,14 @@ CLiveListCtrl::CLiveListCtrl()
 	m_rngSelect.SetEmpty();
 }
 
+void CLiveListCtrl::CancelDrag()
+{
+	if (m_bIsDragging) {
+		m_bIsDragging = false;
+		ReleaseCapture();
+	}
+}
+
 // CLiveListCtrl message map
 
 BEGIN_MESSAGE_MAP(CLiveListCtrl, CListCtrlExSel)
@@ -42,6 +50,7 @@ BEGIN_MESSAGE_MAP(CLiveListCtrl, CListCtrlExSel)
 	ON_WM_RBUTTONDBLCLK()
 	ON_WM_RBUTTONUP()
 	ON_WM_MOUSEMOVE()
+	ON_WM_KILLFOCUS()
 END_MESSAGE_MAP()
 
 // CLiveListCtrl message handlers
@@ -116,10 +125,7 @@ void CLiveListCtrl::OnRButtonUp(UINT nFlags, CPoint point)
 {
 	UNREFERENCED_PARAMETER(nFlags);
 	UNREFERENCED_PARAMETER(point);
-	if (m_bIsDragging) {
-		m_bIsDragging = false;
-		ReleaseCapture();
-	}
+	CancelDrag();
 }
 
 void CLiveListCtrl::OnMouseMove(UINT nFlags, CPoint point)
@@ -149,4 +155,10 @@ void CLiveListCtrl::OnMouseMove(UINT nFlags, CPoint point)
 			m_rngSelect = rngItem;
 		}
 	}
+}
+
+void CLiveListCtrl::OnKillFocus(CWnd* pNewWnd)
+{
+	CancelDrag();	// release capture before losing focus
+	CListCtrlExSel::OnKillFocus(pNewWnd);
 }

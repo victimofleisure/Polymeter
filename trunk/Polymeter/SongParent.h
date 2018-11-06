@@ -42,7 +42,7 @@ public:
 	void	SetRulerHeight(int nHeight);
 
 // Public data
-	CSongView*	m_pSongView;		// pointer to song view
+	CSongView	*m_pSongView;		// pointer to song view
 	CSongTrackView	*m_pSongTrackView;	// pointer to song track view
 
 // Operations

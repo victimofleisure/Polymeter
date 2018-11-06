@@ -21,6 +21,8 @@
 #define IDD_PROGRESS                    117
 #define IDD_STRETCH                     118
 #define IDD_TRACK_SORT                  119
+#define IDD_VELOCITY_OFFSET             120
+#define IDD_VELOCITY_SCALE              121
 #define IDS_APP_HELP_FILE_MISSING       200
 #define IDS_APP_LICENSE                 201
 #define IDS_APP_UNKNOWN_SYSTEM_ERROR    202
@@ -181,7 +183,8 @@
 #define IDS_TRK_Type                    357
 #define IDS_TRK_Velocity                358
 #define IDS_TYPE_TRACK                  359
-#define IDP_OLE_INIT_FAILED             360
+#define IDS_VELOCITY                    360
+#define IDP_OLE_INIT_FAILED             361
 #define IDC_ABOUT_LICENSE               1001
 #define IDC_ABOUT_VERSION               1002
 #define IDC_CURSOR_DRAG_MULTI           1003
@@ -215,6 +218,10 @@
 #define IDC_TRACK_SORT_PROP1            1031
 #define IDC_TRACK_SORT_PROP2            1032
 #define IDC_TRACK_SORT_PROP3            1033
+#define IDC_VELOCITY_OFFSET_EDIT        1034
+#define IDC_VELOCITY_OFFSET_TARGET      1035
+#define IDC_VELOCITY_OFFSET_TARGET2     1036
+#define IDC_VELOCITY_SCALE_EDIT         1037
 #define ID_APP_CHECK_FOR_UPDATES        32771
 #define ID_APP_HOME_PAGE                32772
 #define ID_EDIT_DELETE                  32773
@@ -292,9 +299,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                1
-#define _APS_NEXT_RESOURCE_VALUE        361
+#define _APS_NEXT_RESOURCE_VALUE        362
 #define _APS_NEXT_COMMAND_VALUE         32842
-#define _APS_NEXT_CONTROL_VALUE         1034
+#define _APS_NEXT_CONTROL_VALUE         1038
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

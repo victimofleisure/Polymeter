@@ -27,6 +27,9 @@ public:
 		ULVN_LBUTTONDOWN = 1001,
 	};
 
+// Operations
+	void	CancelDrag();
+
 protected:
 // Constants
 	enum {
@@ -53,4 +56,5 @@ protected:
 	afx_msg void OnRButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnKillFocus(CWnd* pNewWnd);
 };

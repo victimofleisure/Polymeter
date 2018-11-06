@@ -20,6 +20,7 @@
 #include "GDIUtils.h"
 
 class CSongParent;
+class CStepView;
 
 class CSongView : public CScrollView
 {
@@ -33,7 +34,8 @@ protected: // create from serialization only
 	};
 
 // Public data
-	CSongParent	*m_pParent;
+	CSongParent	*m_pParent;		// pointer to parent view
+	CStepView	*m_pStepView;	// pointer to step view, for track selection
 
 // Attributes
 public:
@@ -160,6 +162,7 @@ protected:
 	afx_msg void OnTimer(W64UINT nIDEvent);
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	afx_msg void OnEditSelectAll();
 	afx_msg void OnEditCut();
 	afx_msg void OnUpdateEditCut(CCmdUI *pCmdUI);

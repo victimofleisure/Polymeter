@@ -390,6 +390,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
 				return(DISABLED);
 			m_pDoc->m_arrTrackSel = arrSelection;
+			m_pDoc->m_rStepSel.SetRectEmpty();	// clear step selection if any
 			theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_EDIT_CUT);
 			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
 		}
@@ -400,6 +401,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 				return(DISABLED);
 			if (m_pDoc->GetTrackCount() >= MAX_TRACKS)
 				return(DISABLED);
+			m_pDoc->m_rStepSel.SetRectEmpty();	// clear step selection if any
 			theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_EDIT_PASTE);
 			PRINTF(_T("%s\n"), sUndoTitle);
 		}
@@ -410,6 +412,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 				return(DISABLED);
 			int iInsPos = max(GetRandomItem(), 0);
 			m_pDoc->SelectOnly(iInsPos, false);	// don't update views
+			m_pDoc->m_rStepSel.SetRectEmpty();	// clear step selection if any
 			theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_EDIT_INSERT);
 			PRINTF(_T("%s %d\n"), sUndoTitle, iInsPos);
 		}
@@ -420,6 +423,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
 				return(DISABLED);
 			m_pDoc->m_arrTrackSel = arrSelection;
+			m_pDoc->m_rStepSel.SetRectEmpty();	// clear step selection if any
 			theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_EDIT_DELETE);
 			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
 		}
@@ -550,7 +554,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (!MakeRandomSelection(m_pDoc->GetTrackCount(), arrSelection))
 				return(DISABLED);
 			m_pDoc->m_arrTrackSel = arrSelection;
-			m_pDoc->ReverseSteps();
+			m_pDoc->ReverseTracks();
 			PRINTF(_T("%s\n"), sUndoTitle);
 		}
 		break;
@@ -570,7 +574,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 				return(DISABLED);
 			m_pDoc->m_arrTrackSel = arrSelection;
 			int	nOffset = Random(MAX_ROTATION_STEPS * 2) - MAX_ROTATION_STEPS;
-			m_pDoc->RotateSteps(nOffset);
+			m_pDoc->RotateTracks(nOffset);
 			PRINTF(_T("%s %d\n"), sUndoTitle, nOffset);
 		}
 		break;
@@ -591,7 +595,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 				return(DISABLED);
 			m_pDoc->m_arrTrackSel = arrSelection;
 			int	nOffset = Random(1) ? 1 : -1;
-			m_pDoc->ShiftSteps(nOffset);
+			m_pDoc->ShiftTracks(nOffset);
 			PRINTF(_T("%s %d\n"), sUndoTitle, nOffset);
 		}
 		break;
