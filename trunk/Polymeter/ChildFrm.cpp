@@ -213,13 +213,15 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	m_pStepParent->m_pTrackView = m_pTrackView;
 	m_pStepParent->SetRulerHeight(m_pTrackView->GetHeaderHeight());
 	m_pStepParent->SetTrackHeight(m_pTrackView->GetItemHeight());
-	CRuntimeClass* pSongClass = RUNTIME_CLASS(CSongParent);
-	m_pSongParent = (CSongParent *)pSongClass->CreateObject();
+	if (!SafeCreateObject(RUNTIME_CLASS(CSongParent), m_pSongParent))
+		return false;
 	DWORD	dwSongStyle = WS_CHILD;
 	if (!m_pSongParent->Create(NULL, NULL, dwSongStyle, CRect(0, 0, 0, 0), this, ID_VIEW_SONG, pContext))
 		return false;
-	CRuntimeClass* pLiveClass = RUNTIME_CLASS(CLiveView);
-	m_pLiveView = (CLiveView *)pLiveClass->CreateObject();
+	ASSERT(m_pStepParent->m_pStepView != NULL);
+	m_pSongParent->m_pSongView->m_pStepView = m_pStepParent->m_pStepView;
+	if (!SafeCreateObject(RUNTIME_CLASS(CLiveView), m_pLiveView))
+		return false;
 	DWORD	dwLiveStyle = WS_CHILD;
 	if (!m_pLiveView->Create(NULL, NULL, dwLiveStyle, CRect(0, 0, 0, 0), this, ID_VIEW_LIVE, pContext))
 		return false;

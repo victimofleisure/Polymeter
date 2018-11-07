@@ -624,7 +624,6 @@ LRESULT	CSongView::OnDelayedCreate(WPARAM wParam, LPARAM lParam)
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
 	m_pParent->OnSongZoom();
-	m_pStepView = m_pParent->m_pSongTrackView->m_pStepView;
 	return(0);
 }
 

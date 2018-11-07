@@ -207,10 +207,10 @@ BOOL CSongParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 	if (!CSplitView::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext))
 		return false;
 	// create our child views
-	CRuntimeClass* pSongClass = RUNTIME_CLASS(CSongView);
-	m_pSongView = (CSongView *)pSongClass->CreateObject();
-	CRuntimeClass* pSongTrackClass = RUNTIME_CLASS(CSongTrackView);
-	m_pSongTrackView = (CSongTrackView *)pSongTrackClass->CreateObject();
+	if (!SafeCreateObject(RUNTIME_CLASS(CSongView), m_pSongView))
+		return false;
+	if (!SafeCreateObject(RUNTIME_CLASS(CSongTrackView), m_pSongTrackView))
+		return false;
 	// give child views pointers to parent or siblings, before creating windows
 	m_pSongView->m_pParent = this;
 	m_pSongTrackView->m_pSongView = m_pSongView;

@@ -68,6 +68,14 @@ template<typename T> inline void Swap(T& a, T& b)
 	b = tmp;
 }
 
+// wrap dynamic object creation
+template<typename T> inline bool SafeCreateObject(CRuntimeClass *pRuntimeClass, T*& pObject)
+{
+	pObject = static_cast<T *>(pRuntimeClass->CreateObject());
+	ASSERT(pObject->IsKindOf(pRuntimeClass));
+	return pObject != NULL;	// can be null if class name not found or insufficient memory
+}
+
 #define BENCH_START CBenchmark b;
 #define BENCH_STOP printf("%f\n", b.Elapsed());
 

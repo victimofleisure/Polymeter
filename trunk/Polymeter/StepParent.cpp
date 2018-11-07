@@ -276,13 +276,13 @@ BOOL CStepParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 	if (!CSplitView::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext))
 		return false;
 	// create our child views
-	CRuntimeClass* pMuteClass = RUNTIME_CLASS(CMuteView);
-	m_pMuteView = (CMuteView *)pMuteClass->CreateObject();
-	CRuntimeClass* pStepClass = RUNTIME_CLASS(CStepView);
-	m_pStepView = (CStepView *)pStepClass->CreateObject();
-	CRuntimeClass* pVelocityClass = RUNTIME_CLASS(CVelocityView);
+	if (!SafeCreateObject(RUNTIME_CLASS(CMuteView), m_pMuteView))
+		return false;
+	if (!SafeCreateObject(RUNTIME_CLASS(CStepView), m_pStepView))
+		return false;
+	if (!SafeCreateObject(RUNTIME_CLASS(CVelocityView), m_pVeloView))
+		return false;
 	// give child views pointers to parent or siblings, before creating windows
-	m_pVeloView = (CVelocityView *)pVelocityClass->CreateObject();
 	m_pStepView->m_pParent = this;
 	m_pMuteView->m_pStepView = m_pStepView;
 	m_pVeloView->m_pStepView = m_pStepView;
