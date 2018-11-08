@@ -168,6 +168,7 @@ open	close	type	description	rev	user
 07/30/18	11/05/18	done	add command to scale step values by a multiplier; boosts track velocity without altering dynamics	0.0.16.002	
 11/05/18	11/06/18	done	velocity command's clipping check gives false positives for step selection	0.0.16.003	
 11/06/18	11/06/18	done	velocity range can be incorrect for non-note tracks, due to not masking off step's tie bit	0.0.16.004	
+11/07/18	11/07/18	done	crash when opening existing document via command line or explorer; song view has null step view pointer	0.0.16.005	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
