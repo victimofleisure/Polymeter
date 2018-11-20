@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      27may18	initial version
+		01		12nov18	add method to center current position
 
 */
 
@@ -48,6 +49,7 @@ public:
 public:
 	void	EndDrag();
 	void	ResetSelection();
+	void	CenterCurrentPosition(double fMarginWidth = 0.5);
 
 // Overrides
 public:
@@ -100,6 +102,7 @@ protected:
 	static const COLORREF m_clrViewBkgnd;
 	static const COLORREF m_clrCell[CELL_STATES];
 	static const COLORREF m_clrSongPos;
+	static const double	m_fSongPosMarginWidth;	// width of horizontal margin, as fraction of client width
 
 // Member data
 	int		m_nTrackHeight;		// track height, in client coords
@@ -204,4 +207,19 @@ inline bool CSongView::HaveSelection() const
 inline void CSongView::GetSelection(CRect& rSelection) const
 {
 	rSelection = m_rCellSel;
+}
+
+__forceinline double CSongView::GetTicksPerCellImpl() const
+{
+	return GetDocument()->m_Seq.GetTimeDivision() / STEPS_PER_CELL / m_fZoom;
+}
+
+__forceinline int CSongView::ConvertXToSongPos(int x) const
+{
+	return round(x * GetTicksPerCellImpl() / m_nCellWidth);
+}
+
+__forceinline int CSongView::ConvertSongPosToX(int nSongPos) const
+{
+	return round(nSongPos / GetTicksPerCellImpl() * m_nCellWidth);
 }

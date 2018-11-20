@@ -69,6 +69,7 @@ public:
 			bool	m_bMute;		// true if muted
 			int		m_bMute32;		// includes unused bytes
 		};
+		bool operator<=(const CDub& dub) const { return m_nTime <= dub.m_nTime; }
 	};
 	class CDubArray : public CArrayEx<CDub, CDub&> {
 	public:
@@ -231,6 +232,7 @@ public:
 	int		GetUsedStepCount() const;
 	void	SetDefaults();
 	bool	IsNote() const;
+	bool	IsModulator() const;
 	bool	IsModulated() const;
 
 // Operations
@@ -265,6 +267,11 @@ inline void CTrack::CopyKeepingID(const CTrack& track)
 inline bool CTrack::IsNote() const
 {
 	return m_iType == TT_NOTE;
+}
+
+inline bool CTrack::IsModulator() const
+{
+	return m_iType == TT_MODULATOR;
 }
 
 inline bool CTrack::IsModulated() const

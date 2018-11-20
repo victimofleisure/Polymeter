@@ -9,6 +9,7 @@
 		rev		date	comments
         00      18may18	initial version
 		01		29sep18	for Insert methods, remove const from val
+		02		10nov18	add binary search insert pos
 
 */
 
@@ -16,6 +17,7 @@
 
 	W64INT	Find(const ALGO_TYPE& val) const { return CArrayEx_Find(*this, val); }
 	W64INT	BinarySearch(const ALGO_TYPE& val) const { return CArrayEx_BinarySearch(*this, val); }
+	W64INT	BinarySearchAbove(const ALGO_TYPE& val) const { return CArrayEx_BinarySearchAbove(*this, val); }
 	void	InsertSorted(ALGO_TYPE& val) { CArrayEx_InsertSorted(*this, val); }
 	W64INT	InsertSortedUnique(ALGO_TYPE& val) { return CArrayEx_InsertSortedUnique(*this, val); }
 	void	Reverse(W64INT iStart, W64INT nElems) { CArrayEx_Reverse(*this, iStart, nElems); }

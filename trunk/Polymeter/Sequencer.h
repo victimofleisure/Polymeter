@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+        01      19nov18	add recursive modulation
 
 */
 
@@ -126,6 +127,7 @@ protected:
 	enum {
 		BUFFERS = 2,				// number of playback buffers
 		DEF_BUFFER_SIZE = 4096,		// default buffer size, in events
+		MOD_MAX_RECURSIONS = 32,	// maximum number of modulation recursions
 	};
 
 // Member data
@@ -142,6 +144,7 @@ protected:
 	int		m_iBuffer;				// index of most recently queued buffer
 	int		m_nStartPos;			// starting position of playback, in ticks
 	int		m_nPosOffset;			// total position correction, in ticks
+	int		m_nRecursions;			// current depth of recursive modulation
 	bool	m_bIsPlaying;			// true if playing
 	bool	m_bIsPaused;			// true if paused
 	bool	m_bIsStopping;			// true if stopping
@@ -166,6 +169,7 @@ protected:
 // Helpers
 	static	void	CALLBACK MidiOutProc(HMIDIOUT hMidiOut, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2);
 	int		GetNoteDuration(const CStepArray& arrStep, int nSteps, int iCurStep) const;
+	bool	RecurseModulations(int iTrack, int nAbsEvtTime);
 	void	MakeEvent(const CTrack& trk, DWORD dwTime, int nVal, CEvent& evt);
 	void	AddTrackEvents(int iTrack, int nCBStart);
 	void	AddNoteOffs(int nCBStart, int nCBEnd);

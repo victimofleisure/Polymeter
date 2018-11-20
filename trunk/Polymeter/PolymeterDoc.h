@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+		01		18nov18	add center song position hint
 
 */
 
@@ -62,6 +63,7 @@ public:
 		HINT_PART_NAME,			// part name edit; pHint is CPropHint
 		HINT_PART_ARRAY,		// part array edit; pHint is CSelectionHint
 		HINT_MODULATION,		// modulation edit
+		HINT_CENTER_SONG_POS,	// center current position in song view
 		HINTS
 	};
 	enum {	// view types
@@ -223,6 +225,7 @@ public:
 	void	StretchTracks(double fScale);
 	bool	TrackFill(const CRect *prStepSel);
 	void	TrackFill(const CIntArrayEx& arrTrackSel, CRange<int> rngStep, CRange<int> rngVal, int iFunction, double fFrequency, double fPhase, double fPower);
+	bool	GotoNextDub(bool bReverse = false);
 
 // Overrides
 public:

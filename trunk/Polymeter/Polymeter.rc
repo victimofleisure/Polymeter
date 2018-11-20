@@ -1019,6 +1019,8 @@ BEGIN
     IDS_TYPE_TRACK          "Track"
     IDS_VELOCITY            "Velocity"
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
+    IDS_SEQERR_TOO_MANY_RECURSIONS 
+                            "Modulation exceeded maximum number of recursions."
 END
 
 STRINGTABLE

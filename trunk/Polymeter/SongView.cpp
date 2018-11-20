@@ -8,6 +8,9 @@
 		revision history:
 		rev		date	comments
         00      27may18	initial version
+		01		08nov18	in SetZoom, recompute song position X to avoid slippage
+		02		12nov18 add method to center current position
+		03		12nov18 add shortcut keys that move to next or previous dub
 
 */
 
@@ -47,6 +50,8 @@ const COLORREF CSongView::m_clrCell[CELL_STATES] = {
 	RGB(128, 96, 0),		//	Y		Y		Y
 };
 const COLORREF CSongView::m_clrSongPos = RGB(0, 0, 255);
+
+const double CSongView::m_fSongPosMarginWidth = 0.125;
 
 // CSongView construction/destruction
 
@@ -136,9 +141,9 @@ void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		break;
 	case CPolymeterDoc::HINT_VIEW_TYPE:
 		if (GetDocument()->IsSongView()) {
-			LONGLONG	nPos;
-			if (GetDocument()->m_Seq.GetPosition(nPos)) {
-				UpdateSongPos(static_cast<int>(nPos));
+			LONGLONG	nSongPos;
+			if (GetDocument()->m_Seq.GetPosition(nSongPos)) {
+				UpdateSongPos(static_cast<int>(nSongPos));
 			}
 		}
 		break;
@@ -149,6 +154,9 @@ void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			if (!pPropHint->m_bSelect)
 				ResetSelection();
 		}
+		break;
+	case CPolymeterDoc::HINT_CENTER_SONG_POS:
+		CenterCurrentPosition(m_fSongPosMarginWidth);	// only center if within margin area
 		break;
 	}
 }
@@ -189,7 +197,6 @@ void CSongView::UpdateZoomDelta()
 
 void CSongView::SetZoom(int nZoom, bool bRedraw)
 {
-	int	nSongPos = ConvertXToSongPos(m_nSongPosX);
 	m_nZoom = nZoom;
 	double	fZoom = pow(m_fZoomDelta, nZoom);
 	if (HaveSelection()) {	// if selection exists
@@ -199,8 +206,11 @@ void CSongView::SetZoom(int nZoom, bool bRedraw)
 		m_rCellSel.right = round(m_rCellSel.right * fZoomChange);
 	}
 	m_fZoom = fZoom;
-	m_nSongPosX = ConvertSongPosToX(nSongPos);	// update song position X for new zoom
-	GetDocument()->m_fSongZoom = fZoom;
+	CPolymeterDoc	*pDoc = GetDocument();
+	LONGLONG	nSongPos = 0;
+	pDoc->m_Seq.GetPosition(nSongPos);
+	m_nSongPosX = ConvertSongPosToX(static_cast<int>(nSongPos));	// recompute song position X for new zoom
+	pDoc->m_fSongZoom = fZoom;
 	if (bRedraw) {
 		UpdateViewSize();
 		Invalidate();
@@ -416,6 +426,25 @@ void CSongView::UpdateSelection()
 	UpdateSelection(point);
 }
 
+void CSongView::CenterCurrentPosition(double fMarginWidth)
+{
+	ASSERT(fMarginWidth > 0 && fMarginWidth <= 0.5);	// for normal operation
+	CRect	rClient;
+	GetClientRect(rClient);
+	int	nClientWidth = rClient.Width();
+	int	nMarginWidth = round(nClientWidth * fMarginWidth);	// convert margin to client coords
+	CRange<int>	rngCenter(nMarginWidth, nClientWidth - nMarginWidth);
+	CPoint	ptScroll(GetScrollPosition());
+	// if current position is within margin on either side, center it by scrolling view
+	if (!rngCenter.InRange(m_nSongPosX - ptScroll.x)) {	// if position not in center range
+		int	nNewScrollX = m_nSongPosX - nClientWidth / 2;	// center position via scrolling
+		CPoint	ptMaxScroll(GetMaxScrollPos());
+		nNewScrollX = CLAMP(nNewScrollX, 0, ptMaxScroll.x);
+		ScrollToPosition(CPoint(nNewScrollX, ptScroll.y));
+		m_pParent->OnSongScroll(CPoint(ptScroll.x - nNewScrollX, 0));
+	}
+}
+
 void CSongView::DispatchToDocument()
 {
 	const MSG	*pMsg = GetCurrentMessage();
@@ -426,21 +455,6 @@ void CSongView::DispatchToDocument()
 double CSongView::GetTicksPerCell() const
 {
 	return GetTicksPerCellImpl();
-}
-
-__forceinline double CSongView::GetTicksPerCellImpl() const
-{
-	return GetDocument()->m_Seq.GetTimeDivision() / STEPS_PER_CELL / m_fZoom;
-}
-
-__forceinline int CSongView::ConvertXToSongPos(int x) const
-{
-	return round(x * GetTicksPerCellImpl() / m_nCellWidth);
-}
-
-__forceinline int CSongView::ConvertSongPosToX(int nSongPos) const
-{
-	return round(nSongPos / GetTicksPerCellImpl() * m_nCellWidth);
 }
 
 __forceinline int CSongView::Mod(int Val, int Modulo)
@@ -630,6 +644,30 @@ LRESULT	CSongView::OnDelayedCreate(WPARAM wParam, LPARAM lParam)
 BOOL CSongView::PreTranslateMessage(MSG* pMsg)
 {
 	if (pMsg->message >= WM_KEYFIRST && pMsg->message <= WM_KEYLAST) {
+		if (pMsg->message == WM_KEYDOWN) {
+			switch (pMsg->wParam) {
+			case VK_LEFT:
+			case VK_RIGHT:
+				if (GetKeyState(VK_SHIFT) & GKS_DOWN) {	// if Shift is down
+					bool	bReverse = pMsg->wParam == VK_LEFT;
+					GetDocument()->GotoNextDub(bReverse);
+					return TRUE;
+				}
+				break;
+			case VK_ESCAPE:
+				if (HaveSelection()) {
+					ResetSelection();
+					return TRUE;
+				}
+				break;
+			case VK_HOME:
+				if (GetKeyState(VK_SHIFT) & GKS_DOWN)  {	// if Shift is down
+					CenterCurrentPosition();
+					return TRUE;
+				}
+				break;
+			}
+		}
 		//  give main frame a try
 		if (theApp.GetMainFrame()->SendMessage(UWM_HANDLE_DLG_KEY, reinterpret_cast<WPARAM>(pMsg)))
 			return TRUE;	// key was handled so don't process further
@@ -638,8 +676,6 @@ BOOL CSongView::PreTranslateMessage(MSG* pMsg)
 				UpdateSelection();
 			return TRUE;
 		}
-		if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_ESCAPE && HaveSelection())
-			ResetSelection();
 	}
 	return CScrollView::PreTranslateMessage(pMsg);
 }

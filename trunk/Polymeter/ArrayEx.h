@@ -28,6 +28,7 @@
 		18		09jul18	add array find template
 		19		31jul18	add boolean array
 		20		29sep18	in CArrayEx, change ALGO_TYPE to TYPE
+		21		10nov18	add binary search insert pos
 
 		enhanced array with copy ctor, assignment, and fast const access
  
@@ -86,6 +87,24 @@ __forceinline W64INT CArrayEx_BinarySearch(const ARRAY& arr, const TYPE& val)
 			iStart = iMid + 1;
 	}
 	return -1;
+}
+
+template<class ARRAY, class TYPE>
+__forceinline W64INT CArrayEx_BinarySearchAbove(const ARRAY& arr, const TYPE& val)
+{
+	W64INT iStart = 0;
+	W64INT iEnd = arr.GetSize64() - 1;
+	W64INT iResult = -1;
+	while (iStart <= iEnd) {
+		W64INT iMid = (iStart + iEnd) / 2;
+		if (arr[iMid] <= val)
+			iStart = iMid + 1;
+		else {
+			iResult = iMid;
+			iEnd = iMid - 1;
+		}
+	}
+	return iResult;
 }
 
 template<class ARRAY, class TYPE>

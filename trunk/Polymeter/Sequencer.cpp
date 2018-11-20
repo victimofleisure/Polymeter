@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+        01      19nov18	add recursive modulation
 
 */
 
@@ -35,6 +36,7 @@ CSequencer::CSequencer()
 	m_iBuffer = 0;
 	m_nStartPos = 0;
 	m_nPosOffset = 0;
+	m_nRecursions = 0;
 	m_bIsPlaying = false;
 	m_bIsPaused = false;
 	m_bIsStopping = false;
@@ -364,6 +366,36 @@ __forceinline void CSequencer::OutputControlEvent(const CTrack& trk, DWORD dwTim
 	m_arrEvent.InsertSorted(evt);	// add event to sorted array for output
 }
 
+bool CSequencer::RecurseModulations(int iTrack, int nAbsEvtTime)
+{
+	const CTrack& trk = GetTrack(iTrack);
+	int	nMods = trk.m_arrModulator.GetSize();
+	int	nTracks = GetTrackCount();
+	for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
+		const CModulation&	mod = trk.m_arrModulator[iMod];
+		int	iModSource = mod.m_iSource;
+		int	iModType = mod.m_iType;
+		// if modulation source index is valid, modulation type is mute, and modulator is unmuted
+		if (iModSource >= 0 && iModSource < nTracks && iModType == MT_Mute && !GetMute(iModSource)) {
+			const CTrack&	trkModSource = GetTrack(iModSource);
+			if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
+				if (m_nRecursions >= MOD_MAX_RECURSIONS) {	// if maximum recursion depth reached
+					OnMidiError(SEQERR_TOO_MANY_RECURSIONS);
+					return true;	// abort recursion
+				}
+				m_nRecursions++;	// increment recursion depth
+				if (RecurseModulations(iModSource, nAbsEvtTime))	// recurse into modulator's modulations
+					return true;	// recursion returned mute, so abort recursion and return mute
+				m_nRecursions--;	// decrement recursion depth
+			}
+			int	iModStep = GetStepIndex(iModSource, nAbsEvtTime);
+			if (trkModSource.m_arrStep[iModStep] & SB_VELOCITY)	// if non-zero step
+				return true;	// abort recursion and return mute
+		}
+	}
+	return false;	// return unmute
+}
+
 __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 {
 	CTrack&	trk = GetAt(iTrack);
@@ -388,23 +420,30 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 	int	nTracks = GetTrackCount();
 	while (nEvtTime < m_nCBLen) {	// while event time within callback period
 		if (nEvtTime >= 0) {	// discard already played events
+			int	nAbsEvtTime = nCBStart + nEvtTime;	// convert event time from callback-relative to absolute
 			if (m_bIsSongMode) {	// if applying track dubs
 				CTrack&	trk = GetAt(iTrack);
 				int	nDubs = trk.m_arrDub.GetSize();
-				while (trk.m_iDub < nDubs && nCBStart + nEvtTime >= trk.m_arrDub[trk.m_iDub].m_nTime) {
+				while (trk.m_iDub < nDubs && nAbsEvtTime >= trk.m_arrDub[trk.m_iDub].m_nTime) {
 					trk.m_bMute = trk.m_arrDub[trk.m_iDub].m_bMute;
 					trk.m_iDub++;
 				}
 			}
-			int	arrMod[MODULATION_TYPES] = {0};	// initialize modulators to zero
+			int	arrMod[MODULATION_TYPES] = {0};	// initialize modulations to zero
 			int	nMods = trk.m_arrModulator.GetSize();
-			for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
+			for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
 				const CModulation&	mod = trk.m_arrModulator[iMod];
-				int	iModTrack = mod.m_iSource;
+				int	iModSource = mod.m_iSource;
 				int	iModType = mod.m_iType;
-				if (iModTrack >= 0 && iModTrack < nTracks && !GetMute(iModTrack)) {	// if track is modulated
-					int	iModStep = GetStepIndex(iModTrack, nCBStart + nEvtTime);
-					int	nStepVal = GetTrack(iModTrack).m_arrStep[iModStep] & SB_VELOCITY;
+				if (iModSource >= 0 && iModSource < nTracks && !GetMute(iModSource)) {	// if modulator is valid and unmuted
+					const CTrack&	trkModSource = GetTrack(iModSource);
+					if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
+						m_nRecursions = 0;
+						if (RecurseModulations(iModSource, nAbsEvtTime))	// recurse into modulator's modulations
+							continue;	// recursion returned mute, so skip this modulator
+					}
+					int	iModStep = GetStepIndex(iModSource, nAbsEvtTime);
+					int	nStepVal = trkModSource.m_arrStep[iModStep] & SB_VELOCITY;
 					if (iModType == MT_Mute)	// if modulation type is mute
 						arrMod[MT_Mute] |= nStepVal != 0;	// mute track if any of its mute modulators are active
 					else {	// modulation type other than mute
@@ -434,7 +473,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 									nDuration += nSwing;	// add swing to duration
 							}
 							nDuration = max(nDuration, 1);	// keep duration above zero
-							evt.m_dwTime = nCBStart + nEvtTime + nDuration;	// absolute time
+							evt.m_dwTime = nAbsEvtTime + nDuration;	// absolute time
 							evt.m_dwEvent &= ~0xff0000;	// zero note's velocity
 							m_arrNoteOff.InsertSorted(evt);	// add pending note off to array
 						}

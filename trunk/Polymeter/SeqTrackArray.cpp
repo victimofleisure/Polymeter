@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+		01		18nov18	add method to find next or previous dub time
 
 */
 
@@ -469,6 +470,41 @@ void CSeqTrackArray::RemoveAllDubs()
 	}
 }
 
+bool CSeqTrackArray::FindNextDubTime(int nStartTime, int& nNextTime, bool bReverse) const
+{
+	CDub	dubStart(nStartTime, 0);
+	int	nResult;
+	if (bReverse) {	// if searching backward
+		nResult = INT_MIN;
+		dubStart.m_nTime--;
+	} else {	// searching forward
+		nResult = INT_MAX;
+	}
+	int	nTracks = GetTrackCount();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		const CTrack&	trk = GetAt(iTrack);
+		W64INT	iDub = trk.m_arrDub.BinarySearchAbove(dubStart);
+		if (bReverse) {	// if searching backward
+			if (iDub < 0)	// if dub not found
+				iDub = trk.m_arrDub.GetSize();	// move past last dub
+			iDub--;	// move to preceding dub
+			if (iDub >= 0) {	// if valid dub index
+				int	nTime = trk.m_arrDub[iDub].m_nTime;	// get dub time
+				if (nTime > nResult)	// if dub is nearer to start time
+					nResult = nTime;	// update result
+			}
+		} else {	// searching forward
+			if (iDub >= 0) {	// if valid dub index
+				int	nTime = trk.m_arrDub[iDub].m_nTime;	// get dub time
+				if (nTime < nResult)	// if dub is nearer to start time
+					nResult = nTime;	// update result
+			}
+		}
+	}
+	nNextTime = nResult;
+	return nResult > INT_MIN && nResult < INT_MAX;
+}
+
 void CSeqTrackArray::SetModulations(int iTrack, const CModulationArray& arrMod)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
@@ -613,10 +649,10 @@ void CSeqTrackArray::CalcNoteRange(int iTrack, int& nMinNote, int& nMaxNote) con
 	int	nMods = trk.m_arrModulator.GetSize();
 	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
 		if (trk.m_arrModulator[iMod].m_iType == MT_Note) {	// if note modulation
-			int	iModTrack = trk.m_arrModulator[iMod].m_iSource;
-			if (iModTrack >= 0) {	// if track's note is modulated
+			int	iModSource = trk.m_arrModulator[iMod].m_iSource;
+			if (iModSource >= 0) {	// if track's note is modulated
 				int	nMinMod, nMaxMod;	// offset note range to account for modulation
-				CalcStepRange(iModTrack, nMinMod, nMaxMod, 0, 0, true);	// modulator track
+				CalcStepRange(iModSource, nMinMod, nMaxMod, 0, 0, true);	// modulator track
 				nMinNote += nMinMod - MIDI_NOTES / 2;	// convert step value to signed offset
 				nMaxNote += nMaxMod - MIDI_NOTES / 2;
 			}
@@ -637,10 +673,10 @@ bool CSeqTrackArray::CalcVelocityRange(int iTrack, int& nMinVel, int& nMaxVel, i
 	int	nMods = trk.m_arrModulator.GetSize();
 	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
 		if (trk.m_arrModulator[iMod].m_iType == MT_Velocity) {	// if velocity modulation
-			int	iModTrack = trk.m_arrModulator[iMod].m_iSource;
-			if (iModTrack >= 0) {	// if track's velocity is modulated
+			int	iModSource = trk.m_arrModulator[iMod].m_iSource;
+			if (iModSource >= 0) {	// if track's velocity is modulated
 				int	nMinMod, nMaxMod;	// offset velocity range to account for modulation
-				CalcStepRange(iModTrack, nMinMod, nMaxMod, 0, 0, true);	// modulator track
+				CalcStepRange(iModSource, nMinMod, nMaxMod, 0, 0, true);	// modulator track
 				nMinVel += nMinMod - MIDI_NOTES / 2;	// convert step value to signed offset
 				nMaxVel += nMaxMod - MIDI_NOTES / 2;
 			}

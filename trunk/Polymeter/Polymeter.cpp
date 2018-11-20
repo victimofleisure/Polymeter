@@ -54,7 +54,7 @@ CPolymeterApp::CPolymeterApp()
 
 	// TODO: replace application ID string below with unique ID string; recommended
 	// format for string is CompanyName.ProductName.SubProduct.VersionInformation
-	SetAppID(_T("AnalSoftware.AnalSoftware.Alpha.1.0"));
+	SetAppID(_T("AnalSoftware.Polymeter.Beta.1.0"));
 
 	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance

@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+		01		18nov18	add method to find next or previous dub time
 
 */
 
@@ -119,6 +120,7 @@ public:
 	void	DeleteDubs(int iTrack, int nStartTime, int nEndTime);
 	void	InsertDubs(int iTrack, int nTime, CDubArray& arrDub);
 	void	RemoveAllDubs();
+	bool	FindNextDubTime(int nStartTime, int& nNextTime, bool bReverse = false) const;
 	void	InsertModulation(int iTrack, int iMod, CModulation& mod);
 	void	RemoveModulation(int iTrack, int iMod);
 	void	MoveModulations(int iTrack, CIntArrayEx& arrSelection, int iDropPos);

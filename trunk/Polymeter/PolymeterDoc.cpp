@@ -8,6 +8,8 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+		01		18nov18	add goto next dub method
+		02		20nov18	bump file version for recursive modulation
 
 */
 
@@ -50,7 +52,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	8
+#define	FILE_VERSION	9
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -391,9 +393,9 @@ __forceinline void CPolymeterDoc::ReadTrackModulations(CString sTrkID, CTrack& t
 			if (iDelim >= 0) {	// if operator found
 				int	iType = FindModulationTypeInternalName(sMod.Left(iDelim));
 				if (iType >= 0) {	// if valid modulation type name found
-					int	iModTrack = _ttoi(sMod.Mid(iDelim + 1));	// get index of modulator track
-					if (iModTrack >= 0 && iModTrack < m_Seq.GetTrackCount()) {	// if valid track index
-						CModulation	mod(iType, iModTrack);
+					int	iModSource = _ttoi(sMod.Mid(iDelim + 1));	// get index of modulator track
+					if (iModSource >= 0 && iModSource < m_Seq.GetTrackCount()) {	// if valid track index
+						CModulation	mod(iType, iModSource);
 						trk.m_arrModulator.Add(mod);	// add modulation to track
 					}
 				}
@@ -404,16 +406,16 @@ __forceinline void CPolymeterDoc::ReadTrackModulations(CString sTrkID, CTrack& t
 
 __forceinline void CPolymeterDoc::WriteTrackModulations(CString sTrkID, const CTrack& trk) const
 {
-	CString	sModTrack, sModList;
+	CString	sModSource, sModList;
 	int	nMods = trk.m_arrModulator.GetSize();
 	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
 		const CModulation&	mod = trk.m_arrModulator[iMod];
-		int	iModTrack = mod.m_iSource;
-		if (iModTrack >= 0) {	// if modulation type applies
+		int	iModSource = mod.m_iSource;
+		if (iModSource >= 0) {	// if modulation type applies
 			if (!sModList.IsEmpty())	// if not first token
 				sModList += ',';	// append token separator
-			sModTrack.Format(_T(":%d"), iModTrack);
-			sModList += GetModulationTypeInternalName(mod.m_iType) + sModTrack;
+			sModSource.Format(_T(":%d"), iModSource);
+			sModList += GetModulationTypeInternalName(mod.m_iType) + sModSource;
 		}
 	}
 	CPersist::WriteString(sTrkID, RK_TRACK_MODULATIONS, sModList);
@@ -2466,6 +2468,19 @@ void CPolymeterDoc::PasteDubs(CPoint ptPaste, double fTicksPerCell, CRect& rSele
 	InsertDubs(theApp.m_arrSongClipboard, ptPaste, fTicksPerCell, rSelection);
 }
 
+bool CPolymeterDoc::GotoNextDub(bool bReverse)
+{
+	LONGLONG	nSongPos;
+	if (!m_Seq.GetPosition(nSongPos))
+		return false;
+	int	nNextTime;
+	if (!m_Seq.FindNextDubTime(static_cast<int>(nSongPos), nNextTime, bReverse))
+		return false;
+	SetPosition(nNextTime);
+	UpdateAllViews(NULL, HINT_CENTER_SONG_POS);
+	return true;
+}
+
 inline CPolymeterDoc::CTrackArrayEdit::CTrackArrayEdit(CPolymeterDoc *pDoc)
 {
 	ASSERT(pDoc != NULL);
@@ -3376,6 +3391,7 @@ void CPolymeterDoc::OnTransportGoToPosition()
 		LONGLONG	nPos;
 		if (m_Seq.ConvertStringToPosition(dlg.m_sPos, nPos)) {
 			SetPosition(static_cast<int>(nPos));
+			UpdateAllViews(NULL, HINT_CENTER_SONG_POS);
 		}
 	}
 }
