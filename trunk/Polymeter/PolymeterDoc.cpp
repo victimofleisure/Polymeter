@@ -10,6 +10,7 @@
         00      23mar18	initial version
 		01		18nov18	add goto next dub method
 		02		20nov18	bump file version for recursive modulation
+		03		20nov18	in FillTrack, fix non-rectangular selection case
 
 */
 
@@ -2809,7 +2810,7 @@ bool CPolymeterDoc::TrackFill(const CRect *prStepSel)
 	if (nSels <= 0)	// if not enough tracks
 		return false;
 	CFillDlg	dlg;
-	dlg.m_nSteps = m_Seq.GetLength(arrTrackSel[0]);	// get first track's length
+	dlg.m_nSteps = m_Seq.CalcMaxTrackLength(arrTrackSel);	// get maximum track length
 	if (bIsRectSel) {	// if rectangular selection exists
 		dlg.m_rngStep.Start = prStepSel->left;	// get initial step range from rectangular selection
 		dlg.m_rngStep.End = prStepSel->right;
