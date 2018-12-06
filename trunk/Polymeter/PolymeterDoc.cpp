@@ -11,6 +11,8 @@
 		01		18nov18	add goto next dub method
 		02		20nov18	bump file version for recursive modulation
 		03		20nov18	in FillTrack, fix non-rectangular selection case
+		04		28nov18	in part overlap check, add option to resolve conflicts
+		05		02dec18	add recording of MIDI input
 
 */
 
@@ -1763,7 +1765,7 @@ void CPolymeterDoc::RestorePreset(const CUndoState& State)
 	m_arrPreset[iPreset].m_arrMute = pInfo->m_arrMute;
 }
 
-void CPolymeterDoc::SaveSelectedPresets(CUndoState& State) const
+void CPolymeterDoc::SaveClipboardPresets(CUndoState& State) const
 {
 	if (UndoMgrIsIdle()) {	// if initial state
 		ASSERT(m_parrSelection != NULL);
@@ -1782,7 +1784,7 @@ void CPolymeterDoc::SaveSelectedPresets(CUndoState& State) const
 	}
 }
 
-void CPolymeterDoc::RestoreSelectedPresets(const CUndoState& State)
+void CPolymeterDoc::RestoreClipboardPresets(const CUndoState& State)
 {
 	CUndoSelectedPresets	*pInfo = static_cast<CUndoSelectedPresets*>(State.GetObj());
 	bool	bInserting = GetUndoAction() == State.m_Val.p.x.i; 
@@ -1862,7 +1864,7 @@ void CPolymeterDoc::RestorePart(const CUndoState& State)
 	m_arrPart[iPart].m_arrTrackIdx = pInfo->m_arrSelection;
 }
 
-void CPolymeterDoc::SaveSelectedParts(CUndoState& State) const
+void CPolymeterDoc::SaveClipboardParts(CUndoState& State) const
 {
 	if (UndoMgrIsIdle()) {	// if initial state
 		ASSERT(m_parrSelection != NULL);
@@ -1881,7 +1883,7 @@ void CPolymeterDoc::SaveSelectedParts(CUndoState& State) const
 	}
 }
 
-void CPolymeterDoc::RestoreSelectedParts(const CUndoState& State)
+void CPolymeterDoc::RestoreClipboardParts(const CUndoState& State)
 {
 	CUndoSelectedParts	*pInfo = static_cast<CUndoSelectedParts*>(State.GetObj());
 	bool	bInserting = GetUndoAction() == State.m_Val.p.x.i; 
@@ -1891,6 +1893,28 @@ void CPolymeterDoc::RestoreSelectedParts(const CUndoState& State)
 		hint.m_parrSelection = &pInfo->m_arrSelection;	// set selection
 	} else	// deleting
 		m_arrPart.DeleteSelection(pInfo->m_arrSelection);
+	UpdateAllViews(NULL, HINT_PART_ARRAY, &hint);
+}
+
+void CPolymeterDoc::SaveSelectedParts(CUndoState& State) const
+{
+	if (!State.IsEmpty()) {	// undoing or redoing; selection may have changed, so don't rely on it
+		const CUndoMove	*pInfo = static_cast<CUndoMove*>(State.GetObj());
+		m_parrSelection = &pInfo->m_arrSelection;	// use edit's original selection
+	}
+	ASSERT(m_parrSelection != NULL);
+	CRefPtr<CUndoSelectedParts>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrSelection = *m_parrSelection;
+	m_arrPart.GetSelection(*m_parrSelection, pInfo->m_arrPart);
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreSelectedParts(const CUndoState& State)
+{
+	CUndoSelectedParts	*pInfo = static_cast<CUndoSelectedParts*>(State.GetObj());
+	CSelectionHint	hint;
+	m_arrPart.SetSelection(pInfo->m_arrSelection, pInfo->m_arrPart);
 	UpdateAllViews(NULL, HINT_PART_ARRAY, &hint);
 }
 
@@ -2030,7 +2054,7 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		break;
 	case UCODE_CREATE_PRESET:
 	case UCODE_DELETE_PRESETS:
-		SaveSelectedPresets(State);
+		SaveClipboardPresets(State);
 		break;
 	case UCODE_MOVE_PRESETS:
 		SavePresetMove(State);
@@ -2043,6 +2067,9 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		break;
 	case UCODE_CREATE_PART:
 	case UCODE_DELETE_PARTS:
+		SaveClipboardParts(State);
+		break;
+	case UCODE_MODIFY_PARTS:
 		SaveSelectedParts(State);
 		break;
 	case UCODE_MOVE_PARTS:
@@ -2136,7 +2163,7 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		break;
 	case UCODE_CREATE_PRESET:
 	case UCODE_DELETE_PRESETS:
-		RestoreSelectedPresets(State);
+		RestoreClipboardPresets(State);
 		break;
 	case UCODE_MOVE_PRESETS:
 		RestorePresetMove(State);
@@ -2149,6 +2176,9 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		break;
 	case UCODE_CREATE_PART:
 	case UCODE_DELETE_PARTS:
+		RestoreClipboardParts(State);
+		break;
+	case UCODE_MODIFY_PARTS:
 		RestoreSelectedParts(State);
 		break;
 	case UCODE_MOVE_PARTS:
@@ -2198,6 +2228,36 @@ CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 		sTitle.LoadString(m_arrUndoTitleId[LOWORD(State.GetCode())]);
 	}
 	return sTitle;
+}
+
+bool CPolymeterDoc::UndoDependencies()
+{
+	int	nUndoCode = UCODE_MODIFY_PARTS;	// only one dependent case for now
+	CUndoManager	*pMgr = GetUndoManager();
+	int	iPos = pMgr->GetPos();
+	if (iPos > 0) {	// if can undo
+		CUndoState&	state = pMgr->GetState(iPos - 1);	// get previous undo state
+		if (state.GetCode() == nUndoCode && state.GetCtrlID() == INT_MIN) {	// if state is dependent
+			pMgr->Undo();
+			return true;
+		}
+	}
+	return false;
+}
+
+bool CPolymeterDoc::RedoDependencies()
+{
+	int	nUndoCode = UCODE_MODIFY_PARTS;	// only one dependent case for now
+	CUndoManager	*pMgr = GetUndoManager();
+	int	iPos = pMgr->GetPos();
+	if (iPos < pMgr->GetSize()) {	// if can redo
+		CUndoState&	state = pMgr->GetState(iPos);	// get next undo state
+		if (state.GetCode() == nUndoCode && state.GetCtrlID() == INT_MIN) {	// if state is dependent
+			pMgr->Redo();
+			return true;
+		}
+	}
+	return false;
 }
 
 void CPolymeterDoc::SecsToTime(int nSecs, CString& sTime)
@@ -2326,6 +2386,55 @@ bool CPolymeterDoc::CreateAutoSavePath(CString& sPath) const
 	sFolder.Append(sFileName);	// append file name to folder
 	sPath = sFolder;	// return path to caller
 	return true;
+}
+
+bool CPolymeterDoc::RecordToTracks(bool bEnable)
+{
+	if (bEnable == theApp.IsRecordingMidiInput())	// if already in requested state
+		return true;	// nothing to do
+	if (bEnable) {	// if starting
+		if (!theApp.RecordMidiInput(true))
+			return false;
+	} else {	// stopping
+		theApp.RecordMidiInput(false);
+		int	nEvents = theApp.m_arrMidiInEvent.GetSize();
+		if (!nEvents)
+			return false;
+		CMidiTrackArray	arrMidiTrack;
+		arrMidiTrack.Add(theApp.m_arrMidiInEvent);
+		int	nStartTime = arrMidiTrack[0][0].DeltaT;	// first MIDI input event's timestamp
+		int	nPrevTime = 0;
+		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each recorded MIDI input event
+			// event timestamps are in milliseconds relative to when MIDI input device was started
+			MIDI_EVENT&	evt = arrMidiTrack[0][iEvent];
+			int nTime = static_cast<int>(m_Seq.ConvertMillisecondsToPosition(evt.DeltaT - nStartTime));
+			evt.DeltaT = nTime - nPrevTime;	// convert to delta time in sequencer ticks
+			nPrevTime = nTime;
+		}
+		arrMidiTrack[0][0].DeltaT += theApp.m_nMidiInStartTime;
+		CImportTrackArray	arrTrack;	// destination array
+		CStringArrayEx	arrTrackName;
+		arrTrackName.SetSize(1);
+		int	nTimeDiv = m_Seq.GetTimeDivision();
+		double	fQuant = 4.0 / theApp.m_Options.GetInputQuantization();
+		arrTrack.ImportMidiFile(arrMidiTrack, arrTrackName, nTimeDiv, nTimeDiv, fQuant);
+		OnImportTracks(arrTrack);
+	}
+	return true;
+}
+
+void CPolymeterDoc::OnImportTracks(CImportTrackArray& arrTrack)
+{
+	int	iInsTrack;
+	if (GetSelectedCount())	// if selection exists
+		iInsTrack = m_arrTrackSel[0];	// insert at selection
+	else	// no selection
+		iInsTrack = 0;	// default insert position
+	m_Seq.InsertTracks(iInsTrack, arrTrack);
+	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
+	SetModifiedFlag();
+	SelectRange(iInsTrack, arrTrack.GetSize());
+	NotifyUndoableEdit(0, UCODE_INSERT_TRACKS);
 }
 
 void CPolymeterDoc::UpdateSongLength()
@@ -2593,18 +2702,41 @@ void CPolymeterDoc::SetPresetName(int iPreset, CString sName)
 	UpdateAllViews(NULL, HINT_PRESET_NAME, &hint);
 }
 
-bool CPolymeterDoc::CheckForPartOverlap(int iTargetPart) const
+bool CPolymeterDoc::CheckForPartOverlap(int iTargetPart)
 {
 	CIntArrayEx	arrTrackIdx;
 	arrTrackIdx.SetSize(GetTrackCount());
 	m_arrPart.GetTrackRefs(arrTrackIdx);
+	bool	bIsOverlapOK = false;
+	CIntArrayEx	arrConflictedPartIdx;
 	int	nSels = GetSelectedCount();
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = m_arrTrackSel[iSel];
 		int	iPart = arrTrackIdx[iTrack];
-		if (iPart >= 0 && iPart != iTargetPart) {	// if track already belongs to a part other than target
-			AfxMessageBox(IDS_DOC_GROUP_OVERLAP);
-			return false;	// user error; track can't belong to multiple parts
+		if (iPart >= 0 && iPart != iTargetPart) {	// if track already belongs to part other than target
+			if (!bIsOverlapOK) {	// if overlap warning not yet given
+				if (AfxMessageBox(IDS_DOC_GROUP_OVERLAP, MB_OKCANCEL) != IDOK)	// warn user
+					return false;	// user canceled; track can't belong to multiple parts
+				bIsOverlapOK = true;	// only one warning
+			}
+			if (arrConflictedPartIdx.Find(iPart) < 0)	// if conflicted part not already added
+				arrConflictedPartIdx.Add(iPart);	// add conflicted part's index to array
+		}
+	}
+	if (arrConflictedPartIdx.GetSize()) {	// if conflicts were found, resolve them
+		// this edit is conditional and dependent on a parent edit; undoing or redoing the parent edit
+		// should automatically undo or redo this edit, allowing its existence to be hidden from the user
+		m_parrSelection = &arrConflictedPartIdx;
+		NotifyUndoableEdit(INT_MIN, UCODE_MODIFY_PARTS);	// see UndoDependencies and RedoDependencies
+		int	nSels = GetSelectedCount();
+		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+			int	iTrack = m_arrTrackSel[iSel];
+			int	iPart = arrTrackIdx[iTrack];
+			if (iPart >= 0 && iPart != iTargetPart) {	// if track already belongs to part other than target
+				W64INT	iMbr = m_arrPart[iPart].m_arrTrackIdx.Find(iTrack);	// find track within other part
+				if (iMbr >= 0)	// should always be true but check anyway
+					m_arrPart[iPart].m_arrTrackIdx.RemoveAt(iMbr);	// remove track from other part
+			}
 		}
 	}
 	return true;
@@ -2877,6 +3009,8 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_RECORD, OnUpdateTransportRecord)
 	ON_COMMAND(ID_TRANSPORT_REWIND, OnTransportRewind)
 	ON_COMMAND(ID_TRANSPORT_GO_TO_POSITION, OnTransportGoToPosition)
+	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_RECORD_TRACKS, OnUpdateTransportRecordTracks)
+	ON_COMMAND(ID_TRANSPORT_RECORD_TRACKS, OnTransportRecordTracks)
 	ON_COMMAND(ID_VIEW_TYPE_SONG, OnViewTypeSong)
 	ON_COMMAND(ID_VIEW_TYPE_TRACK, OnViewTypeTrack)
 	ON_COMMAND(ID_VIEW_TYPE_LIVE, OnViewTypeLive)
@@ -3029,16 +3163,7 @@ void CPolymeterDoc::OnFileImport()
 		CImportTrackArray	arrTrack;	// destination array
 		double	fQuant = 4.0 / theApp.m_Options.GetInputQuantization();
 		arrTrack.ImportMidiFile(fd.GetPathName(), m_Seq.GetTimeDivision(), fQuant);
-		int	iInsTrack;
-		if (GetSelectedCount())	// if selection exists
-			iInsTrack = m_arrTrackSel[0];	// insert at selection
-		else	// no selection
-			iInsTrack = 0;	// default insert position
-		m_Seq.InsertTracks(iInsTrack, arrTrack);
-		UpdateAllViews(NULL, HINT_TRACK_ARRAY);
-		SetModifiedFlag();
-		SelectRange(iInsTrack, arrTrack.GetSize());
-		NotifyUndoableEdit(0, UCODE_INSERT_TRACKS);
+		OnImportTracks(arrTrack);
 	}
 }
 
@@ -3046,6 +3171,7 @@ void CPolymeterDoc::OnEditUndo()
 {
 	if (!CFocusEdit::Undo()) {
 		GetUndoManager()->Undo();
+		UndoDependencies();	// order matters; must be after parent undo
 		SetModifiedFlag();	// undo counts as modification
 	}
 }
@@ -3062,6 +3188,7 @@ void CPolymeterDoc::OnUpdateEditUndo(CCmdUI *pCmdUI)
 
 void CPolymeterDoc::OnEditRedo()
 {
+	RedoDependencies();	// order matters; must be before parent undo
 	GetUndoManager()->Redo();
 	SetModifiedFlag();	// redo counts as modification
 }
@@ -3395,6 +3522,17 @@ void CPolymeterDoc::OnTransportGoToPosition()
 			UpdateAllViews(NULL, HINT_CENTER_SONG_POS);
 		}
 	}
+}
+
+void CPolymeterDoc::OnTransportRecordTracks()
+{
+	RecordToTracks(!theApp.IsRecordingMidiInput());
+}
+
+void CPolymeterDoc::OnUpdateTransportRecordTracks(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(theApp.IsMidiInputDeviceOpen());
+	pCmdUI->SetCheck(theApp.IsRecordingMidiInput());
 }
 
 void CPolymeterDoc::OnViewTypeTrack()

@@ -107,6 +107,7 @@ BEGIN
     BUTTON      ID_TRANSPORT_PAUSE
     BUTTON      ID_TRANSPORT_RECORD
     BUTTON      ID_TRANSPORT_REWIND
+    BUTTON      ID_TRANSPORT_RECORD_TRACKS
     SEPARATOR
     BUTTON      ID_VIEW_VELOCITIES
     BUTTON      ID_TRACK_TIE_NOTES
@@ -133,6 +134,7 @@ BEGIN
     BUTTON      ID_TRANSPORT_PAUSE
     BUTTON      ID_TRANSPORT_RECORD
     BUTTON      ID_TRANSPORT_REWIND
+    BUTTON      ID_TRANSPORT_RECORD_TRACKS
     SEPARATOR
     BUTTON      ID_VIEW_VELOCITIES
     BUTTON      ID_TRACK_TIE_NOTES
@@ -318,6 +320,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Re&wind",                     ID_TRANSPORT_REWIND
         MENUITEM "&Go To Position...",          ID_TRANSPORT_GO_TO_POSITION
+        MENUITEM "Record &Tracks",              ID_TRANSPORT_RECORD_TRACKS
     END
     POPUP "&Tools"
     BEGIN
@@ -427,6 +430,7 @@ BEGIN
     "A",            ID_EDIT_SELECT_ALL,     VIRTKEY, CONTROL, NOINVERT
     "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL, NOINVERT
     "E",            ID_FILE_EXPORT,         VIRTKEY, CONTROL, NOINVERT
+    "I",            ID_FILE_IMPORT,         VIRTKEY, CONTROL, NOINVERT
     "N",            ID_FILE_NEW,            VIRTKEY, CONTROL, NOINVERT
     "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
     "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL, NOINVERT
@@ -434,6 +438,7 @@ BEGIN
     VK_F6,          ID_NEXT_PANE,           VIRTKEY, NOINVERT
     VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT, NOINVERT
     "O",            ID_TOOLS_OPTIONS,       VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "F",            ID_TRACK_FILL,          VIRTKEY, SHIFT, CONTROL, NOINVERT
     "G",            ID_TRACK_GROUP,         VIRTKEY, CONTROL, NOINVERT
     "L",            ID_TRACK_LENGTH,        VIRTKEY, CONTROL, NOINVERT
     "M",            ID_TRACK_MUTE,          VIRTKEY, CONTROL, NOINVERT
@@ -454,6 +459,7 @@ BEGIN
     VK_SPACE,       ID_TRANSPORT_PAUSE,     VIRTKEY, SHIFT, CONTROL, NOINVERT
     VK_SPACE,       ID_TRANSPORT_PLAY,      VIRTKEY, CONTROL, NOINVERT
     "R",            ID_TRANSPORT_RECORD,    VIRTKEY, CONTROL, NOINVERT
+    "R",            ID_TRANSPORT_RECORD_TRACKS, VIRTKEY, SHIFT, CONTROL, NOINVERT
     "W",            ID_TRANSPORT_REWIND,    VIRTKEY, CONTROL, NOINVERT
     "C",            ID_VIEW_CHANNELS,       VIRTKEY, CONTROL, ALT, NOINVERT
     "M",            ID_VIEW_MODULATIONS,    VIRTKEY, CONTROL, ALT, NOINVERT
@@ -468,7 +474,6 @@ BEGIN
     VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
     "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
     VK_F11,         ID_WINDOW_FULL_SCREEN,  VIRTKEY, NOINVERT
-    "F",            ID_TRACK_FILL,          VIRTKEY, SHIFT, CONTROL, NOINVERT
 END
 
 
@@ -829,9 +834,9 @@ BEGIN
     IDS_DOC_BAD_FORMAT      "'%1' has an invalid format."
     IDS_DOC_BAD_STEP_SELECTION "Invalid step selection."
     IDS_DOC_CANT_TRUNCATE_RECORDING 
-                            "Can't set song length shorter than recording."
+                            "Can't set song length shorter than the recording."
     IDS_DOC_CLIP_WARNING    "Clipping may occur."
-    IDS_DOC_GROUP_OVERLAP   "One or more selected tracks already belongs to a group."
+    IDS_DOC_GROUP_OVERLAP   "One or more of the selected tracks already belong to a group, and will be reassigned."
     IDS_DOC_NEWER_VERSION   "'%1' is from a newer document version. Some of its features may not be supported."
     IDS_DOC_TRACK_TOO_LONG  "Track too long."
     IDS_DOC_VELOCITY_RANGE  "Velocity range: %d, %d"
@@ -979,16 +984,18 @@ BEGIN
     IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
     IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format"
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
+    IDS_SEQERR_TOO_MANY_RECURSIONS 
+                            "Modulation exceeded the maximum number of recursions."
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
     IDS_SORT_DIR_ASCENDING  "Ascending"
     IDS_SORT_DIR_DESCENDING "Descending"
     IDS_STATUS_PANE1        "Pane 1"
     IDS_STATUS_PANE2        "Pane 2"
-    IDS_TIME_TO_REPEAT_DAYS "days"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TIME_TO_REPEAT_DAYS "days"
     IDS_TIME_TO_REPEAT_FMT  "%s beats\n%s\nGreatest prime factor is %s"
     IDS_TOOLBAR_CUSTOMIZE   "Customize..."
     IDS_TOOLBAR_STANDARD    "Standard"
@@ -1004,11 +1011,11 @@ BEGIN
     IDS_TRK_Length          "Length"
     IDS_TRK_Mute            "Mute"
     IDS_TRK_Name            "Name"
-    IDS_TRK_Note            "Note"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_Note            "Note"
     IDS_TRK_Number          "#"
     IDS_TRK_Offset          "Offset"
     IDS_TRK_Quant           "Quant"
@@ -1019,8 +1026,7 @@ BEGIN
     IDS_TYPE_TRACK          "Track"
     IDS_VELOCITY            "Velocity"
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
-    IDS_SEQERR_TOO_MANY_RECURSIONS 
-                            "Modulation exceeded maximum number of recursions."
+    IDS_EDIT_MODIFY_PARTS   "Modify Parts"
 END
 
 STRINGTABLE
@@ -1108,6 +1114,8 @@ BEGIN
     ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "&Windows..."
+    ID_TRANSPORT_RECORD_TRACKS 
+                            "Start or stop recording MIDI input to tracks\nRecord Tracks"
 END
 
 STRINGTABLE

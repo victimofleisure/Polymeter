@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+		01		02dec18	add recording of MIDI input
 
 */
 
@@ -25,6 +26,7 @@
 #include "Track.h"
 #include "MidiWrap.h"
 #include "MidiDevices.h"
+#include "MidiFile.h"
 
 // CPolymeterApp:
 // See Polymeter.cpp for the implementation of this class
@@ -37,9 +39,12 @@ class CPolymeterApp : public CWinAppCK
 public:
 	CPolymeterApp();
 
+// Types
+
 // Attributes
 	CMainFrame	*GetMainFrame() const;
 	bool	IsMidiInputDeviceOpen() const;
+	bool	IsRecordingMidiInput() const;
 
 // Operations
 	bool	HandleDlgKeyMsg(MSG* pMsg);
@@ -51,6 +56,7 @@ public:
 	void	ResetMidiInputDevice();
 	void	OnDeviceChange();
 	static	int		FindHelpID(int nResID);
+	bool	RecordMidiInput(bool bEnable);
 
 // Overrides
 	virtual BOOL InitInstance();
@@ -67,6 +73,8 @@ public:
 	CTrack::CDubArrayArray	m_arrSongClipboard;	// clipboard for song dubs
 	CMidiDevices	m_midiDevs;		// MIDI device information
 	bool	m_bTieNotes;	// if true, new notes are tied
+	CMidiEventArray	m_arrMidiInEvent;	// array of MIDI input events
+	int		m_nMidiInStartTime;	// first MIDI input event's time, in active document's ticks
 
 protected:
 // Types
@@ -82,6 +90,7 @@ protected:
 	CMidiIn	m_midiIn;			// MIDI input device
 	bool	m_bInMsgBox;		// true if displaying message box
 	bool	m_bHelpInit;		// true if help was initialized
+	bool	m_bIsRecordMidiIn;	// if true, recording input MIDI events
 
 // Helpers
 	static void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2);
@@ -113,4 +122,9 @@ inline CMainFrame* CPolymeterApp::GetMainFrame() const
 inline bool CPolymeterApp::IsMidiInputDeviceOpen() const
 {
 	return m_midiIn.IsOpen();
+}
+
+inline bool CPolymeterApp::IsRecordingMidiInput() const
+{
+	return m_bIsRecordMidiIn;
 }

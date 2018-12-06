@@ -9,6 +9,7 @@
 		rev		date	comments
         00      23mar18	initial version
         01      19nov18	add recursive modulation
+		02		02dec18	add conversion from milliseconds to position
 
 */
 
@@ -86,6 +87,7 @@ public:
 	bool	ConvertStringToPosition(const CString& sPos, LONGLONG& nPos) const;
 	LONGLONG	ConvertPositionToSeconds(LONGLONG nPos) const;
 	LONGLONG	ConvertSecondsToPosition(LONGLONG nSecs) const;
+	LONGLONG	ConvertMillisecondsToPosition(LONGLONG nMillis) const;
 	void	ConvertPositionToTimeString(LONGLONG nPos, CString& sTime) const;
 	void	RecordDub(int iTrack);
 	void	RecordDub(const CIntArrayEx& arrSelection);

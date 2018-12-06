@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+		01		02dec18	add recording of MIDI input
 
 */
 
@@ -60,7 +61,9 @@ CPolymeterApp::CPolymeterApp()
 	// Place all significant initialization in InitInstance
 	m_bInMsgBox = false;
 	m_bTieNotes = false;
+	m_bIsRecordMidiIn = false;
 	m_bHelpInit = false;
+	m_nMidiInStartTime = 0;
 }
 
 // The one and only CPolymeterApp object
@@ -453,6 +456,18 @@ void CPolymeterApp::ResetMidiInputDevice()
 	m_midiIn.Close();
 }
 
+bool CPolymeterApp::RecordMidiInput(bool bEnable)
+{
+	if (bEnable == m_bIsRecordMidiIn)	// if already in requested state
+		return true;	// nothing to do
+	if (bEnable) {
+		theApp.m_arrMidiInEvent.RemoveAll();
+		m_nMidiInStartTime = 0;
+	}
+	m_bIsRecordMidiIn = bEnable;
+	return true;
+}
+
 void CPolymeterApp::OnDeviceChange()
 {
 	if (!m_bInMsgBox) {	// if not already displaying message box
@@ -496,6 +511,17 @@ void CALLBACK CPolymeterApp::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwIn
 				DWORD	dwEvent = static_cast<DWORD>(dwParam1);
 				if (theApp.m_Options.m_Midi_bThru)	// if MIDI thru enabled
 					pDoc->m_Seq.OutputLiveEvent(dwEvent);	// output event
+			}
+			if (theApp.m_bIsRecordMidiIn) {	// if recording MIDI input
+				if (!theApp.m_arrMidiInEvent.GetSize()) {	// if first event
+					if (pDoc != NULL) {	// if active document exists
+						LONGLONG	nPos;
+						if (pDoc->m_Seq.GetPosition(nPos))	// get position in ticks
+							theApp.m_nMidiInStartTime = static_cast<int>(nPos);
+					}
+				}
+				MIDI_EVENT	evt = {UINT64TO32(dwParam2), UINT64TO32(dwParam1)};
+				theApp.m_arrMidiInEvent.Add(evt);	// add event to MIDI input array
 			}
 		}
 		break;

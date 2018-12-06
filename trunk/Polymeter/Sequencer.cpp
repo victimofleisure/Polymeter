@@ -9,6 +9,7 @@
 		rev		date	comments
         00      23mar18	initial version
         01      19nov18	add recursive modulation
+		02		02dec18	add conversion from milliseconds to position
 
 */
 
@@ -618,7 +619,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 		ChaseDubs(0, true);	// reset dub indices and update mutes
 		nChunkDuration = m_nLatency;	// same latency as playback to ensure identical dubbing
 	} else {	// track mode
-		GetUsedTracks(arrUsedTrack, !m_bIsSongMode);	// in track mode, exclude muted tracks
+		GetUsedTracks(arrUsedTrack, true);	// exclude muted tracks
 		nUsedTracks = arrUsedTrack.GetSize();
 		// max tracks is one less to allow for initialization track
 		if (!nUsedTracks || nUsedTracks > USHRT_MAX - 1)	// if no tracks, or too many tracks
@@ -846,6 +847,11 @@ LONGLONG CSequencer::ConvertPositionToSeconds(LONGLONG nPos) const
 LONGLONG CSequencer::ConvertSecondsToPosition(LONGLONG nSecs) const
 {
 	return round64(static_cast<double>(nSecs) / 60 * m_fTempo * m_nTimeDiv);
+}
+
+LONGLONG CSequencer::ConvertMillisecondsToPosition(LONGLONG nMillis) const
+{
+	return round64(static_cast<double>(nMillis) / 60000 * m_fTempo * m_nTimeDiv);
 }
 
 void CSequencer::ConvertPositionToTimeString(LONGLONG nPos, CString& sTime) const

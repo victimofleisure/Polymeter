@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      26mar18	initial version
+		01		28nov18	add modify parts
 
 		undo code data
  
@@ -53,6 +54,7 @@ UCODE_DEF(UPDATE_PART)
 UCODE_DEF(RENAME_PART)
 UCODE_DEF(DELETE_PARTS)
 UCODE_DEF(MOVE_PARTS)
+UCODE_DEF(MODIFY_PARTS)
 UCODE_DEF(MODULATION)
 UCODE_DEF(FILL_STEPS)
 

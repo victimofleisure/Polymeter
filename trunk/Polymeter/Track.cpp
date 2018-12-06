@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+		01		02dec18	in MIDI file import, fix rounding errors
 
 */
 
@@ -438,8 +439,8 @@ void CImportTrackArray::ImportMidiFile(const CMidiTrackArray& arrInTrack, const 
 					info.nVelocity = nVelocity;
 				} else {	// note off
 					if (info.nStartTime >= 0) {	// if note in progress
-						int	nStart = round(info.nStartTime / nInQuant);
-						int	nEnd = round(nTime / nInQuant);
+						int	nStart = round(double(info.nStartTime) / nInQuant);
+						int	nEnd = round(double(nTime) / nInQuant);
 						int	nDur = nEnd - nStart;
 						CTrack&	trk = arrOutTrack[info.iTrack];
 						trk.m_arrStep.SetSize(nEnd);
@@ -456,7 +457,7 @@ void CImportTrackArray::ImportMidiFile(const CMidiTrackArray& arrInTrack, const 
 			}
 		}
 	}
-	int	nMaxSteps = round(nMaxTime / nInQuant);	// compute maximum track length
+	int	nMaxSteps = round(double(nMaxTime) / nInQuant);	// compute maximum track length
 	CArrayEx<CTrack *, CTrack *>	arrTrackPtr;
 	int	nOutTracks = arrOutTrack.GetSize();
 	arrTrackPtr.SetSize(nOutTracks);	// allocate track pointers

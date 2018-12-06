@@ -9,6 +9,8 @@
 		rev		date	comments
         00      23mar18	initial version
 		01		18nov18	add center song position hint
+		02		28nov18	add undo handlers for modify parts and refactor names
+		03		02dec18	add recording of MIDI input
 
 */
 
@@ -219,7 +221,7 @@ public:
 	void	UpdatePart(int iPart);
 	void	MakePartMutesConsistent();
 	void	MakePresetMutesConsistent();
-	bool	CheckForPartOverlap(int iTargetPart = -1) const;
+	bool	CheckForPartOverlap(int iTargetPart = -1);
 	bool	CreateAutoSavePath(CString& sPath) const;
 	static	bool	DoShiftDialog(int& nSteps, bool bIsRotate = false);
 	void	StretchTracks(double fScale);
@@ -368,6 +370,8 @@ protected:
 	void	CopyTracksToClipboard();
 	void	PasteTracks();
 	void	InsertTracks();
+	bool	RecordToTracks(bool bEnable);
+	void	OnImportTracks(CImportTrackArray& arrTrack);
 
 // Undo helpers
 	void	SaveTrackProperty(CUndoState& State) const;
@@ -410,19 +414,23 @@ protected:
 	void	RestorePresetName(const CUndoState& State);
 	void	SavePreset(CUndoState& State) const;
 	void	RestorePreset(const CUndoState& State);
-	void	SaveSelectedPresets(CUndoState& State) const;
-	void	RestoreSelectedPresets(const CUndoState& State);
+	void	SaveClipboardPresets(CUndoState& State) const;
+	void	RestoreClipboardPresets(const CUndoState& State);
 	void	SavePresetMove(CUndoState& State) const;
 	void	RestorePresetMove(const CUndoState& State);
 	void	SavePartName(CUndoState& State) const;
 	void	RestorePartName(const CUndoState& State);
 	void	SavePart(CUndoState& State) const;
 	void	RestorePart(const CUndoState& State);
+	void	SaveClipboardParts(CUndoState& State) const;
+	void	RestoreClipboardParts(const CUndoState& State);
 	void	SaveSelectedParts(CUndoState& State) const;
 	void	RestoreSelectedParts(const CUndoState& State);
 	void	RestorePartMove(const CUndoState& State);
 	void	SaveModulation(CUndoState& State) const;
 	void	RestoreModulation(const CUndoState& State);
+	bool	UndoDependencies();
+	bool	RedoDependencies();
 
 // Generated message map functions
 protected:
@@ -442,6 +450,8 @@ protected:
 	afx_msg void OnUpdateTransportRecord(CCmdUI *pCmdUI);
 	afx_msg void OnTransportRewind();
 	afx_msg void OnTransportGoToPosition();
+	afx_msg void OnTransportRecordTracks();
+	afx_msg void OnUpdateTransportRecordTracks(CCmdUI *pCmdUI);
 	afx_msg void OnViewTypeTrack();
 	afx_msg void OnViewTypeSong();
 	afx_msg void OnViewTypeLive();
