@@ -10,6 +10,9 @@
         00      23mar18	initial version
         01      19nov18	add recursive modulation
 		02		02dec18	add conversion from milliseconds to position
+		03		07dec18	set initial dub time to smallest int instead of zero
+		04		07dec18	in track export, don't export modulator tracks
+		05		07dec18	in export implementation, reset cached parameters
 
 */
 
@@ -610,16 +613,17 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 	// note that this method may throw CFileException (from CMidiFile)
 	if (nDuration <= 0)	// if invalid duration (in seconds)
 		return false;	// avoid divide by zero
+	ResetCachedParameters();	// crucial to avoid undefined controller behavior
 	CIntArrayEx	arrUsedTrack;
 	int	nUsedTracks;
 	int	nChunkDuration;
 	int	arrFirstTrack[MIDI_CHANNELS];
 	if (m_bIsSongMode) {	// if song mode
 		nUsedTracks = GetChannelUsage(arrFirstTrack);
-		ChaseDubs(0, true);	// reset dub indices and update mutes
+		ChaseDubs(MIN_DUB_TIME, true);	// reset dub indices and update mutes
 		nChunkDuration = m_nLatency;	// same latency as playback to ensure identical dubbing
 	} else {	// track mode
-		GetUsedTracks(arrUsedTrack, true);	// exclude muted tracks
+		GetUsedTracks(arrUsedTrack, UT_NO_MUTE | UT_NO_MODULATOR);	// exclude muted tracks and modulators
 		nUsedTracks = arrUsedTrack.GetSize();
 		// max tracks is one less to allow for initialization track
 		if (!nUsedTracks || nUsedTracks > USHRT_MAX - 1)	// if no tracks, or too many tracks

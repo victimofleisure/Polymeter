@@ -9,6 +9,7 @@
 		rev		date	comments
         00      23mar18	initial version
 		01		02dec18	in MIDI file import, fix rounding errors
+		02		07dec18	set initial dub time to smallest int instead of zero
 
 */
 
@@ -126,7 +127,7 @@ void CTrackBase::CDubArray::SetDubs(int nStartTime, int nEndTime, bool bMute)
 {
 	int	iStartDub = FindDub(nStartTime);	// find nearest dub at or before start time
 	if (iStartDub < 0) {	// if no dubs
-		AddDub(0, true);	// muted
+		AddDub(MIN_DUB_TIME, true);	// muted
 		iStartDub = 0;
 	}
 	int	iEndDub = FindDub(nEndTime, iStartDub);	// find nearest dub at or before end time
@@ -190,7 +191,7 @@ void CTrackBase::CDubArray::InsertDubs(int nTime, CDubArray& arrDub)
 			iInsDub++;
 		}
 	} else {	// no dubs
-		AddDub(0, true);	// insert mute span
+		AddDub(MIN_DUB_TIME, true);	// insert mute span
 		AddDub(nTime, true);
 		iInsDub = 1;
 	}

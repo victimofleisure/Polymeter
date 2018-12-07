@@ -9,6 +9,8 @@
 		rev		date	comments
         00      23mar18	initial version
 		01		18nov18	add method to find next or previous dub time
+		02		07dec18	set initial dub time to smallest int instead of zero
+		03		07dec18	in GetUsedTracks and GetUsedTrackCount, add flags arg
 
 */
 
@@ -171,22 +173,24 @@ void CSeqTrackArray::SetTrackProperty(int iTrack, int iProp, const CComVariant& 
 	}
 }
 
-void CSeqTrackArray::GetUsedTracks(CIntArrayEx& arrUsedTrack, bool bExcludeMuted) const
+void CSeqTrackArray::GetUsedTracks(CIntArrayEx& arrUsedTrack, UINT nFlags) const
 {
 	arrUsedTrack.RemoveAll();
 	int	nTracks = GetSize();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-		if (!GetMute(iTrack) || !bExcludeMuted) {	// if track is unmuted, or we're including muted tracks
-			if (GetAt(iTrack).GetUsedStepCount())	// if track has non-empty steps
-				arrUsedTrack.Add(iTrack);	// add track's index to used array
-		}
+		if ((nFlags & UT_NO_MUTE) && GetMute(iTrack))	// if excluding muted tracks and track is muted
+			continue;	// exclude track
+		if ((nFlags & UT_NO_MODULATOR) && IsModulator(iTrack))	// if excluding modulators and track is a modulator
+			continue;	// exclude track
+		if (GetAt(iTrack).GetUsedStepCount())	// if track has non-empty steps
+			arrUsedTrack.Add(iTrack);	// add track's index to used array
 	}
 }
 
-int CSeqTrackArray::GetUsedTrackCount(bool bExcludeMuted) const
+int CSeqTrackArray::GetUsedTrackCount(UINT nFlags) const
 {
 	CIntArrayEx	arrUsedTrack;
-	GetUsedTracks(arrUsedTrack, bExcludeMuted);
+	GetUsedTracks(arrUsedTrack, nFlags);
 	return arrUsedTrack.GetSize();
 }
 
@@ -350,7 +354,7 @@ void CSeqTrackArray::OnRecordStart(int nStartTime)
 			trk.m_arrDub.DeleteDubs(nStartTime, INT_MAX);
 		} else {	// not overdubbing
 			trk.m_arrDub.RemoveAll();
-			CDub	dub(0, trk.m_bMute);	// add initial mute state
+			CDub	dub(MIN_DUB_TIME, trk.m_bMute);	// add initial mute state
 			trk.m_arrDub.Add(dub);
 		}
 	}
@@ -730,7 +734,7 @@ int CSeqTrackArray::GetChannelUsage(int *parrFirstTrack) const
 	int	nUsedChans = 0;
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		const CTrack&	trk = GetAt(iTrack);
-		if (trk.GetUsedStepCount()) {	// if track not empty
+		if (trk.GetUsedStepCount() && !trk.IsModulator()) {	// if track isn't empty and isn't a modulator
 			int	iChan = trk.m_nChannel;
 			ASSERT(iChan >= 0 && iChan < MIDI_CHANNELS);
 			if (parrFirstTrack[iChan] < 0) {	// if first track using this channel

@@ -13,6 +13,7 @@
 		03		20nov18	in FillTrack, fix non-rectangular selection case
 		04		28nov18	in part overlap check, add option to resolve conflicts
 		05		02dec18	add recording of MIDI input
+		06		07dec18	in track export, don't export modulator tracks
 
 */
 
@@ -2465,7 +2466,7 @@ void CPolymeterDoc::SetDubs(const CRect& rSelection, double fTicksPerCell, bool 
 	NotifyUndoableEdit(0, UCODE_DUB);
 	SetModifiedFlag();
 	int	nStartTime = round(rSelection.left * fTicksPerCell);
-	int	nEndTime = round((rSelection.right) * fTicksPerCell);
+	int	nEndTime = round(rSelection.right * fTicksPerCell);
 	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
 		m_Seq.SetDubs(iTrack, nStartTime, nEndTime, bMute);
 	}
@@ -2504,7 +2505,7 @@ void CPolymeterDoc::ToggleDubs(const CRect& rSelection, double fTicksPerCell)
 void CPolymeterDoc::CopyDubsToClipboard(const CRect& rSelection, double fTicksPerCell) const
 {
 	int	nStartTime = round(rSelection.left * fTicksPerCell);
-	int	nEndTime = round((rSelection.right) * fTicksPerCell);
+	int	nEndTime = round(rSelection.right * fTicksPerCell);
 	int	nCopyTracks = rSelection.bottom - rSelection.top;
 	theApp.m_arrSongClipboard.SetSize(nCopyTracks);
 	for (int iTrack = 0; iTrack < nCopyTracks; iTrack++) {	// for each selected track
@@ -2523,7 +2524,7 @@ void CPolymeterDoc::DeleteDubs(const CRect& rSelection, double fTicksPerCell, bo
 		m_Seq.RemoveAllDubs();
 	} else {	// normal selection
 		int	nStartTime = round(rSelection.left * fTicksPerCell);
-		int	nEndTime = round((rSelection.right) * fTicksPerCell);
+		int	nEndTime = round(rSelection.right * fTicksPerCell);
 		for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
 			m_Seq.DeleteDubs(iTrack, nStartTime, nEndTime);
 		}
@@ -2633,6 +2634,8 @@ void CPolymeterDoc::ApplyPreset(int iPreset)
 {
 	NotifyUndoableEdit(0, UCODE_APPLY_PRESET);
 	m_Seq.SetMutes(m_arrPreset[iPreset].m_arrMute);
+	if (m_Seq.IsRecording())
+		m_Seq.RecordDub();
 	SetModifiedFlag();
 	UpdateAllViews(NULL, HINT_SOLO);
 }
@@ -3115,7 +3118,11 @@ BOOL CPolymeterDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
 void CPolymeterDoc::OnFileExport()
 {
-	int	nUsedTracks = m_Seq.GetUsedTrackCount(m_nViewType != VIEW_SONG);	// in track mode, exclude muted tracks
+	bool	bSongMode = m_Seq.HasDubs();
+	UINT	nUsedTrackFlags = UT_NO_MODULATOR;	// exclude modulator tracks
+	if (!bSongMode)	// if track mode 
+		nUsedTrackFlags |= UT_NO_MUTE;	// also exclude muted tracks
+	int	nUsedTracks = m_Seq.GetUsedTrackCount(nUsedTrackFlags);
 	if (!nUsedTracks) {	// if no tracks to export
 		AfxMessageBox(IDS_EXPORT_EMPTY_FILE);
 		return;
@@ -3134,17 +3141,13 @@ void CPolymeterDoc::OnFileExport()
 		const int	nDefaultDuration = 60;	// seconds
 		CExportDlg	dlg;
 		dlg.m_nDuration = theApp.GetProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, nDefaultDuration);
-		bool	bHasDubs;
-		if (m_Seq.HasDubs()) {
-			bHasDubs = true;
+		if (bSongMode)
 			dlg.m_nDuration = m_Seq.GetSongDurationSeconds();
-		} else
-			bHasDubs = false;
 		if (dlg.DoModal() == IDOK) {
 			theApp.WriteProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, dlg.m_nDuration);
 			CWaitCursor	wc;	// show wait cursor; export can take time
 			UpdateChannelEvents();	// queue channel events to be output at start of playback
-			if (!m_Seq.Export(fd.GetPathName(), dlg.m_nDuration, bHasDubs, m_nStartPos)) {
+			if (!m_Seq.Export(fd.GetPathName(), dlg.m_nDuration, bSongMode, m_nStartPos)) {
 				AfxMessageBox(IDS_EXPORT_ERROR);
 			}
 		}

@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+		01		07dec18	add used track flags
 
 */
 
@@ -28,6 +29,7 @@ public:
 	};
 	enum {
 		INIT_STEPS = 32,			// initial number of steps
+		MIN_DUB_TIME = INT_MIN,		// minimum dub time
 	};
 	enum {	// step bitmasks; these define the layout of a sequencer step
 		// for track types other than note, the velocity carries the event's
@@ -50,6 +52,10 @@ public:
 		#define MODTYPEDEF(name) MT_##name,
 		#include "TrackTypeDef.h"	// generate modulation type enum
 		MODULATION_TYPES
+	};
+	enum {	// used track flags, for GetUsedTracks and GetUsedTrackCount
+		UT_NO_MUTE		= 0x01,		// exclude muted tracks
+		UT_NO_MODULATOR	= 0x02,		// exclude modulator tracks
 	};
 
 // Types

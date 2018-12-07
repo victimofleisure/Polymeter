@@ -9,6 +9,7 @@
 		rev		date	comments
         00      23mar18	initial version
 		01		18nov18	add method to find next or previous dub time
+		02		07dec18	in GetUsedTracks and GetUsedTrackCount, add flags arg
 
 */
 
@@ -35,6 +36,7 @@ public:
 	int		GetType(int iTrack) const;
 	void	SetType(int iTrack, int nType);
 	bool	IsNote(int iTrack) const;
+	bool	IsModulator(int iTrack) const;
 	int		GetChannel(int iTrack) const;
 	void	SetChannel(int iTrack, int nChannel);
 	int		GetNote(int iTrack) const;
@@ -68,8 +70,8 @@ public:
 	const CDub&	GetDub(int iTrack, int iDub) const;
 	void	GetTrackProperty(int iTrack, int iProp, CComVariant& var) const;
 	void	SetTrackProperty(int iTrack, int iProp, const CComVariant& var);
-	int		GetUsedTrackCount(bool bExcludeMuted = false) const;
-	void	GetUsedTracks(CIntArrayEx& arrUsedTrack, bool bExcludeMuted = false) const;
+	void	GetUsedTracks(CIntArrayEx& arrUsedTrack, UINT nFlags = 0) const;
+	int		GetUsedTrackCount(UINT nFlags = 0) const;
 	bool	GetNoteVelocity(int iTrack, int iStep, STEP& nStep) const;
 	bool	HasDubs() const;
 	int		GetSongDuration() const;
@@ -191,6 +193,11 @@ inline void CSeqTrackArray::SetType(int iTrack, int iType)
 inline bool CSeqTrackArray::IsNote(int iTrack) const
 {
 	return GetAt(iTrack).IsNote();
+}
+
+inline bool CSeqTrackArray::IsModulator(int iTrack) const
+{
+	return GetAt(iTrack).IsModulator();
 }
 
 inline int CSeqTrackArray::GetChannel(int iTrack) const

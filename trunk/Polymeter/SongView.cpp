@@ -11,6 +11,7 @@
 		01		08nov18	in SetZoom, recompute song position X to avoid slippage
 		02		12nov18 add method to center current position
 		03		12nov18 add shortcut keys that move to next or previous dub
+		04		07dec18	OnInitialUpdate was restoring step zoom due to typo
 
 */
 
@@ -93,7 +94,7 @@ BOOL CSongView::PreCreateWindow(CREATESTRUCT& cs)
 
 void CSongView::OnInitialUpdate()
 {
-	double	fDocZoom = GetDocument()->m_fStepZoom;
+	double	fDocZoom = GetDocument()->m_fSongZoom;
 	double	fZoomDelta = theApp.m_Options.GetZoomDeltaFrac();
 	m_nMaxZoomSteps = round(InvPow(fZoomDelta, MAX_ZOOM_SCALE));
 	m_nZoom = round(InvPow(fZoomDelta, fDocZoom));
