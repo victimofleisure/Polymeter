@@ -175,6 +175,14 @@ open	close	type	description	rev	user
 11/11/18	11/12/18	done	go to position command should automatically center current position if it's too close to either side	0.0.17.000	
 03/22/18	11/20/18	done	recursive mute modulation (modulation of modulation); only for tracks of modulator type, to avoid incompatibility	0.0.17.000	
 11/19/18	11/20/18	done	fill command doesn't handle non-rectangular selection properly; compute max track length	0.0.17.000	
+11/28/18	11/28/18	done	group overlap warning should include option to resolve conflict by reassigning conflicted tracks	0.0.18.000	
+06/04/18	12/02/18	done	record live MIDI input to tracks; useful for inputting melodies and chords, uses import quantization option	0.0.18.000	
+12/02/18	12/02/18	done	MIDI import mangles event times, due to integer division where floating point division was intended	0.0.18.000	
+10/11/18	12/07/18	done	dubs made while song position is negative aren't recorded, because minimum dub time is zero	0.0.18.001	
+11/28/18	12/07/18	done	presets bar's Apply command should add a dub when recording	0.0.18.001	
+12/06/18	12/07/18	done	song view was restoring step view's zoom; typo in song view's OnInitialUpdate	0.0.18.001	
+12/06/18	12/07/18	done	track MIDI export outputs empty modulator tracks	0.0.18.001	
+12/07/18	12/07/18	done	MIDI export has subtle differences between debug and release versions; export must reset cached parameters	0.0.18.001	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
@@ -195,6 +203,7 @@ open	close	type	description	rev	user
 05/30/18		hold	song view needs different menus?		
 06/04/18		hold	option to change track name font and thereby change track height		
 06/04/18		hold	song view should indicate undersampling (multiple dubs per cell at current zoom)		
+06/04/18		hold	include live MIDI input in recording; but no way to view or edit it? MIDI dialog would at least allow viewing?		
 06/05/18		hold	optionally show tooltips in grid controls (Track and Channels views) via label tip extended style		
 07/05/18		hold	command to change track, part and preset names to title case		
 07/14/18		hold	channel volume sliders in live view; solving wrong problem?		
@@ -206,28 +215,34 @@ open	close	type	description	rev	user
 07/30/18		hold	optional tool tip in step view showing step's position and value; position in what format?		
 08/02/18		hold	mute tracks in song view; complicates sequencer and song view UI		
 08/02/18		hold	should be able to loop a given time range of sequence, especially in song view, even approximately		
-09/17/18		hold	step zoom via Ctrl + mouse wheel doesn't work when track view has focus		
+09/17/18		hold	step zoom via Ctrl + mouse wheel doesn't work unless step view has focus; default OS behavior		
 09/17/18		hold	in step view, add command to select all steps of selected tracks		
 09/23/18		hold	ReadEnum should report undefined strings as errors? More accurate, but less robust		
 09/25/18		hold	pan column in channels bar should show signed values; conflicts with use of -1 as unspecified value		
-10/11/18		hold	any dubs recorded while song position is negative are lost, because minimum dub time is zero		
 10/27/18		hold	switching from song view to live view doesn't always update parts list to reflect dub state? Hard to replicate		
-11/19/18		hold	length modulation; cool idea but severe impact on existing code (Benoit)		
+11/19/18		hold	length modulation; cool idea but incompatible with sequencer architecture (Benoit)		
 11/19/18		hold	not / invert operator for modulations; would allow a single modulator track to control a crossfade (Benoit)		
-11/19/18		hold	window that dumps MIDI output; borrow code from ChordEase (Benoit)		
-11/19/18		hold	highlight modulated parameters; complicates UI for little gain (Benoit)		
+11/19/18		hold	window that dumps MIDI output; could reuse UI from ChordEase but no way to hook output MIDI (Benoit)		
+11/19/18		hold	highlight modulated parameters; complicates UI and doesn't fully capture modulation state (Benoit)		
+11/19/18		hold	detail view of modulations that shows target as well as source and type; editable, sortable, clipboard (Benoit)		
+11/19/18		hold	modulation export / import in tablular format such as CSV (Benoit)		
+12/05/18		hold	find and replace for track names; part and preset names too? Within selection only?		
 05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
 06/08/18		punt	untying note should set all steps to velocity of original tied note; better to preserve velocity		
 09/18/18		punt	modulation dubbing is sensitive to track order at longer latencies; also affects export		
-11/19/18		punt	step copy/cut/paste should support non-rectangular step selection (Benoit); incompatible with step view design		
-11/19/18		punt	vertically fill the note column with values from a scale or chord; record to tracks is better solution (Benoit)		
+11/19/18		punt	step copy/cut/paste should support non-rectangular step selection; incompatible with step view design (Benoit)		
 11/19/18		punt	list view selection is hard to see when list doesn't have focus; curse at Microsoft or change theme (Benoit)		
 11/19/18		punt	sort on note name without octave; not sure why this is useful (Benoit)		
-06/04/18		todo	include live MIDI input in recording; but no way to view or edit it? MIDI dialog would at least allow viewing?		
-06/04/18		todo	record live MIDI input to tracks; useful for inputting melodies and chords intuitively, requires quantization setting		
+11/21/18		punt	while drawing velocities in velocity pane, dragging left/right of window should scroll view; tried it, too confusing		
+11/27/18		punt	modulation graph, via GraphViz; support via separate app PolymeterGraph		
 06/21/18		todo	track merge command; combine tracks that have identical settings and non-overlapping steps		
 07/26/18		todo	command to shift selected steps up or down one or more tracks		
 07/26/18		todo	replace steps, like paste but overwrite steps at insert position instead of shifting them; command or mode?		
 10/17/18		todo	in live view, dragging list selection beyond window boundaries should scroll list		
+11/19/18		todo	vertically fill the note column with values from a scale or chord (Benoit); start with chromatic scale		
+11/27/18		todo	note window that limits modulated note to an octave; start note should be modulation target; variable size too?		
+12/06/18		todo	modulation bar needs clipboard support, so you can copy modulations from one track to another		
+12/06/18		todo	offset command that shifts selected tracks in time by adding a value to their offsets		
+12/07/18		todo	song view should show negative time when start position is less than zero		

@@ -1446,6 +1446,70 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>11/28/18</TD>
+<TD>11/28/18</TD>
+<TD>done</TD>
+<TD>group overlap warning should include option to resolve conflict by reassigning conflicted tracks</TD>
+<TD>0.0.18.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>06/04/18</TD>
+<TD>12/02/18</TD>
+<TD>done</TD>
+<TD>record live MIDI input to tracks; useful for inputting melodies and chords, uses import quantization option</TD>
+<TD>0.0.18.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/02/18</TD>
+<TD>12/02/18</TD>
+<TD>done</TD>
+<TD>MIDI import mangles event times, due to integer division where floating point division was intended</TD>
+<TD>0.0.18.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10/11/18</TD>
+<TD>12/07/18</TD>
+<TD>done</TD>
+<TD>dubs made while song position is negative aren't recorded, because minimum dub time is zero</TD>
+<TD>0.0.18.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/28/18</TD>
+<TD>12/07/18</TD>
+<TD>done</TD>
+<TD>presets bar's Apply command should add a dub when recording</TD>
+<TD>0.0.18.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/06/18</TD>
+<TD>12/07/18</TD>
+<TD>done</TD>
+<TD>song view was restoring step view's zoom; typo in song view's OnInitialUpdate</TD>
+<TD>0.0.18.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/06/18</TD>
+<TD>12/07/18</TD>
+<TD>done</TD>
+<TD>track MIDI export outputs empty modulator tracks</TD>
+<TD>0.0.18.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/07/18</TD>
+<TD>12/07/18</TD>
+<TD>done</TD>
+<TD>MIDI export has subtle differences between debug and release versions; export must reset cached parameters</TD>
+<TD>0.0.18.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -1606,6 +1670,14 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>06/04/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>include live MIDI input in recording; but no way to view or edit it? MIDI dialog would at least allow viewing?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>06/05/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -1697,7 +1769,7 @@
 <TD>09/17/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>step zoom via Ctrl + mouse wheel doesn't work when track view has focus</TD>
+<TD>step zoom via Ctrl + mouse wheel doesn't work unless step view has focus; default OS behavior</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1726,14 +1798,6 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>10/11/18</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>any dubs recorded while song position is negative are lost, because minimum dub time is zero</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>10/27/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -1745,7 +1809,7 @@
 <TD>11/19/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>length modulation; cool idea but severe impact on existing code (Benoit)</TD>
+<TD>length modulation; cool idea but incompatible with sequencer architecture (Benoit)</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1761,7 +1825,7 @@
 <TD>11/19/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>window that dumps MIDI output; borrow code from ChordEase (Benoit)</TD>
+<TD>window that dumps MIDI output; could reuse UI from ChordEase but no way to hook output MIDI (Benoit)</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1769,7 +1833,31 @@
 <TD>11/19/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>highlight modulated parameters; complicates UI for little gain (Benoit)</TD>
+<TD>highlight modulated parameters; complicates UI and doesn't fully capture modulation state (Benoit)</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/19/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>detail view of modulations that shows target as well as source and type; editable, sortable, clipboard (Benoit)</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/19/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>modulation export / import in tablular format such as CSV (Benoit)</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/05/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>find and replace for track names; part and preset names too? Within selection only?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1817,15 +1905,7 @@
 <TD>11/19/18</TD>
 <TD>&nbsp;</TD>
 <TD>punt</TD>
-<TD>step copy/cut/paste should support non-rectangular step selection (Benoit); incompatible with step view design</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>11/19/18</TD>
-<TD>&nbsp;</TD>
-<TD>punt</TD>
-<TD>vertically fill the note column with values from a scale or chord; record to tracks is better solution (Benoit)</TD>
+<TD>step copy/cut/paste should support non-rectangular step selection; incompatible with step view design (Benoit)</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1846,18 +1926,18 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>06/04/18</TD>
+<TD>11/21/18</TD>
 <TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>include live MIDI input in recording; but no way to view or edit it? MIDI dialog would at least allow viewing?</TD>
+<TD>punt</TD>
+<TD>while drawing velocities in velocity pane, dragging left/right of window should scroll view; tried it, too confusing</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>06/04/18</TD>
+<TD>11/27/18</TD>
 <TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>record live MIDI input to tracks; useful for inputting melodies and chords intuitively, requires quantization setting</TD>
+<TD>punt</TD>
+<TD>modulation graph, via GraphViz; support via separate app PolymeterGraph</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1890,6 +1970,46 @@
 <TD>&nbsp;</TD>
 <TD>todo</TD>
 <TD>in live view, dragging list selection beyond window boundaries should scroll list</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/19/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>vertically fill the note column with values from a scale or chord (Benoit); start with chromatic scale</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/27/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>note window that limits modulated note to an octave; start note should be modulation target; variable size too?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/06/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>modulation bar needs clipboard support, so you can copy modulations from one track to another</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/06/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>offset command that shifts selected tracks in time by adding a value to their offsets</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/07/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>song view should show negative time when start position is less than zero</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
