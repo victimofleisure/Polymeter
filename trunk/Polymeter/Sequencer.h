@@ -183,6 +183,7 @@ protected:
 	bool	ExportImpl(LPCTSTR pszPath, int nDuration);
 	void	ResetCachedParameters();
 	void	OutputControlEvent(const CTrack& track, DWORD dwTime, int nVal);
+	static	int		ApplyNoteRange(int nNote, int nRangeStart, int iRangeType);
 #if SEQ_DUMP_EVENTS
 	void	AddDumpEvent(const CMidiEventStream& arrEvt, int nEvents);
 	void	DumpEvents(LPCTSTR pszPath);

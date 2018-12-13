@@ -10,6 +10,8 @@
         00      23mar18	initial version
 		01		02dec18	in MIDI file import, fix rounding errors
 		02		07dec18	set initial dub time to smallest int instead of zero
+		03		11dec18	add range types
+		04		13dec18	add import steps to track array
 
 */
 
@@ -23,12 +25,17 @@
 
 const CProperties::OPTION_INFO CTrackBase::m_oiTrackType[TRACK_TYPES] = {
 	#define TRACKTYPEDEF(name) {_T(#name), IDS_TRACK_TYPE_##name},
-	#include "TrackTypeDef.h"	// generate track type name resource IDs
+	#include "TrackDef.h"	// generate track type name resource IDs
 };
 
 const CProperties::OPTION_INFO CTrackBase::m_oiModulationType[MODULATION_TYPES] = {
 	#define MODTYPEDEF(name) {_T(#name), IDS_TRK_##name},
-	#include "TrackTypeDef.h"	// generate modulation type name resource IDs
+	#include "TrackDef.h"	// generate modulation type name resource IDs
+};
+
+const CProperties::OPTION_INFO CTrackBase::m_oiRangeType[RANGE_TYPES] = {
+	#define RANGETYPEDEF(name) {_T(#name), IDS_RANGE_TYPE_##name},
+	#include "TrackDef.h"	// generate range type name resource IDs
 };
 
 void CTrack::SetDefaults()
@@ -470,6 +477,25 @@ void CImportTrackArray::ImportMidiFile(const CMidiTrackArray& arrInTrack, const 
 	SetSize(nOutTracks);	// allocate member track array
 	for (int iTrack = 0; iTrack < nOutTracks; iTrack++)	// for each output track
 		GetAt(iTrack) = *arrTrackPtr[iTrack];	// copy track to member array in sorted order
+}
+
+void CTrackArray::ImportSteps(LPCTSTR pszPath)
+{
+	CTrack	trk(true);	// set defaults
+	CStdioFile	fIn(pszPath, CFile::modeRead);
+	CString	sLine;
+	while (fIn.ReadString(sLine)) {
+		int	iStart = 0;
+		CString	sToken;
+		trk.m_arrStep.FastSetSize(0);
+		while (!(sToken = sLine.Tokenize(_T(","), iStart)).IsEmpty()) {
+			int	nStep;
+			if (_stscanf_s(sToken, _T("%d"), &nStep) == 1)
+				trk.m_arrStep.Add(static_cast<BYTE>(nStep));
+		}
+		if (trk.m_arrStep.GetSize())
+			Add(trk);
+	}
 }
 
 #define RK_GROUP_COUNT _T("Count")

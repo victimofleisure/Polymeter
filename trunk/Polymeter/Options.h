@@ -83,5 +83,5 @@ inline int COptions::GetInputQuantization(int iInQuant)
 
 inline int COptions::GetInputQuantization() const
 {
-	return GetInputQuantization(m_General_iInputQuant);
+	return GetInputQuantization(m_Midi_iInputQuant);
 }

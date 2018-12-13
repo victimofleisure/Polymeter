@@ -294,9 +294,6 @@
     <ClInclude Include="VelocityView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TrackTypeDef.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MuteView.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -9,6 +9,7 @@
 		rev		date	comments
         00      27may18	initial version
 		01		12nov18	add method to center current position
+		02		10dec18	add song time shift to handle negative times
 
 */
 
@@ -44,6 +45,8 @@ public:
 	bool	HaveSelection() const;
 	void	GetSelection(CRect& rSelelection) const;
 	double	GetTicksPerCell() const;
+	int		GetCellWidth() const;
+	int		GetOriginShift() const;
 
 // Operations
 public:
@@ -120,6 +123,7 @@ protected:
 	CRgnData	m_rgndCellSel;	// region data for cell selection overlap removal
 	CPoint	m_ptScrollDelta;	// scroll by this amount per timer tick
 	W64UINT	m_nScrollTimer;		// if non-zero, timer instance for scrolling
+	int		m_nSongTimeShift;	// time shift when song start position is negative, in ticks
 
 // Helpers
 	CSize	GetClientSize() const;
@@ -209,6 +213,16 @@ inline void CSongView::GetSelection(CRect& rSelection) const
 	rSelection = m_rCellSel;
 }
 
+inline int CSongView::GetCellWidth() const
+{
+	return m_nCellWidth;
+}
+
+inline int CSongView::GetOriginShift() const
+{
+	return round(m_nSongTimeShift / GetTicksPerCell() * m_nCellWidth);
+}
+
 __forceinline double CSongView::GetTicksPerCellImpl() const
 {
 	return GetDocument()->m_Seq.GetTimeDivision() / STEPS_PER_CELL / m_fZoom;
@@ -216,10 +230,10 @@ __forceinline double CSongView::GetTicksPerCellImpl() const
 
 __forceinline int CSongView::ConvertXToSongPos(int x) const
 {
-	return round(x * GetTicksPerCellImpl() / m_nCellWidth);
+	return round(x * GetTicksPerCellImpl() / m_nCellWidth) + m_nSongTimeShift;
 }
 
 __forceinline int CSongView::ConvertSongPosToX(int nSongPos) const
 {
-	return round(nSongPos / GetTicksPerCellImpl() * m_nCellWidth);
+	return round((nSongPos - m_nSongTimeShift) / GetTicksPerCellImpl() * m_nCellWidth);
 }

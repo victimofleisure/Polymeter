@@ -87,7 +87,7 @@ int COptions::GetOptionCount(int iProp) const
 		return theApp.m_midiDevs.GetCount(CMidiDevices::INPUT) + 1;	// add one for none option
 	case PROP_Midi_iOutputDevice:
 		return theApp.m_midiDevs.GetCount(CMidiDevices::OUTPUT) + 1;	// add one for none option
-	case PROP_General_iInputQuant:
+	case PROP_Midi_iInputQuant:
 		return INPUT_QUANTS;
 	default:
 		return CProperties::GetOptionCount(iProp);
@@ -111,7 +111,7 @@ CString	COptions::GetOptionName(int iProp, int iOption) const
 				sName.LoadString(IDS_NONE);
 			return sName;
 		}
-	case PROP_General_iInputQuant:
+	case PROP_Midi_iInputQuant:
 		{
 			CString	sName;
 			sName.Format(_T("1/%d"), GetInputQuantization(iOption));

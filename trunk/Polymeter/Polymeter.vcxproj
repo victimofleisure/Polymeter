@@ -284,7 +284,6 @@
     <ClInclude Include="Track.h" />
     <ClInclude Include="TrackDef.h" />
     <ClInclude Include="TrackSortDlg.h" />
-    <ClInclude Include="TrackTypeDef.h" />
     <ClInclude Include="TrackUndoTest.h" />
     <ClInclude Include="TrackView.h" />
     <ClInclude Include="OffsetDlg.h" />

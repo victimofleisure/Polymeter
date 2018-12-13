@@ -14,6 +14,9 @@
 		04		28nov18	in part overlap check, add option to resolve conflicts
 		05		02dec18	add recording of MIDI input
 		06		07dec18	in track export, don't export modulator tracks
+		07		08dec18	bump file version for negative dub times
+		08		10dec18	add song time shift to handle negative times
+		09		13dec18	add import steps command
 
 */
 
@@ -324,6 +327,10 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 			trk.m_arrDub.SetSize(nDubs);
 			nReadSize = nDubs * sizeof(CDub);
 			CPersist::GetBinary(sTrkID, RK_TRACK_DUB_ARRAY, trk.m_arrDub.GetData(), &nReadSize);
+			if (!trk.m_arrDub[0].m_nTime) {	// if first dub time is zero
+				ASSERT(m_nFileVersion < 10);	// should only occur in older versions
+				trk.m_arrDub[0].m_nTime = MIN_DUB_TIME;	// update to allow negative dub times
+			}
 		}
 		ReadTrackModulations(sTrkID, trk);	// read modulations if any
 		m_Seq.SetTrack(iTrack, trk);
@@ -2424,7 +2431,7 @@ bool CPolymeterDoc::RecordToTracks(bool bEnable)
 	return true;
 }
 
-void CPolymeterDoc::OnImportTracks(CImportTrackArray& arrTrack)
+void CPolymeterDoc::OnImportTracks(CTrackArray& arrTrack)
 {
 	int	iInsTrack;
 	if (GetSelectedCount())	// if selection exists
@@ -2460,13 +2467,22 @@ bool CPolymeterDoc::ShowGMDrums(int iTrack) const
 		&& theApp.m_Options.m_View_bShowGMNames);
 }
 
+int CPolymeterDoc::CalcSongTimeShift() const
+{
+	if (m_nStartPos >= 0)	// if positive song position
+		return 0;
+	int	nTimeDivTicks = GetTimeDivisionTicks();
+	return ((m_nStartPos + 1) / nTimeDivTicks - 1) * nTimeDivTicks;	// round down to nearest beat
+}
+
 void CPolymeterDoc::SetDubs(const CRect& rSelection, double fTicksPerCell, bool bMute)
 {
 	m_rUndoSel = rSelection;	// for undo handler
 	NotifyUndoableEdit(0, UCODE_DUB);
 	SetModifiedFlag();
-	int	nStartTime = round(rSelection.left * fTicksPerCell);
-	int	nEndTime = round(rSelection.right * fTicksPerCell);
+	int	nTimeShift = CalcSongTimeShift();
+	int	nStartTime = CellToTime(rSelection.left, fTicksPerCell, nTimeShift);
+	int	nEndTime = CellToTime(rSelection.right, fTicksPerCell, nTimeShift);
 	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
 		m_Seq.SetDubs(iTrack, nStartTime, nEndTime, bMute);
 	}
@@ -2480,13 +2496,14 @@ void CPolymeterDoc::ToggleDubs(const CRect& rSelection, double fTicksPerCell)
 	m_rUndoSel = rSelection;	// for undo handler
 	NotifyUndoableEdit(0, UCODE_DUB);
 	SetModifiedFlag();
+	int	nTimeShift = CalcSongTimeShift();
 	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
-		int	nRunStartTime = round(rSelection.left * fTicksPerCell);
-		int	nRunEndTime = round((rSelection.left + 1) * fTicksPerCell);
+		int	nRunStartTime = CellToTime(rSelection.left, fTicksPerCell, nTimeShift);
+		int	nRunEndTime = CellToTime(rSelection.left + 1, fTicksPerCell, nTimeShift);
 		bool	bRunMute = m_Seq.GetDubs(iTrack, nRunStartTime, nRunEndTime);
 		for (int iCell = rSelection.left + 1; iCell < rSelection.right; iCell++) {
-			int	nStartTime = round(iCell * fTicksPerCell);
-			int	nEndTime = round((iCell + 1) * fTicksPerCell);
+			int	nStartTime = CellToTime(iCell, fTicksPerCell, nTimeShift);
+			int	nEndTime = CellToTime(iCell + 1, fTicksPerCell, nTimeShift);
 			bool	bMute = m_Seq.GetDubs(iTrack, nStartTime, nEndTime);
 			if (bMute != bRunMute) {
 				m_Seq.SetDubs(iTrack, nRunStartTime, nRunEndTime, !bRunMute);
@@ -2504,8 +2521,9 @@ void CPolymeterDoc::ToggleDubs(const CRect& rSelection, double fTicksPerCell)
 
 void CPolymeterDoc::CopyDubsToClipboard(const CRect& rSelection, double fTicksPerCell) const
 {
-	int	nStartTime = round(rSelection.left * fTicksPerCell);
-	int	nEndTime = round(rSelection.right * fTicksPerCell);
+	int	nTimeShift = CalcSongTimeShift();
+	int	nStartTime = CellToTime(rSelection.left, fTicksPerCell, nTimeShift);
+	int	nEndTime = CellToTime(rSelection.right, fTicksPerCell, nTimeShift);
 	int	nCopyTracks = rSelection.bottom - rSelection.top;
 	theApp.m_arrSongClipboard.SetSize(nCopyTracks);
 	for (int iTrack = 0; iTrack < nCopyTracks; iTrack++) {	// for each selected track
@@ -2523,8 +2541,9 @@ void CPolymeterDoc::DeleteDubs(const CRect& rSelection, double fTicksPerCell, bo
 	if (rSelection.right == INT_MAX && !rSelection.left) {	// if select all
 		m_Seq.RemoveAllDubs();
 	} else {	// normal selection
-		int	nStartTime = round(rSelection.left * fTicksPerCell);
-		int	nEndTime = round(rSelection.right * fTicksPerCell);
+		int	nTimeShift = CalcSongTimeShift();
+		int	nStartTime = CellToTime(rSelection.left, fTicksPerCell, nTimeShift);
+		int	nEndTime = CellToTime(rSelection.right, fTicksPerCell, nTimeShift);
 		for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
 			m_Seq.DeleteDubs(iTrack, nStartTime, nEndTime);
 		}
@@ -2550,7 +2569,8 @@ void CPolymeterDoc::InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double f
 	m_rUndoSel = rInsert;	// for undo handler
 	NotifyUndoableEdit(0, UCODE_DUB);
 	SetModifiedFlag();
-	int	nInsTime = round(ptInsert.x * fTicksPerCell);
+	int	nSongTimeShift = CalcSongTimeShift();
+	int	nInsTime = CellToTime(ptInsert.x, fTicksPerCell, nSongTimeShift);
 	for (int iTrack = 0; iTrack < nInsTracks; iTrack++) {	// for each source row
 		m_Seq.InsertDubs(ptInsert.y + iTrack, nInsTime, arrDub[iTrack]);
 	}
@@ -3053,6 +3073,7 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIME_TO_REPEAT, OnUpdateToolsTimeToRepeat)
 	ON_COMMAND(ID_TOOLS_VELOCITY_RANGE, OnToolsVelocityRange)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_VELOCITY_RANGE, OnUpdateTrackReverse)
+	ON_COMMAND(ID_TOOLS_IMPORT_STEPS, OnToolsImportSteps)
 	ON_COMMAND(ID_TRACK_TRANSPOSE, OnTrackTranspose)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_TRANSPOSE, OnUpdateTrackTranspose)
 	ON_COMMAND(ID_TRACK_VELOCITY, OnTrackVelocity)
@@ -3713,4 +3734,18 @@ void CPolymeterDoc::OnToolsVelocityRange()
 		sMsg += '\n' + LDS(IDS_DOC_CLIP_WARNING);
 	}
 	AfxMessageBox(sMsg, nFlags);
+}
+
+void CPolymeterDoc::OnToolsImportSteps()
+{
+	CString	sFilter(LPCTSTR(IDS_CSV_FILE_FILTER));
+	CFileDialog	fd(TRUE, _T(".csv"), NULL, OFN_HIDEREADONLY, sFilter);
+	CString	sDlgTitle(LPCTSTR(IDS_IMPORT));
+	fd.m_ofn.lpstrTitle = sDlgTitle;
+	if (fd.DoModal() == IDOK) {
+		CTrackArray	arrTrack;
+		arrTrack.ImportSteps(fd.GetPathName());
+		if (arrTrack.GetSize())
+			OnImportTracks(arrTrack);
+	}
 }

@@ -9,6 +9,8 @@
 		rev		date	comments
         00      23mar18	initial version
 		01		07dec18	add used track flags
+		02		11dec18	add range types
+		03		13dec18	add import steps to track array
 
 */
 
@@ -45,13 +47,18 @@ public:
 	};
 	enum {	// track types
 		#define TRACKTYPEDEF(name) TT_##name,
-		#include "TrackTypeDef.h"	// generate track type enum
+		#include "TrackDef.h"	// generate track type enum
 		TRACK_TYPES
 	};
 	enum {	// modulation types
 		#define MODTYPEDEF(name) MT_##name,
-		#include "TrackTypeDef.h"	// generate modulation type enum
+		#include "TrackDef.h"	// generate modulation type enum
 		MODULATION_TYPES
+	};
+	enum {
+		#define RANGETYPEDEF(name) RT_##name,
+		#include "TrackDef.h"	// generate range type enum
+		RANGE_TYPES
 	};
 	enum {	// used track flags, for GetUsedTracks and GetUsedTrackCount
 		UT_NO_MUTE		= 0x01,		// exclude muted tracks
@@ -121,11 +128,14 @@ public:
 	static	CString	GetModulationTypeName(int iType);
 	static	LPCTSTR	GetModulationTypeInternalName(int iType);
 	static	int		FindModulationTypeInternalName(LPCTSTR sName);
+	static	CString	GetRangeTypeName(int iType);
+	static	LPCTSTR	GetRangeTypeInternalName(int iType);
 
 protected:
 // Constants
 	static const CProperties::OPTION_INFO m_oiTrackType[TRACK_TYPES];
 	static const CProperties::OPTION_INFO m_oiModulationType[MODULATION_TYPES];
+	static const CProperties::OPTION_INFO m_oiRangeType[RANGE_TYPES];
 };
 
 inline CString CTrackBase::GetTrackTypeName(int iType)
@@ -159,6 +169,18 @@ inline int CTrackBase::FindModulationTypeInternalName(LPCTSTR sName)
 			return iType;
 	}
 	return -1;
+}
+
+inline CString CTrackBase::GetRangeTypeName(int iType)
+{
+	ASSERT(iType >= 0 && iType < RANGE_TYPES);
+	return LDS(m_oiRangeType[iType].nNameID);
+}
+
+inline LPCTSTR CTrackBase::GetRangeTypeInternalName(int iType)
+{
+	ASSERT(iType >= 0 && iType < RANGE_TYPES);
+	return m_oiRangeType[iType].pszName;
 }
 
 inline CTrackBase::CDub::CDub()
@@ -287,6 +309,7 @@ inline bool CTrack::IsModulated() const
 
 class CTrackArray : public CArrayEx<CTrack, CTrack&> {
 public:
+	void	ImportSteps(LPCTSTR pszPath);
 };
 
 class CImportTrackArray : public CTrackArray {

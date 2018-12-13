@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      30may18	initial version
+		01		08dec18	add origin shift to handle negative times
 
 */
 
@@ -103,7 +104,7 @@ void CSongParent::OnSongScroll(CSize szScroll)
 		CSaveObj<bool>	save(m_bIsScrolling, true);
 		CPoint	ptScroll(m_pSongView->GetScrollPosition());
 		if (szScroll.cx) {	// if x scroll
-			m_wndRuler.ScrollToPosition(ptScroll.x - m_nNameWidth - m_nSplitBarWidth);
+			m_wndRuler.ScrollToPosition(ptScroll.x - m_nNameWidth - m_nSplitBarWidth + m_pSongView->GetOriginShift());
 		}
 		if (szScroll.cy) {	// if y scroll
 			m_pSongTrackView->ScrollToPosition(ptScroll.y);
@@ -117,7 +118,7 @@ void CSongParent::OnSongZoom()
 		CSaveObj<bool>	save(m_bIsScrolling, true);
 		CPoint	ptScroll(m_pSongView->GetScrollPosition());
 		double	fBeatWidth = m_pSongView->GetBeatWidth() * m_pSongView->GetZoom();
-		m_wndRuler.SetScrollPosition(ptScroll.x - m_nNameWidth - m_nSplitBarWidth);
+		m_wndRuler.SetScrollPosition(ptScroll.x - m_nNameWidth - m_nSplitBarWidth + m_pSongView->GetOriginShift());
 		m_wndRuler.SetZoom(1 / fBeatWidth);
 	}
 }

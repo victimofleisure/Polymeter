@@ -12,6 +12,8 @@
 		02		12nov18 add method to center current position
 		03		12nov18 add shortcut keys that move to next or previous dub
 		04		07dec18	OnInitialUpdate was restoring step zoom due to typo
+		05		10dec18	add song time shift to handle negative times
+		06		10dec18	updating view size now invalidates
 
 */
 
@@ -73,6 +75,7 @@ CSongView::CSongView()
 	m_rCellSel.SetRectEmpty();
 	m_ptScrollDelta = CPoint(0, 0);
 	m_nScrollTimer = 0;
+	m_nSongTimeShift = 0;
 }
 
 CSongView::~CSongView()
@@ -94,12 +97,17 @@ BOOL CSongView::PreCreateWindow(CREATESTRUCT& cs)
 
 void CSongView::OnInitialUpdate()
 {
-	double	fDocZoom = GetDocument()->m_fSongZoom;
+	CPolymeterDoc	*pDoc = GetDocument();
+	m_nSongTimeShift = pDoc->CalcSongTimeShift();
+	double	fDocZoom = pDoc->m_fSongZoom;
 	double	fZoomDelta = theApp.m_Options.GetZoomDeltaFrac();
 	m_nMaxZoomSteps = round(InvPow(fZoomDelta, MAX_ZOOM_SCALE));
 	m_nZoom = round(InvPow(fZoomDelta, fDocZoom));
 	m_fZoom = fDocZoom;
 	m_fZoomDelta = fZoomDelta;
+	LONGLONG	nSongPos = 0;
+	pDoc->m_Seq.GetPosition(nSongPos);
+	m_nSongPosX = ConvertSongPosToX(static_cast<int>(nSongPos));
 	CScrollView::OnInitialUpdate();
 	UpdateViewSize();
 }
@@ -130,6 +138,11 @@ void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			case CMasterProps::PROP_nSongLength:
 			case CMasterProps::PROP_nTimeDiv:
 				UpdateViewSize();
+				break;
+			case CMasterProps::PROP_nStartPos:
+				m_nSongTimeShift = GetDocument()->CalcSongTimeShift();
+				Invalidate();
+				m_pParent->OnSongScroll(CSize(1, 0));	// horizontal scroll
 				break;
 			}
 		}
@@ -183,6 +196,7 @@ void CSongView::UpdateViewSize()
 	int	nTracks = pDoc->m_Seq.GetTrackCount();
 	CSize	szView(nMaxTrackWidth + 1, m_nTrackHeight * nTracks + 1);
 	SetScrollSizes(MM_TEXT, szView);
+	Invalidate();
 }
 
 CPoint CSongView::GetMaxScrollPos() const
@@ -214,7 +228,6 @@ void CSongView::SetZoom(int nZoom, bool bRedraw)
 	pDoc->m_fSongZoom = fZoom;
 	if (bRedraw) {
 		UpdateViewSize();
-		Invalidate();
 		m_pParent->OnSongZoom();
 	}
 }
@@ -226,7 +239,6 @@ void CSongView::Zoom(int nZoom)
 	} else {	// unscrolled
 		SetZoom(nZoom);
 		UpdateViewSize();
-		Invalidate();
 	}
 }
 
@@ -242,7 +254,6 @@ void CSongView::Zoom(int nZoom, int nOriginX)
 	CPoint	ptScrollMax = GetMaxScrollPos();
 	ptScroll.x = CLAMP(ptScroll.x, 0, ptScrollMax.x);
 	ScrollToPosition(ptScroll);
-	Invalidate();
 	m_pParent->OnSongZoom();
 }
 
@@ -484,7 +495,7 @@ void CSongView::OnDraw(CDC* pDC)
 		const CTrack&	trk = seq.GetTrack(iTrack);
 		int	nLength = trk.m_arrStep.GetSize();
 		int	nQuant = trk.m_nQuant;
-		int	nOffset = trk.m_nOffset;
+		int	nOffset = trk.m_nOffset - m_nSongTimeShift;
 		int	nSwing = trk.m_nSwing;
 		nSwing = CLAMP(nSwing, 1 - nQuant, nQuant - 1);	// limit swing within quant
 		double	fStepsPerCell = fTicksPerCell / nQuant;
@@ -507,7 +518,7 @@ void CSongView::OnDraw(CDC* pDC)
 			}
 		}
 		int	nDubs = trk.m_arrDub.GetSize();
-		int	nCellTime = round(iFirstCell * fTicksPerCell);
+		int	nCellTime = round(iFirstCell * fTicksPerCell) + m_nSongTimeShift;
 		int	iDub = trk.m_arrDub.FindDub(nCellTime);
 		bool	bMute;
 		if (iDub >= 0)
@@ -546,7 +557,7 @@ void CSongView::OnDraw(CDC* pDC)
 			pDC->FillSolidRect(x, y, m_nCellWidth, 1, clrGridHorz);
 			pDC->FillSolidRect(x, y, 1, m_nTrackHeight, clrGridVert);
 			CRect	rCell(CPoint(x + 1, y + 1), CSize(m_nCellWidth, m_nTrackHeight));
-			nCellTime = round(iCell * fTicksPerCell);
+			nCellTime = round(iCell * fTicksPerCell) + m_nSongTimeShift;
 			if (iDub >= 0) {
 				while (iDub < nDubs && nCellTime >= trk.m_arrDub[iDub].m_nTime) {
 					bMute = trk.m_arrDub[iDub].m_bMute;
@@ -836,7 +847,6 @@ void CSongView::OnViewZoomReset()
 {
 	SetZoom(0);
 	UpdateViewSize();
-	Invalidate();
 }
 
 void CSongView::OnEditSelectAll()

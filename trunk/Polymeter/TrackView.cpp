@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23apr18	initial version
+		01		11dec18	add note range type and start
 
 */
 
@@ -173,8 +174,10 @@ void CTrackView::UpdateDependencies(int iTrack, int iProp)
 {
 	switch (iProp) {	// implement side effects
 	case PROP_Type:
-		if (theApp.m_Options.m_View_bShowNoteNames)	 // if showing note names
+		if (theApp.m_Options.m_View_bShowNoteNames) {	 // if showing note names
 			m_grid.RedrawSubItem(iTrack, COL_Note);	// also update note column
+			m_grid.RedrawSubItem(iTrack, COL_RangeStart);	// also update range start note
+		}
 		break;
 	case PROP_Channel:
 		if (theApp.m_Options.m_View_bShowGMNames)	// if showing General MIDI names
@@ -300,6 +303,22 @@ CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle,
 		} else	// default note handling
 			goto DefaultCreateEditCtrl;	// don't rely on falling through
 		break;
+	case COL_RangeType:
+		{
+			CPopupCombo	*pCombo = CPopupCombo::Factory(0, rect, this, 0, 100);
+			if (pCombo == NULL)
+				return NULL;
+			int	iSel = -1;
+			for (int iType = 0; iType < RANGE_TYPES; iType++) {
+				if (GetRangeTypeName(iType) == pszText)
+					iSel = iType;
+				pCombo->AddString(GetRangeTypeName(iType));
+			}
+			pCombo->SetCurSel(iSel);
+			pCombo->ShowDropDown();
+			return pCombo;
+		}
+		break;
 	default:
 DefaultCreateEditCtrl:
 		CPopupNumEdit	*pEdit = new CPopupNumEdit;
@@ -310,10 +329,11 @@ DefaultCreateEditCtrl:
 			pEdit->SetRange(1, 16);
 			break;
 		case COL_Note:
+		case COL_RangeStart:
 			{
+				bool	bShowNoteNames = pDoc->m_Seq.IsNote(iTrack) && theApp.m_Options.m_View_bShowNoteNames;
 				pEdit->SetRange(0, MIDI_NOTE_MAX);
 				pEdit->SetKeySignature(static_cast<BYTE>(pDoc->m_nKeySig));
-				bool	bShowNoteNames = pDoc->m_Seq.IsNote(iTrack) && theApp.m_Options.m_View_bShowNoteNames;
 				pEdit->SetNoteEntry(bShowNoteNames);
 				if (bShowNoteNames) {	// if showing note names
 					CNote	note;
@@ -602,6 +622,9 @@ void CTrackView::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 			} else	// default note handling
 				goto DefaultDisplayItem;	// don't rely on falling through
 			break;
+		case COL_RangeType:
+			_tcscpy_s(item.pszText, item.cchTextMax, GetRangeTypeName(pDoc->m_Seq.GetRangeType(iTrack)));
+			break;
 		default:
 DefaultDisplayItem:
 			int	nVal;
@@ -614,11 +637,17 @@ DefaultDisplayItem:
 				NODEFAULTCASE;
 				nVal = 0;
 			}
-			// if note column, and track type is note, and showing notes as names
-			if (item.iSubItem == COL_Note && pDoc->m_Seq.IsNote(iTrack)
-			&& theApp.m_Options.m_View_bShowNoteNames) {
-				_tcscpy_s(item.pszText, item.cchTextMax, CNote(nVal).MidiName(pDoc->m_nKeySig));
-			} else {	// default case
+			switch (item.iSubItem) {
+			case COL_Note:
+			case COL_RangeStart:
+				// if note column, and track type is note, and showing notes as names
+				if (pDoc->m_Seq.IsNote(iTrack) && theApp.m_Options.m_View_bShowNoteNames)
+					_tcscpy_s(item.pszText, item.cchTextMax, CNote(nVal).MidiName(pDoc->m_nKeySig));
+				else
+					goto DefaultSpecialItem;
+				break;
+			default:
+DefaultSpecialItem:
 				if (item.iSubItem == COL_Channel)	// if channel column
 					nVal++;	// convert zero-origin channel index to one-origin channel number
 				_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), nVal);

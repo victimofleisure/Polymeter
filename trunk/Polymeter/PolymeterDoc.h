@@ -11,6 +11,7 @@
 		01		18nov18	add center song position hint
 		02		28nov18	add undo handlers for modify parts and refactor names
 		03		02dec18	add recording of MIDI input
+		04		10dec18	add song time shift to handle negative times
 
 */
 
@@ -228,6 +229,7 @@ public:
 	bool	TrackFill(const CRect *prStepSel);
 	void	TrackFill(const CIntArrayEx& arrTrackSel, CRange<int> rngStep, CRange<int> rngVal, int iFunction, double fFrequency, double fPhase, double fPower);
 	bool	GotoNextDub(bool bReverse = false);
+	int		CalcSongTimeShift() const;
 
 // Overrides
 public:
@@ -371,7 +373,8 @@ protected:
 	void	PasteTracks();
 	void	InsertTracks();
 	bool	RecordToTracks(bool bEnable);
-	void	OnImportTracks(CImportTrackArray& arrTrack);
+	void	OnImportTracks(CTrackArray& arrTrack);
+	int		CellToTime(int iCell, double fTicksPerCell, int nSongTimeShift) const;
 
 // Undo helpers
 	void	SaveTrackProperty(CUndoState& State) const;
@@ -481,6 +484,7 @@ protected:
 	afx_msg void OnToolsTimeToRepeat();
 	afx_msg void OnToolsVelocityRange();
 	afx_msg void OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI);
+	afx_msg void OnToolsImportSteps();
 	afx_msg void OnTrackShiftLeft();
 	afx_msg void OnTrackShiftRight();
 	afx_msg void OnTrackShiftSteps();
@@ -548,3 +552,9 @@ inline bool CPolymeterDoc::HaveTrackOrStepSelection() const
 {
 	return GetSelectedCount() || HaveStepSelection();
 }
+
+inline int CPolymeterDoc::CellToTime(int iCell, double fTicksPerCell, int nSongTimeShift) const
+{
+	return round(iCell * fTicksPerCell) + nSongTimeShift;
+}
+

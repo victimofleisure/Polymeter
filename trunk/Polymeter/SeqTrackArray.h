@@ -53,6 +53,10 @@ public:
 	void	SetVelocity(int iTrack, int nVelocity);
 	int		GetDuration(int iTrack) const;
 	void	SetDuration(int iTrack, int nDuration);
+	int		GetRangeType(int iTrack) const;
+	void	SetRangeType(int iTrack, int iRangeType);
+	int		GetRangeStart(int iTrack) const;
+	void	SetRangeStart(int iTrack, int nStartNote);
 	bool	GetMute(int iTrack) const;
 	void	SetMute(int iTrack, bool bMute);
 	void	ToggleMute(int iTrack);
@@ -276,6 +280,26 @@ inline int CSeqTrackArray::GetDuration(int iTrack) const
 inline void CSeqTrackArray::SetDuration(int iTrack, int nDuration)
 {
 	GetAt(iTrack).m_nDuration = nDuration;
+}
+
+inline int CSeqTrackArray::GetRangeType(int iTrack) const
+{
+	return GetAt(iTrack).m_iRangeType;
+}
+
+inline void CSeqTrackArray::SetRangeType(int iTrack, int iRangeType)
+{
+	GetAt(iTrack).m_iRangeType = iRangeType;
+}
+
+inline int CSeqTrackArray::GetRangeStart(int iTrack) const
+{
+	return GetAt(iTrack).m_nRangeStart;
+}
+
+inline void CSeqTrackArray::SetRangeStart(int iTrack, int nStartNote)
+{
+	GetAt(iTrack).m_nRangeStart = nStartNote;
 }
 
 inline bool CSeqTrackArray::GetMute(int iTrack) const

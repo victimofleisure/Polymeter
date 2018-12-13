@@ -13,6 +13,8 @@
 		03		07dec18	set initial dub time to smallest int instead of zero
 		04		07dec18	in track export, don't export modulator tracks
 		05		07dec18	in export implementation, reset cached parameters
+		06		11dec18	add note range and range modulation
+		07		13dec18	add position modulation
 
 */
 
@@ -303,6 +305,22 @@ void CALLBACK CSequencer::MidiOutProc(HMIDIOUT hMidiOut, UINT wMsg, W64UINT dwIn
 	}
 }
 
+__forceinline int CSequencer::ApplyNoteRange(int nNote, int nRangeStart, int iRangeType)
+{
+	const int OCTAVE = 12;
+	nNote = (nNote - nRangeStart) % OCTAVE;
+	if (iRangeType == RT_DUAL) {	// if dual octave range
+		nNote += nRangeStart;	// add start offset first
+		if (nNote < 0)	// then wrap negative values
+			nNote += OCTAVE;
+	} else {	// default is single octave range
+		if (nNote < 0)	// wrap negative values first
+			nNote += OCTAVE;
+		nNote += nRangeStart;	// then add start offset
+	}
+	return nNote;
+}
+
 __forceinline int CSequencer::GetNoteDuration(const CStepArray& arrStep, int nSteps, int iCurStep) const
 {
 	int	iPrevStep = iCurStep - 1;	// previous step
@@ -457,15 +475,24 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 				}
 			}
 			if (!trk.m_bMute && !arrMod[MT_Mute]) {	// if track isn't muted
+				int	iModStep;
+				if (arrMod[MT_Position]) {	// if modulating position
+					iModStep = (iStep - arrMod[MT_Position]) % nLength;
+					if (iModStep < 0)
+						iModStep += nLength;
+				} else	// not modulating position
+					iModStep = iStep;
 				if (trk.m_iType == TT_NOTE) {	// if track type is note
-					if (trk.m_arrStep[iStep]) {	// if step isn't empty
-						int	nDurSteps = GetNoteDuration(trk.m_arrStep, nLength, iStep);
+					if (trk.m_arrStep[iModStep]) {	// if step isn't empty
+						int	nDurSteps = GetNoteDuration(trk.m_arrStep, nLength, iModStep);
 						if (nDurSteps) {	// if at start of note
 							CEvent	evt;
 							evt.m_dwTime = nEvtTime;
-							int	nVel = (trk.m_arrStep[iStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
+							int	nVel = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
 							nVel = CLAMP(nVel, 0, MIDI_NOTE_MAX);
 							int	nNote = trk.m_nNote + arrMod[MT_Note];
+							if (trk.m_iRangeType != RT_NONE)	// if applying range to note
+								nNote = ApplyNoteRange(nNote, trk.m_nRangeStart + arrMod[MT_Range], trk.m_iRangeType);
 							nNote = CLAMP(nNote, 0, MIDI_NOTE_MAX);
 							evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, nNote, nVel);
 							m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
@@ -483,7 +510,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 						}
 					}
 				} else if (trk.m_iType != TT_MODULATOR) {	// track type isn't note or modulator
-					int	nVal = (trk.m_arrStep[iStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
+					int	nVal = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
 					nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
 					OutputControlEvent(trk, nEvtTime, nVal);
 				}
