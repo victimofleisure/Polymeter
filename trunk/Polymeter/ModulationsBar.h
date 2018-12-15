@@ -8,7 +8,8 @@
 		revision history:
 		rev		date	comments
         00		24jun18	initial version
-		
+		01		14dec18	add clipboard support and sorting
+
 */
 
 #pragma once
@@ -71,7 +72,8 @@ protected:
 
 // Helpers
 	void	UpdateUnion();
-	static	int		ModPairSortCmp(const void *arg1, const void *arg2);
+	static	int		ModPairSortCompare(const void *arg1, const void *arg2);
+	void	SortModulations(bool bBySource);
 
 // Overrides
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
@@ -90,6 +92,11 @@ protected:
 	afx_msg void OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu);
 	afx_msg void OnExitMenuLoop(BOOL bIsTrackPopupMenu);
 	afx_msg void OnListColHdrReset();
+	afx_msg void OnEditCopy();
+	afx_msg void OnEditCut();
+	afx_msg void OnEditPaste();
+	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
+	afx_msg void OnEditSelectAll();
 	afx_msg void OnEditDelete();
 	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
 	afx_msg void OnEditInsert();
@@ -97,4 +104,7 @@ protected:
 	afx_msg void OnListReorder(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnUpdateShowDifferences(CCmdUI *pCmdUI);
 	afx_msg void OnShowDifferences();
+	afx_msg void OnSortByType();
+	afx_msg void OnSortBySource();
+	afx_msg void OnUpdateSort(CCmdUI *pCmdUI);
 };

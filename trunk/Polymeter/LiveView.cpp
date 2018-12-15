@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      20jun18	initial version
+        01      15dec18	show unnamed tracks
 
 */
 
@@ -169,13 +170,12 @@ void CLiveView::Update()
 	pDoc->m_arrPart.GetTrackRefs(arrTrackIdx);
 	m_arrPart.RemoveAll();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-		// if track doesn't belong to a part and has a non-empty name
-		if (arrTrackIdx[iTrack] < 0 && !pDoc->m_Seq.GetName(iTrack).IsEmpty())
+		if (arrTrackIdx[iTrack] < 0)	// if track doesn't belong to a part
 			m_arrPart.Add(iTrack);
 	}
 	int	nParts = pDoc->m_arrPart.GetSize();
 	for (int iPart = 0; iPart < nParts; iPart++) {	// for each part
-		m_arrPart.Add(iPart | PART_GROUP_MASK);
+		m_arrPart.Add(iPart | PART_GROUP_MASK);	// flag index to identify as group
 	}
 	m_list[LIST_PARTS].SetItemCountEx(m_arrPart.GetSize(), 0);	// invalidate all
 	m_list[LIST_PRESETS].SetItemCountEx(pDoc->m_arrPreset.GetSize(), 0);	// invalidate all
@@ -191,7 +191,7 @@ void CLiveView::UpdatePartLengths()
 	m_wndPosBar.m_arrPartInfo.SetSize(nItems);
 	for (int iItem = 0; iItem < nItems; iItem++) {	// for each parts list item
 		int	iPart = m_arrPart[iItem];
-		if (iPart & PART_GROUP_MASK) {
+		if (iPart & PART_GROUP_MASK) {	// if part is a group
 			const CTrackGroup&	part = pDoc->m_arrPart[iPart & ~PART_GROUP_MASK];
 			int	nMbrs = part.m_arrTrackIdx.GetSize();
 			int	nMaxLen = 1;	// avoids divide by zero in UpdateBars
@@ -729,10 +729,15 @@ void CLiveView::OnListGetdispinfo(UINT id, NMHDR* pNMHDR, LRESULT* pResult)
 			{
 				LPCTSTR	pszName;
 				int	iPart = m_arrPart[iItem];
-				if (iPart & PART_GROUP_MASK)
+				if (iPart & PART_GROUP_MASK)	// if part is a group
 					pszName = pDoc->m_arrPart[iPart & ~PART_GROUP_MASK].m_sName;
-				else
+				else {
+					if (pDoc->m_Seq.GetName(iPart).IsEmpty()) {	// if name is empty
+						_stprintf_s(item.pszText, item.cchTextMax, _T("Track %d"), iPart + 1);
+						break;
+					}
 					pszName = pDoc->m_Seq.GetName(iPart);
+				}
 				_tcscpy_s(item.pszText, item.cchTextMax, pszName);
 			}
 			break;

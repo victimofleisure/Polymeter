@@ -10,7 +10,10 @@
         00      23mar18	initial version
 		01		07dec18	add used track flags
 		02		11dec18	add range types
-		03		13dec18	add import steps to track array
+		03		13dec18	add import/export steps to track array
+		04		14dec18	add sort to modulation array
+        05      15dec18	add find by name to track array
+		06		15dec18	add import/export to packed modulations array
 
 */
 
@@ -107,14 +110,26 @@ public:
 		int		m_iType;	// index of modulation type, enumerated above
 		int		m_iSource;	// index of modulation source in track array, or -1 if none
 	};
-	typedef public CArrayEx<CModulation, CModulation&> CModulationArray;
+	class CModulationArray : public CArrayEx<CModulation, CModulation&> {
+	public:
+		void	SortByType();
+		void	SortBySource();
+
+	protected:
+		static	int		SortCompareByType(const void *arg1, const void *arg2);
+		static	int		SortCompareBySource(const void *arg1, const void *arg2);
+	};
 	typedef CArrayEx<CModulationArray, CModulationArray&> CModulationArrayArray;
 	struct PACKED_MODULATION {
 		int		iType;		// index of modulation type
 		int		iSource;	// index of source track
 		int		iTarget;	// index of target track
 	};
-	typedef CArrayEx<PACKED_MODULATION, PACKED_MODULATION&> CPackedModulationArray;
+	class CPackedModulationArray : public CArrayEx<PACKED_MODULATION, PACKED_MODULATION&> {
+	public:
+		void	Import(LPCTSTR pszPath, int nTracks);
+		void	Export(LPCTSTR pszPath) const;
+	};
 	struct STEP_EVENT {
 		int		nStart;		// event start time, as step index
 		int		nDuration;	// event duration, in steps (note events only)
@@ -309,7 +324,14 @@ inline bool CTrack::IsModulated() const
 
 class CTrackArray : public CArrayEx<CTrack, CTrack&> {
 public:
+	enum {	// find flags
+		FINDF_IGNORE_CASE		= 0x01,		// case-insensitive
+		FINDF_PARTIAL_MATCH		= 0x02,		// match substrings
+		FINDF_NO_WRAP_SEARCH	= 0x04,		// don't wrap search
+	};
 	void	ImportSteps(LPCTSTR pszPath);
+	void	ExportSteps(const CIntArrayEx& arrSelection, LPCTSTR pszPath) const;
+	int		FindName(const CString& sName, int iStart = 0, UINT nFlags = 0) const;
 };
 
 class CImportTrackArray : public CTrackArray {

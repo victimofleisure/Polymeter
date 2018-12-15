@@ -9,6 +9,7 @@
 		rev		date	comments
         00      23mar18	initial version
 		01		02dec18	add recording of MIDI input
+		02		14dec18	add modulations clipboard
 
 */
 
@@ -49,6 +50,7 @@ public:
 // Operations
 	bool	HandleDlgKeyMsg(MSG* pMsg);
 	static	bool	HandleScrollViewKeys(MSG *pMsg, CScrollView *pView);
+	static	DWORD	GetModifierKeyStates();
 	void	ApplyOptions(const COptions *pPrevOptions);
 	void	OnMidiError(MMRESULT nResult);
 	void	MidiInit();
@@ -71,6 +73,7 @@ public:
 	CTrackArray	m_arrTrackClipboard;	// clipboard for tracks
 	CTrack::CStepArrayArray m_arrStepClipboard;	// clipboard for steps
 	CTrack::CDubArrayArray	m_arrSongClipboard;	// clipboard for song dubs
+	CTrack::CModulationArray	m_arrModClipboard;	// clipboard for modulations
 	CMidiDevices	m_midiDevs;		// MIDI device information
 	bool	m_bTieNotes;	// if true, new notes are tied
 	CMidiEventArray	m_arrMidiInEvent;	// array of MIDI input events

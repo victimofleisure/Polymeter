@@ -9,6 +9,7 @@
 		rev		date	comments
         00      23apr18	initial version
 		01		11dec18	add note range type and start
+		02		15dec18	add label tip style to grid
 
 */
 
@@ -554,7 +555,7 @@ int CTrackView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		CSize(lpCreateStruct->cx, lpCreateStruct->cy));
 	if (!m_grid.Create(dwStyle, rGrid, this, IDC_TRACK_GRID))
 		return -1;
-	DWORD	dwListExStyle = LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP;
+	DWORD	dwListExStyle = LVS_EX_LABELTIP | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP;
 	m_grid.SetExtendedStyle(dwListExStyle);
 	m_grid.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
 	m_grid.CreateColumns(m_arrColInfo, COLUMNS);

@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+        01      15dec18	add find/replace
 
 */
 
@@ -26,6 +27,7 @@
 #include "DllWrap.h"
 #include "MidiWrap.h"
 #include "dbt.h"	// for device change types
+#include "TrackView.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -67,6 +69,8 @@ enum {	// application looks; alpha order to match corresponding resource IDs
 #define ID_VIEW_APPLOOK_FIRST ID_VIEW_APPLOOK_OFF_2003
 #define ID_VIEW_APPLOOK_LAST ID_VIEW_APPLOOK_WIN_XP
 
+static UINT WM_FINDREPLACE = ::RegisterWindowMessage(FINDMSGSTRING);
+
 // CMainFrame construction/destruction
 
 CMainFrame::CMainFrame()
@@ -75,6 +79,8 @@ CMainFrame::CMainFrame()
 	theApp.m_nAppLook = theApp.GetInt(_T("ApplicationLook"), APPLOOK_VS_2008);
 	theApp.m_pMainWnd = this;
 	m_pActiveDoc = NULL;
+	m_pFindDlg = NULL;
+	m_bFindMatchCase = false;
 }
 
 CMainFrame::~CMainFrame()
@@ -607,6 +613,93 @@ void CMainFrame::FullScreen(bool bEnable)
 	SetRedraw(true);	// reenable painting
 }
 
+void CMainFrame::CreateFindReplaceDlg(bool bReplace)
+{
+	if (m_pFindDlg != NULL) {	// if find dialog exists
+		m_pFindDlg->SetFocus();
+	} else {	// find dialog doesn't exist
+		m_pFindDlg = new CFindReplaceDialog;
+		int	nFlags = FR_HIDEUPDOWN | FR_HIDEWHOLEWORD;
+		if (m_bFindMatchCase)
+			nFlags |= FR_MATCHCASE;
+		m_pFindDlg->Create(!bReplace, m_sFindText, m_sReplaceText, nFlags);
+	}
+}
+
+bool CMainFrame::DoFindReplace()
+{
+	if (m_pFindDlg == NULL)
+		return false;
+	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
+	if (pDoc == NULL || !pDoc->GetTrackCount())	// if no active document, or no tracks
+		return false;
+	CViewIter	iter(pDoc);
+	CView	*pView;
+	while ((pView = iter.GetNextView()) != NULL) {	// iterate document's views
+		if (pView->IsKindOf(RUNTIME_CLASS(CTrackView)))	// if track view found
+			break;	// end iteration
+	}
+	if (pView == NULL)	// if track view not found
+		return false;
+	UINT	nTrackFindFlags = CTrackArray::FINDF_PARTIAL_MATCH;
+	int	nFindDlgFlags = m_pFindDlg->m_fr.Flags;
+	if (!(nFindDlgFlags & FR_MATCHCASE))	// if not matching case
+		nTrackFindFlags |= CTrackArray::FINDF_IGNORE_CASE;
+	if (nFindDlgFlags & FR_REPLACEALL) {	// if replacing all
+		nTrackFindFlags |= CTrackArray::FINDF_NO_WRAP_SEARCH;	// don't wrap search
+		// if two or more tracks are selected, limit search to selection
+		bool	bInSelection = pDoc->GetSelectedCount() > 1;
+		CIntArrayEx	arrHit;
+		int	iTrack = 0;	// start search at first track
+		while ((iTrack = pDoc->m_Seq.GetTracks().FindName(	// while matching track names found
+			m_pFindDlg->GetFindString(), iTrack, nTrackFindFlags)) >= 0) {
+			if (!bInSelection || pDoc->GetSelected(iTrack))	// if track passes selection filter
+				arrHit.Add(iTrack);	// add matching track's index to hit array
+			iTrack++;	// advance search to next track
+		}
+		if (arrHit.IsEmpty())	// if no hits
+			return false;	// failure: string not found
+		CIntArrayEx	arrTrackSel(pDoc->m_arrTrackSel);	// save document's track selection
+		pDoc->m_arrTrackSel = arrHit;	// set our track selection for undo notification
+		pDoc->NotifyUndoableEdit(CTrack::PROP_Name, UCODE_MULTI_TRACK_PROP);
+		pDoc->m_arrTrackSel = arrTrackSel;	// restore document's track selection
+		int	nHits = arrHit.GetSize();
+		for (int iHit = 0; iHit < nHits; iHit++) {	// for each hit
+			int	iTrack = arrHit[iHit];
+			CString	sName(pDoc->m_Seq.GetName(iTrack));	// get track name
+			if (nFindDlgFlags & FR_MATCHCASE)	// if matching case
+				sName.Replace(m_pFindDlg->GetFindString(), m_pFindDlg->GetReplaceString());
+			else	// ignoring case
+				StringReplaceNoCase(sName, m_pFindDlg->GetFindString(), m_pFindDlg->GetReplaceString());
+			pDoc->m_Seq.SetName(iTrack, sName);	// update track name
+		}
+		CPolymeterDoc::CMultiItemPropHint	hint(arrHit, CTrack::PROP_Name);
+		pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_TRACK_PROP, &hint);	// update views
+		pDoc->SetModifiedFlag();
+	} else if (nFindDlgFlags & (FR_FINDNEXT | FR_REPLACE)) {	// if finding or replacing
+		CTrackView	*pTrackView = STATIC_DOWNCAST(CTrackView, pView);
+		int	iTrack = pTrackView->GetSelectionMark() + 1;	// start searching at track after selection mark
+		iTrack = pDoc->m_Seq.GetTracks().FindName(	// search for matching track name
+			m_pFindDlg->GetFindString(), iTrack, nTrackFindFlags);
+		if (iTrack >= 0) {	// if matching track name was found
+			pDoc->SelectOnly(iTrack);	// select matching track
+			if (nFindDlgFlags & FR_REPLACE) {	// if replacing
+				pDoc->NotifyUndoableEdit(iTrack, MAKELONG(UCODE_TRACK_PROP, CTrack::PROP_Name));
+				CString	sName(pDoc->m_Seq.GetName(iTrack));	// get track name
+				if (nFindDlgFlags & FR_MATCHCASE)	// if matching case
+					sName.Replace(m_pFindDlg->GetFindString(), m_pFindDlg->GetReplaceString());
+				else	// ignoring case
+					StringReplaceNoCase(sName, m_pFindDlg->GetFindString(), m_pFindDlg->GetReplaceString());
+				pDoc->m_Seq.SetName(iTrack, sName);	// update track name
+				CPolymeterDoc::CPropHint	hint(iTrack, CTrack::PROP_Name);
+				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_PROP, &hint);	// update views
+				pDoc->SetModifiedFlag();
+			}
+		}
+	}
+	return true;	// success: one or more matches were found
+}
+
 // CMainFrame diagnostics
 
 #ifdef _DEBUG
@@ -644,6 +737,9 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_MESSAGE(UWM_DEVICE_NODE_CHANGE, OnDeviceNodeChange)
 	ON_WM_DEVICECHANGE()
 	ON_COMMAND(ID_TOOLS_DEVICES, OnToolsDevices)
+	ON_COMMAND(ID_EDIT_FIND, OnEditFind)
+	ON_COMMAND(ID_EDIT_REPLACE, OnEditReplace)
+	ON_REGISTERED_MESSAGE(WM_FINDREPLACE, OnFindReplace)
 	ON_COMMAND(ID_VIEW_CHANNELS, OnViewChannels)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_CHANNELS, OnUpdateViewChannels)
 	ON_COMMAND(ID_VIEW_PROPERTIES, OnViewProperties)
@@ -907,6 +1003,34 @@ BOOL CMainFrame::OnDeviceChange(UINT nEventType, W64ULONG dwData)
 	return retc;	// true to allow device change
 }
 
+void CMainFrame::OnEditFind()
+{
+	CreateFindReplaceDlg(false);	// find
+}
+
+void CMainFrame::OnEditReplace()
+{
+	CreateFindReplaceDlg(true);		// replace
+}
+
+LRESULT CMainFrame::OnFindReplace(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	CFindReplaceDialog *pDlg = CFindReplaceDialog::GetNotifier(lParam);
+	if (pDlg != NULL) {	// if valid notifier
+		if (pDlg->IsTerminating()) {	// if dialog is terminating
+			m_sFindText = pDlg->GetFindString();	// save find string
+			m_sReplaceText = pDlg->GetReplaceString();	// save replace string
+			m_bFindMatchCase = (pDlg->m_fr.Flags & FR_MATCHCASE) != 0;	// save match case option
+			pDlg->DestroyWindow();	// destroy dialog
+			m_pFindDlg = NULL;	// mark dialog destroyed
+		} else {	// not terminating
+			DoFindReplace();	// do find/replace
+		}
+	}
+	return 0;
+}
+
 void CMainFrame::OnViewChannels()
 {
 	bool	bShow = !m_wndChannelsBar.IsVisible();
@@ -986,3 +1110,4 @@ void CMainFrame::OnWindowFullScreen()
 {
 	FullScreen(!IsFullScreen());
 }
+

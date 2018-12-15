@@ -16,7 +16,9 @@
 		06		07dec18	in track export, don't export modulator tracks
 		07		08dec18	bump file version for negative dub times
 		08		10dec18	add song time shift to handle negative times
-		09		13dec18	add import steps command
+		09		13dec18	add import/export steps commands
+		10		14dec18	bump file version for note range, position modulation
+		11		15dec18	add import/export modulations commands
 
 */
 
@@ -59,7 +61,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	9
+#define	FILE_VERSION	10
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -3074,6 +3076,10 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_COMMAND(ID_TOOLS_VELOCITY_RANGE, OnToolsVelocityRange)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_VELOCITY_RANGE, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TOOLS_IMPORT_STEPS, OnToolsImportSteps)
+	ON_COMMAND(ID_TOOLS_EXPORT_STEPS, OnToolsExportSteps)
+	ON_UPDATE_COMMAND_UI(ID_TOOLS_EXPORT_STEPS, OnUpdateTrackReverse)
+	ON_COMMAND(ID_TOOLS_IMPORT_MODULATIONS, OnToolsImportModulations)
+	ON_COMMAND(ID_TOOLS_EXPORT_MODULATIONS, OnToolsExportModulations)
 	ON_COMMAND(ID_TRACK_TRANSPOSE, OnTrackTranspose)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_TRANSPOSE, OnUpdateTrackTranspose)
 	ON_COMMAND(ID_TRACK_VELOCITY, OnTrackVelocity)
@@ -3745,7 +3751,52 @@ void CPolymeterDoc::OnToolsImportSteps()
 	if (fd.DoModal() == IDOK) {
 		CTrackArray	arrTrack;
 		arrTrack.ImportSteps(fd.GetPathName());
-		if (arrTrack.GetSize())
+		if (arrTrack.GetSize())	// if steps were imported
 			OnImportTracks(arrTrack);
+	}
+}
+
+void CPolymeterDoc::OnToolsExportSteps()
+{
+	CString	sFilter(LPCTSTR(IDS_CSV_FILE_FILTER));
+	CFileDialog	fd(FALSE, _T(".csv"), NULL, OFN_OVERWRITEPROMPT, sFilter);
+	CString	sDlgTitle(LPCTSTR(IDS_EXPORT));
+	fd.m_ofn.lpstrTitle = sDlgTitle;
+	if (fd.DoModal() == IDOK) {
+		m_Seq.GetTracks().ExportSteps(m_arrTrackSel, fd.GetPathName());
+	}
+}
+
+void CPolymeterDoc::OnToolsImportModulations()
+{
+	CString	sFilter(LPCTSTR(IDS_CSV_FILE_FILTER));
+	CFileDialog	fd(TRUE, _T(".csv"), NULL, OFN_HIDEREADONLY, sFilter);
+	CString	sDlgTitle(LPCTSTR(IDS_IMPORT));
+	fd.m_ofn.lpstrTitle = sDlgTitle;
+	if (fd.DoModal() == IDOK) {
+		CPackedModulationArray	arrMod;
+		arrMod.Import(fd.GetPathName(), GetTrackCount());
+		if (arrMod.GetSize()) {	// if modulations were imported
+			CIntArrayEx	arrTrackSel(m_arrTrackSel);	// save track selection
+			GetSelectAll(m_arrTrackSel);	// select all tracks for undo notification
+			NotifyUndoableEdit(0, UCODE_MODULATION);	// notify undo
+			m_arrTrackSel = arrTrackSel;	// restore track selection
+			m_Seq.SetModulations(arrMod);	// replace existing modulations with imported ones
+			UpdateAllViews(NULL, HINT_MODULATION);
+			SetModifiedFlag();
+		}
+	}
+}
+
+void CPolymeterDoc::OnToolsExportModulations()
+{
+	CString	sFilter(LPCTSTR(IDS_CSV_FILE_FILTER));
+	CFileDialog	fd(FALSE, _T(".csv"), NULL, OFN_OVERWRITEPROMPT, sFilter);
+	CString	sDlgTitle(LPCTSTR(IDS_EXPORT));
+	fd.m_ofn.lpstrTitle = sDlgTitle;
+	if (fd.DoModal() == IDOK) {
+		CPackedModulationArray	arrMod;
+		m_Seq.GetModulations(arrMod);
+		arrMod.Export(fd.GetPathName());
 	}
 }

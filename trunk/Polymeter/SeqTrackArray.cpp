@@ -11,6 +11,7 @@
 		01		18nov18	add method to find next or previous dub time
 		02		07dec18	set initial dub time to smallest int instead of zero
 		03		07dec18	in GetUsedTracks and GetUsedTrackCount, add flags arg
+		04		14dec18	add InsertModulations
 
 */
 
@@ -564,6 +565,12 @@ void CSeqTrackArray::InsertModulation(int iTrack, int iMod, CModulation& mod)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	GetAt(iTrack).m_arrModulator.InsertAt(iMod, mod);
+}
+
+void CSeqTrackArray::InsertModulations(int iTrack, int iMod, CModulationArray& arrMod)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	GetAt(iTrack).m_arrModulator.InsertAt(iMod, &arrMod);
 }
 
 void CSeqTrackArray::RemoveModulation(int iTrack, int iMod)

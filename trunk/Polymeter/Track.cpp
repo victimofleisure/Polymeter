@@ -11,7 +11,10 @@
 		01		02dec18	in MIDI file import, fix rounding errors
 		02		07dec18	set initial dub time to smallest int instead of zero
 		03		11dec18	add range types
-		04		13dec18	add import steps to track array
+		04		13dec18	add import/export steps to track array
+		05		14dec18	add sort to modulation array
+        06      15dec18	add find by name to track array
+		07		15dec18	add import/export to packed modulations array
 
 */
 
@@ -479,14 +482,43 @@ void CImportTrackArray::ImportMidiFile(const CMidiTrackArray& arrInTrack, const 
 		GetAt(iTrack) = *arrTrackPtr[iTrack];	// copy track to member array in sorted order
 }
 
-void CTrackArray::ImportSteps(LPCTSTR pszPath)
+void CTrackBase::CPackedModulationArray::Import(LPCTSTR pszPath, int nTracks)
 {
-	CTrack	trk(true);	// set defaults
+	ASSERT(IsEmpty());
 	CStdioFile	fIn(pszPath, CFile::modeRead);
 	CString	sLine;
 	while (fIn.ReadString(sLine)) {
+		PACKED_MODULATION	mod;
+		if (_stscanf_s(sLine, _T("%d,%d,%d"), &mod.iType, &mod.iSource, &mod.iTarget) == 3) {
+			if (mod.iType >= 0 && mod.iType < MODULATION_TYPES && mod.iTarget >= 0 && mod.iTarget < nTracks) {
+				if (mod.iSource >= nTracks)	// if source is out of range
+					mod.iSource = -1;	// set source to undefined
+				Add(mod);
+			}
+		}
+	}
+}
+
+void CTrackBase::CPackedModulationArray::Export(LPCTSTR pszPath) const
+{
+	CStdioFile	fOut(pszPath, CFile::modeCreate | CFile::modeWrite);
+	CString	sLine;
+	int	nMods = GetSize();
+	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
+		const PACKED_MODULATION&	mod = GetAt(iMod);
+		sLine.Format(_T("%d,%d,%d\n"), mod.iType, mod.iSource, mod.iTarget);
+		fOut.WriteString(sLine);
+	}
+}
+
+void CTrackArray::ImportSteps(LPCTSTR pszPath)
+{
+	ASSERT(IsEmpty());
+	CTrack	trk(true);	// set defaults
+	CStdioFile	fIn(pszPath, CFile::modeRead);
+	CString	sLine, sToken;
+	while (fIn.ReadString(sLine)) {
 		int	iStart = 0;
-		CString	sToken;
 		trk.m_arrStep.FastSetSize(0);
 		while (!(sToken = sLine.Tokenize(_T(","), iStart)).IsEmpty()) {
 			int	nStep;
@@ -496,6 +528,56 @@ void CTrackArray::ImportSteps(LPCTSTR pszPath)
 		if (trk.m_arrStep.GetSize())
 			Add(trk);
 	}
+}
+
+void CTrackArray::ExportSteps(const CIntArrayEx& arrSelection, LPCTSTR pszPath) const
+{
+	CStdioFile	fOut(pszPath, CFile::modeCreate | CFile::modeWrite);
+	int	nSels = arrSelection.GetSize();
+	CString	sLine, sNum;
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		const CTrack& trk = GetAt(arrSelection[iSel]);
+		sLine.Empty();
+		int	nSteps = trk.m_arrStep.GetSize();
+		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each of track's steps
+			if (iStep)
+				sLine += ',';
+			sNum.Format(_T("%d"), trk.m_arrStep[iStep]);
+			sLine += sNum;
+		}
+		fOut.WriteString(sLine + '\n');
+	}
+}
+
+int CTrackArray::FindName(const CString& sName, int iStart, UINT nFlags) const
+{
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		if (iStart < 0 || iStart >= nTracks) {	// if start index out of range
+			if (nFlags & FINDF_NO_WRAP_SEARCH)	// if not wrapping search
+				break;
+			iStart = 0;	// wrap to first track
+		}
+		if (nFlags & FINDF_PARTIAL_MATCH) {	// if partial match requested
+			if (nFlags & FINDF_IGNORE_CASE) {	// if ignoring case
+				if (StrStrI(GetAt(iStart).m_sName, sName) != NULL)
+					return iStart;
+			} else {	// case sensitive
+				if (GetAt(iStart).m_sName.Find(sName) >= 0)
+					return iStart;
+			}
+		} else {	// match entire string
+			if (nFlags & FINDF_IGNORE_CASE) {	// if ignoring case
+				if (!GetAt(iStart).m_sName.CompareNoCase(sName))
+					return iStart;
+			} else {	// case sensitive
+				if (GetAt(iStart).m_sName == sName)
+					return iStart;
+			}
+		}
+		iStart++;
+	}
+	return -1;
 }
 
 #define RK_GROUP_COUNT _T("Count")
@@ -567,4 +649,34 @@ void CTrackGroupArray::GetTrackRefs(CIntArrayEx& arrTrackIdx) const
 			arrTrackIdx[iTrack] = iGroup;
 		}
 	}
+}
+
+void CTrackBase::CModulationArray::SortByType()
+{
+	qsort(GetData(), GetSize(), sizeof(CModulation), SortCompareByType);
+}
+
+void CTrackBase::CModulationArray::SortBySource()
+{
+	qsort(GetData(), GetSize(), sizeof(CModulation), SortCompareBySource);
+}
+
+int CTrackBase::CModulationArray::SortCompareByType(const void *arg1, const void *arg2)
+{
+	const CModulation	*p1 = (CModulation*)arg1;
+	const CModulation	*p2 = (CModulation*)arg2;
+	int	retc = CTrack::Compare(p1->m_iType, p2->m_iType);
+	if (!retc)
+		retc = CTrack::Compare(p1->m_iSource, p2->m_iSource);
+	return retc;
+}
+
+int CTrackBase::CModulationArray::SortCompareBySource(const void *arg1, const void *arg2)
+{
+	const CModulation	*p1 = (CModulation*)arg1;
+	const CModulation	*p2 = (CModulation*)arg2;
+	int	retc = CTrack::Compare(p1->m_iSource, p2->m_iSource);
+	if (!retc)
+		retc = CTrack::Compare(p1->m_iType, p2->m_iType);
+	return retc;
 }

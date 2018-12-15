@@ -44,6 +44,7 @@ public:
 	static const LPCTSTR	GetGMDrumName(int iNote);
 	void	SetColumnOrder(const CIntArrayEx& arrOrder);
 	void	SetColumnWidths(const CIntArrayEx& arrWidth);
+	int		GetSelectionMark();
 
 // Operations
 	void	SetVScrollPos(int nPos);
@@ -143,4 +144,9 @@ inline int CTrackView::GetHeaderHeight() const
 inline int CTrackView::GetItemHeight() const
 {
 	return m_nItemHeight;
+}
+
+inline int CTrackView::GetSelectionMark()
+{
+	return m_grid.GetSelectionMark();
 }

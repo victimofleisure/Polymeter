@@ -78,6 +78,7 @@ public:
 	};
 
 // Types
+	typedef CMap<UINT, UINT, int, int> CTrackIDMap;
 	class CMySequencer : public CSequencer {
 	public:
 		virtual void OnMidiError(MMRESULT nResult);
@@ -154,6 +155,7 @@ public:
 	void	SetPartName(int iPart, CString sName);
 	bool	HaveStepSelection() const;
 	bool	HaveTrackOrStepSelection() const;
+	void	GetTrackIDMap(CTrackIDMap& mapTrackID) const;
 
 // Operations
 public:
@@ -331,7 +333,6 @@ protected:
 		CIntArrayEx	m_arrSelection;	// indices of selected items
 		CModulationArrayArray	m_arrModulator;	// array of modulator arrays
 	};
-	typedef CMap<UINT, UINT, int, int> CTrackIDMap;
 	class CTrackArrayEdit {
 	public:
 		CTrackArrayEdit(CPolymeterDoc *pDoc);
@@ -367,7 +368,6 @@ protected:
 	void	ApplyStepsArrayEdit(const CRect& rStepSel, bool bSelect);
 	bool	MakePasteSelection(CSize szData, CRect& rSelection) const;
 	void	SetViewType(int nViewType);
-	void	GetTrackIDMap(CTrackIDMap& mapTrackID) const;
 	void	OnTrackArrayEdit(const CTrackIDMap& mapTrackID);
 	void	CopyTracksToClipboard();
 	void	PasteTracks();
@@ -485,6 +485,9 @@ protected:
 	afx_msg void OnToolsVelocityRange();
 	afx_msg void OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI);
 	afx_msg void OnToolsImportSteps();
+	afx_msg void OnToolsExportSteps();
+	afx_msg void OnToolsImportModulations();
+	afx_msg void OnToolsExportModulations();
 	afx_msg void OnTrackShiftLeft();
 	afx_msg void OnTrackShiftRight();
 	afx_msg void OnTrackShiftSteps();

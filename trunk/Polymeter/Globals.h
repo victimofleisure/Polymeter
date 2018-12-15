@@ -56,6 +56,7 @@ bool CopyStringToClipboard(HWND m_hWnd, const CString& strData);
 void EnableChildWindows(CWnd& Wnd, bool Enable, bool Deep = TRUE);
 void UpdateMenu(CWnd *pWnd, CMenu *pMenu);
 bool FormatNumberCommas(LPCTSTR pszSrc, CString& sDst, int nPrecision = 0);
+int StringReplaceNoCase(CString& str, LPCTSTR pszOld, LPCTSTR pszNew);
 
 // data validation method to flunk a control
 void DDV_Fail(CDataExchange* pDX, int nIDC);

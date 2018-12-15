@@ -315,6 +315,18 @@ bool CPolymeterApp::HandleScrollViewKeys(MSG *pMsg, CScrollView *pView)
 	return false;
 }
 
+DWORD CPolymeterApp::GetModifierKeyStates()
+{
+	int	nFlags = 0;
+	if (GetKeyState(VK_CONTROL) & GKS_DOWN)
+		nFlags |= MK_CONTROL;
+	if (GetKeyState(VK_SHIFT) & GKS_DOWN)
+		nFlags |= MK_SHIFT;
+	if (GetKeyState(VK_MENU) & GKS_DOWN)
+		nFlags |= MK_MBUTTON;	// substitute for non-existent menu flag
+	return nFlags;
+}
+
 void CPolymeterApp::ApplyOptions(const COptions *pPrevOptions)
 {
 	m_midiDevs.SetIdx(CMidiDevices::INPUT, m_Options.m_Midi_iInputDevice - 1);

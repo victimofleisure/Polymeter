@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+        01      15dec18	add find/replace
 
 */
 
@@ -99,6 +100,10 @@ protected:  // control bar embedded members
 	CPolymeterDoc	*m_pActiveDoc;		// pointer to active document, or NULL if none
 	CString	m_sSongPos;					// song position string
 	CString	m_sSongTime;				// song time string
+	CFindReplaceDialog	*m_pFindDlg;	// pointer to find dialog
+	CString	m_sFindText;				// find text
+	CString	m_sReplaceText;				// replace text
+	bool	m_bFindMatchCase;			// true if find should match case
 
 // Helpers
 	BOOL	CreateDockingWindows();
@@ -107,6 +112,8 @@ protected:  // control bar embedded members
 	bool	CheckForUpdates(bool Explicit);
 	static	UINT	CheckForUpdatesThreadFunc(LPVOID Param);
 	void	SetViewTimer(bool bEnable);
+	void	CreateFindReplaceDlg(bool bReplace);
+	bool	DoFindReplace();
 
 // Generated message map functions
 protected:
@@ -131,6 +138,9 @@ protected:
 	afx_msg LRESULT	OnDeviceNodeChange(WPARAM wParam, LPARAM lParam);
 	afx_msg BOOL OnDeviceChange(UINT nEventType, W64ULONG dwData);
 	afx_msg void OnToolsDevices();
+	afx_msg void OnEditFind();
+	afx_msg void OnEditReplace();
+	afx_msg LRESULT OnFindReplace(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnViewChannels();
 	afx_msg void OnUpdateViewChannels(CCmdUI *pCmdUI);
 	afx_msg void OnViewProperties();

@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		15apr18	initial version
+		01		15dec18	add label tip style to grid
 		
 */
 
@@ -270,7 +271,7 @@ int CChannelsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		| LVS_SHOWSELALWAYS | LVS_NOSORTHEADER;
 	m_grid.Create(dwStyle, CRect(0, 0, 0, 0), this, IDC_CHANNELS_GRID);
 	m_grid.CreateColumns(m_arrColInfo, COLUMNS);
-	DWORD	dwListExStyle = LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP;
+	DWORD	dwListExStyle = LVS_EX_LABELTIP | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP;
 	m_grid.SetExtendedStyle(dwListExStyle);
 	m_grid.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
 	m_grid.SetItemCountEx(MIDI_CHANNELS);

@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		14jun18	initial version
+		01		14dec18	add clipboard support and sorting
 		
 */
 
@@ -190,7 +191,7 @@ void CModulationsBar::UpdateUnion()
 		arrModPairPtr[iPair++] = pModPair;	// add map pair pointer to array
 		pModPair = mapMod.PGetNextAssoc(pModPair);
 	}
-	qsort(arrModPairPtr.GetData(), nUniqueMods, sizeof(CModRefMap::CPair*), ModPairSortCmp);	// sort map pairs
+	qsort(arrModPairPtr.GetData(), nUniqueMods, sizeof(CModRefMap::CPair*), ModPairSortCompare);	// sort map pairs
 	CModulationArray	arrMod;
 	arrMod.SetSize(nUniqueMods);
 	CIntArrayEx	arrModCount;
@@ -207,12 +208,11 @@ void CModulationsBar::UpdateUnion()
 	m_bModDifferences = false;	// difference indicator isn't applicable in this mode
 }
 
-int CModulationsBar::ModPairSortCmp(const void *arg1, const void *arg2)
+int CModulationsBar::ModPairSortCompare(const void *arg1, const void *arg2)
 {
-	CModRefMap::CPair *p1 = *(CModRefMap::CPair**)arg1;
-	CModRefMap::CPair *p2 = *(CModRefMap::CPair**)arg2;
-	int	retc;
-	retc = -CTrack::Compare(p1->value, p2->value);	// descending by modulation instance count
+	const CModRefMap::CPair *p1 = *(CModRefMap::CPair**)arg1;
+	const CModRefMap::CPair *p2 = *(CModRefMap::CPair**)arg2;
+	int	retc = -CTrack::Compare(p1->value, p2->value);	// descending by modulation instance count
 	if (!retc) {
 		retc = CTrack::Compare(p1->key.m_iType, p2->key.m_iType);	// ascending by modulation type
 		if (!retc) {
@@ -327,6 +327,27 @@ void CModulationsBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 	}
 }
 
+void CModulationsBar::SortModulations(bool bBySource)
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL && pDoc->GetSelectedCount()) {	// if track selection exists
+		pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
+		int	nTrackSels = pDoc->GetSelectedCount();
+		for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
+			int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
+			CModulationArray	arrMod;
+			pDoc->m_Seq.GetModulations(iTrack, arrMod);
+			if (bBySource)
+				arrMod.SortBySource();
+			else
+				arrMod.SortByType();
+			pDoc->m_Seq.SetModulations(iTrack, arrMod);
+		}
+	}
+	pDoc->SetModifiedFlag();
+	UpdateAll();
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CModulationsBar message map
 
@@ -344,6 +365,14 @@ BEGIN_MESSAGE_MAP(CModulationsBar, CDockablePane)
 	ON_WM_MENUSELECT()
 	ON_WM_EXITMENULOOP()
 	ON_COMMAND(ID_LIST_COL_HDR_RESET, OnListColHdrReset)
+	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditDelete)
+	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditDelete)
+	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
+	ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditInsert)
 	ON_COMMAND(ID_EDIT_INSERT, OnEditInsert)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
@@ -351,6 +380,10 @@ BEGIN_MESSAGE_MAP(CModulationsBar, CDockablePane)
 	ON_NOTIFY(ULVN_REORDER, IDC_MOD_LIST, OnListReorder)
 	ON_COMMAND(ID_MODULATION_SHOW_DIFFERENCES, OnShowDifferences)
 	ON_UPDATE_COMMAND_UI(ID_MODULATION_SHOW_DIFFERENCES, OnUpdateShowDifferences)
+	ON_COMMAND(ID_MODULATION_SORT_BY_TYPE, OnSortByType)
+	ON_COMMAND(ID_MODULATION_SORT_BY_SOURCE, OnSortBySource)
+	ON_UPDATE_COMMAND_UI(ID_MODULATION_SORT_BY_TYPE, OnUpdateSort)
+	ON_UPDATE_COMMAND_UI(ID_MODULATION_SORT_BY_SOURCE, OnUpdateSort)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -365,7 +398,8 @@ int CModulationsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		| LVS_REPORT | LVS_OWNERDATA | LVS_NOSORTHEADER;
 	if (!m_grid.Create(dwStyle, CRect(0, 0, 0, 0), this, IDC_MOD_LIST))
 		return -1;
-	m_grid.SetExtendedStyle(LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT);
+	DWORD	dwListExStyle = LVS_EX_LABELTIP | LVS_EX_FULLROWSELECT;
+	m_grid.SetExtendedStyle(dwListExStyle);
 	m_grid.CreateColumns(m_arrColInfo, COLUMNS);
 	m_grid.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
 	m_grid.LoadColumnOrder(RK_MODULATION, RK_COL_ORDER);
@@ -522,6 +556,7 @@ void CModulationsBar::OnExitMenuLoop(BOOL bIsTrackPopupMenu)
 BOOL CModulationsBar::PreTranslateMessage(MSG* pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN) {
+		int	nModKeyFlags = theApp.GetModifierKeyStates();
 		switch (pMsg->wParam) {
 		case VK_INSERT:
 			OnEditInsert();
@@ -529,6 +564,30 @@ BOOL CModulationsBar::PreTranslateMessage(MSG* pMsg)
 		case VK_DELETE:
 			OnEditDelete();
 			return true;
+		case 'C':
+			if (nModKeyFlags == MK_CONTROL) {
+				OnEditCopy();
+				return true;
+			}
+			break;
+		case 'X':
+			if (nModKeyFlags == MK_CONTROL) {
+				OnEditCut();
+				return true;
+			}
+			break;
+		case 'V':
+			if (nModKeyFlags == MK_CONTROL) {
+				OnEditPaste();
+				return true;
+			}
+			break;
+		case 'A':
+			if (nModKeyFlags == MK_CONTROL) {
+				OnEditSelectAll();
+				return true;
+			}
+			break;
 		}
 	}
 	return CDockablePane::PreTranslateMessage(pMsg);
@@ -541,6 +600,71 @@ void CModulationsBar::OnListColHdrReset()
 	m_grid.ResetColumnOrder();
 	m_grid.SetRedraw();	// reenable drawing
 	m_grid.Invalidate();
+}
+
+void CModulationsBar::OnEditCopy()
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL && pDoc->GetSelectedCount()) {	// if track selection exists
+		CIntArrayEx	arrModSel;
+		m_grid.GetSelection(arrModSel);
+		int	nModSels = arrModSel.GetSize();
+		theApp.m_arrModClipboard.SetSize(nModSels);
+		for (int iModSel = 0; iModSel < nModSels; iModSel++) {	// for each selected modulation
+			int	iMod = arrModSel[iModSel];
+			const CModulation&	mod = m_arrModulator[iMod];
+			int	nSourceID;
+			if (mod.m_iSource >= 0)	// if modulation source track index is valid
+				nSourceID = pDoc->m_Seq.GetID(mod.m_iSource);	// map track index to unique ID
+			else	// invalid source track index
+				nSourceID = 0;	// invalid track ID
+			theApp.m_arrModClipboard[iModSel] = CModulation(mod.m_iType, nSourceID);
+		}
+	}
+}
+
+void CModulationsBar::OnEditCut()
+{
+	OnEditCopy();
+	OnEditDelete();
+}
+
+void CModulationsBar::OnEditPaste()
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL && pDoc->GetSelectedCount()) {	// if track selection exists
+		CPolymeterDoc::CTrackIDMap	mapTrackID;
+		pDoc->GetTrackIDMap(mapTrackID);
+		int	nMods = theApp.m_arrModClipboard.GetSize();
+		if (nMods) {
+			pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
+			CModulationArray	arrMod;
+			arrMod.SetSize(nMods);
+			for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation in clipboard
+				const CModulation&	mod = theApp.m_arrModClipboard[iMod];
+				int	iModSource = -1;
+				mapTrackID.Lookup(mod.m_iSource, iModSource);
+				arrMod[iMod] = CModulation(mod.m_iType, iModSource);
+			}
+			int	nTrackSels = pDoc->GetSelectedCount();
+			int	iSelMark = m_grid.GetSelectionMark();
+			for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
+				int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
+				int	iMod = iSelMark;
+				if (iMod < 0)	// if no selection
+					iMod = pDoc->m_Seq.GetModulationCount(iTrack);	// append
+				pDoc->m_Seq.InsertModulations(iTrack, iMod, arrMod);	// insert clipboard modulations
+			}
+			UpdateAll();
+		}
+	}
+}
+
+void CModulationsBar::OnUpdateEditPaste(CCmdUI *pCmdUI)
+{
+	// enable if track selection exists and modulation clipboard isn't empty
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	pCmdUI->Enable(pDoc != NULL && pDoc->GetSelectedCount() && theApp.m_arrModClipboard.GetSize());
 }
 
 void CModulationsBar::OnEditInsert()
@@ -570,7 +694,7 @@ void CModulationsBar::OnEditInsert()
 void CModulationsBar::OnUpdateEditInsert(CCmdUI *pCmdUI)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	pCmdUI->Enable(pDoc != NULL && pDoc->GetSelectedCount());
+	pCmdUI->Enable(pDoc != NULL && pDoc->GetSelectedCount());	// if track selection exists
 }
 
 void CModulationsBar::OnEditDelete()
@@ -600,6 +724,11 @@ void CModulationsBar::OnEditDelete()
 void CModulationsBar::OnUpdateEditDelete(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_grid.GetSelectedCount());
+}
+
+void CModulationsBar::OnEditSelectAll()
+{
+	m_grid.SelectAll();
 }
 
 void CModulationsBar::OnListReorder(NMHDR* pNMHDR, LRESULT* pResult)
@@ -643,4 +772,19 @@ void CModulationsBar::OnShowDifferences()
 void CModulationsBar::OnUpdateShowDifferences(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bShowDifferences);
+}
+
+void CModulationsBar::OnSortByType()
+{
+	SortModulations(false);
+}
+
+void CModulationsBar::OnSortBySource()
+{
+	SortModulations(true);
+}
+
+void CModulationsBar::OnUpdateSort(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(!m_bShowDifferences);
 }

@@ -10,6 +10,7 @@
         00      23mar18	initial version
 		01		18nov18	add method to find next or previous dub time
 		02		07dec18	in GetUsedTracks and GetUsedTrackCount, add flags arg
+		03		14dec18	add InsertModulations
 
 */
 
@@ -128,6 +129,7 @@ public:
 	void	RemoveAllDubs();
 	bool	FindNextDubTime(int nStartTime, int& nNextTime, bool bReverse = false) const;
 	void	InsertModulation(int iTrack, int iMod, CModulation& mod);
+	void	InsertModulations(int iTrack, int iMod, CModulationArray& arrMod);
 	void	RemoveModulation(int iTrack, int iMod);
 	void	MoveModulations(int iTrack, CIntArrayEx& arrSelection, int iDropPos);
 	void	OnTrackArrayEdit(const CIntArrayEx& arrTrackMap);

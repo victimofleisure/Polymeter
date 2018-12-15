@@ -14,7 +14,7 @@
 		04		07dec18	in track export, don't export modulator tracks
 		05		07dec18	in export implementation, reset cached parameters
 		06		11dec18	add note range and range modulation
-		07		13dec18	add position modulation
+		07		14dec18	add position modulation
 
 */
 

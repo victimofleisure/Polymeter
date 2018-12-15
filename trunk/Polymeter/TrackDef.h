@@ -32,7 +32,7 @@ TRACKDEF(	VAR,		int,		n,		Offset,		0,			NULL,			0			)	// track offset in ticks
 TRACKDEF(	VAR,		int,		n,		Swing,		0,			NULL,			0			)	// swing in ticks
 TRACKDEF(	VAR,		int,		n,		Velocity,	0,			NULL,			0			)	// note velocity offset
 TRACKDEF(	VAR,		int,		n,		Duration,	0,			NULL,			0			)	// note duration offset
-TRACKDEF(	VAR,		int,		i,		RangeType,	0,			NULL,			0			)	// note range type
+TRACKDEF(	ENUM,		int,		i,		RangeType,	0,			m_oiRangeType,	RANGE_TYPES	)	// note range type
 TRACKDEF(	VAR,		int,		n,		RangeStart,	64,			NULL,			0			)	// start of note range
 #ifndef TRACKDEF_INT
 TRACKDEF(	VAR,		bool,		b,		Mute,		false,		NULL,			0			)	// true if muted

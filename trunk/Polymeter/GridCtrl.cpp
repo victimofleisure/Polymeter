@@ -19,6 +19,7 @@
 		09		25apr18	in EditSubItem, don't modify selection
 		10		27apr18	handle reordered columns
 		11		04jun18	give popup edit control non-zero ID
+		12		15dec18	only handle tab key if control key is up
 
 		grid control
  
@@ -189,7 +190,7 @@ BOOL CGridCtrl::PreTranslateMessage(MSG* pMsg)
 				}
 				break;
 			case VK_TAB:
-				{
+				if (!(GetKeyState(VK_CONTROL) & GKS_DOWN)) {	// if control key up
 					int	nDeltaCol = (GetKeyState(VK_SHIFT) & GKS_DOWN) ? -1 : 1;
 					GotoSubitem(0, nDeltaCol);
 				}
@@ -205,6 +206,7 @@ BOOL CGridCtrl::PreTranslateMessage(MSG* pMsg)
 	} else {	// not editing
 		if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_TAB
 		&& !(GetKeyState(VK_SHIFT) & GKS_DOWN)	// if unshifted tab key pressed
+		&& !(GetKeyState(VK_CONTROL) & GKS_DOWN)	// and control key up
 		&& GetColumnCount() > 1) {	// and at least one subitem
 			int	iRow = GetSelectionMark();
 			if (iRow >= 0) {	// if current row valid

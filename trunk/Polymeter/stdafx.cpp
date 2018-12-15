@@ -166,3 +166,26 @@ bool FormatNumberCommas(LPCTSTR pszSrc, CString& sDst, int nPrecision)
 	sDst = sBuf;
 	return true;
 }
+
+int StringReplaceNoCase(CString& str, LPCTSTR pszOld, LPCTSTR pszNew)
+{
+	CString	sDest(str);
+	CString	sOld(pszOld);
+	sDest.MakeLower();	// convert destination and old string to lower case
+	sOld.MakeLower();
+	// first pass: find instances of old string and store their positions
+	int	nOldLen = sOld.GetLength();
+	CDWordArray	arrSub;
+	int	iPos = 0;
+	while ((iPos = sDest.Find(sOld, iPos)) >= 0) {	// while old string is found
+		arrSub.Add(iPos);	// add found string's position to substitution array
+		iPos += nOldLen;	// advance position past found string
+	}
+	// second pass: do the substitions, in reverse order for stability
+	int	nSubs = static_cast<int>(arrSub.GetSize());	// string indices are 32-bit
+	for (int iSub = nSubs - 1; iSub >= 0; iSub--) {	// for each substitution
+		str.Delete(arrSub[iSub], nOldLen);	// delete old string
+		str.Insert(arrSub[iSub], pszNew);	// insert new string
+	}
+	return nSubs;	// return number of substitutions
+}
