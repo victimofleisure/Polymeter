@@ -54,6 +54,14 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>12/09/18</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>right click on track list header divider unexpectedly shows view context menu</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>03/25/18</TD>
 <TD>done</TD>
@@ -1510,6 +1518,102 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>12/07/18</TD>
+<TD>12/10/18</TD>
+<TD>done</TD>
+<TD>song view should show negative time when start position is less than zero</TD>
+<TD>0.0.19.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/10/18</TD>
+<TD>12/10/18</TD>
+<TD>done</TD>
+<TD>adding or removing tracks or changing PPQ doesn't update song view</TD>
+<TD>0.0.19.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/27/18</TD>
+<TD>12/11/18</TD>
+<TD>done</TD>
+<TD>note window that limits modulated note to an octave; make start note a modulation target</TD>
+<TD>0.0.19.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/08/18</TD>
+<TD>12/12/18</TD>
+<TD>done</TD>
+<TD>position modulation; rotates target track by one or more steps</TD>
+<TD>0.0.19.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/08/18</TD>
+<TD>12/13/18</TD>
+<TD>done</TD>
+<TD>import steps from CSV file; export steps from selected tracks to CSV file</TD>
+<TD>0.0.19.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/19/18</TD>
+<TD>12/14/18</TD>
+<TD>done</TD>
+<TD>add clipboard support to modulation bar, so modulations can be copied from one track to another</TD>
+<TD>0.0.19.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/19/18</TD>
+<TD>12/14/18</TD>
+<TD>done</TD>
+<TD>sort modulations by type or source, via context menu</TD>
+<TD>0.0.19.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>06/05/18</TD>
+<TD>12/15/18</TD>
+<TD>done</TD>
+<TD>show tooltips for truncated items in all grid controls, via label tip extended style</TD>
+<TD>0.0.19.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/05/18</TD>
+<TD>12/15/18</TD>
+<TD>done</TD>
+<TD>find and replace for track names</TD>
+<TD>0.0.19.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/08/18</TD>
+<TD>12/15/18</TD>
+<TD>done</TD>
+<TD>import modulations from CSV file, replacing existing modulations; export modulations to CSV file</TD>
+<TD>0.0.19.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/14/18</TD>
+<TD>12/15/18</TD>
+<TD>done</TD>
+<TD>Ctrl + Tab should switch between documents; grid control must check for control key</TD>
+<TD>0.0.19.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/15/18</TD>
+<TD>12/15/18</TD>
+<TD>done</TD>
+<TD>show unnamed tracks in live view to avoid confusion</TD>
+<TD>0.0.19.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -1678,10 +1782,10 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>06/05/18</TD>
+<TD>06/21/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>optionally show tooltips in grid controls (Track and Channels views) via label tip extended style</TD>
+<TD>track merge command; combine tracks that have identical settings and non-overlapping steps</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1742,6 +1846,22 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>07/26/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>command to shift selected steps up or down one or more tracks</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>07/26/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>replace steps, like paste but overwrite steps at insert position instead of shifting them; command or mode?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>07/30/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -1798,6 +1918,14 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>10/17/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>in live view, dragging list selection beyond window boundaries should scroll list</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>10/27/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -1809,15 +1937,7 @@
 <TD>11/19/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>length modulation; cool idea but incompatible with sequencer architecture (Benoit)</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>11/19/18</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>not / invert operator for modulations; would allow a single modulator track to control a crossfade (Benoit)</TD>
+<TD>not/invert operator for modulations; would allow a single modulator track to control a crossfade (Benoit)</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1849,15 +1969,39 @@
 <TD>11/19/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>modulation export / import in tablular format such as CSV (Benoit)</TD>
+<TD>modulation export/import in tablular format such as CSV (Benoit)</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>12/05/18</TD>
+<TD>11/19/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>find and replace for track names; part and preset names too? Within selection only?</TD>
+<TD>vertically fill the note column with values from a scale or chord (Benoit); start with chromatic scale</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/06/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>offset command that shifts selected tracks in time by adding a value to their offsets</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/09/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>add hide/unhide column commands to track list header's context menu; where to store previous width?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/12/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>grid control's header should display tooltip for truncated column names; must subclass header control?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1905,6 +2049,14 @@
 <TD>11/19/18</TD>
 <TD>&nbsp;</TD>
 <TD>punt</TD>
+<TD>length modulation; cool idea but incompatible with sequencer architecture (Benoit)</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/19/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
 <TD>step copy/cut/paste should support non-rectangular step selection; incompatible with step view design (Benoit)</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
@@ -1937,79 +2089,15 @@
 <TD>11/27/18</TD>
 <TD>&nbsp;</TD>
 <TD>punt</TD>
-<TD>modulation graph, via GraphViz; support via separate app PolymeterGraph</TD>
+<TD>modulation graph, via GraphViz; supported via separate console app (PolymeterGraph)</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>06/21/18</TD>
+<TD>12/08/18</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>track merge command; combine tracks that have identical settings and non-overlapping steps</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>07/26/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>command to shift selected steps up or down one or more tracks</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>07/26/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>replace steps, like paste but overwrite steps at insert position instead of shifting them; command or mode?</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>10/17/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>in live view, dragging list selection beyond window boundaries should scroll list</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>11/19/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>vertically fill the note column with values from a scale or chord (Benoit); start with chromatic scale</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>11/27/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>note window that limits modulated note to an octave; start note should be modulation target; variable size too?</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>12/06/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>modulation bar needs clipboard support, so you can copy modulations from one track to another</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>12/06/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>offset command that shifts selected tracks in time by adding a value to their offsets</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>12/07/18</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>song view should show negative time when start position is less than zero</TD>
+<TD>import tracks from CSV file; use column header so columns can be omitted? Handle quotes, validate ranges</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
