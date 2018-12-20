@@ -155,7 +155,7 @@ void CSeqTrackArray::ToggleSteps(const CRect& rSelection, UINT nFlags)
 void CSeqTrackArray::GetTrackProperty(int iTrack, int iProp, CComVariant& var) const
 {
 	switch (iProp) {
-	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) \
+	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
 		case PROP_##name: var = Get##name(iTrack); break;
 	#include "TrackDef.h"		// generate code to get track properties
 	default:
@@ -166,7 +166,7 @@ void CSeqTrackArray::GetTrackProperty(int iTrack, int iProp, CComVariant& var) c
 void CSeqTrackArray::SetTrackProperty(int iTrack, int iProp, const CComVariant& var)
 {
 	switch (iProp) {
-	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) \
+	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
 		case PROP_##name: { type val; GetVariant(var, val); Set##name(iTrack, val); } break;
 	#include "TrackDef.h"		// generate code to set track properties
 	default:

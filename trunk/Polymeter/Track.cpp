@@ -15,6 +15,9 @@
 		05		14dec18	add sort to modulation array
         06      15dec18	add find by name to track array
 		07		15dec18	add import/export to packed modulations array
+		08		17dec18	move MIDI file types into class scope
+		09		18dec18	add import/export tracks
+		10		19dec18	refactor property info to support value range
 
 */
 
@@ -25,6 +28,14 @@
 #include "Persist.h"
 #include "math.h"	// for Resample
 #include "Midi.h"
+#include "ParseCSV.h"
+#include "SeqTrackArray.h"	// just for assigning track IDs
+
+const CTrackBase::PROPERTY_INFO CTrackBase::m_arrPropertyInfo[PROPERTIES] = {
+	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
+		{_T(#name), IDS_TRK_##name, &typeid(type), CProperties::PT_##proptype, items, itemopt, minval, maxval},
+	#include "TrackDef.h"	// generate track property info
+};
 
 const CProperties::OPTION_INFO CTrackBase::m_oiTrackType[TRACK_TYPES] = {
 	#define TRACKTYPEDEF(name) {_T(#name), IDS_TRACK_TYPE_##name},
@@ -41,12 +52,23 @@ const CProperties::OPTION_INFO CTrackBase::m_oiRangeType[RANGE_TYPES] = {
 	#include "TrackDef.h"	// generate range type name resource IDs
 };
 
+#define m_nLength m_arrStep	// track length is undefined because it's actually step array size
+const CTrack::PROPERTY_FIELD	CTrack::m_arrPropertyField[PROPERTIES] = {
+	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
+		{offsetof(CTrack, m_##prefix##name), sizeof(type)},
+	#include "TrackDef.h"		// generate code to initialize track property field descriptors
+};
+#undef m_nLength	// cancel track length workaround
+
+#define TRACK_EX_PROP_NAME_STEPS _T("Steps")	// extended property names for track import/export
+#define TRACK_EX_PROP_NAME_MODS _T("Mods")
+
 void CTrack::SetDefaults()
 {
-	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) m_##prefix##name = defval;
+	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) m_##prefix##name = defval;
 	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 	#include "TrackDef.h"		// generate code to initialize track properties
-	m_arrStep.SetSize(INIT_STEPS);
+	m_arrStep.SetSize(INIT_STEPS);	// length is actually step array size
 	m_nUID = 0;
 	m_iDub = 0;
 }
@@ -73,16 +95,75 @@ template<class T> int CTrack::Compare(const T& a, const T& b)
 int CTrack::CompareProperty(int iProp, const CTrack& track) const
 {
 	switch (iProp) {
-	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) case PROP_##name: \
+	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) case PROP_##name: \
 		return Compare(m_##prefix##name, track.m_##prefix##name);
 	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 	#include "TrackDef.h"		// generate code to compare track properties
-	case PROP_Length:
+	case PROP_Length:	// length is actually step array size
 		return Compare(m_arrStep.GetSize(), track.m_arrStep.GetSize());
 	case PROPERTIES:
 		return Compare(m_nUID, track.m_nUID);	// sort by track ID
 	}
 	return 0;
+}
+
+CString	CTrack::PropertyToString(int iProp) const
+{
+	switch (iProp) {
+	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
+		case PROP_##name: return CParseCSV::ValToStr(m_##prefix##name);
+	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
+	#include "TrackDef.h"	// generate code to covert track properties to strings
+	case PROP_Length:	// length is actually step array size
+		return CParseCSV::ValToStr(m_arrStep.GetSize());
+	}
+	return _T("");
+}
+
+bool CTrack::StringToProperty(int iProp, const CString& str)
+{
+	switch (iProp) {
+	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
+		case PROP_##name: return CParseCSV::StrToVal(str, m_##prefix##name);
+	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
+	#include "TrackDef.h"	// generate code to convert strings to track properties
+	case PROP_Length:	// length is actually step array size
+		{
+			int	nLength;
+			if (!CParseCSV::StrToVal(str, nLength))
+				return false;
+			if (nLength <= 1)	// sequencer requires at least one step
+				return false;
+			m_arrStep.SetSize(nLength);
+		}
+	}
+	return true;
+}
+
+void CTrack::GetPropertyValue(int iProp, void *pBuf, int nLen) const
+{
+	UNREFERENCED_PARAMETER(nLen);
+	ASSERT(iProp >= 0 && iProp < PROPERTIES);
+	if (iProp == PROP_Length) {	// length is actually step array size
+		int	nLength = m_arrStep.GetSize();
+		ASSERT(sizeof(int) <= nLen);
+		memcpy(pBuf, &nLength, sizeof(int));
+	} else {	// normal property
+		const PROPERTY_FIELD&	field = m_arrPropertyField[iProp];
+		ASSERT(field.nLen <= nLen);
+		memcpy(pBuf, LPBYTE(this) + field.nOffset, field.nLen);
+	}
+}
+
+bool CTrack::ValidateProperty(int iProp) const
+{
+	int	nMinVal, nMaxVal;
+	GetPropertyRange(iProp, nMinVal, nMaxVal);
+	if (nMinVal == nMaxVal)
+		return true;
+	int	nVal;
+	GetPropertyValue(iProp, &nVal, sizeof(int));
+	return nVal >= nMinVal && nVal <= nMaxVal;
 }
 
 bool CTrackBase::CDubArray::GetDubs(int nStartTime, int nEndTime) const
@@ -400,7 +481,7 @@ int CImportTrackArray::ImportSortCmp(const void *arg1, const void *arg2)
 
 void CImportTrackArray::ImportMidiFile(LPCTSTR szPath, int nOutTimeDiv, double fQuantization)
 {
-	CMidiTrackArray	arrInTrack;
+	CMidiFile::CMidiTrackArray	arrInTrack;
 	CStringArrayEx	arrInTrackName;
 	WORD	nInTimeDiv;
 	{
@@ -410,7 +491,7 @@ void CImportTrackArray::ImportMidiFile(LPCTSTR szPath, int nOutTimeDiv, double f
 	ImportMidiFile(arrInTrack, arrInTrackName, nInTimeDiv, nOutTimeDiv, fQuantization);
 }
 
-void CImportTrackArray::ImportMidiFile(const CMidiTrackArray& arrInTrack, const CStringArrayEx& arrInTrackName, int nInTimeDiv, int nOutTimeDiv, double fQuantization)
+void CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTrack, const CStringArrayEx& arrInTrackName, int nInTimeDiv, int nOutTimeDiv, double fQuantization)
 {
 	int	nInQuant = max(round(nInTimeDiv * fQuantization), 1);	// convert quantization to input ticks
 	int	nOutQuant = max(round(nOutTimeDiv * fQuantization), 1);	// convert quantization to output ticks
@@ -419,7 +500,7 @@ void CImportTrackArray::ImportMidiFile(const CMidiTrackArray& arrInTrack, const 
 	CMap<int, int, TRACK_INFO, TRACK_INFO&>	mapTrack;
 	int	nInTracks = arrInTrack.GetSize();
 	for (int iTrack = 0; iTrack < nInTracks; iTrack++) {	// for each input track
-		const CMidiEventArray&	arrEvent = arrInTrack[iTrack];
+		const CMidiFile::CMidiEventArray&	arrEvent = arrInTrack[iTrack];
 		int	nEvents = arrEvent.GetSize();
 		int	nTime = 0;	// reset event time
 		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each of track's events
@@ -484,10 +565,10 @@ void CImportTrackArray::ImportMidiFile(const CMidiTrackArray& arrInTrack, const 
 
 void CTrackBase::CPackedModulationArray::Import(LPCTSTR pszPath, int nTracks)
 {
-	ASSERT(IsEmpty());
+	ASSERT(IsEmpty());	// array must be empty
 	CStdioFile	fIn(pszPath, CFile::modeRead);
 	CString	sLine;
-	while (fIn.ReadString(sLine)) {
+	while (fIn.ReadString(sLine)) {	// for each line of input file
 		PACKED_MODULATION	mod;
 		if (_stscanf_s(sLine, _T("%d,%d,%d"), &mod.iType, &mod.iSource, &mod.iTarget) == 3) {
 			if (mod.iType >= 0 && mod.iType < MODULATION_TYPES && mod.iTarget >= 0 && mod.iTarget < nTracks) {
@@ -507,17 +588,17 @@ void CTrackBase::CPackedModulationArray::Export(LPCTSTR pszPath) const
 	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
 		const PACKED_MODULATION&	mod = GetAt(iMod);
 		sLine.Format(_T("%d,%d,%d\n"), mod.iType, mod.iSource, mod.iTarget);
-		fOut.WriteString(sLine);
+		fOut.WriteString(sLine);	// write line to output file
 	}
 }
 
 void CTrackArray::ImportSteps(LPCTSTR pszPath)
 {
-	ASSERT(IsEmpty());
+	ASSERT(IsEmpty());	// array must be empty
 	CTrack	trk(true);	// set defaults
 	CStdioFile	fIn(pszPath, CFile::modeRead);
 	CString	sLine, sToken;
-	while (fIn.ReadString(sLine)) {
+	while (fIn.ReadString(sLine)) {	// for each line of input file
 		int	iStart = 0;
 		trk.m_arrStep.FastSetSize(0);
 		while (!(sToken = sLine.Tokenize(_T(","), iStart)).IsEmpty()) {
@@ -530,22 +611,173 @@ void CTrackArray::ImportSteps(LPCTSTR pszPath)
 	}
 }
 
-void CTrackArray::ExportSteps(const CIntArrayEx& arrSelection, LPCTSTR pszPath) const
+void CTrackArray::ExportSteps(const CIntArrayEx *parrSelection, LPCTSTR pszPath) const
 {
 	CStdioFile	fOut(pszPath, CFile::modeCreate | CFile::modeWrite);
-	int	nSels = arrSelection.GetSize();
+	int	nSels;
+	if (parrSelection != NULL)	// if selection exists
+		nSels = parrSelection->GetSize();	// export selected tracks
+	else	// no selection
+		nSels = GetSize();	// export all tracks
 	CString	sLine, sNum;
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		const CTrack& trk = GetAt(arrSelection[iSel]);
+		int	iTrack;
+		if (parrSelection != NULL)	// if selection exists
+			iTrack = (*parrSelection)[iSel];	// get selected track's index
+		else	// no selection
+			iTrack = iSel;	// selection index is track index
+		const CTrack& trk = GetAt(iTrack);
 		sLine.Empty();
 		int	nSteps = trk.m_arrStep.GetSize();
 		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each of track's steps
-			if (iStep)
-				sLine += ',';
-			sNum.Format(_T("%d"), trk.m_arrStep[iStep]);
-			sLine += sNum;
+			if (iStep)	// if not first item
+				sLine += ',';	// insert separator
+			sNum.Format(_T("%d"), trk.m_arrStep[iStep]);	// convert step to string
+			sLine += sNum;	// append step string to line
 		}
-		fOut.WriteString(sLine + '\n');
+		fOut.WriteString(sLine + '\n');	// write line to output file
+	}
+}
+
+void CTrackArray::OnImportTracksError(int nErrMsgFormatID, int iRow, int iCol)
+{
+	CString	sLocation;
+	sLocation.Format(IDS_IMPORT_ERR_LOCATION, iRow + 1, iCol + 1);
+	AfxMessageBox(LDS(nErrMsgFormatID) + '\n' + sLocation);
+	AfxThrowUserException();
+}
+
+void CTrackArray::ImportTracks(LPCTSTR pszPath)
+{
+	ASSERT(IsEmpty());	// array must be empty
+	CStdioFile	fIn(pszPath, CFile::modeRead);
+	CString	sLine, sToken;
+	CIntArrayEx	arrCol;
+	int	iRow = 0;
+	int	nStartID = CSeqTrackArray::GetCurrentID() + 1;	// save current track ID
+	enum {	// define special columns that don't map directly to properties
+		PROP_STEPS = CTrack::PROPERTIES,
+		PROP_MODS,
+	};
+	while (fIn.ReadString(sLine)) {	// for each line of input file
+		if (!sLine.IsEmpty()) {	// ignore blank lines
+			CParseCSV	parser(sLine);
+			if (arrCol.IsEmpty()) {	// if expecting column header
+				while (parser.GetString(sToken)) {	// for each token in line
+					int	iProp = CTrackBase::FindPropertyInternalName(sToken);
+					if (iProp < 0) {	// if not ordinary track property
+						if (sToken == TRACK_EX_PROP_NAME_STEPS) {	// if steps array
+							iProp = PROP_STEPS;
+						} else if (sToken == TRACK_EX_PROP_NAME_MODS) {	// if modulations array
+							iProp = PROP_MODS;
+						} else {	// not special track property either
+							OnImportTracksError(IDS_IMPORT_ERR_PROPERTY, iRow, arrCol.GetSize());
+						}
+					}
+					arrCol.Add(iProp);
+				}
+			} else {	// expecting data
+				CTrack	trk(true);
+				trk.m_nUID = CSeqTrackArray::AssignID();	// assign new track ID
+				int	nCols = arrCol.GetSize();
+				for (int iCol = 0; iCol < nCols; iCol++) {	// for each column
+					int	iProp = arrCol[iCol];	// get column's property index
+					if (!parser.GetString(sToken))	// if can't get token
+						break;	// technically an error, but just exit column loop
+					if (iProp < CTrack::PROPERTIES) {	// if track property
+						if (!trk.StringToProperty(iProp, sToken)) {	// convert token to property
+							OnImportTracksError(IDS_IMPORT_ERR_FORMAT, iRow, iCol);
+						}
+						if (!trk.ValidateProperty(iProp)) {
+							OnImportTracksError(IDS_IMPORT_ERR_RANGE, iRow, iCol);
+						}
+					} else if (iProp == PROP_STEPS) {	// if steps array
+						CTrack::CStepArray	arrStep;
+						CString	sStep;
+						int	iStart = 0;
+						while (!(sStep = sToken.Tokenize(_T(","), iStart)).IsEmpty()) {
+							int	nStep;
+							if (_stscanf_s(sStep, _T("%d"), &nStep) == 1) {	// if valid step
+								arrStep.Add(static_cast<BYTE>(nStep));
+							} else {	// invalid step format
+								OnImportTracksError(IDS_IMPORT_ERR_FORMAT, iRow, iCol);
+							}
+						}
+						if (arrStep.GetSize())
+							trk.m_arrStep = arrStep;
+					} else if (iProp == PROP_MODS) {	// if modulations array
+						CString	sMod;
+						int	iStart = 0;
+						while (!(sMod = sToken.Tokenize(_T(","), iStart)).IsEmpty()) {
+							CTrack::CModulation	mod;
+							if (_stscanf_s(sMod, _T("%d:%d"), &mod.m_iType, &mod.m_iSource) == 2) {	// if valid modulation
+								if (mod.m_iSource >= 0)	// if valid modulation source
+									mod.m_iSource += nStartID;	// convert track index to track ID
+								trk.m_arrModulator.Add(mod);
+							} else {	// invalid modulation format
+								OnImportTracksError(IDS_IMPORT_ERR_FORMAT, iRow, iCol);
+							}
+						}
+					}
+				}
+				Add(trk);	// add track to our array
+			}
+		}
+		iRow++;
+	}
+}
+
+void CTrackArray::ExportTracks(const CIntArrayEx *parrSelection, LPCTSTR pszPath) const
+{
+	CStdioFile	fOut(pszPath, CFile::modeCreate | CFile::modeWrite);
+	int	nSels;
+	if (parrSelection != NULL)	// if selection exists
+		nSels = parrSelection->GetSize();	// export selected tracks
+	else	// no selection
+		nSels = GetSize();	// export all tracks
+	CString	sLine;
+	for (int iProp = 0; iProp < CTrackBase::PROPERTIES; iProp++) {	// for each property
+		if (iProp)	// if not first item
+			sLine += ',';	// insert separator
+		sLine += CTrackBase::GetPropertyInternalName(iProp);
+	}
+	sLine += _T(",") TRACK_EX_PROP_NAME_STEPS _T(",") TRACK_EX_PROP_NAME_MODS;
+	fOut.WriteString(sLine + '\n');
+	CString	sVal;
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack;
+		if (parrSelection != NULL)	// if selection exists
+			iTrack = (*parrSelection)[iSel];	// get selected track's index
+		else	// no selection
+			iTrack = iSel;	// selection index is track index
+		const CTrack& trk = GetAt(iTrack);
+		sLine.Empty();
+		for (int iProp = 0; iProp < CTrackBase::PROPERTIES; iProp++) {	// for each property
+			if (iProp)	// if not first item
+				sLine += ',';	// insert separator
+			sLine += trk.PropertyToString(iProp);	// convert to string and append
+		}
+		sLine += _T(",\"");
+		int	nSteps = trk.m_arrStep.GetSize();
+		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step
+			if (iStep)	// if not first item
+				sLine += ',';	// insert separator
+			sLine += CParseCSV::ValToStr(trk.m_arrStep[iStep]);	// convert to string and append
+		}
+		sLine += _T("\",");
+		int	nMods = trk.m_arrModulator.GetSize();
+		if (nMods) {
+			sLine += '\"';
+			for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
+				const CTrack::CModulation&	mod = trk.m_arrModulator[iMod];
+				if (iMod)	// if not first item
+					sLine += ',';
+				sVal.Format(_T("%d:%d"), mod.m_iType, mod.m_iSource);	// convert to string
+				sLine += sVal;	// append to line
+			}
+			sLine += '\"';
+		}
+		fOut.WriteString(sLine + '\n');	// write line to output file
 	}
 }
 

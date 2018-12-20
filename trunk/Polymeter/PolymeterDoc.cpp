@@ -19,6 +19,9 @@
 		09		13dec18	add import/export steps commands
 		10		14dec18	bump file version for note range, position modulation
 		11		15dec18	add import/export modulations commands
+		12		17dec18	move MIDI file types into class scope
+		13		18dec18	add import/export tracks
+		14		19dec18	move track property names into base class
 
 */
 
@@ -121,11 +124,6 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 const int CPolymeterDoc::m_arrUndoTitleId[UNDO_CODES] = {
 	#define UCODE_DEF(name) IDS_EDIT_##name,
 	#include "UndoCodeData.h"	
-};
-
-const int CPolymeterDoc::m_arrTrackPropNameId[CTrackBase::PROPERTIES] = {
-	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) IDS_TRK_##name,
-	#include "TrackDef.h"		// generate enumeration
 };
 
 const LPCTSTR CPolymeterDoc::m_arrViewTypeName[VIEW_TYPES] = {
@@ -313,7 +311,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 		CTrack	trk(true);	// initialize to defaults
 		CString	sTrkID;
 		sTrkID.Format(_T("Track%d"), iTrack);
-		#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) \
+		#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
 			if (PT_##proptype == PT_ENUM) \
 				ReadEnum(sTrkID, _T(#name), trk.m_##prefix##name, itemopt, items); \
 			else \
@@ -370,7 +368,7 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 		const CTrack&	trk = m_Seq.GetTrack(iTrack);
 		CString	sTrkID;
 		sTrkID.Format(_T("Track%d"), iTrack);
-		#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) \
+		#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
 			if (PT_##proptype == PT_ENUM) \
 				WriteEnum(sTrkID, _T(#name), trk.m_##prefix##name, itemopt, items); \
 			else \
@@ -476,9 +474,9 @@ void CPolymeterDoc::CopyTracksToClipboard()
 	}
 }
 
-void CPolymeterDoc::PasteTracks()
+void CPolymeterDoc::PasteTracks(CTrackArray& arrCBTrack)
 {
-	if (m_Seq.GetTrackCount() + theApp.m_arrTrackClipboard.GetSize() > MAX_TRACKS)	// if too many tracks
+	if (m_Seq.GetTrackCount() + arrCBTrack.GetSize() > MAX_TRACKS)	// if too many tracks
 		AfxThrowNotSupportedException();	// throw unsupported
 	int	iInsPos = GetInsertPos();
 	{
@@ -486,18 +484,18 @@ void CPolymeterDoc::PasteTracks()
 		// the insert function assigns new IDs to the clipboard tracks, so the new IDs must be added to
 		// the track map; but if the clipboard tracks refer to other clipboard tracks, they do so using
 		// their previous IDs, so the previous IDs must also be added unless they're already in the map
-		int	nCBTracks = theApp.m_arrTrackClipboard.GetSize();
+		int	nCBTracks = arrCBTrack.GetSize();
 		int	nTracks = GetTrackCount();
 		UINT	nNewID = m_Seq.GetCurrentID();
 		for (int iCBTrack = 0; iCBTrack < nCBTracks; iCBTrack++) {	// for each clipboard track
-			const CTrack&	trk = theApp.m_arrTrackClipboard[iCBTrack];
+			const CTrack&	trk = arrCBTrack[iCBTrack];
 			int	iCBPos = nTracks + iCBTrack;	// after document's tracks
 			TrackArrayEdit.m_mapTrackID.SetAt(++nNewID, iCBPos);	// add track's new ID to map; pre-increment ID
 			int	iTemp;
 			if (!TrackArrayEdit.m_mapTrackID.Lookup(trk.m_nUID, iTemp))	// if track's previous ID not found in map
 				TrackArrayEdit.m_mapTrackID.SetAt(trk.m_nUID, iCBPos);	// add track's previous ID to map
 		}
-		m_Seq.InsertTracks(iInsPos, theApp.m_arrTrackClipboard);	// insert clipboard tracks, assigning new IDs
+		m_Seq.InsertTracks(iInsPos, arrCBTrack);	// insert clipboard tracks, assigning new IDs
 		for (int iCBTrack = 0; iCBTrack < nCBTracks; iCBTrack++) {	// for each clipboard track
 			int	iTrack = iInsPos + iCBTrack;
 			const CTrack&	trk = m_Seq.GetTrack(iTrack);
@@ -515,7 +513,7 @@ void CPolymeterDoc::PasteTracks()
 		}
 	}	// dtor ends transaction
 	SetModifiedFlag();
-	SelectRange(iInsPos, theApp.m_arrTrackClipboard.GetSize(), false);	// don't update views
+	SelectRange(iInsPos, arrCBTrack.GetSize(), false);	// don't update views
 	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	NotifyUndoableEdit(0, UCODE_PASTE_TRACKS);
 }
@@ -1181,7 +1179,7 @@ void CPolymeterDoc::SaveTrackProperty(CUndoState& State) const
 	int	iTrack = State.GetCtrlID();
 	int	iProp = HIWORD(State.GetCode());
 	switch (iProp) {
-	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) \
+	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
 	case PROP_##name:	\
 		{	\
 			type val(m_Seq.Get##name(iTrack));	\
@@ -1200,7 +1198,7 @@ void CPolymeterDoc::RestoreTrackProperty(const CUndoState& State)
 	int	iTrack = State.GetCtrlID();
 	int	iProp = HIWORD(State.GetCode());
 	switch (iProp) {
-	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) \
+	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
 	case PROP_##name:	\
 		{	\
 			type val;	\
@@ -2207,13 +2205,13 @@ CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 	case UCODE_TRACK_PROP:
 		{
 			int	iProp = HIWORD(State.GetCode());
-			sTitle.LoadString(m_arrTrackPropNameId[iProp]);
+			sTitle.LoadString(GetPropertyNameID(iProp));
 		}
 		break;
 	case UCODE_MULTI_TRACK_PROP:
 		{
 			int	iProp = State.GetCtrlID();
-			sTitle.LoadString(m_arrTrackPropNameId[iProp]);
+			sTitle.LoadString(GetPropertyNameID(iProp));
 		}
 		break;
 	case UCODE_TRACK_STEP:
@@ -2410,13 +2408,13 @@ bool CPolymeterDoc::RecordToTracks(bool bEnable)
 		int	nEvents = theApp.m_arrMidiInEvent.GetSize();
 		if (!nEvents)
 			return false;
-		CMidiTrackArray	arrMidiTrack;
+		CMidiFile::CMidiTrackArray	arrMidiTrack;
 		arrMidiTrack.Add(theApp.m_arrMidiInEvent);
 		int	nStartTime = arrMidiTrack[0][0].DeltaT;	// first MIDI input event's timestamp
 		int	nPrevTime = 0;
 		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each recorded MIDI input event
 			// event timestamps are in milliseconds relative to when MIDI input device was started
-			MIDI_EVENT&	evt = arrMidiTrack[0][iEvent];
+			CMidiFile::MIDI_EVENT&	evt = arrMidiTrack[0][iEvent];
 			int nTime = static_cast<int>(m_Seq.ConvertMillisecondsToPosition(evt.DeltaT - nStartTime));
 			evt.DeltaT = nTime - nPrevTime;	// convert to delta time in sequencer ticks
 			nPrevTime = nTime;
@@ -3077,9 +3075,10 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_VELOCITY_RANGE, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TOOLS_IMPORT_STEPS, OnToolsImportSteps)
 	ON_COMMAND(ID_TOOLS_EXPORT_STEPS, OnToolsExportSteps)
-	ON_UPDATE_COMMAND_UI(ID_TOOLS_EXPORT_STEPS, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TOOLS_IMPORT_MODULATIONS, OnToolsImportModulations)
 	ON_COMMAND(ID_TOOLS_EXPORT_MODULATIONS, OnToolsExportModulations)
+	ON_COMMAND(ID_TOOLS_IMPORT_TRACKS, OnToolsImportTracks)
+	ON_COMMAND(ID_TOOLS_EXPORT_TRACKS, OnToolsExportTracks)
 	ON_COMMAND(ID_TRACK_TRANSPOSE, OnTrackTranspose)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_TRANSPOSE, OnUpdateTrackTranspose)
 	ON_COMMAND(ID_TRACK_VELOCITY, OnTrackVelocity)
@@ -3274,7 +3273,7 @@ void CPolymeterDoc::OnEditPaste()
 			if (!PasteSteps(m_rStepSel))
 				AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
 		} else	// track selection
-			PasteTracks();
+			PasteTracks(theApp.m_arrTrackClipboard);
 	}
 }
 
@@ -3763,7 +3762,12 @@ void CPolymeterDoc::OnToolsExportSteps()
 	CString	sDlgTitle(LPCTSTR(IDS_EXPORT));
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
-		m_Seq.GetTracks().ExportSteps(m_arrTrackSel, fd.GetPathName());
+		const CIntArrayEx	*parrTrackSel;
+		if (GetSelectedCount())	// if selection exists
+			parrTrackSel = &m_arrTrackSel;	// export selected tracks
+		else	// no selection
+			parrTrackSel = NULL;	// export all tracks
+		m_Seq.GetTracks().ExportSteps(parrTrackSel, fd.GetPathName());
 	}
 }
 
@@ -3798,5 +3802,36 @@ void CPolymeterDoc::OnToolsExportModulations()
 		CPackedModulationArray	arrMod;
 		m_Seq.GetModulations(arrMod);
 		arrMod.Export(fd.GetPathName());
+	}
+}
+
+void CPolymeterDoc::OnToolsImportTracks()
+{
+	CString	sFilter(LPCTSTR(IDS_CSV_FILE_FILTER));
+	CFileDialog	fd(TRUE, _T(".csv"), NULL, OFN_HIDEREADONLY, sFilter);
+	CString	sDlgTitle(LPCTSTR(IDS_IMPORT));
+	fd.m_ofn.lpstrTitle = sDlgTitle;
+	if (fd.DoModal() == IDOK) {
+		CTrackArray	arrTrack;
+		arrTrack.ImportTracks(fd.GetPathName());
+		PasteTracks(arrTrack);
+	}
+}
+
+void CPolymeterDoc::OnToolsExportTracks()
+{
+	CString	sFilter(LPCTSTR(IDS_CSV_FILE_FILTER));
+	CPathStr	sFileName(GetTitle());
+	sFileName.RemoveExtension();
+	CFileDialog	fd(FALSE, _T(".csv"), sFileName, OFN_OVERWRITEPROMPT, sFilter);
+	CString	sDlgTitle(LPCTSTR(IDS_EXPORT));
+	fd.m_ofn.lpstrTitle = sDlgTitle;
+	if (fd.DoModal() == IDOK) {
+		const CIntArrayEx	*parrTrackSel;
+		if (GetSelectedCount())	// if selection exists
+			parrTrackSel = &m_arrTrackSel;	// export selected tracks
+		else	// no selection
+			parrTrackSel = NULL;	// export all tracks
+		m_Seq.GetTracks().ExportTracks(parrTrackSel, fd.GetPathName());
 	}
 }

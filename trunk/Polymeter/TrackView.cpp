@@ -10,6 +10,7 @@
         00      23apr18	initial version
 		01		11dec18	add note range type and start
 		02		15dec18	add label tip style to grid
+		03		19dec18	centralize property value ranges
 
 */
 
@@ -46,7 +47,7 @@ const CGridCtrl::COL_INFO CTrackView::m_arrColInfo[COLUMNS] = {
 	{IDS_TRK_Number, LVCFMT_LEFT, 40},
 	{IDS_TRK_Name, LVCFMT_LEFT, 100},
 	{IDS_TRK_Type, LVCFMT_LEFT, 70},
-	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) {IDS_TRK_##name, LVCFMT_LEFT, 70}, 
+	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) {IDS_TRK_##name, LVCFMT_LEFT, 70}, 
 	#define TRACKDEF_INT	// for integer track properties only
 	#include "TrackDef.h"	// generate column definitions
 };
@@ -325,15 +326,16 @@ DefaultCreateEditCtrl:
 		CPopupNumEdit	*pEdit = new CPopupNumEdit;
 		pEdit->SetFormat(CNumEdit::DF_INT | CNumEdit::DF_SPIN);
 		bool	bIsCustomType = false;
+		int	iProp = m_iEditCol - 1;	// convert column to property index, accounting for number column
+		int	nMinVal, nMaxVal;
+		GetPropertyRange(iProp, nMinVal, nMaxVal);
+		if (nMinVal != nMaxVal)	// if property defines a range
+			pEdit->SetRange(nMinVal, nMaxVal);	// set edit control's range
 		switch (m_iEditCol) {
-		case COL_Channel:
-			pEdit->SetRange(1, 16);
-			break;
 		case COL_Note:
 		case COL_RangeStart:
 			{
 				bool	bShowNoteNames = pDoc->m_Seq.IsNote(iTrack) && theApp.m_Options.m_View_bShowNoteNames;
-				pEdit->SetRange(0, MIDI_NOTE_MAX);
 				pEdit->SetKeySignature(static_cast<BYTE>(pDoc->m_nKeySig));
 				pEdit->SetNoteEntry(bShowNoteNames);
 				if (bShowNoteNames) {	// if showing note names
@@ -345,15 +347,8 @@ DefaultCreateEditCtrl:
 				}
 			}
 			break;
-		case COL_Quant:
-			pEdit->SetRange(1, SHRT_MAX);
-			break;
 		case COL_Length:
-			pEdit->SetRange(1, INT_MAX);
 			pDoc->m_Seq.GetSteps(iTrack, m_arrStep);	// save track's step array
-			break;
-		case COL_Velocity:
-			pEdit->SetRange(-MIDI_NOTE_MAX, MIDI_NOTE_MAX);
 			break;
 		}
 		if (!bIsCustomType)	// if ordinary integer
@@ -630,7 +625,7 @@ void CTrackView::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 DefaultDisplayItem:
 			int	nVal;
 			switch (item.iSubItem) {
-			#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) case COL_##name: \
+			#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) case COL_##name: \
 				nVal = pDoc->m_Seq.Get##name(iTrack); break;
 			#define TRACKDEF_INT	// for integer track properties only
 			#include "TrackDef.h"	// generate column definitions

@@ -12,6 +12,7 @@
         02      07mar14	convert to MFC
         03      25apr18	standardize names
         04      10oct18	add read
+		05		17dec18	move types from file scope into class
 		
 		MIDI file I/O
  
@@ -21,14 +22,6 @@
 #define CMIDIFILE_INCLUDED
 
 #include "ArrayEx.h"
-
-struct MIDI_EVENT {
-	UINT	DeltaT;		// delta time in PPQ
-	UINT	Msg;		// short MIDI message
-};
-
-typedef CArrayEx<MIDI_EVENT, MIDI_EVENT> CMidiEventArray;
-typedef CArrayEx<CMidiEventArray, CMidiEventArray&> CMidiTrackArray;
 
 class CMidiFile : public CFile {
 public:
@@ -48,6 +41,12 @@ public:
 		BYTE	ClocksPerClick;		// MIDI clocks per metronome click
 		BYTE	QuarterNote;		// number of 1/32 notes per 24 MIDI clocks
 	};
+	struct MIDI_EVENT {
+		UINT	DeltaT;		// delta time in PPQ
+		UINT	Msg;		// short MIDI message
+	};
+	typedef CArrayEx<MIDI_EVENT, MIDI_EVENT> CMidiEventArray;
+	typedef CArrayEx<CMidiEventArray, CMidiEventArray&> CMidiTrackArray;
 
 // Operations
 	void	WriteHeader(USHORT nTracks, USHORT nPPQ, double fTempo = 0, const TIME_SIGNATURE* pTimeSig = NULL, const KEY_SIGNATURE* pKeySig = NULL);

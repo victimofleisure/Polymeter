@@ -9,6 +9,7 @@
 		rev		date	comments
         00      23mar18	initial version
 		01		02dec18	add recording of MIDI input
+		02		17dec18	move MIDI file types into class scope
 
 */
 
@@ -532,7 +533,7 @@ void CALLBACK CPolymeterApp::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwIn
 							theApp.m_nMidiInStartTime = static_cast<int>(nPos);
 					}
 				}
-				MIDI_EVENT	evt = {UINT64TO32(dwParam2), UINT64TO32(dwParam1)};
+				CMidiFile::MIDI_EVENT	evt = {UINT64TO32(dwParam2), UINT64TO32(dwParam1)};
 				theApp.m_arrMidiInEvent.Add(evt);	// add event to MIDI input array
 			}
 		}

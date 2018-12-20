@@ -12,6 +12,8 @@
 		02		28nov18	add undo handlers for modify parts and refactor names
 		03		02dec18	add recording of MIDI input
 		04		10dec18	add song time shift to handle negative times
+		05		18dec18	add import/export tracks
+		06		19dec18	move track property names into base class
 
 */
 
@@ -140,7 +142,6 @@ public:
 	int		GetTrackCount() const;
 	int		GetSelectedCount() const;
 	bool	GetSelected(int iTrack) const;
-	static	int		GetTrackPropertyNameID(int iProp);
 	void	SetTrackStep(int iTrack, int iStep, STEP nStep);
 	void	SetTrackSteps(const CRect& rSelection, STEP nStep);
 	void	ToggleTrackSteps(const CRect& rSelection, UINT nFlags);
@@ -343,7 +344,6 @@ protected:
 
 // Constants
 	static const int	m_arrUndoTitleId[];	// array of string resource IDs for undo titles
-	static const int	m_arrTrackPropNameId[];	// array of string resource IDs for track property names
 	static const LPCTSTR	m_arrViewTypeName[];	// array of view type names
 
 // Data members
@@ -370,7 +370,7 @@ protected:
 	void	SetViewType(int nViewType);
 	void	OnTrackArrayEdit(const CTrackIDMap& mapTrackID);
 	void	CopyTracksToClipboard();
-	void	PasteTracks();
+	void	PasteTracks(CTrackArray& arrCBTrack);
 	void	InsertTracks();
 	bool	RecordToTracks(bool bEnable);
 	void	OnImportTracks(CTrackArray& arrTrack);
@@ -488,6 +488,8 @@ protected:
 	afx_msg void OnToolsExportSteps();
 	afx_msg void OnToolsImportModulations();
 	afx_msg void OnToolsExportModulations();
+	afx_msg void OnToolsImportTracks();
+	afx_msg void OnToolsExportTracks();
 	afx_msg void OnTrackShiftLeft();
 	afx_msg void OnTrackShiftRight();
 	afx_msg void OnTrackShiftSteps();
@@ -523,12 +525,6 @@ inline int CPolymeterDoc::GetSelectedCount() const
 inline bool CPolymeterDoc::GetSelected(int iTrack) const
 {
 	return m_arrTrackSel.Find(iTrack) >= 0;
-}
-
-inline int CPolymeterDoc::GetTrackPropertyNameID(int iProp)
-{
-	ASSERT(iProp >= 0 && iProp < CTrackBase::PROPERTIES);
-	return m_arrTrackPropNameId[iProp];
 }
 
 inline bool CPolymeterDoc::IsTrackView() const

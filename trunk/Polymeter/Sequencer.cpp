@@ -15,6 +15,7 @@
 		05		07dec18	in export implementation, reset cached parameters
 		06		11dec18	add note range and range modulation
 		07		14dec18	add position modulation
+		08		17dec18	move MIDI file types into class scope
 
 */
 
@@ -665,21 +666,21 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 	int	nChunks = (nDuration * 1000 - 1) / nChunkDuration + 1;	// number of chunks, rounded up
 	m_nCBLen = nChunkLen;	// set callback length member; used in AddTrackEvents
 	{	// output initialization track
-		CMidiEventArray arrMidiEvent;
+		CMidiFile::CMidiEventArray arrMidiEvent;
 		int	nInitEvents = m_arrInitMidiEvent.GetSize();
 		arrMidiEvent.SetSize(nInitEvents + 1);
 		for (int iEvt = 0; iEvt < nInitEvents; iEvt++) {	// for each initial event
-			MIDI_EVENT	evt = {0, m_arrInitMidiEvent[iEvt]};
+			CMidiFile::MIDI_EVENT	evt = {0, m_arrInitMidiEvent[iEvt]};
 			arrMidiEvent[iEvt] = evt;
 		}
 		int	nDurationTicks = static_cast<int>(ConvertSecondsToPosition(nDuration));
-		MIDI_EVENT	evt = {nDurationTicks, KEY_AFT};	// dummy event to pad track out to duration
+		CMidiFile::MIDI_EVENT	evt = {nDurationTicks, KEY_AFT};	// dummy event to pad track out to duration
 		arrMidiEvent[nInitEvents] = evt;
 		fMidi.WriteTrack(arrMidiEvent);	// write initialization track
 	}
 	if (m_bIsSongMode) {	// if song mode
 		int	nCBTime = m_nStartPos;
-		CMidiEventArray arrMidiEvent[MIDI_CHANNELS];
+		CMidiFile::CMidiEventArray arrMidiEvent[MIDI_CHANNELS];
 		int	nTracks = GetSize();
 		for (int iChunk = 0; iChunk < nChunks; iChunk++) {	// for each time chunk
 			m_arrEvent.FastRemoveAll();	// empty event array
@@ -690,7 +691,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 			int	nEvents = m_arrEvent.GetSize();
 			for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
 				const CEvent&	evt = m_arrEvent[iEvent];
-				MIDI_EVENT	midiEvt;
+				CMidiFile::MIDI_EVENT	midiEvt;
 				midiEvt.DeltaT = evt.m_dwTime + nCBTime;	// convert to song time
 				midiEvt.Msg = evt.m_dwEvent;
 				int	iChan = MIDI_CHAN(evt.m_dwEvent);
@@ -704,7 +705,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 				int	nEvents = arrMidiEvent[iChan].GetSize();
 				int	nPrevTime = m_nStartPos;
 				for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each channel event
-					MIDI_EVENT&	midiEvt = arrMidiEvent[iChan][iEvent];
+					CMidiFile::MIDI_EVENT&	midiEvt = arrMidiEvent[iChan][iEvent];
 					int	nTime = midiEvt.DeltaT;
 					midiEvt.DeltaT -= nPrevTime;	// convert to delta time
 					nPrevTime = nTime;
@@ -717,7 +718,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 			int	iTrack = arrUsedTrack[iUsed];	// get track index
 			int	nCBTime = 0;
 			int	nPadTime = 0;
-			CMidiEventArray arrMidiEvent;
+			CMidiFile::CMidiEventArray arrMidiEvent;
 			for (int iChunk = 0; iChunk < nChunks; iChunk++) {	// for each time chunk
 				m_arrEvent.FastRemoveAll();	// empty event array
 				AddTrackEvents(iTrack, nCBTime);	// get track's events for this chunk
@@ -728,7 +729,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 					int	nPrevTime = -nPadTime;
 					for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
 						const CEvent&	evt = m_arrEvent[iEvent];
-						MIDI_EVENT	midiEvt;
+						CMidiFile::MIDI_EVENT	midiEvt;
 						midiEvt.DeltaT = evt.m_dwTime - nPrevTime;	// convert to delta time
 						midiEvt.Msg = evt.m_dwEvent;
 						arrMidiEvent.Add(midiEvt);

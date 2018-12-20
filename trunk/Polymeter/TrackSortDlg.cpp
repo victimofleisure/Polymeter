@@ -95,7 +95,7 @@ BOOL CTrackSortDlg::OnInitDialog()
 		m_cbProp[iLevel].AddString(sName);	// add none option to property combo
 	}
 	for (int iProp = 0; iProp < CTrack::PROPERTIES; iProp++) {	// for each track property
-		sName.LoadString(CPolymeterDoc::GetTrackPropertyNameID(iProp));
+		sName.LoadString(CTrackBase::GetPropertyNameID(iProp));
 		for (int iLevel = 0; iLevel < SORT_LEVELS; iLevel++) {	// for each sort level
 			m_cbProp[iLevel].AddString(sName);	// add property name to property combo
 		}

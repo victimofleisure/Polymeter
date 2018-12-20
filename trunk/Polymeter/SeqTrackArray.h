@@ -94,6 +94,7 @@ public:
 	static	UINT	GetCurrentID();
 
 // Operations
+	static	UINT	AssignID();
 	void	AssignID(int iTrack);
 	void	InsertTracks(int iTrack, int nCount = 1);
 	void	InsertTrack(int iTrack, CTrack& track, bool bKeepID = false);
@@ -342,6 +343,11 @@ inline int CSeqTrackArray::GetDubCount(int iTrack) const
 inline const CTrackBase::CDub& CSeqTrackArray::GetDub(int iTrack, int iDub) const
 {
 	return GetAt(iTrack).m_arrDub[iDub];
+}
+
+inline UINT CSeqTrackArray::AssignID()
+{
+	return ++m_nNextUID;
 }
 
 inline void CSeqTrackArray::AssignID(int iTrack)

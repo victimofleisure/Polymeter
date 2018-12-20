@@ -199,6 +199,7 @@
     <ClInclude Include="ChildFrm.h" />
     <ClInclude Include="ColoredButton.h" />
     <ClInclude Include="CritSec.h" />
+    <ClInclude Include="ParseCSV.h" />
     <ClInclude Include="Diatonic.h" />
     <ClInclude Include="DLLWrap.h" />
     <ClInclude Include="DocIter.h" />
@@ -312,6 +313,7 @@
     <ClCompile Include="ChannelsBar.cpp" />
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="ColoredButton.cpp" />
+    <ClCompile Include="ParseCSV.cpp" />
     <ClCompile Include="Diatonic.cpp" />
     <ClCompile Include="DLLWrap.cpp" />
     <ClCompile Include="DocIter.cpp" />

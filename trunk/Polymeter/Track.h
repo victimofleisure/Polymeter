@@ -14,6 +14,9 @@
 		04		14dec18	add sort to modulation array
         05      15dec18	add find by name to track array
 		06		15dec18	add import/export to packed modulations array
+		07		17dec18	move MIDI file types into class scope
+		08		18dec18	add import/export tracks
+		09		19dec18	refactor property info to support value range
 
 */
 
@@ -28,7 +31,7 @@ class CTrackBase {
 public:
 // Constants
 	enum {	// track properties
-		#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) PROP_##name,
+		#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) PROP_##name,
 		#include "TrackDef.h"		// generate enumeration
 		PROPERTIES,
 	};
@@ -69,6 +72,16 @@ public:
 	};
 
 // Types
+	struct PROPERTY_INFO {	// information about each track property
+		LPCTSTR	pszName;		// internal name
+		int		nNameID;		// string resource ID of display name
+		const type_info	*pType;	// pointer to type info
+		int		iPropType;		// property type; enumerated below
+		int		nOptions;		// if combo box, number of options
+		const CProperties::OPTION_INFO	*pOption;	// if combo box, pointer to array of options
+		CComVariant	vMinVal;	// minimum value, if applicable
+		CComVariant	vMaxVal;	// maximum value, if applicable
+	};
 	typedef BYTE STEP;				// sequencer step
 	typedef CByteArrayEx CStepArray;	// array of sequencer steps
 	typedef CArrayEx<CStepArray, CStepArray&> CStepArrayArray;	// array of step arrays
@@ -138,20 +151,64 @@ public:
 	typedef CArrayEx<STEP_EVENT, STEP_EVENT&> CStepEventArray;
 
 // Attributes
+	static	const PROPERTY_INFO&	GetPropertyInfo(int iProp);
+	static	LPCTSTR	GetPropertyInternalName(int iProp);
+	static	int		FindPropertyInternalName(LPCTSTR pszName);
+	static	int		GetPropertyNameID(int iProp);
+	static	void	GetPropertyRange(int iProp, int& nMinVal, int& nMaxVal);
 	static	CString	GetTrackTypeName(int iType);
 	static	LPCTSTR	GetTrackTypeInternalName(int iType);
 	static	CString	GetModulationTypeName(int iType);
 	static	LPCTSTR	GetModulationTypeInternalName(int iType);
-	static	int		FindModulationTypeInternalName(LPCTSTR sName);
+	static	int		FindModulationTypeInternalName(LPCTSTR pszName);
 	static	CString	GetRangeTypeName(int iType);
 	static	LPCTSTR	GetRangeTypeInternalName(int iType);
 
 protected:
 // Constants
+	static const PROPERTY_INFO m_arrPropertyInfo[PROPERTIES];
 	static const CProperties::OPTION_INFO m_oiTrackType[TRACK_TYPES];
 	static const CProperties::OPTION_INFO m_oiModulationType[MODULATION_TYPES];
 	static const CProperties::OPTION_INFO m_oiRangeType[RANGE_TYPES];
 };
+
+inline const CTrackBase::PROPERTY_INFO& CTrackBase::GetPropertyInfo(int iProp)
+{
+	ASSERT(iProp >= 0 && iProp < PROPERTIES);
+	return m_arrPropertyInfo[iProp];
+}
+
+inline LPCTSTR CTrackBase::GetPropertyInternalName(int iProp)
+{
+	return GetPropertyInfo(iProp).pszName;
+}
+
+inline int CTrackBase::FindPropertyInternalName(LPCTSTR pszName)
+{
+	for (int iProp = 0; iProp < PROPERTIES; iProp++) {	// for each property
+		if (!_tcscmp(pszName, m_arrPropertyInfo[iProp].pszName))
+			return iProp;
+	}
+	return -1;
+}
+
+inline int CTrackBase::GetPropertyNameID(int iProp)
+{
+	return GetPropertyInfo(iProp).nNameID;
+}
+
+inline void	CTrackBase::GetPropertyRange(int iProp, int& nMinVal, int& nMaxVal)
+{
+	const PROPERTY_INFO&	info = GetPropertyInfo(iProp);
+	if (info.nOptions) {	// if options list
+		nMinVal = 0;
+		nMaxVal = info.nOptions - 1;
+	} else {	// normal case
+		ASSERT(info.vMinVal.vt == VT_I4 && info.vMaxVal.vt == VT_I4);	// integer ranges only
+		nMinVal = info.vMinVal.intVal;
+		nMaxVal = info.vMaxVal.intVal;
+	}
+}
 
 inline CString CTrackBase::GetTrackTypeName(int iType)
 {
@@ -177,10 +234,10 @@ inline LPCTSTR CTrackBase::GetModulationTypeInternalName(int iType)
 	return m_oiModulationType[iType].pszName;
 }
 
-inline int CTrackBase::FindModulationTypeInternalName(LPCTSTR sName)
+inline int CTrackBase::FindModulationTypeInternalName(LPCTSTR pszName)
 {
 	for (int iType = 0; iType < MODULATION_TYPES; iType++) {	// for each modulation type
-		if (!_tcscmp(sName, m_oiModulationType[iType].pszName))
+		if (!_tcscmp(pszName, m_oiModulationType[iType].pszName))
 			return iType;
 	}
 	return -1;
@@ -259,10 +316,8 @@ public:
 	CTrack();
 	CTrack(bool bInit);
 
-// Types
-
 // Public data
-	#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) type m_##prefix##name;
+	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) type m_##prefix##name;
 	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 	#include "TrackDef.h"		// generate definitions of track property member vars
 	CStepArray	m_arrStep;		// array of steps
@@ -277,15 +332,29 @@ public:
 	bool	IsNote() const;
 	bool	IsModulator() const;
 	bool	IsModulated() const;
+	void	GetPropertyValue(int iProp, void *pBuf, int nLen) const;
 
 // Operations
 	int		CompareProperty(int iProp, const CTrack& track) const;
 	template<class T> static int Compare(const T& a, const T& b);
+	CString	PropertyToString(int iProp) const;
+	bool	StringToProperty(int iProp, const CString& str);
+	bool	ValidateProperty(int iProp) const;
 	void	CopyKeepingID(const CTrack& track);
 	void	DumpModulations() const;
 	void	GetEvents(CStepEventArray& arrNote) const;
 	bool	Stretch(double fScale, CStepArray& arrStep) const;
 	static	void	Resample(const double *pInSamp, int nInSamps, double *pOutSamp, int nOutSamps);
+
+protected:
+// Types
+	struct PROPERTY_FIELD {	// property field descriptor
+		int		nOffset;	// byte offset of property within CTrack
+		int		nLen;		// size of property in bytes
+	};
+
+// Constants
+	static const PROPERTY_FIELD	m_arrPropertyField[PROPERTIES];	// array of property field descriptors
 };
 
 inline CTrack::CTrack()
@@ -330,14 +399,19 @@ public:
 		FINDF_NO_WRAP_SEARCH	= 0x04,		// don't wrap search
 	};
 	void	ImportSteps(LPCTSTR pszPath);
-	void	ExportSteps(const CIntArrayEx& arrSelection, LPCTSTR pszPath) const;
+	void	ExportSteps(const CIntArrayEx *parrSelection, LPCTSTR pszPath) const;
+	void	ImportTracks(LPCTSTR pszPath);
+	void	ExportTracks(const CIntArrayEx *parrSelection, LPCTSTR pszPath) const;
 	int		FindName(const CString& sName, int iStart = 0, UINT nFlags = 0) const;
+
+protected:
+	static	void	OnImportTracksError(int nErrMsgFormatID, int iRow, int iCol);
 };
 
 class CImportTrackArray : public CTrackArray {
 public:
 	void	ImportMidiFile(LPCTSTR szPath, int nOutTimeDiv, double fQuantization);
-	void	ImportMidiFile(const CMidiTrackArray& arrInTrack, const CStringArrayEx& arrInTrackName, int nInTimeDiv, int nOutTimeDiv, double fQuantization);
+	void	ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTrack, const CStringArrayEx& arrInTrackName, int nInTimeDiv, int nOutTimeDiv, double fQuantization);
 
 protected:
 	struct TRACK_INFO {

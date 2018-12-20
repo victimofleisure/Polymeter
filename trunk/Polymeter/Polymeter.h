@@ -10,6 +10,7 @@
         00      23mar18	initial version
 		01		02dec18	add recording of MIDI input
 		02		14dec18	add modulations clipboard
+		03		17dec18	move MIDI file types into class scope
 
 */
 
@@ -76,7 +77,7 @@ public:
 	CTrack::CModulationArray	m_arrModClipboard;	// clipboard for modulations
 	CMidiDevices	m_midiDevs;		// MIDI device information
 	bool	m_bTieNotes;	// if true, new notes are tied
-	CMidiEventArray	m_arrMidiInEvent;	// array of MIDI input events
+	CMidiFile::CMidiEventArray	m_arrMidiInEvent;	// array of MIDI input events
 	int		m_nMidiInStartTime;	// first MIDI input event's time, in active document's ticks
 
 protected:

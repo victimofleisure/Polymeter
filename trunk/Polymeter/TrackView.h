@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23apr18	initial version
+		01		19dec18	centralize property value ranges
 
 */
 
@@ -78,7 +79,7 @@ protected:
 		COL_Number,
 		COL_Name,
 		COL_Type,
-		#define TRACKDEF(proptype, type, prefix, name, defval, itemopt, items) COL_##name,
+		#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) COL_##name,
 		#define TRACKDEF_INT	// for integer track properties only
 		#include "TrackDef.h"	// generate column definitions
 		COLUMNS
