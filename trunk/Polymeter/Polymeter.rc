@@ -82,6 +82,7 @@ IDR_PolymeterTYPE       ICON                    "res\\PolymeterDoc.ico"
 
 IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
 IDR_MAINFRAME_256       BITMAP                  "res\\Toolbar256.bmp"
+IDB_FILTER              BITMAP                  "res\\filter.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -386,7 +387,7 @@ END
 
 IDR_LIST_COL_HDR MENU
 BEGIN
-    POPUP "&Columns"
+    POPUP ""
     BEGIN
         MENUITEM "&Reset",                      ID_LIST_COL_HDR_RESET
     END
@@ -394,7 +395,7 @@ END
 
 IDR_PRESETS_CTX MENU
 BEGIN
-    POPUP "Edit"
+    POPUP "&Presets"
     BEGIN
         MENUITEM "&Create",                     ID_TRACK_PRESET_CREATE
         MENUITEM "&Apply",                      ID_TRACK_PRESET_APPLY
@@ -406,7 +407,7 @@ END
 
 IDR_PARTS_CTX MENU
 BEGIN
-    POPUP "Edit"
+    POPUP "&Parts"
     BEGIN
         MENUITEM "&Create",                     ID_TRACK_PART_CREATE
         MENUITEM "&Delete",                     ID_EDIT_DELETE
@@ -418,7 +419,7 @@ END
 
 IDR_MODULATION_CTX MENU
 BEGIN
-    POPUP "Edit"
+    POPUP "&Modulation"
     BEGIN
         MENUITEM "&Insert",                     ID_EDIT_INSERT
         MENUITEM "&Delete",                     ID_EDIT_DELETE
@@ -434,6 +435,28 @@ BEGIN
             MENUITEM "By &Type",                    ID_MODULATION_SORT_BY_TYPE
             MENUITEM "By &Source",                  ID_MODULATION_SORT_BY_SOURCE
         END
+    END
+END
+
+IDR_MIDI_OUTPUT_CTX MENU
+BEGIN
+    POPUP "MIDI &Output"
+    BEGIN
+        POPUP "&Channel"
+        BEGIN
+            MENUITEM SEPARATOR
+        END
+        POPUP "&Message"
+        BEGIN
+            MENUITEM SEPARATOR
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Pause",                      ID_MIDI_OUTPUT_PAUSE
+        MENUITEM "Clear &History",              ID_MIDI_OUTPUT_CLEAR_HISTORY
+        MENUITEM "Reset &Filters",              ID_MIDI_OUTPUT_RESET_FILTERS
+        MENUITEM SEPARATOR
+        MENUITEM "&Note Names",                 ID_MIDI_OUTPUT_SHOW_NOTE_NAMES
+        MENUITEM "C&ontroller Names",           ID_MIDI_OUTPUT_SHOW_CONTROLLER_NAMES
     END
 END
 
@@ -843,14 +866,15 @@ BEGIN
     IDS_APP_LICENSE         "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.  You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA."
     IDS_APP_UNKNOWN_SYSTEM_ERROR "Unknown system error %d (0x%X)"
     IDS_BAR_CHANNELS        "Channels"
+    IDS_BAR_MIDI_OUTPUT     "MIDI Output"
     IDS_BAR_MODULATIONS     "Modulations"
     IDS_BAR_PARTS           "Parts"
     IDS_BAR_PRESETS         "Presets"
-    IDS_BAR_PROPERTIES      "Properties"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_BAR_PROPERTIES      "Properties"
     IDS_CHANNEL_COL_BankLSB "Bank LSB"
     IDS_CHANNEL_COL_BankMSB "Bank MSB"
     IDS_CHANNEL_COL_Number  "#"
@@ -867,11 +891,11 @@ BEGIN
     IDS_DOC_CLIP_WARNING    "Clipping may occur."
     IDS_DOC_GROUP_OVERLAP   "One or more of the selected tracks already belong to a group, and will be reassigned."
     IDS_DOC_NEWER_VERSION   "'%1' is from a newer document version. Some of its features may not be supported."
-    IDS_DOC_TRACK_TOO_LONG  "Track too long."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_DOC_TRACK_TOO_LONG  "Track too long."
     IDS_DOC_VELOCITY_RANGE  "Velocity range: %d, %d"
     IDS_EDIT_APPLY_PRESET   "Apply Preset"
     IDS_EDIT_CREATE_PART    "Create Part"
@@ -887,11 +911,11 @@ BEGIN
     IDS_EDIT_INSERT_STEPS   "Insert Steps"
     IDS_EDIT_INSERT_TRACKS  "Insert Tracks"
     IDS_EDIT_MENU           "Edit"
-    IDS_EDIT_MODIFY_PARTS   "Modify Parts"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_MODIFY_PARTS   "Modify Parts"
     IDS_EDIT_MODULATION     "Modulation"
     IDS_EDIT_MOVE_PARTS     "Move Parts"
     IDS_EDIT_MOVE_PRESETS   "Move Presets"
@@ -907,11 +931,11 @@ BEGIN
     IDS_EDIT_ROTATE         "Rotate"
     IDS_EDIT_SHIFT          "Shift"
     IDS_EDIT_SOLO           "Solo"
-    IDS_EDIT_TRACK_SORT     "Track Sort"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_TRACK_SORT     "Track Sort"
     IDS_EDIT_TRANSPOSE      "Transpose"
     IDS_EDIT_UNDO_FMT       "&Undo %s"
     IDS_EDIT_UPDATE_PART    "Update Part"
@@ -928,19 +952,30 @@ BEGIN
     IDS_GRID_ERR_BAD_TIME_FORMAT "Enter time in hh:mm:ss format."
     IDS_HLINK_CANT_LAUNCH   "Can't launch browser."
     IDS_IMPORT              "Import"
-    IDS_IMPORT_ERR_FORMAT   "Format error."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_IMPORT_ERR_FORMAT   "Format error."
     IDS_IMPORT_ERR_LOCATION "Row %d, Column %d"
     IDS_IMPORT_ERR_PROPERTY "Undefined property name."
     IDS_IMPORT_ERR_RANGE    "Range error."
+    IDS_MIDIEVT_COL_CHANNEL "Channel"
+    IDS_MIDIEVT_COL_MESSAGE "Message"
+    IDS_MIDIEVT_COL_P1      "P1"
+    IDS_MIDIEVT_COL_P2      "P2"
+    IDS_MIDIEVT_COL_TIME    "Time"
     IDS_MIDI_DEVICES_MISSING "MIDI devices are missing."
     IDS_MIDI_INPUT          "Input"
+    IDS_MIDI_MSG_NOTE_OFF   "Note Off"
+    IDS_MIDI_MSG_NOTE_ON    "Note On"
     IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
     IDS_MIDI_OUTPUT         "Output"
     IDS_MOD_DIFFERENCES     "<Differences>"
+END
+
+STRINGTABLE
+BEGIN
     IDS_MOD_SOURCE          "Source"
     IDS_NONE                "<None>"
     IDS_OFFSET_NOTES        "Semitones:"
@@ -952,10 +987,6 @@ BEGIN
     IDS_OPT_DESC_General_bPropertyDescrips 
                             "If true, show descriptions area in properties bar"
     IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
-END
-
-STRINGTABLE
-BEGIN
     IDS_OPT_DESC_Midi_iInputDevice "Selected MIDI input device"
     IDS_OPT_DESC_Midi_iInputQuant 
                             "Quantization for converting MIDI input to steps"
@@ -968,6 +999,10 @@ BEGIN
                             "Indicate current position within each track"
     IDS_OPT_DESC_View_bShowGMNames 
                             "Display General MIDI patch and drum names instead of numbers"
+END
+
+STRINGTABLE
+BEGIN
     IDS_OPT_DESC_View_bShowNoteNames 
                             "Display notes as names instead of numbers"
     IDS_OPT_DESC_View_fUpdateFreq 
@@ -978,10 +1013,6 @@ BEGIN
     IDS_OPT_GROUP_Midi      "MIDI"
     IDS_OPT_GROUP_View      "View"
     IDS_OPT_NAME_General_bAlwaysRecord "Always Record"
-END
-
-STRINGTABLE
-BEGIN
     IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
     IDS_OPT_NAME_General_bPropertyDescrips "Show Property Descriptions"
     IDS_OPT_NAME_Midi_bThru "Thru"
@@ -990,6 +1021,10 @@ BEGIN
     IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
     IDS_OPT_NAME_Midi_nBufferSize "Buffer Size"
     IDS_OPT_NAME_Midi_nDefaultVelocity "Default Velocity"
+END
+
+STRINGTABLE
+BEGIN
     IDS_OPT_NAME_Midi_nLatency "Latency"
     IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
     IDS_OPT_NAME_View_bShowGMNames "Show General MIDI Names"
@@ -997,11 +1032,8 @@ BEGIN
     IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
     IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
     IDS_OPT_NAME_View_nLiveFontHeight "Live View Font Height"
+    IDS_OUT_NOTES_FILTER_ALL "All"
     IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
-END
-
-STRINGTABLE
-BEGIN
     IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
     IDS_PDR_DESC_nMeter     "Number of beats in a measure"
     IDS_PDR_DESC_nSongLength "Song duration in HH:MM:SS format"
@@ -1009,6 +1041,10 @@ BEGIN
     IDS_PDR_DESC_nTimeDiv   "Time division, in pulses per quarter note"
     IDS_PDR_GROUP_Master    "Master"
     IDS_PDR_NAME_fTempo     "Tempo"
+END
+
+STRINGTABLE
+BEGIN
     IDS_PDR_NAME_nKeySig    "Key Signature"
     IDS_PDR_NAME_nMeter     "Meter"
     IDS_PDR_NAME_nSongLength "Song Length"
@@ -1018,10 +1054,6 @@ BEGIN
     IDS_RANGE_TYPE_DUAL     "Dual"
     IDS_RANGE_TYPE_NONE     "None"
     IDS_RANGE_TYPE_OCTAVE   "Octave"
-END
-
-STRINGTABLE
-BEGIN
     IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
     IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format"
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
@@ -1030,6 +1062,10 @@ BEGIN
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
     IDS_SORT_DIR_ASCENDING  "Ascending"
     IDS_SORT_DIR_DESCENDING "Descending"
+END
+
+STRINGTABLE
+BEGIN
     IDS_STATUS_PANE1        "Pane 1"
     IDS_STATUS_PANE2        "Pane 2"
     IDS_TIME_TO_REPEAT_DAYS "days"
@@ -1039,10 +1075,6 @@ BEGIN
     IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
     IDS_TRACK_TYPE_CONTROL  "Control"
     IDS_TRACK_TYPE_KEY_AFT  "Key Aftertouch"
-END
-
-STRINGTABLE
-BEGIN
     IDS_TRACK_TYPE_MODULATOR "Modulator"
     IDS_TRACK_TYPE_NOTE     "Note"
     IDS_TRACK_TYPE_PATCH    "Patch"
@@ -1050,6 +1082,10 @@ BEGIN
     IDS_TRK_Channel         "Channel"
     IDS_TRK_Duration        "Duration"
     IDS_TRK_Length          "Length"
+END
+
+STRINGTABLE
+BEGIN
     IDS_TRK_Mute            "Mute"
     IDS_TRK_Name            "Name"
     IDS_TRK_Note            "Note"
@@ -1059,10 +1095,6 @@ BEGIN
     IDS_TRK_Quant           "Quant"
     IDS_TRK_Range           "Range"
     IDS_TRK_RangeStart      "Range Start"
-END
-
-STRINGTABLE
-BEGIN
     IDS_TRK_RangeType       "Range Type"
     IDS_TRK_STEP            "Step"
     IDS_TRK_Swing           "Swing"
@@ -1070,6 +1102,10 @@ BEGIN
     IDS_TRK_Velocity        "Velocity"
     IDS_TYPE_TRACK          "Track"
     IDS_VELOCITY            "Velocity"
+END
+
+STRINGTABLE
+BEGIN
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
 END
 
@@ -1091,13 +1127,18 @@ BEGIN
     ID_FILE_IMPORT          "Import tracks from a MIDI file\nImport"
     ID_INDICATOR_SONG_POS   "000000000.000"
     ID_INDICATOR_SONG_TIME  "0000000:00:00"
-    ID_MODULATION_SHOW_DIFFERENCES 
-                            "Show modulations that differ for selected tracks"
-    ID_MODULATION_SORT_BY_SOURCE "Sort modulations by source track"
+    ID_MIDI_OUTPUT_CLEAR_HISTORY "Remove all events from history"
+    ID_MIDI_OUTPUT_PAUSE    "Pause display while continuing to capture events"
 END
 
 STRINGTABLE
 BEGIN
+    ID_MIDI_OUTPUT_RESET_FILTERS "Reset filters so all events are displayed"
+    ID_MIDI_OUTPUT_SHOW_CONTROLLER_NAMES "Show continuous controller names"
+    ID_MIDI_OUTPUT_SHOW_NOTE_NAMES "Show note names in note events"
+    ID_MODULATION_SHOW_DIFFERENCES 
+                            "Show modulations that differ for selected tracks"
+    ID_MODULATION_SORT_BY_SOURCE "Sort modulations by source track"
     ID_MODULATION_SORT_BY_TYPE "Sort modulations by type"
     ID_PARTS_SELECT_TRACKS  "Select tracks belonging to selected parts"
     ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
@@ -1111,15 +1152,15 @@ BEGIN
     ID_TOOLS_IMPORT_TRACKS  "Import tracks from a CSV file\nImport Tracks"
     ID_TOOLS_OPTIONS        "Edit the options\nOptions"
     ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
+END
+
+STRINGTABLE
+BEGIN
     ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for the selected tracks to repeat\nTime to Repeat"
     ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks or steps\nVelocity Range "
     ID_TRACK_FILL           "Fill selected tracks or steps with a range of values"
     ID_TRACK_GROUP          "Group the selected tracks into a part\nGroup"
     ID_TRACK_LENGTH         "Set the length of one or more tracks\nLength"
-END
-
-STRINGTABLE
-BEGIN
     ID_TRACK_MUTE           "Mute or unmute the selected tracks\nMute"
     ID_TRACK_PART_CREATE    "Create new part from the selected tracks\nCreate Part"
     ID_TRACK_PART_UPDATE    "Update the selected part from the selected tracks\nUpdate Part"
@@ -1131,15 +1172,15 @@ BEGIN
     ID_TRACK_ROTATE_RIGHT   "Rotate the selected tracks or steps right\nRotate Right"
     ID_TRACK_ROTATE_STEPS   "Rotate the selection left or right a given number of steps\nRotate Steps"
     ID_TRACK_SHIFT_LEFT     "Shift the selected tracks or steps left\nShift Left"
+END
+
+STRINGTABLE
+BEGIN
     ID_TRACK_SHIFT_RIGHT    "Shift the selected tracks or steps right\nShift Right"
     ID_TRACK_SHIFT_STEPS    "Shift the selection left or right a given number of steps\nShift Steps"
     ID_TRACK_SOLO           "Solo the selected tracks\nSolo"
     ID_TRACK_SORT           "Sort the selected tracks\nTrack Sort"
     ID_TRACK_STRETCH        "Stretch or shrink the selected tracks\nStretch"
-END
-
-STRINGTABLE
-BEGIN
     ID_TRACK_TIE_NOTES      "Toggle tie notes mode; if on, new notes are tied\nTie Notes"
     ID_TRACK_TRANSPOSE      "Transpose the selected tracks\nTranspose"
     ID_TRACK_VELOCITY       "Transform the velocities of the selected tracks or steps\nVelocity"
@@ -1162,15 +1203,15 @@ BEGIN
     ID_VIEW_PRESETS         "Show or hide the presets bar\nPresets"
     ID_VIEW_PROPERTIES      "Show or hide the properties bar\nProperties"
     ID_VIEW_TYPE_LIVE       "Show the live view\nLive View"
+END
+
+STRINGTABLE
+BEGIN
     ID_VIEW_TYPE_SONG       "Show the song view\nSong View"
     ID_VIEW_TYPE_TRACK      "Show the track view\nTrack View"
     ID_VIEW_VELOCITIES      "Show or hide velocities pane\nVelocities"
     ID_VIEW_ZOOM_IN         "Zoom in\nZoom In"
     ID_VIEW_ZOOM_OUT        "Zoom out\nZoom Out"
-END
-
-STRINGTABLE
-BEGIN
     ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "&Windows..."

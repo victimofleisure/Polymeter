@@ -11,6 +11,7 @@
 		01		02dec18	add recording of MIDI input
 		02		14dec18	add modulations clipboard
 		03		17dec18	move MIDI file types into class scope
+        04		03jan19	add playing document pointer
 
 */
 
@@ -35,6 +36,7 @@
 //
 
 class CMainFrame;
+class CPolymeterDoc;
 
 class CPolymeterApp : public CWinAppCK
 {
@@ -60,6 +62,10 @@ public:
 	void	OnDeviceChange();
 	static	int		FindHelpID(int nResID);
 	bool	RecordMidiInput(bool bEnable);
+	static	void	MakeStartCase(CString& str);
+	static	void	SnakeToStartCase(CString& str);
+	static	void	SnakeToUpperCamelCase(CString& str);
+	static	bool	MakePopup(CMenu& Menu, int StartID, CStringArrayEx& Item, int SelIdx);
 
 // Overrides
 	virtual BOOL InitInstance();
@@ -79,6 +85,7 @@ public:
 	bool	m_bTieNotes;	// if true, new notes are tied
 	CMidiFile::CMidiEventArray	m_arrMidiInEvent;	// array of MIDI input events
 	int		m_nMidiInStartTime;	// first MIDI input event's time, in active document's ticks
+	CPolymeterDoc	*m_pPlayingDoc;	// pointer to playing document if any
 
 protected:
 // Types

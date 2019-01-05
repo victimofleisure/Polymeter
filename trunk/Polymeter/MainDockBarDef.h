@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		07jul18	initial version
+        01		03jan19	add MIDI output bar
 		
 */
 
@@ -18,6 +19,7 @@ MAINDOCKBARDEF(Channels)
 MAINDOCKBARDEF(Presets)
 MAINDOCKBARDEF(Parts)
 MAINDOCKBARDEF(Modulations)
+MAINDOCKBARDEF(MidiOutput)
 
 #endif	// MAINDOCKBARDEF
 #undef MAINDOCKBARDEF

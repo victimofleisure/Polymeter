@@ -18,6 +18,8 @@
 		08		17dec18	move MIDI file types into class scope
 		09		18dec18	add import/export tracks
 		10		19dec18	refactor property info to support value range
+		11		02jan19	in ImportSteps, use remove all instead of set size
+
 
 */
 
@@ -600,7 +602,7 @@ void CTrackArray::ImportSteps(LPCTSTR pszPath)
 	CString	sLine, sToken;
 	while (fIn.ReadString(sLine)) {	// for each line of input file
 		int	iStart = 0;
-		trk.m_arrStep.FastSetSize(0);
+		trk.m_arrStep.FastRemoveAll();
 		while (!(sToken = sLine.Tokenize(_T(","), iStart)).IsEmpty()) {
 			int	nStep;
 			if (_stscanf_s(sToken, _T("%d"), &nStep) == 1)

@@ -10,6 +10,7 @@
         00      23mar18	initial version
 		01		02dec18	add recording of MIDI input
 		02		17dec18	move MIDI file types into class scope
+        03		03jan19	add playing document pointer
 
 */
 
@@ -65,6 +66,7 @@ CPolymeterApp::CPolymeterApp()
 	m_bIsRecordMidiIn = false;
 	m_bHelpInit = false;
 	m_nMidiInStartTime = 0;
+	m_pPlayingDoc = NULL;
 }
 
 // The one and only CPolymeterApp object
@@ -326,6 +328,65 @@ DWORD CPolymeterApp::GetModifierKeyStates()
 	if (GetKeyState(VK_MENU) & GKS_DOWN)
 		nFlags |= MK_MBUTTON;	// substitute for non-existent menu flag
 	return nFlags;
+}
+
+void CPolymeterApp::MakeStartCase(CString& str)
+{
+	int	len = str.GetLength();
+	int	pos = 0;
+	while (1) {
+		while (pos < len && str[pos] == ' ')	// skip spaces
+			pos++;
+		if (pos >= len)	// if end of string
+			break;
+		str.SetAt(pos, TCHAR(toupper(str[pos])));	// capitalize start of word
+		pos++;
+		while (pos < len && str[pos] != ' ') {	// find next space if any
+			str.SetAt(pos, TCHAR(tolower(str[pos])));	// uncapitalize rest of word
+			pos++;
+		}
+	}
+}
+
+void CPolymeterApp::SnakeToStartCase(CString& str)
+{
+	str.Replace('_', ' ');	// replace underscores with spaces
+	MakeStartCase(str);
+}
+
+void CPolymeterApp::SnakeToUpperCamelCase(CString& str)
+{
+	str.MakeLower();
+	int	len = str.GetLength();
+	int	pos = len - 1;
+	while (pos >= 0) {
+		while (pos >= 0 && str[pos] == '_') {	// delete underscores
+			str.Delete(pos);
+			pos--;
+		}
+		if (pos < 0)	// if end of string
+			break;
+		while (pos >= 0 && str[pos] != '_')	// skip word
+			pos--;
+		str.SetAt(pos + 1, TCHAR(toupper(str[pos + 1])));	// capitalize start of word
+	}
+}
+
+bool CPolymeterApp::MakePopup(CMenu& Menu, int StartID, CStringArrayEx& Item, int SelIdx)
+{
+	if (!Menu.DeleteMenu(0, MF_BYPOSITION))	// delete placeholder item
+		return(FALSE);
+	int	nItems = INT64TO32(Item.GetSize());
+	ASSERT(SelIdx < nItems);
+	for (int iItem = 0; iItem < nItems; iItem++) {	// for each item
+		if (!Menu.AppendMenu(MF_STRING, StartID + iItem, Item[iItem]))
+			return(FALSE);
+	}
+	if (SelIdx >= 0) {	// if valid selection
+		if (!Menu.CheckMenuRadioItem(0, nItems, SelIdx, MF_BYPOSITION))
+			return(FALSE);
+	}
+	return(TRUE);
 }
 
 void CPolymeterApp::ApplyOptions(const COptions *pPrevOptions)

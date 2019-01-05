@@ -22,6 +22,7 @@
 		12		17dec18	move MIDI file types into class scope
 		13		18dec18	add import/export tracks
 		14		19dec18	move track property names into base class
+		15		03jan19	in Play, add support for MIDI output bar
 
 */
 
@@ -153,6 +154,8 @@ CPolymeterDoc::CPolymeterDoc()
 
 CPolymeterDoc::~CPolymeterDoc()
 {
+	if (this == theApp.m_pPlayingDoc)
+		theApp.m_pPlayingDoc = NULL;
 }
 
 void CPolymeterDoc::CMySequencer::OnMidiError(MMRESULT nResult)
@@ -2328,6 +2331,7 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 		return true;	// nothing to do
 	if (theApp.m_Options.m_General_bAlwaysRecord)	// if always recording
 		bRecord = true;
+	bool	bOutputCapture = false;
 	if (bPlay) {	// if starting playback
 		if (m_Seq.GetOutputDevice() < 0) {	// if no output MIDI device selected
 			AfxMessageBox(IDS_MIDI_NO_OUTPUT_DEVICE);
@@ -2337,18 +2341,23 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 			m_rUndoSel = CRect(0, 0, 0, m_Seq.GetTrackCount());
 			NotifyUndoableEdit(0, UCODE_RECORD);
 		}
-		CAllDocIter	iter;	// iterate all documents
-		CPolymeterDoc	*pOtherDoc;
-		while ((pOtherDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
-			if (pOtherDoc != this && pOtherDoc->m_Seq.IsPlaying()) {	// if another document is playing
-				bool	bWasRecording = pOtherDoc->m_Seq.IsRecording();
-				pOtherDoc->m_Seq.Play(false);	// stop other document; only one can play at a time
-				pOtherDoc->OnPlay(false, bWasRecording);	// do post-play processing
-				break;
-			}
+		if (theApp.m_pPlayingDoc != NULL) {	// if another document is playing
+			bool	bWasRecording = theApp.m_pPlayingDoc->m_Seq.IsRecording();
+			theApp.m_pPlayingDoc->m_Seq.Play(false);	// stop other document; only one can play at a time
+			theApp.m_pPlayingDoc->OnPlay(false, bWasRecording);	// do post-play processing
 		}
+		theApp.m_pPlayingDoc = this;
 		UpdateChannelEvents();	// queue channel events to be output at start of playback
+		CMidiOutputBar&	wndMidiOutput = theApp.GetMainFrame()->GetMidiOutputBar();
+		if (wndMidiOutput.IsVisible()) {
+			wndMidiOutput.SetKeySignature(m_nKeySig);
+			wndMidiOutput.RemoveAllEvents();
+			bOutputCapture = true;
+		}
+	} else {	// stopping playback
+		theApp.m_pPlayingDoc = NULL;
 	}
+	m_Seq.SetMidiOutputCapture(bOutputCapture);
 	bool	bRetVal;
 	bool	bWasRecording = m_Seq.IsRecording();
 	bRetVal = m_Seq.Play(bPlay, bRecord);

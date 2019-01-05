@@ -9,6 +9,7 @@
 		rev		date	comments
         00      23mar18	initial version
         01      15dec18	add find/replace
+        02		03jan19	add MIDI output bar
 
 */
 
@@ -22,6 +23,7 @@
 #include "PresetsBar.h"
 #include "PartsBar.h"
 #include "ModulationsBar.h"
+#include "MidiOutputBar.h"
 
 // docking bar IDs are relative to AFX_IDW_CONTROLBAR_FIRST
 enum {	// docking bar IDs; don't change, else bar placement won't be restored
@@ -59,6 +61,7 @@ public:
 	CPresetsBar&	GetPresetsBar();
 	CPartsBar&	GetPartsBar();
 	CModulationsBar&	GetModulationsBar();
+	CMidiOutputBar&	GetMidiOutputBar();
 	CString	GetSongPositionString() const;
 	CString	GetSongTimeString() const;
 
@@ -92,6 +95,7 @@ protected:  // control bar embedded members
 	CPresetsBar		  m_wndPresetsBar;
 	CPartsBar		  m_wndPartsBar;
 	CModulationsBar	  m_wndModulationsBar;
+	CMidiOutputBar	  m_wndMidiOutputBar;
 
 // Constants
 	static const UINT m_arrIndicatorID[];	// array of status bar indicator IDs
@@ -104,6 +108,7 @@ protected:  // control bar embedded members
 	CString	m_sFindText;				// find text
 	CString	m_sReplaceText;				// replace text
 	bool	m_bFindMatchCase;			// true if find should match case
+	CSequencer::CMidiEventArray m_arrMIDIOutputEvent;	// array of MIDI output events
 
 // Helpers
 	BOOL	CreateDockingWindows();
@@ -193,6 +198,11 @@ inline CPartsBar& CMainFrame::GetPartsBar()
 inline CModulationsBar& CMainFrame::GetModulationsBar()
 {
 	return m_wndModulationsBar;
+}
+
+inline CMidiOutputBar& CMainFrame::GetMidiOutputBar()
+{
+	return m_wndMidiOutputBar;
 }
 
 inline CString CMainFrame::GetSongPositionString() const

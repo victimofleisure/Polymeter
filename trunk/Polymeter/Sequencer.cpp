@@ -16,6 +16,7 @@
 		06		11dec18	add note range and range modulation
 		07		14dec18	add position modulation
 		08		17dec18	move MIDI file types into class scope
+		09		03jan19	add MIDI output capture
 
 */
 
@@ -51,6 +52,7 @@ CSequencer::CSequencer()
 	m_bIsTempoChange = false;
 	m_bIsPositionChange = false;
 	m_bIsSongMode = false;
+	m_bIsOutputCapture = false;
 	ZeroMemory(&m_stats, sizeof(m_stats));
 	m_qLiveEvent.Create(DEF_BUFFER_SIZE);
 }
@@ -230,6 +232,8 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 		WriteTempo(m_fTempo);	// output tempo
 		m_arrMsgHdr[0].dwBytesRecorded = nEvents * sizeof(MIDI_STREAM_EVENT);
 		CHECK(midiStreamOut(m_hStrm, &m_arrMsgHdr[0], sizeof(MIDIHDR)));	// output lead-in
+		if (m_bIsOutputCapture)	// if capturing output MIDI events
+			QueueOutputEvents(nEvents);
 		if (!OutputMidiBuffer())	// output first chunk of sequence in second buffer
 			return false;
 		m_bIsRecording = bRecord;	// set recording flag before starting playback
@@ -623,6 +627,8 @@ bool CSequencer::OutputMidiBuffer()
 	MIDIHDR&	hdr = m_arrMsgHdr[m_iBuffer];
 	hdr.dwBytesRecorded = nEvents * sizeof(MIDI_STREAM_EVENT);
 	CHECK(midiStreamOut(m_hStrm, &hdr, sizeof(MIDIHDR)));	// output MIDI buffer
+	if (m_bIsOutputCapture)	// if capturing output MIDI events
+		QueueOutputEvents(nEvents);
 	// update statistics only after this point
 	double t = b.Elapsed();
 	m_stats.nCallbacks++;
@@ -957,6 +963,38 @@ void CSequencer::ChaseDubsFromCurPos()
 		if (GetPosition(nPos))
 			ChaseDubs(static_cast<int>(nPos), true);	// set mutes
 	}
+}
+
+void CSequencer::QueueOutputEvents(int nEvents)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to output event buffer
+	CMidiEventStream&	arrEvt = m_arrMidiEvent[m_iBuffer];
+	int	nOldSize = m_arrOutputEvent.GetSize();
+	m_arrOutputEvent.FastSetSize(nOldSize + nEvents, m_nBufferSize);	// grow buffer
+	for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
+		MIDI_EVENT	evt = {arrEvt[iEvent].dwDeltaTime, arrEvt[iEvent].dwEvent};
+		m_arrOutputEvent[nOldSize + iEvent] = evt;
+	}
+}
+
+void CSequencer::GetMidiOutputEvents(CMidiEventArray& arrEvent)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to output event buffer
+	m_arrOutputEvent.Swap(arrEvent);	// swap event buffers with caller; swaps pointers only
+	m_arrOutputEvent.FastRemoveAll();	// empty our new buffer but don't deallocate it
+}
+
+void CSequencer::FlushMidiOutputEvents()
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to output event buffer
+	m_arrOutputEvent.FastRemoveAll();
+}
+
+void CSequencer::SetMidiOutputCapture(bool bEnable)
+{
+	if (bEnable)
+		FlushMidiOutputEvents();
+	m_bIsOutputCapture = bEnable;
 }
 
 #if SEQ_DUMP_EVENTS

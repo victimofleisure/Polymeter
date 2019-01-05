@@ -192,6 +192,7 @@
     <ClInclude Include="ArrayEx.h" />
     <ClInclude Include="ArrayExAlgoDef.h" />
     <ClInclude Include="Benchmark.h" />
+    <ClInclude Include="BlockArray.h" />
     <ClInclude Include="BoundArray.h" />
     <ClInclude Include="Channel.h" />
     <ClInclude Include="ChannelsBar.h" />
@@ -199,6 +200,9 @@
     <ClInclude Include="ChildFrm.h" />
     <ClInclude Include="ColoredButton.h" />
     <ClInclude Include="CritSec.h" />
+    <ClInclude Include="MidiEventColDef.h" />
+    <ClInclude Include="MidiOutputBar.h" />
+    <ClInclude Include="MidiStatusDef.h" />
     <ClInclude Include="ParseCSV.h" />
     <ClInclude Include="Diatonic.h" />
     <ClInclude Include="DLLWrap.h" />
@@ -313,6 +317,7 @@
     <ClCompile Include="ChannelsBar.cpp" />
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="ColoredButton.cpp" />
+    <ClCompile Include="MidiOutputBar.cpp" />
     <ClCompile Include="ParseCSV.cpp" />
     <ClCompile Include="Diatonic.cpp" />
     <ClCompile Include="DLLWrap.cpp" />
@@ -395,8 +400,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Polymeter.reg" />
-    <None Include="res\cursor1.cur" />
-    <None Include="res\cursor2.cur" />
     <None Include="res\dragmulti.cur" />
     <None Include="res\dragsingle.cur" />
     <None Include="res\Polymeter.rc2" />
@@ -405,6 +408,7 @@
     <ResourceCompile Include="Polymeter.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\filter.bmp" />
     <Image Include="res\Polymeter.ico" />
     <Image Include="res\PolymeterDoc.ico" />
     <Image Include="res\Toolbar.bmp" />

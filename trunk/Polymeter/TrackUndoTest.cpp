@@ -12,6 +12,7 @@
 		02		09sep14	move enable flag to Globals.h
 		03		15mar15	remove 16-bit assert in rename case
 		04		06apr15	in DoPageEdit, skip disabled controls
+		05		02jan19	add case for range type property
 
 		automated undo test for patch editing
  
@@ -164,6 +165,9 @@ void CTrackUndoTest::MakeRandomTrackProperty(int iTrack, int iProp, CComVariant&
 		break;
 	case PROP_Mute:
 		var = !m_pDoc->m_Seq.GetMute(iTrack);
+		break;
+	case PROP_RangeType:
+		var = Random(RANGE_TYPES);
 		break;
 	default:
 		var = Random(MIDI_NOTE_MAX) + 1;

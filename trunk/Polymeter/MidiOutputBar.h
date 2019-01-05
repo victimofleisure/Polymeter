@@ -1,0 +1,138 @@
+// Copyleft 2018 Chris Korda
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 2 of the License, or any later version.
+/*
+        chris korda
+ 
+		revision history:
+		rev		date	comments
+        00		17dec18	initial version
+        01		03jan19	add filtering via context menu
+
+*/
+
+#pragma once
+
+#include "ListCtrlExSel.h"
+#include "Sequencer.h"
+#include "BlockArray.h"
+
+class CMidiOutputBar : public CDockablePane
+{
+	DECLARE_DYNAMIC(CMidiOutputBar)
+// Construction
+public:
+	CMidiOutputBar();
+
+// Types
+	typedef CSequencer::MIDI_EVENT MIDI_EVENT;
+
+// Attributes
+public:
+	void	SetKeySignature(int nKeySig);
+	static	LPCTSTR	GetControllerName(int iController);
+
+// Operations
+public:
+	void	AddEvents(const CSequencer::CMidiEventArray& arrEvent);
+	void	RemoveAllEvents();
+
+// Overrides
+
+// Implementation
+public:
+	virtual ~CMidiOutputBar();
+
+protected:
+// Constants
+	enum {
+		IDC_LIST = 1861,
+		EVENT_BLOCK_SIZE = 1024,
+	};
+	enum {	// list columns
+		#define LISTCOLDEF(name, align, width) COL_##name,
+		#include "MidiEventColDef.h"
+		COLUMNS
+	};
+	enum {	// MIDI channel voice messages
+		#define MIDICHANSTATDEF(name) CMT_##name,
+		#include "MidiStatusDef.h"
+		CHANNEL_VOICE_MESSAGES
+	};
+	enum {	// filters
+		FILTER_CHANNEL,
+		FILTER_MESSAGE,
+		FILTERS
+	};
+	enum {	// context submenus
+		SM_CHANNEL,
+		SM_MESSAGE,
+		CONTEXT_SUBMENUS
+	};
+	enum {	// submenu command ID ranges
+		SMID_CHANNEL_FIRST = WM_USER + 1,
+		SMID_CHANNEL_LAST = SMID_CHANNEL_FIRST + MIDI_CHANNELS,
+		SMID_MESSAGE_FIRST = SMID_CHANNEL_LAST + 1,
+		SMID_MESSAGE_LAST = SMID_MESSAGE_FIRST + CHANNEL_VOICE_MESSAGES,
+	};
+	static const CListCtrlExSel::COL_INFO	m_arrColInfo[COLUMNS];	// list column info
+	static const int	m_arrChanStatID[CHANNEL_VOICE_MESSAGES];	// channel status string resource IDs
+	static const LPCTSTR	m_arrControllerName[];	// array of controller name strings
+	static const int	m_arrFilterCol[FILTERS];	// column index of each column that can be filtered
+
+// Types
+	typedef CBlockArray<MIDI_EVENT, EVENT_BLOCK_SIZE> CMidiEventArray;
+	class CEventListCtrl : public CListCtrlExSel {
+	public:
+		CEventListCtrl();
+		bool	m_bIsVScrolling;	// true while list is vertically scrolling
+		DECLARE_MESSAGE_MAP()
+		afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	};
+
+// Member data
+	CEventListCtrl	m_list;			// list control
+	CImageList	m_ilList;			// image list for list control
+	CMidiEventArray	m_arrEvent;		// array of MIDI events
+	CIntArrayEx	m_arrFilterPass;	// if filtering, indices of events that pass filter
+	CStringArrayEx	m_arrChanStatName;	// channel status message names
+	int		m_nEventTime;			// time of current MIDI event, in ticks
+	bool	m_bIsFiltering;			// true if filtering events
+	bool	m_bIsPaused;			// true if playback is paused
+	bool	m_bShowNoteNames;		// true if showing note names
+	bool	m_bShowControllerNames;	// true if showing controller names
+	int		m_arrFilter[FILTERS];	// array of filters consisting of target item index, or -1 for all
+	int		m_nPauseEvents;			// number of events when display was paused
+	int		m_nKeySig;				// key signature in which notes are displayed
+
+// Helpers
+	int		GetListItemCount();
+	bool	ApplyFilters(WPARAM wParam) const;
+	void	OnFilterChange();
+	void	Pause(bool bEnable);
+	void	ResetFilters();
+
+// Overrides
+
+// Generated message map functions
+	DECLARE_MESSAGE_MAP()
+	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+	afx_msg void OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu);
+	afx_msg void OnExitMenuLoop(BOOL bIsTrackPopupMenu);
+	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
+	afx_msg void OnClearHistory();
+	afx_msg void OnPause();
+	afx_msg void OnResetFilters();
+	afx_msg void OnUpdatePause(CCmdUI *pCmdUI);
+	afx_msg void OnFilterChannel(UINT nID);
+	afx_msg void OnFilterMessage(UINT nID);
+	afx_msg void OnShowNoteNames();
+	afx_msg void OnUpdateShowNoteNames(CCmdUI *pCmdUI);
+	afx_msg void OnShowControllerNames();
+	afx_msg void OnUpdateShowControllerNames(CCmdUI *pCmdUI);
+};

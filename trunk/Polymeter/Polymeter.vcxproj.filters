@@ -366,6 +366,18 @@
     <ClInclude Include="ParseCSV.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MidiEventColDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MidiOutputBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MidiStatusDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BlockArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Polymeter.cpp">
@@ -611,16 +623,13 @@
     <ClCompile Include="ParseCSV.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MidiOutputBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Polymeter.reg" />
     <None Include="res\Polymeter.rc2">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="res\cursor1.cur">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="res\cursor2.cur">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="res\dragmulti.cur">
@@ -649,6 +658,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\Toolbar256.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\filter.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

@@ -9,6 +9,7 @@
 		rev		date	comments
         00      23mar18	initial version
         01      15dec18	add find/replace
+        02		03jan19	add MIDI output bar
 
 */
 
@@ -164,7 +165,10 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	// combine presets and parts bars into one tabbed bar
 	m_wndPartsBar.AttachToTabWnd(&m_wndPresetsBar, DM_SHOW);
 	m_wndModulationsBar.EnableDocking(CBRS_ALIGN_ANY);
-	DockPane(&m_wndModulationsBar);
+	// combine channels and modulations bars into one tabbed bar
+	m_wndModulationsBar.AttachToTabWnd(&m_wndChannelsBar, DM_SHOW);
+	m_wndMidiOutputBar.EnableDocking(CBRS_ALIGN_ANY);
+	DockPane(&m_wndMidiOutputBar);
 
 	// enable Visual Studio 2005 style docking window behavior
 	CDockingManager::SetDockingMode(DT_SMART);
@@ -313,6 +317,13 @@ BOOL CMainFrame::CreateDockingWindows()
 		TRACE0("Failed to create modulations bar\n");
 		return FALSE; // failed to create
 	}
+	sTitle.LoadString(IDS_BAR_MIDI_OUTPUT);
+	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
+	if (!m_wndMidiOutputBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_MidiOutput, dwStyle))
+	{
+		TRACE0("Failed to create modulations bar\n");
+		return FALSE; // failed to create
+	}
 	SetDockingWindowIcons(theApp.m_bHiColorIcons);
 	return TRUE;
 }
@@ -329,7 +340,7 @@ void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 	if (pDoc != NULL) {
 		if (pPrevOptions != NULL) {
 			if (theApp.m_Options.m_View_fUpdateFreq != pPrevOptions->m_View_fUpdateFreq) {
-				if (pDoc->m_Seq.IsPlaying())
+				if (theApp.m_pPlayingDoc != NULL)	// if document is playing
 					SetViewTimer(true);
 			}
 		}
@@ -417,6 +428,10 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				case CMasterProps::PROP_nMeter:
 					UpdateSongPosition();	// update song position in status bar
 					break;
+				case CMasterProps::PROP_nKeySig:
+					if (pDoc->m_Seq.IsPlaying() && m_wndMidiOutputBar.IsVisible())
+						m_wndMidiOutputBar.SetKeySignature(pDoc->m_nKeySig);
+					break;
 				}
 			}
 			if (pSender != reinterpret_cast<CView *>(&m_wndPropertiesBar)) {	// if sender isn't properties bar
@@ -503,7 +518,7 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		}
 		bool	bIsPlaying = pDoc->m_Seq.IsPlaying();
 		m_wndPropertiesBar.Enable(CMasterProps::PROP_nTimeDiv, !bIsPlaying);
-		SetViewTimer(bIsPlaying);
+		SetViewTimer(theApp.m_pPlayingDoc != NULL);	// run view timer if any document is playing, not just this one
 	} else {	// no active document
 		CMasterProps	props;	// default properties
 		m_wndPropertiesBar.SetProperties(props);	// update properties bar
@@ -964,6 +979,11 @@ void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 {
 	if (nIDEvent == VIEW_TIMER_ID) {
 		UpdateSongPosition();
+		if (m_wndMidiOutputBar.IsVisible() && theApp.m_pPlayingDoc != NULL) {
+			// we swap buffers with sequencer, so our buffer is a member var to avoid reallocation
+			theApp.m_pPlayingDoc->m_Seq.GetMidiOutputEvents(m_arrMIDIOutputEvent);	// swap buffers
+			m_wndMidiOutputBar.AddEvents(m_arrMIDIOutputEvent);	// queue latest installment
+		}
 	} else
 		CMDIFrameWndEx::OnTimer(nIDEvent);
 }
