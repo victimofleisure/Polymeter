@@ -32,11 +32,14 @@ public:
 public:
 	void	SetKeySignature(int nKeySig);
 	static	LPCTSTR	GetControllerName(int iController);
+	static	LPCTSTR	GetChannelStatusNickname(int iStatus);
+	CString	GetChannelStatusName(int iStatus) const;
 
 // Operations
 public:
 	void	AddEvents(const CSequencer::CMidiEventArray& arrEvent);
 	void	RemoveAllEvents();
+	void	ExportEvents(LPCTSTR pszPath);
 
 // Overrides
 
@@ -78,6 +81,7 @@ protected:
 	};
 	static const CListCtrlExSel::COL_INFO	m_arrColInfo[COLUMNS];	// list column info
 	static const int	m_arrChanStatID[CHANNEL_VOICE_MESSAGES];	// channel status string resource IDs
+	static const LPCTSTR	m_arrChanStatNickname[CHANNEL_VOICE_MESSAGES];	// internal channel status names
 	static const LPCTSTR	m_arrControllerName[];	// array of controller name strings
 	static const int	m_arrFilterCol[FILTERS];	// column index of each column that can be filtered
 
@@ -118,6 +122,7 @@ protected:
 // Generated message map functions
 	DECLARE_MESSAGE_MAP()
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void OnDestroy();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu);
@@ -135,4 +140,18 @@ protected:
 	afx_msg void OnUpdateShowNoteNames(CCmdUI *pCmdUI);
 	afx_msg void OnShowControllerNames();
 	afx_msg void OnUpdateShowControllerNames(CCmdUI *pCmdUI);
+	afx_msg void OnExport();
+	afx_msg void OnUpdateExport(CCmdUI *pCmdUI);
+	afx_msg void OnListColHdrReset();
 };
+
+inline LPCTSTR CMidiOutputBar::GetChannelStatusNickname(int iStatus)
+{
+	ASSERT(iStatus >= 0 && iStatus < CHANNEL_VOICE_MESSAGES);
+	return m_arrChanStatNickname[iStatus];
+}
+
+inline CString CMidiOutputBar::GetChannelStatusName(int iStatus) const
+{
+	return m_arrChanStatName[iStatus];
+}

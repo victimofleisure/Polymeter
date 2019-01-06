@@ -17,6 +17,7 @@
 #include "MidiOutputBar.h"
 #include "MainFrm.h"
 #include "PolymeterDoc.h"
+#include "RegTempl.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -52,6 +53,16 @@ const int CMidiOutputBar::m_arrChanStatID[CHANNEL_VOICE_MESSAGES] = {
 	#define MIDICHANSTATDEF(name) IDS_TRACK_TYPE_##name,
 	#include "MidiStatusDef.h"
 };
+
+const LPCTSTR CMidiOutputBar::m_arrChanStatNickname[CHANNEL_VOICE_MESSAGES] = {
+	#define MIDICHANSTATDEF(name) _T(#name),
+	#include "MidiStatusDef.h"
+};
+
+#define RK_MIDI_OUTPUT_BAR _T("MIDIOutputBar")
+#define RK_SHOW_NOTE_NAMES _T("ShowNoteNames")
+#define RK_SHOW_CONTROLLER_NAMES _T("ShowCtrlrNames")
+#define RK_COL_WIDTH _T("ColWidth")
 
 CMidiOutputBar::CMidiOutputBar()
 {
@@ -192,6 +203,32 @@ void CMidiOutputBar::SetKeySignature(int nKeySig)
 	m_list.Invalidate();
 }
 
+void CMidiOutputBar::ExportEvents(LPCTSTR pszPath)
+{
+	CStringArrayEx	arrStatNick;
+	arrStatNick.SetSize(CHANNEL_VOICE_MESSAGES);
+	for (int iStat = 0; iStat < CHANNEL_VOICE_MESSAGES; iStat++) {
+		arrStatNick[iStat] = m_arrChanStatNickname[iStat];
+		theApp.SnakeToUpperCamelCase(arrStatNick[iStat]);
+	}
+	CStdioFile	fOut(pszPath, CFile::modeCreate | CFile::modeWrite);
+	CString	sLine;
+	int	nEvents = INT64TO32(m_arrEvent.GetSize());
+	for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each events
+		const MIDI_EVENT&	evt = m_arrEvent[iEvent];
+		CString	sStatus;
+		UINT	nCmd = MIDI_CMD(evt.dwEvent) >> 4;
+		int	iStat = nCmd - 8;
+		if (iStat >= 0 && iStat < _countof(m_arrChanStatID))
+			sStatus = arrStatNick[iStat];
+		else
+			sStatus.Format(_T("%d"), nCmd);
+		sLine.Format(_T("%d,%d,%s,%d,%d\n"), evt.dwTime, MIDI_CHAN(evt.dwEvent) + 1, 
+			sStatus, MIDI_P1(evt.dwEvent), MIDI_P2(evt.dwEvent));
+		fOut.WriteString(sLine);
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////////
 // CEventListCtrl message map
 
@@ -225,6 +262,7 @@ void CMidiOutputBar::CEventListCtrl::OnVScroll(UINT nSBCode, UINT nPos, CScrollB
 
 BEGIN_MESSAGE_MAP(CMidiOutputBar, CDockablePane)
 	ON_WM_CREATE()
+	ON_WM_DESTROY()
 	ON_WM_SIZE()
 	ON_WM_CONTEXTMENU()
 	ON_WM_MENUSELECT()
@@ -242,6 +280,9 @@ BEGIN_MESSAGE_MAP(CMidiOutputBar, CDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_MIDI_OUTPUT_SHOW_NOTE_NAMES, OnUpdateShowNoteNames)
 	ON_COMMAND(ID_MIDI_OUTPUT_SHOW_CONTROLLER_NAMES, OnShowControllerNames)
 	ON_UPDATE_COMMAND_UI(ID_MIDI_OUTPUT_SHOW_CONTROLLER_NAMES, OnUpdateShowControllerNames)
+	ON_COMMAND(ID_MIDI_OUTPUT_EXPORT, OnExport)
+	ON_UPDATE_COMMAND_UI(ID_MIDI_OUTPUT_EXPORT, OnUpdateExport)
+	ON_COMMAND(ID_LIST_COL_HDR_RESET, OnListColHdrReset)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -265,7 +306,18 @@ int CMidiOutputBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	VERIFY(m_ilList.Create(IDB_FILTER, 16, 0, clrImageMask));
 	m_list.SetImageList(&m_ilList, LVSIL_SMALL);
 	m_ilList.SetBkColor(CLR_NONE);	// required for transparency to work
+	RdReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_NOTE_NAMES, m_bShowNoteNames);
+	RdReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_CONTROLLER_NAMES, m_bShowControllerNames);
+	m_list.LoadColumnWidths(RK_MIDI_OUTPUT_BAR, RK_COL_WIDTH);
 	return 0;
+}
+
+void CMidiOutputBar::OnDestroy()
+{
+	WrReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_NOTE_NAMES, m_bShowNoteNames);
+	WrReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_CONTROLLER_NAMES, m_bShowControllerNames);
+	m_list.SaveColumnWidths(RK_MIDI_OUTPUT_BAR, RK_COL_WIDTH);
+	CDockablePane::OnDestroy();
 }
 
 void CMidiOutputBar::OnSize(UINT nType, int cx, int cy)
@@ -458,4 +510,25 @@ void CMidiOutputBar::OnShowControllerNames()
 void CMidiOutputBar::OnUpdateShowControllerNames(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bShowControllerNames);
+}
+
+void CMidiOutputBar::OnExport()
+{
+	CString	sFilter(LPCTSTR(IDS_CSV_FILE_FILTER));
+	CFileDialog	fd(FALSE, _T(".csv"), NULL, OFN_OVERWRITEPROMPT, sFilter);
+	CString	sDlgTitle(LPCTSTR(IDS_EXPORT));
+	fd.m_ofn.lpstrTitle = sDlgTitle;
+	if (fd.DoModal() == IDOK) {
+		ExportEvents(fd.GetPathName());
+	}
+}
+
+void CMidiOutputBar::OnUpdateExport(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_arrEvent.GetSize() > 0);
+}
+
+void CMidiOutputBar::OnListColHdrReset()
+{
+	m_list.ResetColumnWidths(m_arrColInfo, COLUMNS);
 }

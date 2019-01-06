@@ -356,7 +356,6 @@ void CPolymeterApp::SnakeToStartCase(CString& str)
 
 void CPolymeterApp::SnakeToUpperCamelCase(CString& str)
 {
-	str.MakeLower();
 	int	len = str.GetLength();
 	int	pos = len - 1;
 	while (pos >= 0) {
@@ -366,8 +365,10 @@ void CPolymeterApp::SnakeToUpperCamelCase(CString& str)
 		}
 		if (pos < 0)	// if end of string
 			break;
-		while (pos >= 0 && str[pos] != '_')	// skip word
+		while (pos >= 0 && str[pos] != '_') {	// skip word
+			str.SetAt(pos, TCHAR(tolower(str[pos])));	// uncapitalize rest of word
 			pos--;
+		}
 		str.SetAt(pos + 1, TCHAR(toupper(str[pos + 1])));	// capitalize start of word
 	}
 }

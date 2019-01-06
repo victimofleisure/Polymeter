@@ -450,13 +450,15 @@ BEGIN
         BEGIN
             MENUITEM SEPARATOR
         END
+        MENUITEM "Reset &Filters",              ID_MIDI_OUTPUT_RESET_FILTERS
         MENUITEM SEPARATOR
         MENUITEM "&Pause",                      ID_MIDI_OUTPUT_PAUSE
         MENUITEM "Clear &History",              ID_MIDI_OUTPUT_CLEAR_HISTORY
-        MENUITEM "Reset &Filters",              ID_MIDI_OUTPUT_RESET_FILTERS
+        MENUITEM "&Export...",                  ID_MIDI_OUTPUT_EXPORT
         MENUITEM SEPARATOR
         MENUITEM "&Note Names",                 ID_MIDI_OUTPUT_SHOW_NOTE_NAMES
         MENUITEM "C&ontroller Names",           ID_MIDI_OUTPUT_SHOW_CONTROLLER_NAMES
+        MENUITEM "&Reset Columns",              ID_LIST_COL_HDR_RESET
     END
 END
 
@@ -1127,13 +1129,16 @@ BEGIN
     ID_FILE_IMPORT          "Import tracks from a MIDI file\nImport"
     ID_INDICATOR_SONG_POS   "000000000.000"
     ID_INDICATOR_SONG_TIME  "0000000:00:00"
+    ID_LIST_COL_HDR_RESET   "Reset column header to default state"
     ID_MIDI_OUTPUT_CLEAR_HISTORY "Remove all events from history"
-    ID_MIDI_OUTPUT_PAUSE    "Pause display while continuing to capture events"
+    ID_MIDI_OUTPUT_EXPORT   "Export MIDI events to CSV file"
 END
 
 STRINGTABLE
 BEGIN
-    ID_MIDI_OUTPUT_RESET_FILTERS "Reset filters so all events are displayed"
+    ID_MIDI_OUTPUT_PAUSE    "Pause display while continuing to capture events"
+    ID_MIDI_OUTPUT_RESET_FILTERS 
+                            "Remove all filters so all events are displayed"
     ID_MIDI_OUTPUT_SHOW_CONTROLLER_NAMES "Show continuous controller names"
     ID_MIDI_OUTPUT_SHOW_NOTE_NAMES "Show note names in note events"
     ID_MODULATION_SHOW_DIFFERENCES 
@@ -1151,11 +1156,11 @@ BEGIN
     ID_TOOLS_IMPORT_STEPS   "Import steps from a CSV file\nImport Steps"
     ID_TOOLS_IMPORT_TRACKS  "Import tracks from a CSV file\nImport Tracks"
     ID_TOOLS_OPTIONS        "Edit the options\nOptions"
-    ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
     ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for the selected tracks to repeat\nTime to Repeat"
     ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks or steps\nVelocity Range "
     ID_TRACK_FILL           "Fill selected tracks or steps with a range of values"
@@ -1171,11 +1176,11 @@ BEGIN
     ID_TRACK_ROTATE_LEFT    "Rotate the selected tracks or steps left\nRotate Left"
     ID_TRACK_ROTATE_RIGHT   "Rotate the selected tracks or steps right\nRotate Right"
     ID_TRACK_ROTATE_STEPS   "Rotate the selection left or right a given number of steps\nRotate Steps"
-    ID_TRACK_SHIFT_LEFT     "Shift the selected tracks or steps left\nShift Left"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_SHIFT_LEFT     "Shift the selected tracks or steps left\nShift Left"
     ID_TRACK_SHIFT_RIGHT    "Shift the selected tracks or steps right\nShift Right"
     ID_TRACK_SHIFT_STEPS    "Shift the selection left or right a given number of steps\nShift Steps"
     ID_TRACK_SOLO           "Solo the selected tracks\nSolo"
@@ -1202,11 +1207,11 @@ BEGIN
     ID_VIEW_PARTS           "Show or hide the parts bar\nParts"
     ID_VIEW_PRESETS         "Show or hide the presets bar\nPresets"
     ID_VIEW_PROPERTIES      "Show or hide the properties bar\nProperties"
-    ID_VIEW_TYPE_LIVE       "Show the live view\nLive View"
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_TYPE_LIVE       "Show the live view\nLive View"
     ID_VIEW_TYPE_SONG       "Show the song view\nSong View"
     ID_VIEW_TYPE_TRACK      "Show the track view\nTrack View"
     ID_VIEW_VELOCITIES      "Show or hide velocities pane\nVelocities"
