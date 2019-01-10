@@ -1,0 +1,101 @@
+// Copyleft 2018 Chris Korda
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 2 of the License, or any later version.
+/*
+        chris korda
+ 
+		revision history:
+		rev		date	comments
+        00		08jan19	initial version
+
+*/
+
+#include "stdafx.h"
+#include "Polymeter.h"
+#include "MyDockablePane.h"
+
+#ifdef _DEBUG
+#undef THIS_FILE
+static char THIS_FILE[]=__FILE__;
+#define new DEBUG_NEW
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+// CMyDockablePane
+
+IMPLEMENT_DYNAMIC(CMyDockablePane, CDockablePane)
+
+CMyDockablePane::CMyDockablePane()
+{
+	m_bIsShowPending = false;
+	m_bFastIsVisible = false;
+}
+
+CMyDockablePane::~CMyDockablePane()
+{
+}
+
+void CMyDockablePane::OnShowChanged(bool bShow)
+{
+	UNREFERENCED_PARAMETER(bShow);
+}
+
+////////////////////////////////////////////////////////////////////////////
+// CMyDockablePane message map
+
+BEGIN_MESSAGE_MAP(CMyDockablePane, CDockablePane)
+	ON_WM_MENUSELECT()
+	ON_WM_EXITMENULOOP()
+	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
+	ON_WM_SHOWWINDOW()
+	ON_MESSAGE(UWM_SHOW_CHANGING, OnShowChanging)
+END_MESSAGE_MAP()
+
+/////////////////////////////////////////////////////////////////////////////
+// CMyDockablePane message handlers
+
+void CMyDockablePane::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
+{
+	UNREFERENCED_PARAMETER(hSysMenu);
+	if (!(nFlags & MF_SYSMENU))	// if not system menu item
+		AfxGetMainWnd()->SendMessage(WM_SETMESSAGESTRING, nItemID, 0);	// set status hint
+}
+
+void CMyDockablePane::OnExitMenuLoop(BOOL bIsTrackPopupMenu)
+{
+	if (bIsTrackPopupMenu)	// if exiting context menu, restore status idle message
+		AfxGetMainWnd()->SendMessage(WM_SETMESSAGESTRING, AFX_IDS_IDLEMESSAGE, 0);
+}
+
+LRESULT CMyDockablePane::OnCommandHelp(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	theApp.WinHelp(GetDlgCtrlID());
+	return TRUE;
+}
+
+void CMyDockablePane::OnShowWindow(BOOL bShow, UINT nStatus)
+{
+	// docking or floating generates a pair of spurious show/hide notifications,
+	// so post ourself a message that we'll receive after things settle down
+	if (!m_bIsShowPending) {	// if update not pending
+		PostMessage(UWM_SHOW_CHANGING);
+		m_bIsShowPending = true;
+	}
+	CDockablePane::OnShowWindow(bShow, nStatus);
+}
+
+LRESULT CMyDockablePane::OnShowChanging(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	m_bIsShowPending = false;	// reset pending flag
+	bool	bShow = IsVisible() != 0;
+	if (bShow != m_bFastIsVisible) {	// if show state actually changed
+		m_bFastIsVisible = bShow;	// update cached show state before notifying
+		OnShowChanged(bShow);	// notify derived class of debounced show change
+	}
+	return 0;
+}

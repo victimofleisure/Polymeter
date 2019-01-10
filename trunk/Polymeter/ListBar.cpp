@@ -1,6 +1,6 @@
 // Copyleft 2018 Chris Korda
 // This program is free software; you can redistribute it and/or modify it
-// under the terms of the GNU General Public License as published by the FreeCListBar
+// under the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 2 of the License, or any later version.
 /*
         chris korda
@@ -24,7 +24,7 @@ static char THIS_FILE[]=__FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CListBar
 
-IMPLEMENT_DYNAMIC(CListBar, CDockablePane)
+IMPLEMENT_DYNAMIC(CListBar, CMyDockablePane)
 
 CListBar::CListBar()
 {
@@ -79,14 +79,11 @@ BOOL CListBar::CMyListCtrl::PreTranslateMessage(MSG* pMsg)
 /////////////////////////////////////////////////////////////////////////////
 // CListBar message map
 
-BEGIN_MESSAGE_MAP(CListBar, CDockablePane)
+BEGIN_MESSAGE_MAP(CListBar, CMyDockablePane)
 	ON_WM_CREATE()
 	ON_WM_DESTROY()
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
-	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
-	ON_WM_MENUSELECT()
-	ON_WM_EXITMENULOOP()
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST, OnListGetdispinfo)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST, OnListDblClick)
 	ON_NOTIFY(LVN_ENDLABELEDIT, IDC_LIST, OnListEndLabelEdit)
@@ -103,7 +100,7 @@ END_MESSAGE_MAP()
 
 int CListBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-	if (CDockablePane::OnCreate(lpCreateStruct) == -1)
+	if (CMyDockablePane::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
 	DWORD	dwStyle = WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_OWNERDATA
@@ -119,36 +116,15 @@ int CListBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CListBar::OnSize(UINT nType, int cx, int cy)
 {
-	CDockablePane::OnSize(nType, cx, cy);
+	CMyDockablePane::OnSize(nType, cx, cy);
 	m_list.MoveWindow(0, 0, cx, cy);
 	m_list.SetColumnWidth(0, cx);	// only one column, give it full width
 }
 
 void CListBar::OnSetFocus(CWnd* pOldWnd)
 {
-	CDockablePane::OnSetFocus(pOldWnd);
+	CMyDockablePane::OnSetFocus(pOldWnd);
 	m_list.SetFocus();	// delegate focus to child control
-}
-
-LRESULT CListBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
-	AfxGetApp()->WinHelp(GetDlgCtrlID());
-	return TRUE;
-}
-
-void CListBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
-{
-	UNREFERENCED_PARAMETER(hSysMenu);
-	if (!(nFlags & MF_SYSMENU))	// if not system menu item
-		AfxGetMainWnd()->SendMessage(WM_SETMESSAGESTRING, nItemID, 0);	// set status hint
-}
-
-void CListBar::OnExitMenuLoop(BOOL bIsTrackPopupMenu)
-{
-	if (bIsTrackPopupMenu)	// if exiting context menu, restore status idle message
-		AfxGetMainWnd()->SendMessage(WM_SETMESSAGESTRING, AFX_IDS_IDLEMESSAGE, 0);
 }
 
 void CListBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult) 

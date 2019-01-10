@@ -33,6 +33,7 @@
 #include "DocIter.h"
 #include "OptionsDlg.h"
 #include "SaveObj.h"
+#include "afxregpath.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -63,6 +64,7 @@ CPolymeterApp::CPolymeterApp()
 	// Place all significant initialization in InitInstance
 	m_bInMsgBox = false;
 	m_bTieNotes = false;
+	m_bCleanStateOnExit = false;
 	m_bIsRecordMidiIn = false;
 	m_bHelpInit = false;
 	m_nMidiInStartTime = 0;
@@ -191,7 +193,36 @@ int CPolymeterApp::ExitInstance()
 
 	CloseHtmlHelp();
 
+	if (m_bCleanStateOnExit) {
+		ResetWindowLayout();	// delete window layout keys
+		CleanState();	// delete workspace key
+		RestartApp();	// launch new instance of app
+	}
+
 	return CWinAppEx::ExitInstance();
+}
+
+void CPolymeterApp::ResetWindowLayout()
+{
+	// registry keys listed here will be deleted
+	static const LPCTSTR pszCleanKey[] = {
+		RK_CHANNELS_BAR,
+		RK_CHILD_FRAME,
+		RK_MIDI_OUTPUT_BAR,
+		RK_MODULATIONS_BAR,
+		RK_PIANO_BAR,
+		RK_PROPERTIES_BAR,
+		RK_SONG_VIEW,
+		RK_STEP_VIEW,
+		RK_TRACK_VIEW,
+		RK_LIVE_VIEW,
+		_T("Options\\Expand"),
+	};
+	CSettingsStoreSP regSP;
+	CSettingsStore& reg = regSP.Create(FALSE, FALSE);
+	int	nKeys = _countof(pszCleanKey);
+	for (int iKey = 0; iKey < nKeys; iKey++)	// for each listed key
+		reg.DeleteKey(AFXGetRegPath(pszCleanKey[iKey]));
 }
 
 #ifdef _DEBUG
@@ -411,7 +442,7 @@ int CPolymeterApp::FindHelpID(int nResID)
 void CPolymeterApp::WinHelp(DWORD_PTR dwData, UINT nCmd) 
 {
 	UNREFERENCED_PARAMETER(nCmd);
-//printf("dwData=%d:%d nCmd=%d\n", HIWORD(dwData), LOWORD(dwData), nCmd);
+// printf("dwData=%d:%d nCmd=%d\n", HIWORD(dwData), LOWORD(dwData), nCmd);
 	CPathStr	HelpPath(GetAppFolder());
 	HelpPath.Append(CString(m_pszAppName) + _T(".chm"));
 	HWND	hMainWnd = GetMainFrame()->m_hWnd;
@@ -601,6 +632,20 @@ void CALLBACK CPolymeterApp::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwIn
 		}
 		break;
 	}
+}
+
+bool CPolymeterApp::RestartApp()
+{
+	TCHAR	szAppPath[MAX_PATH] = {0};
+	::GetModuleFileName(NULL, szAppPath, MAX_PATH);
+	STARTUPINFO	si = {0};
+	PROCESS_INFORMATION	pi;
+	GetStartupInfo(&si);
+	if (!CreateProcess(NULL, szAppPath, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+		AfxMessageBox(GetLastErrorString()); // report the error
+		return false;
+	}
+	return true;
 }
 
 // CPolymeterApp message map

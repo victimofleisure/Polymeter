@@ -10,6 +10,7 @@
         00      23mar18	initial version
         01      15dec18	add find/replace
         02		03jan19	add MIDI output bar
+        03		07jan19	add piano bar
 
 */
 
@@ -169,6 +170,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_wndModulationsBar.AttachToTabWnd(&m_wndChannelsBar, DM_SHOW);
 	m_wndMidiOutputBar.EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_wndMidiOutputBar);
+	m_wndPianoBar.EnableDocking(CBRS_ALIGN_ANY);
+	DockPane(&m_wndPianoBar);
 
 	// enable Visual Studio 2005 style docking window behavior
 	CDockingManager::SetDockingMode(DT_SMART);
@@ -322,6 +325,13 @@ BOOL CMainFrame::CreateDockingWindows()
 	if (!m_wndMidiOutputBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_MidiOutput, dwStyle))
 	{
 		TRACE0("Failed to create modulations bar\n");
+		return FALSE; // failed to create
+	}
+	sTitle.LoadString(IDS_BAR_PIANO);
+	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_BOTTOM | CBRS_FLOAT_MULTI;
+	if (!m_wndPianoBar.Create(sTitle, this, CRect(0, 0, 140, 140), TRUE, ID_BAR_Piano, dwStyle))
+	{
+		TRACE0("Failed to create output piano bar\n");
 		return FALSE; // failed to create
 	}
 	SetDockingWindowIcons(theApp.m_bHiColorIcons);
@@ -766,6 +776,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_COMMAND(ID_VIEW_MODULATIONS, OnViewModulations)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_MODULATIONS, OnUpdateViewModulations)
 	ON_COMMAND(ID_WINDOW_FULL_SCREEN, OnWindowFullScreen)
+	ON_COMMAND(ID_WINDOW_RESET_LAYOUT, OnWindowResetLayout)
 END_MESSAGE_MAP()
 
 // CMainFrame message handlers
@@ -979,10 +990,17 @@ void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 {
 	if (nIDEvent == VIEW_TIMER_ID) {
 		UpdateSongPosition();
-		if (m_wndMidiOutputBar.IsVisible() && theApp.m_pPlayingDoc != NULL) {
-			// we swap buffers with sequencer, so our buffer is a member var to avoid reallocation
-			theApp.m_pPlayingDoc->m_Seq.GetMidiOutputEvents(m_arrMIDIOutputEvent);	// swap buffers
-			m_wndMidiOutputBar.AddEvents(m_arrMIDIOutputEvent);	// queue latest installment
+		if (theApp.m_pPlayingDoc != NULL) {
+			bool	bShowingMidiOutputBar = m_wndMidiOutputBar.FastIsVisible();
+			bool	bShowingPianoBar = m_wndPianoBar.FastIsVisible();
+			if (bShowingMidiOutputBar || bShowingPianoBar) {
+				// we swap buffers with sequencer, so our buffer is a member var to avoid reallocation
+				theApp.m_pPlayingDoc->m_Seq.GetMidiOutputEvents(m_arrMIDIOutputEvent);	// swap buffers
+			}
+			if (bShowingMidiOutputBar)
+				m_wndMidiOutputBar.AddEvents(m_arrMIDIOutputEvent);	// queue latest installment
+			if (bShowingPianoBar)
+				m_wndPianoBar.AddEvents(m_arrMIDIOutputEvent);	// queue latest installment
 		}
 	} else
 		CMDIFrameWndEx::OnTimer(nIDEvent);
@@ -1131,3 +1149,14 @@ void CMainFrame::OnWindowFullScreen()
 	FullScreen(!IsFullScreen());
 }
 
+void CMainFrame::OnWindowResetLayout()
+{
+	UINT	nType = MB_YESNO | MB_DEFBUTTON2 | MB_ICONWARNING;
+	if (AfxMessageBox(IDS_WINDOW_RESET_LAYOUT_WARN, nType) == IDYES) {	// get confirmation
+		if (!theApp.SaveAllModified())	// save any unsaved documents
+			return;	// save failed or user canceled
+		theApp.CloseAllDocuments(TRUE);	// end session
+		theApp.m_bCleanStateOnExit = true;
+		PostMessage(WM_CLOSE);
+	}
+}

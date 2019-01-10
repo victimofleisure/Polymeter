@@ -34,7 +34,6 @@ const COLORREF CLiveView::m_clrBkgnd = RGB(0, 0, 64);
 
 int CLiveView::m_nGlobListWidth[LISTS] = {INIT_LIST_WIDTH, INIT_LIST_WIDTH}; 
 
-#define RK_LIVE_VIEW _T("LiveView")
 #define RK_LIST_WIDTH RK_LIVE_VIEW _T("\\ListWidth")
 
 const LPCTSTR CLiveView::m_nListName[LISTS] = {

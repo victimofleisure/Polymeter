@@ -10,6 +10,7 @@
         00      23mar18	initial version
         01      15dec18	add find/replace
         02		03jan19	add MIDI output bar
+        03		07jan19	add piano bar
 
 */
 
@@ -24,6 +25,7 @@
 #include "PartsBar.h"
 #include "ModulationsBar.h"
 #include "MidiOutputBar.h"
+#include "PianoBar.h"
 
 // docking bar IDs are relative to AFX_IDW_CONTROLBAR_FIRST
 enum {	// docking bar IDs; don't change, else bar placement won't be restored
@@ -62,6 +64,7 @@ public:
 	CPartsBar&	GetPartsBar();
 	CModulationsBar&	GetModulationsBar();
 	CMidiOutputBar&	GetMidiOutputBar();
+	CPianoBar& GetPianoBar();
 	CString	GetSongPositionString() const;
 	CString	GetSongTimeString() const;
 
@@ -96,6 +99,7 @@ protected:  // control bar embedded members
 	CPartsBar		  m_wndPartsBar;
 	CModulationsBar	  m_wndModulationsBar;
 	CMidiOutputBar	  m_wndMidiOutputBar;
+	CPianoBar		  m_wndPianoBar;
 
 // Constants
 	static const UINT m_arrIndicatorID[];	// array of status bar indicator IDs
@@ -157,6 +161,7 @@ protected:
 	afx_msg void OnViewModulations();
 	afx_msg void OnUpdateViewModulations(CCmdUI *pCmdUI);
 	afx_msg void OnWindowFullScreen();
+	afx_msg void OnWindowResetLayout();
 };
 
 inline HACCEL CMainFrame::GetAccelTable() const
@@ -203,6 +208,11 @@ inline CModulationsBar& CMainFrame::GetModulationsBar()
 inline CMidiOutputBar& CMainFrame::GetMidiOutputBar()
 {
 	return m_wndMidiOutputBar;
+}
+
+inline CPianoBar& CMainFrame::GetPianoBar()
+{
+	return m_wndPianoBar;
 }
 
 inline CString CMainFrame::GetSongPositionString() const

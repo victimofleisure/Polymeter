@@ -1,6 +1,6 @@
 // Copyleft 2018 Chris Korda
 // This program is free software; you can redistribute it and/or modify it
-// under the terms of the GNU General Public License as published by the FreeCModulationsBar
+// under the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 2 of the License, or any later version.
 /*
         chris korda
@@ -29,7 +29,7 @@ static char THIS_FILE[]=__FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CModulationsBar
 
-IMPLEMENT_DYNAMIC(CModulationsBar, CDockablePane)
+IMPLEMENT_DYNAMIC(CModulationsBar, CMyDockablePane)
 
 const CGridCtrl::COL_INFO CModulationsBar::m_arrColInfo[COLUMNS] = {
 	{IDS_TRK_Number,	LVCFMT_LEFT,	30},
@@ -37,7 +37,6 @@ const CGridCtrl::COL_INFO CModulationsBar::m_arrColInfo[COLUMNS] = {
 	{IDS_MOD_SOURCE,	LVCFMT_LEFT,	200},
 };
 
-#define RK_MODULATION _T("ModulationsBar")
 #define RK_COL_ORDER _T("ColOrder")
 #define RK_COL_WIDTH _T("ColWidth")
 
@@ -351,7 +350,7 @@ void CModulationsBar::SortModulations(bool bBySource)
 /////////////////////////////////////////////////////////////////////////////
 // CModulationsBar message map
 
-BEGIN_MESSAGE_MAP(CModulationsBar, CDockablePane)
+BEGIN_MESSAGE_MAP(CModulationsBar, CMyDockablePane)
 	ON_WM_CREATE()
 	ON_WM_DESTROY()
 	ON_WM_SIZE()
@@ -360,10 +359,6 @@ BEGIN_MESSAGE_MAP(CModulationsBar, CDockablePane)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_MOD_LIST, OnListCustomdraw)
 	ON_MESSAGE(UWM_DEFERRED_UPDATE, OnDeferredUpdate)
 	ON_WM_CONTEXTMENU()
-	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
-	ON_WM_CONTEXTMENU()
-	ON_WM_MENUSELECT()
-	ON_WM_EXITMENULOOP()
 	ON_COMMAND(ID_LIST_COL_HDR_RESET, OnListColHdrReset)
 	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditDelete)
@@ -391,7 +386,7 @@ END_MESSAGE_MAP()
 
 int CModulationsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-	if (CDockablePane::OnCreate(lpCreateStruct) == -1)
+	if (CMyDockablePane::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
 	DWORD	dwStyle = WS_CHILD | WS_VISIBLE 
@@ -402,27 +397,27 @@ int CModulationsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_grid.SetExtendedStyle(dwListExStyle);
 	m_grid.CreateColumns(m_arrColInfo, COLUMNS);
 	m_grid.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
-	m_grid.LoadColumnOrder(RK_MODULATION, RK_COL_ORDER);
-	m_grid.LoadColumnWidths(RK_MODULATION, RK_COL_WIDTH);
+	m_grid.LoadColumnOrder(RK_MODULATIONS_BAR, RK_COL_ORDER);
+	m_grid.LoadColumnWidths(RK_MODULATIONS_BAR, RK_COL_WIDTH);
 	return 0;
 }
 
 void CModulationsBar::OnDestroy()
 {
-	m_grid.SaveColumnOrder(RK_MODULATION, RK_COL_ORDER);
-	m_grid.SaveColumnWidths(RK_MODULATION, RK_COL_WIDTH);
-	CDockablePane::OnDestroy();
+	m_grid.SaveColumnOrder(RK_MODULATIONS_BAR, RK_COL_ORDER);
+	m_grid.SaveColumnWidths(RK_MODULATIONS_BAR, RK_COL_WIDTH);
+	CMyDockablePane::OnDestroy();
 }
 
 void CModulationsBar::OnSize(UINT nType, int cx, int cy)
 {
-	CDockablePane::OnSize(nType, cx, cy);
+	CMyDockablePane::OnSize(nType, cx, cy);
 	m_grid.MoveWindow(0, 0, cx, cy);
 }
 
 void CModulationsBar::OnSetFocus(CWnd* pOldWnd)
 {
-	CDockablePane::OnSetFocus(pOldWnd);
+	CMyDockablePane::OnSetFocus(pOldWnd);
 	m_grid.SetFocus();	// delegate focus to child control
 }
 
@@ -532,27 +527,6 @@ void CModulationsBar::OnContextMenu(CWnd* pWnd, CPoint point)
 	menu.GetSubMenu(0)->TrackPopupMenu(0, point.x, point.y, this);
 }
 
-LRESULT CModulationsBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
-	theApp.WinHelp(GetDlgCtrlID());
-	return TRUE;
-}
-
-void CModulationsBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
-{
-	UNREFERENCED_PARAMETER(hSysMenu);
-	if (!(nFlags & MF_SYSMENU))	// if not system menu item
-		AfxGetMainWnd()->SendMessage(WM_SETMESSAGESTRING, nItemID, 0);	// set status hint
-}
-
-void CModulationsBar::OnExitMenuLoop(BOOL bIsTrackPopupMenu)
-{
-	if (bIsTrackPopupMenu)	// if exiting context menu, restore status idle message
-		AfxGetMainWnd()->SendMessage(WM_SETMESSAGESTRING, AFX_IDS_IDLEMESSAGE, 0);
-}
-
 BOOL CModulationsBar::PreTranslateMessage(MSG* pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN) {
@@ -590,7 +564,7 @@ BOOL CModulationsBar::PreTranslateMessage(MSG* pMsg)
 			break;
 		}
 	}
-	return CDockablePane::PreTranslateMessage(pMsg);
+	return CMyDockablePane::PreTranslateMessage(pMsg);
 }
 
 void CModulationsBar::OnListColHdrReset()

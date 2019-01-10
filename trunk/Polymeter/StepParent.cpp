@@ -38,7 +38,6 @@ bool CStepParent::m_bGlobIsVeloSigned = false;
 
 const LPCTSTR CStepParent::m_pszVeloOrigin[2] = {_T("64"), _T("0")};
 
-#define RK_STEP_VIEW _T("StepView")
 #define RK_VELO_HEIGHT _T("VeloHeight")
 #define RK_VELO_SIGNED _T("VeloSigned")
 

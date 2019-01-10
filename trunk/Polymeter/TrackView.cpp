@@ -37,7 +37,6 @@
 
 IMPLEMENT_DYNCREATE(CTrackView, CView)
 
-#define RK_TRACK_VIEW _T("TrackView")
 #define RK_COL_WIDTH _T("ColWidth")
 #define RK_COL_ORDER _T("ColOrder")
 

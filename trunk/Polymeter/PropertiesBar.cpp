@@ -26,8 +26,7 @@ static char THIS_FILE[]=__FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CPropertiesBar
 
-#define RK_PROPERTIES_BAR _T("PropertiesBar\\")
-#define RK_EXPAND _T("Expand")
+#define RK_EXPAND _T("\\Expand")
 #define RK_DESCRIPTION_ROWS _T("DescriptionRows")
 
 CPropertiesBar::CPropertiesBar()

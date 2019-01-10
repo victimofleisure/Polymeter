@@ -39,7 +39,6 @@ IMPLEMENT_DYNCREATE(CChildFrame, CMDIChildWndEx)
 
 int CChildFrame::m_nGlobSplitPos = INIT_SPLIT_POS;
 
-#define RK_CHILD_FRAME _T("ChildFrm")
 #define RK_SPLIT_POS _T("SplitPos")
 
 // CChildFrame construction/destruction

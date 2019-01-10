@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      27mar18	initial version
+		01		09jan19	in reset all, select first output device if any
 		
 */
 
@@ -92,8 +93,12 @@ void COptionsDlg::OnOK()
 
 void COptionsDlg::OnClickedResetAll()
 {
-	if (AfxMessageBox(IDS_RESET_ALL_OPTIONS, MB_YESNO) == IDYES) {
+	if (AfxMessageBox(IDS_RESET_ALL_OPTIONS, MB_YESNO) == IDYES) {	// if resetting all options
 		COptions	opt;
+		if (theApp.m_midiDevs.GetCount(CMidiDevices::OUTPUT) > 0) {	// if at least one output device
+			theApp.m_midiDevs.SetIdx(CMidiDevices::OUTPUT, 0);	// select first output device
+			opt.m_Midi_iOutputDevice = 1;	// select first output device, skipping none option
+		}
 		m_Grid.SetProperties(opt);
 		GotoDlgCtrl(GetDlgItem(IDOK));
 	}

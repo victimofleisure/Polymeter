@@ -13,11 +13,13 @@
 
 #pragma once
 
+#include "MyDockablePane.h"
 #include "PreviewGridCtrl.h"
 #include "Midi.h"
 
-class CChannelsBar : public CDockablePane
+class CChannelsBar : public CMyDockablePane
 {
+	DECLARE_DYNAMIC(CChannelsBar)
 // Construction
 public:
 	CChannelsBar();
@@ -74,7 +76,6 @@ protected:
 	afx_msg void OnDestroy();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
-	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnListColHdrReset();

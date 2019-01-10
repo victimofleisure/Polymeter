@@ -14,9 +14,10 @@
 
 #pragma once
 
+#include "MyDockablePane.h"
 #include "GridCtrl.h"
 
-class CModulationsBar : public CDockablePane, public CTrackBase
+class CModulationsBar : public CMyDockablePane, public CTrackBase
 {
 	DECLARE_DYNAMIC(CModulationsBar)
 // Construction
@@ -88,9 +89,6 @@ protected:
 	afx_msg void OnListCustomdraw(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg LRESULT OnDeferredUpdate(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
-	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
-	afx_msg void OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu);
-	afx_msg void OnExitMenuLoop(BOOL bIsTrackPopupMenu);
 	afx_msg void OnListColHdrReset();
 	afx_msg void OnEditCopy();
 	afx_msg void OnEditCut();

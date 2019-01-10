@@ -1,6 +1,6 @@
 // Copyleft 2018 Chris Korda
 // This program is free software; you can redistribute it and/or modify it
-// under the terms of the GNU General Public License as published by the FreeCChannelsBar
+// under the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 2 of the License, or any later version.
 /*
         chris korda
@@ -30,6 +30,8 @@ static char THIS_FILE[]=__FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CChannelsBar
 
+IMPLEMENT_DYNAMIC(CChannelsBar, CMyDockablePane)
+
 const CGridCtrl::COL_INFO CChannelsBar::m_arrColInfo[COLUMNS] = {
 	#define CHANNELDEF(name, align, width) {IDS_CHANNEL_COL_##name, align, width},
 	#define CHANNELDEF_NUMBER	// include channel number
@@ -41,7 +43,6 @@ const LPCTSTR CChannelsBar::m_arrGMPatchName[MIDI_NOTES] = {
 	#include "MidiCtrlrDef.h"	// generate array of General MIDI patch names
 };
 
-#define RK_CHANNELS _T("ChannelsBar")
 #define RK_COL_ORDER _T("ColOrder")
 #define RK_COL_WIDTH _T("ColWidth")
 
@@ -248,12 +249,11 @@ bool CChannelsBar::ShowListColumnHeaderMenu(CWnd *pWnd, CListCtrl *pList, CPoint
 /////////////////////////////////////////////////////////////////////////////
 // CChannelsBar message map
 
-BEGIN_MESSAGE_MAP(CChannelsBar, CDockablePane)
+BEGIN_MESSAGE_MAP(CChannelsBar, CMyDockablePane)
 	ON_WM_CREATE()
 	ON_WM_DESTROY()
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
-	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_CHANNELS_GRID, OnGetdispinfo)
 	ON_WM_CONTEXTMENU()
 	ON_COMMAND(ID_LIST_COL_HDR_RESET, OnListColHdrReset)
@@ -264,7 +264,7 @@ END_MESSAGE_MAP()
 
 int CChannelsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-	if (CDockablePane::OnCreate(lpCreateStruct) == -1)
+	if (CMyDockablePane::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
 	DWORD	dwStyle = WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_OWNERDATA
@@ -275,36 +275,28 @@ int CChannelsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_grid.SetExtendedStyle(dwListExStyle);
 	m_grid.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
 	m_grid.SetItemCountEx(MIDI_CHANNELS);
-	m_grid.LoadColumnOrder(RK_CHANNELS, RK_COL_ORDER);
-	m_grid.LoadColumnWidths(RK_CHANNELS, RK_COL_WIDTH);
+	m_grid.LoadColumnOrder(RK_CHANNELS_BAR, RK_COL_ORDER);
+	m_grid.LoadColumnWidths(RK_CHANNELS_BAR, RK_COL_WIDTH);
 	return 0;
 }
 
 void CChannelsBar::OnDestroy()
 {
-	m_grid.SaveColumnOrder(RK_CHANNELS, RK_COL_ORDER);
-	m_grid.SaveColumnWidths(RK_CHANNELS, RK_COL_WIDTH);
-	CDockablePane::OnDestroy();
+	m_grid.SaveColumnOrder(RK_CHANNELS_BAR, RK_COL_ORDER);
+	m_grid.SaveColumnWidths(RK_CHANNELS_BAR, RK_COL_WIDTH);
+	CMyDockablePane::OnDestroy();
 }
 
 void CChannelsBar::OnSize(UINT nType, int cx, int cy)
 {
-	CDockablePane::OnSize(nType, cx, cy);
+	CMyDockablePane::OnSize(nType, cx, cy);
 	m_grid.MoveWindow(0, 0, cx, cy);
 }
 
 void CChannelsBar::OnSetFocus(CWnd* pOldWnd)
 {
-	CDockablePane::OnSetFocus(pOldWnd);
+	CMyDockablePane::OnSetFocus(pOldWnd);
 	m_grid.SetFocus();	// delegate focus to child control
-}
-
-LRESULT CChannelsBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
-	theApp.WinHelp(GetDlgCtrlID());
-	return TRUE;
 }
 
 void CChannelsBar::OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult) 
@@ -352,7 +344,7 @@ void CChannelsBar::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	if (ShowListColumnHeaderMenu(this, &m_grid, point))
 		return;
-	CDockablePane::OnContextMenu(pWnd, point);
+	CMyDockablePane::OnContextMenu(pWnd, point);
 }
 
 void CChannelsBar::OnListColHdrReset()

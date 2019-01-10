@@ -14,11 +14,12 @@
 
 #pragma once
 
+#include "MyDockablePane.h"
 #include "ListCtrlExSel.h"
 #include "Sequencer.h"
 #include "BlockArray.h"
 
-class CMidiOutputBar : public CDockablePane
+class CMidiOutputBar : public CMyDockablePane
 {
 	DECLARE_DYNAMIC(CMidiOutputBar)
 // Construction
@@ -118,6 +119,9 @@ protected:
 	void	ResetFilters();
 
 // Overrides
+	virtual BOOL CanAutoHide() const;
+	virtual BOOL CanBeAttached() const;
+	virtual	void OnShowChanged(bool bShow);
 
 // Generated message map functions
 	DECLARE_MESSAGE_MAP()
@@ -126,10 +130,7 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu);
-	afx_msg void OnExitMenuLoop(BOOL bIsTrackPopupMenu);
-	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg void OnClearHistory();
 	afx_msg void OnPause();
 	afx_msg void OnResetFilters();

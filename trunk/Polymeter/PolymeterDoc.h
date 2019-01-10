@@ -233,6 +233,7 @@ public:
 	void	TrackFill(const CIntArrayEx& arrTrackSel, CRange<int> rngStep, CRange<int> rngVal, int iFunction, double fFrequency, double fPhase, double fPower);
 	bool	GotoNextDub(bool bReverse = false);
 	int		CalcSongTimeShift() const;
+	void	OnMidiOutputCaptureChange();
 
 // Overrides
 public:

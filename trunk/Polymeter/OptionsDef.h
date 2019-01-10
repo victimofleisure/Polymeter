@@ -9,6 +9,7 @@
 		rev		date	comments
         00      27mar18	initial version
 		01		12dec18	move input quantization to MIDI group
+		02		09jan19	change default velocity from 64 to 100
 		
 */
 
@@ -31,7 +32,7 @@ PROPDEF(	Midi,		NONE,		ENUM,		int,		iOutputDevice,		0,			0,			0,			NULL,		0)
 PROPDEF(	Midi,		NONE,		VAR,		int,		nLatency,			10,			1,			1000,		NULL,		0)
 PROPDEF(	Midi,		NONE,		VAR,		int,		nBufferSize,		4096,		1,			USHRT_MAX,	NULL,		0)
 PROPDEF(	Midi,		NONE,		VAR,		bool,		bThru,				1,			0,			0,			NULL,		0)
-PROPDEF(	Midi,		NONE,		VAR,		short,		nDefaultVelocity,	64,			1,			127,		NULL,		0)
+PROPDEF(	Midi,		NONE,		VAR,		short,		nDefaultVelocity,	100,		1,			127,		NULL,		0)
 PROPDEF(	Midi,		NONE,		ENUM,		int,		iInputQuant,		INQNT_16,	0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		float,		fUpdateFreq,		20.0f,		1.0f,		60.0f,		NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowCurPos,		1,			0,			0,			NULL,		0)

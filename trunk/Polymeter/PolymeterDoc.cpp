@@ -23,6 +23,7 @@
 		13		18dec18	add import/export tracks
 		14		19dec18	move track property names into base class
 		15		03jan19	in Play, add support for MIDI output bar
+		16		07jan19	in Play, add support for piano bar
 
 */
 
@@ -78,9 +79,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_TRACK_MODULATIONS	_T("Mods")
 
 #define RK_MASTER		_T("Master")
-#define RK_STEP_VIEW	_T("StepView")
 #define RK_STEP_ZOOM	_T("Zoom")
-#define RK_SONG_VIEW	_T("SongView")
 #define RK_SONG_ZOOM	_T("Zoom")
 #define RK_VIEW_TYPE	_T("ViewType")
 
@@ -178,7 +177,7 @@ BOOL CPolymeterDoc::OnNewDocument()
 
 void CPolymeterDoc::OnCloseDocument()
 {
-	m_Seq.Play(false);	// stop playback
+	Play(false);	// stop playback; use wrapper function for proper cleanup
 	CDocument::OnCloseDocument();
 }
 
@@ -2349,7 +2348,8 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 		theApp.m_pPlayingDoc = this;
 		UpdateChannelEvents();	// queue channel events to be output at start of playback
 		CMidiOutputBar&	wndMidiOutput = theApp.GetMainFrame()->GetMidiOutputBar();
-		if (wndMidiOutput.IsVisible()) {
+		CPianoBar&	wndNotes = theApp.GetMainFrame()->GetPianoBar();
+		if (wndMidiOutput.IsVisible() || wndNotes.IsVisible()) {
 			wndMidiOutput.SetKeySignature(m_nKeySig);
 			wndMidiOutput.RemoveAllEvents();
 			bOutputCapture = true;
@@ -2368,16 +2368,21 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 
 void CPolymeterDoc::OnPlay(bool bPlay, bool bRecord)
 {
-	if (!bPlay && bRecord) {	// if ending a recording
-		UpdateSongLength();
-		if (theApp.m_Options.m_General_bAlwaysRecord) {	// if always recording
-			CString	sPath;
-			if (CreateAutoSavePath(sPath)) {	// if auto-save path created
-				WriteProperties(sPath);	// automatically save document
-				SetModifiedFlag(false);
-			}
-		} else	// normal recording
-			SetModifiedFlag();
+	if (!bPlay) {	// if stopping
+		if (bRecord) {	// if ending a recording
+			UpdateSongLength();
+			if (theApp.m_Options.m_General_bAlwaysRecord) {	// if always recording
+				CString	sPath;
+				if (CreateAutoSavePath(sPath)) {	// if auto-save path created
+					WriteProperties(sPath);	// automatically save document
+					SetModifiedFlag(false);
+				}
+			} else	// normal recording
+				SetModifiedFlag();
+		}
+		CPianoBar&	wndNotes = theApp.GetMainFrame()->GetPianoBar();
+		if (wndNotes.IsVisible())
+			wndNotes.RemoveAllEvents();
 	}
 }
 
@@ -3007,6 +3012,14 @@ bool CPolymeterDoc::TrackFill(const CRect *prStepSel)
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_STEPS, &hint);
 	SetModifiedFlag();
 	return true;
+}
+
+void CPolymeterDoc::OnMidiOutputCaptureChange()
+{
+	CMainFrame	*pMainFrame = theApp.GetMainFrame();
+	bool	bIsCapturing = pMainFrame->GetMidiOutputBar().FastIsVisible() != 0
+		|| pMainFrame->GetPianoBar().FastIsVisible() != 0;
+	m_Seq.SetMidiOutputCapture(bIsCapturing);
 }
 
 // CPolymeterDoc diagnostics

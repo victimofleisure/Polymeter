@@ -9,6 +9,7 @@
 		rev		date	comments
         00		07jul18	initial version
         01		03jan19	add MIDI output bar
+        02		07jan19	add piano bar
 		
 */
 
@@ -20,6 +21,7 @@ MAINDOCKBARDEF(Presets)
 MAINDOCKBARDEF(Parts)
 MAINDOCKBARDEF(Modulations)
 MAINDOCKBARDEF(MidiOutput)
+MAINDOCKBARDEF(Piano)
 
 #endif	// MAINDOCKBARDEF
 #undef MAINDOCKBARDEF

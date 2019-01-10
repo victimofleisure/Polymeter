@@ -189,6 +189,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AboutDlg.h" />
+    <ClInclude Include="AppRegKey.h" />
     <ClInclude Include="ArrayEx.h" />
     <ClInclude Include="ArrayExAlgoDef.h" />
     <ClInclude Include="Benchmark.h" />
@@ -203,6 +204,8 @@
     <ClInclude Include="MidiEventColDef.h" />
     <ClInclude Include="MidiOutputBar.h" />
     <ClInclude Include="MidiStatusDef.h" />
+    <ClInclude Include="MyDockablePane.h" />
+    <ClInclude Include="PianoBar.h" />
     <ClInclude Include="ParseCSV.h" />
     <ClInclude Include="Diatonic.h" />
     <ClInclude Include="DLLWrap.h" />
@@ -250,6 +253,8 @@
     <ClInclude Include="OptionsDlg.h" />
     <ClInclude Include="PathStr.h" />
     <ClInclude Include="Persist.h" />
+    <ClInclude Include="PianoCtrl.h" />
+    <ClInclude Include="PianoSizeDef.h" />
     <ClInclude Include="Polymeter.h" />
     <ClInclude Include="PolymeterDoc.h" />
     <ClInclude Include="Preset.h" />
@@ -301,6 +306,7 @@
     <ClInclude Include="UndoTypes.h" />
     <ClInclude Include="VariantHelper.h" />
     <ClInclude Include="VelocityDlg.h" />
+    <ClInclude Include="VelocityPalette.h" />
     <ClInclude Include="VelocityView.h" />
     <ClInclude Include="Version.h" />
     <ClInclude Include="VersionInfo.h" />
@@ -318,6 +324,8 @@
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="ColoredButton.cpp" />
     <ClCompile Include="MidiOutputBar.cpp" />
+    <ClCompile Include="MyDockablePane.cpp" />
+    <ClCompile Include="PianoBar.cpp" />
     <ClCompile Include="ParseCSV.cpp" />
     <ClCompile Include="Diatonic.cpp" />
     <ClCompile Include="DLLWrap.cpp" />
@@ -352,6 +360,7 @@
     <ClCompile Include="OptionsDlg.cpp" />
     <ClCompile Include="PathStr.cpp" />
     <ClCompile Include="Persist.cpp" />
+    <ClCompile Include="PianoCtrl.cpp" />
     <ClCompile Include="Polymeter.cpp" />
     <ClCompile Include="PolymeterDoc.cpp" />
     <ClCompile Include="Preset.cpp" />

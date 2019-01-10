@@ -1,6 +1,6 @@
 // Copyleft 2018 Chris Korda
 // This program is free software; you can redistribute it and/or modify it
-// under the terms of the GNU General Public License as published by the FreeCMidiOutputBar
+// under the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 2 of the License, or any later version.
 /*
         chris korda
@@ -28,7 +28,7 @@ static char THIS_FILE[]=__FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CMidiOutputBar
 
-IMPLEMENT_DYNAMIC(CMidiOutputBar, CDockablePane)
+IMPLEMENT_DYNAMIC(CMidiOutputBar, CMyDockablePane)
 
 const CGridCtrl::COL_INFO CMidiOutputBar::m_arrColInfo[COLUMNS] = {
 	#define LISTCOLDEF(name, align, width) {IDS_MIDIEVT_COL_##name, align, width},
@@ -59,7 +59,6 @@ const LPCTSTR CMidiOutputBar::m_arrChanStatNickname[CHANNEL_VOICE_MESSAGES] = {
 	#include "MidiStatusDef.h"
 };
 
-#define RK_MIDI_OUTPUT_BAR _T("MIDIOutputBar")
 #define RK_SHOW_NOTE_NAMES _T("ShowNoteNames")
 #define RK_SHOW_CONTROLLER_NAMES _T("ShowCtrlrNames")
 #define RK_COL_WIDTH _T("ColWidth")
@@ -74,10 +73,14 @@ CMidiOutputBar::CMidiOutputBar()
 	m_nPauseEvents = 0;
 	m_nKeySig = 0;
 	ResetFilters();
+	RdReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_NOTE_NAMES, m_bShowNoteNames);
+	RdReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_CONTROLLER_NAMES, m_bShowControllerNames);
 }
 
 CMidiOutputBar::~CMidiOutputBar()
 {
+	WrReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_NOTE_NAMES, m_bShowNoteNames);
+	WrReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_CONTROLLER_NAMES, m_bShowControllerNames);
 }
 
 LPCTSTR CMidiOutputBar::GetControllerName(int iController)
@@ -229,6 +232,24 @@ void CMidiOutputBar::ExportEvents(LPCTSTR pszPath)
 	}
 }
 
+BOOL CMidiOutputBar::CanAutoHide() const
+{ 
+	return FALSE;	// auto hide breaks output capture control
+}
+
+BOOL CMidiOutputBar::CanBeAttached() const
+{ 
+	return FALSE;	// attaching breaks output capture control
+}
+
+void CMidiOutputBar::OnShowChanged(bool bShow)
+{
+	UNREFERENCED_PARAMETER(bShow);
+	RemoveAllEvents();
+	if (theApp.m_pPlayingDoc != NULL)	// if document is playing
+		theApp.m_pPlayingDoc->OnMidiOutputCaptureChange();
+}
+
 ////////////////////////////////////////////////////////////////////////////
 // CEventListCtrl message map
 
@@ -260,16 +281,13 @@ void CMidiOutputBar::CEventListCtrl::OnVScroll(UINT nSBCode, UINT nPos, CScrollB
 ////////////////////////////////////////////////////////////////////////////
 // CMidiOutputBar message map
 
-BEGIN_MESSAGE_MAP(CMidiOutputBar, CDockablePane)
+BEGIN_MESSAGE_MAP(CMidiOutputBar, CMyDockablePane)
 	ON_WM_CREATE()
 	ON_WM_DESTROY()
 	ON_WM_SIZE()
 	ON_WM_CONTEXTMENU()
 	ON_WM_MENUSELECT()
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST, OnListGetdispinfo)
-	ON_WM_SHOWWINDOW()
-	ON_WM_CONTEXTMENU()
-	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 	ON_COMMAND(ID_MIDI_OUTPUT_CLEAR_HISTORY, OnClearHistory)
 	ON_COMMAND(ID_MIDI_OUTPUT_PAUSE, OnPause)
 	ON_COMMAND(ID_MIDI_OUTPUT_RESET_FILTERS, OnResetFilters)
@@ -290,7 +308,7 @@ END_MESSAGE_MAP()
 
 int CMidiOutputBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-	if (CDockablePane::OnCreate(lpCreateStruct) == -1)
+	if (CMyDockablePane::OnCreate(lpCreateStruct) == -1)
 		return -1;
 	m_arrChanStatName.SetSize(_countof(m_arrChanStatID));
 	for (int iChSt = 0; iChSt < _countof(m_arrChanStatID); iChSt++)
@@ -306,45 +324,20 @@ int CMidiOutputBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	VERIFY(m_ilList.Create(IDB_FILTER, 16, 0, clrImageMask));
 	m_list.SetImageList(&m_ilList, LVSIL_SMALL);
 	m_ilList.SetBkColor(CLR_NONE);	// required for transparency to work
-	RdReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_NOTE_NAMES, m_bShowNoteNames);
-	RdReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_CONTROLLER_NAMES, m_bShowControllerNames);
 	m_list.LoadColumnWidths(RK_MIDI_OUTPUT_BAR, RK_COL_WIDTH);
 	return 0;
 }
 
 void CMidiOutputBar::OnDestroy()
 {
-	WrReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_NOTE_NAMES, m_bShowNoteNames);
-	WrReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_CONTROLLER_NAMES, m_bShowControllerNames);
 	m_list.SaveColumnWidths(RK_MIDI_OUTPUT_BAR, RK_COL_WIDTH);
-	CDockablePane::OnDestroy();
+	CMyDockablePane::OnDestroy();
 }
 
 void CMidiOutputBar::OnSize(UINT nType, int cx, int cy)
 {
-	CDockablePane::OnSize(nType, cx, cy);
+	CMyDockablePane::OnSize(nType, cx, cy);
 	m_list.MoveWindow(0, 0, cx, cy);
-}
-
-void CMidiOutputBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
-{
-	UNREFERENCED_PARAMETER(hSysMenu);
-	if (!(nFlags & MF_SYSMENU))	// if not system menu item
-		AfxGetMainWnd()->SendMessage(WM_SETMESSAGESTRING, nItemID, 0);	// set status hint
-}
-
-void CMidiOutputBar::OnExitMenuLoop(BOOL bIsTrackPopupMenu)
-{
-	if (bIsTrackPopupMenu)	// if exiting context menu, restore status idle message
-		AfxGetMainWnd()->SendMessage(WM_SETMESSAGESTRING, AFX_IDS_IDLEMESSAGE, 0);
-}
-
-LRESULT CMidiOutputBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
-	theApp.WinHelp(GetDlgCtrlID());
-	return TRUE;
 }
 
 void CMidiOutputBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
@@ -406,23 +399,19 @@ GetDispInfoP1Default:
 	}
 }
 
-void CMidiOutputBar::OnShowWindow(BOOL bShow, UINT nStatus)
-{
-	CDockablePane::OnShowWindow(bShow, nStatus);
-	RemoveAllEvents();
-	if (theApp.m_pPlayingDoc != NULL) {	// if document is playing
-		theApp.m_pPlayingDoc->m_Seq.SetMidiOutputCapture(bShow != 0);
-	}
-}
-
 void CMidiOutputBar::OnContextMenu(CWnd* pWnd, CPoint point)
 {
-	UNREFERENCED_PARAMETER(pWnd);
+	CRect	rc;
+	GetClientRect(rc);
 	if (point.x == -1 && point.y == -1) {
-		CRect	rc;
-		GetClientRect(rc);
 		point = rc.TopLeft();
 		ClientToScreen(&point);
+	} else {
+		ClientToScreen(rc);
+		if (!rc.PtInRect(point)) {
+			CMyDockablePane::OnContextMenu(pWnd, point);
+			return;
+		}
 	}
 	CMenu	menu;
 	VERIFY(menu.LoadMenu(IDR_MIDI_OUTPUT_CTX));
@@ -435,7 +424,7 @@ void CMidiOutputBar::OnContextMenu(CWnd* pWnd, CPoint point)
 	ASSERT(pSubMenu != NULL);
 	CStringArrayEx	arrItemStr;	// menu item strings
 	arrItemStr.SetSize(MIDI_CHANNELS + 1);	// one extra item for wildcard
-	arrItemStr[0] = LDS(IDS_OUT_NOTES_FILTER_ALL);	// wildcard comes first
+	arrItemStr[0] = LDS(IDS_FILTER_ALL);	// wildcard comes first
 	CString	s;
 	for (int iItem = 1; iItem <= MIDI_CHANNELS; iItem++) {	// for each channel
 		s.Format(_T("%d"), iItem);
@@ -451,6 +440,26 @@ void CMidiOutputBar::OnContextMenu(CWnd* pWnd, CPoint point)
 	}
 	theApp.MakePopup(*pSubMenu, SMID_MESSAGE_FIRST, arrItemStr, m_arrFilter[FILTER_MESSAGE]  + 1);
 	pPopup->TrackPopupMenu(0, point.x, point.y, this);
+}
+
+void CMidiOutputBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
+{
+	if (!(nFlags & MF_SYSMENU)) {	// if not system menu item
+		if (nItemID >= SMID_CHANNEL_FIRST) {
+			if (nItemID < SMID_CHANNEL_LAST) {
+				if (nItemID == SMID_CHANNEL_FIRST)
+					nItemID = IDS_SM_CHANNEL_ALL;
+				else
+					nItemID = IDS_SM_CHANNEL_SELECT;
+			} else if (nItemID < SMID_MESSAGE_LAST) {
+				if (nItemID == SMID_MESSAGE_FIRST)
+					nItemID = IDS_SM_MESSAGE_ALL;
+				else
+					nItemID = IDS_SM_MESSAGE_SELECT;
+			}
+		}
+	}
+	CMyDockablePane::OnMenuSelect(nItemID, nFlags, hSysMenu);
 }
 
 void CMidiOutputBar::OnClearHistory()

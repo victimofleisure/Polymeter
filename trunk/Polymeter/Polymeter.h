@@ -30,6 +30,7 @@
 #include "MidiWrap.h"
 #include "MidiDevices.h"
 #include "MidiFile.h"
+#include "AppRegKey.h"
 
 // CPolymeterApp:
 // See Polymeter.cpp for the implementation of this class
@@ -83,6 +84,7 @@ public:
 	CTrack::CModulationArray	m_arrModClipboard;	// clipboard for modulations
 	CMidiDevices	m_midiDevs;		// MIDI device information
 	bool	m_bTieNotes;	// if true, new notes are tied
+	bool	m_bCleanStateOnExit;	// if true, clean state before exiting
 	CMidiFile::CMidiEventArray	m_arrMidiInEvent;	// array of MIDI input events
 	int		m_nMidiInStartTime;	// first MIDI input event's time, in active document's ticks
 	CPolymeterDoc	*m_pPlayingDoc;	// pointer to playing document if any
@@ -106,6 +108,8 @@ protected:
 // Helpers
 	static void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2);
 	void	CloseHtmlHelp();
+	void	ResetWindowLayout();
+	bool	RestartApp();
 
 // Overrides
 	virtual void PreLoadState();

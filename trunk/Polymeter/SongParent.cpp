@@ -36,7 +36,6 @@ IMPLEMENT_DYNCREATE(CSongParent, CSplitView)
 
 int CSongParent::m_nGlobNameWidth = INIT_NAME_WIDTH;
 
-#define RK_SONG_VIEW _T("SongView")
 #define RK_NAME_WIDTH _T("NameWidth")
 
 #define PANE_ID(n) (PANE_ID_FIRST + n)
