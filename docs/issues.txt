@@ -196,8 +196,11 @@ open	close	type	description	rev	user
 12/08/18	12/15/18	done	import modulations from CSV file, replacing existing modulations; export modulations to CSV file (Benoit)	0.0.19.001	
 12/14/18	12/15/18	done	Ctrl + Tab should switch between documents; grid control must check for control key	0.0.19.001	
 12/15/18	12/15/18	done	show unnamed tracks in live view to avoid confusion	0.0.19.001	
-12/18/18	12/19/18	done	refactor track property info to centralize it and support property ranges and validation	0.0.20.000	
 12/08/18	12/19/18	done	import tracks from CSV file; require column header, handle quotes, validate ranges; also export tracks	0.0.20.000	
+12/18/18	12/19/18	done	refactor track property info to centralize it and support property ranges and validation	0.0.20.000	
+11/19/18	01/03/19	done	MIDI output bar that displays sequencer output, with filtering options (Benoit)	0.0.21.000	
+11/19/18	01/09/19	done	command that resets window layout to defaults; useful for dual monitor setups (Benoit)	0.0.21.001	
+11/19/18	01/09/19	done	piano bar that displays sequencer output notes on a piano keyboard, with filtering	0.0.21.001	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
@@ -239,10 +242,9 @@ open	close	type	description	rev	user
 10/17/18		hold	in live view, dragging list selection beyond window boundaries should scroll list		
 10/27/18		hold	switching from song view to live view doesn't always update parts list to reflect dub state? Hard to replicate		
 11/19/18		hold	not/invert operator for modulations; would allow a single modulator track to control a crossfade (Benoit)		
-11/19/18		hold	window that dumps MIDI output; could reuse UI from ChordEase but how to hook output MIDI? (Benoit)		
 11/19/18		hold	highlight modulated parameters; complicates UI and doesn't fully capture modulation state (Benoit)		
 11/19/18		hold	detail view of modulations that shows target as well as source and type; editable, sortable, clipboard (Benoit)		
-11/19/18		hold	vertically fill the note column with values from a scale or chord (Benoit); start with chromatic scale		
+11/19/18		hold	vertically fill the note column with values from a scale or chord (Benoit)		
 12/06/18		hold	offset command that shifts selected tracks in time by adding a value to their offsets		
 12/09/18		hold	add hide/unhide column commands to track list header's context menu; where to store previous width?		
 12/12/18		hold	grid control's header should display tooltip for truncated column names; must subclass header control?		
