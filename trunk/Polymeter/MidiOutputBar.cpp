@@ -148,10 +148,10 @@ void CMidiOutputBar::Pause(bool bEnable)
 bool CMidiOutputBar::ApplyFilters(WPARAM wParam) const
 {
 	int	iChan = m_arrFilter[FILTER_CHANNEL];
-	if (iChan >= 0 && MIDI_CHAN(wParam) != iChan)	// if channel doesn't match
+	if (iChan >= 0 && static_cast<int>(MIDI_CHAN(wParam)) != iChan)	// if channel doesn't match
 		return(false);
 	int	nMsg = m_arrFilter[FILTER_MESSAGE];
-	if (nMsg >= 0 && ((MIDI_CMD(wParam) >> 4) - 8) != nMsg)	// if message status doesn't match
+	if (nMsg >= 0 && static_cast<int>(((MIDI_CMD(wParam) >> 4) - 8)) != nMsg)	// if message status doesn't match
 		return(false);
 	return true;
 }
