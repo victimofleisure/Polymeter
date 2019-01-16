@@ -201,6 +201,10 @@ open	close	type	description	rev	user
 11/19/18	01/03/19	done	MIDI output bar that displays sequencer output, with filtering options (Benoit)	0.0.21.000	
 11/19/18	01/09/19	done	command that resets window layout to defaults; useful for dual monitor setups (Benoit)	0.0.21.001	
 11/19/18	01/09/19	done	piano bar that displays sequencer output notes on a piano keyboard, with filtering	0.0.21.001	
+01/11/19	01/12/19	done	recursive position modulation; essential for position modulation of mute masks	0.0.22.000	
+01/13/19	01/14/19	done	piano bar's note names should match key signature	0.0.22.000	
+01/14/19	01/15/19	done	insert track from piano bar, via context menu or Ctrl + left-click	0.0.22.000	
+01/15/19	01/16/19	done	import MIDI file, import steps, and record to tracks corrupt track indices due to lack of track array transaction	0.0.22.001	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
@@ -216,7 +220,7 @@ open	close	type	description	rev	user
 05/10/18		hold	right-click in step view background with no selection should show context menu?		
 05/10/18		hold	left-click anywhere in step view should toggle selected steps or mutes, as in original app; too confusing?		
 05/17/18		hold	installed app's shortcut icon has poor resolution; VS2008 installer bug, use WiX toolset instead?		
-05/19/18		hold	note correction to chord changes, from ChordEase		
+05/19/18		hold	note correction to chord changes, from ChordEase; poorly defined, pitch class sets would be more general		
 05/21/18		hold	velocity pane visibility should be same for all documents?		
 05/30/18		hold	song view needs different menus?		
 06/04/18		hold	option to change track name font and thereby change track height		
@@ -245,9 +249,11 @@ open	close	type	description	rev	user
 11/19/18		hold	highlight modulated parameters; complicates UI and doesn't fully capture modulation state (Benoit)		
 11/19/18		hold	detail view of modulations that shows target as well as source and type; editable, sortable, clipboard (Benoit)		
 11/19/18		hold	vertically fill the note column with values from a scale or chord (Benoit)		
+11/27/18		hold	modulation graph, via GraphViz; output SVG and show in HTML view? Wheel zoom doesn't work properly		
 12/06/18		hold	offset command that shifts selected tracks in time by adding a value to their offsets		
 12/09/18		hold	add hide/unhide column commands to track list header's context menu; where to store previous width?		
 12/12/18		hold	grid control's header should display tooltip for truncated column names; must subclass header control?		
+01/11/19		hold	in Piano view, if multiple instances of a note overlap, velocity color may be inaccurate		
 05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
@@ -258,4 +264,3 @@ open	close	type	description	rev	user
 11/19/18		punt	list view selection is hard to see when list doesn't have focus; curse at Microsoft or change theme (Benoit)		
 11/19/18		punt	sort on note name without octave; not sure why this is useful (Benoit)		
 11/21/18		punt	while drawing velocities in velocity pane, dragging left/right of window should scroll view; tried it, too confusing		
-11/27/18		punt	modulation graph, via GraphViz; supported via separate console app (PolymeterGraph)		
