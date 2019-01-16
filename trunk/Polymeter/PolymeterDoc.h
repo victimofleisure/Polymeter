@@ -14,6 +14,7 @@
 		04		10dec18	add song time shift to handle negative times
 		05		18dec18	add import/export tracks
 		06		19dec18	move track property names into base class
+		07		16jan19	refactor insert tracks to standardize usage
 
 */
 
@@ -178,9 +179,9 @@ public:
 	int		GetInsertPos() const;
 	void	CopyTracksToClipboard();
 	void	PasteTracks(CTrackArray& arrCBTrack);
-	void	InsertTracks(int nCount = 1);
-	void	InsertTracks(CTrackArray& arrTrack);
-	void	InsertTrack(CTrack& track);
+	void	InsertTracks(int nCount = 1, int iInsPos = -1);
+	void	InsertTracks(CTrackArray& arrTrack, int iInsPos = -1);
+	void	InsertTrack(CTrack& track, int iInsPos = -1);
 	void	DeleteTracks(bool bCopyToClipboard);
 	void	Drop(int iDropPos);
 	void	SortTracks(const CIntArrayEx& arrSortLevel);

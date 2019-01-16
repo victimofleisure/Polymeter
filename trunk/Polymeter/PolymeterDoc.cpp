@@ -25,6 +25,7 @@
 		15		03jan19	in Play, add support for MIDI output bar
 		16		07jan19	in Play, add support for piano bar
 		17		14jan19	bump file version for recursive position modulation
+		18		16jan19	refactor insert tracks to standardize usage
 
 */
 
@@ -521,11 +522,12 @@ void CPolymeterDoc::PasteTracks(CTrackArray& arrCBTrack)
 	NotifyUndoableEdit(0, UCODE_PASTE_TRACKS);
 }
 
-void CPolymeterDoc::InsertTracks(int nCount)
+void CPolymeterDoc::InsertTracks(int nCount, int iInsPos)
 {
-	if (m_Seq.GetTrackCount() >= MAX_TRACKS)	// if too many tracks
+	if (m_Seq.GetTrackCount() + nCount > MAX_TRACKS)	// if too many tracks
 		AfxThrowNotSupportedException();	// throw unsupported
-	int	iInsPos = GetInsertPos();
+	if (iInsPos < 0)	// if insert position unspecified
+		iInsPos = GetInsertPos();
 	{
 		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
 		m_Seq.InsertTracks(iInsPos, nCount);
@@ -536,23 +538,27 @@ void CPolymeterDoc::InsertTracks(int nCount)
 	NotifyUndoableEdit(0, UCODE_INSERT_TRACKS);
 }
 
-void CPolymeterDoc::InsertTracks(CTrackArray& arrTrack)
+void CPolymeterDoc::InsertTracks(CTrackArray& arrTrack, int iInsPos)
 {
 	if (m_Seq.GetTrackCount() + arrTrack.GetSize() > MAX_TRACKS)	// if too many tracks
 		AfxThrowNotSupportedException();	// throw unsupported
-	int	iInsPos = GetInsertPos();
-	m_Seq.InsertTracks(iInsPos, arrTrack);
+	if (iInsPos < 0)	// if insert position unspecified
+		iInsPos = GetInsertPos();
+	{
+		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
+		m_Seq.InsertTracks(iInsPos, arrTrack);
+	}	// dtor ends transaction
 	SetModifiedFlag();
 	SelectRange(iInsPos, arrTrack.GetSize(), false);	// don't update views
 	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	NotifyUndoableEdit(0, UCODE_INSERT_TRACKS);
 }
 
-void CPolymeterDoc::InsertTrack(CTrack& track)
+void CPolymeterDoc::InsertTrack(CTrack& track, int iInsPos)
 {
 	CTrackArray	arrTrack;
 	arrTrack.Add(track);
-	InsertTracks(arrTrack);
+	InsertTracks(arrTrack, iInsPos);
 }
 
 void CPolymeterDoc::DeleteTracks(bool bCopyToClipboard)
@@ -2475,11 +2481,7 @@ void CPolymeterDoc::OnImportTracks(CTrackArray& arrTrack)
 		iInsTrack = m_arrTrackSel[0];	// insert at selection
 	else	// no selection
 		iInsTrack = 0;	// default insert position
-	m_Seq.InsertTracks(iInsTrack, arrTrack);
-	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
-	SetModifiedFlag();
-	SelectRange(iInsTrack, arrTrack.GetSize());
-	NotifyUndoableEdit(0, UCODE_INSERT_TRACKS);
+	InsertTracks(arrTrack, iInsTrack);
 }
 
 void CPolymeterDoc::UpdateSongLength()
