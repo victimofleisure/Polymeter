@@ -327,6 +327,7 @@ public:
 	CModulationArray	m_arrModulator;	// array of track indices of modulators
 
 // Attributes
+	int		GetLength() const;
 	int		GetUsedStepCount() const;
 	void	SetDefaults();
 	bool	IsNote() const;
@@ -374,6 +375,11 @@ inline void CTrack::CopyKeepingID(const CTrack& track)
 	UINT	nUID = m_nUID;	// save our ID
 	*this = track;	// copy overwrites our ID
 	m_nUID = nUID;	// restore our ID
+}
+
+inline int CTrack::GetLength() const
+{
+	return m_arrStep.GetSize();
 }
 
 inline bool CTrack::IsNote() const

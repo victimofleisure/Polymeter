@@ -8,6 +8,8 @@
 		revision history:
 		rev		date	comments
         00		07jan19	initial version
+		01		14jan19	add key signature attribute
+		02		15jan19	add insert track method
 
 */
 
@@ -48,9 +50,12 @@ CPianoBar::CPianoBar()
 	ZeroMemory(m_arrNoteRefs, sizeof(m_arrNoteRefs));
 	m_iFilterChannel = -1;
 	m_iPianoSize = PS_128;
+	m_nKeySig = 0;
 	m_bShowKeyLabels = false;
 	m_bRotateLabels = true;
 	m_bColorVelocity = false;
+	m_bKeyLabelsDirty = false;
+	m_ptContextMenu = CPoint(0, 0);
 	RdReg(RK_PIANO_BAR, RK_PIANO_SIZE, m_iPianoSize);
 	RdReg(RK_PIANO_BAR, RK_KEY_LABELS, m_bShowKeyLabels);
 	RdReg(RK_PIANO_BAR, RK_ROTATE_LABELS, m_bRotateLabels);
@@ -160,10 +165,9 @@ void CPianoBar::UpdateKeyLabels()
 		int	nKeys = m_pno.GetKeyCount();
 		arrKeyLabel.SetSize(nKeys);
 		int	nStartNote = m_pno.GetStartNote();
-		int	nKeySig = F;
 		for (int iKey = 0; iKey < nKeys; iKey++) {	// for each key
 			CNote	note(nStartNote + iKey);	// convert key to note
-			arrKeyLabel[iKey] = note.MidiName(nKeySig);	// create label
+			arrKeyLabel[iKey] = note.MidiName(m_nKeySig);	// create label
 		}
 		m_pno.SetKeyLabels(arrKeyLabel);
 	} else {	// not showing key labels
@@ -178,6 +182,32 @@ void CPianoBar::UpdatePianoSize()
 	m_pno.SetRange(rng.StartNote, rng.KeyCount);
 	OnFilterChange();	// in case active notes were outside piano range
 	UpdateKeyLabels();
+}
+
+void CPianoBar::SetKeySignature(int nKeySig)
+{
+	if (nKeySig == m_nKeySig)	// if key signature unchanged
+		return;	// nothing to do
+	m_nKeySig = nKeySig;	// update member
+	if (IsVisible())	// if we're visible
+		UpdateKeyLabels();	// update key labels to match new key signature
+	else	// we're hidden
+		m_bKeyLabelsDirty = true;	// update key labels next time we're shown
+}
+
+void CPianoBar::InsertTrackFromPoint(CPoint pt)
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL) {	// if valid document
+		int	iKey = m_pno.FindKey(pt);
+		if (iKey >= 0) {	// key was found
+			int	nNote = iKey + m_pno.GetStartNote();
+			CTrack	track(true);	// set defaults
+			track.m_nChannel = 0;
+			track.m_nNote = nNote;
+			pDoc->InsertTrack(track);
+		}
+	}
 }
 
 BOOL CPianoBar::CanAutoHide() const
@@ -196,6 +226,10 @@ void CPianoBar::OnShowChanged(bool bShow)
 	RemoveAllEvents();
 	if (theApp.m_pPlayingDoc != NULL)	// if document is playing
 		theApp.m_pPlayingDoc->OnMidiOutputCaptureChange();
+	if (bShow && m_bKeyLabelsDirty) {	// if showing and key labels need updating
+		UpdateKeyLabels();	// update key labels
+		m_bKeyLabelsDirty = false;	// reset flag
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -216,6 +250,7 @@ BEGIN_MESSAGE_MAP(CPianoBar, CMyDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_PIANO_ROTATE_LABELS, OnUpdateRotateLabels)
 	ON_COMMAND(ID_PIANO_COLOR_VELOCITY, OnColorVelocity)
 	ON_UPDATE_COMMAND_UI(ID_PIANO_COLOR_VELOCITY, OnUpdateColorVelocity)
+	ON_COMMAND(ID_PIANO_INSERT_TRACK, OnInsertTrack)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -259,6 +294,7 @@ void CPianoBar::OnContextMenu(CWnd* pWnd, CPoint point)
 			return;
 		}
 	}
+	m_ptContextMenu = point;
 	CMenu	menu;
 	VERIFY(menu.LoadMenu(IDR_PIANO_CTX));
 	UpdateMenu(this, &menu);
@@ -316,6 +352,11 @@ void CPianoBar::OnParentNotify(UINT message, LPARAM lParam)
 	switch (message) {
 	case WM_LBUTTONDOWN:
 		SetFocus();
+		if (GetKeyState(VK_CONTROL) & GKS_DOWN) {	// if control key down
+			CPoint	pt;
+			POINTSTOPOINT(pt, lParam);
+			InsertTrackFromPoint(pt);
+		}
 		break;
 	}
 }
@@ -370,4 +411,11 @@ void CPianoBar::OnColorVelocity()
 void CPianoBar::OnUpdateColorVelocity(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bColorVelocity);
+}
+
+void CPianoBar::OnInsertTrack()
+{
+	CPoint	pt(m_ptContextMenu);
+	m_pno.ScreenToClient(&pt);
+	InsertTrackFromPoint(pt);
 }

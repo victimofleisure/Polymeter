@@ -613,7 +613,7 @@ bool CSeqTrackArray::CalcStepRange(int iTrack, int& nMinStep, int& nMaxStep, int
 	const CTrack&	trk = GetAt(iTrack);
 	int	nMin = MIDI_NOTE_MAX;
 	int	nMax = 0;
-	int	nSteps = trk.m_arrStep.GetSize();
+	int	nSteps = trk.GetLength();
 	int	iEndStep;
 	if (nRangeSteps)	// if step range specified
 		iEndStep = iStartStep + nRangeSteps;

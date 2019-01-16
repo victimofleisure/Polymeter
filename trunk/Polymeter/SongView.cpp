@@ -493,7 +493,7 @@ void CSongView::OnDraw(CDC* pDC)
 //	printf("[%d %d][%d %d]\n", iFirstTrack, iLastTrack, iFirstCell, iLastCell);
 	for (int iTrack = iFirstTrack; iTrack <= iLastTrack; iTrack++) {	// for each track that intersects clip box
 		const CTrack&	trk = seq.GetTrack(iTrack);
-		int	nLength = trk.m_arrStep.GetSize();
+		int	nLength = trk.GetLength();
 		int	nQuant = trk.m_nQuant;
 		int	nOffset = trk.m_nOffset - m_nSongTimeShift;
 		int	nSwing = trk.m_nSwing;

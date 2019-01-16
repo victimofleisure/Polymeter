@@ -478,6 +478,7 @@ BEGIN
         MENUITEM "&Key Labels",                 ID_PIANO_SHOW_KEY_LABELS
         MENUITEM "&Rotate Labels",              ID_PIANO_ROTATE_LABELS
         MENUITEM "Color &Velocities",           ID_PIANO_COLOR_VELOCITY
+        MENUITEM "&Insert Track",               ID_PIANO_INSERT_TRACK
     END
 END
 
@@ -1251,6 +1252,7 @@ BEGIN
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "&Windows..."
     ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"
+    ID_PIANO_INSERT_TRACK   "Insert track for selected note"
 END
 
 STRINGTABLE

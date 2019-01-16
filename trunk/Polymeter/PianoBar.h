@@ -8,6 +8,8 @@
 		revision history:
 		rev		date	comments
         00		07jan19	initial version
+		01		14jan19	add key signature attribute
+		02		15jan19	add insert track method
 
 */
 
@@ -29,13 +31,15 @@ public:
 
 // Attributes
 public:
-	void	AddEvents(const CSequencer::CMidiEventArray& arrEvent);
-	void	RemoveAllEvents();
-
+	void	SetKeySignature(int nKeySig);
+	
 // Operations
 public:
+	void	AddEvents(const CSequencer::CMidiEventArray& arrEvent);
+	void	RemoveAllEvents();
 	void	UpdateKeyLabels();
 	void	UpdatePianoSize();
+	void	InsertTrackFromPoint(CPoint pt);
 
 // Overrides
 
@@ -80,9 +84,12 @@ protected:
 	int		m_arrNoteRefs[MIDI_NOTES];	// array of note reference counts
 	int		m_iFilterChannel;		// channel to filter for, or -1 for all channels
 	int		m_iPianoSize;			// index of selected piano size preset
+	int		m_nKeySig;				// key signature in which notes are displayed
 	bool	m_bShowKeyLabels;		// if true, show note names on keys
 	bool	m_bRotateLabels;		// if true, rotate labels sideways (when horizontally docked)
 	bool	m_bColorVelocity;		// if true, custom color keys to show note velocities
+	bool	m_bKeyLabelsDirty;		// if true, key labels need updating next time we're shown
+	CPoint	m_ptContextMenu;		// where context menu was invoked, in screen coords
 
 // Helpers
 	void	OnFilterChange();
@@ -110,6 +117,7 @@ protected:
 	afx_msg void OnUpdateRotateLabels(CCmdUI *pCmdUI);
 	afx_msg void OnColorVelocity();
 	afx_msg void OnUpdateColorVelocity(CCmdUI *pCmdUI);
+	afx_msg void OnInsertTrack();
 };
 
 inline const CPianoBar::PIANO_RANGE& CPianoBar::GetPianoRange(int iPianoSize)

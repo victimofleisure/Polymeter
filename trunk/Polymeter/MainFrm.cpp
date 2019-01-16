@@ -11,6 +11,7 @@
         01      15dec18	add find/replace
         02		03jan19	add MIDI output bar
         03		07jan19	add piano bar
+		04		14jan19	set piano bar's key signature
 
 */
 
@@ -263,18 +264,22 @@ void CMainFrame::OnActivateView(CView *pView)
 		if (bNewEnable != bOldEnable) {	// if first or last view
 			EnableChildWindows(m_wndPropertiesBar, bNewEnable);
 		}
+		int	nKeySig;
 		if (pDoc != NULL) {	// if valid document
 			LONGLONG	nPos;
 			if (pDoc->m_Seq.GetPosition(nPos)) {	// if valid song position
 				pDoc->m_Seq.ConvertPositionToString(nPos, m_sSongPos);
 				pDoc->m_Seq.ConvertPositionToTimeString(nPos, m_sSongTime);
 			}
+			nKeySig = pDoc->m_nKeySig;
 		} else {	// no document
 			m_sSongPos.Empty();
 			m_sSongTime.Empty();
+			nKeySig = 0;
 		}
 		m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);	// update song position in status bar
 		m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);	// update song time in status bar
+		m_wndPianoBar.SetKeySignature(nKeySig);
 	}
 	m_wndModulationsBar.OnDocumentChange();
 }
@@ -441,6 +446,7 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				case CMasterProps::PROP_nKeySig:
 					if (pDoc->m_Seq.IsPlaying() && m_wndMidiOutputBar.IsVisible())
 						m_wndMidiOutputBar.SetKeySignature(pDoc->m_nKeySig);
+					m_wndPianoBar.SetKeySignature(pDoc->m_nKeySig);
 					break;
 				}
 			}

@@ -11,6 +11,7 @@
         01      19nov18	add recursive modulation
 		02		02dec18	add conversion from milliseconds to position
 		03		03jan19	add MIDI output capture
+		04		12jan19	add recursive position modulation
 
 */
 
@@ -102,6 +103,7 @@ public:
 	void	RecordDub();
 	void	ChaseDubsFromCurPos();
 	void	FlushMidiOutputEvents();
+	static	int		ModWrap(int nVal, int nModulo);
 
 protected:
 // Types
@@ -183,7 +185,7 @@ protected:
 // Helpers
 	static	void	CALLBACK MidiOutProc(HMIDIOUT hMidiOut, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2);
 	int		GetNoteDuration(const CStepArray& arrStep, int nSteps, int iCurStep) const;
-	bool	RecurseModulations(int iTrack, int nAbsEvtTime);
+	bool	RecurseModulations(int iTrack, int nAbsEvtTime, int& nPosMod);
 	void	MakeEvent(const CTrack& trk, DWORD dwTime, int nVal, CEvent& evt);
 	void	AddTrackEvents(int iTrack, int nCBStart);
 	void	AddNoteOffs(int nCBStart, int nCBEnd);
@@ -339,4 +341,12 @@ inline void CSequencer::SetSongMode(bool bEnable)
 inline int CSequencer::GetStartPosition() const
 {
 	return m_nStartPos;
+}
+
+inline int CSequencer::ModWrap(int nVal, int nModulo)
+{
+	nVal %= nModulo;
+	if (nVal < 0)
+		nVal += nModulo;
+	return nVal;
 }

@@ -117,7 +117,7 @@ CString	CTrack::PropertyToString(int iProp) const
 	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 	#include "TrackDef.h"	// generate code to covert track properties to strings
 	case PROP_Length:	// length is actually step array size
-		return CParseCSV::ValToStr(m_arrStep.GetSize());
+		return CParseCSV::ValToStr(GetLength());
 	}
 	return _T("");
 }
@@ -147,7 +147,7 @@ void CTrack::GetPropertyValue(int iProp, void *pBuf, int nLen) const
 	UNREFERENCED_PARAMETER(nLen);
 	ASSERT(iProp >= 0 && iProp < PROPERTIES);
 	if (iProp == PROP_Length) {	// length is actually step array size
-		int	nLength = m_arrStep.GetSize();
+		int	nLength = GetLength();
 		ASSERT(sizeof(int) <= nLen);
 		memcpy(pBuf, &nLength, sizeof(int));
 	} else {	// normal property

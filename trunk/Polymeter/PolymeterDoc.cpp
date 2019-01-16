@@ -24,6 +24,7 @@
 		14		19dec18	move track property names into base class
 		15		03jan19	in Play, add support for MIDI output bar
 		16		07jan19	in Play, add support for piano bar
+		17		14jan19	bump file version for recursive position modulation
 
 */
 
@@ -66,7 +67,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	10
+#define	FILE_VERSION	11
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -377,7 +378,7 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 				WrReg(sTrkID, _T(#name), trk.m_##prefix##name);
 		#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 		#include "TrackDef.h"		// generate code to write track properties
-		theApp.WriteProfileInt(sTrkID, RK_TRACK_LENGTH, trk.m_arrStep.GetSize());
+		theApp.WriteProfileInt(sTrkID, RK_TRACK_LENGTH, trk.GetLength());
 		CPersist::WriteBinary(sTrkID, RK_TRACK_STEP, trk.m_arrStep.GetData(), trk.GetUsedStepCount());
 		DWORD	nDubs = trk.m_arrDub.GetSize();
 		if (nDubs) {	// if track has dubs
@@ -520,19 +521,38 @@ void CPolymeterDoc::PasteTracks(CTrackArray& arrCBTrack)
 	NotifyUndoableEdit(0, UCODE_PASTE_TRACKS);
 }
 
-void CPolymeterDoc::InsertTracks()
+void CPolymeterDoc::InsertTracks(int nCount)
 {
 	if (m_Seq.GetTrackCount() >= MAX_TRACKS)	// if too many tracks
 		AfxThrowNotSupportedException();	// throw unsupported
 	int	iInsPos = GetInsertPos();
 	{
 		CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
-		m_Seq.InsertTracks(iInsPos);
+		m_Seq.InsertTracks(iInsPos, nCount);
 	}	// dtor ends transaction
 	SetModifiedFlag();
-	SelectOnly(iInsPos, false);	// don't update views
+	SelectRange(iInsPos, nCount, false);	// don't update views
 	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	NotifyUndoableEdit(0, UCODE_INSERT_TRACKS);
+}
+
+void CPolymeterDoc::InsertTracks(CTrackArray& arrTrack)
+{
+	if (m_Seq.GetTrackCount() + arrTrack.GetSize() > MAX_TRACKS)	// if too many tracks
+		AfxThrowNotSupportedException();	// throw unsupported
+	int	iInsPos = GetInsertPos();
+	m_Seq.InsertTracks(iInsPos, arrTrack);
+	SetModifiedFlag();
+	SelectRange(iInsPos, arrTrack.GetSize(), false);	// don't update views
+	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
+	NotifyUndoableEdit(0, UCODE_INSERT_TRACKS);
+}
+
+void CPolymeterDoc::InsertTrack(CTrack& track)
+{
+	CTrackArray	arrTrack;
+	arrTrack.Add(track);
+	InsertTracks(arrTrack);
 }
 
 void CPolymeterDoc::DeleteTracks(bool bCopyToClipboard)
@@ -2348,11 +2368,14 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 		theApp.m_pPlayingDoc = this;
 		UpdateChannelEvents();	// queue channel events to be output at start of playback
 		CMidiOutputBar&	wndMidiOutput = theApp.GetMainFrame()->GetMidiOutputBar();
-		CPianoBar&	wndNotes = theApp.GetMainFrame()->GetPianoBar();
-		if (wndMidiOutput.IsVisible() || wndNotes.IsVisible()) {
+		if (wndMidiOutput.IsVisible()) {	// if MIDI output bar is visible
 			wndMidiOutput.SetKeySignature(m_nKeySig);
 			wndMidiOutput.RemoveAllEvents();
-			bOutputCapture = true;
+			bOutputCapture = true;	// enable MIDI output capture
+		}
+		CPianoBar&	wndPiano = theApp.GetMainFrame()->GetPianoBar();
+		if (wndPiano.IsVisible()) {	// if piano bar is visible
+			bOutputCapture = true;	// enable MIDI output capture
 		}
 	} else {	// stopping playback
 		theApp.m_pPlayingDoc = NULL;
@@ -2380,9 +2403,9 @@ void CPolymeterDoc::OnPlay(bool bPlay, bool bRecord)
 			} else	// normal recording
 				SetModifiedFlag();
 		}
-		CPianoBar&	wndNotes = theApp.GetMainFrame()->GetPianoBar();
-		if (wndNotes.IsVisible())
-			wndNotes.RemoveAllEvents();
+		CPianoBar&	wndPiano = theApp.GetMainFrame()->GetPianoBar();
+		if (wndPiano.IsVisible())
+			wndPiano.RemoveAllEvents();
 	}
 }
 
@@ -2958,7 +2981,7 @@ void CPolymeterDoc::TrackFill(const CIntArrayEx& arrTrackSel, CRange<int> rngSte
 				iVal = round(r * nDeltaVal) + rngVal.Start;	// scale, offset, and round
 			}
 			iVal = CLAMP(iVal, 0, MIDI_NOTE_MAX);	// clamp to step range just in case
-			if (iStep + rngStep.Start >= trk.m_arrStep.GetSize())	// if step index out of range
+			if (iStep + rngStep.Start >= trk.GetLength())	// if step index out of range
 				break;	// abort step loop to avoid access violation
 			arrStep[iStep + rngStep.Start] = static_cast<STEP>(iVal);	// store step
 		}

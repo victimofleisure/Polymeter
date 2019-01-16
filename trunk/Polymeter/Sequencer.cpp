@@ -17,6 +17,7 @@
 		07		14dec18	add position modulation
 		08		17dec18	move MIDI file types into class scope
 		09		03jan19	add MIDI output capture
+		10		12jan19	add recursive position modulation
 
 */
 
@@ -393,31 +394,43 @@ __forceinline void CSequencer::OutputControlEvent(const CTrack& trk, DWORD dwTim
 	m_arrEvent.InsertSorted(evt);	// add event to sorted array for output
 }
 
-bool CSequencer::RecurseModulations(int iTrack, int nAbsEvtTime)
+bool CSequencer::RecurseModulations(int iTrack, int nAbsEvtTime, int& nPosMod)
 {
+	nPosMod = 0;
 	const CTrack& trk = GetTrack(iTrack);
-	int	nMods = trk.m_arrModulator.GetSize();
 	int	nTracks = GetTrackCount();
+	int	nMods = trk.m_arrModulator.GetSize();
 	for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
 		const CModulation&	mod = trk.m_arrModulator[iMod];
 		int	iModSource = mod.m_iSource;
 		int	iModType = mod.m_iType;
-		// if modulation source index is valid, modulation type is mute, and modulator is unmuted
-		if (iModSource >= 0 && iModSource < nTracks && iModType == MT_Mute && !GetMute(iModSource)) {
-			const CTrack&	trkModSource = GetTrack(iModSource);
-			if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
-				if (m_nRecursions >= MOD_MAX_RECURSIONS) {	// if maximum recursion depth reached
-					OnMidiError(SEQERR_TOO_MANY_RECURSIONS);
-					return true;	// abort recursion
+		// if modulation source index is valid and modulator is unmuted
+		if (iModSource >= 0 && iModSource < nTracks && !GetMute(iModSource)) {
+			if (iModType == MT_Mute || iModType == MT_Position) {	// if modulation type is mute or position
+				int	iModStep = GetStepIndex(iModSource, nAbsEvtTime);
+				const CTrack&	trkModSource = GetTrack(iModSource);
+				if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
+					if (m_nRecursions >= MOD_MAX_RECURSIONS) {	// if maximum recursion depth reached
+						OnMidiError(SEQERR_TOO_MANY_RECURSIONS);
+						return true;	// abort recursion
+					}
+					int	nPosMod2;
+					m_nRecursions++;	// increment recursion depth
+					if (RecurseModulations(iModSource, nAbsEvtTime, nPosMod2))	// recurse into modulator's modulations
+						return true;	// recursion returned mute, so abort recursion and return mute
+					m_nRecursions--;	// decrement recursion depth
+					if (nPosMod2)	// if recursion returned a non-zero position modulation
+						iModStep = ModWrap(iModStep - nPosMod2, trkModSource.GetLength());	// modulate position
 				}
-				m_nRecursions++;	// increment recursion depth
-				if (RecurseModulations(iModSource, nAbsEvtTime))	// recurse into modulator's modulations
-					return true;	// recursion returned mute, so abort recursion and return mute
-				m_nRecursions--;	// decrement recursion depth
+				if (iModType == MT_Mute) {	// if mute modulation
+					if (trkModSource.m_arrStep[iModStep] & SB_VELOCITY)	// if non-zero step
+						return true;	// abort recursion and return mute
+				} else {	// position modulation
+					int	nStepVal = trkModSource.m_arrStep[iModStep] & SB_VELOCITY;
+					nStepVal -= MIDI_NOTES / 2;	// convert step value to signed offset
+					nPosMod += nStepVal;	// offset caller's position modulation
+				}
 			}
-			int	iModStep = GetStepIndex(iModSource, nAbsEvtTime);
-			if (trkModSource.m_arrStep[iModStep] & SB_VELOCITY)	// if non-zero step
-				return true;	// abort recursion and return mute
 		}
 	}
 	return false;	// return unmute
@@ -427,7 +440,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 {
 	CTrack&	trk = GetAt(iTrack);
 	int	nOffset = trk.m_nOffset;	// cache these values for thread safety
-	int	nLength = trk.m_arrStep.GetSize();
+	int	nLength = trk.GetLength();
 	int	nQuant = trk.m_nQuant;
 	int	nSwing = trk.m_nSwing;
 	nSwing = CLAMP(nSwing, 1 - nQuant, nQuant - 1);	// limit swing within quant
@@ -464,17 +477,20 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 				int	iModType = mod.m_iType;
 				if (iModSource >= 0 && iModSource < nTracks && !GetMute(iModSource)) {	// if modulator is valid and unmuted
 					const CTrack&	trkModSource = GetTrack(iModSource);
-					if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
-						m_nRecursions = 0;
-						if (RecurseModulations(iModSource, nAbsEvtTime))	// recurse into modulator's modulations
-							continue;	// recursion returned mute, so skip this modulator
-					}
 					int	iModStep = GetStepIndex(iModSource, nAbsEvtTime);
+					if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
+						int	nPosMod;
+						m_nRecursions = 0;
+						if (RecurseModulations(iModSource, nAbsEvtTime, nPosMod))	// recurse into modulator's modulations
+							continue;	// recursion returned mute, so skip this modulator
+						if (nPosMod)	// if recursion returned a non-zero position modulation
+							iModStep = ModWrap(iModStep - nPosMod, trkModSource.GetLength());	// modulate position
+					}
 					int	nStepVal = trkModSource.m_arrStep[iModStep] & SB_VELOCITY;
 					if (iModType == MT_Mute)	// if modulation type is mute
 						arrMod[MT_Mute] |= nStepVal != 0;	// mute track if any of its mute modulators are active
 					else {	// modulation type other than mute
-						nStepVal = nStepVal - MIDI_NOTES / 2;	// convert step value to signed offset
+						nStepVal -= MIDI_NOTES / 2;	// convert step value to signed offset
 						arrMod[iModType] += nStepVal;	// accumulate modulation value
 					}
 				}
@@ -918,7 +934,7 @@ int CSequencer::GetSongDurationSeconds() const
 int CSequencer::GetStepIndex(int iTrack, LONGLONG nPos) const
 {
 	const CTrack&	trk = GetAt(iTrack);
-	int	nLength = trk.m_arrStep.GetSize();
+	int	nLength = trk.GetLength();
 	int	nQuant = trk.m_nQuant;
 	int	nOffset = trk.m_nOffset;
 	// similar to AddEvents, but divide by nQuant instead nQuant * 2

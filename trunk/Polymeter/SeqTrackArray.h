@@ -242,7 +242,7 @@ inline void CSeqTrackArray::SetQuant(int iTrack, int nQuant)
 
 inline int CSeqTrackArray::GetLength(int iTrack) const
 {
-	return GetAt(iTrack).m_arrStep.GetSize();
+	return GetAt(iTrack).GetLength();
 }
 
 inline int CSeqTrackArray::GetOffset(int iTrack) const
