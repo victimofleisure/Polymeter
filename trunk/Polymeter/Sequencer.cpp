@@ -18,6 +18,7 @@
 		08		17dec18	move MIDI file types into class scope
 		09		03jan19	add MIDI output capture
 		10		12jan19	add recursive position modulation
+		11		17jan19	handle recursive mute with continue instead of abort
 
 */
 
@@ -416,15 +417,16 @@ bool CSequencer::RecurseModulations(int iTrack, int nAbsEvtTime, int& nPosMod)
 					}
 					int	nPosMod2;
 					m_nRecursions++;	// increment recursion depth
-					if (RecurseModulations(iModSource, nAbsEvtTime, nPosMod2))	// recurse into modulator's modulations
-						return true;	// recursion returned mute, so abort recursion and return mute
+					bool	bMute = RecurseModulations(iModSource, nAbsEvtTime, nPosMod2);	// traverse sub-modulations
 					m_nRecursions--;	// decrement recursion depth
+					if (bMute)	// if recursion returned mute
+						continue;	// skip this modulator
 					if (nPosMod2)	// if recursion returned a non-zero position modulation
 						iModStep = ModWrap(iModStep - nPosMod2, trkModSource.GetLength());	// modulate position
 				}
 				if (iModType == MT_Mute) {	// if mute modulation
 					if (trkModSource.m_arrStep[iModStep] & SB_VELOCITY)	// if non-zero step
-						return true;	// abort recursion and return mute
+						return true;	// abandon this branch and return mute
 				} else {	// position modulation
 					int	nStepVal = trkModSource.m_arrStep[iModStep] & SB_VELOCITY;
 					nStepVal -= MIDI_NOTES / 2;	// convert step value to signed offset
