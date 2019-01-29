@@ -201,6 +201,9 @@
     <ClInclude Include="ChildFrm.h" />
     <ClInclude Include="ColoredButton.h" />
     <ClInclude Include="CritSec.h" />
+    <ClInclude Include="FolderDialog.h" />
+    <ClInclude Include="GraphBar.h" />
+    <ClInclude Include="GraphTypeDef.h" />
     <ClInclude Include="MidiEventColDef.h" />
     <ClInclude Include="MidiOutputBar.h" />
     <ClInclude Include="MidiStatusDef.h" />
@@ -260,6 +263,7 @@
     <ClInclude Include="Preset.h" />
     <ClInclude Include="PresetsBar.h" />
     <ClInclude Include="PreviewGridCtrl.h" />
+    <ClInclude Include="RecursiveFileFind.h" />
     <ClInclude Include="RulerCtrl.h" />
     <ClInclude Include="Scale.h" />
     <ClInclude Include="SeqTrackArray.h" />
@@ -323,6 +327,8 @@
     <ClCompile Include="ChannelsBar.cpp" />
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="ColoredButton.cpp" />
+    <ClCompile Include="FolderDialog.cpp" />
+    <ClCompile Include="GraphBar.cpp" />
     <ClCompile Include="MidiOutputBar.cpp" />
     <ClCompile Include="MyDockablePane.cpp" />
     <ClCompile Include="PianoBar.cpp" />
@@ -366,6 +372,7 @@
     <ClCompile Include="Preset.cpp" />
     <ClCompile Include="PresetsBar.cpp" />
     <ClCompile Include="PreviewGridCtrl.cpp" />
+    <ClCompile Include="RecursiveFileFind.cpp" />
     <ClCompile Include="RulerCtrl.cpp" />
     <ClCompile Include="Scale.cpp" />
     <ClCompile Include="SeqTrackArray.cpp" />

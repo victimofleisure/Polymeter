@@ -9,6 +9,8 @@
 		rev		date	comments
         00		14jun18	initial version
 		01		14dec18	add clipboard support and sorting
+		02		21jan19	fix paste not setting document modified flag
+		03		22jan19	use update all views consistently
 		
 */
 
@@ -52,10 +54,18 @@ CModulationsBar::~CModulationsBar()
 {
 }
 
-void CModulationsBar::OnDocumentChange()
+inline void CModulationsBar::ResetModulatorCache()
 {
-	m_arrModulator.RemoveAll();	// invalidate cache
-	UpdateAll();
+	m_arrModulator.RemoveAll();	// reset modulator cache
+	m_grid.SetItemCountEx(0);	// synchronize grid control with modulator cache
+}
+
+inline void CModulationsBar::StartDeferredUpdate()
+{
+	if (!m_bUpdatePending) {	// if update not pending already
+		m_bUpdatePending = true;	// set pending flag
+		PostMessage(UWM_DEFERRED_UPDATE);	// defer update until after message queue settles down
+	}
 }
 
 void CModulationsBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
@@ -63,15 +73,18 @@ void CModulationsBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	UNREFERENCED_PARAMETER(pSender);
 	switch (lHint) {
 	case CPolymeterDoc::HINT_NONE:
+		ResetModulatorCache();	// assume document change which invalidate cache
+		StartDeferredUpdate();	// suppress bouncing during document activation
+		break;
 	case CPolymeterDoc::HINT_TRACK_ARRAY:
-	case CPolymeterDoc::HINT_MODULATION:
 		UpdateAll();
 		break;
+	case CPolymeterDoc::HINT_MODULATION:
+		if (pSender != reinterpret_cast<CView*>(this))	// if not self-notification
+			UpdateAll();
+		break;
 	case CPolymeterDoc::HINT_TRACK_SELECTION:
-		if (!m_bUpdatePending) {
-			m_bUpdatePending = true;
-			PostMessage(UWM_DEFERRED_UPDATE);	// defer update until after selection state settles down
-		}
+		StartDeferredUpdate();	// suppress bouncing during list item selection
 		break;
 	case CPolymeterDoc::HINT_TRACK_PROP:
 		{
@@ -302,6 +315,8 @@ void CModulationsBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 					mod.m_iType = iSelItem;	// update cached modulation type
 				}
 				pDoc->SetModifiedFlag();
+				// specify sender view as this instance; prevents needless rebuild of modulation cache
+				pDoc->UpdateAllViews(reinterpret_cast<CView*>(this), CPolymeterDoc::HINT_MODULATION);
 			}
 			break;
 		case COL_SOURCE:
@@ -320,6 +335,8 @@ void CModulationsBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 					mod.m_iSource = iSelItem;	// update cached modulation source (index of source track)
 				}
 				pDoc->SetModifiedFlag();
+				// specify sender view as this instance; prevents needless rebuild of modulation cache
+				pDoc->UpdateAllViews(reinterpret_cast<CView*>(this), CPolymeterDoc::HINT_MODULATION);
 			}
 			break;
 		}
@@ -344,7 +361,7 @@ void CModulationsBar::SortModulations(bool bBySource)
 		}
 	}
 	pDoc->SetModifiedFlag();
-	UpdateAll();
+	pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -505,8 +522,8 @@ LRESULT CModulationsBar::OnDeferredUpdate(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
-	UpdateAll();
-	m_bUpdatePending = false;
+	UpdateAll();	// do deferred update
+	m_bUpdatePending = false;	// reset pending flag
 	return 0;
 }
 
@@ -629,7 +646,8 @@ void CModulationsBar::OnEditPaste()
 					iMod = pDoc->m_Seq.GetModulationCount(iTrack);	// append
 				pDoc->m_Seq.InsertModulations(iTrack, iMod, arrMod);	// insert clipboard modulations
 			}
-			UpdateAll();
+			pDoc->SetModifiedFlag();
+			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
 		}
 	}
 }
@@ -657,7 +675,7 @@ void CModulationsBar::OnEditInsert()
 			pDoc->m_Seq.InsertModulation(iTrack, iMod, mod);
 		}
 		pDoc->SetModifiedFlag();
-		UpdateAll();
+		pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
 		if (iSelMark < 0)	// if no selection
 			iSelMark = m_arrModulator.GetSize() - 1;	// appended
 		if (iSelMark >= 0)
@@ -691,7 +709,7 @@ void CModulationsBar::OnEditDelete()
 			}
 		}
 		pDoc->SetModifiedFlag();
-		UpdateAll();
+		pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
 	}
 }
 
@@ -729,7 +747,7 @@ void CModulationsBar::OnListReorder(NMHDR* pNMHDR, LRESULT* pResult)
 					pDoc->m_Seq.MoveModulations(iTrack, arrModSel, iDropPos);
 				}
 				pDoc->SetModifiedFlag();
-				UpdateAll();
+				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
 				m_grid.SelectRange(iDropPos, arrModSel.GetSize());
 			}
 		}
@@ -739,8 +757,8 @@ void CModulationsBar::OnListReorder(NMHDR* pNMHDR, LRESULT* pResult)
 void CModulationsBar::OnShowDifferences()
 {
 	m_bShowDifferences ^= 1;	// toggle show differences state
-	m_arrModulator.RemoveAll();	// reset modulator cache
-	UpdateAll();
+	ResetModulatorCache();	// mode change invalidates cache
+	UpdateAll();	// rebuild cache for new mode
 }
 
 void CModulationsBar::OnUpdateShowDifferences(CCmdUI *pCmdUI)

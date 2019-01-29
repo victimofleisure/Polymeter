@@ -17,6 +17,8 @@
 		07		17dec18	move MIDI file types into class scope
 		08		18dec18	add import/export tracks
 		09		19dec18	refactor property info to support value range
+		10		25jan19	add modulation crawler to track array
+		11		27jan19	cache type name strings instead of loading every time
 
 */
 
@@ -164,12 +166,18 @@ public:
 	static	CString	GetRangeTypeName(int iType);
 	static	LPCTSTR	GetRangeTypeInternalName(int iType);
 
+// Operations
+	static	void	LoadStringResources();
+
 protected:
 // Constants
 	static const PROPERTY_INFO m_arrPropertyInfo[PROPERTIES];
 	static const CProperties::OPTION_INFO m_oiTrackType[TRACK_TYPES];
 	static const CProperties::OPTION_INFO m_oiModulationType[MODULATION_TYPES];
 	static const CProperties::OPTION_INFO m_oiRangeType[RANGE_TYPES];
+	static CString m_sTrackTypeName[TRACK_TYPES];
+	static CString m_sModulationTypeName[MODULATION_TYPES];
+	static CString m_sRangeTypeName[RANGE_TYPES];
 };
 
 inline const CTrackBase::PROPERTY_INFO& CTrackBase::GetPropertyInfo(int iProp)
@@ -213,7 +221,7 @@ inline void	CTrackBase::GetPropertyRange(int iProp, int& nMinVal, int& nMaxVal)
 inline CString CTrackBase::GetTrackTypeName(int iType)
 {
 	ASSERT(iType >= 0 && iType < TRACK_TYPES);
-	return LDS(m_oiTrackType[iType].nNameID);
+	return m_sTrackTypeName[iType];
 }
 
 inline LPCTSTR CTrackBase::GetTrackTypeInternalName(int iType)
@@ -225,7 +233,7 @@ inline LPCTSTR CTrackBase::GetTrackTypeInternalName(int iType)
 inline CString CTrackBase::GetModulationTypeName(int iType)
 {
 	ASSERT(iType >= 0 && iType < MODULATION_TYPES);
-	return LDS(m_oiModulationType[iType].nNameID);
+	return m_sModulationTypeName[iType];
 }
 
 inline LPCTSTR CTrackBase::GetModulationTypeInternalName(int iType)
@@ -246,7 +254,7 @@ inline int CTrackBase::FindModulationTypeInternalName(LPCTSTR pszName)
 inline CString CTrackBase::GetRangeTypeName(int iType)
 {
 	ASSERT(iType >= 0 && iType < RANGE_TYPES);
-	return LDS(m_oiRangeType[iType].nNameID);
+	return m_sRangeTypeName[iType];
 }
 
 inline LPCTSTR CTrackBase::GetRangeTypeInternalName(int iType)
@@ -399,18 +407,38 @@ inline bool CTrack::IsModulated() const
 
 class CTrackArray : public CArrayEx<CTrack, CTrack&> {
 public:
+// Constants
 	enum {	// find flags
 		FINDF_IGNORE_CASE		= 0x01,		// case-insensitive
 		FINDF_PARTIAL_MATCH		= 0x02,		// match substrings
 		FINDF_NO_WRAP_SEARCH	= 0x04,		// don't wrap search
 	};
+
+// Operations
 	void	ImportSteps(LPCTSTR pszPath);
 	void	ExportSteps(const CIntArrayEx *parrSelection, LPCTSTR pszPath) const;
 	void	ImportTracks(LPCTSTR pszPath);
 	void	ExportTracks(const CIntArrayEx *parrSelection, LPCTSTR pszPath) const;
 	int		FindName(const CString& sName, int iStart = 0, UINT nFlags = 0) const;
+	void	GetModulatees(CTrack::CModulationArrayArray& arrModulatee) const;
+	void	GetLinkedTracks(const CIntArrayEx& arrSelection, CIntArrayEx& arrLinkedTrack, bool bIncludeModulatees) const;
 
 protected:
+// Types
+	class CModulationCrawler {
+	public:
+		CModulationCrawler(const CTrackArray& arrTrack, bool bIncludeModulatees);
+		void	Crawl(const CIntArrayEx& arrSelection, CIntArrayEx& arrLinkedTrack);
+
+	protected:
+		const CTrackArray&	m_arrTrack;	// reference to parent track array
+		CBoolArrayEx	m_arrIsLinked;	// for each track, true if track is linked
+		CTrack::CModulationArrayArray	m_arrModulatee;	// modulatee cross-reference; each track's modulatee array
+		bool	m_bIncludeModulatees;	// if true, traverse modulatees as well as modulators
+		void	Recurse(int iTrack);
+	};
+
+// Helpers
 	static	void	OnImportTracksError(int nErrMsgFormatID, int iRow, int iCol);
 };
 

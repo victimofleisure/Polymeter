@@ -11,7 +11,8 @@
 		01		03nov17	add subgroup
 		02		16apr18	add get/set property
 		03		17may18	make get/set property mandatory
-		
+		04		27jan19	add methods to load option strings
+	
 */
 
 #include "stdafx.h"
@@ -148,4 +149,16 @@ int CProperties::FindOption(LPCTSTR szOption, const CProperties::OPTION_INFO *pO
 			return iOption;
 	}
 	return -1;	// option string not found
+}
+
+void CProperties::LoadOptionStrings(CString *parrStr, const CProperties::OPTION_INFO *pOption, int nOptions)
+{
+	for (int iOption = 0; iOption < nOptions; iOption++)	// for each option
+		parrStr[iOption].LoadString(pOption[iOption].nNameID);	// load name string resource
+}
+
+void CProperties::LoadOptionStrings(CStringArray& arrStr, const CProperties::OPTION_INFO *pOption, int nOptions)
+{
+	arrStr.SetSize(nOptions);
+	LoadOptionStrings(arrStr.GetData(), pOption, nOptions);
 }

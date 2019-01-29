@@ -12,6 +12,8 @@
         02		03jan19	add MIDI output bar
         03		07jan19	add piano bar
 		04		14jan19	set piano bar's key signature
+		05		21jan19	remove modulation bar document change handler
+		06		25jan19	add graph bar
 
 */
 
@@ -173,6 +175,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	DockPane(&m_wndMidiOutputBar);
 	m_wndPianoBar.EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_wndPianoBar);
+	m_wndGraphBar.EnableDocking(CBRS_ALIGN_ANY);
+	DockPane(&m_wndGraphBar);
 
 	// enable Visual Studio 2005 style docking window behavior
 	CDockingManager::SetDockingMode(DT_SMART);
@@ -281,7 +285,6 @@ void CMainFrame::OnActivateView(CView *pView)
 		m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);	// update song time in status bar
 		m_wndPianoBar.SetKeySignature(nKeySig);
 	}
-	m_wndModulationsBar.OnDocumentChange();
 }
 
 BOOL CMainFrame::CreateDockingWindows()
@@ -337,6 +340,13 @@ BOOL CMainFrame::CreateDockingWindows()
 	if (!m_wndPianoBar.Create(sTitle, this, CRect(0, 0, 140, 140), TRUE, ID_BAR_Piano, dwStyle))
 	{
 		TRACE0("Failed to create output piano bar\n");
+		return FALSE; // failed to create
+	}
+	sTitle.LoadString(IDS_BAR_GRAPH);
+	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT | CBRS_FLOAT_MULTI;
+	if (!m_wndGraphBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_Graph, dwStyle))
+	{
+		TRACE0("Failed to create output Graph bar\n");
 		return FALSE; // failed to create
 	}
 	SetDockingWindowIcons(theApp.m_bHiColorIcons);
@@ -542,6 +552,8 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		SetViewTimer(false);
 	}
 	m_wndModulationsBar.OnUpdate(pSender, lHint, pHint);	// update modulation bar
+	if (m_wndGraphBar.FastIsVisible())
+		m_wndGraphBar.OnUpdate(pSender, lHint, pHint);
 }
 
 void CMainFrame::UpdateSongPosition()

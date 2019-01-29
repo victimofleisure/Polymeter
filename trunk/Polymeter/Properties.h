@@ -15,7 +15,8 @@
 		05		17may18	make get/set property mandatory
 		06		04jun18	add time property type
 		07		24sep18	in ReadEnum, move value assertion to after assignment
-		
+		08		27jan19	add methods to load option strings
+
 */
 
 #pragma once
@@ -79,6 +80,8 @@ public:
 // Operations
 	void	ExportPropertyInfo(LPCTSTR szPath) const;
 	static	int		FindOption(LPCTSTR szOption, const CProperties::OPTION_INFO *pOption, int nOptions);
+	static	void	LoadOptionStrings(CString *parrStr, const CProperties::OPTION_INFO *pOption, int nOptions);
+	static	void	LoadOptionStrings(CStringArray& arrStr, const CProperties::OPTION_INFO *pOption, int nOptions);
 	static	void	ReadEnum(LPCTSTR szSection, LPCTSTR szKey, int& Value, const CProperties::OPTION_INFO *pOption, int nOptions);
 	static	void	WriteEnum(LPCTSTR szSection, LPCTSTR szKey, const int& Value, const CProperties::OPTION_INFO *pOption, int nOptions);
 	template<class T>

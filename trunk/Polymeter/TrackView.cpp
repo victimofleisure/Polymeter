@@ -11,6 +11,7 @@
 		01		11dec18	add note range type and start
 		02		15dec18	add label tip style to grid
 		03		19dec18	centralize property value ranges
+		04		27jan19	load track resource strings during startup
 
 */
 
@@ -450,6 +451,7 @@ void CTrackView::SetColumnWidths(const CIntArrayEx& arrWidth)
 
 void CTrackView::LoadPersistentState()
 {
+	LoadStringResources();
 	m_gColState.Load();
 }
 

@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      09jan19	initial version
+		01		25jan19	add graph bar
 
 */
 
@@ -17,6 +18,7 @@
 
 #define RK_CHANNELS_BAR _T("ChannelsBar")
 #define RK_CHILD_FRAME _T("ChildFrm")
+#define RK_GRAPH_BAR _T("GraphBar")
 #define RK_MIDI_OUTPUT_BAR _T("MIDIOutputBar")
 #define RK_MODULATIONS_BAR _T("ModulationsBar")
 #define RK_PIANO_BAR _T("PianoBar")

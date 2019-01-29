@@ -19,7 +19,8 @@
 		09		18dec18	add import/export tracks
 		10		19dec18	refactor property info to support value range
 		11		02jan19	in ImportSteps, use remove all instead of set size
-
+		12		25jan19	add modulation crawler to track array
+		13		27jan19	cache type name strings instead of loading every time
 
 */
 
@@ -64,6 +65,17 @@ const CTrack::PROPERTY_FIELD	CTrack::m_arrPropertyField[PROPERTIES] = {
 
 #define TRACK_EX_PROP_NAME_STEPS _T("Steps")	// extended property names for track import/export
 #define TRACK_EX_PROP_NAME_MODS _T("Mods")
+
+CString CTrackBase::m_sTrackTypeName[TRACK_TYPES];
+CString CTrackBase::m_sModulationTypeName[MODULATION_TYPES];
+CString CTrackBase::m_sRangeTypeName[RANGE_TYPES];
+
+void CTrackBase::LoadStringResources()
+{
+	CProperties::LoadOptionStrings(m_sTrackTypeName, m_oiTrackType, TRACK_TYPES);
+	CProperties::LoadOptionStrings(m_sModulationTypeName, m_oiModulationType, MODULATION_TYPES);
+	CProperties::LoadOptionStrings(m_sRangeTypeName, m_oiRangeType, RANGE_TYPES);
+}
 
 void CTrack::SetDefaults()
 {
@@ -812,6 +824,87 @@ int CTrackArray::FindName(const CString& sName, int iStart, UINT nFlags) const
 		iStart++;
 	}
 	return -1;
+}
+
+void CTrackArray::GetModulatees(CTrack::CModulationArrayArray& arrModulatee) const
+{
+	arrModulatee.RemoveAll();	// reset array just in case
+	int	nTracks = GetSize();
+	arrModulatee.SetSize(nTracks);
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		const CTrack&	trk = GetAt(iTrack);
+		int	nMods = trk.m_arrModulator.GetSize();
+		for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
+			const CTrack::CModulation&	modulator = trk.m_arrModulator[iMod];
+			int	iModSource = modulator.m_iSource;
+			if (iModSource >= 0) {	// if modulator is valid
+				// for modulatees, m_iSource is redefined to be index of target instead
+				CTrack::CModulation	modulatee(modulator.m_iType, iTrack);
+				arrModulatee[iModSource].Add(modulatee);	// add modulatee to destination array
+			}
+		}
+	}
+}
+
+void CTrackArray::GetLinkedTracks(const CIntArrayEx& arrSelection, CIntArrayEx& arrLinkedTrack, bool bIncludeModulatees) const
+{
+	CModulationCrawler	crawler(*this, bIncludeModulatees);
+	crawler.Crawl(arrSelection, arrLinkedTrack);
+}
+
+CTrackArray::CModulationCrawler::CModulationCrawler(const CTrackArray& arrTrack, bool bIncludeModulatees) 
+	: m_arrTrack(arrTrack)
+{
+	m_bIncludeModulatees = bIncludeModulatees;
+}
+
+void CTrackArray::CModulationCrawler::Crawl(const CIntArrayEx& arrSelection, CIntArrayEx& arrLinkedTrack)
+{
+	arrLinkedTrack.RemoveAll();
+	int	nTracks = m_arrTrack.GetSize();
+	if (m_bIncludeModulatees)	// if including modulatees
+		m_arrTrack.GetModulatees(m_arrModulatee);	// build modulatee cross-reference
+	m_arrIsLinked.SetSize(nTracks);
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = arrSelection[iSel];
+		m_arrIsLinked[iTrack] = true;	// mark track linked
+		Recurse(iTrack);	// crawl track
+	}
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		if (m_arrIsLinked[iTrack])	// if track is linked
+			arrLinkedTrack.Add(iTrack);	// add to track destination array
+	}
+}
+
+void CTrackArray::CModulationCrawler::Recurse(int iTrack)
+{
+	const CTrack& trk = m_arrTrack[iTrack];
+	int	nMods = trk.m_arrModulator.GetSize();
+	for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
+		const CTrack::CModulation&	mod = trk.m_arrModulator[iMod];
+		int	iModSource = mod.m_iSource;
+		if (iModSource >= 0) {	// if valid modulation source
+			if (!m_arrIsLinked[iModSource]) {	// if not already crawled
+				m_arrIsLinked[iModSource] = true;	// mark modulator linked
+				Recurse(iModSource);	// crawl modulator
+			}
+		}
+	}
+	if (m_bIncludeModulatees) {	// if including modulatees
+		const CTrack::CModulationArray&	arrTrackMod = m_arrModulatee[iTrack];
+		nMods = arrTrackMod.GetSize();
+		for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulatees
+			const CTrack::CModulation&	mod = arrTrackMod[iMod];
+			int	iModTarget = mod.m_iSource;
+			if (iModTarget >= 0) {	// if valid modulation target
+				if (!m_arrIsLinked[iModTarget]) {	// if not already crawled
+					m_arrIsLinked[iModTarget] = true;	// mark modulatee linked
+					Recurse(iModTarget);	// crawl modulatee
+				}
+			}
+		}
+	}
 }
 
 #define RK_GROUP_COUNT _T("Count")

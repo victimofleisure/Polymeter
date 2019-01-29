@@ -9,6 +9,7 @@
 		rev		date	comments
         00		24jun18	initial version
 		01		14dec18	add clipboard support and sorting
+		02		22jan19	remove document change handler
 
 */
 
@@ -29,9 +30,7 @@ public:
 
 // Operations
 public:
-	void	OnDocumentChange();
 	void	OnUpdate(CView* pSender, LPARAM lHint = 0, CObject* pHint = NULL);
-	void	UpdateAll();
 
 // Overrides
 
@@ -72,9 +71,12 @@ protected:
 	CIntArrayEx	m_arrModCount;		// in show differences mode, instance count for each cached modulation
 
 // Helpers
+	void	UpdateAll();
 	void	UpdateUnion();
 	static	int		ModPairSortCompare(const void *arg1, const void *arg2);
 	void	SortModulations(bool bBySource);
+	void	ResetModulatorCache();
+	void	StartDeferredUpdate();
 
 // Overrides
 	virtual BOOL PreTranslateMessage(MSG* pMsg);

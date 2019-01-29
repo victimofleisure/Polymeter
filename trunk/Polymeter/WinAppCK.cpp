@@ -18,6 +18,7 @@
 		08		19nov13	in EnableChildWindows, add Deep argument
 		09		07may15	SHGetSpecialFolderPath return value is BOOL, not HRESULT
 		10		03may18	remove VC6 cruft and methods that moved to file scope
+		11		28jan19	add GetLogicalDrives
 
         enhanced application
  
@@ -164,4 +165,21 @@ CString CWinAppCK::GetTitleFromPath(LPCTSTR Path)
 	CPathStr	s(PathFindFileName(Path));
 	s.RemoveExtension();
 	return(s);
+}
+
+bool CWinAppCK::GetLogicalDriveStringArray(CStringArrayEx& arrDrive)
+{
+	DWORD	dwBufferSize = GetLogicalDriveStrings(0, NULL);
+	if (!dwBufferSize)
+		return false;
+	CString	sDrive;
+	TCHAR	*pDrive = sDrive.GetBuffer(dwBufferSize + 1);
+    if (pDrive == NULL)
+		return false;
+	GetLogicalDriveStrings(dwBufferSize, pDrive);
+	while (*pDrive) {
+		arrDrive.Add(pDrive);
+		pDrive += _tcslen(pDrive) + 1;
+	}
+	return true;
 }

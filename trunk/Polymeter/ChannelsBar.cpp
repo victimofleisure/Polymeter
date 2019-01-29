@@ -9,6 +9,7 @@
 		rev		date	comments
         00		15apr18	initial version
 		01		15dec18	add label tip style to grid
+		02		28jan19	include divider in list column header hit test
 		
 */
 
@@ -238,7 +239,7 @@ bool CChannelsBar::ShowListColumnHeaderMenu(CWnd *pWnd, CListCtrl *pList, CPoint
 	pHdrCtrl->ScreenToClient(&ptGrid);
 	HDHITTESTINFO	hti = {ptGrid};
 	pHdrCtrl->HitTest(&hti);
-	if (hti.flags & (HHT_ONHEADER | HHT_NOWHERE)) {
+	if (hti.flags & (HHT_ONHEADER | HHT_NOWHERE | HHT_ONDIVIDER)) {
 		CMenu	menu;
 		menu.LoadMenu(IDR_LIST_COL_HDR);
 		return menu.GetSubMenu(0)->TrackPopupMenu(0, point.x, point.y, pWnd) != 0;

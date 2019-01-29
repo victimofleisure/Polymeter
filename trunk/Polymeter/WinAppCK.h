@@ -20,6 +20,7 @@
 		10		19nov13	in EnableChildWindows, add Deep argument
 		11		24mar15	generate template specializations for numeric types
 		12		03may18	remove VC6 cruft and methods that moved to file scope
+		13		28jan19	add GetLogicalDrives
 
         enhanced application
  
@@ -50,6 +51,7 @@ public:
 	static	bool	CreateFolder(LPCTSTR Path);
 	static	bool	DeleteFolder(LPCTSTR Path, FILEOP_FLAGS nFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT);
 	static	CString	GetTitleFromPath(LPCTSTR Path);
+	static	bool	GetLogicalDriveStringArray(CStringArrayEx& arrDrive);
 
 // Overrides
 	// ClassWizard generated virtual function overrides
