@@ -213,6 +213,7 @@ open	close	type	description	rev	user
 12/09/18	01/28/19	done	right click on track list header divider unexpectedly shows view context menu	0.0.23.000	
 01/28/19	01/29/19	done	add MIDI input bar	0.0.23.001	
 01/29/19	01/29/19	done	MIDI through from input device to sequencer should exclude system status messages	0.0.23.001	
+01/30/19	01/30/19	done	graph doesn't fill window if system text size is greater than 100%	0.0.23.002	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
