@@ -8,7 +8,8 @@
 		revision history:
 		rev		date	comments
         00		25jan19	initial version
-		
+		01		30jan19	fix graph too small when system text size above 100%
+
 */
 
 #include "stdafx.h"
@@ -315,16 +316,16 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes) const
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc == NULL)
 		return false;
-	CSize	szLogPix;
-	HDC	hDCScreen = ::GetDC(NULL);
-	szLogPix.cx = GetDeviceCaps(hDCScreen, LOGPIXELSX);
-	szLogPix.cy = GetDeviceCaps(hDCScreen, LOGPIXELSY);
-	double	fDPI = max(szLogPix.cx, szLogPix.cy);
+	// Graphviz has a DPI setting which defaults to 96. It can be overriden, but doing so
+	// breaks the SVG export (it outputs an incorrect view size). The solution is to use
+	// the default Graphviz DPI instead of the system DPI when calculating the page size.
+	// A small correction is added to the DPI to avoid spurious scroll bars in some cases.
+	double	fGraphvizDPI = 96.1;	// this dubious kludge helps avoid scroll bars
 	CRect	rc;
 	GetClientRect(rc);
 	CSize	sz(rc.Size());
-	double	fWidth = sz.cx / fDPI;	// width in inches
-	double	fHeight = sz.cy / fDPI;	// height in inches
+	double	fWidth = sz.cx / fGraphvizDPI;	// width in inches
+	double	fHeight = sz.cy / fGraphvizDPI;	// height in inches
 	CStdioFile	fout(pszPath, CFile::modeCreate | CFile::modeWrite);
 	_fputts(_T("digraph G {\n"), fout.m_pStream);
 	_ftprintf(fout.m_pStream, _T("graph[size=\"%g,%g\",ratio=fill];\n"), fWidth, fHeight);
