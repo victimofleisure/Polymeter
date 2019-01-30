@@ -170,7 +170,7 @@ BOOL CPolymeterDoc::OnNewDocument()
 	if (!CDocument::OnNewDocument())
 		return FALSE;
 
-	// TODO: add reinitialization code here
+	// add reinitialization code here
 	// (SDI documents will reuse this document)
 	m_Seq.SetTrackCount(INIT_TRACKS);
 
@@ -266,11 +266,9 @@ void CPolymeterDoc::Serialize(CArchive& ar)
 {
 	if (ar.IsStoring())
 	{
-		// TODO: add storing code here
 	}
 	else
 	{
-		// TODO: add loading code here
 	}
 }
 
@@ -2373,7 +2371,7 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 		}
 		theApp.m_pPlayingDoc = this;
 		UpdateChannelEvents();	// queue channel events to be output at start of playback
-		CMidiOutputBar&	wndMidiOutput = theApp.GetMainFrame()->GetMidiOutputBar();
+		CMidiEventBar&	wndMidiOutput = theApp.GetMainFrame()->GetMidiOutputBar();
 		if (wndMidiOutput.IsVisible()) {	// if MIDI output bar is visible
 			wndMidiOutput.SetKeySignature(m_nKeySig);
 			wndMidiOutput.RemoveAllEvents();

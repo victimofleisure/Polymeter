@@ -14,6 +14,7 @@
 		04		14jan19	set piano bar's key signature
 		05		21jan19	remove modulation bar document change handler
 		06		25jan19	add graph bar
+		07		29jan19	add MIDI input bar; refactor create dockable panes
 
 */
 
@@ -78,9 +79,8 @@ static UINT WM_FINDREPLACE = ::RegisterWindowMessage(FINDMSGSTRING);
 
 // CMainFrame construction/destruction
 
-CMainFrame::CMainFrame()
+CMainFrame::CMainFrame() : m_wndMidiInputBar(false), m_wndMidiOutputBar(true)
 {
-	// TODO: add member initialization code here
 	theApp.m_nAppLook = theApp.GetInt(_T("ApplicationLook"), APPLOOK_VS_2008);
 	theApp.m_pMainWnd = this;
 	m_pActiveDoc = NULL;
@@ -146,7 +146,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	}
 	m_wndStatusBar.SetIndicators(m_arrIndicatorID, _countof(m_arrIndicatorID));
 
-	// TODO: Delete these five lines if you don't want the toolbar and menubar to be dockable
+	// Delete these five lines if you don't want the toolbar and menubar to be dockable
 	m_wndMenuBar.EnableDocking(CBRS_ALIGN_ANY);
 	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
 	EnableDocking(CBRS_ALIGN_ANY);
@@ -171,6 +171,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_wndModulationsBar.EnableDocking(CBRS_ALIGN_ANY);
 	// combine channels and modulations bars into one tabbed bar
 	m_wndModulationsBar.AttachToTabWnd(&m_wndChannelsBar, DM_SHOW);
+	m_wndMidiInputBar.EnableDocking(CBRS_ALIGN_ANY);
+	DockPane(&m_wndMidiInputBar);
 	m_wndMidiOutputBar.EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_wndMidiOutputBar);
 	m_wndPianoBar.EnableDocking(CBRS_ALIGN_ANY);
@@ -246,9 +248,7 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
 	if( !CMDIFrameWndEx::PreCreateWindow(cs) )
 		return FALSE;
-	// TODO: Modify the Window class or styles here by modifying
-	//  the CREATESTRUCT cs
-
+	// Modify the Window class or styles here by modifying the CREATESTRUCT cs
 	return TRUE;
 }
 
@@ -289,66 +289,15 @@ void CMainFrame::OnActivateView(CView *pView)
 
 BOOL CMainFrame::CreateDockingWindows()
 {
-	// create properties bar
 	CString sTitle;
-	sTitle.LoadString(IDS_BAR_PROPERTIES);
-	DWORD	dwStyle = WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT | CBRS_FLOAT_MULTI;
-	CMasterProps	props;
-	m_wndPropertiesBar.SetInitialProperties(props);
-	if (!m_wndPropertiesBar.Create(sTitle, this, CRect(0, 0, 200, 200), TRUE, ID_BAR_Properties, dwStyle))
-	{
-		TRACE0("Failed to create properties bar\n");
-		return FALSE; // failed to create
-	}
-	sTitle.LoadString(IDS_BAR_CHANNELS);
-	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
-	if (!m_wndChannelsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_Channels, dwStyle))
-	{
-		TRACE0("Failed to create channels bar\n");
-		return FALSE; // failed to create
-	}
-	sTitle.LoadString(IDS_BAR_PRESETS);
-	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
-	if (!m_wndPresetsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_Presets, dwStyle))
-	{
-		TRACE0("Failed to create presets bar\n");
-		return FALSE; // failed to create
-	}
-	sTitle.LoadString(IDS_BAR_PARTS);
-	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
-	if (!m_wndPartsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_Parts, dwStyle))
-	{
-		TRACE0("Failed to create groups bar\n");
-		return FALSE; // failed to create
-	}
-	sTitle.LoadString(IDS_BAR_MODULATIONS);
-	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
-	if (!m_wndModulationsBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_Modulations, dwStyle))
-	{
-		TRACE0("Failed to create modulations bar\n");
-		return FALSE; // failed to create
-	}
-	sTitle.LoadString(IDS_BAR_MIDI_OUTPUT);
-	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_RIGHT | CBRS_FLOAT_MULTI;
-	if (!m_wndMidiOutputBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_MidiOutput, dwStyle))
-	{
-		TRACE0("Failed to create modulations bar\n");
-		return FALSE; // failed to create
-	}
-	sTitle.LoadString(IDS_BAR_PIANO);
-	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_BOTTOM | CBRS_FLOAT_MULTI;
-	if (!m_wndPianoBar.Create(sTitle, this, CRect(0, 0, 140, 140), TRUE, ID_BAR_Piano, dwStyle))
-	{
-		TRACE0("Failed to create output piano bar\n");
-		return FALSE; // failed to create
-	}
-	sTitle.LoadString(IDS_BAR_GRAPH);
-	dwStyle = WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT | CBRS_FLOAT_MULTI;
-	if (!m_wndGraphBar.Create(sTitle, this, CRect(0, 0, 300, 200), TRUE, ID_BAR_Graph, dwStyle))
-	{
-		TRACE0("Failed to create output Graph bar\n");
-		return FALSE; // failed to create
-	}
+	DWORD	dwBaseStyle = WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | CBRS_FLOAT_MULTI;
+	#define MAINDOCKBARDEF(name, width, height, style) \
+		sTitle.LoadString(IDS_BAR_##name); \
+		if (!m_wnd##name##Bar.Create(sTitle, this, CRect(0, 0, width, height), TRUE, ID_BAR_##name, style)) {	\
+			TRACE("Failed to create %s bar\n", #name);	\
+			return FALSE; \
+		}
+	#include "MainDockBarDef.h"	// generate code to create docking windows
 	SetDockingWindowIcons(theApp.m_bHiColorIcons);
 	return TRUE;
 }

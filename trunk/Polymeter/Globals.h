@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		23mar18	initial version
+		01		29jan19	add MIDI event message
 
 		global definitions and inlines
 
@@ -92,6 +93,7 @@ enum {	// application-wide user window messages, based on WP_APP
 	UWM_MIDI_ERROR,				// wParam: error code, lParam: CDocument*
 	UWM_DEVICE_NODE_CHANGE,		// wParam: none, lParam: none
 	UWM_SHOW_CHANGING,			// wParam: none, lParam: none
+	UWM_MIDI_EVENT,				// wParam: timestamp, lParam: MIDI message
 };
 
 // undo natter should always be zero in a shipping version

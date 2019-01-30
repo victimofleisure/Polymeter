@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      25mar18	initial version
+		01		29jan19	remove set initial properties
 		
 */
 
@@ -24,7 +25,6 @@ public:
 
 // Attributes
 public:
-	void	SetInitialProperties(const CMasterProps& Props);
 	void	GetProperties(CMasterProps& Props) const;
 	void	SetProperties(const CMasterProps& Props);
 	void	GetProperty(CMasterProps& Props, int iProp) const;
@@ -46,7 +46,6 @@ protected:
 	};
 
 // Data members
-	const CProperties	*m_pInitialProps;	// pointer to initial properties
 	CMyPropertiesGridCtrl m_Grid;			// derived properties grid control
 
 // Implementation
@@ -101,11 +100,6 @@ inline bool CPropertiesBar::IsEnabled(int iProp) const
 inline void CPropertiesBar::Enable(int iProp, bool bEnable)
 {
 	m_Grid.Enable(iProp, bEnable);
-}
-
-inline void CPropertiesBar::SetInitialProperties(const CMasterProps& Props)
-{
-	m_pInitialProps = &Props;
 }
 
 inline void CPropertiesBar::GetProperties(CMasterProps& Props) const

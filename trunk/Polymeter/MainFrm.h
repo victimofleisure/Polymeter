@@ -12,6 +12,7 @@
         02		03jan19	add MIDI output bar
         03		07jan19	add piano bar
 		04		25jan19	add graph bar
+		05		29jan19	add MIDI input bar
 
 */
 
@@ -25,14 +26,14 @@
 #include "PresetsBar.h"
 #include "PartsBar.h"
 #include "ModulationsBar.h"
-#include "MidiOutputBar.h"
+#include "MidiEventBar.h"
 #include "PianoBar.h"
 #include "GraphBar.h"
 
 // docking bar IDs are relative to AFX_IDW_CONTROLBAR_FIRST
 enum {	// docking bar IDs; don't change, else bar placement won't be restored
-	ID_APP_CONTROL_BAR_FIRST = AFX_IDW_CONTROLBAR_FIRST + 40,
-	#define MAINDOCKBARDEF(name) ID_BAR_##name,
+	ID_APP_DOCKING_BAR_FIRST = AFX_IDW_CONTROLBAR_FIRST + 40,
+	#define MAINDOCKBARDEF(name, width, height, style) ID_BAR_##name,
 	#include "MainDockBarDef.h"	// generate docking bar IDs
 };
 
@@ -65,7 +66,8 @@ public:
 	CPresetsBar&	GetPresetsBar();
 	CPartsBar&	GetPartsBar();
 	CModulationsBar&	GetModulationsBar();
-	CMidiOutputBar&	GetMidiOutputBar();
+	CMidiEventBar&	GetMidiInputBar();
+	CMidiEventBar&	GetMidiOutputBar();
 	CPianoBar& GetPianoBar();
 	CGraphBar& GetGraphBar();
 	CString	GetSongPositionString() const;
@@ -101,7 +103,8 @@ protected:  // control bar embedded members
 	CPresetsBar		  m_wndPresetsBar;
 	CPartsBar		  m_wndPartsBar;
 	CModulationsBar	  m_wndModulationsBar;
-	CMidiOutputBar	  m_wndMidiOutputBar;
+	CMidiEventBar	  m_wndMidiInputBar;
+	CMidiEventBar	  m_wndMidiOutputBar;
 	CPianoBar		  m_wndPianoBar;
 	CGraphBar		  m_wndGraphBar;
 
@@ -209,7 +212,12 @@ inline CModulationsBar& CMainFrame::GetModulationsBar()
 	return m_wndModulationsBar;
 }
 
-inline CMidiOutputBar& CMainFrame::GetMidiOutputBar()
+inline CMidiEventBar& CMainFrame::GetMidiInputBar()
+{
+	return m_wndMidiInputBar;
+}
+
+inline CMidiEventBar& CMainFrame::GetMidiOutputBar()
 {
 	return m_wndMidiOutputBar;
 }

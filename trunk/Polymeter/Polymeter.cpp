@@ -11,6 +11,8 @@
 		01		02dec18	add recording of MIDI input
 		02		17dec18	move MIDI file types into class scope
         03		03jan19	add playing document pointer
+		04		29jan19	add MIDI input bar
+		05		29jan19	exclude system status messages from MIDI thru
 
 */
 
@@ -56,11 +58,10 @@ CPolymeterApp::CPolymeterApp()
 {
 	m_bHiColorIcons = TRUE;
 
-	// TODO: replace application ID string below with unique ID string; recommended
+	// replace application ID string below with unique ID string; recommended
 	// format for string is CompanyName.ProductName.SubProduct.VersionInformation
 	SetAppID(_T("AnalSoftware.Polymeter.Beta.1.0"));
 
-	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance
 	m_bInMsgBox = false;
 	m_bTieNotes = false;
@@ -115,7 +116,7 @@ BOOL CPolymeterApp::InitInstance()
 	// of your final executable, you should remove from the following
 	// the specific initialization routines you do not need
 	// Change the registry key under which our settings are stored
-	// TODO: You should modify this string to be something appropriate
+	// You should modify this string to be something appropriate
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Anal Software"));
 	LoadStdProfileSettings(4);  // Load standard INI file options (including MRU)
@@ -208,6 +209,7 @@ void CPolymeterApp::ResetWindowLayout()
 	static const LPCTSTR pszCleanKey[] = {
 		RK_CHANNELS_BAR,
 		RK_CHILD_FRAME,
+		RK_MIDI_INPUT_BAR,
 		RK_MIDI_OUTPUT_BAR,
 		RK_MODULATIONS_BAR,
 		RK_PIANO_BAR,
@@ -612,22 +614,27 @@ void CALLBACK CPolymeterApp::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwIn
 	case MIM_DATA:
 		{
 //			_tprintf(_T("%x %d\n"), dwParam1, dwParam2);
-			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-			if (pDoc != NULL && pDoc->m_Seq.IsOpen()) {
-				DWORD	dwEvent = static_cast<DWORD>(dwParam1);
-				if (theApp.m_Options.m_Midi_bThru)	// if MIDI thru enabled
-					pDoc->m_Seq.OutputLiveEvent(dwEvent);	// output event
-			}
-			if (theApp.m_bIsRecordMidiIn) {	// if recording MIDI input
-				if (!theApp.m_arrMidiInEvent.GetSize()) {	// if first event
-					if (pDoc != NULL) {	// if active document exists
-						LONGLONG	nPos;
-						if (pDoc->m_Seq.GetPosition(nPos))	// get position in ticks
-							theApp.m_nMidiInStartTime = static_cast<int>(nPos);
-					}
+			if (MIDI_STAT(dwParam1) < SYSEX) {	// if channel voice message (exclude system status messages)
+				CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+				if (pDoc != NULL && pDoc->m_Seq.IsOpen()) {
+					DWORD	dwEvent = static_cast<DWORD>(dwParam1);
+					if (theApp.m_Options.m_Midi_bThru)	// if MIDI thru enabled
+						pDoc->m_Seq.OutputLiveEvent(dwEvent);	// output event
 				}
-				CMidiFile::MIDI_EVENT	evt = {UINT64TO32(dwParam2), UINT64TO32(dwParam1)};
-				theApp.m_arrMidiInEvent.Add(evt);	// add event to MIDI input array
+				if (theApp.m_bIsRecordMidiIn) {	// if recording MIDI input
+					if (!theApp.m_arrMidiInEvent.GetSize()) {	// if first event
+						if (pDoc != NULL) {	// if active document exists
+							LONGLONG	nPos;
+							if (pDoc->m_Seq.GetPosition(nPos))	// get position in ticks
+								theApp.m_nMidiInStartTime = static_cast<int>(nPos);
+						}
+					}
+					CMidiFile::MIDI_EVENT	evt = {static_cast<DWORD>(dwParam2), static_cast<DWORD>(dwParam1)};
+					theApp.m_arrMidiInEvent.Add(evt);	// add event to MIDI input array
+				}
+			}
+			if (theApp.GetMainFrame()->GetMidiInputBar().FastIsVisible()) {	// if MIDI input bar visible
+				theApp.GetMainFrame()->GetMidiInputBar().PostMessage(UWM_MIDI_EVENT, dwParam2, dwParam1);
 			}
 		}
 		break;

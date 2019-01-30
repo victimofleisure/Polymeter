@@ -205,7 +205,7 @@
     <ClInclude Include="GraphBar.h" />
     <ClInclude Include="GraphTypeDef.h" />
     <ClInclude Include="MidiEventColDef.h" />
-    <ClInclude Include="MidiOutputBar.h" />
+    <ClInclude Include="MidiEventBar.h" />
     <ClInclude Include="MidiStatusDef.h" />
     <ClInclude Include="MyDockablePane.h" />
     <ClInclude Include="PianoBar.h" />
@@ -329,7 +329,7 @@
     <ClCompile Include="ColoredButton.cpp" />
     <ClCompile Include="FolderDialog.cpp" />
     <ClCompile Include="GraphBar.cpp" />
-    <ClCompile Include="MidiOutputBar.cpp" />
+    <ClCompile Include="MidiEventBar.cpp" />
     <ClCompile Include="MyDockablePane.cpp" />
     <ClCompile Include="PianoBar.cpp" />
     <ClCompile Include="ParseCSV.cpp" />

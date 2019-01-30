@@ -11,19 +11,31 @@
         01		03jan19	add MIDI output bar
         02		07jan19	add piano bar
 		03		25jan19	add graph bar
+		04		29jan19	add MIDI input bar
 		
 */
 
 #ifdef MAINDOCKBARDEF
 
-MAINDOCKBARDEF(Properties)
-MAINDOCKBARDEF(Channels)
-MAINDOCKBARDEF(Presets)
-MAINDOCKBARDEF(Parts)
-MAINDOCKBARDEF(Modulations)
-MAINDOCKBARDEF(MidiOutput)
-MAINDOCKBARDEF(Piano)
-MAINDOCKBARDEF(Graph)
+// Don't remove or reorder entries! Append only to avoid incompatibility.
+
+//			   name			width	height	style
+MAINDOCKBARDEF(Properties,	200,	200,	dwBaseStyle | CBRS_LEFT | WS_VISIBLE)
+MAINDOCKBARDEF(Channels,	300,	200,	dwBaseStyle | CBRS_RIGHT)
+MAINDOCKBARDEF(Presets,		300,	200,	dwBaseStyle | CBRS_RIGHT)
+MAINDOCKBARDEF(Parts,		300,	200,	dwBaseStyle | CBRS_RIGHT)
+MAINDOCKBARDEF(Modulations,	300,	200,	dwBaseStyle | CBRS_RIGHT)
+MAINDOCKBARDEF(MidiOutput,	300,	200,	dwBaseStyle | CBRS_RIGHT)
+MAINDOCKBARDEF(Piano,		140,	140,	dwBaseStyle | CBRS_BOTTOM)
+MAINDOCKBARDEF(Graph,		300,	200,	dwBaseStyle | CBRS_LEFT)
+MAINDOCKBARDEF(MidiInput,	300,	200,	dwBaseStyle | CBRS_RIGHT)
+
+// After adding a new dockable bar here:
+// 1. Add a resource string IDS_BAR_Foo where Foo is the bar name.
+// 2. Add a member variable and accessor for the bar in MainFrm.h.
+// 3. Enable docking and dock the bar in CMainFrame::OnCreate.
+// 4. Add a registry key for the bar in AppRegKey.h.
+// 5. Possibly add the bar to CPolymeterApp::ResetWindowLayout.
 
 #endif	// MAINDOCKBARDEF
 #undef MAINDOCKBARDEF

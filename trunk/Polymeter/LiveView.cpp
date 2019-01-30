@@ -589,7 +589,7 @@ int CLiveView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CView::OnCreate(lpCreateStruct) == -1)
 		return -1;
 	CreateFonts();
-	static const int arrListNameID[LISTS] = {IDS_BAR_PRESETS, IDS_BAR_PARTS};
+	static const int arrListNameID[LISTS] = {IDS_BAR_Presets, IDS_BAR_Parts};
 	DWORD	dwListStyle = WS_CHILD | WS_VISIBLE 
 		| LVS_REPORT | LVS_OWNERDATA | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER;
 	static const DWORD	arrListStyle[LISTS] = {dwListStyle | LVS_SINGLESEL, dwListStyle};

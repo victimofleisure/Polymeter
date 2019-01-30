@@ -9,6 +9,7 @@
 		rev		date	comments
         00		17dec18	initial version
         01		03jan19	add filtering via context menu
+        02		29jan19	refactor to support both input and output
 
 */
 
@@ -19,12 +20,12 @@
 #include "Sequencer.h"
 #include "BlockArray.h"
 
-class CMidiOutputBar : public CMyDockablePane
+class CMidiEventBar : public CMyDockablePane
 {
-	DECLARE_DYNAMIC(CMidiOutputBar)
+	DECLARE_DYNAMIC(CMidiEventBar)
 // Construction
 public:
-	CMidiOutputBar();
+	CMidiEventBar(bool bIsOutputBar);
 
 // Types
 	typedef CSequencer::MIDI_EVENT MIDI_EVENT;
@@ -39,6 +40,7 @@ public:
 // Operations
 public:
 	void	AddEvents(const CSequencer::CMidiEventArray& arrEvent);
+	void	AddEvent(MIDI_EVENT& evt);
 	void	RemoveAllEvents();
 	void	ExportEvents(LPCTSTR pszPath);
 
@@ -46,7 +48,7 @@ public:
 
 // Implementation
 public:
-	virtual ~CMidiOutputBar();
+	virtual ~CMidiEventBar();
 
 protected:
 // Constants
@@ -54,13 +56,18 @@ protected:
 		IDC_LIST = 1861,
 		EVENT_BLOCK_SIZE = 1024,
 	};
+	enum {	// bar directions; see ctor's IsOutputBar flag
+		BAR_INPUT,
+		BAR_OUTPUT,
+		BAR_DIRECTIONS
+	};
 	enum {	// list columns
 		#define LISTCOLDEF(name, align, width) COL_##name,
 		#include "MidiEventColDef.h"
 		COLUMNS
 	};
 	enum {	// MIDI channel voice messages
-		#define MIDICHANSTATDEF(name) CMT_##name,
+		#define MIDICHANSTATDEF(name) CVM_##name,
 		#include "MidiStatusDef.h"
 		CHANNEL_VOICE_MESSAGES
 	};
@@ -81,10 +88,14 @@ protected:
 		SMID_MESSAGE_LAST = SMID_MESSAGE_FIRST + CHANNEL_VOICE_MESSAGES,
 	};
 	static const CListCtrlExSel::COL_INFO	m_arrColInfo[COLUMNS];	// list column info
-	static const int	m_arrChanStatID[CHANNEL_VOICE_MESSAGES];	// channel status string resource IDs
+	static const int	m_arrChanStatID[CHANNEL_VOICE_MESSAGES];	// channel status message string resource IDs
+	static const int	m_arrSysStatID[];	// system status message string resource IDs
 	static const LPCTSTR	m_arrChanStatNickname[CHANNEL_VOICE_MESSAGES];	// internal channel status names
 	static const LPCTSTR	m_arrControllerName[];	// array of controller name strings
 	static const int	m_arrFilterCol[FILTERS];	// column index of each column that can be filtered
+	static const LPCTSTR	m_arrBarRegKey[BAR_DIRECTIONS];	// registry keys for input versus output
+	static CStringArrayEx	m_arrChanStatName;	// channel status message names
+	static CStringArrayEx	m_arrSysStatName;	// system status message names
 
 // Types
 	typedef CBlockArray<MIDI_EVENT, EVENT_BLOCK_SIZE> CMidiEventArray;
@@ -101,19 +112,21 @@ protected:
 	CImageList	m_ilList;			// image list for list control
 	CMidiEventArray	m_arrEvent;		// array of MIDI events
 	CIntArrayEx	m_arrFilterPass;	// if filtering, indices of events that pass filter
-	CStringArrayEx	m_arrChanStatName;	// channel status message names
+	LPCTSTR	m_pszRegKey;			// registry key; depends on input versus output
 	int		m_nEventTime;			// time of current MIDI event, in ticks
 	bool	m_bIsFiltering;			// true if filtering events
 	bool	m_bIsPaused;			// true if playback is paused
 	bool	m_bShowNoteNames;		// true if showing note names
 	bool	m_bShowControllerNames;	// true if showing controller names
+	bool	m_bShowSystemMessages;	// true if showing system messages
 	int		m_arrFilter[FILTERS];	// array of filters consisting of target item index, or -1 for all
 	int		m_nPauseEvents;			// number of events when display was paused
 	int		m_nKeySig;				// key signature in which notes are displayed
 
 // Helpers
+	void	OnAddedEvents(int nOldListItems);
 	int		GetListItemCount();
-	bool	ApplyFilters(WPARAM wParam) const;
+	bool	ApplyFilters(DWORD dwEvent) const;
 	void	OnFilterChange();
 	void	Pause(bool bEnable);
 	void	ResetFilters();
@@ -131,6 +144,7 @@ protected:
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu);
 	afx_msg void OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg LRESULT OnMidiEvent(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnClearHistory();
 	afx_msg void OnPause();
 	afx_msg void OnResetFilters();
@@ -144,15 +158,17 @@ protected:
 	afx_msg void OnExport();
 	afx_msg void OnUpdateExport(CCmdUI *pCmdUI);
 	afx_msg void OnListColHdrReset();
+	afx_msg void OnShowSystemMessages();
+	afx_msg void OnUpdateShowSystemMessages(CCmdUI *pCmdUI);
 };
 
-inline LPCTSTR CMidiOutputBar::GetChannelStatusNickname(int iStatus)
+inline LPCTSTR CMidiEventBar::GetChannelStatusNickname(int iStatus)
 {
 	ASSERT(iStatus >= 0 && iStatus < CHANNEL_VOICE_MESSAGES);
 	return m_arrChanStatNickname[iStatus];
 }
 
-inline CString CMidiOutputBar::GetChannelStatusName(int iStatus) const
+inline CString CMidiEventBar::GetChannelStatusName(int iStatus) const
 {
 	return m_arrChanStatName[iStatus];
 }

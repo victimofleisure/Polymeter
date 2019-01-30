@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      25mar18	initial version
+		01		29jan19	remove set initial properties
 		
 */
 
@@ -31,7 +32,6 @@ static char THIS_FILE[]=__FILE__;
 
 CPropertiesBar::CPropertiesBar()
 {
-	m_pInitialProps = NULL;
 }
 
 CPropertiesBar::~CPropertiesBar()
@@ -141,8 +141,8 @@ int CPropertiesBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;      // fail to create
 	}
 
-	if (m_pInitialProps != NULL)
-		InitPropList(*m_pInitialProps);
+	CMasterProps	props;
+	InitPropList(props);
 
 	m_Grid.RestoreGroupExpansion(RK_PROPERTIES_BAR RK_EXPAND);
 	m_Grid.SetDescriptionRows(AfxGetApp()->GetProfileInt(RK_PROPERTIES_BAR, RK_DESCRIPTION_ROWS, 3));
@@ -203,7 +203,7 @@ LRESULT CPropertiesBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)
 	if (iProp >= 0 && iProp < CMasterProps::PROPERTIES)	// if valid property index
 		nID = CMasterProps::m_Info[iProp].nNameID;	// get property name resource ID
 	else
-		nID = IDS_BAR_PROPERTIES;
+		nID = IDS_BAR_Properties;
 	theApp.WinHelp(nID);
 	return TRUE;
 }

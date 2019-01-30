@@ -348,9 +348,6 @@
     <ClInclude Include="HelpResMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MainDockBarDef.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="OffsetDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -367,9 +364,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MidiEventColDef.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MidiOutputBar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MidiStatusDef.h">
@@ -406,6 +400,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FolderDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MidiEventBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MainDockBarDef.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -653,9 +653,6 @@
     <ClCompile Include="ParseCSV.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MidiOutputBar.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PianoCtrl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -672,6 +669,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FolderDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MidiEventBar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

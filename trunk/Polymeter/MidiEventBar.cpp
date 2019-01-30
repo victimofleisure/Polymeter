@@ -9,12 +9,13 @@
 		rev		date	comments
         00		17dec18	initial version
         01		03jan19	add filtering via context menu
+        02		29jan19	refactor to support both input and output
 		
 */
 
 #include "stdafx.h"
 #include "Polymeter.h"
-#include "MidiOutputBar.h"
+#include "MidiEventBar.h"
 #include "MainFrm.h"
 #include "PolymeterDoc.h"
 #include "RegTempl.h"
@@ -26,21 +27,21 @@ static char THIS_FILE[]=__FILE__;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
-// CMidiOutputBar
+// CMidiEventBar
 
-IMPLEMENT_DYNAMIC(CMidiOutputBar, CMyDockablePane)
+IMPLEMENT_DYNAMIC(CMidiEventBar, CMyDockablePane)
 
-const CGridCtrl::COL_INFO CMidiOutputBar::m_arrColInfo[COLUMNS] = {
+const CGridCtrl::COL_INFO CMidiEventBar::m_arrColInfo[COLUMNS] = {
 	#define LISTCOLDEF(name, align, width) {IDS_MIDIEVT_COL_##name, align, width},
 	#include "MidiEventColDef.h"
 };
 
-const LPCTSTR CMidiOutputBar::m_arrControllerName[] = {
+const LPCTSTR CMidiEventBar::m_arrControllerName[] = {
 	#define MIDI_CTRLR_TITLE_DEF(name) _T(name),
 	#include "MidiCtrlrDef.h"
 };
 
-const int CMidiOutputBar::m_arrFilterCol[FILTERS] = {
+const int CMidiEventBar::m_arrFilterCol[FILTERS] = {
 	COL_CHANNEL,
 	COL_MESSAGE,
 };
@@ -49,12 +50,21 @@ const int CMidiOutputBar::m_arrFilterCol[FILTERS] = {
 #define IDS_TRACK_TYPE_NOTE_OFF IDS_MIDI_MSG_NOTE_OFF
 #define IDS_TRACK_TYPE_NOTE_ON IDS_MIDI_MSG_NOTE_ON
 
-const int CMidiOutputBar::m_arrChanStatID[CHANNEL_VOICE_MESSAGES] = {
+const int CMidiEventBar::m_arrChanStatID[CHANNEL_VOICE_MESSAGES] = {
 	#define MIDICHANSTATDEF(name) IDS_TRACK_TYPE_##name,
 	#include "MidiStatusDef.h"
 };
 
-const LPCTSTR CMidiOutputBar::m_arrChanStatNickname[CHANNEL_VOICE_MESSAGES] = {
+#define IDS_MIDI_SYS_STAT_UNDEFINED 0
+const int CMidiEventBar::m_arrSysStatID[] = {
+	#define MIDISYSSTATDEF(name) IDS_MIDI_SYS_STAT_##name,
+	#include "MidiStatusDef.h"
+};
+
+CStringArrayEx CMidiEventBar::m_arrChanStatName;
+CStringArrayEx CMidiEventBar::m_arrSysStatName;
+
+const LPCTSTR CMidiEventBar::m_arrChanStatNickname[CHANNEL_VOICE_MESSAGES] = {
 	#define MIDICHANSTATDEF(name) _T(#name),
 	#include "MidiStatusDef.h"
 };
@@ -63,33 +73,40 @@ const LPCTSTR CMidiOutputBar::m_arrChanStatNickname[CHANNEL_VOICE_MESSAGES] = {
 #define RK_SHOW_CONTROLLER_NAMES _T("ShowCtrlrNames")
 #define RK_COL_WIDTH _T("ColWidth")
 
-CMidiOutputBar::CMidiOutputBar()
+const LPCTSTR CMidiEventBar::m_arrBarRegKey[BAR_DIRECTIONS] = {
+	RK_MIDI_INPUT_BAR,
+	RK_MIDI_OUTPUT_BAR,
+};
+
+CMidiEventBar::CMidiEventBar(bool bIsOutputBar)
 {
+	m_pszRegKey = m_arrBarRegKey[bIsOutputBar];
 	m_nEventTime = 0;
 	m_bIsFiltering = false;
 	m_bIsPaused = false;
 	m_bShowNoteNames = true;
 	m_bShowControllerNames = false;
+	m_bShowSystemMessages = true;
 	m_nPauseEvents = 0;
 	m_nKeySig = 0;
 	ResetFilters();
-	RdReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_NOTE_NAMES, m_bShowNoteNames);
-	RdReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_CONTROLLER_NAMES, m_bShowControllerNames);
+	RdReg(m_pszRegKey, RK_SHOW_NOTE_NAMES, m_bShowNoteNames);
+	RdReg(m_pszRegKey, RK_SHOW_CONTROLLER_NAMES, m_bShowControllerNames);
 }
 
-CMidiOutputBar::~CMidiOutputBar()
+CMidiEventBar::~CMidiEventBar()
 {
-	WrReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_NOTE_NAMES, m_bShowNoteNames);
-	WrReg(RK_MIDI_OUTPUT_BAR, RK_SHOW_CONTROLLER_NAMES, m_bShowControllerNames);
+	WrReg(m_pszRegKey, RK_SHOW_NOTE_NAMES, m_bShowNoteNames);
+	WrReg(m_pszRegKey, RK_SHOW_CONTROLLER_NAMES, m_bShowControllerNames);
 }
 
-LPCTSTR CMidiOutputBar::GetControllerName(int iController)
+LPCTSTR CMidiEventBar::GetControllerName(int iController)
 {
 	ASSERT(iController >= 0 && iController < _countof(m_arrControllerName));
 	return m_arrControllerName[iController];
 }
 
-inline int CMidiOutputBar::GetListItemCount()
+inline int CMidiEventBar::GetListItemCount()
 {
 	if (m_bIsFiltering)	// if filtering
 		return m_arrFilterPass.GetSize();
@@ -97,7 +114,7 @@ inline int CMidiOutputBar::GetListItemCount()
 		return INT64TO32(m_arrEvent.GetSize());
 }
 
-void CMidiOutputBar::AddEvents(const CSequencer::CMidiEventArray& arrEvent)
+void CMidiEventBar::AddEvents(const CSequencer::CMidiEventArray& arrEvent)
 {
 	int	nOldListItems = GetListItemCount();
 	int	nEvents = arrEvent.GetSize();
@@ -115,6 +132,26 @@ void CMidiOutputBar::AddEvents(const CSequencer::CMidiEventArray& arrEvent)
 			}
 		}
 	}
+	OnAddedEvents(nOldListItems);
+}
+
+void CMidiEventBar::AddEvent(MIDI_EVENT& evt)
+{
+	if (!(evt.dwEvent & 0xff000000)) {	// if event is a short MIDI message
+		int	nOldListItems = GetListItemCount();
+		m_arrEvent.Add(evt);	// add event to array
+		if (m_bIsFiltering) {	// if filtering input
+			if (ApplyFilters(evt.dwEvent)) {	// if event passes filters
+				int	iEvent = INT64TO32(m_arrEvent.GetSize()) - 1;
+				m_arrFilterPass.Add(iEvent);	// add event index to pass array
+			}
+		}
+		OnAddedEvents(nOldListItems);
+	}
+}
+
+__forceinline void CMidiEventBar::OnAddedEvents(int nOldListItems)
+{
 	if (!m_bIsPaused) {	// if not paused, update list
 		int	nNewListItems = GetListItemCount();
 		if (nNewListItems != nOldListItems) {	// if items were added
@@ -125,7 +162,7 @@ void CMidiOutputBar::AddEvents(const CSequencer::CMidiEventArray& arrEvent)
 	}
 }
 
-void CMidiOutputBar::RemoveAllEvents()
+void CMidiEventBar::RemoveAllEvents()
 {
 	m_arrEvent.RemoveAll();
 	m_arrFilterPass.RemoveAll();
@@ -134,7 +171,7 @@ void CMidiOutputBar::RemoveAllEvents()
 	m_nPauseEvents = 0;
 }
 
-void CMidiOutputBar::Pause(bool bEnable)
+void CMidiEventBar::Pause(bool bEnable)
 {
 	if (bEnable == m_bIsPaused)	// if already in requested state
 		return;	// nothing to do
@@ -145,20 +182,25 @@ void CMidiOutputBar::Pause(bool bEnable)
 		OnFilterChange();	// filter passes may have grown while we were paused
 }
 
-bool CMidiOutputBar::ApplyFilters(WPARAM wParam) const
+bool CMidiEventBar::ApplyFilters(DWORD dwEvent) const
 {
-	int	iChan = m_arrFilter[FILTER_CHANNEL];
-	if (iChan >= 0 && static_cast<int>(MIDI_CHAN(wParam)) != iChan)	// if channel doesn't match
-		return(false);
-	int	nMsg = m_arrFilter[FILTER_MESSAGE];
-	if (nMsg >= 0 && static_cast<int>(((MIDI_CMD(wParam) >> 4) - 8)) != nMsg)	// if message status doesn't match
-		return(false);
+	if (MIDI_STAT(dwEvent) < SYSEX) {	// if channel voice message
+		int	iChan = m_arrFilter[FILTER_CHANNEL];
+		if (iChan >= 0 && static_cast<int>(MIDI_CHAN(dwEvent)) != iChan)	// if channel doesn't match
+			return false;
+		int	nMsg = m_arrFilter[FILTER_MESSAGE];
+		if (nMsg >= 0 && static_cast<int>(((MIDI_CMD(dwEvent) >> 4) - 8)) != nMsg)	// if message status doesn't match
+			return false;
+	} else {	// system status message
+		if (!m_bShowSystemMessages)	// if hiding system messages
+			return false;
+	}
 	return true;
 }
 
-void CMidiOutputBar::OnFilterChange()
+void CMidiEventBar::OnFilterChange()
 {
-	m_bIsFiltering = false;
+	m_bIsFiltering = !m_bShowSystemMessages;	// hiding system messages counts as a filter
 	for (int iFilter = 0; iFilter < FILTERS; iFilter++) {	// for each filter
 		LVCOLUMN	lvc;
 		if (m_arrFilter[iFilter] >= 0) {	// if filter is specified
@@ -194,25 +236,26 @@ void CMidiOutputBar::OnFilterChange()
 	m_list.SetItemCountEx(nListItems, 0);
 }
 
-void CMidiOutputBar::ResetFilters()
+void CMidiEventBar::ResetFilters()
 {
 	for (int iFilter = 0; iFilter < FILTERS; iFilter++)	// for each filter 
 		m_arrFilter[iFilter] = -1;
+	m_bShowSystemMessages = true;
 }
 
-void CMidiOutputBar::SetKeySignature(int nKeySig)
+void CMidiEventBar::SetKeySignature(int nKeySig)
 {
 	m_nKeySig = nKeySig;
 	m_list.Invalidate();
 }
 
-void CMidiOutputBar::ExportEvents(LPCTSTR pszPath)
+void CMidiEventBar::ExportEvents(LPCTSTR pszPath)
 {
-	CStringArrayEx	arrStatNick;
-	arrStatNick.SetSize(CHANNEL_VOICE_MESSAGES);
+	CStringArrayEx	arrChanStatNick;
+	arrChanStatNick.SetSize(CHANNEL_VOICE_MESSAGES);
 	for (int iStat = 0; iStat < CHANNEL_VOICE_MESSAGES; iStat++) {
-		arrStatNick[iStat] = m_arrChanStatNickname[iStat];
-		theApp.SnakeToUpperCamelCase(arrStatNick[iStat]);
+		arrChanStatNick[iStat] = m_arrChanStatNickname[iStat];
+		theApp.SnakeToUpperCamelCase(arrChanStatNick[iStat]);
 	}
 	CStdioFile	fOut(pszPath, CFile::modeCreate | CFile::modeWrite);
 	CString	sLine;
@@ -220,29 +263,33 @@ void CMidiOutputBar::ExportEvents(LPCTSTR pszPath)
 	for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each events
 		const MIDI_EVENT&	evt = m_arrEvent[iEvent];
 		CString	sStatus;
-		UINT	nCmd = MIDI_CMD(evt.dwEvent) >> 4;
-		int	iStat = nCmd - 8;
-		if (iStat >= 0 && iStat < _countof(m_arrChanStatID))
-			sStatus = arrStatNick[iStat];
-		else
-			sStatus.Format(_T("%d"), nCmd);
-		sLine.Format(_T("%d,%d,%s,%d,%d\n"), evt.dwTime, MIDI_CHAN(evt.dwEvent) + 1, 
+		UINT	nStat = MIDI_STAT(evt.dwEvent);
+		UINT	iChan;
+		if (nStat < SYSEX) {	// if channel voice message
+			int	iChanStat = (nStat >> 4) - 8;
+			sStatus = arrChanStatNick[iChanStat];
+			iChan = MIDI_CHAN(evt.dwEvent);
+		} else {	// system status message
+			sStatus.Format(_T("%d"), nStat);
+			iChan = 0;
+		}
+		sLine.Format(_T("%d,%d,%s,%d,%d\n"), evt.dwTime, iChan, 
 			sStatus, MIDI_P1(evt.dwEvent), MIDI_P2(evt.dwEvent));
 		fOut.WriteString(sLine);
 	}
 }
 
-BOOL CMidiOutputBar::CanAutoHide() const
+BOOL CMidiEventBar::CanAutoHide() const
 { 
-	return FALSE;	// auto hide breaks output capture control
+	return FALSE;	// auto hide breaks event capture control
 }
 
-BOOL CMidiOutputBar::CanBeAttached() const
+BOOL CMidiEventBar::CanBeAttached() const
 { 
-	return FALSE;	// attaching breaks output capture control
+	return FALSE;	// attaching breaks event capture control
 }
 
-void CMidiOutputBar::OnShowChanged(bool bShow)
+void CMidiEventBar::OnShowChanged(bool bShow)
 {
 	UNREFERENCED_PARAMETER(bShow);
 	RemoveAllEvents();
@@ -253,19 +300,19 @@ void CMidiOutputBar::OnShowChanged(bool bShow)
 ////////////////////////////////////////////////////////////////////////////
 // CEventListCtrl message map
 
-BEGIN_MESSAGE_MAP(CMidiOutputBar::CEventListCtrl, CListCtrlExSel)
+BEGIN_MESSAGE_MAP(CMidiEventBar::CEventListCtrl, CListCtrlExSel)
 	ON_WM_VSCROLL()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // CEventListCtrl message handlers
 
-CMidiOutputBar::CEventListCtrl::CEventListCtrl()
+CMidiEventBar::CEventListCtrl::CEventListCtrl()
 {
 	m_bIsVScrolling = false;
 }
 
-void CMidiOutputBar::CEventListCtrl::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+void CMidiEventBar::CEventListCtrl::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	CListCtrlExSel::OnVScroll(nSBCode, nPos, pScrollBar);
 	switch (nSBCode) {
@@ -279,40 +326,48 @@ void CMidiOutputBar::CEventListCtrl::OnVScroll(UINT nSBCode, UINT nPos, CScrollB
 }
 
 ////////////////////////////////////////////////////////////////////////////
-// CMidiOutputBar message map
+// CMidiEventBar message map
 
-BEGIN_MESSAGE_MAP(CMidiOutputBar, CMyDockablePane)
+BEGIN_MESSAGE_MAP(CMidiEventBar, CMyDockablePane)
 	ON_WM_CREATE()
 	ON_WM_DESTROY()
 	ON_WM_SIZE()
 	ON_WM_CONTEXTMENU()
 	ON_WM_MENUSELECT()
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_LIST, OnListGetdispinfo)
-	ON_COMMAND(ID_MIDI_OUTPUT_CLEAR_HISTORY, OnClearHistory)
-	ON_COMMAND(ID_MIDI_OUTPUT_PAUSE, OnPause)
-	ON_COMMAND(ID_MIDI_OUTPUT_RESET_FILTERS, OnResetFilters)
-	ON_UPDATE_COMMAND_UI(ID_MIDI_OUTPUT_PAUSE, OnUpdatePause)
+	ON_MESSAGE(UWM_MIDI_EVENT, OnMidiEvent)
+	ON_COMMAND(ID_MIDI_EVENT_CLEAR_HISTORY, OnClearHistory)
+	ON_COMMAND(ID_MIDI_EVENT_PAUSE, OnPause)
+	ON_COMMAND(ID_MIDI_EVENT_RESET_FILTERS, OnResetFilters)
+	ON_UPDATE_COMMAND_UI(ID_MIDI_EVENT_PAUSE, OnUpdatePause)
 	ON_COMMAND_RANGE(SMID_CHANNEL_FIRST, SMID_CHANNEL_LAST, OnFilterChannel)
 	ON_COMMAND_RANGE(SMID_MESSAGE_FIRST, SMID_MESSAGE_LAST, OnFilterMessage)
-	ON_COMMAND(ID_MIDI_OUTPUT_SHOW_NOTE_NAMES, OnShowNoteNames)
-	ON_UPDATE_COMMAND_UI(ID_MIDI_OUTPUT_SHOW_NOTE_NAMES, OnUpdateShowNoteNames)
-	ON_COMMAND(ID_MIDI_OUTPUT_SHOW_CONTROLLER_NAMES, OnShowControllerNames)
-	ON_UPDATE_COMMAND_UI(ID_MIDI_OUTPUT_SHOW_CONTROLLER_NAMES, OnUpdateShowControllerNames)
-	ON_COMMAND(ID_MIDI_OUTPUT_EXPORT, OnExport)
-	ON_UPDATE_COMMAND_UI(ID_MIDI_OUTPUT_EXPORT, OnUpdateExport)
+	ON_COMMAND(ID_MIDI_EVENT_SHOW_NOTE_NAMES, OnShowNoteNames)
+	ON_UPDATE_COMMAND_UI(ID_MIDI_EVENT_SHOW_NOTE_NAMES, OnUpdateShowNoteNames)
+	ON_COMMAND(ID_MIDI_EVENT_SHOW_CONTROLLER_NAMES, OnShowControllerNames)
+	ON_UPDATE_COMMAND_UI(ID_MIDI_EVENT_SHOW_CONTROLLER_NAMES, OnUpdateShowControllerNames)
+	ON_COMMAND(ID_MIDI_EVENT_EXPORT, OnExport)
+	ON_UPDATE_COMMAND_UI(ID_MIDI_EVENT_EXPORT, OnUpdateExport)
 	ON_COMMAND(ID_LIST_COL_HDR_RESET, OnListColHdrReset)
+	ON_COMMAND(ID_MIDI_EVENT_SHOW_SYSTEM_MESSAGES, OnShowSystemMessages)
+	ON_UPDATE_COMMAND_UI(ID_MIDI_EVENT_SHOW_SYSTEM_MESSAGES, OnUpdateShowSystemMessages)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
-// CMidiOutputBar message handlers
+// CMidiEventBar message handlers
 
-int CMidiOutputBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
+int CMidiEventBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CMyDockablePane::OnCreate(lpCreateStruct) == -1)
 		return -1;
-	m_arrChanStatName.SetSize(_countof(m_arrChanStatID));
-	for (int iChSt = 0; iChSt < _countof(m_arrChanStatID); iChSt++)
-		m_arrChanStatName[iChSt].LoadString(m_arrChanStatID[iChSt]);
+	if (m_arrChanStatName.IsEmpty()) {	// if message strings not yet loaded
+		m_arrChanStatName.SetSize(_countof(m_arrChanStatID));
+		for (int iChSt = 0; iChSt < _countof(m_arrChanStatID); iChSt++)
+			m_arrChanStatName[iChSt].LoadString(m_arrChanStatID[iChSt]);
+		m_arrSysStatName.SetSize(_countof(m_arrSysStatID));
+		for (int iSysSt = 0; iSysSt < _countof(m_arrSysStatID); iSysSt++)
+			m_arrSysStatName[iSysSt].LoadString(m_arrSysStatID[iSysSt]);
+	}
 	DWORD	dwStyle = WS_CHILD | WS_VISIBLE 
 		| LVS_REPORT | LVS_OWNERDATA | LVS_NOSORTHEADER;
 	if (!m_list.Create(dwStyle, CRect(0, 0, 0, 0), this, IDC_LIST))
@@ -324,23 +379,23 @@ int CMidiOutputBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	VERIFY(m_ilList.Create(IDB_FILTER, 16, 0, clrImageMask));
 	m_list.SetImageList(&m_ilList, LVSIL_SMALL);
 	m_ilList.SetBkColor(CLR_NONE);	// required for transparency to work
-	m_list.LoadColumnWidths(RK_MIDI_OUTPUT_BAR, RK_COL_WIDTH);
+	m_list.LoadColumnWidths(m_pszRegKey, RK_COL_WIDTH);
 	return 0;
 }
 
-void CMidiOutputBar::OnDestroy()
+void CMidiEventBar::OnDestroy()
 {
-	m_list.SaveColumnWidths(RK_MIDI_OUTPUT_BAR, RK_COL_WIDTH);
+	m_list.SaveColumnWidths(m_pszRegKey, RK_COL_WIDTH);
 	CMyDockablePane::OnDestroy();
 }
 
-void CMidiOutputBar::OnSize(UINT nType, int cx, int cy)
+void CMidiEventBar::OnSize(UINT nType, int cx, int cy)
 {
 	CMyDockablePane::OnSize(nType, cx, cy);
 	m_list.MoveWindow(0, 0, cx, cy);
 }
 
-void CMidiOutputBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
+void CMidiEventBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	UNREFERENCED_PARAMETER(pResult);
 	NMLVDISPINFO* pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
@@ -357,16 +412,17 @@ void CMidiOutputBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), evt.dwTime); 
 			break;
 		case COL_CHANNEL:
-			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), MIDI_CHAN(evt.dwEvent) + 1); 
+			if (MIDI_STAT(evt.dwEvent) < SYSEX)	// if channel voice message
+				_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), MIDI_CHAN(evt.dwEvent) + 1); 
 			break;
 		case COL_MESSAGE:
 			{
-				UINT	nCmd = MIDI_CMD(evt.dwEvent) >> 4;
-				int	iStat = nCmd - 8;
-				if (iStat >= 0 && iStat < _countof(m_arrChanStatID))
-					_tcscpy_s(item.pszText, item.cchTextMax, m_arrChanStatName[iStat]);
-				else
-					_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), nCmd);
+				UINT	nStat = MIDI_STAT(evt.dwEvent);
+				if (nStat < SYSEX) {	// if channel voice message
+					int	iChanStat = (nStat >> 4) - 8;
+					_tcscpy_s(item.pszText, item.cchTextMax, m_arrChanStatName[iChanStat]);
+				} else	// system status message
+					_tcscpy_s(item.pszText, item.cchTextMax, m_arrSysStatName[nStat - SYSEX]);
 			}
 			break;
 		case COL_P1:
@@ -399,7 +455,7 @@ GetDispInfoP1Default:
 	}
 }
 
-void CMidiOutputBar::OnContextMenu(CWnd* pWnd, CPoint point)
+void CMidiEventBar::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	CRect	rc;
 	GetClientRect(rc);
@@ -414,7 +470,7 @@ void CMidiOutputBar::OnContextMenu(CWnd* pWnd, CPoint point)
 		}
 	}
 	CMenu	menu;
-	VERIFY(menu.LoadMenu(IDR_MIDI_OUTPUT_CTX));
+	VERIFY(menu.LoadMenu(IDR_MIDI_EVENT_CTX));
 	UpdateMenu(this, &menu);
 	CMenu	*pPopup = menu.GetSubMenu(0);
 	ASSERT(pPopup != NULL);
@@ -442,7 +498,7 @@ void CMidiOutputBar::OnContextMenu(CWnd* pWnd, CPoint point)
 	pPopup->TrackPopupMenu(0, point.x, point.y, this);
 }
 
-void CMidiOutputBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
+void CMidiEventBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
 {
 	if (!(nFlags & MF_SYSMENU)) {	// if not system menu item
 		if (nItemID >= SMID_CHANNEL_FIRST) {
@@ -462,28 +518,35 @@ void CMidiOutputBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
 	CMyDockablePane::OnMenuSelect(nItemID, nFlags, hSysMenu);
 }
 
-void CMidiOutputBar::OnClearHistory()
+LRESULT CMidiEventBar::OnMidiEvent(WPARAM wParam, LPARAM lParam)
+{
+	MIDI_EVENT	evt = {static_cast<DWORD>(wParam), static_cast<DWORD>(lParam)};
+	AddEvent(evt);
+	return 0;
+}
+
+void CMidiEventBar::OnClearHistory()
 {
 	RemoveAllEvents();
 }
 
-void CMidiOutputBar::OnPause()
+void CMidiEventBar::OnPause()
 {
 	Pause(!m_bIsPaused);
 }
 
-void CMidiOutputBar::OnResetFilters()
+void CMidiEventBar::OnResetFilters()
 {
 	ResetFilters();
 	OnFilterChange();
 }
 
-void CMidiOutputBar::OnUpdatePause(CCmdUI *pCmdUI)
+void CMidiEventBar::OnUpdatePause(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bIsPaused);
 }
 
-void CMidiOutputBar::OnFilterChannel(UINT nID)
+void CMidiEventBar::OnFilterChannel(UINT nID)
 {
 	int	iChannel = nID - SMID_CHANNEL_FIRST - 1;	// one extra for wildcard
 	ASSERT(iChannel < MIDI_CHANNELS);
@@ -491,7 +554,7 @@ void CMidiOutputBar::OnFilterChannel(UINT nID)
 	OnFilterChange();
 }
 
-void CMidiOutputBar::OnFilterMessage(UINT nID)
+void CMidiEventBar::OnFilterMessage(UINT nID)
 {
 	int	iMessage = nID - SMID_MESSAGE_FIRST - 1;	// one extra for wildcard
 	ASSERT(iMessage < CHANNEL_VOICE_MESSAGES);
@@ -499,29 +562,29 @@ void CMidiOutputBar::OnFilterMessage(UINT nID)
 	OnFilterChange();
 }
 
-void CMidiOutputBar::OnShowNoteNames()
+void CMidiEventBar::OnShowNoteNames()
 {
 	m_bShowNoteNames ^= 1;
 	m_list.Invalidate();
 }
 
-void CMidiOutputBar::OnUpdateShowNoteNames(CCmdUI *pCmdUI)
+void CMidiEventBar::OnUpdateShowNoteNames(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bShowNoteNames);
 }
 
-void CMidiOutputBar::OnShowControllerNames()
+void CMidiEventBar::OnShowControllerNames()
 {
 	m_bShowControllerNames ^= 1;
 	m_list.Invalidate();
 }
 
-void CMidiOutputBar::OnUpdateShowControllerNames(CCmdUI *pCmdUI)
+void CMidiEventBar::OnUpdateShowControllerNames(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bShowControllerNames);
 }
 
-void CMidiOutputBar::OnExport()
+void CMidiEventBar::OnExport()
 {
 	CString	sFilter(LPCTSTR(IDS_CSV_FILE_FILTER));
 	CFileDialog	fd(FALSE, _T(".csv"), NULL, OFN_OVERWRITEPROMPT, sFilter);
@@ -532,12 +595,23 @@ void CMidiOutputBar::OnExport()
 	}
 }
 
-void CMidiOutputBar::OnUpdateExport(CCmdUI *pCmdUI)
+void CMidiEventBar::OnUpdateExport(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_arrEvent.GetSize() > 0);
 }
 
-void CMidiOutputBar::OnListColHdrReset()
+void CMidiEventBar::OnListColHdrReset()
 {
 	m_list.ResetColumnWidths(m_arrColInfo, COLUMNS);
+}
+
+void CMidiEventBar::OnShowSystemMessages()
+{
+	m_bShowSystemMessages ^= 1;
+	OnFilterChange();
+}
+
+void CMidiEventBar::OnUpdateShowSystemMessages(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bShowSystemMessages);
 }
