@@ -214,10 +214,14 @@ open	close	type	description	rev	user
 01/28/19	01/29/19	done	add MIDI input bar	0.0.23.001	
 01/29/19	01/29/19	done	MIDI through from input device to sequencer should exclude system status messages	0.0.23.001	
 01/30/19	01/30/19	done	graph doesn't fill window if system text size is greater than 100%	0.0.23.002	
+01/31/19	01/31/19	done	if no active document, graph should be empty	0.0.23.003	
+02/01/19	02/01/19	done	piano bar keys get stuck on if MIDI input device sends note off instead of note on with zero velocity	0.0.23.003	
+02/01/19	02/01/19	done	left-clicking piano key should optionally output note if sequencer is playing; add output channel to context menu	0.0.23.003	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
-03/22/18		hold	offset and swing modulation; may not be feasible		
+03/22/18		hold	offset modulation; may not be feasible		
+03/22/18		hold	swing modulation; may not be feasible		
 03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 03/22/18		hold	radio groups; member tracks automatically mute each other so that only one member sounds at a time		
 03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -268,7 +272,7 @@ open	close	type	description	rev	user
 05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
 06/08/18		punt	untying note should set all steps to velocity of original tied note; better to preserve velocity		
 09/18/18		punt	modulation dubbing is sensitive to track order at longer latencies; also affects export		
-11/19/18		punt	length modulation; cool idea but incompatible with sequencer architecture (Benoit)		
+11/19/18		hold	length modulation; cool idea but hard to implement (Benoit)		
 11/19/18		punt	step copy/cut/paste should support non-rectangular step selection; incompatible with step view design (Benoit)		
 11/19/18		punt	list view selection is hard to see when list doesn't have focus; curse at Microsoft or change theme (Benoit)		
 11/19/18		punt	sort on note name without octave; not sure why this is useful (Benoit)		
