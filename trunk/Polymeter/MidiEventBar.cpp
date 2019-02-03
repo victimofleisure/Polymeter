@@ -340,8 +340,8 @@ BEGIN_MESSAGE_MAP(CMidiEventBar, CMyDockablePane)
 	ON_COMMAND(ID_MIDI_EVENT_PAUSE, OnPause)
 	ON_COMMAND(ID_MIDI_EVENT_RESET_FILTERS, OnResetFilters)
 	ON_UPDATE_COMMAND_UI(ID_MIDI_EVENT_PAUSE, OnUpdatePause)
-	ON_COMMAND_RANGE(SMID_CHANNEL_FIRST, SMID_CHANNEL_LAST, OnFilterChannel)
-	ON_COMMAND_RANGE(SMID_MESSAGE_FIRST, SMID_MESSAGE_LAST, OnFilterMessage)
+	ON_COMMAND_RANGE(SMID_FILTER_CHANNEL_FIRST, SMID_FILTER_CHANNEL_LAST, OnFilterChannel)
+	ON_COMMAND_RANGE(SMID_FILTER_MESSAGE_FIRST, SMID_FILTER_MESSAGE_LAST, OnFilterMessage)
 	ON_COMMAND(ID_MIDI_EVENT_SHOW_NOTE_NAMES, OnShowNoteNames)
 	ON_UPDATE_COMMAND_UI(ID_MIDI_EVENT_SHOW_NOTE_NAMES, OnUpdateShowNoteNames)
 	ON_COMMAND(ID_MIDI_EVENT_SHOW_CONTROLLER_NAMES, OnShowControllerNames)
@@ -486,7 +486,7 @@ void CMidiEventBar::OnContextMenu(CWnd* pWnd, CPoint point)
 		s.Format(_T("%d"), iItem);
 		arrItemStr[iItem] = s;
 	}
-	theApp.MakePopup(*pSubMenu, SMID_CHANNEL_FIRST, arrItemStr, m_arrFilter[FILTER_CHANNEL] + 1);
+	theApp.MakePopup(*pSubMenu, SMID_FILTER_CHANNEL_FIRST, arrItemStr, m_arrFilter[FILTER_CHANNEL] + 1);
 	// create message submenu
 	pSubMenu = pPopup->GetSubMenu(SM_MESSAGE);
 	ASSERT(pSubMenu != NULL);
@@ -494,24 +494,24 @@ void CMidiEventBar::OnContextMenu(CWnd* pWnd, CPoint point)
 	for (int iItem = 1; iItem <= CHANNEL_VOICE_MESSAGES; iItem++) {	// for each channel voice message
 		arrItemStr[iItem].LoadString(m_arrChanStatID[iItem - 1]);	// account for wildcard
 	}
-	theApp.MakePopup(*pSubMenu, SMID_MESSAGE_FIRST, arrItemStr, m_arrFilter[FILTER_MESSAGE]  + 1);
+	theApp.MakePopup(*pSubMenu, SMID_FILTER_MESSAGE_FIRST, arrItemStr, m_arrFilter[FILTER_MESSAGE]  + 1);
 	pPopup->TrackPopupMenu(0, point.x, point.y, this);
 }
 
 void CMidiEventBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
 {
 	if (!(nFlags & MF_SYSMENU)) {	// if not system menu item
-		if (nItemID >= SMID_CHANNEL_FIRST) {
-			if (nItemID < SMID_CHANNEL_LAST) {
-				if (nItemID == SMID_CHANNEL_FIRST)
-					nItemID = IDS_SM_CHANNEL_ALL;
+		if (nItemID >= SMID_FILTER_CHANNEL_FIRST) {
+			if (nItemID <= SMID_FILTER_CHANNEL_LAST) {
+				if (nItemID == SMID_FILTER_CHANNEL_FIRST)
+					nItemID = IDS_SM_FILTER_CHANNEL_ALL;
 				else
-					nItemID = IDS_SM_CHANNEL_SELECT;
-			} else if (nItemID < SMID_MESSAGE_LAST) {
-				if (nItemID == SMID_MESSAGE_FIRST)
-					nItemID = IDS_SM_MESSAGE_ALL;
+					nItemID = IDS_SM_FILTER_CHANNEL_SELECT;
+			} else if (nItemID <= SMID_FILTER_MESSAGE_LAST) {
+				if (nItemID == SMID_FILTER_MESSAGE_FIRST)
+					nItemID = IDS_SM_FILTER_MESSAGE_ALL;
 				else
-					nItemID = IDS_SM_MESSAGE_SELECT;
+					nItemID = IDS_SM_FILTER_MESSAGE_SELECT;
 			}
 		}
 	}
@@ -548,7 +548,7 @@ void CMidiEventBar::OnUpdatePause(CCmdUI *pCmdUI)
 
 void CMidiEventBar::OnFilterChannel(UINT nID)
 {
-	int	iChannel = nID - SMID_CHANNEL_FIRST - 1;	// one extra for wildcard
+	int	iChannel = nID - SMID_FILTER_CHANNEL_FIRST - 1;	// one extra for wildcard
 	ASSERT(iChannel < MIDI_CHANNELS);
 	m_arrFilter[FILTER_CHANNEL] = iChannel;
 	OnFilterChange();
@@ -556,7 +556,7 @@ void CMidiEventBar::OnFilterChannel(UINT nID)
 
 void CMidiEventBar::OnFilterMessage(UINT nID)
 {
-	int	iMessage = nID - SMID_MESSAGE_FIRST - 1;	// one extra for wildcard
+	int	iMessage = nID - SMID_FILTER_MESSAGE_FIRST - 1;	// one extra for wildcard
 	ASSERT(iMessage < CHANNEL_VOICE_MESSAGES);
 	m_arrFilter[FILTER_MESSAGE] = iMessage;
 	OnFilterChange();

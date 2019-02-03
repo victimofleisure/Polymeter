@@ -2466,7 +2466,8 @@ bool CPolymeterDoc::RecordToTracks(bool bEnable)
 		arrTrackName.SetSize(1);
 		int	nTimeDiv = m_Seq.GetTimeDivision();
 		double	fQuant = 4.0 / theApp.m_Options.GetInputQuantization();
-		arrTrack.ImportMidiFile(arrMidiTrack, arrTrackName, nTimeDiv, nTimeDiv, fQuant);
+		if (!arrTrack.ImportMidiFile(arrMidiTrack, arrTrackName, nTimeDiv, nTimeDiv, fQuant))
+			return false;
 		OnImportTracks(arrTrack);
 	}
 	return true;
@@ -3236,8 +3237,8 @@ void CPolymeterDoc::OnFileImport()
 	if (fd.DoModal() == IDOK) {
 		CImportTrackArray	arrTrack;	// destination array
 		double	fQuant = 4.0 / theApp.m_Options.GetInputQuantization();
-		arrTrack.ImportMidiFile(fd.GetPathName(), m_Seq.GetTimeDivision(), fQuant);
-		OnImportTracks(arrTrack);
+		if (arrTrack.ImportMidiFile(fd.GetPathName(), m_Seq.GetTimeDivision(), fQuant))
+			OnImportTracks(arrTrack);
 	}
 }
 

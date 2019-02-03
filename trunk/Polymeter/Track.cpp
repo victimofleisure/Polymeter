@@ -21,6 +21,7 @@
 		11		02jan19	in ImportSteps, use remove all instead of set size
 		12		25jan19	add modulation crawler to track array
 		13		27jan19	cache type name strings instead of loading every time
+		14		03feb19	add return value to track array's import MIDI file
 
 */
 
@@ -493,19 +494,19 @@ int CImportTrackArray::ImportSortCmp(const void *arg1, const void *arg2)
 	return retc;
 }
 
-void CImportTrackArray::ImportMidiFile(LPCTSTR szPath, int nOutTimeDiv, double fQuantization)
+bool CImportTrackArray::ImportMidiFile(LPCTSTR szPath, int nOutTimeDiv, double fQuantization)
 {
 	CMidiFile::CMidiTrackArray	arrInTrack;
 	CStringArrayEx	arrInTrackName;
 	WORD	nInTimeDiv;
-	{
+	{	// read can throw file exception
 		CMidiFile	fMidi(szPath, CFile::modeRead);	// open MIDI file for input
 		fMidi.ReadTracks(arrInTrack, arrInTrackName, nInTimeDiv);	// read tracks into array
 	}	// close input file before proceeding
-	ImportMidiFile(arrInTrack, arrInTrackName, nInTimeDiv, nOutTimeDiv, fQuantization);
+	return ImportMidiFile(arrInTrack, arrInTrackName, nInTimeDiv, nOutTimeDiv, fQuantization);
 }
 
-void CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTrack, const CStringArrayEx& arrInTrackName, int nInTimeDiv, int nOutTimeDiv, double fQuantization)
+bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTrack, const CStringArrayEx& arrInTrackName, int nInTimeDiv, int nOutTimeDiv, double fQuantization)
 {
 	int	nInQuant = max(round(nInTimeDiv * fQuantization), 1);	// convert quantization to input ticks
 	int	nOutQuant = max(round(nOutTimeDiv * fQuantization), 1);	// convert quantization to output ticks
@@ -564,8 +565,12 @@ void CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 		}
 	}
 	int	nMaxSteps = round(double(nMaxTime) / nInQuant);	// compute maximum track length
+	if (nMaxSteps <= 0)	// step count must be greater than zero
+		return false;
 	CArrayEx<CTrack *, CTrack *>	arrTrackPtr;
 	int	nOutTracks = arrOutTrack.GetSize();
+	if (nOutTracks <= 0)	// track count must be greater than zero
+		return false;
 	arrTrackPtr.SetSize(nOutTracks);	// allocate track pointers
 	for (int iTrack = 0; iTrack < nOutTracks; iTrack++) {	// for each output track
 		arrOutTrack[iTrack].m_arrStep.SetSize(nMaxSteps);	// make all tracks as long as longest track
@@ -575,6 +580,7 @@ void CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 	SetSize(nOutTracks);	// allocate member track array
 	for (int iTrack = 0; iTrack < nOutTracks; iTrack++)	// for each output track
 		GetAt(iTrack) = *arrTrackPtr[iTrack];	// copy track to member array in sorted order
+	return true;
 }
 
 void CTrackBase::CPackedModulationArray::Import(LPCTSTR pszPath, int nTracks)

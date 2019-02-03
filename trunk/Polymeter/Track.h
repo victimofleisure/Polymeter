@@ -19,6 +19,7 @@
 		09		19dec18	refactor property info to support value range
 		10		25jan19	add modulation crawler to track array
 		11		27jan19	cache type name strings instead of loading every time
+		12		03feb19	add return value to track array's import MIDI file
 
 */
 
@@ -444,8 +445,8 @@ protected:
 
 class CImportTrackArray : public CTrackArray {
 public:
-	void	ImportMidiFile(LPCTSTR szPath, int nOutTimeDiv, double fQuantization);
-	void	ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTrack, const CStringArrayEx& arrInTrackName, int nInTimeDiv, int nOutTimeDiv, double fQuantization);
+	bool	ImportMidiFile(LPCTSTR szPath, int nOutTimeDiv, double fQuantization);
+	bool	ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTrack, const CStringArrayEx& arrInTrackName, int nInTimeDiv, int nOutTimeDiv, double fQuantization);
 
 protected:
 	struct TRACK_INFO {

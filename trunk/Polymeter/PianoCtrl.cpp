@@ -14,6 +14,7 @@
 		04		08jan19	fix unreferenced parameter warnings
 		05		09jan19	lighten pressed black key color
 		06		10jan19	add no internal style and refactor names
+		07		01feb19	add key press notification
 
 		piano control
 
@@ -589,13 +590,21 @@ void CPianoCtrl::OnSize(UINT nType, int cx, int cy)
 
 void CPianoCtrl::OnLButtonDown(UINT nFlags, CPoint point) 
 {
-	if (!(GetStyle() & PS_NO_INTERNAL)) {	// if internal key press enabled
+	DWORD	dwStyle = GetStyle();
+	// if internal key press enabled, or sending press notifications
+	if (!(dwStyle & PS_NO_INTERNAL) || (dwStyle & PS_NOTIFY_PRESS)) {
 		int	iKey = FindKey(point);	// find key containing cursor position
 		if (iKey >= 0) {	// if key found
 			ASSERT(m_iCurKey < 0);	// shouldn't be a current key, else logic error
-			SetPressed(iKey, TRUE);
+			if (!(dwStyle & PS_NO_INTERNAL))	// if internal key press enabled
+				SetPressed(iKey, TRUE);
 			SetCapture();	// capture mouse input
 			m_iCurKey = iKey;	// set current key
+			if (dwStyle & PS_NOTIFY_PRESS) {	// if sending press notifications
+				CWnd	*pParentWnd = GetParent();	// notify parent window
+				ASSERT(pParentWnd != NULL);
+				pParentWnd->SendMessage(UWM_PIANOKEYPRESS, MAKELONG(iKey, true), LPARAM(m_hWnd));
+			}
 		}
 	}
 	CWnd::OnLButtonDown(nFlags, point);
@@ -604,7 +613,14 @@ void CPianoCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 void CPianoCtrl::OnLButtonUp(UINT nFlags, CPoint point) 
 {
 	if (m_iCurKey >= 0) {
-		SetPressed(m_iCurKey, FALSE);
+		DWORD	dwStyle = GetStyle();
+		if (!(dwStyle & PS_NO_INTERNAL))	// if internal key press enabled
+			SetPressed(m_iCurKey, FALSE);
+		if (dwStyle & PS_NOTIFY_PRESS) {	// if sending press notifications
+			CWnd	*pParentWnd = GetParent();	// notify parent window
+			ASSERT(pParentWnd != NULL);
+			pParentWnd->SendMessage(UWM_PIANOKEYPRESS, MAKELONG(m_iCurKey, false), LPARAM(m_hWnd));
+		}
 		ReleaseCapture();	// release mouse input
 		m_iCurKey = -1;	// reset current key
 	}

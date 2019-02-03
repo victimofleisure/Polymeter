@@ -10,6 +10,8 @@
         00		07jan19	initial version
 		01		14jan19	add key signature attribute
 		02		15jan19	add insert track method
+		03		01feb19	fix note off commands causing keys to get stuck on
+		04		02feb19	add output channel; output notes on key press
 
 */
 
@@ -40,6 +42,7 @@ const COLORREF CPianoBar::m_arrVelocityPalette[MIDI_NOTES] = {
 	#include "VelocityPalette.h"
 };
 
+#define RK_OUTPUT_CHANNEL _T("OutputChannel")
 #define RK_PIANO_SIZE _T("PianoSize")
 #define RK_KEY_LABELS _T("KeyLabels")
 #define RK_ROTATE_LABELS _T("RotateLabels")
@@ -49,6 +52,7 @@ CPianoBar::CPianoBar()
 {
 	ZeroMemory(m_arrNoteRefs, sizeof(m_arrNoteRefs));
 	m_iFilterChannel = -1;
+	m_iOutputChannel = -1;
 	m_iPianoSize = PS_128;
 	m_nKeySig = 0;
 	m_bShowKeyLabels = false;
@@ -56,6 +60,7 @@ CPianoBar::CPianoBar()
 	m_bColorVelocity = false;
 	m_bKeyLabelsDirty = false;
 	m_ptContextMenu = CPoint(0, 0);
+	RdReg(RK_PIANO_BAR, RK_OUTPUT_CHANNEL, m_iOutputChannel);
 	RdReg(RK_PIANO_BAR, RK_PIANO_SIZE, m_iPianoSize);
 	RdReg(RK_PIANO_BAR, RK_KEY_LABELS, m_bShowKeyLabels);
 	RdReg(RK_PIANO_BAR, RK_ROTATE_LABELS, m_bRotateLabels);
@@ -65,6 +70,7 @@ CPianoBar::CPianoBar()
 
 CPianoBar::~CPianoBar()
 {
+	WrReg(RK_PIANO_BAR, RK_OUTPUT_CHANNEL, m_iOutputChannel);
 	WrReg(RK_PIANO_BAR, RK_PIANO_SIZE, m_iPianoSize);
 	WrReg(RK_PIANO_BAR, RK_KEY_LABELS, m_bShowKeyLabels);
 	WrReg(RK_PIANO_BAR, RK_ROTATE_LABELS, m_bRotateLabels);
@@ -94,6 +100,8 @@ void CPianoBar::AddEvents(const CSequencer::CMidiEventArray& arrEvent)
 					m_arrNoteRefs[nNote]++;	// increment note's reference count
 				}
 			} else {	// note off
+				if (nCmd == NOTE_OFF)	// if actual note off command (instead of note on commnad with zero velocity)
+					dwNote = (dwNote & ~0xf0) | NOTE_ON;	// replace note off with note on; velocity already zeroed above
 				INT_PTR	iNote = m_arrNoteOn.BinarySearch(dwNote);	// find note in active list
 				if (iNote >= 0) {	// if note found in active list
 					m_arrNoteOn.RemoveAt(iNote);	// remove note from active list
@@ -203,7 +211,7 @@ void CPianoBar::InsertTrackFromPoint(CPoint pt)
 		if (iKey >= 0) {	// key was found
 			int	nNote = iKey + m_pno.GetStartNote();
 			CTrack	track(true);	// set defaults
-			track.m_nChannel = 0;
+			track.m_nChannel = CLAMP(m_iOutputChannel, 0, MIDI_CHAN_MAX);
 			track.m_nNote = nNote;
 			pDoc->InsertTrack(track);
 		}
@@ -242,7 +250,8 @@ BEGIN_MESSAGE_MAP(CPianoBar, CMyDockablePane)
 	ON_WM_CONTEXTMENU()
 	ON_WM_MENUSELECT()
 	ON_WM_PARENTNOTIFY()
-	ON_COMMAND_RANGE(SMID_CHANNEL_FIRST, SMID_CHANNEL_LAST, OnFilterChannel)
+	ON_COMMAND_RANGE(SMID_FILTER_CHANNEL_FIRST, SMID_FILTER_CHANNEL_LAST, OnFilterChannel)
+	ON_COMMAND_RANGE(SMID_OUTPUT_CHANNEL_FIRST, SMID_OUTPUT_CHANNEL_LAST, OnOutputChannel)
 	ON_COMMAND_RANGE(SMID_PIANO_SIZE_FIRST, SMID_PIANO_SIZE_LAST, OnPianoSize)
 	ON_COMMAND(ID_PIANO_SHOW_KEY_LABELS, OnShowKeyLabels)
 	ON_UPDATE_COMMAND_UI(ID_PIANO_SHOW_KEY_LABELS, OnUpdateShowKeyLabels)
@@ -251,6 +260,7 @@ BEGIN_MESSAGE_MAP(CPianoBar, CMyDockablePane)
 	ON_COMMAND(ID_PIANO_COLOR_VELOCITY, OnColorVelocity)
 	ON_UPDATE_COMMAND_UI(ID_PIANO_COLOR_VELOCITY, OnUpdateColorVelocity)
 	ON_COMMAND(ID_PIANO_INSERT_TRACK, OnInsertTrack)
+	ON_MESSAGE(UWM_PIANOKEYPRESS, OnPianoKeyPress)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -263,7 +273,7 @@ int CPianoBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	const PIANO_RANGE&	rng = GetPianoRange(m_iPianoSize);
 	m_pno.SetRange(rng.StartNote, rng.KeyCount);
 	DWORD	dwStyle = WS_CHILD | WS_VISIBLE 
-		| CPianoCtrl::PS_HIGHLIGHT_PRESS | CPianoCtrl::PS_NO_INTERNAL;
+		| CPianoCtrl::PS_HIGHLIGHT_PRESS | CPianoCtrl::PS_NO_INTERNAL | CPianoCtrl::PS_NOTIFY_PRESS;
 	if (m_bRotateLabels)	// if rotating labels sideways
 		dwStyle |= CPianoCtrl::PS_ROTATE_LABELS;
 	if (m_bColorVelocity)	// if key color indicates velocity
@@ -311,7 +321,17 @@ void CPianoBar::OnContextMenu(CWnd* pWnd, CPoint point)
 		s.Format(_T("%d"), iItem);
 		arrItemStr[iItem] = s;
 	}
-	theApp.MakePopup(*pSubMenu, SMID_CHANNEL_FIRST, arrItemStr, m_iFilterChannel + 1);
+	theApp.MakePopup(*pSubMenu, SMID_FILTER_CHANNEL_FIRST, arrItemStr, m_iFilterChannel + 1);
+	// create output submenu
+	pSubMenu = pPopup->GetSubMenu(SM_OUTPUT);
+	ASSERT(pSubMenu != NULL);
+	arrItemStr.SetSize(MIDI_CHANNELS + 1);	// one extra item for wildcard
+	arrItemStr[0] = LDS(IDS_RANGE_TYPE_NONE);	// wildcard comes first
+	for (int iItem = 1; iItem <= MIDI_CHANNELS; iItem++) {	// for each channel
+		s.Format(_T("%d"), iItem);
+		arrItemStr[iItem] = s;
+	}
+	theApp.MakePopup(*pSubMenu, SMID_OUTPUT_CHANNEL_FIRST, arrItemStr, m_iOutputChannel + 1);
 	// make piano size submenu
 	pSubMenu = pPopup->GetSubMenu(SM_PIANO_SIZE);
 	arrItemStr.SetSize(PIANO_SIZES);
@@ -326,13 +346,18 @@ void CPianoBar::OnContextMenu(CWnd* pWnd, CPoint point)
 void CPianoBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
 {
 	if (!(nFlags & MF_SYSMENU)) {	// if not system menu item
-		if (nItemID >= SMID_CHANNEL_FIRST) {
-			if (nItemID < SMID_CHANNEL_LAST) {
-				if (nItemID == SMID_CHANNEL_FIRST)
-					nItemID = IDS_SM_CHANNEL_ALL;
+		if (nItemID >= SMID_FILTER_CHANNEL_FIRST) {
+			if (nItemID <= SMID_FILTER_CHANNEL_LAST) {
+				if (nItemID == SMID_FILTER_CHANNEL_FIRST)
+					nItemID = IDS_SM_FILTER_CHANNEL_ALL;
 				else
-					nItemID = IDS_SM_CHANNEL_SELECT;
-			} else if (nItemID < SMID_PIANO_SIZE_LAST) {
+					nItemID = IDS_SM_FILTER_CHANNEL_SELECT;
+			} else if (nItemID <= SMID_OUTPUT_CHANNEL_LAST) {
+				if (nItemID == SMID_OUTPUT_CHANNEL_FIRST)
+					nItemID = IDS_SM_OUTPUT_CHANNEL_NONE;
+				else
+					nItemID = IDS_SM_OUTPUT_CHANNEL_SELECT;
+			} else if (nItemID <= SMID_PIANO_SIZE_LAST) {
 				nItemID = IDS_SM_PIANO_SIZE;
 			}
 		}
@@ -363,10 +388,17 @@ void CPianoBar::OnParentNotify(UINT message, LPARAM lParam)
 
 void CPianoBar::OnFilterChannel(UINT nID)
 {
-	int	iChannel = nID - SMID_CHANNEL_FIRST - 1;	// one extra for wildcard
+	int	iChannel = nID - SMID_FILTER_CHANNEL_FIRST - 1;	// one extra for wildcard
 	ASSERT(iChannel < MIDI_CHANNELS);
 	m_iFilterChannel = iChannel;
 	OnFilterChange();
+}
+
+void CPianoBar::OnOutputChannel(UINT nID)
+{
+	int	iChannel = nID - SMID_OUTPUT_CHANNEL_FIRST - 1;	// one extra for none
+	ASSERT(iChannel < MIDI_CHANNELS);
+	SetOutputChannel(iChannel);
 }
 
 void CPianoBar::OnPianoSize(UINT nID)
@@ -418,4 +450,26 @@ void CPianoBar::OnInsertTrack()
 	CPoint	pt(m_ptContextMenu);
 	m_pno.ScreenToClient(&pt);
 	InsertTrackFromPoint(pt);
+}
+
+LRESULT CPianoBar::OnPianoKeyPress(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(lParam);
+	if (m_iOutputChannel >= 0) {	// if piano keys should output notes
+		if (!(GetKeyState(VK_CONTROL) & GKS_DOWN)) {	// if control key up
+			ASSERT(m_iOutputChannel < MIDI_CHANNELS);
+			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+			if (pDoc != NULL && pDoc->m_Seq.IsOpen()) {	// if active document exists and sequencer is open
+				int	iKey = LOWORD(wParam);
+				int	iNote = m_pno.GetStartNote() + iKey;	// convert key index to note
+				if (iNote >= 0 && iNote < MIDI_NOTES) {	// if note in valid range
+					bool	bEnable = HIWORD(wParam) != 0;
+					int	nVel = bEnable ? theApp.m_Options.m_Midi_nDefaultVelocity : 0;
+					DWORD	dwEvent = MakeMidiMsg(NOTE_ON, m_iOutputChannel, iNote, nVel);
+					pDoc->m_Seq.OutputLiveEvent(dwEvent);	// output note event to sequencer
+				}
+			}
+		}
+	}
+	return 0;
 }

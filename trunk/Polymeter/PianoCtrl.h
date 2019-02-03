@@ -12,6 +12,7 @@
 		02		24aug15	add per-key colors
 		03		21dec15	use extended string array
 		04		10jan19	add no internal style and refactor names
+		05		01feb19	add optional key press notifications
 
 		piano control
 
@@ -32,6 +33,7 @@
 #include "ArrayEx.h"
 
 #define UWM_PIANOKEYCHANGE (WM_USER + 1917)	// wParam: key index, lParam: HWND
+#define UWM_PIANOKEYPRESS (WM_USER + 1918)	// wParam: LOWORD key index, HIWORD bool enable, lParam: HWND
 
 class CPianoCtrl : public CWnd
 {
@@ -53,6 +55,7 @@ public:
 		PS_INVERT_LABELS	= 0x0040,	// invert labels on pressed keys;
 										// only supported on custom-colored keys
 		PS_NO_INTERNAL		= 0x0080,	// disable internal key press behavior
+		PS_NOTIFY_PRESS		= 0x0100,	// send key press notifications
 	};
 	enum {	// key sources
 		KS_INTERNAL			= 0x01,		// key triggered internally

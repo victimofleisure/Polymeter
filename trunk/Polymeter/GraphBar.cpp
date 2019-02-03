@@ -9,6 +9,7 @@
 		rev		date	comments
         00		25jan19	initial version
 		01		30jan19	fix graph too small when system text size above 100%
+		02		31jan19	if unable to write graph, show blank page
 
 */
 
@@ -238,9 +239,7 @@ bool CGraphBar::UpdateGraph()
 		return false;
 	m_tfpData.SetPath(sDataPath);
 	int	nNodes;
-	if (!WriteGraph(sDataPath, nNodes))
-		return false;
-	if (!nNodes) {	// if empty graph
+	if (!WriteGraph(sDataPath, nNodes) || !nNodes) {	// if can't write graph or graph is empty
 		m_tfpData.Empty();
 		m_tfpGraph.Empty();
 		Navigate(_T("about:blank"));

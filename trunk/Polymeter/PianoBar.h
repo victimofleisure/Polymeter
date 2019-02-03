@@ -10,6 +10,8 @@
         00		07jan19	initial version
 		01		14jan19	add key signature attribute
 		02		15jan19	add insert track method
+		03		01feb19	add piano key press handler
+		04		02feb19	add output channel; output notes on key press
 
 */
 
@@ -32,6 +34,8 @@ public:
 // Attributes
 public:
 	void	SetKeySignature(int nKeySig);
+	int		GetOutputChannel() const;
+	void	SetOutputChannel(int iChannel);
 	
 // Operations
 public:
@@ -66,15 +70,18 @@ protected:
 	};
 	enum {	// context submenus
 		SM_CHANNEL,
+		SM_OUTPUT,
 		SM_PIANO_SIZE,
 		CONTEXT_SUBMENUS
 	};
 	static const PIANO_RANGE	m_arrPianoRange[PIANO_SIZES];	// range for each piano size
 	enum {	// submenu command ID ranges
-		SMID_CHANNEL_FIRST = WM_USER + 1,
-		SMID_CHANNEL_LAST = SMID_CHANNEL_FIRST + MIDI_CHANNELS,
-		SMID_PIANO_SIZE_FIRST = SMID_CHANNEL_LAST + 1,
-		SMID_PIANO_SIZE_LAST = SMID_PIANO_SIZE_FIRST + PIANO_SIZES,
+		SMID_FILTER_CHANNEL_FIRST = WM_USER + 1,
+		SMID_FILTER_CHANNEL_LAST = SMID_FILTER_CHANNEL_FIRST + MIDI_CHANNELS,
+		SMID_OUTPUT_CHANNEL_FIRST = SMID_FILTER_CHANNEL_LAST + 1,
+		SMID_OUTPUT_CHANNEL_LAST = SMID_OUTPUT_CHANNEL_FIRST + MIDI_CHANNELS,
+		SMID_PIANO_SIZE_FIRST = SMID_OUTPUT_CHANNEL_LAST + 1,
+		SMID_PIANO_SIZE_LAST = SMID_PIANO_SIZE_FIRST + PIANO_SIZES - 1,
 	};
 	static const COLORREF	m_arrVelocityPalette[MIDI_NOTES];
 
@@ -83,6 +90,7 @@ protected:
 	CDWordArrayEx	m_arrNoteOn;	// array of active notes
 	int		m_arrNoteRefs[MIDI_NOTES];	// array of note reference counts
 	int		m_iFilterChannel;		// channel to filter for, or -1 for all channels
+	int		m_iOutputChannel;		// channel to send output notes on, or -1 for none
 	int		m_iPianoSize;			// index of selected piano size preset
 	int		m_nKeySig;				// key signature in which notes are displayed
 	bool	m_bShowKeyLabels;		// if true, show note names on keys
@@ -110,6 +118,7 @@ protected:
 	afx_msg void OnWindowPosChanged(WINDOWPOS* lpwndpos);
 	afx_msg void OnParentNotify(UINT message, LPARAM lParam);
 	afx_msg void OnFilterChannel(UINT nID);
+	afx_msg void OnOutputChannel(UINT nID);
 	afx_msg void OnPianoSize(UINT nID);
 	afx_msg void OnShowKeyLabels();
 	afx_msg void OnUpdateShowKeyLabels(CCmdUI *pCmdUI);
@@ -118,10 +127,21 @@ protected:
 	afx_msg void OnColorVelocity();
 	afx_msg void OnUpdateColorVelocity(CCmdUI *pCmdUI);
 	afx_msg void OnInsertTrack();
+	afx_msg LRESULT OnPianoKeyPress(WPARAM wParam, LPARAM lParam);
 };
 
 inline const CPianoBar::PIANO_RANGE& CPianoBar::GetPianoRange(int iPianoSize)
 {
 	ASSERT(iPianoSize >= 0 && iPianoSize < PIANO_SIZES);
 	return m_arrPianoRange[iPianoSize];
+}
+
+inline int CPianoBar::GetOutputChannel() const
+{
+	return m_iOutputChannel;
+}
+
+inline void CPianoBar::SetOutputChannel(int iChannel)
+{
+	m_iOutputChannel = iChannel;
 }

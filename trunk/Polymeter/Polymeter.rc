@@ -443,11 +443,11 @@ IDR_MIDI_EVENT_CTX MENU
 BEGIN
     POPUP "MIDI &Event"
     BEGIN
-        POPUP "&Channel"
+        POPUP "&Channel Filter"
         BEGIN
             MENUITEM SEPARATOR
         END
-        POPUP "&Message"
+        POPUP "&Message Filter"
         BEGIN
             MENUITEM SEPARATOR
         END
@@ -468,7 +468,11 @@ IDR_PIANO_CTX MENU
 BEGIN
     POPUP "&Piano"
     BEGIN
-        POPUP "&Channel"
+        POPUP "&Channel Filter"
+        BEGIN
+            MENUITEM SEPARATOR
+        END
+        POPUP "&Output Channel"
         BEGIN
             MENUITEM SEPARATOR
         END
@@ -1174,14 +1178,16 @@ BEGIN
     IDS_SEQERR_TOO_MANY_RECURSIONS 
                             "Modulation exceeded the maximum number of recursions."
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
-    IDS_SM_CHANNEL_ALL      "Show all channels"
-    IDS_SM_CHANNEL_SELECT   "Show selected channel only"
+    IDS_SM_FILTER_CHANNEL_ALL "Show all channels"
+    IDS_SM_FILTER_CHANNEL_SELECT "Show selected channel only"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_SM_MESSAGE_ALL      "Show all messages"
-    IDS_SM_MESSAGE_SELECT   "Show selected message only"
+    IDS_SM_FILTER_MESSAGE_ALL "Show all messages"
+    IDS_SM_FILTER_MESSAGE_SELECT "Show selected message only"
+    IDS_SM_OUTPUT_CHANNEL_NONE "Don't output notes"
+    IDS_SM_OUTPUT_CHANNEL_SELECT "Output notes on this channel"
     IDS_SM_PIANO_SIZE       "Select piano size in keys"
     IDS_SORT_DIR_ASCENDING  "Ascending"
     IDS_SORT_DIR_DESCENDING "Descending"
@@ -1194,12 +1200,12 @@ BEGIN
     IDS_TOOLBAR_STANDARD    "Standard"
     IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
     IDS_TRACK_TYPE_CONTROL  "Control"
-    IDS_TRACK_TYPE_KEY_AFT  "Key Aftertouch"
-    IDS_TRACK_TYPE_MODULATOR "Modulator"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRACK_TYPE_KEY_AFT  "Key Aftertouch"
+    IDS_TRACK_TYPE_MODULATOR "Modulator"
     IDS_TRACK_TYPE_NOTE     "Note"
     IDS_TRACK_TYPE_PATCH    "Patch"
     IDS_TRACK_TYPE_WHEEL    "Wheel"
@@ -1214,12 +1220,12 @@ BEGIN
     IDS_TRK_Position        "Position"
     IDS_TRK_Quant           "Quant"
     IDS_TRK_Range           "Range"
-    IDS_TRK_RangeStart      "Range Start"
-    IDS_TRK_RangeType       "Range Type"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_RangeStart      "Range Start"
+    IDS_TRK_RangeType       "Range Type"
     IDS_TRK_STEP            "Step"
     IDS_TRK_Swing           "Swing"
     IDS_TRK_Type            "Type"
@@ -1268,16 +1274,17 @@ BEGIN
                             "Remove all filters so all events are displayed"
     ID_MIDI_EVENT_SHOW_CONTROLLER_NAMES "Show continuous controller names"
     ID_MIDI_EVENT_SHOW_NOTE_NAMES "Show note names in note events"
+    ID_MIDI_EVENT_SHOW_SYSTEM_MESSAGES "Show system messages if checked"
     ID_MODULATION_SHOW_DIFFERENCES 
                             "Show modulations that differ for selected tracks"
     ID_MODULATION_SORT_BY_SOURCE "Sort modulations by source track"
     ID_MODULATION_SORT_BY_TYPE "Sort modulations by type"
     ID_PARTS_SELECT_TRACKS  "Select tracks belonging to selected parts"
-    ID_PIANO_COLOR_VELOCITY "Color keys to show note velocities"
 END
 
 STRINGTABLE
 BEGIN
+    ID_PIANO_COLOR_VELOCITY "Color keys to show note velocities"
     ID_PIANO_INSERT_TRACK   "Insert track for selected note"
     ID_PIANO_ROTATE_LABELS  "Rotate key labels sideways"
     ID_PIANO_SHOW_KEY_LABELS "Show note names on piano keys"
@@ -1295,11 +1302,11 @@ BEGIN
     ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for the selected tracks to repeat\nTime to Repeat"
     ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks or steps\nVelocity Range "
     ID_TRACK_FILL           "Fill selected tracks or steps with a range of values"
-    ID_TRACK_GROUP          "Group the selected tracks into a part\nGroup"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_GROUP          "Group the selected tracks into a part\nGroup"
     ID_TRACK_LENGTH         "Set the length of one or more tracks\nLength"
     ID_TRACK_MUTE           "Mute or unmute the selected tracks\nMute"
     ID_TRACK_PART_CREATE    "Create new part from the selected tracks\nCreate Part"
@@ -1315,11 +1322,11 @@ BEGIN
     ID_TRACK_SHIFT_RIGHT    "Shift the selected tracks or steps right\nShift Right"
     ID_TRACK_SHIFT_STEPS    "Shift the selection left or right a given number of steps\nShift Steps"
     ID_TRACK_SOLO           "Solo the selected tracks\nSolo"
-    ID_TRACK_SORT           "Sort the selected tracks\nTrack Sort"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_SORT           "Sort the selected tracks\nTrack Sort"
     ID_TRACK_STRETCH        "Stretch or shrink the selected tracks\nStretch"
     ID_TRACK_TIE_NOTES      "Toggle tie notes mode; if on, new notes are tied\nTie Notes"
     ID_TRACK_TRANSPOSE      "Transpose the selected tracks\nTranspose"
@@ -1346,17 +1353,16 @@ BEGIN
     ID_VIEW_TYPE_SONG       "Show the song view\nSong View"
     ID_VIEW_TYPE_TRACK      "Show the track view\nTrack View"
     ID_VIEW_VELOCITIES      "Show or hide velocities pane\nVelocities"
-    ID_VIEW_ZOOM_IN         "Zoom in\nZoom In"
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_ZOOM_IN         "Zoom in\nZoom In"
     ID_VIEW_ZOOM_OUT        "Zoom out\nZoom Out"
     ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "&Windows..."
     ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"
-    ID_MIDI_EVENT_SHOW_SYSTEM_MESSAGES "Show system messages if checked"
 END
 
 STRINGTABLE
