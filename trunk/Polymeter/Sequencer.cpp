@@ -19,6 +19,7 @@
 		09		03jan19	add MIDI output capture
 		10		12jan19	add recursive position modulation
 		11		17jan19	handle recursive mute with continue instead of abort
+		12		06feb19	in export, chase dubs to start position instead of minimum value
 
 */
 
@@ -672,7 +673,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 	int	arrFirstTrack[MIDI_CHANNELS];
 	if (m_bIsSongMode) {	// if song mode
 		nUsedTracks = GetChannelUsage(arrFirstTrack);
-		ChaseDubs(MIN_DUB_TIME, true);	// reset dub indices and update mutes
+		ChaseDubs(m_nStartPos, true);	// reset dub indices and update mutes
 		nChunkDuration = m_nLatency;	// same latency as playback to ensure identical dubbing
 	} else {	// track mode
 		GetUsedTracks(arrUsedTrack, UT_NO_MUTE | UT_NO_MODULATOR);	// exclude muted tracks and modulators

@@ -76,7 +76,6 @@ CPolymeterApp::CPolymeterApp()
 
 CPolymeterApp theApp;
 
-
 // CPolymeterApp initialization
 
 BOOL CPolymeterApp::InitInstance()

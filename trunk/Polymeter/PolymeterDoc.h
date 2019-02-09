@@ -15,6 +15,7 @@
 		05		18dec18	add import/export tracks
 		06		19dec18	move track property names into base class
 		07		16jan19	refactor insert tracks to standardize usage
+		08		04feb19	add track offset command
 
 */
 
@@ -500,6 +501,7 @@ protected:
 	afx_msg void OnTrackRotateLeft();
 	afx_msg void OnTrackRotateRight();
 	afx_msg void OnTrackRotateSteps();
+	afx_msg void OnTrackOffset();
 	afx_msg void OnTrackSolo();
 	afx_msg void OnUpdateTrackSolo(CCmdUI *pCmdUI);
 	afx_msg void OnTrackMute();

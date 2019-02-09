@@ -26,6 +26,7 @@
 		16		07jan19	in Play, add support for piano bar
 		17		14jan19	bump file version for recursive position modulation
 		18		16jan19	refactor insert tracks to standardize usage
+		19		04feb19	add track offset command
 
 */
 
@@ -107,6 +108,8 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_FILL_PHASE		_T("fPhase")
 #define RK_FILL_CURVINESS	_T("fCurviness")
 #define RK_FILL_SIGNED		_T("bSigned")
+#define RK_OFFSET_DLG		REG_SETTINGS _T("\\Offset")
+#define RK_OFFSET_TICKS		_T("nTicks")
 
 // define null title IDs for undo codes that have dynamic titles, or are insigificant
 #define IDS_EDIT_TRACK_PROP			0
@@ -3114,6 +3117,8 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_RIGHT, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TRACK_ROTATE_STEPS, OnTrackRotateSteps)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_ROTATE_STEPS, OnUpdateTrackReverse)
+	ON_COMMAND(ID_TRACK_OFFSET, OnTrackOffset)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_OFFSET, OnUpdateEditDeselect)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_SORT, OnUpdateEditSelectAll)
 	ON_COMMAND(ID_TOOLS_TIME_TO_REPEAT, OnToolsTimeToRepeat)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIME_TO_REPEAT, OnUpdateToolsTimeToRepeat)
@@ -3432,6 +3437,28 @@ void CPolymeterDoc::OnTrackRotateSteps()
 	int	nSteps;
 	if (DoShiftDialog(nSteps, true))	// change caption to rotate
 		RotateTracksOrSteps(nSteps);
+}
+
+void CPolymeterDoc::OnTrackOffset()
+{
+	COffsetDlg	dlg;
+	dlg.m_nDlgCaptionID = IDS_TRK_Offset;
+	dlg.m_nEditCaptionID = IDS_OFFSET_TICKS;
+	dlg.m_nOffset = theApp.GetProfileInt(RK_OFFSET_DLG, RK_OFFSET_TICKS, 0);
+	if (dlg.DoModal() == IDOK) {
+		NotifyUndoableEdit(PROP_Offset, UCODE_MULTI_TRACK_PROP);
+		if (dlg.m_nOffset) {
+			int	nSels = GetSelectedCount();
+			for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+				int	iTrack = m_arrTrackSel[iSel];
+				m_Seq.SetOffset(iTrack, m_Seq.GetOffset(iTrack) + dlg.m_nOffset);
+			}
+			SetModifiedFlag();
+			CMultiItemPropHint	hint(m_arrTrackSel, PROP_Offset);
+			UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
+		}
+		theApp.WriteProfileInt(RK_OFFSET_DLG, RK_OFFSET_TICKS, dlg.m_nOffset);
+	}
 }
 
 void CPolymeterDoc::OnTrackMute()
