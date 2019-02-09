@@ -217,8 +217,9 @@ open	close	type	description	rev	user
 01/31/19	01/31/19	done	if no active document, graph should be empty	0.0.23.003	
 02/01/19	02/01/19	done	piano bar keys get stuck on if MIDI input device sends note off instead of note on with zero velocity	0.0.23.003	
 02/01/19	02/01/19	done	left-clicking piano key should optionally output note if sequencer is playing; add output channel to context menu	0.0.23.003	
+12/06/18	02/04/19	done	offset command that shifts selected tracks in time by adding a value to their offsets	0.0.23.004	
+02/06/19	02/07/19	done	exported MIDI file may have incorrect initial track mute state; chase to start position, not minimum dub time	0.0.23.004	
 03/22/18		hold	context-sensitive help		
-03/22/18		hold	test against Reason! Don't want to spend a year developing only to find out plan doesn't work		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 03/22/18		hold	offset modulation; may not be feasible		
 03/22/18		hold	swing modulation; may not be feasible		
@@ -262,7 +263,7 @@ open	close	type	description	rev	user
 11/19/18		hold	highlight modulated parameters; complicates UI and doesn't fully capture modulation state (Benoit)		
 11/19/18		hold	detail view of modulations that shows target as well as source and type; editable, sortable, clipboard (Benoit)		
 11/19/18		hold	vertically fill the note column with values from a scale or chord (Benoit)		
-12/06/18		hold	offset command that shifts selected tracks in time by adding a value to their offsets		
+11/19/18		hold	length modulation; cool idea but hard to implement (Benoit)		
 12/09/18		hold	add hide/unhide column commands to track list header's context menu; where to store previous width?		
 12/12/18		hold	grid control's header should display tooltip for truncated column names; must subclass header control?		
 01/11/19		hold	in Piano view, if multiple instances of a note overlap, velocity color may be inaccurate		
@@ -272,8 +273,8 @@ open	close	type	description	rev	user
 05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
 06/08/18		punt	untying note should set all steps to velocity of original tied note; better to preserve velocity		
 09/18/18		punt	modulation dubbing is sensitive to track order at longer latencies; also affects export		
-11/19/18		hold	length modulation; cool idea but hard to implement (Benoit)		
 11/19/18		punt	step copy/cut/paste should support non-rectangular step selection; incompatible with step view design (Benoit)		
 11/19/18		punt	list view selection is hard to see when list doesn't have focus; curse at Microsoft or change theme (Benoit)		
 11/19/18		punt	sort on note name without octave; not sure why this is useful (Benoit)		
 11/21/18		punt	while drawing velocities in velocity pane, dragging left/right of window should scroll view; tried it, too confusing		
+02/04/19		todo	handle overlapping instances of the same note on the same channel; defer note offs until reference count is zero		
