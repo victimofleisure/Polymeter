@@ -10,6 +10,7 @@
         00		17dec18	initial version
         01		03jan19	add filtering via context menu
         02		29jan19	refactor to support both input and output
+		03		10feb19	add method to get array of channel status nicknames
 
 */
 
@@ -35,6 +36,7 @@ public:
 	void	SetKeySignature(int nKeySig);
 	static	LPCTSTR	GetControllerName(int iController);
 	static	LPCTSTR	GetChannelStatusNickname(int iStatus);
+	static	void	GetChannelStatusNicknames(CStringArray& arrChanStatNick);
 	CString	GetChannelStatusName(int iStatus) const;
 
 // Operations

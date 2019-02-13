@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      15apr18	initial version
+		01		10feb19	in channel array, add method to get MIDI event array
 
 */
 
@@ -93,6 +94,18 @@ DWORD CChannelArray::GetMidiEvent(int iChan, int iProp) const
 		NODEFAULTCASE;
 	}
 	return 0;
+}
+
+void CChannelArray::GetMidiEvents(CDWordArrayEx& arrMidiEvent) const
+{
+	ASSERT(arrMidiEvent.IsEmpty());
+	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each channel
+		for (int iProp = 0; iProp < CChannel::PROPERTIES; iProp++) {	// for each channel property
+			DWORD	dwEvent = GetMidiEvent(iChan, iProp);	// get property's MIDI event
+			if (dwEvent)	// if property is specified
+				arrMidiEvent.Add(dwEvent);	// add MIDI event to destination array
+		}
+	}
 }
 
 void CChannelArray::Read()

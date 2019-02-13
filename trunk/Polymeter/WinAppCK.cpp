@@ -19,6 +19,7 @@
 		09		07may15	SHGetSpecialFolderPath return value is BOOL, not HRESULT
 		10		03may18	remove VC6 cruft and methods that moved to file scope
 		11		28jan19	add GetLogicalDrives
+		12		10feb19	add temp file path wrapper
 
         enhanced application
  
@@ -182,4 +183,23 @@ bool CWinAppCK::GetLogicalDriveStringArray(CStringArrayEx& arrDrive)
 		pDrive += _tcslen(pDrive) + 1;
 	}
 	return true;
+}
+
+CTempFilePath::~CTempFilePath()
+{
+	Empty();
+}
+
+void CTempFilePath::Empty()
+{
+	if (!m_sPath.IsEmpty()) {
+		DeleteFile(m_sPath);
+		m_sPath.Empty();
+	}
+}
+
+void CTempFilePath::SetPath(const CString& sPath)
+{
+	Empty();
+	m_sPath = sPath;
 }

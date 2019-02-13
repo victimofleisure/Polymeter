@@ -10,6 +10,7 @@
         00		17dec18	initial version
         01		03jan19	add filtering via context menu
         02		29jan19	refactor to support both input and output
+		03		10feb19	add method to get array of channel status nicknames
 		
 */
 
@@ -249,14 +250,19 @@ void CMidiEventBar::SetKeySignature(int nKeySig)
 	m_list.Invalidate();
 }
 
-void CMidiEventBar::ExportEvents(LPCTSTR pszPath)
+void CMidiEventBar::GetChannelStatusNicknames(CStringArray& arrChanStatNick)
 {
-	CStringArrayEx	arrChanStatNick;
 	arrChanStatNick.SetSize(CHANNEL_VOICE_MESSAGES);
 	for (int iStat = 0; iStat < CHANNEL_VOICE_MESSAGES; iStat++) {
 		arrChanStatNick[iStat] = m_arrChanStatNickname[iStat];
 		theApp.SnakeToUpperCamelCase(arrChanStatNick[iStat]);
 	}
+}
+
+void CMidiEventBar::ExportEvents(LPCTSTR pszPath)
+{
+	CStringArrayEx	arrChanStatNick;
+	GetChannelStatusNicknames(arrChanStatNick);
 	CStdioFile	fOut(pszPath, CFile::modeCreate | CFile::modeWrite);
 	CString	sLine;
 	int	nEvents = INT64TO32(m_arrEvent.GetSize());

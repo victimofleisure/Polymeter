@@ -21,6 +21,7 @@
 		11		24mar15	generate template specializations for numeric types
 		12		03may18	remove VC6 cruft and methods that moved to file scope
 		13		28jan19	add GetLogicalDrives
+		14		10feb19	add temp file path wrapper
 
         enhanced application
  
@@ -70,3 +71,36 @@ protected:
 };
 
 /////////////////////////////////////////////////////////////////////////////
+
+class CTempFilePath {
+public:
+	CTempFilePath();
+	CTempFilePath(const CString& sPath);
+	~CTempFilePath();
+	bool	IsEmpty() const;
+	const CString&	GetPath() const;
+	void	SetPath(const CString& sPath);
+	void	Empty();
+
+protected:
+	CString	m_sPath;	// protected temp file path
+};
+
+inline CTempFilePath::CTempFilePath()
+{
+}
+
+inline CTempFilePath::CTempFilePath(const CString& sPath)
+{
+	SetPath(sPath);
+}
+
+inline bool CTempFilePath::IsEmpty() const
+{
+	return m_sPath.IsEmpty();
+}
+
+inline const CString& CTempFilePath::GetPath() const
+{
+	return m_sPath;
+}

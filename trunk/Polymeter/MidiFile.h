@@ -13,6 +13,7 @@
         03      25apr18	standardize names
         04      10oct18	add read
 		05		17dec18	move types from file scope into class
+		06		11feb19	add tempo and key and time signatures to read
 		
 		MIDI file I/O
  
@@ -51,7 +52,7 @@ public:
 // Operations
 	void	WriteHeader(USHORT nTracks, USHORT nPPQ, double fTempo = 0, const TIME_SIGNATURE* pTimeSig = NULL, const KEY_SIGNATURE* pKeySig = NULL);
 	void	WriteTrack(const CMidiEventArray& arrEvent, LPCTSTR pszName = NULL);
-	void	ReadTracks(CMidiTrackArray& arrTrack, CStringArrayEx& arrTrackName, USHORT& nPPQ);
+	void	ReadTracks(CMidiTrackArray& arrTrack, CStringArrayEx& arrTrackName, USHORT& nPPQ, UINT* pnfTempo = NULL, TIME_SIGNATURE* pTimeSig = NULL, KEY_SIGNATURE* pKeySig = NULL);
 
 protected:
 // Types

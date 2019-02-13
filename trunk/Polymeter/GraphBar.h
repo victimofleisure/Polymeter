@@ -8,11 +8,13 @@
 		revision history:
 		rev		date	comments
         00		25jan19	initial version
+		01		10feb19	move temp file path wrapper to app
 		
 */
 
 #pragma once
 
+#include "WinAppCK.h"	// for temp file path wrapper
 #include "MyDockablePane.h"
 #include "RecursiveFileFind.h"
 
@@ -42,17 +44,6 @@ public:
 
 protected:
 // Types
-	class CTempFilePath {
-	public:
-		~CTempFilePath();
-		bool	IsEmpty() const;
-		const CString&	GetPath() const;
-		void	SetPath(const CString& sPath);
-		void	Empty();
-
-	protected:
-		CString	m_sPath;	// protected temp file path
-	};
 	class CGraphThreadParams {
 	public:
 		CString	m_sDataPath;		// path to graph input data file

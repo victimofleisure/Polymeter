@@ -347,6 +347,7 @@ BEGIN
             MENUITEM "&Tracks...",                  ID_TOOLS_EXPORT_TRACKS
             MENUITEM "&Steps...",                   ID_TOOLS_EXPORT_STEPS
             MENUITEM "&Modulations...",             ID_TOOLS_EXPORT_MODULATIONS
+            MENUITEM "S&ong...",                    ID_TOOLS_EXPORT_SONG
         END
     END
     POPUP "&Window"
@@ -1367,6 +1368,7 @@ BEGIN
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "&Windows..."
     ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"
+    ID_TOOLS_EXPORT_SONG    "Export song MIDI data to a CSV file\nExport Song"
 END
 
 STRINGTABLE

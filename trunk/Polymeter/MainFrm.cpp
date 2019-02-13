@@ -913,7 +913,6 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 			pDoc->m_Seq.SetTempo(pDoc->m_fTempo);
 			break;
 		case CMasterProps::PROP_nTimeDiv:
-			ASSERT(!pDoc->m_Seq.IsPlaying());
 			// convert time division preset index to time division value in ticks
 			pDoc->m_Seq.SetTimeDivision(pDoc->GetTimeDivisionTicks());
 			break;

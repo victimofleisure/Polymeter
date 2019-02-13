@@ -12,6 +12,7 @@
         02      07mar14	convert to MFC
         03      25apr18	standardize names
         04      10oct18 add read
+		05		11feb19	add tempo and key and time signatures to read
 
 		MIDI file I/O
  
@@ -198,8 +199,14 @@ void CMidiFile::WriteTrack(const CMidiEventArray& arrEvent, LPCTSTR pszName)
 	EndTrack(StartPos);	// finish track and fix header
 }
 
-void CMidiFile::ReadTracks(CMidiTrackArray& arrTrack, CStringArrayEx& arrTrackName, USHORT& nPPQ)
+void CMidiFile::ReadTracks(CMidiTrackArray& arrTrack, CStringArrayEx& arrTrackName, USHORT& nPPQ, UINT *pnTempo, TIME_SIGNATURE* pTimeSig, KEY_SIGNATURE* pKeySig)
 {
+	if (pnTempo != NULL)	// if tempo requested
+		*pnTempo = 0;	// init destination before anything throws
+	if (pTimeSig != NULL)	// if time signature requested
+		ZeroMemory(pTimeSig, sizeof(TIME_SIGNATURE));
+	if (pKeySig != NULL)	// if key signature requested
+		ZeroMemory(pKeySig, sizeof(KEY_SIGNATURE));
 	UINT	nChunkID;
 	ReadCheck(&nChunkID, sizeof(nChunkID));	// read chunk ID
 	if (nChunkID != m_nHeaderChunkID)	// if not header chunk
@@ -239,11 +246,25 @@ void CMidiFile::ReadTracks(CMidiTrackArray& arrTrack, CStringArrayEx& arrTrackNa
 					UINT	nEventLen;
 					ReadByte(nEventType);	// read meta event type
 					ReadVarLen(nEventLen);	// read meta event data length
-					arrByte.SetSize(nEventType);	// allocate buffer for meta event
+					arrByte.SetSize(nEventLen);	// allocate buffer for meta event
 					ReadCheck(arrByte.GetData(), nEventLen);	// read meta event
 					if (nEventType == ME_END_TRACK) {	// if end of track
 						iTrack++;	// increment track index
 						break;	// exit track processing loop
+					}
+					switch (nEventType) {
+					case ME_SET_TEMPO:
+						if (pnTempo != NULL)	// if tempo requested
+							Reverse(pnTempo, arrByte.GetData(), TEMPO_LEN);	// convert tempo to little endian
+						break;
+					case ME_TIME_SIGNATURE:
+						if (pTimeSig != NULL)	// if time signature requested
+							*pTimeSig = *reinterpret_cast<TIME_SIGNATURE*>(arrByte.GetData());
+						break;
+					case ME_KEY_SIGNATURE:
+						if (pKeySig != NULL)	// if key signature requested
+							*pKeySig = *reinterpret_cast<KEY_SIGNATURE*>(arrByte.GetData());
+						break;
 					}
 					switch (nEventType) {
 					case ME_TRACK_NAME:

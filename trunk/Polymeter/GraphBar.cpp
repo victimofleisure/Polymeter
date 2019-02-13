@@ -10,6 +10,7 @@
         00		25jan19	initial version
 		01		30jan19	fix graph too small when system text size above 100%
 		02		31jan19	if unable to write graph, show blank page
+		03		10feb19	move temp file path wrapper to app
 
 */
 
@@ -109,35 +110,6 @@ CGraphBar::~CGraphBar()
 	WrReg(RK_GRAPH_BAR, RK_HIGHLIGHT_SELECT, m_bHighlightSelect);
 	WrReg(RK_GRAPH_BAR, RK_EDGE_LABELS, m_bEdgeLabels);
 	WrReg(RK_GRAPH_BAR, RK_GRAPHVIZ_PATH, m_sGraphvizPath);
-}
-
-CGraphBar::CTempFilePath::~CTempFilePath()
-{
-	Empty();
-}
-
-inline bool CGraphBar::CTempFilePath::IsEmpty() const
-{
-	return m_sPath.IsEmpty();
-}
-
-void CGraphBar::CTempFilePath::Empty()
-{
-	if (!m_sPath.IsEmpty()) {
-		DeleteFile(m_sPath);
-		m_sPath.Empty();
-	}
-}
-
-inline const CString& CGraphBar::CTempFilePath::GetPath() const
-{
-	return m_sPath;
-}
-
-void CGraphBar::CTempFilePath::SetPath(const CString& sPath)
-{
-	Empty();
-	m_sPath = sPath;
 }
 
 bool CGraphBar::CreateBrowser()

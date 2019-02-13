@@ -44,6 +44,7 @@ public:
 	enum {
 		INIT_TRACKS = 32,		// initial track count
 		MAX_TRACKS = USHRT_MAX,	// limiting factor is 16-bit track indices in undo implementation
+		TRACK_EXPORT_DURATION = 60,	// default export duration in track mode, in seconds
 	};
 	enum {	// update hints
 		HINT_NONE,				// no hint
@@ -244,6 +245,7 @@ public:
 	bool	GotoNextDub(bool bReverse = false);
 	int		CalcSongTimeShift() const;
 	void	OnMidiOutputCaptureChange();
+	bool	ExportSongAsCSV(LPCTSTR pszDestPath);
 
 // Overrides
 public:
@@ -495,6 +497,7 @@ protected:
 	afx_msg void OnToolsExportModulations();
 	afx_msg void OnToolsImportTracks();
 	afx_msg void OnToolsExportTracks();
+	afx_msg void OnToolsExportSong();
 	afx_msg void OnTrackShiftLeft();
 	afx_msg void OnTrackShiftRight();
 	afx_msg void OnTrackShiftSteps();

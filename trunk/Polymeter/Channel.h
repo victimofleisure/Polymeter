@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      15apr18	initial version
+		01		10feb19	in channel array, add method to get MIDI event array
 
 */
 
@@ -71,6 +72,7 @@ public:
 // Attributes
 	int		GetUsedCount() const;
 	DWORD	GetMidiEvent(int iChan, int iProp) const;
+	void	GetMidiEvents(CDWordArrayEx& arrMidiEvent) const;
 
 // Operations
 	void	Read();
