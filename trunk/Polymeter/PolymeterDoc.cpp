@@ -28,6 +28,7 @@
 		18		16jan19	refactor insert tracks to standardize usage
 		19		04feb19	add track offset command
 		20		10feb19	add tools song export of MIDI data to CSV file
+		21		14feb19	refactor export to avoid track mode special cases
 
 */
 
@@ -3044,16 +3045,24 @@ void CPolymeterDoc::OnMidiOutputCaptureChange()
 	m_Seq.SetMidiOutputCapture(bIsCapturing);
 }
 
-bool CPolymeterDoc::ExportSongAsCSV(LPCTSTR pszDestPath)
+bool CPolymeterDoc::PromptForExportParams(bool bSongMode, int& nDuration)
+{
+	CExportDlg	dlg;
+	if (bSongMode)	// if song mode
+		dlg.m_nDuration = m_Seq.GetSongDurationSeconds();
+	else	// track mode
+		dlg.m_nDuration = theApp.GetProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, TRACK_EXPORT_DURATION);
+	if (dlg.DoModal() != IDOK)	// do dialog
+		return false;
+	theApp.WriteProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, dlg.m_nDuration);
+	nDuration = dlg.m_nDuration;
+	return true;
+}
+
+bool CPolymeterDoc::ExportSongAsCSV(LPCTSTR pszDestPath, int nDuration, bool bSongMode)
 {
 	CWaitCursor	wc;	// show wait cursor; export can take time
 	UpdateChannelEvents();	// queue channel events to be output at start of playback
-	bool	bSongMode = m_Seq.HasDubs();
-	int	nDuration;
-	if (bSongMode)	// if song mode
-		nDuration = m_Seq.GetSongDurationSeconds();
-	else	// track mode
-		nDuration = theApp.GetProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, TRACK_EXPORT_DURATION);
 	CString	sTempMidiFilePath;
 	if (!theApp.GetTempFileName(sTempMidiFilePath, _T("plm"))) {
 		AfxMessageBox(GetLastErrorString());
@@ -3240,19 +3249,6 @@ BOOL CPolymeterDoc::OnSaveDocument(LPCTSTR lpszPathName)
 
 void CPolymeterDoc::OnFileExport()
 {
-	bool	bSongMode = m_Seq.HasDubs();
-	UINT	nUsedTrackFlags = UT_NO_MODULATOR;	// exclude modulator tracks
-	if (!bSongMode)	// if track mode 
-		nUsedTrackFlags |= UT_NO_MUTE;	// also exclude muted tracks
-	int	nUsedTracks = m_Seq.GetUsedTrackCount(nUsedTrackFlags);
-	if (!nUsedTracks) {	// if no tracks to export
-		AfxMessageBox(IDS_EXPORT_EMPTY_FILE);
-		return;
-	}
-	if (nUsedTracks > USHRT_MAX) {	// if too many tracks for MIDI file
-		AfxMessageBox(IDS_EXPORT_TOO_MANY_TRACKS);
-		return;
-	}
 	CString	sFilter(LPCTSTR(IDS_EXPORT_FILE_FILTER));
 	CPathStr	sDefName(GetTitle());
 	sDefName.RemoveExtension();
@@ -3260,16 +3256,12 @@ void CPolymeterDoc::OnFileExport()
 	CString	sDlgTitle(LPCTSTR(IDS_EXPORT));
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
-		CExportDlg	dlg;
-		if (bSongMode)	// if song mode
-			dlg.m_nDuration = m_Seq.GetSongDurationSeconds();
-		else	// track mode
-			dlg.m_nDuration = theApp.GetProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, TRACK_EXPORT_DURATION);
-		if (dlg.DoModal() == IDOK) {
-			theApp.WriteProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, dlg.m_nDuration);
+		bool	bSongMode = m_Seq.HasDubs();
+		int	nDuration;
+		if (PromptForExportParams(bSongMode, nDuration)) {
 			CWaitCursor	wc;	// show wait cursor; export can take time
 			UpdateChannelEvents();	// queue channel events to be output at start of playback
-			if (!m_Seq.Export(fd.GetPathName(), dlg.m_nDuration, bSongMode, m_nStartPos)) {
+			if (!m_Seq.Export(fd.GetPathName(), nDuration, bSongMode, m_nStartPos)) {
 				AfxMessageBox(IDS_EXPORT_ERROR);
 			}
 		}
@@ -3963,6 +3955,10 @@ void CPolymeterDoc::OnToolsExportSong()
 	CString	sDlgTitle(LPCTSTR(IDS_EXPORT));
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
-		ExportSongAsCSV(fd.GetPathName());
+		bool	bSongMode = m_Seq.HasDubs();
+		int	nDuration;
+		if (PromptForExportParams(bSongMode, nDuration)) {
+			ExportSongAsCSV(fd.GetPathName(), nDuration, bSongMode);
+		}
 	}
 }

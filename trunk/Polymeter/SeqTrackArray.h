@@ -11,6 +11,7 @@
 		01		18nov18	add method to find next or previous dub time
 		02		07dec18	in GetUsedTracks and GetUsedTrackCount, add flags arg
 		03		14dec18	add InsertModulations
+		04		14feb19	add exclude muted track flag to GetChannelUsage
 
 */
 
@@ -90,7 +91,7 @@ public:
 	int		GetModulationCount(int iTrack) const;
 	void	GetModulations(CPackedModulationArray& arrMod) const;
 	void	SetModulations(const CPackedModulationArray& arrMod);
-	int		GetChannelUsage(int *parrFirstTrack) const;
+	int		GetChannelUsage(int *parrFirstTrack, bool bExcludeMuted = false) const;
 	static	UINT	GetCurrentID();
 
 // Operations

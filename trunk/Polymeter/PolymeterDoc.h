@@ -16,6 +16,7 @@
 		06		19dec18	move track property names into base class
 		07		16jan19	refactor insert tracks to standardize usage
 		08		04feb19	add track offset command
+		09		14feb19	refactor export to avoid track mode special cases
 
 */
 
@@ -245,7 +246,7 @@ public:
 	bool	GotoNextDub(bool bReverse = false);
 	int		CalcSongTimeShift() const;
 	void	OnMidiOutputCaptureChange();
-	bool	ExportSongAsCSV(LPCTSTR pszDestPath);
+	bool	ExportSongAsCSV(LPCTSTR pszDestPath, int nDuration, bool bSongMode);
 
 // Overrides
 public:
@@ -382,6 +383,7 @@ protected:
 	bool	RecordToTracks(bool bEnable);
 	void	OnImportTracks(CTrackArray& arrTrack);
 	int		CellToTime(int iCell, double fTicksPerCell, int nSongTimeShift) const;
+	bool	PromptForExportParams(bool bSongMode, int& nDuration);
 
 // Undo helpers
 	void	SaveTrackProperty(CUndoState& State) const;

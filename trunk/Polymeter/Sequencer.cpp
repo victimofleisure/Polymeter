@@ -20,6 +20,7 @@
 		10		12jan19	add recursive position modulation
 		11		17jan19	handle recursive mute with continue instead of abort
 		12		06feb19	in export, chase dubs to start position instead of minimum value
+		13		14feb19	in export, handle track and song modes similarly
 
 */
 
@@ -668,21 +669,10 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 		return false;	// avoid divide by zero
 	ResetCachedParameters();	// crucial to avoid undefined controller behavior
 	CIntArrayEx	arrUsedTrack;
-	int	nUsedTracks;
-	int	nChunkDuration;
 	int	arrFirstTrack[MIDI_CHANNELS];
-	if (m_bIsSongMode) {	// if song mode
-		nUsedTracks = GetChannelUsage(arrFirstTrack);
-		ChaseDubs(m_nStartPos, true);	// reset dub indices and update mutes
-		nChunkDuration = m_nLatency;	// same latency as playback to ensure identical dubbing
-	} else {	// track mode
-		GetUsedTracks(arrUsedTrack, UT_NO_MUTE | UT_NO_MODULATOR);	// exclude muted tracks and modulators
-		nUsedTracks = arrUsedTrack.GetSize();
-		// max tracks is one less to allow for initialization track
-		if (!nUsedTracks || nUsedTracks > USHRT_MAX - 1)	// if no tracks, or too many tracks
-			return false;
-		nChunkDuration = 1000;	// large chunk size for faster export
-	}
+	int	nUsedTracks = GetChannelUsage(arrFirstTrack, !m_bIsSongMode);	// if track mode, exclude muted tracks
+	ChaseDubs(m_nStartPos, true);	// reset dub indices and update mutes
+	int	nChunkDuration = m_nLatency;	// same latency as playback to ensure identical dubbing
 	CMidiFile	fMidi(pszPath, CFile::modeCreate | CFile::modeWrite);	// create MIDI file
 	USHORT	uTracks = static_cast<USHORT>(nUsedTracks + 1);	// account for initialization track
 	USHORT	uTimeDiv = static_cast<USHORT>(m_nTimeDiv);
@@ -703,69 +693,38 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 		arrMidiEvent[nInitEvents] = evt;
 		fMidi.WriteTrack(arrMidiEvent);	// write initialization track
 	}
-	if (m_bIsSongMode) {	// if song mode
-		int	nCBTime = m_nStartPos;
-		CMidiFile::CMidiEventArray arrMidiEvent[MIDI_CHANNELS];
-		int	nTracks = GetSize();
-		for (int iChunk = 0; iChunk < nChunks; iChunk++) {	// for each time chunk
-			m_arrEvent.FastRemoveAll();	// empty event array
-			for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-				AddTrackEvents(iTrack, nCBTime);	// get track's events for this chunk
-				AddNoteOffs(nCBTime, nCBTime + nChunkLen);	// add note offs for this chunk
-			}
-			int	nEvents = m_arrEvent.GetSize();
-			for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
-				const CEvent&	evt = m_arrEvent[iEvent];
-				CMidiFile::MIDI_EVENT	midiEvt;
-				midiEvt.DeltaT = evt.m_dwTime + nCBTime;	// convert to song time
-				midiEvt.Msg = evt.m_dwEvent;
-				int	iChan = MIDI_CHAN(evt.m_dwEvent);
-				arrMidiEvent[iChan].Add(midiEvt);	// add event to per-channel array
-			}
-			nCBTime += nChunkLen;
+	int	nCBTime = m_nStartPos;
+	CMidiFile::CMidiEventArray arrMidiEvent[MIDI_CHANNELS];
+	int	nTracks = GetSize();
+	for (int iChunk = 0; iChunk < nChunks; iChunk++) {	// for each time chunk
+		m_arrEvent.FastRemoveAll();	// empty event array
+		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+			AddTrackEvents(iTrack, nCBTime);	// get track's events for this chunk
+			AddNoteOffs(nCBTime, nCBTime + nChunkLen);	// add note offs for this chunk
 		}
-		for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each MIDI channel
-			int	iTrack = arrFirstTrack[iChan];
-			if (iTrack >= 0) {	// if channel is used
-				int	nEvents = arrMidiEvent[iChan].GetSize();
-				int	nPrevTime = m_nStartPos;
-				for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each channel event
-					CMidiFile::MIDI_EVENT&	midiEvt = arrMidiEvent[iChan][iEvent];
-					int	nTime = midiEvt.DeltaT;
-					midiEvt.DeltaT -= nPrevTime;	// convert to delta time
-					nPrevTime = nTime;
-				}
-				fMidi.WriteTrack(arrMidiEvent[iChan], GetName(iTrack));	// write track to MIDI file
-			}
+		int	nEvents = m_arrEvent.GetSize();
+		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
+			const CEvent&	evt = m_arrEvent[iEvent];
+			CMidiFile::MIDI_EVENT	midiEvt;
+			midiEvt.DeltaT = evt.m_dwTime + nCBTime;	// convert to song time
+			midiEvt.Msg = evt.m_dwEvent;
+			int	iChan = MIDI_CHAN(evt.m_dwEvent);
+			arrMidiEvent[iChan].Add(midiEvt);	// add event to per-channel array
 		}
-	} else {	// track mode
-		for (int iUsed = 0; iUsed < nUsedTracks; iUsed++) {	// for each non-empty track
-			int	iTrack = arrUsedTrack[iUsed];	// get track index
-			int	nCBTime = 0;
-			int	nPadTime = 0;
-			CMidiFile::CMidiEventArray arrMidiEvent;
-			for (int iChunk = 0; iChunk < nChunks; iChunk++) {	// for each time chunk
-				m_arrEvent.FastRemoveAll();	// empty event array
-				AddTrackEvents(iTrack, nCBTime);	// get track's events for this chunk
-				AddNoteOffs(nCBTime, nCBTime + nChunkLen);	// add note offs for this chunk
-				int	nEvents = m_arrEvent.GetSize();
-				if (nEvents) {	// if any events to output
-					// convert event times (relative to start of callback period) to delta times
-					int	nPrevTime = -nPadTime;
-					for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
-						const CEvent&	evt = m_arrEvent[iEvent];
-						CMidiFile::MIDI_EVENT	midiEvt;
-						midiEvt.DeltaT = evt.m_dwTime - nPrevTime;	// convert to delta time
-						midiEvt.Msg = evt.m_dwEvent;
-						arrMidiEvent.Add(midiEvt);
-						nPrevTime = evt.m_dwTime;
-					}
-					nPadTime = nChunkLen - m_arrEvent[nEvents - 1].m_dwTime;
-				} else	// no events to output
-					nPadTime += nChunkLen;
-				nCBTime += nChunkLen;
+		nCBTime += nChunkLen;
+	}
+	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each MIDI channel
+		int	iTrack = arrFirstTrack[iChan];
+		if (iTrack >= 0) {	// if channel is used
+			int	nEvents = arrMidiEvent[iChan].GetSize();
+			int	nPrevTime = m_nStartPos;
+			for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each channel event
+				CMidiFile::MIDI_EVENT&	midiEvt = arrMidiEvent[iChan][iEvent];
+				int	nTime = midiEvt.DeltaT;
+				midiEvt.DeltaT -= nPrevTime;	// convert to delta time
+				nPrevTime = nTime;
 			}
-			fMidi.WriteTrack(arrMidiEvent, GetName(iTrack));	// write track to MIDI file
+			fMidi.WriteTrack(arrMidiEvent[iChan], GetName(iTrack));	// write track to MIDI file
 		}
 	}
 	return true;

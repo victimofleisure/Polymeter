@@ -1025,7 +1025,6 @@ BEGIN
     IDS_EXPORT_EMPTY_FILE   "Nothing to export."
     IDS_EXPORT_ERROR        "Error during export."
     IDS_EXPORT_FILE_FILTER  "MIDI Files (*.mid)|*.mid|All Files (*.*)|*.*||"
-    IDS_EXPORT_TOO_MANY_TRACKS "Too many tracks."
 END
 
 STRINGTABLE
@@ -1295,6 +1294,7 @@ BEGIN
     ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
     ID_TOOLS_EXPORT_MODULATIONS 
                             "Export modulations to a CSV file\nExport Modulations"
+    ID_TOOLS_EXPORT_SONG    "Export song MIDI data to a CSV file\nExport Song"
     ID_TOOLS_EXPORT_STEPS   "Export steps from selected tracks to a CSV file\nExport Steps"
     ID_TOOLS_EXPORT_TRACKS  "Export selected tracks to a CSV file\nExport Tracks"
     ID_TOOLS_IMPORT_MODULATIONS 
@@ -1305,11 +1305,11 @@ BEGIN
     ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
     ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for the selected tracks to repeat\nTime to Repeat"
     ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks or steps\nVelocity Range "
-    ID_TRACK_FILL           "Fill selected tracks or steps with a range of values"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_FILL           "Fill selected tracks or steps with a range of values"
     ID_TRACK_GROUP          "Group the selected tracks into a part\nGroup"
     ID_TRACK_LENGTH         "Set the length of one or more tracks\nLength"
     ID_TRACK_MUTE           "Mute or unmute the selected tracks\nMute"
@@ -1325,11 +1325,11 @@ BEGIN
     ID_TRACK_ROTATE_STEPS   "Rotate the selection left or right a given number of steps\nRotate Steps"
     ID_TRACK_SHIFT_LEFT     "Shift the selected tracks or steps left\nShift Left"
     ID_TRACK_SHIFT_RIGHT    "Shift the selected tracks or steps right\nShift Right"
-    ID_TRACK_SHIFT_STEPS    "Shift the selection left or right a given number of steps\nShift Steps"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_SHIFT_STEPS    "Shift the selection left or right a given number of steps\nShift Steps"
     ID_TRACK_SOLO           "Solo the selected tracks\nSolo"
     ID_TRACK_SORT           "Sort the selected tracks\nTrack Sort"
     ID_TRACK_STRETCH        "Stretch or shrink the selected tracks\nStretch"
@@ -1356,11 +1356,11 @@ BEGIN
     ID_VIEW_PROPERTIES      "Show or hide the properties bar\nProperties"
     ID_VIEW_TYPE_LIVE       "Show the live view\nLive View"
     ID_VIEW_TYPE_SONG       "Show the song view\nSong View"
-    ID_VIEW_TYPE_TRACK      "Show the track view\nTrack View"
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_TYPE_TRACK      "Show the track view\nTrack View"
     ID_VIEW_VELOCITIES      "Show or hide velocities pane\nVelocities"
     ID_VIEW_ZOOM_IN         "Zoom in\nZoom In"
     ID_VIEW_ZOOM_OUT        "Zoom out\nZoom Out"
@@ -1368,7 +1368,6 @@ BEGIN
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "&Windows..."
     ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"
-    ID_TOOLS_EXPORT_SONG    "Export song MIDI data to a CSV file\nExport Song"
 END
 
 STRINGTABLE

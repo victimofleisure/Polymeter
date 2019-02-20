@@ -12,6 +12,7 @@
 		02		07dec18	set initial dub time to smallest int instead of zero
 		03		07dec18	in GetUsedTracks and GetUsedTrackCount, add flags arg
 		04		14dec18	add InsertModulations
+		05		14feb19	add exclude muted track flag to GetChannelUsage
 
 */
 
@@ -732,7 +733,7 @@ void CSeqTrackArray::ScaleSteps(int iTrack, int iStep, int nSteps, double fScale
 	}
 }
 
-int CSeqTrackArray::GetChannelUsage(int *parrFirstTrack) const
+int CSeqTrackArray::GetChannelUsage(int *parrFirstTrack, bool bExcludeMuted) const
 {
 	ASSERT(parrFirstTrack != NULL);
 	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++)	// for each channel
@@ -742,6 +743,8 @@ int CSeqTrackArray::GetChannelUsage(int *parrFirstTrack) const
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		const CTrack&	trk = GetAt(iTrack);
 		if (trk.GetUsedStepCount() && !trk.IsModulator()) {	// if track isn't empty and isn't a modulator
+			if (bExcludeMuted && trk.m_bMute)	// if excluding muted tracks and track is muted
+				continue;
 			int	iChan = trk.m_nChannel;
 			ASSERT(iChan >= 0 && iChan < MIDI_CHANNELS);
 			if (parrFirstTrack[iChan] < 0) {	// if first track using this channel
