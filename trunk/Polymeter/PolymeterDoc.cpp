@@ -29,6 +29,7 @@
 		19		04feb19	add track offset command
 		20		10feb19	add tools song export of MIDI data to CSV file
 		21		14feb19	refactor export to avoid track mode special cases
+		22		20feb19	add note overlap prevention
 
 */
 
@@ -71,7 +72,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	11
+#define	FILE_VERSION	12
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -303,6 +304,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 	#include "MasterPropsDef.h"	// generate code to read master properties
 	m_Seq.SetTempo(m_fTempo);
 	m_Seq.SetTimeDivision(GetTimeDivisionTicks());
+	m_Seq.SetNoteOverlapMode(m_iNoteOverlap != CMasterProps::NOTE_OVERLAP_Allow);
 	m_Seq.SetMeter(m_nMeter);
 	m_Seq.SetPosition(m_nStartPos);
 	int	nTracks = 0;
@@ -1372,6 +1374,10 @@ void CPolymeterDoc::RestoreMasterProperty(const CUndoState& State)
 	case CMasterProps::PROP_nTimeDiv:
 		// convert time division preset index to time division value in ticks
 		m_Seq.SetTimeDivision(GetTimeDivisionTicks());
+		break;
+	case CMasterProps::PROP_iNoteOverlap:
+		// convert time division preset index to time division value in ticks
+		m_Seq.SetNoteOverlapMode(m_iNoteOverlap != CMasterProps::NOTE_OVERLAP_Allow);
 		break;
 	}
 	CPropHint	hint(0, iProp);

@@ -15,6 +15,7 @@
 		05		21jan19	remove modulation bar document change handler
 		06		25jan19	add graph bar
 		07		29jan19	add MIDI input bar; refactor create dockable panes
+		08		20feb19	add note overlap prevention
 
 */
 
@@ -929,6 +930,9 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 					pDoc->UpdateSongLength();	// restore song length from dubs
 				}
 			}
+			break;
+		case CMasterProps::PROP_iNoteOverlap:
+			pDoc->m_Seq.SetNoteOverlapMode(pDoc->m_iNoteOverlap != CMasterProps::NOTE_OVERLAP_Allow);
 			break;
 		}
 		CPolymeterDoc::CPropHint	hint(0, iProp);

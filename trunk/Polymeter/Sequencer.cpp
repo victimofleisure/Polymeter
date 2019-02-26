@@ -21,6 +21,8 @@
 		11		17jan19	handle recursive mute with continue instead of abort
 		12		06feb19	in export, chase dubs to start position instead of minimum value
 		13		14feb19	in export, handle track and song modes similarly
+		14		20feb19	optionally prevent note overlaps
+		15		26feb19	use fast insert for event arrays
 
 */
 
@@ -57,6 +59,7 @@ CSequencer::CSequencer()
 	m_bIsPositionChange = false;
 	m_bIsSongMode = false;
 	m_bIsOutputCapture = false;
+	m_bPreventNoteOverlap = false;
 	ZeroMemory(&m_stats, sizeof(m_stats));
 	m_qLiveEvent.Create(DEF_BUFFER_SIZE);
 }
@@ -179,9 +182,22 @@ void CSequencer::UpdateCallbackLength()
 	m_nCBLen = GetCallbackLength(m_nLatency);
 }
 
+void CSequencer::SetNoteOverlapMode(bool bPrevent)
+{
+	if (m_bIsPlaying) {	// if playing
+		WCritSec::Lock	lock(m_csTrack);	// serialize access to note reference counts
+		if (bPrevent)	// if preventing note overlaps
+			ZeroMemory(m_arrNoteRef, sizeof(m_arrNoteRef));	// zero note reference counts
+		m_bPreventNoteOverlap = bPrevent;
+	} else	// stopped
+		m_bPreventNoteOverlap = bPrevent;	// serialization not needed; play resets reference counts
+}
+
 inline void CSequencer::ResetCachedParameters()
 {
 	memset(&m_MidiCache, 0xff, sizeof(m_MidiCache));	// MIDI parameters are 7-bit so 0xff is unused
+	if (m_bPreventNoteOverlap)	// if preventing note overlaps
+		ZeroMemory(m_arrNoteRef, sizeof(m_arrNoteRef));	// zero note reference counts
 }
 
 bool CSequencer::Play(bool bEnable, bool bRecord)
@@ -394,7 +410,7 @@ __forceinline void CSequencer::OutputControlEvent(const CTrack& trk, DWORD dwTim
 		NODEFAULTCASE;
 	}
 	evt.m_dwTime = dwTime;
-	m_arrEvent.InsertSorted(evt);	// add event to sorted array for output
+	m_arrEvent.FastInsertSorted(evt);	// add event to sorted array for output
 }
 
 bool CSequencer::RecurseModulations(int iTrack, int nAbsEvtTime, int& nPosMod)
@@ -520,7 +536,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 								nNote = ApplyNoteRange(nNote, trk.m_nRangeStart + arrMod[MT_Range], trk.m_iRangeType);
 							nNote = CLAMP(nNote, 0, MIDI_NOTE_MAX);
 							evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, nNote, nVel);
-							m_arrEvent.InsertSorted(evt);	// add note to sorted array for output
+							m_arrEvent.FastInsertSorted(evt);	// add note to sorted array for output
 							int	nDuration = nDurSteps * nQuant + trk.m_nDuration + arrMod[MT_Duration];	// add duration offset
 							if (nDurSteps & 1) {	// if odd duration
 								if (bIsOdd)	// if odd step
@@ -531,7 +547,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 							nDuration = max(nDuration, 1);	// keep duration above zero
 							evt.m_dwTime = nAbsEvtTime + nDuration;	// absolute time
 							evt.m_dwEvent &= ~0xff0000;	// zero note's velocity
-							m_arrNoteOff.InsertSorted(evt);	// add pending note off to array
+							m_arrNoteOff.FastInsertSorted(evt);	// add pending note off to array
 						}
 					}
 				} else if (trk.m_iType != TT_MODULATOR) {	// track type isn't note or modulator
@@ -559,8 +575,8 @@ __forceinline void CSequencer::AddNoteOffs(int nCBStart, int nCBEnd)
 	while (nOffs > 0 && m_arrNoteOff[0].m_dwTime < nCBEnd) {
 		m_arrNoteOff[0].m_dwTime -= nCBStart;	// make time relative to this callback
 		ASSERT(m_arrNoteOff[0].m_dwTime >= 0);	// time must be positive
-		m_arrEvent.InsertSorted(m_arrNoteOff[0]);
-		m_arrNoteOff.RemoveAt(0);
+		m_arrEvent.FastInsertSorted(m_arrNoteOff[0]);
+		m_arrNoteOff.FastRemoveAt(0);
 		nOffs--;
 	}
 }
@@ -617,6 +633,10 @@ bool CSequencer::OutputMidiBuffer()
 	CMidiEventStream&	arrEvt = m_arrMidiEvent[m_iBuffer];
 	int	nEvents = m_arrEvent.GetSize();
 	if (nEvents) {	// if any events to output
+		if (m_bPreventNoteOverlap) {	// if preventing note overlap
+			FixNoteOverlaps();
+			nEvents = m_arrEvent.GetSize();	// fixing may resize event array
+		}
 		CEvent	evt(m_nCBLen, MEVT_NOP << 24);
 		m_arrEvent.Add(evt);	// pad time to start of next callback
 		nEvents++;
@@ -662,6 +682,50 @@ bool CSequencer::OutputMidiBuffer()
 	return true;
 }
 
+void CSequencer::FixNoteOverlaps()
+{
+	int	nEvents = m_arrEvent.GetSize();
+	int	iEvent = 0;
+	while (iEvent < nEvents) {	// for each event
+		DWORD	dwEvent = m_arrEvent[iEvent].m_dwEvent;
+		if (MIDI_CMD(dwEvent) == NOTE_ON) {	// if note on event
+			int	iChan = MIDI_CHAN(dwEvent);
+			int	iNote = MIDI_P1(dwEvent);
+			if (MIDI_P2(dwEvent)) {	// if event is note on (non-zero velocity)
+				if (m_arrNoteRef[iChan][iNote]++) {	// if note is already active; post-increment reference count
+					int	dwTime = m_arrEvent[iEvent].m_dwTime;
+					for (int iPrevEvt = iEvent - 1; iPrevEvt >= 0; iPrevEvt--) {	// for each previous event
+						if (m_arrEvent[iPrevEvt].m_dwTime != dwTime)	// if previous event has different time
+							break;	// stop iterating
+						// if previous event is note on for same channel and note number
+						if (USHORT(m_arrEvent[iPrevEvt].m_dwEvent) == USHORT(dwEvent)) {
+							m_arrEvent.FastRemoveAt(iPrevEvt);	// delete previous note on event
+							nEvents--;	// one less event
+							goto lblFixNoteOverlaps;	// skip incrementing index to account for deletion
+						}
+					}
+					CEvent	evt(m_arrEvent[iEvent]);
+					evt.m_dwEvent &= ~0xff0000;	// convert to note off (zero note's velocity)
+					m_arrEvent.FastInsertAt(iEvent, evt);	// insert note off event
+					iEvent++;	// extra index increment to account for insertion
+					nEvents++;	// one more event
+				}
+			} else {	// event is note off (zero velocity)
+				if (m_arrNoteRef[iChan][iNote] > 0) {	// if note is active
+					m_arrNoteRef[iChan][iNote]--;	// decrement note's reference count
+					if (m_arrNoteRef[iChan][iNote]) {	// if note is still active
+						m_arrEvent.FastRemoveAt(iEvent);	// delete note off event
+						nEvents--;	// one less event
+						continue;	// skip incrementing index to account for deletion
+					}
+				}
+			}
+		}
+		iEvent++;	// increment index to access next event
+lblFixNoteOverlaps:;
+	}
+}
+
 bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 {
 	// note that this method may throw CFileException (from CMidiFile)
@@ -702,6 +766,8 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 			AddTrackEvents(iTrack, nCBTime);	// get track's events for this chunk
 			AddNoteOffs(nCBTime, nCBTime + nChunkLen);	// add note offs for this chunk
 		}
+		if (m_bPreventNoteOverlap)	// if preventing note overlap
+			FixNoteOverlaps();
 		int	nEvents = m_arrEvent.GetSize();
 		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
 			const CEvent&	evt = m_arrEvent[iEvent];
@@ -749,6 +815,7 @@ CSequencerReader::CSequencerReader(CSequencer& seq)
 	m_bIsSongMode = seq.m_bIsSongMode;
 	m_nLatency = seq.m_nLatency;
 	m_arrInitMidiEvent = seq.m_arrInitMidiEvent;
+	m_bPreventNoteOverlap = seq.m_bPreventNoteOverlap;
 }
 
 CSequencerReader::~CSequencerReader()

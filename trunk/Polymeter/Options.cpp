@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      27mar18	initial version
+		01		20feb19	rename option info vars
 		
 */
 
@@ -18,7 +19,7 @@
 #include "VariantHelper.h"
 #include "MidiWrap.h"
 
-const COptions::OPTION_INFO COptions::m_Group[GROUPS] = {
+const COptions::OPTION_INFO COptions::m_oiGroup[GROUPS] = {
 	#define GROUPDEF(name) {_T(#name), IDS_OPT_GROUP_##name},
 	#include "OptionsDef.h"
 };
@@ -77,7 +78,7 @@ void COptions::SetVariants(const CVariantArray& Var)
 CString COptions::GetGroupName(int iGroup) const
 {
 	ASSERT(IsValidGroup(iGroup));
-	return LDS(m_Group[iGroup].nNameID);
+	return LDS(m_oiGroup[iGroup].nNameID);
 }
 
 int COptions::GetOptionCount(int iProp) const

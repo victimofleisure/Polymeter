@@ -12,6 +12,7 @@
 		02		02dec18	add conversion from milliseconds to position
 		03		03jan19	add MIDI output capture
 		04		12jan19	add recursive position modulation
+		05		20feb19	add note reference counts
 
 */
 
@@ -83,6 +84,8 @@ public:
 	int		GetStartPosition() const;
 	void	SetMidiOutputCapture(bool bEnable);
 	void	GetMidiOutputEvents(CMidiEventArray& arrMidiEvent);
+	bool	GetNoteOverlapMode() const;
+	void	SetNoteOverlapMode(bool bPrevent);
 
 // Operations
 	bool	Play(bool bEnable, bool bRecord = false);
@@ -166,6 +169,7 @@ protected:
 	bool	m_bIsPositionChange;	// true if position changed
 	bool	m_bIsSongMode;			// true if applying track dubs
 	bool	m_bIsOutputCapture;		// true if capturing output events
+	bool	m_bPreventNoteOverlap;	// true if preventing note overlaps
 	STATS	m_stats;				// timing statistics
 	CMidiEventStream	m_arrMidiEvent[BUFFERS];	// array of MIDI event stream buffers
 	CEventArray	m_arrEvent;			// array of track events
@@ -173,6 +177,7 @@ protected:
 	CDWordArrayEx	m_arrInitMidiEvent;	// array of MIDI events to output at start of playback
 	CILockRingBuf<DWORD>	m_qLiveEvent;	// thread-safe queue of live events to be output
 	MIDI_PARAMS	m_MidiCache;		// cached values of MIDI parameters
+	BYTE	m_arrNoteRef[MIDI_CHANNELS][MIDI_NOTES];	// note reference counts
 	CMidiEventArray	m_arrOutputEvent;	// MIDI event buffer for capturing output
 
 #if SEQ_DUMP_EVENTS
@@ -199,6 +204,7 @@ protected:
 	void	OutputControlEvent(const CTrack& track, DWORD dwTime, int nVal);
 	static	int		ApplyNoteRange(int nNote, int nRangeStart, int iRangeType);
 	void	QueueOutputEvents(int nEvents);
+	void	FixNoteOverlaps();
 #if SEQ_DUMP_EVENTS
 	void	AddDumpEvent(const CMidiEventStream& arrEvt, int nEvents);
 	void	DumpEvents(LPCTSTR pszPath);
@@ -349,4 +355,9 @@ inline int CSequencer::ModWrap(int nVal, int nModulo)
 	if (nVal < 0)
 		nVal += nModulo;
 	return nVal;
+}
+
+inline bool CSequencer::GetNoteOverlapMode() const
+{
+	return m_bPreventNoteOverlap;
 }

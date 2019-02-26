@@ -31,6 +31,8 @@
 		21		10nov18	add binary search insert pos
 		22		31dec18	refactor to reuse code
 		23		03jan19	add CPtrArrayEx
+		24		25feb19	fix missing default count in FastRemoveAt
+		25		26feb19	add FastInsertSorted
 
 		enhanced array with copy ctor, assignment, and fast const access
  
@@ -103,7 +105,8 @@ public:
 	void	FastSetAtGrow(INT_PTR nIndex, ARG_TYPE newElement);
 	INT_PTR	FastAdd(ARG_TYPE newElement);
 	void	FastInsertAt(INT_PTR nIndex, ARG_TYPE newElement, INT_PTR nCount = 1);
-	void	FastRemoveAt(INT_PTR nIndex, INT_PTR nCount);
+	void	FastRemoveAt(INT_PTR nIndex, INT_PTR nCount = 1);
+	void	FastInsertSorted(ARG_TYPE val);
 	#define	CArrayEx_TYPE TYPE
 	#define CArrayEx_CLASS CArrayEx
 	#define CArrayEx_NO_FAST_SET_SIZE
@@ -194,9 +197,9 @@ void CArrayEx<TYPE, ARG_TYPE>::FastInsertAt(INT_PTR nIndex, ARG_TYPE newElement,
 		INT_PTR nOldSize = m_nSize;
 		FastSetSize(m_nSize + nCount, -1);  // grow it to new size
 		// shift old data up to fill gap
-		memmove(m_pData + nIndex + nCount, m_pData + nIndex, (nOldSize-nIndex) * sizeof(TYPE));
-		// re-init slots we copied from
+		memmove(m_pData + nIndex + nCount, m_pData + nIndex, (nOldSize - nIndex) * sizeof(TYPE));
 #if CArrayEx_FAST_INIT_ZERO
+		// re-init slots we copied from
 		memset((void*)(m_pData + nIndex), 0, (size_t)nCount * sizeof(TYPE));
 #endif
 	}
@@ -215,11 +218,38 @@ void CArrayEx<TYPE, ARG_TYPE>::FastRemoveAt(INT_PTR nIndex, INT_PTR nCount)
 	INT_PTR nUpperBound = nIndex + nCount;
 	ASSERT(nUpperBound <= m_nSize && nUpperBound >= nIndex && nUpperBound >= nCount);
 	// just remove a range
-	INT_PTR nMoveCount = m_nSize - (nUpperBound);
+	INT_PTR nMoveCount = m_nSize - nUpperBound;
 	if (nMoveCount) {
 		memmove(m_pData + nIndex, m_pData + nUpperBound, (size_t)nMoveCount * sizeof(TYPE));
 	}
 	m_nSize -= nCount;
+}
+
+template<class TYPE, class ARG_TYPE>
+AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::FastInsertSorted(ARG_TYPE val) 
+{
+	W64INT	iInsert = 0;
+	W64INT	nSize = m_nSize;
+	if (nSize) {	// optimize initial insertion
+		W64INT	iStart = 0;
+		W64INT	iEnd = nSize - 1;
+		if (val <= GetAt(0))	// optimize insertion at start
+			iInsert = 0;
+		else if (val >= GetAt(iEnd))	// optimize insertion at end
+			iInsert = nSize;
+		else {	// general case
+			while (iStart <= iEnd) {
+				W64INT	iMid = (iStart + iEnd) / 2;
+				if (GetAt(iMid) <= val)
+					iStart = iMid + 1;
+				else {
+					iInsert = iMid;
+					iEnd = iMid - 1;
+				}
+			}
+		}
+	}
+	FastInsertAt(iInsert, val);	// same as InsertSorted except for this line
 }
 
 template<class TYPE, class ARG_TYPE>

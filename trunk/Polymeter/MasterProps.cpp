@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      25mar18	initial version
+		01		20feb19	add note overlap property
 		
 */
 
@@ -18,12 +19,12 @@
 
 #define SUBGROUP_NONE	-1
 
-const CProperties::OPTION_INFO CMasterProps::m_Group[GROUPS] = {
+const CProperties::OPTION_INFO CMasterProps::m_oiGroup[GROUPS] = {
 	#define GROUPDEF(name) {_T(#name), IDS_PDR_GROUP_##name}, 
 	#include "MasterPropsDef.h"	// generate group name options
 };
 
-const CProperties::OPTION_INFO CMasterProps::m_TimeDiv[TIME_DIVS] = {
+const CProperties::OPTION_INFO CMasterProps::m_oiTimeDiv[TIME_DIVS] = {
 	#define TIMEDIVDEF(name) {_T(#name), 0}, 
 	#include "MasterPropsDef.h"	// generate time division options
 };
@@ -33,9 +34,14 @@ const int CMasterProps::m_arrTimeDivTicks[TIME_DIVS] = {
 	#include "MasterPropsDef.h"	// generate time division tick values
 };
 
-CProperties::OPTION_INFO CMasterProps::m_KeySig[NOTES] = {
+CProperties::OPTION_INFO CMasterProps::m_oiKeySig[NOTES] = {
 	#define NOTEDEF(name) {_T(#name)},
 	#include "NoteDef.h"	// generate note name array
+};
+
+CProperties::OPTION_INFO CMasterProps::m_oiNoteOverlap[NOTE_OVERLAP_MODES] = {
+	#define NOTEOVERLAPMODE(name) {_T(#name), IDS_NOTE_OVERLAP_##name}, 
+	#include "MasterPropsDef.h"	// generate note overlap mode options
 };
 
 const CProperties::PROPERTY_INFO CMasterProps::m_Info[PROPERTIES] = {
@@ -85,7 +91,7 @@ void CMasterProps::SetVariants(const CVariantArray& Var)
 CString CMasterProps::GetGroupName(int iGroup) const
 {
 	ASSERT(IsValidGroup(iGroup));
-	return LDS(m_Group[iGroup].nNameID);
+	return LDS(m_oiGroup[iGroup].nNameID);
 }
 
 int CMasterProps::GetSubgroupCount(int iGroup) const

@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      27mar18	initial version
+		01		20feb19	rename option info vars
 		
 */
 
@@ -38,7 +39,7 @@ public:
 		#include "OptionsDef.h"
 		INPUT_QUANTS
 	};
-	static const OPTION_INFO	m_Group[GROUPS];	// group names
+	static const OPTION_INFO	m_oiGroup[GROUPS];	// group names
 	static const PROPERTY_INFO	m_Info[PROPERTIES];	// fixed info for each property
 	static const int	m_arrInputQuant[INPUT_QUANTS];	// input quantizations, as denominators
 

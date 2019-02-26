@@ -8,7 +8,8 @@
 		revision history:
 		rev		date	comments
         00      25mar18	initial version
-		
+		01		20feb19	add note overlap property
+	
 */
 
 #pragma once
@@ -39,10 +40,16 @@ public:
 		#include "MasterPropsDef.h"	// generate enumeratation 
 		TIME_DIVS
 	};
-	static const OPTION_INFO	m_Group[GROUPS];		// group name options
-	static const OPTION_INFO	m_TimeDiv[TIME_DIVS];	// time division options
+	enum {	// note overlap modes
+		#define NOTEOVERLAPMODE(name) NOTE_OVERLAP_##name,
+		#include "MasterPropsDef.h"	// generate enumeratation 
+		NOTE_OVERLAP_MODES
+	};
+	static const OPTION_INFO	m_oiGroup[GROUPS];		// group name options
+	static const OPTION_INFO	m_oiTimeDiv[TIME_DIVS];	// time division options
 	static const int m_arrTimeDivTicks[TIME_DIVS];		// time division values in ticks
-	static OPTION_INFO	m_KeySig[NOTES];	// key signature options
+	static OPTION_INFO	m_oiKeySig[NOTES];	// key signature options
+	static OPTION_INFO	m_oiNoteOverlap[NOTE_OVERLAP_MODES];	// note overlap options
 	enum {	// properties
 		#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) PROP_##name,
 		#include "MasterPropsDef.h"	// generate enumeratation 
