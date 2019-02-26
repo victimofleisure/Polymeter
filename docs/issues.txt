@@ -220,6 +220,8 @@ open	close	type	description	rev	user
 12/06/18	02/04/19	done	offset command that shifts selected tracks in time by adding a value to their offsets	0.0.23.004	
 02/06/19	02/07/19	done	exported MIDI file may have incorrect initial track mute state; chase to start position, not minimum dub time	0.0.23.004	
 02/10/19	02/12/19	done	add tools export of song MIDI data to CSV file; useful for debugging and comparing mixes	0.0.23.005	
+02/14/19	02/14/19	done	refactor export to avoid track mode special cases; export one MIDI file track per channel in all cases	0.0.23.006	
+02/04/19	02/26/19	done	optionally prevent overlapping instances of the same note on the same channel	0.0.24.000	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 03/22/18		hold	offset modulation; may not be feasible		
@@ -269,7 +271,6 @@ open	close	type	description	rev	user
 12/12/18		hold	grid control's header should display tooltip for truncated column names; must subclass header control?		
 01/11/19		hold	in Piano view, if multiple instances of a note overlap, velocity color may be inaccurate		
 01/19/19		hold	document I/O doesn't support Unicode track names; initialize INI file with UTF-16 LE BOM		
-02/04/19		hold	handle overlapping instances of the same note on the same channel; complex issue		
 05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
