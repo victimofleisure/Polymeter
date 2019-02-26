@@ -13,6 +13,7 @@
 		03		15mar15	remove 16-bit assert in rename case
 		04		06apr15	in DoPageEdit, skip disabled controls
 		05		02jan19	add case for range type property
+		06		26feb19	change master property default to fail gracefully
 
 		automated undo test for patch editing
  
@@ -208,10 +209,8 @@ bool CTrackUndoTest::MakeRandomMasterProperty(int iProp, CComVariant& var)
 			var = nSongLength;
 		}
 		break;
-	case CMasterProps::PROP_nStartPos:
-		return false;
 	default:
-		NODEFAULTCASE;
+		return false;
 	}
 	return true;
 }
