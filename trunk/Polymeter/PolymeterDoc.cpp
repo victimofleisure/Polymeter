@@ -30,6 +30,7 @@
 		20		10feb19	add tools song export of MIDI data to CSV file
 		21		14feb19	refactor export to avoid track mode special cases
 		22		20feb19	add note overlap prevention
+		23		22mar19	add track invert command
 
 */
 
@@ -746,6 +747,15 @@ void CPolymeterDoc::ToggleTrackSteps(const CRect& rSelection, UINT nFlags)
 	SetModifiedFlag();
 	CRectSelPropHint	hint(rSelection);
 	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
+}
+
+void CPolymeterDoc::ToggleTrackSteps(UINT nFlags)
+{
+	NotifyUndoableEdit(0, UCODE_INVERT);
+	SetModifiedFlag();
+	m_Seq.ToggleSteps(m_arrTrackSel, nFlags);
+	CMultiItemPropHint	hint(m_arrTrackSel);
+	UpdateAllViews(NULL, HINT_MULTI_TRACK_STEPS, &hint);
 }
 
 bool CPolymeterDoc::GetTrackSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const
@@ -2070,6 +2080,7 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 	case UCODE_VELOCITY:
 	case UCODE_SHIFT:
 	case UCODE_FILL_STEPS:
+	case UCODE_INVERT:
 		SaveMultiTrackSteps(State);
 		break;
 	case UCODE_REVERSE:
@@ -2179,6 +2190,7 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_VELOCITY:
 	case UCODE_SHIFT:
 	case UCODE_FILL_STEPS:
+	case UCODE_INVERT:
 		RestoreMultiTrackSteps(State);
 		break;
 	case UCODE_REVERSE:
@@ -3164,6 +3176,8 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_DESELECT, OnUpdateEditDeselect)
 	ON_COMMAND(ID_TRACK_REVERSE, OnTrackReverse)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_REVERSE, OnUpdateTrackReverse)
+	ON_COMMAND(ID_TRACK_INVERT, OnTrackInvert)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_INVERT, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TRACK_SHIFT_LEFT, OnTrackShiftLeft)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_SHIFT_LEFT, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TRACK_SHIFT_RIGHT, OnTrackShiftRight)
@@ -3446,6 +3460,17 @@ void CPolymeterDoc::OnTrackReverse()
 void CPolymeterDoc::OnUpdateTrackReverse(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(HaveTrackOrStepSelection());
+}
+
+void CPolymeterDoc::OnTrackInvert()
+{
+	int	nToggleFlags = theApp.m_Options.m_Midi_nDefaultVelocity;	// default velocity
+	if (theApp.m_bTieNotes)	// if notes default to tied
+		nToggleFlags |= SB_TIE;	// set tie bit
+	if (HaveStepSelection())	// if step selection
+		ToggleTrackSteps(m_rStepSel, nToggleFlags);	// toggle selected steps
+	else	// track selection
+		ToggleTrackSteps(nToggleFlags);	// toggle all steps of selected tracks
 }
 
 void CPolymeterDoc::OnTrackShiftLeft()

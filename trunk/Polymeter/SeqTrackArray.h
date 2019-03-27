@@ -12,6 +12,7 @@
 		02		07dec18	in GetUsedTracks and GetUsedTrackCount, add flags arg
 		03		14dec18	add InsertModulations
 		04		14feb19	add exclude muted track flag to GetChannelUsage
+		05		22mar19	overload toggle steps for track selection
 
 */
 
@@ -72,6 +73,7 @@ public:
 	void	SetSteps(const CRect& rSelection, const CStepArrayArray& arrStepArray);
 	void	SetSteps(const CRect& rSelection, STEP nStep);
 	void	ToggleSteps(const CRect& rSelection, UINT nFlags);
+	void	ToggleSteps(const CIntArrayEx& arrSelection, UINT nFlags);
 	int		GetDubCount(int iTrack) const;
 	const CDub&	GetDub(int iTrack, int iDub) const;
 	void	GetTrackProperty(int iTrack, int iProp, CComVariant& var) const;

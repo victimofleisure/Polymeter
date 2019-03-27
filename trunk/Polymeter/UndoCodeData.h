@@ -9,6 +9,7 @@
 		rev		date	comments
         00      26mar18	initial version
 		01		28nov18	add modify parts
+		02		22mar19	add invert
 
 		undo code data
  
@@ -57,5 +58,6 @@ UCODE_DEF(MOVE_PARTS)
 UCODE_DEF(MODIFY_PARTS)
 UCODE_DEF(MODULATION)
 UCODE_DEF(FILL_STEPS)
+UCODE_DEF(INVERT)
 
 #undef UCODE_DEF

@@ -17,6 +17,7 @@
 		07		16jan19	refactor insert tracks to standardize usage
 		08		04feb19	add track offset command
 		09		14feb19	refactor export to avoid track mode special cases
+		10		22mar19	add track invert command
 
 */
 
@@ -149,6 +150,7 @@ public:
 	void	SetTrackStep(int iTrack, int iStep, STEP nStep);
 	void	SetTrackSteps(const CRect& rSelection, STEP nStep);
 	void	ToggleTrackSteps(const CRect& rSelection, UINT nFlags);
+	void	ToggleTrackSteps(UINT nFlags);
 	bool	GetTrackSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const;
 	bool	IsRectStepSelection(const CRect& rSelection, bool bIsDeleting = false) const;
 	void	SetPosition(int nPos);
@@ -486,6 +488,7 @@ protected:
 	afx_msg void OnUpdateEditDeselect(CCmdUI *pCmdUI);
 	afx_msg void OnTrackReverse();
 	afx_msg void OnUpdateTrackReverse(CCmdUI *pCmdUI);
+	afx_msg void OnTrackInvert();
 	afx_msg void OnTrackTranspose();
 	afx_msg void OnUpdateTrackTranspose(CCmdUI *pCmdUI);
 	afx_msg void OnTrackVelocity();

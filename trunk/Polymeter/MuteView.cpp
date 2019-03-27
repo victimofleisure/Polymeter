@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      15may18	initial version
+		01		22mar19	left-click not on button now toggles selection
 
 */
 
@@ -288,20 +289,24 @@ void CMuteView::OnSize(UINT nType, int cx, int cy)
 void CMuteView::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	CPolymeterDoc	*pDoc = GetDocument();
-	int iTrack = HitTest(point);
-	if (iTrack >= 0) {	// if hit mute
-		if (pDoc->GetSelectedCount()) {	// if tracks are selected
-			if (nFlags & MK_CONTROL) {	// if control key
-				pDoc->SetSelectedMutes(MB_MUTE);	// mute selected tracks
-			} else	// no control key
-				pDoc->SetSelectedMutes(MB_TOGGLE);	// toggle mute for selected tracks
-		} else {	// single track
-			if (nFlags & MK_CONTROL) {	// if control key
-				pDoc->SetMute(iTrack, MB_MUTE);	// mute hit track
-			} else	// no control key
-				pDoc->SetMute(iTrack, pDoc->m_Seq.GetMute(iTrack) ^ 1);	// toggle hit track's mute
-		}
+	if (pDoc->GetSelectedCount()) {	// if tracks are selected
+		UINT	nMask;
+		if (nFlags & MK_CONTROL)	// if control key
+			nMask = MB_MUTE;	// mute selected tracks
+		else	// no control key
+			nMask = MB_TOGGLE;	// toggle mute for selected tracks
+		pDoc->SetSelectedMutes(nMask);
 		pDoc->Deselect();
+	} else {	// no track selection
+		int iTrack = HitTest(point);
+		if (iTrack >= 0) {	// if hit mute
+			bool	bMute;
+			if (nFlags & MK_CONTROL)	// if control key
+				bMute = MB_MUTE;	// mute hit track
+			else	// no control key
+				bMute = pDoc->m_Seq.GetMute(iTrack) ^ 1;	// toggle hit track's mute
+			pDoc->SetMute(iTrack, bMute);
+		}
 	}
 	CView::OnLButtonDown(nFlags, point);
 }
