@@ -33,6 +33,7 @@
 		23		03jan19	add CPtrArrayEx
 		24		25feb19	fix missing default count in FastRemoveAt
 		25		26feb19	add FastInsertSorted
+		26		01apr19	add FastInsertSortedUnique
 
 		enhanced array with copy ctor, assignment, and fast const access
  
@@ -107,6 +108,7 @@ public:
 	void	FastInsertAt(INT_PTR nIndex, ARG_TYPE newElement, INT_PTR nCount = 1);
 	void	FastRemoveAt(INT_PTR nIndex, INT_PTR nCount = 1);
 	void	FastInsertSorted(ARG_TYPE val);
+	W64INT	FastInsertSortedUnique(ARG_TYPE val);
 	#define	CArrayEx_TYPE TYPE
 	#define CArrayEx_CLASS CArrayEx
 	#define CArrayEx_NO_FAST_SET_SIZE
@@ -250,6 +252,27 @@ AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::FastInsertSorted(ARG_TYPE val)
 		}
 	}
 	FastInsertAt(iInsert, val);	// same as InsertSorted except for this line
+}
+
+template<class TYPE, class ARG_TYPE>
+AFX_INLINE W64INT CArrayEx<TYPE, ARG_TYPE>::FastInsertSortedUnique(ARG_TYPE val) 
+{
+	W64INT	iInsert = m_nSize;
+	W64INT	iStart = 0;
+	W64INT	iEnd = iInsert - 1;
+	while (iStart <= iEnd) {
+		W64INT	iMid = (iStart + iEnd) / 2;
+		if (GetAt(iMid) == val)	// if would be duplicate
+			return iMid;	// return element index
+		if (GetAt(iMid) < val)
+			iStart = iMid + 1;
+		else {
+			iInsert = iMid;
+			iEnd = iMid - 1;
+		}
+	}
+	FastInsertAt(iInsert, val);	// same as InsertSortedUnique except for this line
+	return -1;	// success
 }
 
 template<class TYPE, class ARG_TYPE>

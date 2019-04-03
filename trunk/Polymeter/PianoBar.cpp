@@ -12,6 +12,7 @@
 		02		15jan19	add insert track method
 		03		01feb19	fix note off commands causing keys to get stuck on
 		04		02feb19	add output channel; output notes on key press
+		05		01apr19	in OnFilterChange, add partial fix for velocity
 
 */
 
@@ -158,8 +159,10 @@ void CPianoBar::OnFilterChange()
 			m_arrNoteRefs[nNote]++;
 			int	iKey = nNote - m_pno.GetStartNote();
 			if (iKey >= 0 && iKey < m_pno.GetKeyCount()) {
-				if (m_bColorVelocity)
-					m_pno.SetKeyColor(iKey, m_arrVelocityPalette[nNote], false);
+				if (m_bColorVelocity) {
+					int	nVel = 100;	// note's actual velocity is unknown
+					m_pno.SetKeyColor(iKey, m_arrVelocityPalette[nVel], false);
+				}
 				m_pno.SetPressed(iKey, true, true);	// press external note
 			}
 		}
