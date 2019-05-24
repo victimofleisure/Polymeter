@@ -3,6 +3,7 @@ open	close	type	description	rev	user
 09/07/18		bug	song edits sometimes leave fragments, especially if zoom is changed while editing		
 01/26/19		bug	resizing docked pane via mouse drag leaves artifacts in Windows 10; affects stock VS2012 app too		
 01/26/19		bug	resizing docked pane via mouse drag leaves gap between scroll bar and pane, when two or more documents exist; affects stock VS2012 app too		
+03/31/19		bug	in piano bar, notes that are active when velocity color is enabled have incorrect key colors		
 03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -222,6 +223,8 @@ open	close	type	description	rev	user
 02/10/19	02/12/19	done	add tools export of song MIDI data to CSV file; useful for debugging and comparing mixes	0.0.23.005	
 02/14/19	02/14/19	done	refactor export to avoid track mode special cases; export one MIDI file track per channel in all cases	0.0.23.006	
 02/04/19	02/26/19	done	optionally prevent overlapping instances of the same note on the same channel	0.0.24.000	
+03/19/19	03/22/19	done	add invert command to track menu	0.0.25.000	
+03/21/19	03/22/19	done	left-clicking within mute pane but not on mute button should toggle selected mutes	0.0.25.000	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 03/22/18		hold	offset modulation; may not be feasible		
@@ -269,8 +272,9 @@ open	close	type	description	rev	user
 11/19/18		hold	length modulation; cool idea but hard to implement (Benoit)		
 12/09/18		hold	add hide/unhide column commands to track list header's context menu; where to store previous width?		
 12/12/18		hold	grid control's header should display tooltip for truncated column names; must subclass header control?		
-01/11/19		hold	in Piano view, if multiple instances of a note overlap, velocity color may be inaccurate		
-01/19/19		hold	document I/O doesn't support Unicode track names; initialize INI file with UTF-16 LE BOM		
+01/19/19		hold	document I/O doesn't support Unicode track names; initialize INI file with UTF-16 LE BOM (doubles file size)		
+02/28/19		hold	song export length doesn't account for negative start position		
+03/25/19		hold	piano bar should be able to show channels separately via multiple keyboards		
 05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
@@ -280,3 +284,5 @@ open	close	type	description	rev	user
 11/19/18		punt	list view selection is hard to see when list doesn't have focus; curse at Microsoft or change theme (Benoit)		
 11/19/18		punt	sort on note name without octave; not sure why this is useful (Benoit)		
 11/21/18		punt	while drawing velocities in velocity pane, dragging left/right of window should scroll view; tried it, too confusing		
+01/11/19		punt	in Piano view, if multiple instances of a note overlap, velocity color may be inaccurate; unavoidable		
+02/28/19		punt	song playback doesn't always match live output when modulator tracks have big quants; dub granularity issue		
