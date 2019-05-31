@@ -4,6 +4,7 @@ open	close	type	description	rev	user
 01/26/19		bug	resizing docked pane via mouse drag leaves artifacts in Windows 10; affects stock VS2012 app too		
 01/26/19		bug	resizing docked pane via mouse drag leaves gap between scroll bar and pane, when two or more documents exist; affects stock VS2012 app too		
 03/31/19		bug	in piano bar, notes that are active when velocity color is enabled have incorrect key colors		
+05/30/19		bug	modulation list is empty regardless of track selection; can't reproduce it, brain fire?		
 03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -225,13 +226,15 @@ open	close	type	description	rev	user
 02/04/19	02/26/19	done	optionally prevent overlapping instances of the same note on the same channel	0.0.24.000	
 03/19/19	03/22/19	done	add invert command to track menu	0.0.25.000	
 03/21/19	03/22/19	done	left-clicking within mute pane but not on mute button should toggle selected mutes	0.0.25.000	
+05/09/19	05/09/19	done	in velocity pane, bars with value of 64 don't quite line up with origin; rounding issue	0.0.25.001	
+05/22/19	05/30/19	done	piano bar shows tempo changes; ignore events with non-zero MSB	0.0.25.001	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
-03/22/18		hold	offset modulation; may not be feasible		
-03/22/18		hold	swing modulation; may not be feasible		
+03/22/18		hold	swing modulation; probably not feasible		
 03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 03/22/18		hold	radio groups; member tracks automatically mute each other so that only one member sounds at a time		
 03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
+03/22/18		hold	offset modulation; possibly feasible by delaying notes until subsequent callbacks		
 03/25/18		hold	animated visualization		
 03/25/18		hold	playback can be slow to start, due to device open delay; keep output device open all the time?		
 03/25/18		hold	MIDI mapping of all parameters, with manual assignment and learn mode		
@@ -275,6 +278,7 @@ open	close	type	description	rev	user
 01/19/19		hold	document I/O doesn't support Unicode track names; initialize INI file with UTF-16 LE BOM (doubles file size)		
 02/28/19		hold	song export length doesn't account for negative start position		
 03/25/19		hold	piano bar should be able to show channels separately via multiple keyboards		
+05/12/19		hold	programmed tempo change; tempo map		
 05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
