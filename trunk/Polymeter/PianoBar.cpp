@@ -13,6 +13,7 @@
 		03		01feb19	fix note off commands causing keys to get stuck on
 		04		02feb19	add output channel; output notes on key press
 		05		01apr19	in OnFilterChange, add partial fix for velocity
+		06		30may19	handle short MIDI messages only; ignore other event types
 
 */
 
@@ -85,6 +86,8 @@ void CPianoBar::AddEvents(const CSequencer::CMidiEventArray& arrEvent)
 	int	nEvents = arrEvent.GetSize();
 	for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each new event
 		const MIDI_EVENT&	evt = arrEvent[iEvent];
+		if (evt.dwEvent & 0xff000000)	// if event isn't a short MIDI message
+			continue;	// ignore other event types
 		UINT	nCmd = MIDI_CMD(evt.dwEvent);
 		if (nCmd == NOTE_ON || nCmd == NOTE_OFF) {	// if event is a note
 			UINT	nNote = MIDI_P1(evt.dwEvent);

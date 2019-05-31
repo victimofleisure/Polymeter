@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      11may18	initial version
+		01		09may19	align origin line with velocity bar midpoint
 
 */
 
@@ -343,7 +344,8 @@ void CVelocityView::OnDraw(CDC* pDC)
 	CSize	szClient(rClient.Size());
 	const COLORREF	clrBeatLine = m_pStepView->GetBeatLineColor();
 	const COLORREF	clrBar = RGB(0, 0, 0);
-	pDC->FillSolidRect(rClip.left, szClient.cy / 2, szClient.cx, 1, clrBeatLine);
+	int	oy = szClient.cy - round(double(MIDI_NOTES / 2) / MIDI_NOTE_MAX * szClient.cy);
+	pDC->FillSolidRect(rClip.left, oy, szClient.cx, 1, clrBeatLine);
 	int	nScrollPos = m_pStepView->GetScrollPosition().x;
 	int	x1 = rClip.left + nScrollPos;
 	int	x2 = rClip.right + nScrollPos;
