@@ -10,6 +10,7 @@
         00      08oct13	initial version
         01      07may14	move generic functionality to base class
 		02		09sep14	add CPatchObject
+		03		02dec19	remove sort function, array now provides it
 
 		automated undo test for patch editing
  
@@ -53,5 +54,4 @@ protected:
 	bool	MakeRandomStepSelection(CRect& rSelection) const;
 	CString	PrintSelection(CIntArrayEx& arrSelection) const;
 	CString	PrintSelection(CRect& rSelection) const;
-	static	int IntArraySortCompare(const void *arg1, const void *arg2);
 };

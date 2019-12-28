@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      21may18	initial version
+		01		15nov19	add option for signed velocity scaling
 
 */
 
@@ -72,6 +73,7 @@ void CVelocityScalePage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_VELOCITY_SCALE_EDIT, m_pSheet->m_fScale);
+	DDX_Radio(pDX, IDC_VELOCITY_SCALE_UNSIGNED, m_pSheet->m_nSigned);
 }
 
 BEGIN_MESSAGE_MAP(CVelocityScalePage, CPropertyPage)
@@ -90,6 +92,7 @@ CVelocitySheet::CVelocitySheet(UINT nIDCaption, CWnd* pParentWnd, UINT iSelectPa
 	m_nOffset = 0;
 	m_nTarget = 0;
 	m_fScale = 1;
+	m_nSigned = 0;
 	m_bHaveStepSelection = false;
 }
 

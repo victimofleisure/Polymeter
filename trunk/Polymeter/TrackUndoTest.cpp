@@ -14,6 +14,7 @@
 		04		06apr15	in DoPageEdit, skip disabled controls
 		05		02jan19	add case for range type property
 		06		26feb19	change master property default to fail gracefully
+		07		02dec19	remove sort function, array now provides it
 
 		automated undo test for patch editing
  
@@ -122,15 +123,6 @@ int CTrackUndoTest::GetRandomInsertPos() const
 	return(Random(m_pDoc->GetTrackCount() + 1));
 }
 
-int CTrackUndoTest::IntArraySortCompare(const void *arg1, const void *arg2)
-{
-	if (*(int *)arg1 < *(int *)arg2)
-		return(-1);
-	if (*(int *)arg1 > *(int *)arg2)
-		return(1);
-	return(0);
-}
-
 bool CTrackUndoTest::MakeRandomSelection(int nItems, CIntArrayEx& arrSelection) const
 {
 	if (nItems <= 0)
@@ -140,7 +132,7 @@ bool CTrackUndoTest::MakeRandomSelection(int nItems, CIntArrayEx& arrSelection) 
 	arrSelection.SetSize(nSels);
 	for (int iSel = 0; iSel < nSels; iSel++)	// for each selection
 		arrSelection[iSel] = list.GetNext();	// select random track
-	qsort(arrSelection.GetData(), arrSelection.GetSize(), sizeof(int), IntArraySortCompare);
+	arrSelection.Sort();
 	return(TRUE);
 }
 

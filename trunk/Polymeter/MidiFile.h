@@ -14,6 +14,7 @@
         04      10oct18	add read
 		05		17dec18	move types from file scope into class
 		06		11feb19	add tempo and key and time signatures to read
+		07		09sep19	add duration and tempo map to write
 		
 		MIDI file I/O
  
@@ -49,8 +50,13 @@ public:
 	typedef CArrayEx<MIDI_EVENT, MIDI_EVENT> CMidiEventArray;
 	typedef CArrayEx<CMidiEventArray, CMidiEventArray&> CMidiTrackArray;
 
+// Constants
+	enum {
+		MICROS_PER_MINUTE	= 60000000,	// for converting tempo to microseconds per quarter note
+	};
+
 // Operations
-	void	WriteHeader(USHORT nTracks, USHORT nPPQ, double fTempo = 0, const TIME_SIGNATURE* pTimeSig = NULL, const KEY_SIGNATURE* pKeySig = NULL);
+	void	WriteHeader(USHORT nTracks, USHORT nPPQ, double fTempo = 0, UINT nDurationTicks = 0, const TIME_SIGNATURE* pTimeSig = NULL, const KEY_SIGNATURE* pKeySig = NULL, const CMidiEventArray* parrTempoMap = NULL);
 	void	WriteTrack(const CMidiEventArray& arrEvent, LPCTSTR pszName = NULL);
 	void	ReadTracks(CMidiTrackArray& arrTrack, CStringArrayEx& arrTrackName, USHORT& nPPQ, UINT* pnfTempo = NULL, TIME_SIGNATURE* pTimeSig = NULL, KEY_SIGNATURE* pKeySig = NULL);
 
@@ -105,7 +111,8 @@ protected:
 	void	WriteShort(short Val);
 	void	WriteInt(int Val);
 	void	WriteVarLen(UINT Val);
-	void	WriteMeta(BYTE Type, UINT Len);
+	void	WriteMeta(UINT DeltaT, BYTE Type, UINT Len);
+	void	WriteTempo(UINT DeltaT, UINT Tempo);
 	void	ReadCheck(void* lpBuf, UINT nCount);
 	void	ReadByte(BYTE& Val);
 	void	ReadShort(short& Val);

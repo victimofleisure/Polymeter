@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      21may18	initial version
+		01		15nov19	add option for signed velocity scaling
 
 */
 
@@ -80,6 +81,7 @@ public:
 	int		m_nOffset;				// offset in MIDI steps
 	int		m_nTarget;				// target entities; see enum above
 	double	m_fScale;				// multiplier
+	int		m_nSigned;				// if non-zero, scaling treats velocities as signed values
 	bool	m_bHaveStepSelection;	// if true, disable target selection
 
 	DECLARE_MESSAGE_MAP()

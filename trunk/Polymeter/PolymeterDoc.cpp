@@ -31,6 +31,10 @@
 		21		14feb19	refactor export to avoid track mode special cases
 		22		20feb19	add note overlap prevention
 		23		22mar19	add track invert command
+		24		09sep19	bump file version for tempo track type and modulation
+		25		15nov19	add option for signed velocity scaling
+		26		12dec19	add GetPeriod
+		27		26dec19	in TimeToRepeat, report fractional beats
 
 */
 
@@ -73,7 +77,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	12
+#define	FILE_VERSION	13
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -95,6 +99,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_VELOCITY_DLG		REG_SETTINGS _T("\\Velocity")
 #define RK_VELOCITY_OFFSET	_T("nOffset")
 #define RK_VELOCITY_SCALE	_T("fScale")
+#define RK_VELOCITY_SIGNED	_T("nSigned")
 #define RK_VELOCITY_TARGET	_T("nTarget")
 #define RK_VELOCITY_PAGE	_T("iPage")
 #define RK_SHIFT_DLG		REG_SETTINGS _T("\\Shift")
@@ -1031,7 +1036,7 @@ bool CPolymeterDoc::Transpose(int nNoteDelta)
 	return true;
 }
 
-bool CPolymeterDoc::IsVelocityChangeSafe(int nVelocityOffset, double fVelocityScale, const CRect *prStepSel, CRange<int> *prngVelocity) const
+bool CPolymeterDoc::IsVelocityChangeSafe(int nVelocityOffset, double fVelocityScale, const CRect *prStepSel, CRange<int> *prngVelocity, bool bSigned) const
 {
 	CRange<int>	rngVel(0, 0);
 	bool	bIsInitialRange = true;
@@ -1059,10 +1064,18 @@ bool CPolymeterDoc::IsVelocityChangeSafe(int nVelocityOffset, double fVelocitySc
 		int	nMinVel, nMaxVel;
 		if (!m_Seq.CalcVelocityRange(iTrack, nMinVel, nMaxVel, iStartStep, nRangeSteps))	// if can't get range
 			continue;	// skip this track; assume empty note track
-		if (bIsScaling) {
+		if (bIsScaling) {	// if scaling
+			if (bSigned) {	// if signed scaling
+				nMinVel -= 64;	// deduct origin
+				nMaxVel -= 64;
+			}
 			nMinVel = round(nMinVel * fVelocityScale);
 			nMaxVel = round(nMaxVel * fVelocityScale);
-		} else {
+			if (bSigned) {	// if signed scaling
+				nMinVel += 64;	// restore origin
+				nMaxVel += 64;
+			}
+		} else {	// offsetting
 			nMinVel += nVelocityOffset;
 			nMaxVel += nVelocityOffset;
 		}
@@ -1106,7 +1119,7 @@ bool CPolymeterDoc::OffsetTrackVelocity(int nVelocityOffset)
 	return true;
 }
 
-bool CPolymeterDoc::TransformStepVelocity(int nVelocityOffset, double fVelocityScale)
+bool CPolymeterDoc::TransformStepVelocity(int nVelocityOffset, double fVelocityScale, bool bSigned)
 {
 	if (!m_arrTrackSel.GetSize())
 		return false;
@@ -1116,7 +1129,7 @@ bool CPolymeterDoc::TransformStepVelocity(int nVelocityOffset, double fVelocityS
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = m_arrTrackSel[iSel];
 		if (bIsScaling)	// if scaling
-			m_Seq.ScaleSteps(iTrack, 0, m_Seq.GetLength(iTrack), fVelocityScale);
+			m_Seq.ScaleSteps(iTrack, 0, m_Seq.GetLength(iTrack), fVelocityScale, bSigned);
 		else	// offset
 			m_Seq.OffsetSteps(iTrack, 0, m_Seq.GetLength(iTrack), nVelocityOffset);
 	}
@@ -1126,7 +1139,7 @@ bool CPolymeterDoc::TransformStepVelocity(int nVelocityOffset, double fVelocityS
 	return true;
 }
 
-bool CPolymeterDoc::TransformStepVelocity(const CRect& rSelection, int nVelocityOffset, double fVelocityScale)
+bool CPolymeterDoc::TransformStepVelocity(const CRect& rSelection, int nVelocityOffset, double fVelocityScale, bool bSigned)
 {
 	if (rSelection.IsRectEmpty())
 		return false;
@@ -1139,7 +1152,7 @@ bool CPolymeterDoc::TransformStepVelocity(const CRect& rSelection, int nVelocity
 		int	iEndStep = min(rSelection.right, m_Seq.GetLength(iTrack));
 		int	nRangeSteps = max(iEndStep - rSelection.left, 0);
 		if (bIsScaling)	// if scaling
-			m_Seq.ScaleSteps(iTrack, rSelection.left, nRangeSteps, fVelocityScale);
+			m_Seq.ScaleSteps(iTrack, rSelection.left, nRangeSteps, fVelocityScale, bSigned);
 		else	// offset
 			m_Seq.OffsetSteps(iTrack, rSelection.left, nRangeSteps, nVelocityOffset);
 	}
@@ -3099,7 +3112,7 @@ bool CPolymeterDoc::ExportSongAsCSV(LPCTSTR pszDestPath, int nDuration, bool bSo
 	USHORT	nPPQ;
 	UINT	nTempo;	// tempo in microseconds per quarter note
 	mf.ReadTracks(arrTrack, arrTrackName, nPPQ, &nTempo);	// read MIDI file's tracks into arrays
-	double	fTempo = nTempo ? 60000000.0 / nTempo : 0;	// convert tempo to BPM; avoid divide by zero
+	double	fTempo = nTempo ? double(CMidiFile::MICROS_PER_MINUTE) / nTempo : 0;	// convert tempo to BPM; avoid divide by zero
 	CStdioFile	fOut(pszDestPath, CFile::modeCreate | CFile::modeWrite);	// create output CSV file
 	int	nTracks = arrTrack.GetSize();
 	_ftprintf(fOut.m_pStream, _T("MIDIFile,%d,%u,%g,%u\n"), nTracks, nPPQ, fTempo, nTempo);
@@ -3576,17 +3589,24 @@ void CPolymeterDoc::OnUpdateTrackTranspose(CCmdUI *pCmdUI)
 
 void CPolymeterDoc::OnTrackVelocity()
 {
-	int	iDlgPage = CPersist::GetInt(RK_VELOCITY_DLG, RK_VELOCITY_PAGE, 0);
+	int	iDlgPage = CPersist::GetInt(RK_VELOCITY_DLG, RK_VELOCITY_PAGE, 0);	// restore dialog state
 	CVelocitySheet	dlg(IDS_VELOCITY, NULL, CLAMP(iDlgPage, 0, CVelocitySheet::PAGES - 1));
 	dlg.m_nOffset = CPersist::GetInt(RK_VELOCITY_DLG, RK_VELOCITY_OFFSET, 0);
 	dlg.m_nTarget = CPersist::GetInt(RK_VELOCITY_DLG, RK_VELOCITY_TARGET, 0);
 	dlg.m_fScale = CPersist::GetDouble(RK_VELOCITY_DLG, RK_VELOCITY_SCALE, 1);
+	dlg.m_nSigned = CPersist::GetInt(RK_VELOCITY_DLG, RK_VELOCITY_SIGNED, 0);
 	dlg.m_bHaveStepSelection = HaveStepSelection();	// determines whether target setting is enabled
 	if (dlg.DoModal() == IDOK) {
 		int	nTarget = 0;
 		int	nOffset = 0;
 		double	fScale = 1;	// if scale is one, transform is offset, else it's scaling
 		iDlgPage = dlg.GetActiveIndex();
+		CPersist::WriteInt(RK_VELOCITY_DLG, RK_VELOCITY_OFFSET, dlg.m_nOffset);	// save dialog state
+		if (!dlg.m_bHaveStepSelection)	// only update target setting if it was enabled
+			CPersist::WriteInt(RK_VELOCITY_DLG, RK_VELOCITY_TARGET, dlg.m_nTarget);
+		CPersist::WriteDouble(RK_VELOCITY_DLG, RK_VELOCITY_SCALE, dlg.m_fScale);
+		CPersist::WriteInt(RK_VELOCITY_DLG, RK_VELOCITY_SIGNED, dlg.m_nSigned);
+		CPersist::WriteInt(RK_VELOCITY_DLG, RK_VELOCITY_PAGE, iDlgPage);
 		switch (iDlgPage) {
 		case CVelocitySheet::PAGE_OFFSET:
 			nTarget = dlg.m_nTarget;
@@ -3599,12 +3619,13 @@ void CPolymeterDoc::OnTrackVelocity()
 		default:
 			NODEFAULTCASE;
 		}
+		bool	bSigned = dlg.m_nSigned != 0;	// applies to scaling only
 		const CRect	*prStepSel;
 		if (dlg.m_bHaveStepSelection)	// if step selection exists
 			prStepSel = &m_rStepSel;	// pass step selection to clipping check
 		else	// no step selection
 			prStepSel = NULL;
-		if (!IsVelocityChangeSafe(nOffset, fScale, prStepSel)) {	// check transform for clipping
+		if (!IsVelocityChangeSafe(nOffset, fScale, prStepSel, NULL, bSigned)) {	// check transform for clipping
 			if (AfxMessageBox(IDS_DOC_CLIP_WARNING, MB_OKCANCEL) != IDOK)
 				return;	// user canceled
 		}
@@ -3615,19 +3636,14 @@ void CPolymeterDoc::OnTrackVelocity()
 				break;
 			case CVelocitySheet::TARGET_STEPS:
 				if (dlg.m_bHaveStepSelection)	// if step selection exists
-					TransformStepVelocity(m_rStepSel, nOffset, fScale);	// transform step selection
+					TransformStepVelocity(m_rStepSel, nOffset, fScale, bSigned);	// transform step selection
 				else	// no step selection
-					TransformStepVelocity(nOffset, fScale);	// transform all steps of selected tracks
+					TransformStepVelocity(nOffset, fScale, bSigned);	// transform all steps of selected tracks
 				break;
 			default:
 				NODEFAULTCASE;
 			}
 		}
-		CPersist::WriteInt(RK_VELOCITY_DLG, RK_VELOCITY_OFFSET, dlg.m_nOffset);
-		if (!dlg.m_bHaveStepSelection)	// only update target setting if it was enabled
-			CPersist::WriteInt(RK_VELOCITY_DLG, RK_VELOCITY_TARGET, dlg.m_nTarget);
-		CPersist::WriteDouble(RK_VELOCITY_DLG, RK_VELOCITY_SCALE, dlg.m_fScale);
-		CPersist::WriteInt(RK_VELOCITY_DLG, RK_VELOCITY_PAGE, iDlgPage);
 	}
 }
 
@@ -3822,10 +3838,9 @@ void CPolymeterDoc::OnToolsTimeToRepeat()
 		return;
 	int	nTimeDiv = m_Seq.GetTimeDivision();
 	CArrayEx<ULONGLONG, ULONGLONG>	arrDuration;
-	arrDuration.Add(nTimeDiv);	// avoids fractions when LCM result is converted from ticks back to beats
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = m_arrTrackSel[iSel];
-		ULONGLONG	nDuration = m_Seq.GetLength(iTrack) * m_Seq.GetQuant(iTrack);	// track duration in ticks
+		ULONGLONG	nDuration = m_Seq.GetPeriod(iTrack);	// track duration in ticks
 		if (arrDuration.BinarySearch(nDuration) < 0)	// eliminate duplicates to avoid needless LCM
 			arrDuration.InsertSorted(nDuration);	// ascending sort may improve LCM performance
 	}
@@ -3835,24 +3850,36 @@ void CPolymeterDoc::OnToolsTimeToRepeat()
 	for (int iDur = 1; iDur < nDurs; iDur++) {	// for each track duration
 		nLCM = CNumberTheory::LeastCommonMultiple(nLCM, arrDuration[iDur]);
 	}
-	ULONGLONG	nBeats = nLCM / nTimeDiv;	// convert ticks to beats; no remainder, see comment above
-	ULONGLONG	nGPF = CNumberTheory::GreatestPrimeFactor(nBeats);
-	CTimeSpan	ts = round64(nBeats / (m_Seq.GetTempo() / 60));	// convert beats to time in seconds
-	CString	sBeats, sGPF;
-	sBeats.Format(_T("%llu"), nBeats);
-	FormatNumberCommas(sBeats, sBeats);
-	sGPF.Format(_T("%llu"), nGPF);
-	FormatNumberCommas(sGPF, sGPF);
+	ULONGLONG	nBeats = nLCM / nTimeDiv;	// convert ticks to beats
+	int	nTicks = nLCM % nTimeDiv;	// compute remainder in ticks
+	CString	sMsg, sVal;
+	sMsg.Format(_T("%llu"), nBeats);
+	FormatNumberCommas(sMsg, sMsg);
+	sMsg += ' ' + LDS(IDS_TIME_TO_REPEAT_BEATS);
+	if (nTicks) {	// if non-zero remainder
+		sVal.Format(_T("%d"), nTicks);
+		sMsg += _T(" + ") + sVal + ' ' + LDS(IDS_TIME_TO_REPEAT_TICKS);
+	}
+	double	fSeconds = double(nLCM) / nTimeDiv / (m_Seq.GetTempo() / 60);
+	CTimeSpan	ts = round64(fSeconds);	// convert beats to time in seconds
 	CString	sTime(ts.Format(_T("%H:%M:%S")));	// convert time in seconds to string
 	LONGLONG	nDays = ts.GetDays();
 	if (nDays) {	// if one or more days
-		CString	sDays;
-		sDays.Format(_T("%lld"), ts.GetDays());
-		FormatNumberCommas(sDays, sDays);
-		sTime.Insert(0, sDays + ' ' + LDS(IDS_TIME_TO_REPEAT_DAYS) + _T(" + "));
+		sVal.Format(_T("%lld"), ts.GetDays());
+		FormatNumberCommas(sVal, sVal);
+		sTime.Insert(0, sVal + ' ' + LDS(IDS_TIME_TO_REPEAT_DAYS) + _T(" + "));
 	}
-	CString	sMsg;
-	sMsg.Format(IDS_TIME_TO_REPEAT_FMT, sBeats, sTime, sGPF);
+	sMsg += '\n' + sTime;
+	if (nDays >= 365) {	// if one or more years
+		static const double	SIDEREAL_YEAR_DAYS = 365.256363004;
+		double	fYears = fSeconds / (3600 * 24) / SIDEREAL_YEAR_DAYS;
+		sVal.Format(_T("%g"), fYears);
+		sMsg += '\n' + sVal + ' ' + LDS(IDS_TIME_TO_REPEAT_YEARS);
+	}
+	ULONGLONG	nGPF = CNumberTheory::GreatestPrimeFactor(nLCM);
+	sVal.Format(_T("%llu"), nGPF);
+	FormatNumberCommas(sVal, sVal);
+	sMsg += '\n' + LDS(IDS_TIME_TO_REPEAT_GPF) + sVal;
 	AfxMessageBox(sMsg, MB_ICONINFORMATION);
 }
 

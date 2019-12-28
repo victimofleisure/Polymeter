@@ -14,6 +14,7 @@
 		04		14dec18	add InsertModulations
 		05		14feb19	add exclude muted track flag to GetChannelUsage
 		06		22mar19	overload toggle steps for track selection
+		07		15nov19	in ScaleSteps, add signed scaling option
 
 */
 
@@ -726,7 +727,7 @@ void CSeqTrackArray::OffsetSteps(int iTrack, int iStep, int nSteps, int nOffset)
 	}
 }
 
-void CSeqTrackArray::ScaleSteps(int iTrack, int iStep, int nSteps, double fScale)
+void CSeqTrackArray::ScaleSteps(int iTrack, int iStep, int nSteps, double fScale, bool bSigned)
 {
 	CTrack&	trk = GetAt(iTrack);
 	int	nLowerRail;
@@ -737,7 +738,12 @@ void CSeqTrackArray::ScaleSteps(int iTrack, int iStep, int nSteps, double fScale
 	for (int iPos = 0; iPos < nSteps; iPos++) {	// for each step in range
 		STEP&	step = trk.m_arrStep[iStep + iPos]; 
 		if (step || !trk.IsNote()) {	// if non-zero step, or track type isn't note
-			int	nVel = round((step & SB_VELOCITY) * fScale);	// mask off velocity
+			int	nVel = step & SB_VELOCITY;	// mask off velocity
+			if (bSigned)	// if signed scaling
+				nVel -= 64;		// deduct origin
+			nVel = round(nVel * fScale);	// scale velocity
+			if (bSigned)	// if signed scaling
+				nVel += 64;		// restore origin
 			step &= ~SB_VELOCITY;	// zero velocity, preserving tie bit
 			step |= static_cast<STEP>(CLAMP(nVel, nLowerRail, MIDI_NOTE_MAX));
 		}

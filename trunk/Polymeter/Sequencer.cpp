@@ -23,6 +23,7 @@
 		13		14feb19	in export, handle track and song modes similarly
 		14		20feb19	optionally prevent note overlaps
 		15		26feb19	use fast insert for event arrays
+		16		09sep19	add tempo track type and tempo modulation
 
 */
 
@@ -32,6 +33,7 @@
 #include "VariantHelper.h"
 #include "MidiFile.h"
 #include "Midi.h"
+#include <math.h>
 
 #define CHECK(x) { MMRESULT nResult = x; if (MIDI_FAILED(nResult)) { OnMidiError(nResult); return false; } }
 
@@ -40,6 +42,7 @@ CSequencer::CSequencer()
 	m_hStrm = 0;
 	ZeroMemory(&m_arrMsgHdr, sizeof(m_arrMsgHdr));
 	m_fTempo = 120;
+	m_nAltTempo = 0;
 	m_iOutputDevice = 0;
 	m_nTimeDiv = 120;
 	m_nMeter = 1;
@@ -94,7 +97,7 @@ bool CSequencer::WriteTimeDivision(int nTimeDiv)
 
 bool CSequencer::WriteTempo(double fTempo)
 {
-	MIDIPROPTEMPO	mpTempo = {sizeof(mpTempo), round(60000000.0 / fTempo)};
+	MIDIPROPTEMPO	mpTempo = {sizeof(mpTempo), round(CMidiFile::MICROS_PER_MINUTE / fTempo)};
 	CHECK(midiStreamProperty(m_hStrm, (BYTE *)&mpTempo, MIDIPROP_SET | MIDIPROP_TEMPO));
 	return true;
 }
@@ -211,6 +214,7 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 		m_stats.fCBTimeMin = DBL_MAX;
 		UpdateCallbackLength();
 		ResetCachedParameters();
+		m_nAltTempo = 0;
 		m_nCBTime = m_nStartPos;
 		m_nPosOffset = m_nStartPos;
 		m_iBuffer = 0;
@@ -489,6 +493,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 					trk.m_iDub++;
 				}
 			}
+			double	fTempoMod = 1;
 			int	arrMod[MODULATION_TYPES] = {0};	// initialize modulations to zero
 			int	nMods = trk.m_arrModulator.GetSize();
 			for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
@@ -507,9 +512,18 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 							iModStep = ModWrap(iModStep - nPosMod, trkModSource.GetLength());	// modulate position
 					}
 					int	nStepVal = trkModSource.m_arrStep[iModStep] & SB_VELOCITY;
-					if (iModType == MT_Mute)	// if modulation type is mute
+					switch (iModType) {
+					case MT_Mute:
 						arrMod[MT_Mute] |= nStepVal != 0;	// mute track if any of its mute modulators are active
-					else {	// modulation type other than mute
+						break;
+					case MT_Tempo:
+						{
+							// duration is repurposed as tempo change percentage
+							double	fValNorm = double(nStepVal - MIDI_NOTES / 2) / (MIDI_NOTES / 2);
+							fTempoMod *= pow(2, fValNorm * trkModSource.m_nDuration / 100.0);
+						}
+						break;
+					default:
 						nStepVal -= MIDI_NOTES / 2;	// convert step value to signed offset
 						arrMod[iModType] += nStepVal;	// accumulate modulation value
 					}
@@ -551,9 +565,21 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 						}
 					}
 				} else if (trk.m_iType != TT_MODULATOR) {	// track type isn't note or modulator
-					int	nVal = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
-					nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
-					OutputControlEvent(trk, nEvtTime, nVal);
+					if (trk.m_iType == TT_TEMPO) {	// if track type is tempo
+						int	nVal = trk.m_arrStep[iModStep] & SB_VELOCITY;
+						double	fValNorm = double(nVal - MIDI_NOTES / 2) / (MIDI_NOTES / 2);
+						double	fTempoOut = m_fTempo * pow(2, fValNorm * trk.m_nDuration / 100.0) * fTempoMod;
+						int	iTempo = round(CMidiFile::MICROS_PER_MINUTE / fTempoOut);
+						if (iTempo != m_nAltTempo) {	// if altered tempo actually changed
+							m_nAltTempo = iTempo;	// update shadow
+							CEvent	evtTempo(nEvtTime, (MEVT_TEMPO << 24) | iTempo);
+							m_arrTempoEvent.FastAdd(evtTempo);	// add tempo event
+						}
+					} else {	// track type is control event
+						int	nVal = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
+						nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
+						OutputControlEvent(trk, nEvtTime, nVal);
+					}
 				}
 			}
 		}
@@ -588,10 +614,11 @@ bool CSequencer::OutputMidiBuffer()
 	{
 		WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 		m_arrEvent.FastRemoveAll();
+		m_arrTempoEvent.FastRemoveAll();
 		// handle tempo change first to improve responsiveness
 		if (m_bIsTempoChange) {	// if tempo changed
 			m_bIsTempoChange = false;	// reset signal
-			int	iTempo = round(60000000.0 / m_fTempo);
+			int	iTempo = round(CMidiFile::MICROS_PER_MINUTE / m_fTempo);
 			CEvent	evtTempo(0, (MEVT_TEMPO << 24) | iTempo);	// at callback start time
 			m_arrEvent.Add(evtTempo);	// add tempo event
 		}
@@ -632,10 +659,15 @@ bool CSequencer::OutputMidiBuffer()
 	// fill MIDI output buffer with events created above
 	CMidiEventStream&	arrEvt = m_arrMidiEvent[m_iBuffer];
 	int	nEvents = m_arrEvent.GetSize();
-	if (nEvents) {	// if any events to output
+	int	nTempoEvts = m_arrTempoEvent.GetSize();
+	if (nEvents || nTempoEvts) {	// if any events to output
 		if (m_bPreventNoteOverlap) {	// if preventing note overlap
 			FixNoteOverlaps();
 			nEvents = m_arrEvent.GetSize();	// fixing may resize event array
+		}
+		// add tempo events after note processing, which can't handle meta-events
+		for (int iTempoEvt = 0; iTempoEvt < nTempoEvts; iTempoEvt++) {	// for each tempo event
+			m_arrEvent.FastInsertSorted(m_arrTempoEvent[iTempoEvt]);	// insert into event array
 		}
 		CEvent	evt(m_nCBLen, MEVT_NOP << 24);
 		m_arrEvent.Add(evt);	// pad time to start of next callback
@@ -738,30 +770,25 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 	ChaseDubs(m_nStartPos, true);	// reset dub indices and update mutes
 	int	nChunkDuration = m_nLatency;	// same latency as playback to ensure identical dubbing
 	CMidiFile	fMidi(pszPath, CFile::modeCreate | CFile::modeWrite);	// create MIDI file
-	USHORT	uTracks = static_cast<USHORT>(nUsedTracks + 1);	// account for initialization track
+	USHORT	uTracks = static_cast<USHORT>(nUsedTracks);
 	USHORT	uTimeDiv = static_cast<USHORT>(m_nTimeDiv);
-	fMidi.WriteHeader(uTracks, uTimeDiv, m_fTempo);	// write MIDI file header
 	int	nChunkLen = GetCallbackLength(nChunkDuration);	// convert chunk duration to ticks
-	int	nChunks = (nDuration * 1000 - 1) / nChunkDuration + 1;	// number of chunks, rounded up
+	int nDurationTicks = static_cast<int>(ConvertSecondsToPosition(nDuration));
+	int	nChunks = (nDurationTicks - 1) / nChunkLen + 1;	// number of chunks, rounded up
 	m_nCBLen = nChunkLen;	// set callback length member; used in AddTrackEvents
-	{	// output initialization track
-		CMidiFile::CMidiEventArray arrMidiEvent;
-		int	nInitEvents = m_arrInitMidiEvent.GetSize();
-		arrMidiEvent.SetSize(nInitEvents + 1);
-		for (int iEvt = 0; iEvt < nInitEvents; iEvt++) {	// for each initial event
-			CMidiFile::MIDI_EVENT	evt = {0, m_arrInitMidiEvent[iEvt]};
-			arrMidiEvent[iEvt] = evt;
-		}
-		int	nDurationTicks = static_cast<int>(ConvertSecondsToPosition(nDuration));
-		CMidiFile::MIDI_EVENT	evt = {nDurationTicks, KEY_AFT};	// dummy event to pad track out to duration
-		arrMidiEvent[nInitEvents] = evt;
-		fMidi.WriteTrack(arrMidiEvent);	// write initialization track
-	}
 	int	nCBTime = m_nStartPos;
 	CMidiFile::CMidiEventArray arrMidiEvent[MIDI_CHANNELS];
+	int	nInitEvents = m_arrInitMidiEvent.GetSize();
+	for (int iEvt = 0; iEvt < nInitEvents; iEvt++) {	// for each initial event
+		int	iChan = MIDI_CHAN(m_arrInitMidiEvent[iEvt]);
+		CMidiFile::MIDI_EVENT	evt = {m_nStartPos, m_arrInitMidiEvent[iEvt]};
+		arrMidiEvent[iChan].Add(evt);	// add initial event to per-channel array
+	}
+	CEventArray arrSongTempoEvent;
 	int	nTracks = GetSize();
 	for (int iChunk = 0; iChunk < nChunks; iChunk++) {	// for each time chunk
 		m_arrEvent.FastRemoveAll();	// empty event array
+		m_arrTempoEvent.FastRemoveAll();	// empty tempo event array
 		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 			AddTrackEvents(iTrack, nCBTime);	// get track's events for this chunk
 			AddNoteOffs(nCBTime, nCBTime + nChunkLen);	// add note offs for this chunk
@@ -777,8 +804,29 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 			int	iChan = MIDI_CHAN(evt.m_dwEvent);
 			arrMidiEvent[iChan].Add(midiEvt);	// add event to per-channel array
 		}
+		int	nTempoEvts = m_arrTempoEvent.GetSize();
+		for (int iTempoEvt = 0; iTempoEvt < nTempoEvts; iTempoEvt++) {	// for each tempo event
+			m_arrTempoEvent[iTempoEvt].m_dwTime += nCBTime;	// convert to song time
+			arrSongTempoEvent.FastInsertSorted(m_arrTempoEvent[iTempoEvt]);	// add event to song tempo event array
+		}
 		nCBTime += nChunkLen;
 	}
+	CMidiFile::CMidiEventArray arrTempoMap;
+	CMidiFile::CMidiEventArray *parrTempoMap = NULL;
+	int	nTempoEvts = arrSongTempoEvent.GetSize();
+	if (nTempoEvts) {
+		arrTempoMap.SetSize(nTempoEvts);
+		int	nPrevTime = m_nStartPos;
+		for (int iTempoEvt = 0; iTempoEvt < nTempoEvts; iTempoEvt++) {	// for each tempo event
+			const CEvent&	evt = arrSongTempoEvent[iTempoEvt];
+			int	nTime = evt.m_dwTime - nPrevTime;
+			nPrevTime = evt.m_dwTime;
+			CMidiFile::MIDI_EVENT	midiEvt = {nTime, MEVT_EVENTPARM(evt.m_dwEvent)};
+			arrTempoMap[iTempoEvt] = midiEvt;
+		}
+		parrTempoMap = &arrTempoMap;
+	}
+	fMidi.WriteHeader(uTracks, uTimeDiv, m_fTempo, nDurationTicks, NULL, NULL, parrTempoMap);	// write MIDI file header
 	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each MIDI channel
 		int	iTrack = arrFirstTrack[iChan];
 		if (iTrack >= 0) {	// if channel is used
@@ -966,7 +1014,7 @@ int CSequencer::GetStepIndex(int iTrack, LONGLONG nPos) const
 	int	nLength = trk.GetLength();
 	int	nQuant = trk.m_nQuant;
 	int	nOffset = trk.m_nOffset;
-	// similar to AddEvents, but divide by nQuant instead nQuant * 2
+	// similar to AddTrackEvents, but divide by nQuant instead nQuant * 2
 	int	nTrkStart = static_cast<int>(nPos) - nOffset;
 	int	iQuant = nTrkStart / nQuant;
 	int	nEvtTime = nTrkStart % nQuant;

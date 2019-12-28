@@ -13,6 +13,7 @@
         03		07jan19	add piano bar
 		04		25jan19	add graph bar
 		05		29jan19	add MIDI input bar
+		06		12dec19	add phase bar
 
 */
 
@@ -29,6 +30,7 @@
 #include "MidiEventBar.h"
 #include "PianoBar.h"
 #include "GraphBar.h"
+#include "PhaseBar.h"
 
 // docking bar IDs are relative to AFX_IDW_CONTROLBAR_FIRST
 enum {	// docking bar IDs; don't change, else bar placement won't be restored
@@ -70,6 +72,7 @@ public:
 	CMidiEventBar&	GetMidiOutputBar();
 	CPianoBar& GetPianoBar();
 	CGraphBar& GetGraphBar();
+	CPhaseBar& GetPhaseBar();
 	CString	GetSongPositionString() const;
 	CString	GetSongTimeString() const;
 
@@ -107,6 +110,7 @@ protected:  // control bar embedded members
 	CMidiEventBar	  m_wndMidiOutputBar;
 	CPianoBar		  m_wndPianoBar;
 	CGraphBar		  m_wndGraphBar;
+	CPhaseBar		  m_wndPhaseBar;
 
 // Constants
 	static const UINT m_arrIndicatorID[];	// array of status bar indicator IDs
@@ -230,6 +234,11 @@ inline CPianoBar& CMainFrame::GetPianoBar()
 inline CGraphBar& CMainFrame::GetGraphBar()
 {
 	return m_wndGraphBar;
+}
+
+inline CPhaseBar& CMainFrame::GetPhaseBar()
+{
+	return m_wndPhaseBar;
 }
 
 inline CString CMainFrame::GetSongPositionString() const

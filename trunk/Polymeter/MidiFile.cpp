@@ -13,6 +13,7 @@
         03      25apr18	standardize names
         04      10oct18 add read
 		05		11feb19	add tempo and key and time signatures to read
+		06		09sep19	add duration and tempo map to write
 
 		MIDI file I/O
  
@@ -117,12 +118,20 @@ void CMidiFile::ReadVarLen(UINT& Val)
 	}
 }
 
-void CMidiFile::WriteMeta(BYTE Type, UINT Len)
+void CMidiFile::WriteMeta(UINT DeltaT, BYTE Type, UINT Len)
 {
-	WriteByte(0);	// write zero delta time; required
+	WriteVarLen(DeltaT);	// write delta time
 	WriteByte(META_EVENT);	// write meta event pseudo-status
 	WriteByte(Type);	// write meta event type
 	WriteVarLen(Len);	// write meta event data size
+}
+
+void CMidiFile::WriteTempo(UINT DeltaT, UINT Tempo)
+{
+	WriteMeta(DeltaT, ME_SET_TEMPO, TEMPO_LEN);	// write meta header
+	BYTE	TempoBuf[TEMPO_LEN];
+	Reverse(TempoBuf, &Tempo, TEMPO_LEN);	// convert tempo to big endian
+	Write(TempoBuf, TEMPO_LEN);	// write tempo
 }
 
 CMidiFile::FILE_POS CMidiFile::BeginTrack()
@@ -134,7 +143,7 @@ CMidiFile::FILE_POS CMidiFile::BeginTrack()
 
 void CMidiFile::EndTrack(FILE_POS StartPos)
 {
-	WriteMeta(ME_END_TRACK, 0);	// not optional
+	WriteMeta(0, ME_END_TRACK, 0);	// not optional
 	FILE_POS	EndPos = GetPosition();	// get file position at end of chunk
 	int	ChunkSize = static_cast<UINT>(EndPos - StartPos);	// compute chunk size
 	int	ChunkSizeOffset = ChunkSize + sizeof(int);	// include size in offset
@@ -143,7 +152,7 @@ void CMidiFile::EndTrack(FILE_POS StartPos)
 	Seek(ChunkSize, CFile::current);	// restore file position
 }
 
-void CMidiFile::WriteHeader(USHORT nTracks, USHORT nPPQ, double fTempo, const TIME_SIGNATURE* pTimeSig, const KEY_SIGNATURE* pKeySig)
+void CMidiFile::WriteHeader(USHORT nTracks, USHORT nPPQ, double fTempo, UINT nDurationTicks, const TIME_SIGNATURE* pTimeSig, const KEY_SIGNATURE* pKeySig, const CMidiEventArray* parrTempoMap)
 {
 	// write file header
 	Write(&m_nHeaderChunkID, sizeof(m_nHeaderChunkID));	// write chunk ID
@@ -153,21 +162,31 @@ void CMidiFile::WriteHeader(USHORT nTracks, USHORT nPPQ, double fTempo, const TI
 	WriteShort(nPPQ);	// write pulses per quarter note
 	// write song track
 	FILE_POS	StartPos = BeginTrack();	// write track header
+	int	uspqn = 0;
 	if (fTempo > 0) {	// if tempo specified
-		WriteMeta(ME_SET_TEMPO, TEMPO_LEN);	// write meta header
-		int	mspq = round(60000000 / fTempo);	 // microseconds per quarter note
-		BYTE	TempoBuf[TEMPO_LEN];
-		Reverse(TempoBuf, &mspq, TEMPO_LEN);	// convert tempo to big endian
-		Write(TempoBuf, TEMPO_LEN);	// write tempo
+		uspqn = round(MICROS_PER_MINUTE / fTempo);	 // microseconds per quarter note
+		WriteTempo(0, uspqn);	// write tempo
 	}
 	if (pTimeSig != NULL) {	// if time signature specified
-		WriteMeta(ME_TIME_SIGNATURE, TIME_SIG_LEN);	// write meta header
+		WriteMeta(0, ME_TIME_SIGNATURE, TIME_SIG_LEN);	// write meta header
 		Write(pTimeSig, TIME_SIG_LEN);	// write time signature
 	}
 	if (pKeySig != NULL) {	// if key signature specified
-		WriteMeta(ME_KEY_SIGNATURE, KEY_SIG_LEN);	// write meta header
+		WriteMeta(0, ME_KEY_SIGNATURE, KEY_SIG_LEN);	// write meta header
 		Write(pKeySig, KEY_SIG_LEN);	// write key signature
 	}
+	UINT	nLastTempoEvtTime = 0;
+	if (parrTempoMap != NULL && parrTempoMap->GetSize()) {	// if tempo map specified
+		int	nEvents = parrTempoMap->GetSize();
+		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each tempo map event
+			const MIDI_EVENT&	midiEvt = (*parrTempoMap)[iEvent];
+			WriteTempo(midiEvt.DeltaT, midiEvt.Msg);
+			nLastTempoEvtTime += midiEvt.DeltaT;	// accumulate duration
+		}
+		uspqn = (*parrTempoMap)[nEvents - 1].Msg;	// store last tempo
+	}
+	if (nDurationTicks > nLastTempoEvtTime && uspqn)
+		WriteTempo(nDurationTicks - nLastTempoEvtTime, uspqn);	// pad track to duration
 	EndTrack(StartPos);	// finish track and fix header
 }
 
@@ -178,7 +197,7 @@ void CMidiFile::WriteTrack(const CMidiEventArray& arrEvent, LPCTSTR pszName)
 	if (pszName != NULL) {	// if track name specified
 		int	len = UINT64TO32(_tcslen(pszName));
 		if (len) {	// if track name has non-zero length
-			WriteMeta(ME_TRACK_NAME, len);	// write meta header
+			WriteMeta(0, ME_TRACK_NAME, len);	// write meta header
 			Write(T2CA(pszName), len);	// write track name
 		}
 	}

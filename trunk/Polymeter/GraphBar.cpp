@@ -11,6 +11,7 @@
 		01		30jan19	fix graph too small when system text size above 100%
 		02		31jan19	if unable to write graph, show blank page
 		03		10feb19	move temp file path wrapper to app
+		04		09sep19	add tempo modulation color
 
 */
 
@@ -42,6 +43,7 @@ IMPLEMENT_DYNAMIC(CGraphBar, CMyDockablePane)
 #define MOD_TYPE_COLOR_Duration	"blue"
 #define MOD_TYPE_COLOR_Range	"darkcyan"
 #define MOD_TYPE_COLOR_Position	"purple"
+#define MOD_TYPE_COLOR_Tempo	"brown"
 
 // adding a new modulation type requires adding a new color name above
 const LPCTSTR CGraphBar::m_arrModTypeColor[CTrack::MODULATION_TYPES] = {

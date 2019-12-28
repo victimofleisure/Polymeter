@@ -13,6 +13,8 @@
 		03		14dec18	add InsertModulations
 		04		14feb19	add exclude muted track flag to GetChannelUsage
 		05		22mar19	overload toggle steps for track selection
+		06		15nov19	in ScaleSteps, add signed scaling option
+		07		12dec19	add GetPeriod
 
 */
 
@@ -48,6 +50,7 @@ public:
 	void	SetQuant(int iTrack, int nQuant);
 	int		GetLength(int iTrack) const;
 	void	SetLength(int iTrack, int nLength);
+	int		GetPeriod(int iTrack) const;
 	int		GetOffset(int iTrack) const;
 	void	SetOffset(int iTrack, int nOffset);
 	int		GetSwing(int iTrack) const;
@@ -115,7 +118,7 @@ public:
 	void	RotateSteps(int iTrack, int nOffset);
 	void	RotateSteps(int iTrack, int iStep, int nSteps, int nOffset);
 	void	OffsetSteps(int iTrack, int iStep, int nSteps, int nOffset);
-	void	ScaleSteps(int iTrack, int iStep, int nSteps, double fScale);
+	void	ScaleSteps(int iTrack, int iStep, int nSteps, double fScale, bool bSigned);
 	void	OnRecordStart(int nStartTime);
 	void	OnRecordStop(int nEndTime);
 	void	AddDub(int iTrack, int nTime);
@@ -246,6 +249,11 @@ inline void CSeqTrackArray::SetQuant(int iTrack, int nQuant)
 inline int CSeqTrackArray::GetLength(int iTrack) const
 {
 	return GetAt(iTrack).GetLength();
+}
+
+inline int CSeqTrackArray::GetPeriod(int iTrack) const
+{
+	return GetAt(iTrack).GetPeriod();
 }
 
 inline int CSeqTrackArray::GetOffset(int iTrack) const

@@ -11,6 +11,7 @@
 		01		11dec18	add note range type and start
 		02		12dec18	move track type defs here
 		03		19dec18	add value range
+		04		09sep19	add tempo track type and tempo modulation
 
 */
 
@@ -54,6 +55,7 @@ TRACKTYPEDEF(CONTROL)
 TRACKTYPEDEF(PATCH)
 TRACKTYPEDEF(CHAN_AFT)
 TRACKTYPEDEF(WHEEL)
+TRACKTYPEDEF(TEMPO)
 TRACKTYPEDEF(MODULATOR)
 
 #undef TRACKTYPEDEF
@@ -67,6 +69,7 @@ MODTYPEDEF(Velocity)
 MODTYPEDEF(Duration)
 MODTYPEDEF(Range)
 MODTYPEDEF(Position)
+MODTYPEDEF(Tempo)
 
 #undef MODTYPEDEF
 #endif	// MODTYPEDEF

@@ -16,6 +16,7 @@
 		06		25jan19	add graph bar
 		07		29jan19	add MIDI input bar; refactor create dockable panes
 		08		20feb19	add note overlap prevention
+		09		12dec19	add phase bar
 
 */
 
@@ -180,6 +181,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	DockPane(&m_wndPianoBar);
 	m_wndGraphBar.EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_wndGraphBar);
+	m_wndPhaseBar.EnableDocking(CBRS_ALIGN_ANY);
+	DockPane(&m_wndPhaseBar);
 
 	// enable Visual Studio 2005 style docking window behavior
 	CDockingManager::SetDockingMode(DT_SMART);
@@ -504,6 +507,8 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	m_wndModulationsBar.OnUpdate(pSender, lHint, pHint);	// update modulation bar
 	if (m_wndGraphBar.FastIsVisible())
 		m_wndGraphBar.OnUpdate(pSender, lHint, pHint);
+	if (m_wndPhaseBar.FastIsVisible())
+		m_wndPhaseBar.OnUpdate(pSender, lHint, pHint);
 }
 
 void CMainFrame::UpdateSongPosition()

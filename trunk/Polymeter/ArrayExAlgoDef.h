@@ -11,6 +11,7 @@
 		01		29sep18	for Insert methods, remove const from val
 		02		10nov18	add binary search insert pos
 		03		31dec18	refactor to reuse code
+		04		02dec19	add sort method
 
 */
 
@@ -345,6 +346,26 @@ void Shift(W64INT iStart, W64INT nElems, W64INT nOffset, CArrayEx_TYPE& val)
 void Shift(W64INT nOffset, CArrayEx_TYPE& val) 
 {
 	Shift(0, m_nSize, nOffset, val); 
+}
+
+static int SortCompareAscending(const void *elem1, const void *elem2)
+{
+	const CArrayEx_TYPE	*a = (const CArrayEx_TYPE *)elem1;
+	const CArrayEx_TYPE	*b = (const CArrayEx_TYPE *)elem2;
+	return(*a < *b ? -1 : (*a > *b ? 1 : 0));
+}
+
+static int SortCompareDescending(const void *elem1, const void *elem2)
+{
+	const CArrayEx_TYPE	*a = (const CArrayEx_TYPE *)elem1;
+	const CArrayEx_TYPE	*b = (const CArrayEx_TYPE *)elem2;
+	return(*a < *b ? 1 : (*a > *b ? -1 : 0));
+}
+
+void Sort(bool bDescending = FALSE)
+{
+	qsort(m_pData, m_nSize, sizeof(CArrayEx_TYPE), 
+		bDescending ? SortCompareDescending : SortCompareAscending);
 }
 
 #undef CArrayEx_TYPE

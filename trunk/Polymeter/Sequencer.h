@@ -13,6 +13,7 @@
 		03		03jan19	add MIDI output capture
 		04		12jan19	add recursive position modulation
 		05		20feb19	add note reference counts
+		06		09sep19	add tempo event array
 
 */
 
@@ -150,6 +151,7 @@ protected:
 	HMIDISTRM	m_hStrm;			// MIDI stream handle
 	MIDIHDR	m_arrMsgHdr[BUFFERS];	// array of MIDI message headers
 	double	m_fTempo;				// tempo, in beats per minute
+	int		m_nAltTempo;			// altered tempo, in microseconds per quarter note
 	int		m_iOutputDevice;		// index of output MIDI device
 	int		m_nTimeDiv;				// time division, in pulses per quarter note
 	int		m_nMeter;				// number of beats in a measure
@@ -174,6 +176,7 @@ protected:
 	CMidiEventStream	m_arrMidiEvent[BUFFERS];	// array of MIDI event stream buffers
 	CEventArray	m_arrEvent;			// array of track events
 	CEventArray	m_arrNoteOff;		// array of pending note off events
+	CEventArray	m_arrTempoEvent;	// array of tempo events
 	CDWordArrayEx	m_arrInitMidiEvent;	// array of MIDI events to output at start of playback
 	CILockRingBuf<DWORD>	m_qLiveEvent;	// thread-safe queue of live events to be output
 	MIDI_PARAMS	m_MidiCache;		// cached values of MIDI parameters

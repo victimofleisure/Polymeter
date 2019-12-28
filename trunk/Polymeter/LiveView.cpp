@@ -9,6 +9,7 @@
 		rev		date	comments
         00      20jun18	initial version
         01      15dec18	show unnamed tracks
+        02      12dec19	add GetPeriod
 
 */
 
@@ -196,13 +197,13 @@ void CLiveView::UpdatePartLengths()
 			int	nMaxLen = 1;	// avoids divide by zero in UpdateBars
 			for (int iMbr = 0; iMbr < nMbrs; iMbr++) {	// for each part member
 				int	iTrack = part.m_arrTrackIdx[iMbr];
-				int	nLen = pDoc->m_Seq.GetLength(iTrack) * pDoc->m_Seq.GetQuant(iTrack);
+				int	nLen = pDoc->m_Seq.GetPeriod(iTrack);
 				if (nLen > nMaxLen)
 					nMaxLen = nLen;
 			}
 			m_wndPosBar.m_arrPartInfo[iItem].nLength = nMaxLen;
 		} else {
-			m_wndPosBar.m_arrPartInfo[iItem].nLength = pDoc->m_Seq.GetLength(iPart) * pDoc->m_Seq.GetQuant(iPart);
+			m_wndPosBar.m_arrPartInfo[iItem].nLength = pDoc->m_Seq.GetPeriod(iPart);
 		}
 		m_wndPosBar.InvalidateBar(iItem);
 	}

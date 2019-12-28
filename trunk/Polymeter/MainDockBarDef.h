@@ -12,6 +12,7 @@
         02		07jan19	add piano bar
 		03		25jan19	add graph bar
 		04		29jan19	add MIDI input bar
+		05		12dec19	add phase bar
 		
 */
 
@@ -29,6 +30,7 @@ MAINDOCKBARDEF(MidiOutput,	300,	200,	dwBaseStyle | CBRS_RIGHT)
 MAINDOCKBARDEF(Piano,		140,	140,	dwBaseStyle | CBRS_BOTTOM)
 MAINDOCKBARDEF(Graph,		300,	200,	dwBaseStyle | CBRS_LEFT)
 MAINDOCKBARDEF(MidiInput,	300,	200,	dwBaseStyle | CBRS_RIGHT)
+MAINDOCKBARDEF(Phase,		150,	150,	dwBaseStyle | CBRS_LEFT)
 
 // After adding a new dockable bar here:
 // 1. Add a resource string IDS_BAR_Foo where Foo is the bar name.

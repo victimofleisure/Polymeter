@@ -11,6 +11,7 @@
 		01		07may15	in DumpAccidentalsTable, fix unused file pointer arg
 		02		12may15	refactor MakeAccidentalsTable to specify flattest key
 		03		25apr18	use safe file open methods
+		04		10jul19	in ScanNoteName, normalize note after applying accidentals
  
 		diatonic framework
 
@@ -59,10 +60,15 @@ int CDiatonic::ScanNoteName(LPCTSTR Name, CNote& Note)
 	CNote	note(m_NaturalScale.Note[iNote]);	// convert index to note
 	int	iCh = 1;
 	while (Name[iCh] == '#' || Name[iCh] == 'b') {
-		if (Name[iCh] == '#')	// if sharp
+		if (Name[iCh] == '#') {	// if sharp
 			note++;	// increment note
-		else	// else flat
+			if (note >= NOTES)	// if normalized range exceeded
+				note = 0;	// wrap around to keep note normalized
+		} else {	// else flat
 			note--;	// decrement note
+			if (note < 0)	// if normalized range exceeded
+				note = NOTES - 1;	// wrap around to keep note normalized
+		}
 		iCh++;
 	}
 	Note = note;

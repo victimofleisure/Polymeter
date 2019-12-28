@@ -20,6 +20,7 @@
 		10		25jan19	add modulation crawler to track array
 		11		27jan19	cache type name strings instead of loading every time
 		12		03feb19	add return value to track array's import MIDI file
+		13		12dec19	add GetPeriod
 
 */
 
@@ -337,6 +338,7 @@ public:
 
 // Attributes
 	int		GetLength() const;
+	int		GetPeriod() const;
 	int		GetUsedStepCount() const;
 	void	SetDefaults();
 	bool	IsNote() const;
@@ -389,6 +391,11 @@ inline void CTrack::CopyKeepingID(const CTrack& track)
 inline int CTrack::GetLength() const
 {
 	return m_arrStep.GetSize();
+}
+
+inline int CTrack::GetPeriod() const
+{
+	return m_arrStep.GetSize() * m_nQuant;
 }
 
 inline bool CTrack::IsNote() const

@@ -14,6 +14,9 @@
 		04		07dec18	OnInitialUpdate was restoring step zoom due to typo
 		05		10dec18	add song time shift to handle negative times
 		06		10dec18	updating view size now invalidates
+		07		20nov19	try to fix sporadic unpainted cells by simplifying drawing
+		08		26dec19	in OnDraw, exclude song position marker from background fill
+		09		28dec19	in OnDraw, draw bottom outline of last row of cells
 
 */
 
@@ -571,36 +574,29 @@ void CSongView::OnDraw(CDC* pDC)
 				iColor = 0;
 			if (HaveSelection() && m_rCellSel.PtInRect(CPoint(iCell, iTrack)))	// if cell within selection
 				iColor |= CF_SELECT;
-			COLORREF	clrBorder = m_clrCell[iColor];
-			if (bIsFull) {
-				CSize	szStep(m_nCellWidth / 4, m_nTrackHeight / 4);	// quarter-width border
-				CRect	rStep(x + szStep.cx, y + szStep.cy, 
-					x + m_nCellWidth - szStep.cx, y + m_nTrackHeight - szStep.cy);
-				CRect	rBorder;
-				rBorder = CRect(rCell.left, rCell.top, rCell.right, rStep.top);
-				pDC->FillSolidRect(rBorder, clrBorder);
-				rBorder = CRect(rCell.left, rStep.bottom, rCell.right, rCell.bottom);
-				pDC->FillSolidRect(rBorder, clrBorder);
-				rBorder = CRect(rCell.left, rStep.top, rStep.left, rStep.bottom);
-				pDC->FillSolidRect(rBorder, clrBorder);
-				rBorder = CRect(rStep.right, rStep.top, rCell.right, rStep.bottom);
-				pDC->FillSolidRect(rBorder, clrBorder);
-				pDC->FillSolidRect(rStep, m_clrCell[iColor + bIsFull]);
-			} else {
-				pDC->FillSolidRect(rCell, clrBorder);
+			pDC->FillSolidRect(rCell, m_clrCell[iColor]);	// draw cell background
+			if (bIsFull) {	// if cell is occupied
+				CSize	szMark(m_nCellWidth / 4, m_nTrackHeight / 4);	// quarter-width border
+				CRect	rMark(x + szMark.cx, y + szMark.cy, 
+					x + m_nCellWidth - szMark.cx, y + m_nTrackHeight - szMark.cy);
+				pDC->FillSolidRect(rMark, m_clrCell[iColor + 1]);	// draw cell marker
 			}
 		}
 	}
 	CRect	rCells(CPoint(iFirstCell * m_nCellWidth, iFirstTrack * m_nTrackHeight),
-		CSize((iLastCell - iFirstCell + 1) * m_nCellWidth, (iLastTrack - iFirstTrack + 1) * m_nTrackHeight));
-	if (m_bIsSongPosVisible) {
+		CSize((iLastCell - iFirstCell + 1) * m_nCellWidth, (iLastTrack - iFirstTrack + 1) * m_nTrackHeight + 1));
+	if (rClip.bottom >= rCells.bottom)	// if clip rectangle includes last row of cells rectangle
+		pDC->FillSolidRect(rClip.left, rCells.bottom - 1, rClip.Width(), 1, m_clrStepOutline);	// draw bottom outline
+	if (m_bIsSongPosVisible) {	// if song position indicator is visible
 		int	x = m_nSongPosX;
-		if (x >= rCells.left && x < rCells.right) {
+		if (x >= rCells.left && x < rCells.right) {	// if song position is within cells rectangle
 			pDC->FillSolidRect(x, rClip.top, 1, rClip.Height(), m_clrSongPos);
+			if (rClip.bottom > rCells.bottom)	// if clip rectangle extends below cells rectangle
+				pDC->ExcludeClipRect(CRect(CPoint(x, rClip.top), CSize(1, rClip.Height())));	// exclude indicator
 		}
 	}
-	pDC->ExcludeClipRect(rCells);
-	pDC->FillSolidRect(rClip, m_clrViewBkgnd);
+	pDC->ExcludeClipRect(rCells);	// exclude cells rectangle from clipping region
+	pDC->FillSolidRect(rClip, m_clrViewBkgnd);	// fill remaining area with background color
 }
 
 // CSongView message map

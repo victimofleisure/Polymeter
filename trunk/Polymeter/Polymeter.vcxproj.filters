@@ -408,6 +408,9 @@
     <ClInclude Include="MainDockBarDef.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PhaseBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Polymeter.cpp">
@@ -672,6 +675,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MidiEventBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PhaseBar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

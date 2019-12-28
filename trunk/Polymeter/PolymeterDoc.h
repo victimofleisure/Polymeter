@@ -18,6 +18,7 @@
 		08		04feb19	add track offset command
 		09		14feb19	refactor export to avoid track mode special cases
 		10		22mar19	add track invert command
+		11		15nov19	add option for signed velocity scaling
 
 */
 
@@ -210,10 +211,10 @@ public:
 	void	RotateTracksOrSteps(int nOffset);
 	bool	IsTranspositionSafe(int nNoteDelta) const;
 	bool	Transpose(int nNoteDelta);
-	bool	IsVelocityChangeSafe(int nVelocityOffset, double fVelocityScale = 1, const CRect *prStepSel = NULL, CRange<int> *prngVelocity = NULL) const;
+	bool	IsVelocityChangeSafe(int nVelocityOffset, double fVelocityScale = 1, const CRect *prStepSel = NULL, CRange<int> *prngVelocity = NULL, bool bSigned = false) const;
 	bool	OffsetTrackVelocity(int nVelocityOffset);
-	bool	TransformStepVelocity(int nVelocityOffset, double fVelocityScale = 1);
-	bool	TransformStepVelocity(const CRect& rSelection, int nVelocityOffset, double fVelocityScale = 1);
+	bool	TransformStepVelocity(int nVelocityOffset, double fVelocityScale = 1, bool bSigned = false);
+	bool	TransformStepVelocity(const CRect& rSelection, int nVelocityOffset, double fVelocityScale = 1, bool bSigned = false);
 	bool	ValidateTrackLength(int nLength, int nQuant) const;
 	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
 	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
