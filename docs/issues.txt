@@ -1,10 +1,13 @@
 open	close	type	description	rev	user
-07/23/18		bug	if key is Gb, note edit spin control drops an octave when Cb is incremented or decremented; error in ParseMidi		
 09/07/18		bug	song edits sometimes leave fragments, especially if zoom is changed while editing		
 01/26/19		bug	resizing docked pane via mouse drag leaves artifacts in Windows 10; affects stock VS2012 app too		
 01/26/19		bug	resizing docked pane via mouse drag leaves gap between scroll bar and pane, when two or more documents exist; affects stock VS2012 app too		
 03/31/19		bug	in piano bar, notes that are active when velocity color is enabled have incorrect key colors		
 05/30/19		bug	modulation list is empty regardless of track selection; can't reproduce it, brain fire?		
+11/04/19		bug	GraphViz times out if modulation is too complicated; introduce variable timeout option?		
+11/12/19		bug	MDI tab control disappears after opening or closing document; hard to reproduce		
+12/03/19		bug	playback is lags behind UI by one tick (0.5 seconds) at tempo of 1 with GS Synth (see phase test)		
+12/10/19		bug	steps aren't drawn when track's quant is very large (e.g. 30720) and step view is zoomed in		
 03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -228,6 +231,15 @@ open	close	type	description	rev	user
 03/21/19	03/22/19	done	left-clicking within mute pane but not on mute button should toggle selected mutes	0.0.25.000	
 05/09/19	05/09/19	done	in velocity pane, bars with value of 64 don't quite line up with origin; rounding issue	0.0.25.001	
 05/22/19	05/30/19	done	piano bar shows tempo changes; ignore events with non-zero MSB	0.0.25.001	
+07/23/18	07/10/19	done	if key is Gb, note edit spin control drops an octave when Cb is incremented or decremented; error in ScanNoteName	0.0.25.002	
+05/12/19	09/11/19	done	support programmed tempo change and tempo map via tempo track type and tempo modulation	0.0.26.000	
+06/10/19	11/15/19	done	add unsigned / signed option to velocity scaling	0.0.26.000	
+11/20/19	11/20/19	done	switching from track view to song view sometimes leaves one cell upainted; simplifying OnDraw seems to fix it	0.0.26.000	
+12/12/19	12/14/19	done	add phase bar	0.0.26.000	
+12/26/19	12/26/19	done	zooming, scrolling or resizing song view erases portion of current position marker below last track	0.0.26.000	
+12/26/19	12/26/19	done	Time to Repeat function should report fractional ticks instead of extending cycle to beat boundary	0.0.26.000	
+12/26/19	12/26/19	done	Time to Repeat function should report years if needed	0.0.26.000	
+12/26/19	12/28/19	done	in song view, last track's bottom outline isn't drawn	0.0.26.000	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 03/22/18		hold	swing modulation; probably not feasible		
@@ -259,7 +271,7 @@ open	close	type	description	rev	user
 07/26/18		hold	in step view, steps should indicate whether track is muted; could be overdoing it, pink gives me a headache		
 07/26/18		hold	command to shift selected steps up or down one or more tracks		
 07/26/18		hold	replace steps, like paste but overwrite steps at insert position instead of shifting them; command or mode?		
-07/30/18		hold	optional tool tip in step view showing step's position and value; position in what format?		
+07/30/18		hold	optional tool tip in step view showing step's position and value; position in what format? Step index?		
 08/02/18		hold	mute tracks in song view; complicates sequencer and song view UI		
 08/02/18		hold	should be able to loop a given time range of sequence, especially in song view, even approximately		
 09/17/18		hold	step zoom via Ctrl + mouse wheel doesn't work unless step view has focus; default OS behavior		
@@ -277,8 +289,10 @@ open	close	type	description	rev	user
 12/12/18		hold	grid control's header should display tooltip for truncated column names; must subclass header control?		
 01/19/19		hold	document I/O doesn't support Unicode track names; initialize INI file with UTF-16 LE BOM (doubles file size)		
 02/28/19		hold	song export length doesn't account for negative start position		
-03/25/19		hold	piano bar should be able to show channels separately via multiple keyboards		
-05/12/19		hold	programmed tempo change; tempo map		
+03/25/19		hold	piano bar should be able to show channels separately via multiple keyboards; harder than it sounds		
+06/12/19		hold	option for space bar to start/stop playback without needing to also press Ctrl key; causes many UI conflicts		
+11/12/19		hold	step values grid view, to allow numeric editing of step values for selected tracks; probably redundant		
+11/12/19		hold	popup edit of step's velocity value, via Ctrl + right click on step; tried it, less useful than hoped		
 05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
@@ -290,3 +304,4 @@ open	close	type	description	rev	user
 11/21/18		punt	while drawing velocities in velocity pane, dragging left/right of window should scroll view; tried it, too confusing		
 01/11/19		punt	in Piano view, if multiple instances of a note overlap, velocity color may be inaccurate; unavoidable		
 02/28/19		punt	song playback doesn't always match live output when modulator tracks have big quants; dub granularity issue		
+11/12/19		todo	add scale and index modulation		

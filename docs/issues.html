@@ -38,14 +38,6 @@
 <TD>user</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>07/23/18</TD>
-<TD>&nbsp;</TD>
-<TD>bug</TD>
-<TD>if key is Gb, note edit spin control drops an octave when Cb is incremented or decremented; error in ParseMidi</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>09/07/18</TD>
 <TD>&nbsp;</TD>
 <TD>bug</TD>
@@ -82,6 +74,38 @@
 <TD>&nbsp;</TD>
 <TD>bug</TD>
 <TD>modulation list is empty regardless of track selection; can't reproduce it, brain fire?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/04/19</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>GraphViz times out if modulation is too complicated; introduce variable timeout option?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/12/19</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>MDI tab control disappears after opening or closing document; hard to reproduce</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/03/19</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>playback is lags behind UI by one tick (0.5 seconds) at tempo of 1 with GS Synth (see phase test)</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/10/19</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>steps aren't drawn when track's quant is very large (e.g. 30720) and step view is zoomed in</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -1870,6 +1894,78 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>07/23/18</TD>
+<TD>07/10/19</TD>
+<TD>done</TD>
+<TD>if key is Gb, note edit spin control drops an octave when Cb is incremented or decremented; error in ScanNoteName</TD>
+<TD>0.0.25.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/12/19</TD>
+<TD>09/11/19</TD>
+<TD>done</TD>
+<TD>support programmed tempo change and tempo map via tempo track type and tempo modulation</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>06/10/19</TD>
+<TD>11/15/19</TD>
+<TD>done</TD>
+<TD>add unsigned / signed option to velocity scaling</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/20/19</TD>
+<TD>11/20/19</TD>
+<TD>done</TD>
+<TD>switching from track view to song view sometimes leaves one cell upainted; simplifying OnDraw seems to fix it</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/12/19</TD>
+<TD>12/14/19</TD>
+<TD>done</TD>
+<TD>add phase bar</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/26/19</TD>
+<TD>12/26/19</TD>
+<TD>done</TD>
+<TD>zooming, scrolling or resizing song view erases portion of current position marker below last track</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/26/19</TD>
+<TD>12/26/19</TD>
+<TD>done</TD>
+<TD>Time to Repeat function should report fractional ticks instead of extending cycle to beat boundary</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/26/19</TD>
+<TD>12/26/19</TD>
+<TD>done</TD>
+<TD>Time to Repeat function should report years if needed</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12/26/19</TD>
+<TD>12/28/19</TD>
+<TD>done</TD>
+<TD>in song view, last track's bottom outline isn't drawn</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -2121,7 +2217,7 @@
 <TD>07/30/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>optional tool tip in step view showing step's position and value; position in what format?</TD>
+<TD>optional tool tip in step view showing step's position and value; position in what format? Step index?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2265,15 +2361,31 @@
 <TD>03/25/19</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>piano bar should be able to show channels separately via multiple keyboards</TD>
+<TD>piano bar should be able to show channels separately via multiple keyboards; harder than it sounds</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>05/12/19</TD>
+<TD>06/12/19</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>programmed tempo change; tempo map</TD>
+<TD>option for space bar to start/stop playback without needing to also press Ctrl key; causes many UI conflicts</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/12/19</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>step values grid view, to allow numeric editing of step values for selected tracks; probably redundant</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/12/19</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>popup edit of step's velocity value, via Ctrl + right click on step; tried it, less useful than hoped</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2362,6 +2474,14 @@
 <TD>&nbsp;</TD>
 <TD>punt</TD>
 <TD>song playback doesn't always match live output when modulator tracks have big quants; dub granularity issue</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11/12/19</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>add scale and index modulation</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
