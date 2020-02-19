@@ -110,6 +110,30 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>02/18/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>song CSV export omits tempo map, because CMidiFile::ReadTracks doesn't support tempo map</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>02/18/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>GetChannelUsage should ignore tempo tracks</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>02/19/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>tracks are limited to 32767 steps and 255 dubs, due to GetPrivateProfileString; roll your own profile code</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>03/25/18</TD>
 <TD>done</TD>
@@ -1963,6 +1987,22 @@
 <TD>done</TD>
 <TD>in song view, last track's bottom outline isn't drawn</TD>
 <TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>02/19/20</TD>
+<TD>02/19/20</TD>
+<TD>done</TD>
+<TD>tracks longer than 2047 steps are truncated; overload GetProfileString and increase buffer from 4K to 64K</TD>
+<TD>0.0.26.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/13/03</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>select custom colors for tracks (Benoit)</TD>
+<TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>

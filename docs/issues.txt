@@ -8,6 +8,9 @@ open	close	type	description	rev	user
 11/12/19		bug	MDI tab control disappears after opening or closing document; hard to reproduce		
 12/03/19		bug	playback is lags behind UI by one tick (0.5 seconds) at tempo of 1 with GS Synth (see phase test)		
 12/10/19		bug	steps aren't drawn when track's quant is very large (e.g. 30720) and step view is zoomed in		
+02/18/20		bug	song CSV export omits tempo map, because CMidiFile::ReadTracks doesn't support tempo map		
+02/18/20		bug	GetChannelUsage should ignore tempo tracks		
+02/19/20		bug	tracks are limited to 32767 steps and 255 dubs, due to GetPrivateProfileString; roll your own profile code		
 03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -240,6 +243,8 @@ open	close	type	description	rev	user
 12/26/19	12/26/19	done	Time to Repeat function should report fractional ticks instead of extending cycle to beat boundary	0.0.26.000	
 12/26/19	12/26/19	done	Time to Repeat function should report years if needed	0.0.26.000	
 12/26/19	12/28/19	done	in song view, last track's bottom outline isn't drawn	0.0.26.000	
+02/19/20	02/19/20	done	tracks longer than 2047 steps are truncated; overload GetProfileString and increase buffer from 4K to 64K	0.0.26.001	
+05/13/03		hold	select custom colors for tracks (Benoit)		
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 03/22/18		hold	swing modulation; probably not feasible		
