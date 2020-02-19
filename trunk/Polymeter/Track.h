@@ -21,6 +21,7 @@
 		11		27jan19	cache type name strings instead of loading every time
 		12		03feb19	add return value to track array's import MIDI file
 		13		12dec19	add GetPeriod
+		14		17feb20	move MIDI event class into track base
 
 */
 
@@ -90,6 +91,20 @@ public:
 	typedef CByteArrayEx CStepArray;	// array of sequencer steps
 	typedef CArrayEx<CStepArray, CStepArray&> CStepArrayArray;	// array of step arrays
 	typedef CBoolArrayEx CMuteArray;	// array of mutes
+	class CMidiEvent {
+	public:
+		CMidiEvent() {};
+		CMidiEvent(DWORD dwTime, DWORD dwEvent);
+		bool	operator==(const CMidiEvent &evt) const;
+		bool	operator!=(const CMidiEvent &evt) const;
+		bool	operator<(const CMidiEvent &evt) const;
+		bool	operator>(const CMidiEvent &evt) const;
+		bool	operator<=(const CMidiEvent &evt) const;
+		bool	operator>=(const CMidiEvent &evt) const;
+		int		m_dwTime;		// time in ticks
+		DWORD	m_dwEvent;		// MIDI event
+	};
+	typedef CArrayEx<CMidiEvent, CMidiEvent&> CMidiEventArray;
 	class CDub {
 	public:
 	// Construction
@@ -263,6 +278,42 @@ inline LPCTSTR CTrackBase::GetRangeTypeInternalName(int iType)
 {
 	ASSERT(iType >= 0 && iType < RANGE_TYPES);
 	return m_oiRangeType[iType].pszName;
+}
+
+inline CTrackBase::CMidiEvent::CMidiEvent(DWORD dwTime, DWORD dwEvent)
+{
+	m_dwTime = dwTime;
+	m_dwEvent = dwEvent;
+}
+
+inline bool CTrackBase::CMidiEvent::operator==(const CMidiEvent &evt) const
+{
+	return m_dwTime == evt.m_dwTime && m_dwEvent == evt.m_dwEvent;
+}
+
+inline bool CTrackBase::CMidiEvent::operator!=(const CMidiEvent &evt) const
+{
+	return !operator==(evt);
+}
+
+inline bool CTrackBase::CMidiEvent::operator<(const CMidiEvent &evt) const
+{
+	return m_dwTime < evt.m_dwTime || (m_dwTime == evt.m_dwTime && m_dwEvent < evt.m_dwEvent);
+}
+
+inline bool CTrackBase::CMidiEvent::operator>(const CMidiEvent &evt) const
+{
+	return !operator>=(evt);
+}
+
+inline bool CTrackBase::CMidiEvent::operator<=(const CMidiEvent &evt) const
+{
+	return m_dwTime < evt.m_dwTime || (m_dwTime == evt.m_dwTime && m_dwEvent <= evt.m_dwEvent);
+}
+
+inline bool CTrackBase::CMidiEvent::operator>=(const CMidiEvent &evt) const
+{
+	return !operator<(evt);
 }
 
 inline CTrackBase::CDub::CDub()

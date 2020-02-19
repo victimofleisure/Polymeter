@@ -14,6 +14,7 @@
 		04		02feb19	add output channel; output notes on key press
 		05		01apr19	in OnFilterChange, add partial fix for velocity
 		06		30may19	handle short MIDI messages only; ignore other event types
+		07		17feb20	inherit MIDI event class from track base
 
 */
 
@@ -79,23 +80,23 @@ CPianoBar::~CPianoBar()
 	WrReg(RK_PIANO_BAR, RK_KEY_COLORS, m_bColorVelocity);
 }
 
-void CPianoBar::AddEvents(const CSequencer::CMidiEventArray& arrEvent)
+void CPianoBar::AddEvents(const CMidiEventArray& arrEvent)
 {
 	int	nStartNote = m_pno.GetStartNote();
 	int	nKeyCount = m_pno.GetKeyCount();
 	int	nEvents = arrEvent.GetSize();
 	for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each new event
-		const MIDI_EVENT&	evt = arrEvent[iEvent];
-		if (evt.dwEvent & 0xff000000)	// if event isn't a short MIDI message
+		const CMidiEvent&	evt = arrEvent[iEvent];
+		if (evt.m_dwEvent & 0xff000000)	// if event isn't a short MIDI message
 			continue;	// ignore other event types
-		UINT	nCmd = MIDI_CMD(evt.dwEvent);
+		UINT	nCmd = MIDI_CMD(evt.m_dwEvent);
 		if (nCmd == NOTE_ON || nCmd == NOTE_OFF) {	// if event is a note
-			UINT	nNote = MIDI_P1(evt.dwEvent);
-			UINT	nVel = MIDI_P2(evt.dwEvent);
+			UINT	nNote = MIDI_P1(evt.m_dwEvent);
+			UINT	nVel = MIDI_P2(evt.m_dwEvent);
 			bool	bNoteOn = nVel && nCmd != NOTE_OFF;
-			DWORD	dwNote = evt.dwEvent & 0xffff;	// remove velocity; sort by note number, then status
+			DWORD	dwNote = evt.m_dwEvent & 0xffff;	// remove velocity; sort by note number, then status
 			bool	bNotePressChanged = false;
-			bool	bFilterPass = m_iFilterChannel < 0 || m_iFilterChannel == static_cast<int>(MIDI_CHAN(evt.dwEvent));
+			bool	bFilterPass = m_iFilterChannel < 0 || m_iFilterChannel == static_cast<int>(MIDI_CHAN(evt.m_dwEvent));
 			if (bNoteOn) {	// if note on
 				m_arrNoteOn.InsertSorted(dwNote);	// add note to active list
 				if (bFilterPass) {	// if not filtering or note passes filter

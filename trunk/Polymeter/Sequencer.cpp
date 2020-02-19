@@ -24,6 +24,7 @@
 		14		20feb19	optionally prevent note overlaps
 		15		26feb19	use fast insert for event arrays
 		16		09sep19	add tempo track type and tempo modulation
+		17		17feb20	move MIDI event class into track base
 
 */
 
@@ -376,7 +377,7 @@ __forceinline int CSequencer::GetNoteDuration(const CStepArray& arrStep, int nSt
 
 __forceinline void CSequencer::OutputControlEvent(const CTrack& trk, DWORD dwTime, int nVal)
 {
-	CEvent	evt;
+	CMidiEvent	evt;
 	char	cVal = static_cast<char>(nVal);
 	switch (trk.m_iType) {
 	case TT_KEY_AFT:
@@ -541,7 +542,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 					if (trk.m_arrStep[iModStep]) {	// if step isn't empty
 						int	nDurSteps = GetNoteDuration(trk.m_arrStep, nLength, iModStep);
 						if (nDurSteps) {	// if at start of note
-							CEvent	evt;
+							CMidiEvent	evt;
 							evt.m_dwTime = nEvtTime;
 							int	nVel = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
 							nVel = CLAMP(nVel, 0, MIDI_NOTE_MAX);
@@ -572,7 +573,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 						int	iTempo = round(CMidiFile::MICROS_PER_MINUTE / fTempoOut);
 						if (iTempo != m_nAltTempo) {	// if altered tempo actually changed
 							m_nAltTempo = iTempo;	// update shadow
-							CEvent	evtTempo(nEvtTime, (MEVT_TEMPO << 24) | iTempo);
+							CMidiEvent	evtTempo(nEvtTime, (MEVT_TEMPO << 24) | iTempo);
 							m_arrTempoEvent.FastAdd(evtTempo);	// add tempo event
 						}
 					} else {	// track type is control event
@@ -619,7 +620,7 @@ bool CSequencer::OutputMidiBuffer()
 		if (m_bIsTempoChange) {	// if tempo changed
 			m_bIsTempoChange = false;	// reset signal
 			int	iTempo = round(CMidiFile::MICROS_PER_MINUTE / m_fTempo);
-			CEvent	evtTempo(0, (MEVT_TEMPO << 24) | iTempo);	// at callback start time
+			CMidiEvent	evtTempo(0, (MEVT_TEMPO << 24) | iTempo);	// at callback start time
 			m_arrEvent.Add(evtTempo);	// add tempo event
 		}
 		// if position changed, turn off any active notes before adding new events
@@ -634,7 +635,7 @@ bool CSequencer::OutputMidiBuffer()
 		}
 		DWORD	dwLiveEvent;
 		while (m_qLiveEvent.Pop(dwLiveEvent)) {	// while live events remain to be played
-			CEvent	evtLive(0, dwLiveEvent);	// at callback start time
+			CMidiEvent	evtLive(0, dwLiveEvent);	// at callback start time
 			m_arrEvent.Add(evtLive);	// add live event
 		}
 		nCBStart = m_nCBTime;
@@ -669,7 +670,7 @@ bool CSequencer::OutputMidiBuffer()
 		for (int iTempoEvt = 0; iTempoEvt < nTempoEvts; iTempoEvt++) {	// for each tempo event
 			m_arrEvent.FastInsertSorted(m_arrTempoEvent[iTempoEvt]);	// insert into event array
 		}
-		CEvent	evt(m_nCBLen, MEVT_NOP << 24);
+		CMidiEvent	evt(m_nCBLen, MEVT_NOP << 24);
 		m_arrEvent.Add(evt);	// pad time to start of next callback
 		nEvents++;
 		if (nEvents >= arrEvt.GetSize()) {	// if events exceed output buffer size
@@ -679,7 +680,7 @@ bool CSequencer::OutputMidiBuffer()
 		// convert event times (relative to start of callback period) to delta times
 		int	nPrevTime = 0;
 		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
-			const CEvent&	evt = m_arrEvent[iEvent];
+			const CMidiEvent&	evt = m_arrEvent[iEvent];
 			arrEvt[iEvent].dwDeltaTime = evt.m_dwTime - nPrevTime;	// convert to delta time
 			arrEvt[iEvent].dwEvent = evt.m_dwEvent;
 			nPrevTime = evt.m_dwTime;
@@ -736,7 +737,7 @@ void CSequencer::FixNoteOverlaps()
 							goto lblFixNoteOverlaps;	// skip incrementing index to account for deletion
 						}
 					}
-					CEvent	evt(m_arrEvent[iEvent]);
+					CMidiEvent	evt(m_arrEvent[iEvent]);
 					evt.m_dwEvent &= ~0xff0000;	// convert to note off (zero note's velocity)
 					m_arrEvent.FastInsertAt(iEvent, evt);	// insert note off event
 					iEvent++;	// extra index increment to account for insertion
@@ -784,7 +785,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 		CMidiFile::MIDI_EVENT	evt = {m_nStartPos, m_arrInitMidiEvent[iEvt]};
 		arrMidiEvent[iChan].Add(evt);	// add initial event to per-channel array
 	}
-	CEventArray arrSongTempoEvent;
+	CMidiEventArray arrSongTempoEvent;
 	int	nTracks = GetSize();
 	for (int iChunk = 0; iChunk < nChunks; iChunk++) {	// for each time chunk
 		m_arrEvent.FastRemoveAll();	// empty event array
@@ -797,7 +798,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 			FixNoteOverlaps();
 		int	nEvents = m_arrEvent.GetSize();
 		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
-			const CEvent&	evt = m_arrEvent[iEvent];
+			const CMidiEvent&	evt = m_arrEvent[iEvent];
 			CMidiFile::MIDI_EVENT	midiEvt;
 			midiEvt.DeltaT = evt.m_dwTime + nCBTime;	// convert to song time
 			midiEvt.Msg = evt.m_dwEvent;
@@ -818,7 +819,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 		arrTempoMap.SetSize(nTempoEvts);
 		int	nPrevTime = m_nStartPos;
 		for (int iTempoEvt = 0; iTempoEvt < nTempoEvts; iTempoEvt++) {	// for each tempo event
-			const CEvent&	evt = arrSongTempoEvent[iTempoEvt];
+			const CMidiEvent&	evt = arrSongTempoEvent[iTempoEvt];
 			int	nTime = evt.m_dwTime - nPrevTime;
 			nPrevTime = evt.m_dwTime;
 			CMidiFile::MIDI_EVENT	midiEvt = {nTime, MEVT_EVENTPARM(evt.m_dwEvent)};
@@ -1065,7 +1066,7 @@ void CSequencer::QueueOutputEvents(int nEvents)
 	int	nOldSize = m_arrOutputEvent.GetSize();
 	m_arrOutputEvent.FastSetSize(nOldSize + nEvents, m_nBufferSize);	// grow buffer
 	for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
-		MIDI_EVENT	evt = {arrEvt[iEvent].dwDeltaTime, arrEvt[iEvent].dwEvent};
+		CMidiEvent	evt(arrEvt[iEvent].dwDeltaTime, arrEvt[iEvent].dwEvent);
 		m_arrOutputEvent[nOldSize + iEvent] = evt;
 	}
 }

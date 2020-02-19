@@ -12,6 +12,7 @@
 		02		15jan19	add insert track method
 		03		01feb19	add piano key press handler
 		04		02feb19	add output channel; output notes on key press
+		05		17feb20	inherit MIDI event class from track base
 
 */
 
@@ -21,7 +22,7 @@
 #include "PianoCtrl.h"
 #include "Sequencer.h"
 
-class CPianoBar : public CMyDockablePane
+class CPianoBar : public CMyDockablePane, public CTrackBase
 {
 	DECLARE_DYNAMIC(CPianoBar)
 // Construction
@@ -29,7 +30,6 @@ public:
 	CPianoBar();
 
 // Types
-	typedef CSequencer::MIDI_EVENT MIDI_EVENT;
 
 // Attributes
 public:
@@ -39,7 +39,7 @@ public:
 	
 // Operations
 public:
-	void	AddEvents(const CSequencer::CMidiEventArray& arrEvent);
+	void	AddEvents(const CMidiEventArray& arrEvent);
 	void	RemoveAllEvents();
 	void	UpdateKeyLabels();
 	void	UpdatePianoSize();

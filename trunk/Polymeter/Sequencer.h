@@ -14,6 +14,7 @@
 		04		12jan19	add recursive position modulation
 		05		20feb19	add note reference counts
 		06		09sep19	add tempo event array
+		07		17feb20	move MIDI event class into track base
 
 */
 
@@ -39,11 +40,6 @@ public:
 		double	fCBTimeMax;		// maximum callback time in seconds
 		double	fCBTimeSum;		// total callback time in seconds
 	};
-	struct MIDI_EVENT {
-		int		dwTime;			// delta time in ticks
-		DWORD	dwEvent;		// MIDI event
-	};
-	typedef CArrayEx<MIDI_EVENT, MIDI_EVENT&> CMidiEventArray;
 
 // Constants
 	enum {
@@ -111,20 +107,6 @@ public:
 
 protected:
 // Types
-	class CEvent {
-	public:
-		CEvent() {};
-		CEvent(DWORD dwDeltaTime, DWORD dwEvent);
-		bool	operator==(const CEvent &evt) const;
-		bool	operator!=(const CEvent &evt) const;
-		bool	operator<(const CEvent &evt) const;
-		bool	operator>(const CEvent &evt) const;
-		bool	operator<=(const CEvent &evt) const;
-		bool	operator>=(const CEvent &evt) const;
-		int		m_dwTime;			// time in ticks
-		DWORD	m_dwEvent;			// MIDI event
-	};
-	typedef CArrayEx<CEvent, CEvent&> CEventArray;
 	struct MIDI_STREAM_EVENT {
 		DWORD   dwDeltaTime;		// ticks since last event
 		DWORD   dwStreamID;			// reserved; must be zero
@@ -174,9 +156,9 @@ protected:
 	bool	m_bPreventNoteOverlap;	// true if preventing note overlaps
 	STATS	m_stats;				// timing statistics
 	CMidiEventStream	m_arrMidiEvent[BUFFERS];	// array of MIDI event stream buffers
-	CEventArray	m_arrEvent;			// array of track events
-	CEventArray	m_arrNoteOff;		// array of pending note off events
-	CEventArray	m_arrTempoEvent;	// array of tempo events
+	CMidiEventArray	m_arrEvent;			// array of track events
+	CMidiEventArray	m_arrNoteOff;		// array of pending note off events
+	CMidiEventArray	m_arrTempoEvent;	// array of tempo events
 	CDWordArrayEx	m_arrInitMidiEvent;	// array of MIDI events to output at start of playback
 	CILockRingBuf<DWORD>	m_qLiveEvent;	// thread-safe queue of live events to be output
 	MIDI_PARAMS	m_MidiCache;		// cached values of MIDI parameters
@@ -220,42 +202,6 @@ public:
 	CSequencerReader(CSequencer& Seq);
 	virtual ~CSequencerReader();
 };
-
-inline CSequencer::CEvent::CEvent(DWORD dwTime, DWORD dwEvent)
-{
-	m_dwTime = dwTime;
-	m_dwEvent = dwEvent;
-}
-
-inline bool CSequencer::CEvent::operator==(const CEvent &evt) const
-{
-	return m_dwTime == evt.m_dwTime && m_dwEvent == evt.m_dwEvent;
-}
-
-inline bool CSequencer::CEvent::operator!=(const CEvent &evt) const
-{
-	return !operator==(evt);
-}
-
-inline bool CSequencer::CEvent::operator<(const CEvent &evt) const
-{
-	return m_dwTime < evt.m_dwTime || (m_dwTime == evt.m_dwTime && m_dwEvent < evt.m_dwEvent);
-}
-
-inline bool CSequencer::CEvent::operator>(const CEvent &evt) const
-{
-	return !operator>=(evt);
-}
-
-inline bool CSequencer::CEvent::operator<=(const CEvent &evt) const
-{
-	return m_dwTime < evt.m_dwTime || (m_dwTime == evt.m_dwTime && m_dwEvent <= evt.m_dwEvent);
-}
-
-inline bool CSequencer::CEvent::operator>=(const CEvent &evt) const
-{
-	return !operator<(evt);
-}
 
 inline bool CSequencer::IsOpen() const
 {

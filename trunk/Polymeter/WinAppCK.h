@@ -22,6 +22,7 @@
 		12		03may18	remove VC6 cruft and methods that moved to file scope
 		13		28jan19	add GetLogicalDrives
 		14		10feb19	add temp file path wrapper
+		15		19feb20	overload GetProfileString to increase buffer size to 64K
 
         enhanced application
  
@@ -55,6 +56,7 @@ public:
 	static	bool	GetLogicalDriveStringArray(CStringArrayEx& arrDrive);
 
 // Overrides
+	virtual CString GetProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszDefault = NULL);
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CWinAppCK)
 	//}}AFX_VIRTUAL

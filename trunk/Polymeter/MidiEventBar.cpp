@@ -11,6 +11,7 @@
         01		03jan19	add filtering via context menu
         02		29jan19	refactor to support both input and output
 		03		10feb19	add method to get array of channel status nicknames
+		04		17feb20	inherit MIDI event class from track base
 		
 */
 
@@ -115,18 +116,18 @@ inline int CMidiEventBar::GetListItemCount()
 		return INT64TO32(m_arrEvent.GetSize());
 }
 
-void CMidiEventBar::AddEvents(const CSequencer::CMidiEventArray& arrEvent)
+void CMidiEventBar::AddEvents(const CMidiEventArray& arrEvent)
 {
 	int	nOldListItems = GetListItemCount();
 	int	nEvents = arrEvent.GetSize();
 	for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each new event
-		const MIDI_EVENT&	evtIn = arrEvent[iEvent];
-		m_nEventTime += evtIn.dwTime;	// order matters; update current time first
-		if (!(evtIn.dwEvent & 0xff000000)) {	// if event is a short MIDI message
-			MIDI_EVENT	evtOut = {m_nEventTime, evtIn.dwEvent};	// use current time, not delta
+		const CMidiEvent&	evtIn = arrEvent[iEvent];
+		m_nEventTime += evtIn.m_dwTime;	// order matters; update current time first
+		if (!(evtIn.m_dwEvent & 0xff000000)) {	// if event is a short MIDI message
+			CMidiEvent	evtOut(m_nEventTime, evtIn.m_dwEvent);	// use current time, not delta
 			m_arrEvent.Add(evtOut);	// add event to array
 			if (m_bIsFiltering) {	// if filtering input
-				if (ApplyFilters(evtIn.dwEvent)) {	// if event passes filters
+				if (ApplyFilters(evtIn.m_dwEvent)) {	// if event passes filters
 					int	iOutEvent = INT64TO32(m_arrEvent.GetSize()) - 1;
 					m_arrFilterPass.Add(iOutEvent);	// add event index to pass array
 				}
@@ -136,13 +137,13 @@ void CMidiEventBar::AddEvents(const CSequencer::CMidiEventArray& arrEvent)
 	OnAddedEvents(nOldListItems);
 }
 
-void CMidiEventBar::AddEvent(MIDI_EVENT& evt)
+void CMidiEventBar::AddEvent(CMidiEvent& evt)
 {
-	if (!(evt.dwEvent & 0xff000000)) {	// if event is a short MIDI message
+	if (!(evt.m_dwEvent & 0xff000000)) {	// if event is a short MIDI message
 		int	nOldListItems = GetListItemCount();
 		m_arrEvent.Add(evt);	// add event to array
 		if (m_bIsFiltering) {	// if filtering input
-			if (ApplyFilters(evt.dwEvent)) {	// if event passes filters
+			if (ApplyFilters(evt.m_dwEvent)) {	// if event passes filters
 				int	iEvent = INT64TO32(m_arrEvent.GetSize()) - 1;
 				m_arrFilterPass.Add(iEvent);	// add event index to pass array
 			}
@@ -226,7 +227,7 @@ void CMidiEventBar::OnFilterChange()
 		m_arrFilterPass.SetSize(nEvents);	// avoid reallocation during loop
 		nListItems = 0;
 		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
-			if (ApplyFilters(m_arrEvent[iEvent].dwEvent)) {	// if event passes filter
+			if (ApplyFilters(m_arrEvent[iEvent].m_dwEvent)) {	// if event passes filter
 				m_arrFilterPass[nListItems] = iEvent;	// store its index in array
 				nListItems++;
 			}
@@ -267,20 +268,20 @@ void CMidiEventBar::ExportEvents(LPCTSTR pszPath)
 	CString	sLine;
 	int	nEvents = INT64TO32(m_arrEvent.GetSize());
 	for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each events
-		const MIDI_EVENT&	evt = m_arrEvent[iEvent];
+		const CMidiEvent&	evt = m_arrEvent[iEvent];
 		CString	sStatus;
-		UINT	nStat = MIDI_STAT(evt.dwEvent);
+		UINT	nStat = MIDI_STAT(evt.m_dwEvent);
 		UINT	iChan;
 		if (nStat < SYSEX) {	// if channel voice message
 			int	iChanStat = (nStat >> 4) - 8;
 			sStatus = arrChanStatNick[iChanStat];
-			iChan = MIDI_CHAN(evt.dwEvent);
+			iChan = MIDI_CHAN(evt.m_dwEvent);
 		} else {	// system status message
 			sStatus.Format(_T("%d"), nStat);
 			iChan = 0;
 		}
-		sLine.Format(_T("%d,%d,%s,%d,%d\n"), evt.dwTime, iChan, 
-			sStatus, MIDI_P1(evt.dwEvent), MIDI_P2(evt.dwEvent));
+		sLine.Format(_T("%d,%d,%s,%d,%d\n"), evt.m_dwTime, iChan, 
+			sStatus, MIDI_P1(evt.m_dwEvent), MIDI_P2(evt.m_dwEvent));
 		fOut.WriteString(sLine);
 	}
 }
@@ -411,19 +412,19 @@ void CMidiEventBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 		iItem = m_arrFilterPass[item.iItem];	// map item to filtered event
 	else	// unfiltered
 		iItem = item.iItem;	// items map directly to raw events
-	MIDI_EVENT	evt = m_arrEvent[iItem];
+	const CMidiEvent&	evt = m_arrEvent[iItem];
 	if (item.mask & LVIF_TEXT) {
 		switch (item.iSubItem) {
 		case COL_TIME:
-			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), evt.dwTime); 
+			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), evt.m_dwTime); 
 			break;
 		case COL_CHANNEL:
-			if (MIDI_STAT(evt.dwEvent) < SYSEX)	// if channel voice message
-				_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), MIDI_CHAN(evt.dwEvent) + 1); 
+			if (MIDI_STAT(evt.m_dwEvent) < SYSEX)	// if channel voice message
+				_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), MIDI_CHAN(evt.m_dwEvent) + 1); 
 			break;
 		case COL_MESSAGE:
 			{
-				UINT	nStat = MIDI_STAT(evt.dwEvent);
+				UINT	nStat = MIDI_STAT(evt.m_dwEvent);
 				if (nStat < SYSEX) {	// if channel voice message
 					int	iChanStat = (nStat >> 4) - 8;
 					_tcscpy_s(item.pszText, item.cchTextMax, m_arrChanStatName[iChanStat]);
@@ -433,8 +434,8 @@ void CMidiEventBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 			break;
 		case COL_P1:
 			{
-				UINT	nP1 = MIDI_P1(evt.dwEvent); 
-				switch (MIDI_CMD(evt.dwEvent)) {
+				UINT	nP1 = MIDI_P1(evt.m_dwEvent); 
+				switch (MIDI_CMD(evt.m_dwEvent)) {
 				case NOTE_ON:
 				case NOTE_OFF:
 				case KEY_AFT:
@@ -455,7 +456,7 @@ GetDispInfoP1Default:
 			}
 			break;
 		case COL_P2:
-			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), MIDI_P2(evt.dwEvent)); 
+			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), MIDI_P2(evt.m_dwEvent)); 
 			break;
 		}
 	}
@@ -526,7 +527,7 @@ void CMidiEventBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
 
 LRESULT CMidiEventBar::OnMidiEvent(WPARAM wParam, LPARAM lParam)
 {
-	MIDI_EVENT	evt = {static_cast<DWORD>(wParam), static_cast<DWORD>(lParam)};
+	CMidiEvent	evt(static_cast<DWORD>(wParam), static_cast<DWORD>(lParam));
 	AddEvent(evt);
 	return 0;
 }

@@ -11,6 +11,7 @@
         01		03jan19	add filtering via context menu
         02		29jan19	refactor to support both input and output
 		03		10feb19	add method to get array of channel status nicknames
+		04		17feb20	inherit MIDI event class from track base
 
 */
 
@@ -21,15 +22,12 @@
 #include "Sequencer.h"
 #include "BlockArray.h"
 
-class CMidiEventBar : public CMyDockablePane
+class CMidiEventBar : public CMyDockablePane, public CTrackBase
 {
 	DECLARE_DYNAMIC(CMidiEventBar)
 // Construction
 public:
 	CMidiEventBar(bool bIsOutputBar);
-
-// Types
-	typedef CSequencer::MIDI_EVENT MIDI_EVENT;
 
 // Attributes
 public:
@@ -41,8 +39,8 @@ public:
 
 // Operations
 public:
-	void	AddEvents(const CSequencer::CMidiEventArray& arrEvent);
-	void	AddEvent(MIDI_EVENT& evt);
+	void	AddEvents(const CMidiEventArray& arrEvent);
+	void	AddEvent(CMidiEvent& evt);
 	void	RemoveAllEvents();
 	void	ExportEvents(LPCTSTR pszPath);
 
@@ -100,7 +98,7 @@ protected:
 	static CStringArrayEx	m_arrSysStatName;	// system status message names
 
 // Types
-	typedef CBlockArray<MIDI_EVENT, EVENT_BLOCK_SIZE> CMidiEventArray;
+	typedef CBlockArray<CMidiEvent, EVENT_BLOCK_SIZE> CMidiEventBlockArray;
 	class CEventListCtrl : public CListCtrlExSel {
 	public:
 		CEventListCtrl();
@@ -112,7 +110,7 @@ protected:
 // Member data
 	CEventListCtrl	m_list;			// list control
 	CImageList	m_ilList;			// image list for list control
-	CMidiEventArray	m_arrEvent;		// array of MIDI events
+	CMidiEventBlockArray	m_arrEvent;	// block array of MIDI events
 	CIntArrayEx	m_arrFilterPass;	// if filtering, indices of events that pass filter
 	LPCTSTR	m_pszRegKey;			// registry key; depends on input versus output
 	int		m_nEventTime;			// time of current MIDI event, in ticks
