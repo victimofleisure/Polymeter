@@ -92,6 +92,8 @@ function subsetSortCmp(a, b) {	// sort on array's first element (LCM)
 function isPositive(a) {
 	return a > 0;
 }
+// This implementation calculates the unique Least Common Multiples
+// for all subsets of the input set that contain two or more members.
 function main() {
 	sOut = "<p>";	// reset output string
 	var input = document.getElementById("input");
@@ -119,9 +121,7 @@ function main() {
 	<h2>Convergence Calculator</h2>
 	<p>This script finds all the convergences between a given set of positive 
 	integers. It can be useful when composing polymeter or phase music,
-	because it shows how loops of different lengths synchronize over time.
-	The implementation calculates the unique Least Common Multiples for
-	all possible subsets of the input set having two or more values.</p>
+	because it shows how loops of different lengths synchronize over time.</p>
 	<input type="input" id="input" size="72" placeholder="enter a comma-separated list of positive integers"><br>
 	<input type="button" onclick="main()" value="Submit">
 	<div id="result">
