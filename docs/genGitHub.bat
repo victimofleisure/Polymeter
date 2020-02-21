@@ -3,7 +3,11 @@ xcopy /s /y C:\Chris\MyProjects\Polymeter\web\*.* .
 copy downloadGitHub.html download.html
 C:\Chris\MyProjects\tbl2web\release\tbl2web "..\Polymeter ToDo.txt" issues.html issues.txt "Polymeter Issues"
 if errorlevel 1 goto err
+attrib /s tools\*.* +r
+if errorlevel 1 goto err
 C:\Chris\tools\navgen templateGitHub.html .
+if errorlevel 1 goto err
+attrib /s tools\*.* -r
 if errorlevel 1 goto err
 C:\Chris\MyProjects\FixSelfUrl\Release\FixSelfUrl *.html
 if errorlevel 1 goto err
