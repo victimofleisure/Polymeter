@@ -35,6 +35,7 @@
 		25		15nov19	add option for signed velocity scaling
 		26		12dec19	add GetPeriod
 		27		26dec19	in TimeToRepeat, report fractional beats
+		28		24feb20	use new INI file implementation
 
 */
 
@@ -286,8 +287,8 @@ void CPolymeterDoc::Serialize(CArchive& ar)
 
 void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 {
-	CIniFile	f;
-	f.Open(szPath, CFile::modeRead);
+	CIniFile	f(szPath, false);	// reading
+	f.Read();
 	CString	sFileID;
 	RdReg(RK_FILE_ID, sFileID);
 	if (sFileID != FILE_ID) {	// if unexpected file ID
@@ -367,8 +368,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 
 void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 {
-	CIniFile	f;
-	f.Open(szPath, CFile::modeCreate | CFile::modeWrite);
+	CIniFile	f(szPath, true);	// writing
 	WrReg(RK_FILE_ID, CString(FILE_ID));
 	WrReg(RK_FILE_VERSION, FILE_VERSION);
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
@@ -406,6 +406,7 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 	WrReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
 	WrReg(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
 	WrReg(RK_VIEW_TYPE, CString(m_arrViewTypeName[m_nViewType]));
+	f.Write();
 }
 
 __forceinline void CPolymeterDoc::ReadTrackModulations(CString sTrkID, CTrack& trk)

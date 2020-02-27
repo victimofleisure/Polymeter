@@ -13,6 +13,7 @@
         03		03jan19	add playing document pointer
 		04		29jan19	add MIDI input bar
 		05		29jan19	exclude system status messages from MIDI thru
+		06		24feb20	overload profile functions
 
 */
 
@@ -36,6 +37,7 @@
 #include "OptionsDlg.h"
 #include "SaveObj.h"
 #include "afxregpath.h"
+#include "IniFile.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -507,6 +509,48 @@ void CPolymeterApp::LoadCustomState()
 
 void CPolymeterApp::SaveCustomState()
 {
+}
+
+CString CPolymeterApp::GetProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszDefault)
+{
+	CIniFile	*pIniFile = CIniFile::GetThis();
+	if (pIniFile != NULL) {
+		return pIniFile->GetString(lpszSection, lpszEntry, lpszDefault);
+	} else {
+		return CWinApp::GetProfileString(lpszSection, lpszEntry, lpszDefault);
+	}
+}
+
+UINT CPolymeterApp::GetProfileInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nDefault)
+{
+	CIniFile	*pIniFile = CIniFile::GetThis();
+	if (pIniFile != NULL) {
+		return pIniFile->GetInt(lpszSection, lpszEntry, nDefault);
+	} else {
+		return CWinApp::GetProfileInt(lpszSection, lpszEntry, nDefault);
+	}
+}
+
+BOOL CPolymeterApp::WriteProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszValue)
+{
+	CIniFile	*pIniFile = CIniFile::GetThis();
+	if (pIniFile != NULL) {
+		pIniFile->WriteString(lpszSection, lpszEntry, lpszValue);
+		return TRUE;
+	} else {
+		return CWinApp::WriteProfileString(lpszSection, lpszEntry, lpszValue);
+	}
+}
+
+BOOL CPolymeterApp::WriteProfileInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nValue)
+{
+	CIniFile	*pIniFile = CIniFile::GetThis();
+	if (pIniFile != NULL) {
+		pIniFile->WriteInt(lpszSection, lpszEntry, nValue);
+		return TRUE;
+	} else {
+		return CWinApp::WriteProfileInt(lpszSection, lpszEntry, nValue);
+	}
 }
 
 void CPolymeterApp::OnMidiError(MMRESULT nResult)

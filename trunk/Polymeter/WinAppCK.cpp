@@ -20,7 +20,6 @@
 		10		03may18	remove VC6 cruft and methods that moved to file scope
 		11		28jan19	add GetLogicalDrives
 		12		10feb19	add temp file path wrapper
-		13		19feb20	overload GetProfileString to increase buffer size to 64K
 
         enhanced application
  
@@ -184,21 +183,6 @@ bool CWinAppCK::GetLogicalDriveStringArray(CStringArrayEx& arrDrive)
 		pDrive += _tcslen(pDrive) + 1;
 	}
 	return true;
-}
-
-CString CWinAppCK::GetProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszDefault)
-{
-	if (m_pszRegistryKey != NULL) {
-		return CWinApp::GetProfileString(lpszSection, lpszEntry, lpszDefault);
-	} else {
-		ASSERT(m_pszProfileName != NULL);
-		if (lpszDefault == NULL)
-			lpszDefault = _T("");	// don't pass in NULL
-		static TCHAR szT[USHRT_MAX];	// more than 64K fails silently
-		DWORD dw = ::GetPrivateProfileString(lpszSection, lpszEntry,
-			lpszDefault, szT, _countof(szT), m_pszProfileName);
-		return szT;
-	}
 }
 
 CTempFilePath::~CTempFilePath()

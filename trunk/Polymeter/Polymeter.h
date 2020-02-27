@@ -12,6 +12,7 @@
 		02		14dec18	add modulations clipboard
 		03		17dec18	move MIDI file types into class scope
         04		03jan19	add playing document pointer
+		05		24feb20	overload profile functions
 
 */
 
@@ -73,6 +74,10 @@ public:
 	virtual int ExitInstance();
 	virtual void WinHelp(DWORD_PTR dwData, UINT nCmd = HELP_CONTEXT);
 	virtual void WinHelpInternal(DWORD_PTR dwData, UINT nCmd = HELP_CONTEXT);
+	virtual CString GetProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszDefault = NULL);
+	virtual UINT GetProfileInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nDefault);
+	virtual BOOL WriteProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszValue);
+	virtual BOOL WriteProfileInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nValue);
 
 // Public data
 	UINT  m_nAppLook;
