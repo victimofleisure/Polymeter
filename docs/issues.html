@@ -118,22 +118,6 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>02/18/20</TD>
-<TD>&nbsp;</TD>
-<TD>bug</TD>
-<TD>GetChannelUsage should ignore tempo tracks</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>02/19/20</TD>
-<TD>&nbsp;</TD>
-<TD>bug</TD>
-<TD>tracks are limited to 32767 steps and 255 dubs, due to GetPrivateProfileString; roll your own profile code</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>03/25/18</TD>
 <TD>done</TD>
@@ -1998,6 +1982,54 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>02/19/20</TD>
+<TD>02/25/20</TD>
+<TD>done</TD>
+<TD>GetPrivateProfileString limits tracks to 32767 steps and 255 dubs; avoid it by implementing INI file read/write</TD>
+<TD>0.0.27.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>06/04/18</TD>
+<TD>02/29/20</TD>
+<TD>done</TD>
+<TD>optionally record live MIDI input</TD>
+<TD>0.0.27.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>02/27/20</TD>
+<TD>02/29/20</TD>
+<TD>done</TD>
+<TD>crash can occur if MIDI input is received while closing app; main frame OnDestroy must close input device</TD>
+<TD>0.0.27.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>02/27/20</TD>
+<TD>02/29/20</TD>
+<TD>done</TD>
+<TD>exporting MIDI file modifies track mutes (without updating UI); save and restore track mutes</TD>
+<TD>0.0.27.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>02/18/20</TD>
+<TD>03/02/20</TD>
+<TD>done</TD>
+<TD>GetChannelUsage should exclude tempo tracks</TD>
+<TD>0.0.27.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>01/27/20</TD>
+<TD>03/04/20</TD>
+<TD>done</TD>
+<TD>add convergence calculator</TD>
+<TD>0.0.27.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>05/13/03</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -2162,14 +2194,6 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>song view should indicate undersampling (multiple dubs per cell at current zoom)</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>06/04/18</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>include live MIDI input in recording; but no way to view or edit it? MIDI dialog would at least allow viewing?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2426,6 +2450,14 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>popup edit of step's velocity value, via Ctrl + right click on step; tried it, less useful than hoped</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/02/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>separate window for viewing/editing recorded MIDI input</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>

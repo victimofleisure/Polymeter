@@ -1738,5 +1738,100 @@ and handle the entire mess with a CIniFileReader class. It might make sense to
 handle writing too, since much of the code would be shared and doing so might
 improve performance for writing very long strings.
 
+2/24/20 new CIniFile that handles I/O
 
+Works fine, no length limitations, and huge performance improvement:
+reading is 20x faster, writing is 34x faster
 
+Slight performance gain (< 1ms) from pre-allocating 100 sections.
+
+The performance sucks for large strings! But it's fixable by overloading
+CStdioFile::ReadString to increase the buffer size exponentially.
+
+// the following line works because CString::GetBuffer increases the
+// buffer size exponentially; see PrepareWrite2 in atlsimpstr.h
+int	nBufAvail = rString.GetAllocLength() - nLen;	// performance gain
+lpszResult = _fgetts(lpsz, nBufAvail + 1, m_pStream);
+
+2/25/20 short out to stream handle
+
+Amazingly, despite the need for a cast, it works. This changes a lot!
+
+"This parameter can also be the handle of a MIDI stream cast to HMIDIOUT."
+"This function might not return until the message has been sent to the output
+device. You can send short messages while streams are playing on the same 
+device (although you cannot use a running status in this case)."
+
+in CSequencer::OutputLiveEvent(DWORD dwEvent)
+
+return MIDI_SUCCEEDED(midiOutShortMsg(HMIDIOUT(m_hStrm), dwEvent));
+
+The entire MIDI thru and recording implementation needs to be rethought.
+The message seems to be output immediately and is completely unaffected
+by the sequencer callback latency. But it's not so obvious how to play 
+back the recording. The times are relative to when the input device was
+opened, which isn't synchronized to the stream callback. Also the input
+times must be converted to ticks, but how would that work if the tempo 
+changes during recording, changing the duration of a tick? Maybe don't 
+support that case?
+
+2/26/20 recording MIDI input: timestamps aren't useful
+
+There doesn't seem to be any reliable way to synchronize MIDI input
+timestamps with the sequencer timing. If so, this means the strategy
+of recording MIDI event timestamps (in milliseconds since the input
+device was opened) and converting them to ticks later is unworkable.
+But that strategy would be required if we output live input events
+directly to the stream handle instead of queing them to the callback.
+
+Instead, the input recording strategy would have to be built around
+the current method of outputting the live input events: queuing them
+to the sequencer's callback thread and inserting them into the output
+stream. The disadvantage of this method is that the live events are
+delayed by a variable amount up to the callback latency (jitter), and
+even if they weren't, timing accuracy is relatively poor at PPQ 120.
+This is because at tempo 120 e.g. it's 4.16 ms per tick, which means
+converting milliseconds to ticks wastes a lot of precision.
+
+The weirdest thing is that if I record the input, while tapping along
+to a beat at tempo 120, the input events are all separated by around
+487 ms +/- 1. They should be separated by 500 ms! This could happen
+if the sequencer isn't actually producing 120 BPM, but I checked its
+output in WaveShop and it's precise to within 0.1 ms. So something is
+really wrong here. Oddly, the error 500 - 487 = 13 ms corresponds to
+about three ticks. No idea why!
+
+2/27/20 Reason tests show time stamps are actually fine
+
+Key is to use Reason for all such tests, because it has only 1ms of
+latency. Using GS Synth is dumb because it has tons of latency which
+corrupts the tests. Test setup requires to loopMIDI ports and two
+instances of Polymeter.
+
+Polymeter_2 -> loopMIDI_2 -> Polymeter_1 -> loopMIDI_1 -> Reason
+
+Both instances of Polymeter have only a simple 1 beat loop.
+You start instance 2 playing, and then try to start recording
+in instance 1 such that the two loops synchronize perfectly.
+When they do synchronize, slight phasing is audible.
+Then you stop recording and check the timestamps, and they
+should be very close to 3,30,123,153 etc. And they are!
+(offset of 3 is because of sequencer's initial buffer)
+So it looks like the new scheme will actually work.
+
+2/27/20 closing more safely
+
+These two changes will help prevent crashes regardless of which MIDI
+input strategy prevails!
+
+in sequencer:
+	HMIDISTRM	hStrm = m_hStrm;
+	m_hStrm = NULL;	// so IsOpen fails in callback
+	CHECK(midiStreamClose(hStrm));	// close stream
+
+in mainframe:
+void CMainFrame::OnDestroy()
+{
+	theApp.OpenMidiInputDevice(false);
+	CMDIFrameWndEx::OnDestroy();
+}
