@@ -14,6 +14,8 @@
 		04		25jan19	add graph bar
 		05		29jan19	add MIDI input bar
 		06		12dec19	add phase bar
+		07		29feb20	add OnDestroy
+		08		03mar20	add convergences dialog
 
 */
 
@@ -139,6 +141,7 @@ protected:  // control bar embedded members
 protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void OnDestroy();
 	afx_msg void OnWindowManager();
 	afx_msg void OnViewCustomize();
 	afx_msg LRESULT OnToolbarCreateNew(WPARAM wp, LPARAM lp);
@@ -158,6 +161,7 @@ protected:
 	afx_msg LRESULT	OnDeviceNodeChange(WPARAM wParam, LPARAM lParam);
 	afx_msg BOOL OnDeviceChange(UINT nEventType, W64ULONG dwData);
 	afx_msg void OnToolsDevices();
+	afx_msg void OnToolsConvergences();
 	afx_msg void OnEditFind();
 	afx_msg void OnEditReplace();
 	afx_msg LRESULT OnFindReplace(WPARAM wParam, LPARAM lParam);

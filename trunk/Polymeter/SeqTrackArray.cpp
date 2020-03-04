@@ -15,6 +15,7 @@
 		05		14feb19	add exclude muted track flag to GetChannelUsage
 		06		22mar19	overload toggle steps for track selection
 		07		15nov19	in ScaleSteps, add signed scaling option
+		08		02mar20	in GetChannelUsage, exclude tempo tracks
 
 */
 
@@ -759,7 +760,8 @@ int CSeqTrackArray::GetChannelUsage(int *parrFirstTrack, bool bExcludeMuted) con
 	int	nUsedChans = 0;
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		const CTrack&	trk = GetAt(iTrack);
-		if (trk.GetUsedStepCount() && !trk.IsModulator()) {	// if track isn't empty and isn't a modulator
+		if (trk.GetUsedStepCount() && !trk.IsModulator()	// if track isn't empty and isn't a modulator
+		&& trk.m_iType != TT_TEMPO) {	// and track isn't a tempo track
 			if (bExcludeMuted && trk.m_bMute)	// if excluding muted tracks and track is muted
 				continue;
 			int	iChan = trk.m_nChannel;

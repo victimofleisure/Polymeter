@@ -19,6 +19,7 @@
 		09		14feb19	refactor export to avoid track mode special cases
 		10		22mar19	add track invert command
 		11		15nov19	add option for signed velocity scaling
+		12		29feb20	add support for recording live events
 
 */
 
@@ -225,7 +226,7 @@ public:
 	void	ToggleDubs(const CRect& rSelection, double fTicksPerCell);
 	void	CopyDubsToClipboard(const CRect& rSelection, double fTicksPerCell) const;
 	void	DeleteDubs(const CRect& rSelection, double fTicksPerCell, bool bCopyToClipboard);
-	void	InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double fTicksPerCell, CRect& rSelection);
+	void	InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double fTicksPerCell, CRect& rSelection, CMidiEventArray& arrRecordEvent, int nDuration);
 	void	InsertDubs(const CRect& rSelection, double fTicksPerCell);
 	void	PasteDubs(CPoint ptPaste, double fTicksPerCell, CRect& rSelection);
 	void	ApplyPreset(int iPreset);
@@ -326,6 +327,7 @@ protected:
 	public:
 		int		m_iTrack;	// first track of selection
 		CDubArrayArray	m_arrDub;	// array of dub arrays, one for each selected track
+		CMidiEventArray	m_arrRecordEvent;	// array of recorded events
 	};
 	class CUndoMute : public CRefObj {
 	public:
@@ -387,6 +389,7 @@ protected:
 	void	OnImportTracks(CTrackArray& arrTrack);
 	int		CellToTime(int iCell, double fTicksPerCell, int nSongTimeShift) const;
 	bool	PromptForExportParams(bool bSongMode, int& nDuration);
+	void	SaveRecordedMidiInput();
 
 // Undo helpers
 	void	SaveTrackProperty(CUndoState& State) const;

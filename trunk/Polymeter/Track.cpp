@@ -22,6 +22,7 @@
 		12		25jan19	add modulation crawler to track array
 		13		27jan19	cache type name strings instead of loading every time
 		14		03feb19	add return value to track array's import MIDI file
+		15		29feb20	add MIDI event array methods
 
 */
 
@@ -179,6 +180,81 @@ bool CTrack::ValidateProperty(int iProp) const
 	int	nVal;
 	GetPropertyValue(iProp, &nVal, sizeof(int));
 	return nVal >= nMinVal && nVal <= nMaxVal;
+}
+
+int CTrackBase::CMidiEventArray::Chase(int nTime) const
+{
+	int	nEvents = GetSize();
+	for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
+		if (GetAt(iEvent).m_nTime >= nTime)	// if event is due
+			return iEvent;	// return event index
+	}
+	return nEvents;	// event not found
+}
+
+int CTrackBase::CMidiEventArray::FindEvents(int nStartTime, int nEndTime, int& iEndEvent) const
+{
+	int	iStart = Chase(nStartTime);	// find first event in range, if any
+	int	iEnd = iStart;
+	int	nEvents = GetSize();
+	while (iEnd < nEvents && GetAt(iEnd).m_nTime < nEndTime) {	// while events are in range
+		iEnd++;	// increment end index
+	}
+	iEndEvent = iEnd;	// return results
+	return iStart;
+}
+
+void CTrackBase::CMidiEventArray::GetEvents(int nStartTime, int nEndTime, CMidiEventArray& arrEvent) const
+{
+	int	iEnd, iStart = FindEvents(nStartTime, nEndTime, iEnd);
+	int	nEvents = iEnd - iStart;
+	arrEvent.SetSize(nEvents);
+	for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event in range
+		arrEvent[iEvent] = GetAt(iStart + iEvent);	// copy event to caller's array
+		arrEvent[iEvent].m_nTime -= nStartTime;	// convert time from absolute to range-relative
+	}
+}
+
+void CTrackBase::CMidiEventArray::DeleteEvents(int nStartTime)
+{
+	int	iStart = Chase(nStartTime);
+	int	nDeletes = GetSize() - iStart;
+	RemoveAt(iStart, nDeletes);	// delete events after start time
+}
+
+void CTrackBase::CMidiEventArray::DeleteEvents(int nStartTime, int nEndTime)
+{
+	int	iEnd, iStart = FindEvents(nStartTime, nEndTime, iEnd);
+	int	nDeletes = iEnd - iStart;
+	RemoveAt(iStart, nDeletes);	// delete events in range
+	int	nTimeRange = nEndTime - nStartTime;
+	int	nEvents = GetSize();
+	for (int iEvent = iStart; iEvent < nEvents; iEvent++) {	// for each remaining event
+		GetAt(iEvent).m_nTime -= nTimeRange;	// compensate event time for deletion
+	}
+}
+
+void CTrackBase::CMidiEventArray::InsertEvents(int nInsertTime, int nDuration, CMidiEventArray& arrEvent)
+{
+	int	iInsert = Chase(nInsertTime);
+	InsertAt(iInsert, &arrEvent);
+	int	iEnd = iInsert + arrEvent.GetSize();
+	int	iEvent;
+	for (iEvent = iInsert; iEvent < iEnd; iEvent++) {
+		GetAt(iEvent).m_nTime += nInsertTime;	// convert time from range-relative to absolute
+	}
+	int	nEvents = GetSize();
+	for (; iEvent < nEvents; iEvent++) {	// for each event following insertion
+		GetAt(iEvent).m_nTime += nDuration;	// compensate event time for insertion
+	}
+}
+
+void CTrackBase::CMidiEventArray::Dump() const
+{
+	int	nEvents = GetSize();
+	printf("%d events\n", nEvents);
+	for (int iEvent = 0; iEvent < nEvents; iEvent++)
+		printf("%d: %d %x\n", iEvent, GetAt(iEvent).m_nTime, GetAt(iEvent).m_dwEvent);
 }
 
 bool CTrackBase::CDubArray::GetDubs(int nStartTime, int nEndTime) const

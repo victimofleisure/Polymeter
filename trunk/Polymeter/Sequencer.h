@@ -15,6 +15,7 @@
 		05		20feb19	add note reference counts
 		06		09sep19	add tempo event array
 		07		17feb20	move MIDI event class into track base
+		08		29feb20	add support for recording live events
 
 */
 
@@ -22,7 +23,6 @@
 
 #include "mmsystem.h"
 #include "SeqTrackArray.h"
-#include "ILockRingBuf.h"
 
 #define SEQ_DUMP_EVENTS 0
 
@@ -53,6 +53,7 @@ public:
 	bool	IsOpen() const;
 	bool	IsPlaying() const;
 	bool	IsPaused() const;
+	bool	IsStopping() const;
 	bool	IsRecording() const;
 	int		GetOutputDevice() const;
 	void	SetOutputDevice(int iOutputDevice);
@@ -83,6 +84,14 @@ public:
 	void	GetMidiOutputEvents(CMidiEventArray& arrMidiEvent);
 	bool	GetNoteOverlapMode() const;
 	void	SetNoteOverlapMode(bool bPrevent);
+	const CMidiEventArray&	GetRecordedEvents() const;
+	void	SetRecordedEvents(const CMidiEventArray& arrEvent);
+	void	RemoveAllRecordedEvents();
+	void	AppendRecordedEvents(const CMidiEventArray& arrEvent);
+	void	DeleteRecordedEvents(int nStartTime, int nEndTime);
+	void	InsertRecordedEvents(int nInsertTime, int nDuration, CMidiEventArray& arrEvent);
+	int		GetRecordOffset() const;
+	void	SetRecordOffset(int nTicks);
 
 // Operations
 	bool	Play(bool bEnable, bool bRecord = false);
@@ -145,6 +154,8 @@ protected:
 	int		m_nStartPos;			// starting position of playback, in ticks
 	int		m_nPosOffset;			// total position correction, in ticks
 	int		m_nRecursions;			// current depth of recursive modulation
+	int		m_iRecordEvent;			// index of next recorded event to output
+	int		m_nRecordOffset;		// offset added to recorded event times during playback, in ticks
 	bool	m_bIsPlaying;			// true if playing
 	bool	m_bIsPaused;			// true if paused
 	bool	m_bIsStopping;			// true if stopping
@@ -160,10 +171,10 @@ protected:
 	CMidiEventArray	m_arrNoteOff;		// array of pending note off events
 	CMidiEventArray	m_arrTempoEvent;	// array of tempo events
 	CDWordArrayEx	m_arrInitMidiEvent;	// array of MIDI events to output at start of playback
-	CILockRingBuf<DWORD>	m_qLiveEvent;	// thread-safe queue of live events to be output
 	MIDI_PARAMS	m_MidiCache;		// cached values of MIDI parameters
 	BYTE	m_arrNoteRef[MIDI_CHANNELS][MIDI_NOTES];	// note reference counts
 	CMidiEventArray	m_arrOutputEvent;	// MIDI event buffer for capturing output
+	CMidiEventArray	m_arrRecordEvent;	// MIDI event buffer for recording live MIDI
 
 #if SEQ_DUMP_EVENTS
 	CArrayEx<CMidiEventStream, CMidiEventStream&>	m_arrDumpEvent;	// for debug only
@@ -179,6 +190,7 @@ protected:
 	void	MakeEvent(const CTrack& trk, DWORD dwTime, int nVal, CEvent& evt);
 	void	AddTrackEvents(int iTrack, int nCBStart);
 	void	AddNoteOffs(int nCBStart, int nCBEnd);
+	void	AddRecordedEvents(int nCBStart, int nCBEnd);
 	bool	OutputMidiBuffer();
 	bool	WriteTimeDivision(int nTimeDiv);
 	bool	WriteTempo(double fTempo);
@@ -186,10 +198,11 @@ protected:
 	void	UpdateCallbackLength();
 	bool	ExportImpl(LPCTSTR pszPath, int nDuration);
 	void	ResetCachedParameters();
-	void	OutputControlEvent(const CTrack& track, DWORD dwTime, int nVal);
+	void	OutputControlEvent(const CTrack& track, int nTime, int nVal);
 	static	int		ApplyNoteRange(int nNote, int nRangeStart, int iRangeType);
 	void	QueueOutputEvents(int nEvents);
 	void	FixNoteOverlaps();
+	void	ChaseDubs(int nTime, bool bUpdateMutes = false);
 #if SEQ_DUMP_EVENTS
 	void	AddDumpEvent(const CMidiEventStream& arrEvt, int nEvents);
 	void	DumpEvents(LPCTSTR pszPath);
@@ -201,6 +214,7 @@ class CSequencerReader : public CSequencer {
 public:
 	CSequencerReader(CSequencer& Seq);
 	virtual ~CSequencerReader();
+	CMuteArray	m_arrTrackMute;		// copy of track mutes
 };
 
 inline bool CSequencer::IsOpen() const
@@ -216,6 +230,11 @@ inline bool CSequencer::IsPlaying() const
 inline bool CSequencer::IsPaused() const
 {
 	return m_bIsPaused;
+}
+
+inline bool CSequencer::IsStopping() const
+{
+	return m_bIsStopping;
 }
 
 inline bool CSequencer::IsRecording() const
@@ -309,4 +328,19 @@ inline int CSequencer::ModWrap(int nVal, int nModulo)
 inline bool CSequencer::GetNoteOverlapMode() const
 {
 	return m_bPreventNoteOverlap;
+}
+
+inline const CSequencer::CMidiEventArray& CSequencer::GetRecordedEvents() const
+{
+	return m_arrRecordEvent;
+}
+
+inline int CSequencer::GetRecordOffset() const
+{
+	return m_nRecordOffset;
+}
+
+inline void CSequencer::SetRecordOffset(int nTicks)
+{
+	m_nRecordOffset = nTicks;
 }

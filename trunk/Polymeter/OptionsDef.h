@@ -10,7 +10,8 @@
         00      27mar18	initial version
 		01		12dec18	move input quantization to MIDI group
 		02		09jan19	change default velocity from 64 to 100
-		
+		03		29feb20	add record input option
+
 */
 
 #ifdef GROUPDEF
@@ -34,6 +35,7 @@ PROPDEF(	Midi,		NONE,		VAR,		int,		nBufferSize,		4096,		1,			USHRT_MAX,	NULL,		0
 PROPDEF(	Midi,		NONE,		VAR,		bool,		bThru,				1,			0,			0,			NULL,		0)
 PROPDEF(	Midi,		NONE,		VAR,		short,		nDefaultVelocity,	100,		1,			127,		NULL,		0)
 PROPDEF(	Midi,		NONE,		ENUM,		int,		iInputQuant,		INQNT_16,	0,			0,			NULL,		0)
+PROPDEF(	Midi,		NONE,		VAR,		bool,		bRecordInput,		0,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		float,		fUpdateFreq,		20.0f,		1.0f,		60.0f,		NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowCurPos,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowNoteNames,		1,			0,			0,			NULL,		0)

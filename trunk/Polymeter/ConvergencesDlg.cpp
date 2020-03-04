@@ -1,0 +1,263 @@
+// Copyleft 2020 Chris Korda
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation; either version 2 of the License, or any later version.
+/*
+        chris korda
+ 
+		revision history:
+		rev		date	comments
+        00      03mar20	initial version
+
+*/
+
+#include "stdafx.h"
+#include "resource.h"
+#include "ConvergencesDlg.h"
+#include "NumberTheory.h"
+#include <vector>
+#include <algorithm>
+#include "Polymeter.h"
+#include "MainFrm.h"
+#include "PolymeterDoc.h"
+
+void CConvergenceFinder::FindCombinations(int n, int r)
+{
+	std::vector<bool> v(n);
+	std::fill(v.end() - r, v.end(), true);
+	do {
+		m_info.m_arrFactor.FastRemoveAll();
+		for (int i = 0; i < n; i++) {
+			if (v[i])
+				m_info.m_arrFactor.FastAdd(m_arrIn[i]);
+		}
+		if (m_info.m_arrFactor.GetSize()) {
+			m_info.m_nConv = CNumberTheory::LeastCommonMultiple(m_info.m_arrFactor.GetData(), m_info.m_arrFactor.GetSize());
+			INT_PTR	iPos = m_arrOut.InsertSortedUnique(m_info);
+			if (iPos >= 0)
+				m_arrOut[iPos].m_arrFactor = m_info.m_arrFactor;
+		}
+	} while (std::next_permutation(v.begin(), v.end()));
+}
+
+void CConvergenceFinder::FindAllCombinations(int n, int rmin)
+{
+	for (int i = rmin; i <= n; i++)
+		FindCombinations(n, i);
+}
+
+void CConvergenceFinder::Find(const CULongLongArray& arrIn)
+{
+	m_arrIn.RemoveAll();
+	// sort input values and remove any duplicates
+	for (int iIn = 0; iIn < arrIn.GetSize(); iIn++) {	// for each input value
+		ULONGLONG	nVal = arrIn[iIn];
+		m_arrIn.InsertSortedUnique(nVal);
+	}
+	FindAllCombinations(m_arrIn.GetSize(), 2);	// at least two members
+}
+
+const CCtrlResize::CTRL_LIST CConvergencesDlg::m_arrCtrl[] = {
+	{IDC_CONVERGE_INPUT,	BIND_LEFT | BIND_RIGHT},
+	{IDC_CONVERGE_OUTPUT,	BIND_ALL},
+	{0},	// list terminator; don't delete
+};
+
+CConvergencesDlg::CConvergencesDlg() 
+	: CDialog(IDD)
+{
+	//{{AFX_DATA_INIT(CConvergencesDlg)
+	//}}AFX_DATA_INIT
+	m_bInMsgBox = false;
+}
+
+void CConvergencesDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialog::DoDataExchange(pDX);
+	//{{AFX_DATA_MAP(CConvergencesDlg)
+	//}}AFX_DATA_MAP
+	DDX_Control(pDX, IDC_CONVERGE_INPUT, m_editIn);
+	DDX_Control(pDX, IDC_CONVERGE_OUTPUT, m_editOut);
+}
+
+bool CConvergencesDlg::CvtStringToSet(const CString& sIn, CConvergenceFinder::CULongLongArray& arrIn)
+{
+	if (sIn.SpanIncluding(_T("0123456789, ")) != sIn)
+		return false;	// input string contains unexpected characters
+	CString	sToken;
+	int	iStart = 0;
+	while (!(sToken = sIn.Tokenize(_T(", "), iStart)).IsEmpty()) {
+		ULONGLONG	nVal;
+		if (_stscanf_s(sToken, _T("%llu"), &nVal) != 1 || !nVal)
+			return false;	// conversion failed or zero value
+		arrIn.Add(nVal);
+	}
+	return arrIn.GetSize() > 1;
+}
+
+CString CConvergencesDlg::CvtSetToString(const CConvergenceFinder::CULongLongArray& arr)
+{
+	CString	sVal, sOut;
+	int	nElems = arr.GetSize();
+	for (int iElem = 0; iElem < nElems; iElem++) {	// for each element
+		if (iElem)
+			sOut += ',';
+		sVal.Format(_T("%llu"), arr[iElem]);
+		sOut += sVal;
+	}
+	return sOut;
+}
+
+CString CConvergencesDlg::CvtOutputToString(const CConvergenceFinder& finder)
+{
+	const CConvergenceFinder::CULongLongArray& arrIn = finder.GetInput();
+	const CConvergenceFinder::CInfoArray& arrOut = finder.GetOutput();
+	CString	sVal, sOut, sFactor;
+	sOut += _T("Input: [") + CvtSetToString(arrIn) + _T("]\r\n");
+	sVal.Format(_T("%d"), arrOut.GetSize());
+	sOut += _T("Convergences: ") + sVal + _T("\r\n");
+	for (int iConv = 0; iConv < arrOut.GetSize(); iConv++) {	// for each convergence
+		const CConvergenceFinder::CInfo&	info = arrOut[iConv];
+		sVal.Format(_T("%llu"), info.m_nConv);
+		sOut += sVal + _T("\t[");
+		sFactor = CvtSetToString(arrOut[iConv].m_arrFactor);
+		sOut += sFactor + _T("]\r\n");
+	}
+	return sOut;
+}
+
+void CConvergencesDlg::CalcConvergences(const CConvergenceFinder::CULongLongArray& arrIn)
+{
+	CConvergenceFinder	finder;
+	CConvergenceFinder::CInfoArray	arrOut;
+	CWaitCursor	wc;	// calculation can be slow for big input sets
+	finder.Find(arrIn);
+	CString	sOut(CvtOutputToString(finder));
+	m_editOut.SetWindowText(sOut);
+}
+
+void CConvergencesDlg::CalcConvergencesForEditInput()
+{
+	CConvergenceFinder::CULongLongArray	arrIn;
+	CString	sIn;
+	m_editIn.GetWindowText(sIn);
+	if (sIn != m_sPrevIn) {
+		m_sPrevIn = sIn;
+		if (!CvtStringToSet(sIn, arrIn)) {	// if input error
+			m_bInMsgBox = true;
+			AfxMessageBox(IDS_CONVERGE_HINT);
+			m_bInMsgBox = false;
+			GotoDlgCtrl(&m_editIn);
+			return;
+		}
+		CalcConvergences(arrIn);
+	}
+}
+
+void CConvergencesDlg::CalcConvergencesForSelectedTracks()
+{
+	CConvergenceFinder::CULongLongArray	arrIn;
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL && pDoc->GetSelectedCount()) {
+		int	nSels = pDoc->GetSelectedCount();
+		int	iSel;
+		// find minimum quant for selected tracks
+		int	nMinQuant = pDoc->m_Seq.GetQuant(pDoc->m_arrTrackSel[0]);
+		for (iSel = 1; iSel < nSels; iSel++) {
+			int	iTrack = pDoc->m_arrTrackSel[iSel];
+			int	nQuant = pDoc->m_Seq.GetQuant(iTrack);
+			if (nQuant < nMinQuant)
+				nMinQuant = nQuant;
+		}
+		for (iSel = 0; iSel < nSels; iSel++) {	// for selected tracks
+			int	iTrack = pDoc->m_arrTrackSel[iSel];
+			int	nQuant = pDoc->m_Seq.GetQuant(iTrack);
+			// if this track's quant isn't evenly divisible by minimum quant
+			if (nQuant % nMinQuant) {
+				nMinQuant = 0;	// no common unit, so show results in ticks
+				break;
+			}
+		}		
+		for (iSel = 0; iSel < nSels; iSel++) {	// for selected tracks
+			int	iTrack = pDoc->m_arrTrackSel[iSel];
+			ULONGLONG	nPeriod = pDoc->m_Seq.GetPeriod(iTrack);
+			if (nMinQuant)	// if minimum quant specified
+				nPeriod /= nMinQuant;	// convert period to minimum quant
+			arrIn.InsertSortedUnique(nPeriod);
+		}
+		if (arrIn.GetSize() > 1) {
+			CString	sVal, sIn;
+			for (int iIn = 0; iIn < arrIn.GetSize(); iIn++) {
+				if (iIn)
+					sIn += ',';
+				sVal.Format(_T("%llu"), arrIn[iIn]);
+				sIn += sVal;
+			}
+			m_editIn.SetWindowText(sIn);
+			m_sPrevIn = sIn;
+			CalcConvergences(arrIn);
+		}
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// CConvergencesDlg message map
+
+BEGIN_MESSAGE_MAP(CConvergencesDlg, CDialog)
+	//{{AFX_MSG_MAP(CConvergencesDlg)
+	//}}AFX_MSG_MAP
+	ON_WM_SIZE()
+	ON_EN_KILLFOCUS(IDC_CONVERGE_INPUT, OnKillfocusInput)
+	ON_WM_GETMINMAXINFO()
+END_MESSAGE_MAP()
+
+/////////////////////////////////////////////////////////////////////////////
+// CConvergencesDlg message handlers
+
+BOOL CConvergencesDlg::OnInitDialog() 
+{
+	CDialog::OnInitDialog();
+	
+	m_Resize.AddControlList(this, m_arrCtrl);
+	CRect	rWnd;
+	GetWindowRect(rWnd);
+	m_szInit = rWnd.Size();
+	CalcConvergencesForSelectedTracks();
+
+	return TRUE;  // return TRUE unless you set the focus to a control
+	              // EXCEPTION: OCX Property Pages should return FALSE
+}
+
+void CConvergencesDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialog::OnSize(nType, cx, cy);
+	m_Resize.OnSize();
+}
+
+void CConvergencesDlg::OnKillfocusInput()
+{
+	if ((m_nFlags & WF_CONTINUEMODAL) && !m_bInMsgBox)
+		CalcConvergencesForEditInput();
+}
+
+void CConvergencesDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+{
+	lpMMI->ptMinTrackSize = CPoint(m_szInit);
+	CDialog::OnGetMinMaxInfo(lpMMI);
+}
+
+BOOL CConvergencesDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN) {
+		switch (pMsg->wParam) {
+		case VK_RETURN:
+			CalcConvergencesForEditInput();
+			return true;
+		case 'A':
+			if (GetKeyState(VK_CONTROL) & GKS_DOWN)	// if Ctrl+A
+				m_editOut.SetSel(0, -1);	// select all
+			return true;
+		}
+	}
+	return CDialog::PreTranslateMessage(pMsg);
+}

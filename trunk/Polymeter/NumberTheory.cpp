@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      14apr18	initial version
+        01      03mar20	overload LCM for array
 
 */
 
@@ -51,6 +52,16 @@ ULONGLONG CNumberTheory::LeastCommonMultiple(ULONGLONG u, ULONGLONG v)
 {
 	ULONGLONG nGCD = GreatestCommonDivisor(u, v);
 	return u * v / nGCD;
+}
+
+ULONGLONG CNumberTheory::LeastCommonMultiple(const ULONGLONG *parrVal, INT_PTR nVals)
+{
+	ASSERT(nVals > 0);
+	ULONGLONG	nLCM = parrVal[0];
+	for (INT_PTR iVal = 1; iVal < nVals; iVal++) {
+		nLCM = CNumberTheory::LeastCommonMultiple(nLCM, parrVal[iVal]);
+	}
+	return nLCM;
 }
 
 ULONGLONG CNumberTheory::GreatestPrimeFactor(ULONGLONG n)

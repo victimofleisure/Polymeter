@@ -14,6 +14,7 @@
 		04		29jan19	add MIDI input bar
 		05		29jan19	exclude system status messages from MIDI thru
 		06		24feb20	overload profile functions
+		07		29feb20	add support for recording live events
 
 */
 
@@ -659,10 +660,19 @@ void CALLBACK CPolymeterApp::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwIn
 //			_tprintf(_T("%x %d\n"), dwParam1, dwParam2);
 			if (MIDI_STAT(dwParam1) < SYSEX) {	// if channel voice message (exclude system status messages)
 				CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-				if (pDoc != NULL && pDoc->m_Seq.IsOpen()) {
+				if (pDoc != NULL && pDoc->m_Seq.IsOpen() && !pDoc->m_Seq.IsStopping()) {
 					DWORD	dwEvent = static_cast<DWORD>(dwParam1);
-					if (theApp.m_Options.m_Midi_bThru)	// if MIDI thru enabled
+					if (theApp.m_Options.m_Midi_bThru) {	// if MIDI thru enabled
 						pDoc->m_Seq.OutputLiveEvent(dwEvent);	// output event
+						CMidiEventBar&	wndMidiOut = theApp.GetMainFrame()->GetMidiOutputBar();
+						if (wndMidiOut.FastIsVisible()) {	// if MIDI output bar visible
+							wndMidiOut.PostMessage(UWM_MIDI_EVENT, dwParam2, dwParam1);
+						}
+						CPianoBar&	wndPiano = theApp.GetMainFrame()->GetPianoBar();
+						if (wndPiano.FastIsVisible()) {	// if piano bar visible
+							wndPiano.PostMessage(UWM_MIDI_EVENT, dwParam2, dwParam1);
+						}
+					}
 				}
 				if (theApp.m_bIsRecordMidiIn) {	// if recording MIDI input
 					if (!theApp.m_arrMidiInEvent.GetSize()) {	// if first event
@@ -672,7 +682,7 @@ void CALLBACK CPolymeterApp::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwIn
 								theApp.m_nMidiInStartTime = static_cast<int>(nPos);
 						}
 					}
-					CMidiFile::MIDI_EVENT	evt = {static_cast<DWORD>(dwParam2), static_cast<DWORD>(dwParam1)};
+					CTrackBase::CMidiEvent	evt(static_cast<DWORD>(dwParam2), static_cast<DWORD>(dwParam1));
 					theApp.m_arrMidiInEvent.Add(evt);	// add event to MIDI input array
 				}
 			}

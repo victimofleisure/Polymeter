@@ -411,6 +411,12 @@
     <ClInclude Include="PhaseBar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ConvergencesDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CtrlResize.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Polymeter.cpp">
@@ -678,6 +684,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PhaseBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConvergencesDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CtrlResize.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

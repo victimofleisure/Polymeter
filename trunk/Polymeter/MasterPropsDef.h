@@ -9,6 +9,7 @@
 		rev		date	comments
         00      25mar18	initial version
 		01		20feb19	add note overlap property
+		02		02mar20	add record offset
 		
 */
 
@@ -29,6 +30,7 @@ PROPDEF(	Master,		NONE,		ENUM,		int,		nKeySig,			0,				0,			0,			m_oiKeySig,	_co
 PROPDEF(	Master,		NONE,		TIME,		int,		nSongLength,		600,			0,			0,			NULL,		0)
 PROPDEF(	Master,		NONE,		CUSTOM,		int,		nStartPos,			0,				INT_MIN,	INT_MAX,	NULL,		0)
 PROPDEF(	Master,		NONE,		ENUM,		int,		iNoteOverlap,		0,				0,			0,			m_oiNoteOverlap,	_countof(m_oiNoteOverlap))
+PROPDEF(	Master,		NONE,		VAR,		int,		nRecordOffset,		0,				INT_MIN,	INT_MAX,	NULL,		0)
 
 #undef PROPDEF
 #endif

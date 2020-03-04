@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      14apr18	initial version
+        01      03mar20	overload LCM for array
 
 */
 
@@ -17,6 +18,7 @@ class CNumberTheory {
 public:
 	static	ULONGLONG	GreatestCommonDivisor(ULONGLONG u, ULONGLONG v);
 	static	ULONGLONG	LeastCommonMultiple(ULONGLONG u, ULONGLONG v);
+	static	ULONGLONG	LeastCommonMultiple(const ULONGLONG *parr, INT_PTR nVals);
 	static	ULONGLONG	GreatestPrimeFactor(ULONGLONG n);
 };
 

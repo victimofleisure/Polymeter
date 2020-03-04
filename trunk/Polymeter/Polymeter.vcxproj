@@ -200,7 +200,9 @@
     <ClInclude Include="ChannelDef.h" />
     <ClInclude Include="ChildFrm.h" />
     <ClInclude Include="ColoredButton.h" />
+    <ClInclude Include="ConvergencesDlg.h" />
     <ClInclude Include="CritSec.h" />
+    <ClInclude Include="CtrlResize.h" />
     <ClInclude Include="FolderDialog.h" />
     <ClInclude Include="GraphBar.h" />
     <ClInclude Include="GraphTypeDef.h" />
@@ -328,6 +330,8 @@
     <ClCompile Include="ChannelsBar.cpp" />
     <ClCompile Include="ChildFrm.cpp" />
     <ClCompile Include="ColoredButton.cpp" />
+    <ClCompile Include="ConvergencesDlg.cpp" />
+    <ClCompile Include="CtrlResize.cpp" />
     <ClCompile Include="FolderDialog.cpp" />
     <ClCompile Include="GraphBar.cpp" />
     <ClCompile Include="MidiEventBar.cpp" />

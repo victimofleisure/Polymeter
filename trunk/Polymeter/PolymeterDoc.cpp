@@ -36,6 +36,7 @@
 		26		12dec19	add GetPeriod
 		27		26dec19	in TimeToRepeat, report fractional beats
 		28		24feb20	use new INI file implementation
+		29		29feb20	add support for recording live events
 
 */
 
@@ -78,7 +79,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	13
+#define	FILE_VERSION	14
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -120,6 +121,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_FILL_SIGNED		_T("bSigned")
 #define RK_OFFSET_DLG		REG_SETTINGS _T("\\Offset")
 #define RK_OFFSET_TICKS		_T("nTicks")
+#define RK_RECORD_EVENTS	_T("RecordEvents")
 
 // define null title IDs for undo codes that have dynamic titles, or are insigificant
 #define IDS_EDIT_TRACK_PROP			0
@@ -288,7 +290,7 @@ void CPolymeterDoc::Serialize(CArchive& ar)
 void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 {
 	CIniFile	f(szPath, false);	// reading
-	f.Read();
+	f.Read();	// read INI file
 	CString	sFileID;
 	RdReg(RK_FILE_ID, sFileID);
 	if (sFileID != FILE_ID) {	// if unexpected file ID
@@ -364,6 +366,9 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 	int	nViewType = ARRAY_FIND(m_arrViewTypeName, pszViewTypeName);
 	if (nViewType >= 0)
 		m_nViewType = nViewType;
+	CMidiEventArray	arrRecordEvent;
+	theApp.GetProfileArray(arrRecordEvent, REG_SETTINGS, RK_RECORD_EVENTS);	// read recorded events if any
+	m_Seq.SetRecordedEvents(arrRecordEvent);	// load recorded events into sequencer
 }
 
 void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
@@ -406,7 +411,9 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 	WrReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
 	WrReg(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
 	WrReg(RK_VIEW_TYPE, CString(m_arrViewTypeName[m_nViewType]));
-	f.Write();
+	if (m_Seq.GetRecordedEvents().GetSize())	// if recorded events to write
+		theApp.WriteProfileArray(m_Seq.GetRecordedEvents(), REG_SETTINGS, RK_RECORD_EVENTS);
+	f.Write();	// write INI file
 }
 
 __forceinline void CPolymeterDoc::ReadTrackModulations(CString sTrkID, CTrack& trk)
@@ -1729,6 +1736,7 @@ void CPolymeterDoc::SaveDubs(CUndoState& State) const
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
 		pInfo->m_arrDub[iTrack] = m_Seq.GetTrack(iStartTrack + iTrack).m_arrDub;
 	}
+	pInfo->m_arrRecordEvent = m_Seq.GetRecordedEvents();	// also save recorded events
 	State.SetObj(pInfo);
 }
 
@@ -1742,6 +1750,7 @@ void CPolymeterDoc::RestoreDubs(const CUndoState& State)
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
 		m_Seq.SetDubs(iStartTrack + iTrack, pInfo->m_arrDub[iTrack]);
 	}
+	m_Seq.SetRecordedEvents(pInfo->m_arrRecordEvent);	// also restore recorded events
 	m_Seq.ChaseDubsFromCurPos();
 	CRect	rCellSel(CPoint(0, iStartTrack), CSize(INT_MAX, nTracks));	// full width of view
 	CRectSelPropHint	hint(rCellSel);
@@ -2392,6 +2401,8 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 			return false;
 		}
 		if (bRecord) {	// if recording
+			if (theApp.m_Options.m_Midi_bRecordInput)
+				theApp.RecordMidiInput(true);
 			m_rUndoSel = CRect(0, 0, 0, m_Seq.GetTrackCount());
 			NotifyUndoableEdit(0, UCODE_RECORD);
 		}
@@ -2412,6 +2423,7 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 		if (wndPiano.IsVisible()) {	// if piano bar is visible
 			bOutputCapture = true;	// enable MIDI output capture
 		}
+		m_Seq.SetRecordOffset(m_nRecordOffset);
 	} else {	// stopping playback
 		theApp.m_pPlayingDoc = NULL;
 	}
@@ -2429,6 +2441,8 @@ void CPolymeterDoc::OnPlay(bool bPlay, bool bRecord)
 	if (!bPlay) {	// if stopping
 		if (bRecord) {	// if ending a recording
 			UpdateSongLength();
+			if (theApp.IsRecordingMidiInput())
+				SaveRecordedMidiInput();
 			if (theApp.m_Options.m_General_bAlwaysRecord) {	// if always recording
 				CString	sPath;
 				if (CreateAutoSavePath(sPath)) {	// if auto-save path created
@@ -2437,6 +2451,9 @@ void CPolymeterDoc::OnPlay(bool bPlay, bool bRecord)
 				}
 			} else	// normal recording
 				SetModifiedFlag();
+		} else {
+			if (theApp.IsRecordingMidiInput())
+				RecordToTracks(false);
 		}
 		CPianoBar&	wndPiano = theApp.GetMainFrame()->GetPianoBar();
 		if (wndPiano.IsVisible())
@@ -2472,23 +2489,29 @@ bool CPolymeterDoc::RecordToTracks(bool bEnable)
 {
 	if (bEnable == theApp.IsRecordingMidiInput())	// if already in requested state
 		return true;	// nothing to do
+	theApp.RecordMidiInput(bEnable);	// start or stop recording input
 	if (bEnable) {	// if starting
-		if (!theApp.RecordMidiInput(true))
+		if (!Play(true)) {	// start sequencer too
+			theApp.RecordMidiInput(false);	// clean up
 			return false;
+		}
 	} else {	// stopping
 		theApp.RecordMidiInput(false);
 		int	nEvents = theApp.m_arrMidiInEvent.GetSize();
 		if (!nEvents)
 			return false;
 		CMidiFile::CMidiTrackArray	arrMidiTrack;
-		arrMidiTrack.Add(theApp.m_arrMidiInEvent);
-		int	nStartTime = arrMidiTrack[0][0].DeltaT;	// first MIDI input event's timestamp
+		arrMidiTrack.SetSize(1);
+		arrMidiTrack[0].SetSize(nEvents);
+		int	nStartTime = theApp.m_arrMidiInEvent[0].m_nTime;	// first MIDI input event's timestamp
 		int	nPrevTime = 0;
 		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each recorded MIDI input event
 			// event timestamps are in milliseconds relative to when MIDI input device was started
-			CMidiFile::MIDI_EVENT&	evt = arrMidiTrack[0][iEvent];
-			int nTime = static_cast<int>(m_Seq.ConvertMillisecondsToPosition(evt.DeltaT - nStartTime));
-			evt.DeltaT = nTime - nPrevTime;	// convert to delta time in sequencer ticks
+			const CMidiEvent&	evtIn = theApp.m_arrMidiInEvent[iEvent];
+			CMidiFile::MIDI_EVENT&	evtOut = arrMidiTrack[0][iEvent];
+			int nTime = static_cast<int>(m_Seq.ConvertMillisecondsToPosition(evtIn.m_nTime - nStartTime));
+			evtOut.DeltaT = nTime - nPrevTime;	// convert to delta time in sequencer ticks
+			evtOut.Msg = evtIn.m_dwEvent;
 			nPrevTime = nTime;
 		}
 		arrMidiTrack[0][0].DeltaT += theApp.m_nMidiInStartTime;
@@ -2502,6 +2525,22 @@ bool CPolymeterDoc::RecordToTracks(bool bEnable)
 		OnImportTracks(arrTrack);
 	}
 	return true;
+}
+
+void CPolymeterDoc::SaveRecordedMidiInput()
+{
+	theApp.RecordMidiInput(false);
+	int	nEvents = theApp.m_arrMidiInEvent.GetSize();
+	if (nEvents) {
+		int	nStartOffset = theApp.m_nMidiInStartTime;
+		int	nFirstTime = theApp.m_arrMidiInEvent[0].m_nTime;	// first MIDI input event's timestamp
+		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each MIDI input event
+			CMidiEvent&	evt = theApp.m_arrMidiInEvent[iEvent];
+			int nTicks = static_cast<int>(m_Seq.ConvertMillisecondsToPosition(evt.m_nTime - nFirstTime));
+			evt.m_nTime = nTicks + nStartOffset;
+		}
+		m_Seq.AppendRecordedEvents(theApp.m_arrMidiInEvent);	// assume sequencer handles overdub
+	}
 }
 
 void CPolymeterDoc::OnImportTracks(CTrackArray& arrTrack)
@@ -2594,10 +2633,12 @@ void CPolymeterDoc::CopyDubsToClipboard(const CRect& rSelection, double fTicksPe
 	int	nStartTime = CellToTime(rSelection.left, fTicksPerCell, nTimeShift);
 	int	nEndTime = CellToTime(rSelection.right, fTicksPerCell, nTimeShift);
 	int	nCopyTracks = rSelection.bottom - rSelection.top;
-	theApp.m_arrSongClipboard.SetSize(nCopyTracks);
+	theApp.m_SongClipboard.m_arrDub.SetSize(nCopyTracks);
 	for (int iTrack = 0; iTrack < nCopyTracks; iTrack++) {	// for each selected track
-		m_Seq.GetDubs(rSelection.top + iTrack, nStartTime, nEndTime, theApp.m_arrSongClipboard[iTrack]);
+		m_Seq.GetDubs(rSelection.top + iTrack, nStartTime, nEndTime, theApp.m_SongClipboard.m_arrDub[iTrack]);
 	}
+	m_Seq.GetRecordedEvents().GetEvents(nStartTime, nEndTime, theApp.m_SongClipboard.m_arrRecordEvent);
+	theApp.m_SongClipboard.m_nDuration = nEndTime - nStartTime;	// insert also needs duration
 }
 
 void CPolymeterDoc::DeleteDubs(const CRect& rSelection, double fTicksPerCell, bool bCopyToClipboard)
@@ -2609,6 +2650,7 @@ void CPolymeterDoc::DeleteDubs(const CRect& rSelection, double fTicksPerCell, bo
 	SetModifiedFlag();
 	if (rSelection.right == INT_MAX && !rSelection.left) {	// if select all
 		m_Seq.RemoveAllDubs();
+		m_Seq.RemoveAllRecordedEvents();
 	} else {	// normal selection
 		int	nTimeShift = CalcSongTimeShift();
 		int	nStartTime = CellToTime(rSelection.left, fTicksPerCell, nTimeShift);
@@ -2616,13 +2658,14 @@ void CPolymeterDoc::DeleteDubs(const CRect& rSelection, double fTicksPerCell, bo
 		for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
 			m_Seq.DeleteDubs(iTrack, nStartTime, nEndTime);
 		}
+		m_Seq.DeleteRecordedEvents(nStartTime, nEndTime);
 		m_Seq.ChaseDubsFromCurPos();
 	}
 	CRectSelPropHint	hint(CRect(0, rSelection.top, INT_MAX, rSelection.bottom));
 	UpdateAllViews(NULL, HINT_SONG_DUB, &hint);
 }
 
-void CPolymeterDoc::InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double fTicksPerCell, CRect& rSelection)
+void CPolymeterDoc::InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double fTicksPerCell, CRect& rSelection, CMidiEventArray& arrRecordEvent, int nDuration)
 {
 	int	nTracks = GetTrackCount();
 	// if source array has more tracks than will fit, truncate instead of failing
@@ -2643,6 +2686,7 @@ void CPolymeterDoc::InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double f
 	for (int iTrack = 0; iTrack < nInsTracks; iTrack++) {	// for each source row
 		m_Seq.InsertDubs(ptInsert.y + iTrack, nInsTime, arrDub[iTrack]);
 	}
+	m_Seq.InsertRecordedEvents(nInsTime, nDuration, arrRecordEvent);
 	m_Seq.ChaseDubsFromCurPos();
 	CRectSelPropHint	hint(CRect(0, ptInsert.y, INT_MAX, ptInsert.y + nInsTracks), true);
 	UpdateAllViews(NULL, HINT_SONG_DUB, &hint);
@@ -2651,6 +2695,7 @@ void CPolymeterDoc::InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double f
 void CPolymeterDoc::InsertDubs(const CRect& rSelection, double fTicksPerCell)
 {
 	CDubArrayArray	arrDub;
+	CMidiEventArray	arrRecordEvent;
 	int	nRows = rSelection.Height();
 	arrDub.SetSize(nRows);
 	int	nTicksPerCell = round(fTicksPerCell);
@@ -2660,12 +2705,13 @@ void CPolymeterDoc::InsertDubs(const CRect& rSelection, double fTicksPerCell)
 		arrDub[iDub][1] = CTrack::CDub(nTicksPerCell, true);
 	}
 	CRect	rTemp;
-	InsertDubs(arrDub, rSelection.TopLeft(), fTicksPerCell, rTemp);
+	InsertDubs(arrDub, rSelection.TopLeft(), fTicksPerCell, rTemp, arrRecordEvent, nTicksPerCell);
 }
 
 void CPolymeterDoc::PasteDubs(CPoint ptPaste, double fTicksPerCell, CRect& rSelection)
 {
-	InsertDubs(theApp.m_arrSongClipboard, ptPaste, fTicksPerCell, rSelection);
+	InsertDubs(theApp.m_SongClipboard.m_arrDub, ptPaste, fTicksPerCell, rSelection, 
+		theApp.m_SongClipboard.m_arrRecordEvent, theApp.m_SongClipboard.m_nDuration);
 }
 
 bool CPolymeterDoc::GotoNextDub(bool bReverse)
@@ -3718,8 +3764,8 @@ void CPolymeterDoc::OnTransportRecordTracks()
 
 void CPolymeterDoc::OnUpdateTransportRecordTracks(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(theApp.IsMidiInputDeviceOpen());
-	pCmdUI->SetCheck(theApp.IsRecordingMidiInput());
+	pCmdUI->Enable(theApp.IsMidiInputDeviceOpen() && !m_Seq.IsRecording());
+	pCmdUI->SetCheck(theApp.IsRecordingMidiInput() && !m_Seq.IsRecording());
 }
 
 void CPolymeterDoc::OnViewTypeTrack()
@@ -3846,11 +3892,7 @@ void CPolymeterDoc::OnToolsTimeToRepeat()
 			arrDuration.InsertSorted(nDuration);	// ascending sort may improve LCM performance
 	}
 	CWaitCursor	wc;	// LCM can take a while
-	int	nDurs = arrDuration.GetSize();
-	ULONGLONG	nLCM = arrDuration[0];
-	for (int iDur = 1; iDur < nDurs; iDur++) {	// for each track duration
-		nLCM = CNumberTheory::LeastCommonMultiple(nLCM, arrDuration[iDur]);
-	}
+	ULONGLONG	nLCM = CNumberTheory::LeastCommonMultiple(arrDuration.GetData(), arrDuration.GetSize());
 	ULONGLONG	nBeats = nLCM / nTimeDiv;	// convert ticks to beats
 	int	nTicks = nLCM % nTimeDiv;	// compute remainder in ticks
 	CString	sMsg, sVal;

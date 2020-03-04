@@ -889,7 +889,7 @@ void CSongView::OnEditPaste()
 
 void CSongView::OnUpdateEditPaste(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(HaveSelection() && theApp.m_arrSongClipboard.GetSize());
+	pCmdUI->Enable(HaveSelection() && theApp.m_SongClipboard.m_arrDub.GetSize());
 }
 
 void CSongView::OnEditInsert()

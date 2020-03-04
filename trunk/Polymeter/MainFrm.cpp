@@ -17,6 +17,9 @@
 		07		29jan19	add MIDI input bar; refactor create dockable panes
 		08		20feb19	add note overlap prevention
 		09		12dec19	add phase bar
+		10		29feb20	in OnDestroy, close MIDI input device
+		11		02mar20	in OnUpdate, add record offset
+		12		03mar20	add convergences dialog
 
 */
 
@@ -36,6 +39,7 @@
 #include "MidiWrap.h"
 #include "dbt.h"	// for device change types
 #include "TrackView.h"
+#include "ConvergencesDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -411,6 +415,9 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 						m_wndMidiOutputBar.SetKeySignature(pDoc->m_nKeySig);
 					m_wndPianoBar.SetKeySignature(pDoc->m_nKeySig);
 					break;
+				case CMasterProps::PROP_nRecordOffset:
+					pDoc->m_Seq.SetRecordOffset(pDoc->m_nRecordOffset);
+					break;
 				}
 			}
 			if (pSender != reinterpret_cast<CView *>(&m_wndPropertiesBar)) {	// if sender isn't properties bar
@@ -716,6 +723,7 @@ void CMainFrame::Dump(CDumpContext& dc) const
 
 BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_WM_CREATE()
+	ON_WM_DESTROY()
 	ON_COMMAND(ID_WINDOW_MANAGER, &CMainFrame::OnWindowManager)
 	ON_COMMAND(ID_VIEW_CUSTOMIZE, &CMainFrame::OnViewCustomize)
 	ON_REGISTERED_MESSAGE(AFX_WM_CREATETOOLBAR, &CMainFrame::OnToolbarCreateNew)
@@ -750,6 +758,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_MODULATIONS, OnUpdateViewModulations)
 	ON_COMMAND(ID_WINDOW_FULL_SCREEN, OnWindowFullScreen)
 	ON_COMMAND(ID_WINDOW_RESET_LAYOUT, OnWindowResetLayout)
+	ON_COMMAND(ID_TOOLS_CONVERGENCES, OnToolsConvergences)
 END_MESSAGE_MAP()
 
 // CMainFrame message handlers
@@ -893,6 +902,12 @@ LRESULT CMainFrame::OnAfterTaskbarActivate(WPARAM wParam, LPARAM lParam)
 		::SetFocus(hwndMDIChild);
 	}
 	return 0;
+}
+
+void CMainFrame::OnDestroy()
+{
+	theApp.OpenMidiInputDevice(false);
+	CMDIFrameWndEx::OnDestroy();
 }
 
 LRESULT	CMainFrame::OnHandleDlgKey(WPARAM wParam, LPARAM lParam)
@@ -1117,6 +1132,12 @@ void CMainFrame::OnToolsDevices()
 	CString	sMsg;
 	theApp.m_midiDevs.DumpSystemState(sMsg);
 	AfxMessageBox(sMsg, MB_ICONINFORMATION);
+}
+
+void CMainFrame::OnToolsConvergences()
+{
+	CConvergencesDlg	dlg;
+	dlg.DoModal();
 }
 
 void CMainFrame::OnWindowFullScreen()

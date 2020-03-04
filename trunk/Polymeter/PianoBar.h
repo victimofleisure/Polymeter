@@ -13,6 +13,7 @@
 		03		01feb19	add piano key press handler
 		04		02feb19	add output channel; output notes on key press
 		05		17feb20	inherit MIDI event class from track base
+		06		29feb20	add handler for MIDI event message
 
 */
 
@@ -40,6 +41,7 @@ public:
 // Operations
 public:
 	void	AddEvents(const CMidiEventArray& arrEvent);
+	void	AddEvent(DWORD dwEvent);
 	void	RemoveAllEvents();
 	void	UpdateKeyLabels();
 	void	UpdatePianoSize();
@@ -98,6 +100,7 @@ protected:
 	bool	m_bColorVelocity;		// if true, custom color keys to show note velocities
 	bool	m_bKeyLabelsDirty;		// if true, key labels need updating next time we're shown
 	CPoint	m_ptContextMenu;		// where context menu was invoked, in screen coords
+	CMidiEventArray	m_arrAddEvent;	// for repacking single event into array argument
 
 // Helpers
 	void	OnFilterChange();
@@ -128,6 +131,7 @@ protected:
 	afx_msg void OnUpdateColorVelocity(CCmdUI *pCmdUI);
 	afx_msg void OnInsertTrack();
 	afx_msg LRESULT OnPianoKeyPress(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnMidiEvent(WPARAM wParam, LPARAM lParam);
 };
 
 inline const CPianoBar::PIANO_RANGE& CPianoBar::GetPianoRange(int iPianoSize)
@@ -144,4 +148,10 @@ inline int CPianoBar::GetOutputChannel() const
 inline void CPianoBar::SetOutputChannel(int iChannel)
 {
 	m_iOutputChannel = iChannel;
+}
+
+inline void CPianoBar::AddEvent(DWORD dwEvent)
+{
+	m_arrAddEvent[0].m_dwEvent = dwEvent;
+	AddEvents(m_arrAddEvent);
 }

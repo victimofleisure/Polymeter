@@ -122,7 +122,7 @@ void CMidiEventBar::AddEvents(const CMidiEventArray& arrEvent)
 	int	nEvents = arrEvent.GetSize();
 	for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each new event
 		const CMidiEvent&	evtIn = arrEvent[iEvent];
-		m_nEventTime += evtIn.m_dwTime;	// order matters; update current time first
+		m_nEventTime += evtIn.m_nTime;	// order matters; update current time first
 		if (!(evtIn.m_dwEvent & 0xff000000)) {	// if event is a short MIDI message
 			CMidiEvent	evtOut(m_nEventTime, evtIn.m_dwEvent);	// use current time, not delta
 			m_arrEvent.Add(evtOut);	// add event to array
@@ -280,7 +280,7 @@ void CMidiEventBar::ExportEvents(LPCTSTR pszPath)
 			sStatus.Format(_T("%d"), nStat);
 			iChan = 0;
 		}
-		sLine.Format(_T("%d,%d,%s,%d,%d\n"), evt.m_dwTime, iChan, 
+		sLine.Format(_T("%d,%d,%s,%d,%d\n"), evt.m_nTime, iChan, 
 			sStatus, MIDI_P1(evt.m_dwEvent), MIDI_P2(evt.m_dwEvent));
 		fOut.WriteString(sLine);
 	}
@@ -416,7 +416,7 @@ void CMidiEventBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 	if (item.mask & LVIF_TEXT) {
 		switch (item.iSubItem) {
 		case COL_TIME:
-			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), evt.m_dwTime); 
+			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), evt.m_nTime); 
 			break;
 		case COL_CHANNEL:
 			if (MIDI_STAT(evt.m_dwEvent) < SYSEX)	// if channel voice message

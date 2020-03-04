@@ -15,6 +15,7 @@
 		05		01apr19	in OnFilterChange, add partial fix for velocity
 		06		30may19	handle short MIDI messages only; ignore other event types
 		07		17feb20	inherit MIDI event class from track base
+		08		29feb20	add handler for MIDI event message
 
 */
 
@@ -69,6 +70,7 @@ CPianoBar::CPianoBar()
 	RdReg(RK_PIANO_BAR, RK_ROTATE_LABELS, m_bRotateLabels);
 	RdReg(RK_PIANO_BAR, RK_KEY_COLORS, m_bColorVelocity);
 	m_iPianoSize = CLAMP(m_iPianoSize, 0, PIANO_SIZES - 1);	// just in case; avoid bounds error
+	m_arrAddEvent.SetSize(1);
 }
 
 CPianoBar::~CPianoBar()
@@ -268,6 +270,7 @@ BEGIN_MESSAGE_MAP(CPianoBar, CMyDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_PIANO_COLOR_VELOCITY, OnUpdateColorVelocity)
 	ON_COMMAND(ID_PIANO_INSERT_TRACK, OnInsertTrack)
 	ON_MESSAGE(UWM_PIANOKEYPRESS, OnPianoKeyPress)
+	ON_MESSAGE(UWM_MIDI_EVENT, OnMidiEvent)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -478,5 +481,12 @@ LRESULT CPianoBar::OnPianoKeyPress(WPARAM wParam, LPARAM lParam)
 			}
 		}
 	}
+	return 0;
+}
+
+LRESULT CPianoBar::OnMidiEvent(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	AddEvent(static_cast<DWORD>(lParam));
 	return 0;
 }

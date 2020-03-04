@@ -22,6 +22,7 @@
 		12		03feb19	add return value to track array's import MIDI file
 		13		12dec19	add GetPeriod
 		14		17feb20	move MIDI event class into track base
+		15		29feb20	add MIDI event array methods
 
 */
 
@@ -94,17 +95,27 @@ public:
 	class CMidiEvent {
 	public:
 		CMidiEvent() {};
-		CMidiEvent(DWORD dwTime, DWORD dwEvent);
+		CMidiEvent(DWORD nTime, DWORD dwEvent);
 		bool	operator==(const CMidiEvent &evt) const;
 		bool	operator!=(const CMidiEvent &evt) const;
 		bool	operator<(const CMidiEvent &evt) const;
 		bool	operator>(const CMidiEvent &evt) const;
 		bool	operator<=(const CMidiEvent &evt) const;
 		bool	operator>=(const CMidiEvent &evt) const;
-		int		m_dwTime;		// time in ticks
+		int		m_nTime;		// time in ticks
 		DWORD	m_dwEvent;		// MIDI event
+		bool	TimeInRange(int nStartTime, int nEndTime) const;
 	};
-	typedef CArrayEx<CMidiEvent, CMidiEvent&> CMidiEventArray;
+	class CMidiEventArray : public CArrayEx<CMidiEvent, CMidiEvent&> {
+	public:
+		int		Chase(int nTime) const;
+		int		FindEvents(int nStartTime, int nEndTime, int& iEndEvent) const;
+		void	GetEvents(int nStartTime, int nEndTime, CMidiEventArray& arrEvent) const;
+		void	DeleteEvents(int nStartTime);
+		void	DeleteEvents(int nStartTime, int nEndTime);
+		void	InsertEvents(int nInsertTime, int nDuration, CMidiEventArray& arrEvent);
+		void	Dump() const;
+	};
 	class CDub {
 	public:
 	// Construction
@@ -280,15 +291,15 @@ inline LPCTSTR CTrackBase::GetRangeTypeInternalName(int iType)
 	return m_oiRangeType[iType].pszName;
 }
 
-inline CTrackBase::CMidiEvent::CMidiEvent(DWORD dwTime, DWORD dwEvent)
+inline CTrackBase::CMidiEvent::CMidiEvent(DWORD nTime, DWORD dwEvent)
 {
-	m_dwTime = dwTime;
+	m_nTime = nTime;
 	m_dwEvent = dwEvent;
 }
 
 inline bool CTrackBase::CMidiEvent::operator==(const CMidiEvent &evt) const
 {
-	return m_dwTime == evt.m_dwTime && m_dwEvent == evt.m_dwEvent;
+	return m_nTime == evt.m_nTime && m_dwEvent == evt.m_dwEvent;
 }
 
 inline bool CTrackBase::CMidiEvent::operator!=(const CMidiEvent &evt) const
@@ -298,7 +309,7 @@ inline bool CTrackBase::CMidiEvent::operator!=(const CMidiEvent &evt) const
 
 inline bool CTrackBase::CMidiEvent::operator<(const CMidiEvent &evt) const
 {
-	return m_dwTime < evt.m_dwTime || (m_dwTime == evt.m_dwTime && m_dwEvent < evt.m_dwEvent);
+	return m_nTime < evt.m_nTime || (m_nTime == evt.m_nTime && m_dwEvent < evt.m_dwEvent);
 }
 
 inline bool CTrackBase::CMidiEvent::operator>(const CMidiEvent &evt) const
@@ -308,12 +319,17 @@ inline bool CTrackBase::CMidiEvent::operator>(const CMidiEvent &evt) const
 
 inline bool CTrackBase::CMidiEvent::operator<=(const CMidiEvent &evt) const
 {
-	return m_dwTime < evt.m_dwTime || (m_dwTime == evt.m_dwTime && m_dwEvent <= evt.m_dwEvent);
+	return m_nTime < evt.m_nTime || (m_nTime == evt.m_nTime && m_dwEvent <= evt.m_dwEvent);
 }
 
 inline bool CTrackBase::CMidiEvent::operator>=(const CMidiEvent &evt) const
 {
 	return !operator<(evt);
+}
+
+inline bool CTrackBase::CMidiEvent::TimeInRange(int nStartTime, int nEndTime) const
+{
+	return m_nTime >= nStartTime && m_nTime < nEndTime;
 }
 
 inline CTrackBase::CDub::CDub()

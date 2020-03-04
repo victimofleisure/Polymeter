@@ -13,6 +13,7 @@
 		03		17dec18	move MIDI file types into class scope
         04		03jan19	add playing document pointer
 		05		24feb20	overload profile functions
+		06		29feb20	add support for recording live events
 
 */
 
@@ -46,6 +47,12 @@ public:
 	CPolymeterApp();
 
 // Types
+	class CSongClipboard {	// clipboard for song editing
+	public:
+		CTrack::CDubArrayArray	m_arrDub;	// array of dubs
+		CTrack::CMidiEventArray	m_arrRecordEvent;	// array of recorded events
+		int		m_nDuration;	// duration of song data in ticks
+	};
 
 // Attributes
 	CMainFrame	*GetMainFrame() const;
@@ -79,18 +86,32 @@ public:
 	virtual BOOL WriteProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszValue);
 	virtual BOOL WriteProfileInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nValue);
 
+// Profile array templates
+	template<class TYPE, class ARG_TYPE> void GetProfileArray(CArrayEx<TYPE, ARG_TYPE>& arr, LPCTSTR pszSection, LPCTSTR pszEntry)
+	{
+		LPBYTE	pData;
+		UINT	nDataLen;
+		if (GetProfileBinary(pszSection, pszEntry, &pData, &nDataLen))
+			arr.Attach(reinterpret_cast<TYPE *>(pData), nDataLen / sizeof(TYPE));
+	}
+	template<class TYPE, class ARG_TYPE> void WriteProfileArray(const CArrayEx<TYPE, ARG_TYPE>& arr, LPCTSTR pszSection, LPCTSTR pszEntry)
+	{
+		WriteProfileBinary(pszSection, pszEntry, 
+			const_cast<LPBYTE>(reinterpret_cast<const BYTE *>(arr.GetData())), arr.GetSize() * sizeof(TYPE));
+	}
+
 // Public data
 	UINT  m_nAppLook;
 	BOOL  m_bHiColorIcons;
 	COptions	m_Options;	// options data
 	CTrackArray	m_arrTrackClipboard;	// clipboard for tracks
 	CTrack::CStepArrayArray m_arrStepClipboard;	// clipboard for steps
-	CTrack::CDubArrayArray	m_arrSongClipboard;	// clipboard for song dubs
+	CSongClipboard	m_SongClipboard;	// clipboard for song edits
 	CTrack::CModulationArray	m_arrModClipboard;	// clipboard for modulations
 	CMidiDevices	m_midiDevs;		// MIDI device information
 	bool	m_bTieNotes;	// if true, new notes are tied
 	bool	m_bCleanStateOnExit;	// if true, clean state before exiting
-	CMidiFile::CMidiEventArray	m_arrMidiInEvent;	// array of MIDI input events
+	CTrack::CMidiEventArray	m_arrMidiInEvent;	// array of MIDI input events
 	int		m_nMidiInStartTime;	// first MIDI input event's time, in active document's ticks
 	CPolymeterDoc	*m_pPlayingDoc;	// pointer to playing document if any
 
