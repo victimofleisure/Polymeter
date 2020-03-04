@@ -1736,7 +1736,6 @@ void CPolymeterDoc::SaveDubs(CUndoState& State) const
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
 		pInfo->m_arrDub[iTrack] = m_Seq.GetTrack(iStartTrack + iTrack).m_arrDub;
 	}
-	pInfo->m_arrRecordEvent = m_Seq.GetRecordedEvents();	// also save recorded events
 	State.SetObj(pInfo);
 }
 
@@ -1750,7 +1749,6 @@ void CPolymeterDoc::RestoreDubs(const CUndoState& State)
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
 		m_Seq.SetDubs(iStartTrack + iTrack, pInfo->m_arrDub[iTrack]);
 	}
-	m_Seq.SetRecordedEvents(pInfo->m_arrRecordEvent);	// also restore recorded events
 	m_Seq.ChaseDubsFromCurPos();
 	CRect	rCellSel(CPoint(0, iStartTrack), CSize(INT_MAX, nTracks));	// full width of view
 	CRectSelPropHint	hint(rCellSel);
@@ -2633,12 +2631,10 @@ void CPolymeterDoc::CopyDubsToClipboard(const CRect& rSelection, double fTicksPe
 	int	nStartTime = CellToTime(rSelection.left, fTicksPerCell, nTimeShift);
 	int	nEndTime = CellToTime(rSelection.right, fTicksPerCell, nTimeShift);
 	int	nCopyTracks = rSelection.bottom - rSelection.top;
-	theApp.m_SongClipboard.m_arrDub.SetSize(nCopyTracks);
+	theApp.m_arrSongClipboard.SetSize(nCopyTracks);
 	for (int iTrack = 0; iTrack < nCopyTracks; iTrack++) {	// for each selected track
-		m_Seq.GetDubs(rSelection.top + iTrack, nStartTime, nEndTime, theApp.m_SongClipboard.m_arrDub[iTrack]);
+		m_Seq.GetDubs(rSelection.top + iTrack, nStartTime, nEndTime, theApp.m_arrSongClipboard[iTrack]);
 	}
-	m_Seq.GetRecordedEvents().GetEvents(nStartTime, nEndTime, theApp.m_SongClipboard.m_arrRecordEvent);
-	theApp.m_SongClipboard.m_nDuration = nEndTime - nStartTime;	// insert also needs duration
 }
 
 void CPolymeterDoc::DeleteDubs(const CRect& rSelection, double fTicksPerCell, bool bCopyToClipboard)
@@ -2650,7 +2646,6 @@ void CPolymeterDoc::DeleteDubs(const CRect& rSelection, double fTicksPerCell, bo
 	SetModifiedFlag();
 	if (rSelection.right == INT_MAX && !rSelection.left) {	// if select all
 		m_Seq.RemoveAllDubs();
-		m_Seq.RemoveAllRecordedEvents();
 	} else {	// normal selection
 		int	nTimeShift = CalcSongTimeShift();
 		int	nStartTime = CellToTime(rSelection.left, fTicksPerCell, nTimeShift);
@@ -2658,14 +2653,13 @@ void CPolymeterDoc::DeleteDubs(const CRect& rSelection, double fTicksPerCell, bo
 		for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
 			m_Seq.DeleteDubs(iTrack, nStartTime, nEndTime);
 		}
-		m_Seq.DeleteRecordedEvents(nStartTime, nEndTime);
 		m_Seq.ChaseDubsFromCurPos();
 	}
 	CRectSelPropHint	hint(CRect(0, rSelection.top, INT_MAX, rSelection.bottom));
 	UpdateAllViews(NULL, HINT_SONG_DUB, &hint);
 }
 
-void CPolymeterDoc::InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double fTicksPerCell, CRect& rSelection, CMidiEventArray& arrRecordEvent, int nDuration)
+void CPolymeterDoc::InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double fTicksPerCell, CRect& rSelection)
 {
 	int	nTracks = GetTrackCount();
 	// if source array has more tracks than will fit, truncate instead of failing
@@ -2686,7 +2680,6 @@ void CPolymeterDoc::InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double f
 	for (int iTrack = 0; iTrack < nInsTracks; iTrack++) {	// for each source row
 		m_Seq.InsertDubs(ptInsert.y + iTrack, nInsTime, arrDub[iTrack]);
 	}
-	m_Seq.InsertRecordedEvents(nInsTime, nDuration, arrRecordEvent);
 	m_Seq.ChaseDubsFromCurPos();
 	CRectSelPropHint	hint(CRect(0, ptInsert.y, INT_MAX, ptInsert.y + nInsTracks), true);
 	UpdateAllViews(NULL, HINT_SONG_DUB, &hint);
@@ -2695,7 +2688,6 @@ void CPolymeterDoc::InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double f
 void CPolymeterDoc::InsertDubs(const CRect& rSelection, double fTicksPerCell)
 {
 	CDubArrayArray	arrDub;
-	CMidiEventArray	arrRecordEvent;
 	int	nRows = rSelection.Height();
 	arrDub.SetSize(nRows);
 	int	nTicksPerCell = round(fTicksPerCell);
@@ -2705,13 +2697,12 @@ void CPolymeterDoc::InsertDubs(const CRect& rSelection, double fTicksPerCell)
 		arrDub[iDub][1] = CTrack::CDub(nTicksPerCell, true);
 	}
 	CRect	rTemp;
-	InsertDubs(arrDub, rSelection.TopLeft(), fTicksPerCell, rTemp, arrRecordEvent, nTicksPerCell);
+	InsertDubs(arrDub, rSelection.TopLeft(), fTicksPerCell, rTemp);
 }
 
 void CPolymeterDoc::PasteDubs(CPoint ptPaste, double fTicksPerCell, CRect& rSelection)
 {
-	InsertDubs(theApp.m_SongClipboard.m_arrDub, ptPaste, fTicksPerCell, rSelection, 
-		theApp.m_SongClipboard.m_arrRecordEvent, theApp.m_SongClipboard.m_nDuration);
+	InsertDubs(theApp.m_arrSongClipboard, ptPaste, fTicksPerCell, rSelection);
 }
 
 bool CPolymeterDoc::GotoNextDub(bool bReverse)

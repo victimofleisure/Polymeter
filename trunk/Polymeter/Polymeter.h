@@ -47,12 +47,6 @@ public:
 	CPolymeterApp();
 
 // Types
-	class CSongClipboard {	// clipboard for song editing
-	public:
-		CTrack::CDubArrayArray	m_arrDub;	// array of dubs
-		CTrack::CMidiEventArray	m_arrRecordEvent;	// array of recorded events
-		int		m_nDuration;	// duration of song data in ticks
-	};
 
 // Attributes
 	CMainFrame	*GetMainFrame() const;
@@ -106,7 +100,7 @@ public:
 	COptions	m_Options;	// options data
 	CTrackArray	m_arrTrackClipboard;	// clipboard for tracks
 	CTrack::CStepArrayArray m_arrStepClipboard;	// clipboard for steps
-	CSongClipboard	m_SongClipboard;	// clipboard for song edits
+	CTrack::CDubArrayArray	m_arrSongClipboard;	// clipboard for song dubs
 	CTrack::CModulationArray	m_arrModClipboard;	// clipboard for modulations
 	CMidiDevices	m_midiDevs;		// MIDI device information
 	bool	m_bTieNotes;	// if true, new notes are tied
