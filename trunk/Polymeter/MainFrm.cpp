@@ -20,6 +20,9 @@
 		10		29feb20	in OnDestroy, close MIDI input device
 		11		02mar20	in OnUpdate, add record offset
 		12		03mar20	add convergences dialog
+		13		17mar20	move bar docking into CreateDockingWindows
+		14		18mar20	cache song position in document
+		15		20mar20	add mapping
 
 */
 
@@ -165,28 +168,10 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		TRACE0("Failed to create docking windows\n");
 		return -1;
 	}
-	m_wndPropertiesBar.EnableDocking(CBRS_ALIGN_ANY);
-	DockPane(&m_wndPropertiesBar);
-	m_wndChannelsBar.EnableDocking(CBRS_ALIGN_ANY);
-	DockPane(&m_wndChannelsBar);
-	m_wndPresetsBar.EnableDocking(CBRS_ALIGN_ANY);
-	DockPane(&m_wndPresetsBar);
-	m_wndPartsBar.EnableDocking(CBRS_ALIGN_ANY);
 	// combine presets and parts bars into one tabbed bar
 	m_wndPartsBar.AttachToTabWnd(&m_wndPresetsBar, DM_SHOW);
-	m_wndModulationsBar.EnableDocking(CBRS_ALIGN_ANY);
 	// combine channels and modulations bars into one tabbed bar
 	m_wndModulationsBar.AttachToTabWnd(&m_wndChannelsBar, DM_SHOW);
-	m_wndMidiInputBar.EnableDocking(CBRS_ALIGN_ANY);
-	DockPane(&m_wndMidiInputBar);
-	m_wndMidiOutputBar.EnableDocking(CBRS_ALIGN_ANY);
-	DockPane(&m_wndMidiOutputBar);
-	m_wndPianoBar.EnableDocking(CBRS_ALIGN_ANY);
-	DockPane(&m_wndPianoBar);
-	m_wndGraphBar.EnableDocking(CBRS_ALIGN_ANY);
-	DockPane(&m_wndGraphBar);
-	m_wndPhaseBar.EnableDocking(CBRS_ALIGN_ANY);
-	DockPane(&m_wndPhaseBar);
 
 	// enable Visual Studio 2005 style docking window behavior
 	CDockingManager::SetDockingMode(DT_SMART);
@@ -304,7 +289,9 @@ BOOL CMainFrame::CreateDockingWindows()
 		if (!m_wnd##name##Bar.Create(sTitle, this, CRect(0, 0, width, height), TRUE, ID_BAR_##name, style)) {	\
 			TRACE("Failed to create %s bar\n", #name);	\
 			return FALSE; \
-		}
+		} \
+		m_wnd##name##Bar.EnableDocking(CBRS_ALIGN_ANY); \
+		DockPane(&m_wnd##name##Bar);
 	#include "MainDockBarDef.h"	// generate code to create docking windows
 	SetDockingWindowIcons(theApp.m_bHiColorIcons);
 	return TRUE;
@@ -424,10 +411,6 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				m_wndPropertiesBar.SetProperties(*pDoc);	// update properties bar
 			}
 			break;
-		case CPolymeterDoc::HINT_SONG_POS:
-			if (pSender != reinterpret_cast<CView *>(this))
-				UpdateSongPosition();
-			break;
 		case CPolymeterDoc::HINT_CHANNEL_PROP:
 			{
 				const CPolymeterDoc::CPropHint	*pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
@@ -516,6 +499,10 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		m_wndGraphBar.OnUpdate(pSender, lHint, pHint);
 	if (m_wndPhaseBar.FastIsVisible())
 		m_wndPhaseBar.OnUpdate(pSender, lHint, pHint);
+	if (m_wndStepValuesBar.FastIsVisible())
+		m_wndStepValuesBar.OnUpdate(pSender, lHint, pHint);
+	if (m_wndMappingBar.FastIsVisible())
+		m_wndMappingBar.OnUpdate(pSender, lHint, pHint);
 }
 
 void CMainFrame::UpdateSongPosition()
@@ -523,13 +510,12 @@ void CMainFrame::UpdateSongPosition()
 	LONGLONG	nPos;
 	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
 	if (pDoc->m_Seq.GetPosition(nPos)) {	// if valid song position
+		pDoc->m_nSongPos = nPos;
 		pDoc->m_Seq.ConvertPositionToString(nPos, m_sSongPos);
 		m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);
 		pDoc->m_Seq.ConvertPositionToTimeString(nPos, m_sSongTime);
 		m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);
-		CView	*pView = reinterpret_cast<CView *>(this);
-		CPolymeterDoc::CSongPosHint	hint(nPos);
-		pDoc->UpdateAllViews(pView, CPolymeterDoc::HINT_SONG_POS, &hint);
+		pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_SONG_POS);
 	}
 }
 
@@ -743,6 +729,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_MESSAGE(UWM_DEVICE_NODE_CHANGE, OnDeviceNodeChange)
 	ON_WM_DEVICECHANGE()
 	ON_COMMAND(ID_TOOLS_DEVICES, OnToolsDevices)
+	ON_MESSAGE(UWM_TRACK_PROPERTY, OnTrackProperty)
 	ON_COMMAND(ID_EDIT_FIND, OnEditFind)
 	ON_COMMAND(ID_EDIT_REPLACE, OnEditReplace)
 	ON_REGISTERED_MESSAGE(WM_FINDREPLACE, OnFindReplace)
@@ -759,6 +746,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_COMMAND(ID_WINDOW_FULL_SCREEN, OnWindowFullScreen)
 	ON_COMMAND(ID_WINDOW_RESET_LAYOUT, OnWindowResetLayout)
 	ON_COMMAND(ID_TOOLS_CONVERGENCES, OnToolsConvergences)
+	ON_COMMAND(ID_TOOLS_MIDI_LEARN, OnToolsMidiLearn)
+	ON_UPDATE_COMMAND_UI(ID_TOOLS_MIDI_LEARN, OnUpdateToolsMidiLearn)
 END_MESSAGE_MAP()
 
 // CMainFrame message handlers
@@ -1031,6 +1020,21 @@ BOOL CMainFrame::OnDeviceChange(UINT nEventType, W64ULONG dwData)
 	return retc;	// true to allow device change
 }
 
+LRESULT CMainFrame::OnTrackProperty(WPARAM wParam, LPARAM lParam)
+{
+	// this message can be posted by worker threads, so proceed cautiously
+	int	iTrack = static_cast<int>(wParam);
+	int	iProp = HIWORD(lParam);
+	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
+	if (pDoc != NULL) {
+		if (iTrack >= 0 && iTrack < pDoc->GetTrackCount()) {	// if valid track index
+			CPolymeterDoc::CPropHint	hint(iTrack, iProp);
+			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_PROP, &hint);
+		}
+	}
+	return 0;
+}
+
 void CMainFrame::OnEditFind()
 {
 	CreateFindReplaceDlg(false);	// find
@@ -1138,6 +1142,18 @@ void CMainFrame::OnToolsConvergences()
 {
 	CConvergencesDlg	dlg;
 	dlg.DoModal();
+}
+
+void CMainFrame::OnToolsMidiLearn()
+{
+	theApp.m_bIsMidiLearn ^= 1;
+	if (m_wndMappingBar.FastIsVisible())
+		m_wndMappingBar.OnMidiLearn();
+}
+
+void CMainFrame::OnUpdateToolsMidiLearn(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(theApp.m_bIsMidiLearn);
 }
 
 void CMainFrame::OnWindowFullScreen()

@@ -15,6 +15,7 @@
 		05		24mar15	add column order methods
 		06		04apr15	add GetInsertPos
 		07		24apr18	standardize names
+		08		17mar20	add method to delete all columns
 
 		extended selection list control
  
@@ -53,6 +54,21 @@ void CListCtrlExSel::CreateColumns(const COL_INFO *pColInfo, int nColumns)
 		const COL_INFO&	info = pColInfo[iCol];
 		InsertColumn(iCol, LDS(info.nTitleID), info.nAlign, info.nWidth);
 	}
+}
+
+void CListCtrlExSel::DeleteAllColumns()
+{
+	int nCols = GetColumnCount();
+	for (int iCol = 0; iCol < nCols; iCol++)
+		DeleteColumn(0);
+}
+
+void CListCtrlExSel::SetColumnName(int iCol, LPCTSTR pszName)
+{
+	LVCOLUMN	lvcol;
+	lvcol.mask = LVCF_TEXT;	// only column name is valid
+	lvcol.pszText = const_cast<LPTSTR>(pszName);
+	SetColumn(iCol, &lvcol);
 }
 
 int CListCtrlExSel::GetSelection() const

@@ -37,6 +37,9 @@
 		27		26dec19	in TimeToRepeat, report fractional beats
 		28		24feb20	use new INI file implementation
 		29		29feb20	add support for recording live events
+		30		16mar20	bump file version for new modulation types
+		31		18mar20	cache song position in document
+		32		20mar20	add mapping
 
 */
 
@@ -79,7 +82,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	14
+#define	FILE_VERSION	15
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -164,6 +167,7 @@ CPolymeterDoc::CPolymeterDoc()
 	m_fStepZoom = 1;
 	m_fSongZoom = 1;
 	m_nViewType = DEFAULT_VIEW_TYPE;
+	m_nSongPos = 0;
 	m_rUndoSel.SetRectEmpty();
 	m_rStepSel.SetRectEmpty();
 }
@@ -368,7 +372,10 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 		m_nViewType = nViewType;
 	CMidiEventArray	arrRecordEvent;
 	theApp.GetProfileArray(arrRecordEvent, REG_SETTINGS, RK_RECORD_EVENTS);	// read recorded events if any
-	m_Seq.SetRecordedEvents(arrRecordEvent);	// load recorded events into sequencer
+	m_Seq.AttachRecordedEvents(arrRecordEvent);	// load recorded events into sequencer
+	CMappingArray	arrMapping;
+	arrMapping.Read();
+	m_Seq.m_mapping.Attach(arrMapping);
 }
 
 void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
@@ -413,6 +420,8 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 	WrReg(RK_VIEW_TYPE, CString(m_arrViewTypeName[m_nViewType]));
 	if (m_Seq.GetRecordedEvents().GetSize())	// if recorded events to write
 		theApp.WriteProfileArray(m_Seq.GetRecordedEvents(), REG_SETTINGS, RK_RECORD_EVENTS);
+	if (m_Seq.m_mapping.GetArray().GetSize())	// if mappings to write
+		m_Seq.m_mapping.GetArray().Write();
 	f.Write();	// write INI file
 }
 
@@ -676,12 +685,16 @@ int CPolymeterDoc::TrackSortCompare(const void *pElem1, const void *pElem2)
 	return 0;
 }
 
+void CPolymeterDoc::MakeSelectionRange(CIntArrayEx& arrSelection, int iFirstItem, int nItems)
+{
+	arrSelection.SetSize(nItems);
+	for (int iSel = 0; iSel < nItems; iSel++)	// for each item
+		arrSelection[iSel] = iFirstItem + iSel;
+}
+
 void CPolymeterDoc::GetSelectAll(CIntArrayEx& arrSelection) const
 {
-	int	nTracks = GetTrackCount();
-	arrSelection.SetSize(nTracks);	// sort all tracks
-	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
-		arrSelection[iTrack] = iTrack;	// store track's index
+	MakeSelectionRange(arrSelection, 0, GetTrackCount());	// all tracks
 }
 
 void CPolymeterDoc::SetMute(int iTrack, bool bMute)
@@ -1420,12 +1433,13 @@ void CPolymeterDoc::SaveClipboardTracks(CUndoState& State) const
 	if (UndoMgrIsIdle()) {	// if initial state
 		CRefPtr<CUndoClipboard>	pClipboard;
 		pClipboard.CreateObj();
-		pClipboard->m_arrSelection = m_arrTrackSel;
-		m_Seq.GetTracks(m_arrTrackSel, pClipboard->m_arrTrack); 
-		pClipboard->m_iSelMark = m_iTrackSelMark;
-		pClipboard->m_arrPreset = m_arrPreset;
-		pClipboard->m_arrPart = m_arrPart;
-		m_Seq.GetModulations(pClipboard->m_arrMod);
+		pClipboard->m_arrSelection = m_arrTrackSel;	// save selection
+		m_Seq.GetTracks(m_arrTrackSel, pClipboard->m_arrTrack);	// save tracks
+		pClipboard->m_iSelMark = m_iTrackSelMark;	// save selection mark
+		pClipboard->m_arrPreset = m_arrPreset;	// save presets
+		pClipboard->m_arrPart = m_arrPart;	// save parts
+		m_Seq.GetModulations(pClipboard->m_arrMod);	// save modulations
+		m_Seq.m_mapping.GetTrackIndices(pClipboard->m_arrMappingTrackIdx);	// save mappings
 		State.SetObj(pClipboard);
 		switch (LOWORD(State.GetCode())) {
 		case UCODE_CUT_TRACKS:
@@ -1449,6 +1463,7 @@ void CPolymeterDoc::RestoreClipboardTracks(const CUndoState& State)
 		m_arrPreset = pClipboard->m_arrPreset;	// restore presets
 		m_arrPart = pClipboard->m_arrPart;	// restore parts
 		m_Seq.SetModulations(pClipboard->m_arrMod);	// restore modulations
+		m_Seq.m_mapping.SetTrackIndices(pClipboard->m_arrMappingTrackIdx);	// restore mappings
 	} else {	// deleting
 		{
 			CTrackArrayEdit	TrackArrayEdit(this);	// begin track array transaction
@@ -1527,19 +1542,19 @@ void CPolymeterDoc::SaveMultiChannelProperty(CUndoState& State) const
 	int	iProp = State.GetCtrlID();
 	CIntArrayEx	arrSelection;
 	if (State.IsEmpty()) {	// if initial state
-		theApp.GetMainFrame()->GetChannelsBar().GetSelection(arrSelection);	// get fresh selection
+		theApp.GetMainFrame()->m_wndChannelsBar.GetSelection(arrSelection);	// get fresh selection
 	} else {	// undoing or redoing; selection may have changed, so don't rely on it
-		const CUndoMultiItemProp	*pInfo = static_cast<CUndoMultiItemProp*>(State.GetObj());
+		const CUndoMultiIntegerProp	*pInfo = static_cast<CUndoMultiIntegerProp*>(State.GetObj());
 		arrSelection = pInfo->m_arrSelection;	// use edit's original selection
 	}
-	CRefPtr<CUndoMultiItemProp>	pInfo;
+	CRefPtr<CUndoMultiIntegerProp>	pInfo;
 	pInfo.CreateObj();
 	pInfo->m_arrSelection = arrSelection;
 	int	nSels = arrSelection.GetSize();
-	pInfo->m_arrVal.SetSize(nSels);
+	pInfo->m_arrProp.SetSize(nSels);
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iChan = arrSelection[iSel];
-		pInfo->m_arrVal[iSel] = m_arrChannel[iChan].GetProperty(iProp);
+		pInfo->m_arrProp[iSel] = m_arrChannel[iChan].GetProperty(iProp);
 	}
 	State.SetObj(pInfo);
 }
@@ -1547,12 +1562,11 @@ void CPolymeterDoc::SaveMultiChannelProperty(CUndoState& State) const
 void CPolymeterDoc::RestoreMultiChannelProperty(const CUndoState& State)
 {
 	int	iProp = State.GetCtrlID();
-	const CUndoMultiItemProp	*pInfo = static_cast<CUndoMultiItemProp*>(State.GetObj());
+	const CUndoMultiIntegerProp	*pInfo = static_cast<CUndoMultiIntegerProp*>(State.GetObj());
 	int	nSels = pInfo->m_arrSelection.GetSize();
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iChan = pInfo->m_arrSelection[iSel];
-		int	nVal;
-		GetVariant(pInfo->m_arrVal[iSel], nVal);
+		int	nVal = pInfo->m_arrProp[iSel];
 		m_arrChannel[iChan].SetProperty(iProp, nVal);
 	}
 	CMultiItemPropHint	hint(pInfo->m_arrSelection, iProp);
@@ -2048,6 +2062,135 @@ void CPolymeterDoc::RestoreModulation(const CUndoState& State)
 	UpdateAllViews(NULL, HINT_MODULATION);
 }
 
+void CPolymeterDoc::SaveMapping(CUndoState& State) const
+{
+	int	iMapping = State.GetCtrlID();
+	int	iProp = HIWORD(State.GetCode());
+	State.m_Val.p.x.i = m_Seq.m_mapping.GetProperty(iMapping, iProp);
+}
+
+void CPolymeterDoc::RestoreMapping(const CUndoState& State)
+{
+	int	iMapping = State.GetCtrlID();
+	int	iProp = HIWORD(State.GetCode());
+	m_Seq.m_mapping.SetProperty(iMapping, iProp, State.m_Val.p.x.i);
+	CPropHint	hint(iMapping, iProp);
+	UpdateAllViews(NULL, HINT_MAPPING_PROP, &hint);
+}
+
+void CPolymeterDoc::SaveMultiMapping(CUndoState& State) const
+{
+	const CIntArrayEx	*parrSelection;
+	if (State.IsEmpty()) {	// if initial state
+		parrSelection = m_parrSelection;	// get fresh selection
+	} else {	// undoing or redoing; selection may have changed, so don't rely on it
+		const CUndoMultiIntegerProp	*pInfo = static_cast<CUndoMultiIntegerProp*>(State.GetObj());
+		parrSelection = &pInfo->m_arrSelection;	// use edit's original selection
+	}
+	CRefPtr<CUndoMultiIntegerProp>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrSelection = *parrSelection;
+	int	iProp = State.GetCtrlID();
+	m_Seq.m_mapping.GetProperty(*parrSelection, iProp, pInfo->m_arrProp);
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreMultiMapping(const CUndoState& State)
+{
+	int	iProp = State.GetCtrlID();
+	const CUndoMultiIntegerProp	*pInfo = static_cast<CUndoMultiIntegerProp*>(State.GetObj());
+	m_Seq.m_mapping.SetProperty(pInfo->m_arrSelection, iProp, pInfo->m_arrProp);
+	CMultiItemPropHint	hint(pInfo->m_arrSelection, iProp);
+	UpdateAllViews(NULL, HINT_MULTI_MAPPING_PROP, &hint);
+}
+
+void CPolymeterDoc::SaveSelectedMappings(CUndoState& State) const
+{
+	if (UndoMgrIsIdle()) {	// if initial state
+		ASSERT(m_parrSelection != NULL);
+		CRefPtr<CUndoSelectedMappings>	pInfo;
+		pInfo.CreateObj();
+		pInfo->m_arrSelection = *m_parrSelection;
+		m_Seq.m_mapping.GetSelection(*m_parrSelection, pInfo->m_arrMapping);
+		State.SetObj(pInfo);
+		switch (LOWORD(State.GetCode())) {
+		case UCODE_CUT_MAPPINGS:
+		case UCODE_DELETE_MAPPINGS:
+			State.m_Val.p.x.i = CUndoManager::UA_UNDO;	// undo inserts, redo deletes
+			break;
+		default:
+			State.m_Val.p.x.i = CUndoManager::UA_REDO;	// undo deletes, redo inserts
+		}
+	}
+}
+
+void CPolymeterDoc::RestoreSelectedMappings(const CUndoState& State)
+{
+	CUndoSelectedMappings	*pInfo = static_cast<CUndoSelectedMappings*>(State.GetObj());
+	bool	bInserting = GetUndoAction() == State.m_Val.p.x.i; 
+	CSelectionHint	hint;
+	if (bInserting) {	// if inserting
+		m_Seq.m_mapping.Insert(pInfo->m_arrSelection, pInfo->m_arrMapping);
+		hint.m_parrSelection = &pInfo->m_arrSelection;	// set selection
+	} else	// deleting
+		m_Seq.m_mapping.Delete(pInfo->m_arrSelection);
+	UpdateAllViews(NULL, HINT_MAPPING_ARRAY, &hint);
+}
+
+void CPolymeterDoc::RestoreMappingMove(const CUndoState& State)
+{
+	int	iDropPos = State.GetCtrlID();
+	const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
+	int	nSels = pInfo->m_arrSelection.GetSize();
+	CMappingArray	arrMapping;
+	CSelectionHint	hint;
+	if (IsUndoing()) {	// if undoing
+		m_Seq.m_mapping.GetRange(iDropPos, nSels, arrMapping);
+		m_Seq.m_mapping.Delete(iDropPos, nSels);
+		m_Seq.m_mapping.Insert(pInfo->m_arrSelection, arrMapping);
+		hint.m_parrSelection = &pInfo->m_arrSelection;	// set selection
+	} else {	// redoing
+		m_Seq.m_mapping.GetSelection(pInfo->m_arrSelection, arrMapping);
+		m_Seq.m_mapping.Delete(pInfo->m_arrSelection);
+		m_Seq.m_mapping.Insert(iDropPos, arrMapping);
+		hint.m_iFirstItem = iDropPos;	// select range
+		hint.m_nItems = nSels;
+	}
+	UpdateAllViews(NULL, HINT_MAPPING_ARRAY, &hint);
+}
+
+void CPolymeterDoc::SaveSortMappings(CUndoState& State)
+{
+	CRefPtr<CUndoSelectedMappings>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrMapping = m_Seq.m_mapping.GetArray();
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreSortMappings(const CUndoState& State)
+{
+	const CUndoSelectedMappings	*pInfo = static_cast<CUndoSelectedMappings*>(State.GetObj());
+	m_Seq.m_mapping.SetArray(pInfo->m_arrMapping);
+	CSelectionHint	hint(NULL);
+	UpdateAllViews(NULL, HINT_MAPPING_ARRAY, &hint);
+}
+
+void CPolymeterDoc::SaveLearnMapping(CUndoState& State)
+{
+	int	iMapping = State.GetCtrlID();
+	State.m_Val.p.x.u = m_Seq.m_mapping.GetAt(iMapping).GetInputMidiMsg();
+}
+
+void CPolymeterDoc::RestoreLearnMapping(const CUndoState& State)
+{
+	int	iMapping = State.GetCtrlID();
+	CMapping	mapping(m_Seq.m_mapping.GetAt(iMapping));
+	mapping.SetInputMidiMsg(State.m_Val.p.x.u);
+	m_Seq.m_mapping.SetAt(iMapping, mapping);
+	CPropHint	hint(iMapping);
+	UpdateAllViews(NULL, HINT_MAPPING_PROP, &hint);
+}
+
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
 {
 	switch (LOWORD(State.GetCode())) {
@@ -2154,6 +2297,27 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		break;
 	case UCODE_MODULATION:
 		SaveModulation(State);
+		break;
+	case UCODE_MAPPING_PROP:
+		SaveMapping(State);
+		break;
+	case UCODE_MULTI_MAPPING_PROP:
+		SaveMultiMapping(State);
+		break;
+	case UCODE_CUT_MAPPINGS:
+	case UCODE_PASTE_MAPPINGS:
+	case UCODE_INSERT_MAPPING:
+	case UCODE_DELETE_MAPPINGS:
+		SaveSelectedMappings(State);
+		break;
+	case UCODE_MOVE_MAPPINGS:
+		SavePresetMove(State);	// reuse, not an error
+		break;
+	case UCODE_SORT_MAPPINGS:
+		SaveSortMappings(State);
+		break;
+	case UCODE_LEARN_MAPPING:
+		SaveLearnMapping(State);
 		break;
 	}
 }
@@ -2264,6 +2428,27 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		break;
 	case UCODE_MODULATION:
 		RestoreModulation(State);
+		break;
+	case UCODE_MAPPING_PROP:
+		RestoreMapping(State);
+		break;
+	case UCODE_MULTI_MAPPING_PROP:
+		RestoreMultiMapping(State);
+		break;
+	case UCODE_CUT_MAPPINGS:
+	case UCODE_PASTE_MAPPINGS:
+	case UCODE_INSERT_MAPPING:
+	case UCODE_DELETE_MAPPINGS:
+		RestoreSelectedMappings(State);
+		break;
+	case UCODE_MOVE_MAPPINGS:
+		RestoreMappingMove(State);
+		break;
+	case UCODE_SORT_MAPPINGS:
+		RestoreSortMappings(State);
+		break;
+	case UCODE_LEARN_MAPPING:
+		RestoreLearnMapping(State);
 		break;
 	}
 }
@@ -2411,13 +2596,13 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 		}
 		theApp.m_pPlayingDoc = this;
 		UpdateChannelEvents();	// queue channel events to be output at start of playback
-		CMidiEventBar&	wndMidiOutput = theApp.GetMainFrame()->GetMidiOutputBar();
+		CMidiEventBar&	wndMidiOutput = theApp.GetMainFrame()->m_wndMidiOutputBar;
 		if (wndMidiOutput.IsVisible()) {	// if MIDI output bar is visible
 			wndMidiOutput.SetKeySignature(m_nKeySig);
 			wndMidiOutput.RemoveAllEvents();
 			bOutputCapture = true;	// enable MIDI output capture
 		}
-		CPianoBar&	wndPiano = theApp.GetMainFrame()->GetPianoBar();
+		CPianoBar&	wndPiano = theApp.GetMainFrame()->m_wndPianoBar;
 		if (wndPiano.IsVisible()) {	// if piano bar is visible
 			bOutputCapture = true;	// enable MIDI output capture
 		}
@@ -2453,7 +2638,7 @@ void CPolymeterDoc::OnPlay(bool bPlay, bool bRecord)
 			if (theApp.IsRecordingMidiInput())
 				RecordToTracks(false);
 		}
-		CPianoBar&	wndPiano = theApp.GetMainFrame()->GetPianoBar();
+		CPianoBar&	wndPiano = theApp.GetMainFrame()->m_wndPianoBar;
 		if (wndPiano.IsVisible())
 			wndPiano.RemoveAllEvents();
 	}
@@ -2562,8 +2747,8 @@ void CPolymeterDoc::UpdateSongLength()
 void CPolymeterDoc::SetPosition(int nPos)
 {
 	m_Seq.SetPosition(nPos);
-	CSongPosHint	hint(nPos);
-	UpdateAllViews(NULL, HINT_SONG_POS, &hint);
+	m_nSongPos = nPos;
+	theApp.GetMainFrame()->UpdateSongPosition();	// updates all views
 }
 
 bool CPolymeterDoc::ShowGMDrums(int iTrack) const
@@ -2707,11 +2892,8 @@ void CPolymeterDoc::PasteDubs(CPoint ptPaste, double fTicksPerCell, CRect& rSele
 
 bool CPolymeterDoc::GotoNextDub(bool bReverse)
 {
-	LONGLONG	nSongPos;
-	if (!m_Seq.GetPosition(nSongPos))
-		return false;
 	int	nNextTime;
-	if (!m_Seq.FindNextDubTime(static_cast<int>(nSongPos), nNextTime, bReverse))
+	if (!m_Seq.FindNextDubTime(static_cast<int>(m_nSongPos), nNextTime, bReverse))
 		return false;
 	SetPosition(nNextTime);
 	UpdateAllViews(NULL, HINT_CENTER_SONG_POS);
@@ -2752,6 +2934,7 @@ void CPolymeterDoc::OnTrackArrayEdit(const CTrackIDMap& mapTrackID)
 	}
 	// mapping table has one entry for each pre-edit track, possibly followed by entries for pasted tracks
 	m_Seq.OnTrackArrayEdit(arrTrackMap);	// fix modulators ASAP to reduce chance of glitches
+	m_Seq.m_mapping.OnTrackArrayEdit(arrTrackMap);
 	m_arrPreset.OnTrackArrayEdit(arrTrackMap, nNewTracks);
 	m_arrPart.OnTrackArrayEdit(arrTrackMap);
 }
@@ -3109,8 +3292,8 @@ bool CPolymeterDoc::TrackFill(const CRect *prStepSel)
 void CPolymeterDoc::OnMidiOutputCaptureChange()
 {
 	CMainFrame	*pMainFrame = theApp.GetMainFrame();
-	bool	bIsCapturing = pMainFrame->GetMidiOutputBar().FastIsVisible() != 0
-		|| pMainFrame->GetPianoBar().FastIsVisible() != 0;
+	bool	bIsCapturing = pMainFrame->m_wndMidiOutputBar.FastIsVisible() != 0
+		|| pMainFrame->m_wndPianoBar.FastIsVisible() != 0;
 	m_Seq.SetMidiOutputCapture(bIsCapturing);
 }
 
@@ -3163,12 +3346,109 @@ bool CPolymeterDoc::ExportSongAsCSV(LPCTSTR pszDestPath, int nDuration, bool bSo
 		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each of track's events
 			nEvtTime += arrEvent[iEvent].DeltaT;	// add event's delta time to cumulative time
 			DWORD	dwMsg = arrEvent[iEvent].Msg;	// dereference MIDI message
-			int	iStat = (MIDI_STAT(dwMsg) >> 4) - 8;	// assume channel voice messages only
+			int	iStat = MIDI_CMD_IDX(dwMsg);	// assume channel voice messages only
 			_ftprintf(fOut.m_pStream, _T("%u,%s,%u,%u,%u\n"), nEvtTime, arrChanStatNick[iStat], 
 				MIDI_CHAN(dwMsg), MIDI_P1(dwMsg), MIDI_P2(dwMsg));	// output event line
 		}
 	}
 	return true;
+}
+
+void CPolymeterDoc::SetMappingProperty(int iMapping, int iProp, int nVal)
+{
+	NotifyUndoableEdit(iMapping, MAKELONG(UCODE_MAPPING_PROP, iProp));
+	m_Seq.m_mapping.SetProperty(iMapping, iProp, nVal);
+	SetModifiedFlag();
+	CPropHint	hint(iMapping, iProp);
+	UpdateAllViews(NULL, HINT_MAPPING_PROP, &hint);
+}
+
+void CPolymeterDoc::SetMultiMappingProperty(const CIntArrayEx& arrSelection, int iProp, int nVal, CView* pSender)
+{
+	m_parrSelection = &arrSelection;
+	NotifyUndoableEdit(iProp, UCODE_MULTI_MAPPING_PROP);
+	m_Seq.m_mapping.SetProperty(arrSelection, iProp, nVal);
+	SetModifiedFlag();
+	CMultiItemPropHint	hint(arrSelection, iProp);
+	UpdateAllViews(pSender, HINT_MULTI_MAPPING_PROP, &hint);
+}
+
+void CPolymeterDoc::CopyMappings(const CIntArrayEx& arrSelection)
+{
+	m_Seq.m_mapping.GetSelection(arrSelection, theApp.m_arrMappingClipboard);
+	int	nMappings = theApp.m_arrMappingClipboard.GetSize();
+	for (int iMapping = 0; iMapping < nMappings; iMapping++) {	// for each mapping
+		CMapping&	map = theApp.m_arrMappingClipboard[iMapping];
+		if (map.m_nTrack >= 0)	// if mapping specifies a track
+			map.m_nTrack = m_Seq.GetID(map.m_nTrack);	// replace track index with track ID
+	}
+}
+
+void CPolymeterDoc::DeleteMappings(const CIntArrayEx& arrSelection, bool bIsCut)
+{
+	int	nUndoCode;
+	if (bIsCut) {	// if cutting
+		CopyMappings(arrSelection);
+		nUndoCode = UCODE_CUT_MAPPINGS;
+	} else	// deleting
+		nUndoCode = UCODE_DELETE_MAPPINGS;
+	m_parrSelection = &arrSelection;
+	NotifyUndoableEdit(0, nUndoCode);
+	m_Seq.m_mapping.Delete(arrSelection);
+	SetModifiedFlag();
+	CSelectionHint	hint;
+	UpdateAllViews(NULL, HINT_MAPPING_ARRAY, &hint);
+}
+
+void CPolymeterDoc::InsertMappings(int iInsert, const CMappingArray& arrMapping, bool bIsPaste)
+{
+	CTrackIDMap	mapTrackID;
+	GetTrackIDMap(mapTrackID);	// get map of track IDs to track indices
+	CMappingArray	arrMappingCopy(arrMapping);
+	int	nMappings = arrMappingCopy.GetSize();
+	for (int iMapping = 0; iMapping < nMappings; iMapping++) {	// for each mapping
+		CMapping&	map = arrMappingCopy[iMapping];
+		if (map.m_nTrack >= 0) {	// if mapping specifies a track
+			int	iTrack;
+			if (mapTrackID.Lookup(map.m_nTrack, iTrack))	// if track ID found
+				map.m_nTrack = iTrack;	// replace track ID with track index
+			else	// track ID not found
+				map.m_nTrack = -1;	// mark track invalid
+		}
+	}
+	m_Seq.m_mapping.Insert(iInsert, arrMappingCopy);
+	SetModifiedFlag();
+	CSelectionHint	hint(NULL, iInsert, nMappings);
+	UpdateAllViews(NULL, HINT_MAPPING_ARRAY, &hint);
+	CIntArrayEx	arrSelection;
+	MakeSelectionRange(arrSelection, iInsert, nMappings);
+	m_parrSelection = &arrSelection;
+	int	nUndoCode;
+	if (bIsPaste)	// if pasting
+		nUndoCode = UCODE_PASTE_MAPPINGS;
+	else	// inserting
+		nUndoCode = UCODE_INSERT_MAPPING;
+	NotifyUndoableEdit(0, nUndoCode);
+}
+
+void CPolymeterDoc::MoveMappings(const CIntArrayEx& arrSelection, int iDropPos)
+{
+	// assume drop position is already compensated; see CompensateDropPos
+	m_parrSelection = &arrSelection;
+	NotifyUndoableEdit(iDropPos, UCODE_MOVE_MAPPINGS);
+	m_Seq.m_mapping.Move(arrSelection, iDropPos);
+	SetModifiedFlag();
+	CSelectionHint	hint(NULL, iDropPos, arrSelection.GetSize());
+	UpdateAllViews(NULL, HINT_MAPPING_ARRAY, &hint);
+}
+
+void CPolymeterDoc::SortMappings(int iProp)
+{
+	ASSERT(iProp >= 0 && iProp < CMapping::PROPERTIES);
+	NotifyUndoableEdit(0, UCODE_SORT_MAPPINGS);
+	m_Seq.m_mapping.Sort(iProp);
+	CSelectionHint	hint(NULL);
+	UpdateAllViews(NULL, HINT_MAPPING_ARRAY, &hint);
 }
 
 // CPolymeterDoc diagnostics
@@ -3806,22 +4086,22 @@ void CPolymeterDoc::OnTrackPresetCreate()
 
 void CPolymeterDoc::OnTrackPresetApply()
 {
-	theApp.GetMainFrame()->GetPresetsBar().Apply();
+	theApp.GetMainFrame()->m_wndPresetsBar.Apply();
 }
 
 void CPolymeterDoc::OnUpdateTrackPresetApply(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(theApp.GetMainFrame()->GetPresetsBar().HasFocusAndSelection());
+	pCmdUI->Enable(theApp.GetMainFrame()->m_wndPresetsBar.HasFocusAndSelection());
 }
 
 void CPolymeterDoc::OnTrackPresetUpdate()
 {
-	theApp.GetMainFrame()->GetPresetsBar().UpdateMutes();
+	theApp.GetMainFrame()->m_wndPresetsBar.UpdateMutes();
 }
 
 void CPolymeterDoc::OnUpdateTrackPresetUpdate(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(theApp.GetMainFrame()->GetPresetsBar().HasFocusAndSelection());
+	pCmdUI->Enable(theApp.GetMainFrame()->m_wndPresetsBar.HasFocusAndSelection());
 }
 
 void CPolymeterDoc::OnTrackGroup()

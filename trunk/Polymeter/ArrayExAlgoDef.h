@@ -12,6 +12,7 @@
 		02		10nov18	add binary search insert pos
 		03		31dec18	refactor to reuse code
 		04		02dec19	add sort method
+		05		16mar20	add insert sorted descending
 
 */
 
@@ -259,6 +260,32 @@ void InsertSorted(CArrayEx_TYPE& val)
 			while (iStart <= iEnd) {
 				W64INT	iMid = (iStart + iEnd) / 2;
 				if (GetAt(iMid) <= val)
+					iStart = iMid + 1;
+				else {
+					iInsert = iMid;
+					iEnd = iMid - 1;
+				}
+			}
+		}
+	}
+	InsertAt(iInsert, val);
+}
+
+void InsertSortedDescending(CArrayEx_TYPE& val) 
+{
+	W64INT	iInsert = 0;
+	W64INT	nSize = m_nSize;
+	if (nSize) {	// optimize initial insertion
+		W64INT	iStart = 0;
+		W64INT	iEnd = nSize - 1;
+		if (val >= GetAt(0))	// optimize insertion at start
+			iInsert = 0;
+		else if (val <= GetAt(iEnd))	// optimize insertion at end
+			iInsert = nSize;
+		else {	// general case
+			while (iStart <= iEnd) {
+				W64INT	iMid = (iStart + iEnd) / 2;
+				if (GetAt(iMid) >= val)
 					iStart = iMid + 1;
 				else {
 					iInsert = iMid;

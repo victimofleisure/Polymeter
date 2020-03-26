@@ -12,6 +12,7 @@
 		02		12dec18	move track type defs here
 		03		19dec18	add value range
 		04		09sep19	add tempo track type and tempo modulation
+		05		16mar20	add scale, index and voicing modulation
 
 */
 
@@ -70,6 +71,9 @@ MODTYPEDEF(Duration)
 MODTYPEDEF(Range)
 MODTYPEDEF(Position)
 MODTYPEDEF(Tempo)
+MODTYPEDEF(Scale)
+MODTYPEDEF(Index)
+MODTYPEDEF(Voicing)
 
 #undef MODTYPEDEF
 #endif	// MODTYPEDEF

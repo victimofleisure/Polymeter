@@ -366,9 +366,6 @@
     <ClInclude Include="MidiEventColDef.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MidiStatusDef.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="BlockArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -415,6 +412,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CtrlResize.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StepValuesBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MappingBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MappingDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Mapping.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -692,6 +701,15 @@
     <ClCompile Include="CtrlResize.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="StepValuesBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MappingBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Mapping.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Polymeter.reg" />
@@ -727,6 +745,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\filter.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\toolbar1.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

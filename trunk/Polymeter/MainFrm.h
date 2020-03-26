@@ -16,6 +16,8 @@
 		06		12dec19	add phase bar
 		07		29feb20	add OnDestroy
 		08		03mar20	add convergences dialog
+		09		17mar20	add step values bar
+		10		20mar20	add mapping
 
 */
 
@@ -33,6 +35,8 @@
 #include "PianoBar.h"
 #include "GraphBar.h"
 #include "PhaseBar.h"
+#include "StepValuesBar.h"
+#include "MappingBar.h"
 
 // docking bar IDs are relative to AFX_IDW_CONTROLBAR_FIRST
 enum {	// docking bar IDs; don't change, else bar placement won't be restored
@@ -42,6 +46,10 @@ enum {	// docking bar IDs; don't change, else bar placement won't be restored
 };
 
 class CPolymeterDoc;
+
+// need these for generation of docking bar members
+#define CMidiInputBar CMidiEventBar
+#define CMidiOutputBar CMidiEventBar
 
 class CMainFrame : public CMDIFrameWndEx
 {
@@ -66,17 +74,15 @@ public:
 	CMFCStatusBar&	GetStatusBar();
 	CPolymeterDoc	*GetActiveMDIDoc();
 	bool	PropertiesBarHasFocus() const;
-	CChannelsBar&	GetChannelsBar();
-	CPresetsBar&	GetPresetsBar();
-	CPartsBar&	GetPartsBar();
-	CModulationsBar&	GetModulationsBar();
-	CMidiEventBar&	GetMidiInputBar();
-	CMidiEventBar&	GetMidiOutputBar();
-	CPianoBar& GetPianoBar();
-	CGraphBar& GetGraphBar();
-	CPhaseBar& GetPhaseBar();
 	CString	GetSongPositionString() const;
 	CString	GetSongTimeString() const;
+
+// Public data
+	CMFCMenuBar     m_wndMenuBar;
+	CMFCToolBar     m_wndToolBar;
+	CMFCStatusBar   m_wndStatusBar;
+	#define MAINDOCKBARDEF(name, width, height, style) C##name##Bar m_wnd##name##Bar;
+	#include "MainDockBarDef.h"	// generate docking bar members
 
 // Operations
 public:
@@ -99,20 +105,7 @@ public:
 #endif
 
 protected:  // control bar embedded members
-	CMFCMenuBar       m_wndMenuBar;
-	CMFCToolBar       m_wndToolBar;
-	CMFCStatusBar     m_wndStatusBar;
 	CMFCToolBarImages m_UserImages;
-	CPropertiesBar	  m_wndPropertiesBar;
-	CChannelsBar	  m_wndChannelsBar;
-	CPresetsBar		  m_wndPresetsBar;
-	CPartsBar		  m_wndPartsBar;
-	CModulationsBar	  m_wndModulationsBar;
-	CMidiEventBar	  m_wndMidiInputBar;
-	CMidiEventBar	  m_wndMidiOutputBar;
-	CPianoBar		  m_wndPianoBar;
-	CGraphBar		  m_wndGraphBar;
-	CPhaseBar		  m_wndPhaseBar;
 
 // Constants
 	static const UINT m_arrIndicatorID[];	// array of status bar indicator IDs
@@ -160,8 +153,11 @@ protected:
 	afx_msg LRESULT	OnMidiError(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT	OnDeviceNodeChange(WPARAM wParam, LPARAM lParam);
 	afx_msg BOOL OnDeviceChange(UINT nEventType, W64ULONG dwData);
+	afx_msg LRESULT OnTrackProperty(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnToolsDevices();
 	afx_msg void OnToolsConvergences();
+	afx_msg void OnToolsMidiLearn();
+	afx_msg void OnUpdateToolsMidiLearn(CCmdUI *pCmdUI);
 	afx_msg void OnEditFind();
 	afx_msg void OnEditReplace();
 	afx_msg LRESULT OnFindReplace(WPARAM wParam, LPARAM lParam);
@@ -198,51 +194,6 @@ inline bool CMainFrame::PropertiesBarHasFocus() const
 {
 	HWND	hFocusWnd = ::GetFocus();
 	return ::IsChild(m_wndPropertiesBar.m_hWnd, hFocusWnd) != 0;
-}
-
-inline CChannelsBar& CMainFrame::GetChannelsBar()
-{
-	return m_wndChannelsBar;
-}
-
-inline CPresetsBar& CMainFrame::GetPresetsBar()
-{
-	return m_wndPresetsBar;
-}
-
-inline CPartsBar& CMainFrame::GetPartsBar()
-{
-	return m_wndPartsBar;
-}
-
-inline CModulationsBar& CMainFrame::GetModulationsBar()
-{
-	return m_wndModulationsBar;
-}
-
-inline CMidiEventBar& CMainFrame::GetMidiInputBar()
-{
-	return m_wndMidiInputBar;
-}
-
-inline CMidiEventBar& CMainFrame::GetMidiOutputBar()
-{
-	return m_wndMidiOutputBar;
-}
-
-inline CPianoBar& CMainFrame::GetPianoBar()
-{
-	return m_wndPianoBar;
-}
-
-inline CGraphBar& CMainFrame::GetGraphBar()
-{
-	return m_wndGraphBar;
-}
-
-inline CPhaseBar& CMainFrame::GetPhaseBar()
-{
-	return m_wndPhaseBar;
 }
 
 inline CString CMainFrame::GetSongPositionString() const

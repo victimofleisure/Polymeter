@@ -11,6 +11,7 @@
 		01		14dec18	add clipboard support and sorting
 		02		21jan19	fix paste not setting document modified flag
 		03		22jan19	use update all views consistently
+		04		19mar20	move edit key dispatching to app for reuse
 		
 */
 
@@ -47,7 +48,6 @@ CModulationsBar::CModulationsBar()
 	m_bUpdatePending = false;
 	m_bModDifferences = false;
 	m_bShowDifferences = false;
-	m_sTrack.LoadString(IDS_TYPE_TRACK);
 }
 
 CModulationsBar::~CModulationsBar()
@@ -258,18 +258,13 @@ CWnd *CModulationsBar::CModGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwSty
 		break;
 	case COL_SOURCE:
 		{
-			pCombo->AddString(LDS(IDS_NONE));
+			pCombo->AddString(GetTrackNoneString());
 			pCombo->SetItemData(0, DWORD_PTR(-1));	// assign invalid track index to none item
 			int	iSelItem = 0;	// index of selected item; defaults to none
 			int	nTracks = pDoc->GetTrackCount();
 			for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 				if (!pDoc->GetSelected(iTrack)) {	// if track isn't selected (avoids self-modulation)
-					CString	sName = pDoc->m_Seq.GetName(iTrack);
-					if (sName.IsEmpty()) {	// if empty name
-						sTrackNum.Format(_T("%d"), iTrack + 1);	// synthesize name from track number
-						sName = pParent->m_sTrack + sTrackNum;
-					}
-					int	iItem = pCombo->AddString(sName);
+					int	iItem = pCombo->AddString(pDoc->m_Seq.GetNameEx(iTrack));
 					pCombo->SetItemData(iItem, iTrack);
 					if (iTrack == pParent->m_arrModulator[m_iEditRow].m_iSource)	// if track is currently selected modulator
 						iSelItem = iItem;	// set selected item
@@ -414,15 +409,15 @@ int CModulationsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_grid.SetExtendedStyle(dwListExStyle);
 	m_grid.CreateColumns(m_arrColInfo, COLUMNS);
 	m_grid.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
-	m_grid.LoadColumnOrder(RK_MODULATIONS_BAR, RK_COL_ORDER);
-	m_grid.LoadColumnWidths(RK_MODULATIONS_BAR, RK_COL_WIDTH);
+	m_grid.LoadColumnOrder(RK_ModulationsBar, RK_COL_ORDER);
+	m_grid.LoadColumnWidths(RK_ModulationsBar, RK_COL_WIDTH);
 	return 0;
 }
 
 void CModulationsBar::OnDestroy()
 {
-	m_grid.SaveColumnOrder(RK_MODULATIONS_BAR, RK_COL_ORDER);
-	m_grid.SaveColumnWidths(RK_MODULATIONS_BAR, RK_COL_WIDTH);
+	m_grid.SaveColumnOrder(RK_ModulationsBar, RK_COL_ORDER);
+	m_grid.SaveColumnWidths(RK_ModulationsBar, RK_COL_WIDTH);
 	CMyDockablePane::OnDestroy();
 }
 
@@ -464,23 +459,10 @@ void CModulationsBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 			break;
 		case COL_SOURCE:
 			{
-				CString	sName;
 				int	iTrack = m_arrModulator[iItem].m_iSource;
-				if (iTrack >= 0) {
-					CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-					ASSERT(pDoc != NULL);
-					if (pDoc != NULL) {	// run-time check for safety
-						sName = pDoc->m_Seq.GetName(iTrack);
-						if (sName.IsEmpty()) {
-							CString	sTrackNum;
-							sTrackNum.Format(_T("%d"), iTrack + 1);	// default track names are one-origin
-							sName = m_sTrack + sTrackNum;
-						}
-					}
-				} else {
-					sName.LoadString(IDS_NONE);
-				}
-				_tcscpy_s(item.pszText, item.cchTextMax, sName);
+				CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+				ASSERT(pDoc != NULL);
+				_tcscpy_s(item.pszText, item.cchTextMax, pDoc->m_Seq.GetNameEx(iTrack));
 			}
 			break;
 		}
@@ -546,41 +528,8 @@ void CModulationsBar::OnContextMenu(CWnd* pWnd, CPoint point)
 
 BOOL CModulationsBar::PreTranslateMessage(MSG* pMsg)
 {
-	if (pMsg->message == WM_KEYDOWN) {
-		int	nModKeyFlags = theApp.GetModifierKeyStates();
-		switch (pMsg->wParam) {
-		case VK_INSERT:
-			OnEditInsert();
-			return true;
-		case VK_DELETE:
-			OnEditDelete();
-			return true;
-		case 'C':
-			if (nModKeyFlags == MK_CONTROL) {
-				OnEditCopy();
-				return true;
-			}
-			break;
-		case 'X':
-			if (nModKeyFlags == MK_CONTROL) {
-				OnEditCut();
-				return true;
-			}
-			break;
-		case 'V':
-			if (nModKeyFlags == MK_CONTROL) {
-				OnEditPaste();
-				return true;
-			}
-			break;
-		case 'A':
-			if (nModKeyFlags == MK_CONTROL) {
-				OnEditSelectAll();
-				return true;
-			}
-			break;
-		}
-	}
+	if (theApp.DispatchEditKeys(pMsg, *this))
+		return true;
 	return CMyDockablePane::PreTranslateMessage(pMsg);
 }
 

@@ -144,8 +144,8 @@ int CPropertiesBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	CMasterProps	props;
 	InitPropList(props);
 
-	m_Grid.RestoreGroupExpansion(RK_PROPERTIES_BAR RK_EXPAND);
-	m_Grid.SetDescriptionRows(AfxGetApp()->GetProfileInt(RK_PROPERTIES_BAR, RK_DESCRIPTION_ROWS, 3));
+	m_Grid.RestoreGroupExpansion(RK_PropertiesBar RK_EXPAND);
+	m_Grid.SetDescriptionRows(AfxGetApp()->GetProfileInt(RK_PropertiesBar, RK_DESCRIPTION_ROWS, 3));
 
 	AdjustLayout();
 	return 0;
@@ -154,8 +154,8 @@ int CPropertiesBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 void CPropertiesBar::OnDestroy()
 {
 	CDockablePane::OnDestroy();
-	m_Grid.SaveGroupExpansion(RK_PROPERTIES_BAR RK_EXPAND);
-	AfxGetApp()->WriteProfileInt(RK_PROPERTIES_BAR, RK_DESCRIPTION_ROWS, m_Grid.GetActualDescriptionRows());
+	m_Grid.SaveGroupExpansion(RK_PropertiesBar RK_EXPAND);
+	AfxGetApp()->WriteProfileInt(RK_PropertiesBar, RK_DESCRIPTION_ROWS, m_Grid.GetActualDescriptionRows());
 }
 
 void CPropertiesBar::OnSize(UINT nType, int cx, int cy)

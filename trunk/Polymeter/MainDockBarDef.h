@@ -13,6 +13,8 @@
 		03		25jan19	add graph bar
 		04		29jan19	add MIDI input bar
 		05		12dec19	add phase bar
+		06		17mar20	add step values bar
+		07		20mar20	add mapping
 		
 */
 
@@ -31,13 +33,17 @@ MAINDOCKBARDEF(Piano,		140,	140,	dwBaseStyle | CBRS_BOTTOM)
 MAINDOCKBARDEF(Graph,		300,	200,	dwBaseStyle | CBRS_LEFT)
 MAINDOCKBARDEF(MidiInput,	300,	200,	dwBaseStyle | CBRS_RIGHT)
 MAINDOCKBARDEF(Phase,		150,	150,	dwBaseStyle | CBRS_LEFT)
+MAINDOCKBARDEF(StepValues,	150,	300,	dwBaseStyle | CBRS_RIGHT)
+MAINDOCKBARDEF(Mapping,		200,	300,	dwBaseStyle | CBRS_LEFT)
 
 // After adding a new dockable bar here:
 // 1. Add a resource string IDS_BAR_Foo where Foo is the bar name.
-// 2. Add a member variable and accessor for the bar in MainFrm.h.
-// 3. Enable docking and dock the bar in CMainFrame::OnCreate.
-// 4. Add a registry key for the bar in AppRegKey.h.
-// 5. Possibly add the bar to CPolymeterApp::ResetWindowLayout.
+// 2. Add a registry key RK_Foo for the bar in AppRegKey.h.
+//
+// Otherwise Polymeter.cpp won't compile; it uses the resource strings
+// in CreateDockingWindows and the registry keys in ResetWindowLayout.
+// The docking bar IDs, member variables, and code to create and dock
+// the bars are all generated automatically by the macros above.
 
 #endif	// MAINDOCKBARDEF
 #undef MAINDOCKBARDEF

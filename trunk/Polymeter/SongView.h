@@ -10,6 +10,7 @@
         00      27may18	initial version
 		01		12nov18	add method to center current position
 		02		10dec18	add song time shift to handle negative times
+		03		18mar20	make song position 64-bit
 
 */
 
@@ -77,7 +78,7 @@ public:
 // Operations
 	int		HitTest(CPoint point, int& iCell, UINT nFlags = 0) const;
 	int		ConvertXToSongPos(int x) const;
-	int		ConvertSongPosToX(int nSongPos) const;
+	int		ConvertSongPosToX(LONGLONG nSongPos) const;
 
 protected:
 // Types
@@ -133,7 +134,7 @@ protected:
 	void	Zoom(int nZoom, int nOriginX);
 	void	UpdateZoomDelta();
 	static	double	InvPow(double fBase, double fVal);
-	void	UpdateSongPos(int nSongPos);
+	void	UpdateSongPos(LONGLONG nSongPos);
 	double	GetTicksPerCellImpl() const;
 	static	int		Mod(int Val, int Modulo);
 	void	GetCellRect(int iTrack, int iCell, CRect& rCell) const;
@@ -233,7 +234,7 @@ __forceinline int CSongView::ConvertXToSongPos(int x) const
 	return round(x * GetTicksPerCellImpl() / m_nCellWidth) + m_nSongTimeShift;
 }
 
-__forceinline int CSongView::ConvertSongPosToX(int nSongPos) const
+__forceinline int CSongView::ConvertSongPosToX(LONGLONG nSongPos) const
 {
 	return round((nSongPos - m_nSongTimeShift) / GetTicksPerCellImpl() * m_nCellWidth);
 }

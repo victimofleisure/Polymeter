@@ -12,6 +12,7 @@
         02		29jan19	refactor to support both input and output
 		03		10feb19	add method to get array of channel status nicknames
 		04		17feb20	inherit MIDI event class from track base
+		05		19mar20	move MIDI message enums to Midi header
 		
 */
 
@@ -38,7 +39,7 @@ const CGridCtrl::COL_INFO CMidiEventBar::m_arrColInfo[COLUMNS] = {
 	#include "MidiEventColDef.h"
 };
 
-const LPCTSTR CMidiEventBar::m_arrControllerName[] = {
+const LPCTSTR CMidiEventBar::m_arrControllerName[MIDI_NOTES] = {
 	#define MIDI_CTRLR_TITLE_DEF(name) _T(name),
 	#include "MidiCtrlrDef.h"
 };
@@ -52,32 +53,30 @@ const int CMidiEventBar::m_arrFilterCol[FILTERS] = {
 #define IDS_TRACK_TYPE_NOTE_OFF IDS_MIDI_MSG_NOTE_OFF
 #define IDS_TRACK_TYPE_NOTE_ON IDS_MIDI_MSG_NOTE_ON
 
-const int CMidiEventBar::m_arrChanStatID[CHANNEL_VOICE_MESSAGES] = {
+const int CMidiEventBar::m_arrChanStatID[MIDI_CHANNEL_VOICE_MESSAGES] = {
 	#define MIDICHANSTATDEF(name) IDS_TRACK_TYPE_##name,
-	#include "MidiStatusDef.h"
+	#include "MidiCtrlrDef.h"
 };
 
-#define IDS_MIDI_SYS_STAT_UNDEFINED 0
-const int CMidiEventBar::m_arrSysStatID[] = {
+#define IDS_MIDI_SYS_STAT_UNDEFINED_1 0
+#define IDS_MIDI_SYS_STAT_UNDEFINED_2 0
+#define IDS_MIDI_SYS_STAT_UNDEFINED_3 0
+#define IDS_MIDI_SYS_STAT_UNDEFINED_4 0
+const int CMidiEventBar::m_arrSysStatID[MIDI_SYSTEM_STATUS_MESSAGES] = {
 	#define MIDISYSSTATDEF(name) IDS_MIDI_SYS_STAT_##name,
-	#include "MidiStatusDef.h"
+	#include "MidiCtrlrDef.h"
 };
 
 CStringArrayEx CMidiEventBar::m_arrChanStatName;
 CStringArrayEx CMidiEventBar::m_arrSysStatName;
-
-const LPCTSTR CMidiEventBar::m_arrChanStatNickname[CHANNEL_VOICE_MESSAGES] = {
-	#define MIDICHANSTATDEF(name) _T(#name),
-	#include "MidiStatusDef.h"
-};
 
 #define RK_SHOW_NOTE_NAMES _T("ShowNoteNames")
 #define RK_SHOW_CONTROLLER_NAMES _T("ShowCtrlrNames")
 #define RK_COL_WIDTH _T("ColWidth")
 
 const LPCTSTR CMidiEventBar::m_arrBarRegKey[BAR_DIRECTIONS] = {
-	RK_MIDI_INPUT_BAR,
-	RK_MIDI_OUTPUT_BAR,
+	RK_MidiInputBar,
+	RK_MidiOutputBar,
 };
 
 CMidiEventBar::CMidiEventBar(bool bIsOutputBar)
@@ -191,7 +190,7 @@ bool CMidiEventBar::ApplyFilters(DWORD dwEvent) const
 		if (iChan >= 0 && static_cast<int>(MIDI_CHAN(dwEvent)) != iChan)	// if channel doesn't match
 			return false;
 		int	nMsg = m_arrFilter[FILTER_MESSAGE];
-		if (nMsg >= 0 && static_cast<int>(((MIDI_CMD(dwEvent) >> 4) - 8)) != nMsg)	// if message status doesn't match
+		if (nMsg >= 0 && static_cast<int>(MIDI_CMD_IDX(dwEvent)) != nMsg)	// if message status doesn't match
 			return false;
 	} else {	// system status message
 		if (!m_bShowSystemMessages)	// if hiding system messages
@@ -253,9 +252,9 @@ void CMidiEventBar::SetKeySignature(int nKeySig)
 
 void CMidiEventBar::GetChannelStatusNicknames(CStringArray& arrChanStatNick)
 {
-	arrChanStatNick.SetSize(CHANNEL_VOICE_MESSAGES);
-	for (int iStat = 0; iStat < CHANNEL_VOICE_MESSAGES; iStat++) {
-		arrChanStatNick[iStat] = m_arrChanStatNickname[iStat];
+	arrChanStatNick.SetSize(MIDI_CHANNEL_VOICE_MESSAGES);
+	for (int iStat = 0; iStat < MIDI_CHANNEL_VOICE_MESSAGES; iStat++) {
+		arrChanStatNick[iStat] = m_arrMidiChannelVoiceMsgName[iStat];
 		theApp.SnakeToUpperCamelCase(arrChanStatNick[iStat]);
 	}
 }
@@ -497,8 +496,8 @@ void CMidiEventBar::OnContextMenu(CWnd* pWnd, CPoint point)
 	// create message submenu
 	pSubMenu = pPopup->GetSubMenu(SM_MESSAGE);
 	ASSERT(pSubMenu != NULL);
-	arrItemStr.SetSize(CHANNEL_VOICE_MESSAGES + 1);	// one extra item for wildcard
-	for (int iItem = 1; iItem <= CHANNEL_VOICE_MESSAGES; iItem++) {	// for each channel voice message
+	arrItemStr.SetSize(MIDI_CHANNEL_VOICE_MESSAGES + 1);	// one extra item for wildcard
+	for (int iItem = 1; iItem <= MIDI_CHANNEL_VOICE_MESSAGES; iItem++) {	// for each channel voice message
 		arrItemStr[iItem].LoadString(m_arrChanStatID[iItem - 1]);	// account for wildcard
 	}
 	theApp.MakePopup(*pSubMenu, SMID_FILTER_MESSAGE_FIRST, arrItemStr, m_arrFilter[FILTER_MESSAGE]  + 1);
@@ -564,7 +563,7 @@ void CMidiEventBar::OnFilterChannel(UINT nID)
 void CMidiEventBar::OnFilterMessage(UINT nID)
 {
 	int	iMessage = nID - SMID_FILTER_MESSAGE_FIRST - 1;	// one extra for wildcard
-	ASSERT(iMessage < CHANNEL_VOICE_MESSAGES);
+	ASSERT(iMessage < MIDI_CHANNEL_VOICE_MESSAGES);
 	m_arrFilter[FILTER_MESSAGE] = iMessage;
 	OnFilterChange();
 }

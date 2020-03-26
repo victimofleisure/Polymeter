@@ -18,6 +18,7 @@
 		08		25apr18	add GetSelected
 		09		05jun18	make LoadArray public
 		10		21jun18	add RedrawItem
+		11		17mar20	add method to delete all columns
 
 		extended selection list control
  
@@ -61,10 +62,12 @@ public:
 	bool	GetSelected(int iItem) const;
 	void	SetSelected(int iItem, bool bEnable);
 	int		GetInsertPos() const;
+	void	SetColumnName(int iCol, LPCTSTR pszName);
 
 // Operations
 public:
 	void	CreateColumns(const COL_INFO *pColInfo, int nColumns);
+	void	DeleteAllColumns();
 	void	Select(int iItem);
 	void	SelectOnly(int iItem);
 	void	SelectRange(int iFirstItem, int nItems);

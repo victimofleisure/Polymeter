@@ -16,6 +16,7 @@
 		06		22mar19	overload toggle steps for track selection
 		07		15nov19	in ScaleSteps, add signed scaling option
 		08		02mar20	in GetChannelUsage, exclude tempo tracks
+		09		19mar20	add GetNameEx to handle default track names
 
 */
 
@@ -186,6 +187,17 @@ void CSeqTrackArray::SetTrackProperty(int iTrack, int iProp, const CComVariant& 
 	default:
 		NODEFAULTCASE;
 	}
+}
+
+CString CSeqTrackArray::GetNameEx(int iTrack) const
+{
+	if (iTrack < 0)	// if invalid track index
+		return m_sTrackNone;	// return none string
+	if (!GetName(iTrack).IsEmpty())	// if track name is specified
+		return GetName(iTrack);	// return track name
+	CString	sTrackNum;
+	sTrackNum.Format(_T("%d"), iTrack + 1);	// default track names are one-origin
+	return m_sTrack + sTrackNum;	// return default track name
 }
 
 void CSeqTrackArray::GetUsedTracks(CIntArrayEx& arrUsedTrack, UINT nFlags) const

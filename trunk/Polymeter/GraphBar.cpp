@@ -12,6 +12,7 @@
 		02		31jan19	if unable to write graph, show blank page
 		03		10feb19	move temp file path wrapper to app
 		04		09sep19	add tempo modulation color
+		05		16mar20	add colors for new modulation types
 
 */
 
@@ -42,8 +43,11 @@ IMPLEMENT_DYNAMIC(CGraphBar, CMyDockablePane)
 #define MOD_TYPE_COLOR_Velocity	"green"
 #define MOD_TYPE_COLOR_Duration	"blue"
 #define MOD_TYPE_COLOR_Range	"darkcyan"
-#define MOD_TYPE_COLOR_Position	"purple"
+#define MOD_TYPE_COLOR_Position	"magenta"
 #define MOD_TYPE_COLOR_Tempo	"brown"
+#define MOD_TYPE_COLOR_Scale	"purple"
+#define MOD_TYPE_COLOR_Index	"olive"
+#define MOD_TYPE_COLOR_Voicing	"orange"
 
 // adding a new modulation type requires adding a new color name above
 const LPCTSTR CGraphBar::m_arrModTypeColor[CTrack::MODULATION_TYPES] = {
@@ -91,27 +95,27 @@ CGraphBar::CGraphBar()
 	m_bEdgeLabels = false;
 	m_bGraphvizFound = false;
 	// read graph scope string from registry and try to map it to index
-	CString	sScope(theApp.GetProfileString(RK_GRAPH_BAR, RK_GRAPH_SCOPE));
+	CString	sScope(theApp.GetProfileString(RK_GraphBar, RK_GRAPH_SCOPE));
 	int iScope = ARRAY_FIND(m_arrGraphScopeInternalName, sScope);
 	if (iScope >= 0)	// if string was found
 		m_iGraphScope = iScope;
 	// read graph layout string from registry and try to map it to index
-	CString	sLayout(theApp.GetProfileString(RK_GRAPH_BAR, RK_GRAPH_LAYOUT));
+	CString	sLayout(theApp.GetProfileString(RK_GraphBar, RK_GRAPH_LAYOUT));
 	int iLayout = ARRAY_FIND(m_arrGraphLayout, sLayout);
 	if (iLayout >= 0)	// if string was found
 		m_iGraphLayout = iLayout;
-	RdReg(RK_GRAPH_BAR, RK_HIGHLIGHT_SELECT, m_bHighlightSelect);
-	RdReg(RK_GRAPH_BAR, RK_EDGE_LABELS, m_bEdgeLabels);
-	RdReg(RK_GRAPH_BAR, RK_GRAPHVIZ_PATH, m_sGraphvizPath);
+	RdReg(RK_GraphBar, RK_HIGHLIGHT_SELECT, m_bHighlightSelect);
+	RdReg(RK_GraphBar, RK_EDGE_LABELS, m_bEdgeLabels);
+	RdReg(RK_GraphBar, RK_GRAPHVIZ_PATH, m_sGraphvizPath);
 }
 
 CGraphBar::~CGraphBar()
 {
-	theApp.WriteProfileString(RK_GRAPH_BAR, RK_GRAPH_SCOPE, m_arrGraphScopeInternalName[m_iGraphScope]);
-	theApp.WriteProfileString(RK_GRAPH_BAR, RK_GRAPH_LAYOUT, m_arrGraphLayout[m_iGraphLayout]);
-	WrReg(RK_GRAPH_BAR, RK_HIGHLIGHT_SELECT, m_bHighlightSelect);
-	WrReg(RK_GRAPH_BAR, RK_EDGE_LABELS, m_bEdgeLabels);
-	WrReg(RK_GRAPH_BAR, RK_GRAPHVIZ_PATH, m_sGraphvizPath);
+	theApp.WriteProfileString(RK_GraphBar, RK_GRAPH_SCOPE, m_arrGraphScopeInternalName[m_iGraphScope]);
+	theApp.WriteProfileString(RK_GraphBar, RK_GRAPH_LAYOUT, m_arrGraphLayout[m_iGraphLayout]);
+	WrReg(RK_GraphBar, RK_HIGHLIGHT_SELECT, m_bHighlightSelect);
+	WrReg(RK_GraphBar, RK_EDGE_LABELS, m_bEdgeLabels);
+	WrReg(RK_GraphBar, RK_GRAPHVIZ_PATH, m_sGraphvizPath);
 }
 
 bool CGraphBar::CreateBrowser()
@@ -191,9 +195,9 @@ bool CGraphBar::UpdateGraph()
 	if (!m_bGraphvizFound) {	// if graphviz not found yet
 		if (FindGraphviz()) {	// find graphviz; if successful
 			m_bGraphvizFound = true;	// don't find again
-			WrReg(RK_GRAPH_BAR, RK_GRAPHVIZ_PATH, m_sGraphvizPath);	// update registry entry immediately
+			WrReg(RK_GraphBar, RK_GRAPHVIZ_PATH, m_sGraphvizPath);	// update registry entry immediately
 		} else {	// graphviz not found
-			theApp.GetMainFrame()->GetGraphBar().ShowPane(false, false, false);	// hide graph bar
+			theApp.GetMainFrame()->m_wndGraphBar.ShowPane(false, false, false);	// hide graph bar
 			return false;	// disable graphing
 		}
 	}
@@ -275,7 +279,7 @@ UINT CGraphBar::GraphThread(LPVOID pParam)
 		dwExitMsg = UWM_GRAPH_ERROR;
 		dwExitParam = GetLastError();
 	}
-	CWnd&	wndParent = theApp.GetMainFrame()->GetGraphBar();
+	CWnd&	wndParent = theApp.GetMainFrame()->m_wndGraphBar;
 	if (!wndParent.PostMessage(dwExitMsg, dwExitParam)) {	// if post message fails
 		DeleteFile(sDataPath);	// try to clean up temp files
 		DeleteFile(sGraphPath);

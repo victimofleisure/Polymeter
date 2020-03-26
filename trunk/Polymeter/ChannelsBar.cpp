@@ -276,15 +276,15 @@ int CChannelsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_grid.SetExtendedStyle(dwListExStyle);
 	m_grid.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
 	m_grid.SetItemCountEx(MIDI_CHANNELS);
-	m_grid.LoadColumnOrder(RK_CHANNELS_BAR, RK_COL_ORDER);
-	m_grid.LoadColumnWidths(RK_CHANNELS_BAR, RK_COL_WIDTH);
+	m_grid.LoadColumnOrder(RK_ChannelsBar, RK_COL_ORDER);
+	m_grid.LoadColumnWidths(RK_ChannelsBar, RK_COL_WIDTH);
 	return 0;
 }
 
 void CChannelsBar::OnDestroy()
 {
-	m_grid.SaveColumnOrder(RK_CHANNELS_BAR, RK_COL_ORDER);
-	m_grid.SaveColumnWidths(RK_CHANNELS_BAR, RK_COL_WIDTH);
+	m_grid.SaveColumnOrder(RK_ChannelsBar, RK_COL_ORDER);
+	m_grid.SaveColumnWidths(RK_ChannelsBar, RK_COL_WIDTH);
 	CMyDockablePane::OnDestroy();
 }
 

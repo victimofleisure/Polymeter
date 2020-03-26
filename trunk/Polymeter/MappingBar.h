@@ -1,4 +1,4 @@
-// Copyleft 2018 Chris Korda
+// Copyleft 2020 Chris Korda
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 2 of the License, or any later version.
@@ -7,10 +7,7 @@
  
 		revision history:
 		rev		date	comments
-        00		24jun18	initial version
-		01		14dec18	add clipboard support and sorting
-		02		22jan19	remove document change handler
-		03		19mar20	move default track name to track base class
+        00		20mar20	initial version
 
 */
 
@@ -19,25 +16,28 @@
 #include "MyDockablePane.h"
 #include "GridCtrl.h"
 
-class CModulationsBar : public CMyDockablePane, public CTrackBase
+class CMappingBar : public CMyDockablePane
 {
-	DECLARE_DYNAMIC(CModulationsBar)
+	DECLARE_DYNAMIC(CMappingBar)
 // Construction
 public:
-	CModulationsBar();
+	CMappingBar();
 
 // Attributes
 public:
+	CString GetInputEventName(int iEvent) const;
+	CString GetOutputEventName(int iEvent) const;
 
 // Operations
 public:
 	void	OnUpdate(CView* pSender, LPARAM lHint = 0, CObject* pHint = NULL);
+	void	OnMidiLearn();
 
 // Overrides
 
 // Implementation
 public:
-	virtual ~CModulationsBar();
+	virtual ~CMappingBar();
 
 protected:
 // Types
@@ -50,36 +50,36 @@ protected:
 
 // Constants
 	enum {
-		IDC_MOD_LIST = 1936,
-		MOD_NONE = -1,
-		MOD_INVALID = -2,
+		IDC_MAPPING_GRID = 1931,
+		MIDI_LEARN_COLOR = RGB(0, 255, 0),
 	};
-	enum {
-		COL_NUMBER,
-		COL_TYPE,
-		COL_SOURCE,
+	enum {	// grid columns
+		#define MAPPINGDEF_INCLUDE_NUMBER
+		#define MAPPINGDEF(name, align, width, member, minval, maxval) COL_##name,
+		#include "MappingDef.h"	// generate column enumeration
 		COLUMNS
 	};
-	static const CGridCtrl::COL_INFO	m_arrColInfo[COLUMNS];
+	static const CGridCtrl::COL_INFO	m_arrColInfo[COLUMNS];	// list column data
+	struct COL_RANGE {
+		int		nMin;
+		int		nMax;
+	};
+	static const COL_RANGE m_arrColRange[COLUMNS];	// array of column ranges
 
 // Member data
-	CModGridCtrl	m_grid;			// grid control
-	CModulationArray	m_arrModulator;	// array of cached modulations for current track selection
-	bool	m_bUpdatePending;		// true if an update is pending
-	bool	m_bModDifferences;		// true if selected tracks have differing modulations
-	bool	m_bShowDifferences;		// true if showing modulation differences
-	CIntArrayEx	m_arrModCount;		// in show differences mode, instance count for each cached modulation
+	CModGridCtrl	m_grid;		// grid control
+	CStringArrayEx	m_arrInputEventName;	// array of input event names
+	CStringArrayEx	m_arrOutputEventName;	// array of output event names
 
 // Helpers
-	void	UpdateAll();
-	void	UpdateUnion();
-	static	int		ModPairSortCompare(const void *arg1, const void *arg2);
-	void	SortModulations(bool bBySource);
-	void	ResetModulatorCache();
-	void	StartDeferredUpdate();
+	void	InitEventNames();
+	void	UpdateGrid();
+	void	OnTrackArrayChange();
+	void	OnTrackNameChange(int iTrack);
 
 // Overrides
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	virtual	void OnShowChanged(bool bShow);
 
 // Generated message map functions
 	DECLARE_MESSAGE_MAP()
@@ -88,23 +88,31 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnListCustomdraw(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg LRESULT OnDeferredUpdate(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnListColHdrReset();
+	afx_msg void OnListReorder(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnListColumnClick(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnListCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg LRESULT OnMidiEvent(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnEditSelectAll();
 	afx_msg void OnEditCopy();
 	afx_msg void OnEditCut();
 	afx_msg void OnEditPaste();
 	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
-	afx_msg void OnEditSelectAll();
 	afx_msg void OnEditDelete();
 	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
 	afx_msg void OnEditInsert();
 	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
-	afx_msg void OnListReorder(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnUpdateShowDifferences(CCmdUI *pCmdUI);
-	afx_msg void OnShowDifferences();
-	afx_msg void OnSortByType();
-	afx_msg void OnSortBySource();
-	afx_msg void OnUpdateSort(CCmdUI *pCmdUI);
+	afx_msg void OnToolsMidiLearn();
+	afx_msg void OnUpdateToolsMidiLearn(CCmdUI *pCmdUI);
 };
+
+inline CString CMappingBar::GetInputEventName(int iEvent) const
+{
+	return m_arrInputEventName[iEvent];
+}
+
+inline CString CMappingBar::GetOutputEventName(int iEvent) const
+{
+	return m_arrOutputEventName[iEvent];
+}

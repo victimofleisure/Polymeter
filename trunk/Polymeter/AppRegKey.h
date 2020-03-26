@@ -10,23 +10,28 @@
         00      09jan19	initial version
 		01		25jan19	add graph bar
 		02		29jan19	add MIDI input bar
+		03		18mar20	add step values bar
+		04		20mar20	add mapping
 
 */
 
 #pragma once
 
 // Don't change or remove existing keys to avoid incompatibility.
-// Windows added here may also belong in ResetWindowLayout.
+// All entries in MainDockBarDef.h must have a key definition here.
 
-#define RK_PROPERTIES_BAR	_T("PropertiesBar")
-#define RK_CHANNELS_BAR		_T("ChannelsBar")
-#define RK_PRESETS_BAR		_T("PresetsBar")
-#define RK_PARTS_BAR		_T("PartsBar")
-#define RK_MODULATIONS_BAR	_T("ModulationsBar")
-#define RK_MIDI_OUTPUT_BAR	_T("MidiOutputBar")
-#define RK_PIANO_BAR		_T("PianoBar")
-#define RK_GRAPH_BAR		_T("GraphBar")
-#define RK_MIDI_INPUT_BAR	_T("MidiInputBar")
+#define RK_PropertiesBar	_T("PropertiesBar")
+#define RK_ChannelsBar		_T("ChannelsBar")
+#define RK_PresetsBar		_T("PresetsBar")
+#define RK_PartsBar			_T("PartsBar")
+#define RK_ModulationsBar	_T("ModulationsBar")
+#define RK_MidiOutputBar	_T("MidiOutputBar")
+#define RK_PianoBar			_T("PianoBar")
+#define RK_GraphBar			_T("GraphBar")
+#define RK_MidiInputBar		_T("MidiInputBar")
+#define RK_PhaseBar			_T("PhaseBar")
+#define RK_StepValuesBar	_T("StepValuesBar")
+#define RK_MappingBar		_T("MappingBar")
 
 #define RK_CHILD_FRAME		_T("ChildFrm")
 #define RK_SONG_VIEW		_T("SongView")

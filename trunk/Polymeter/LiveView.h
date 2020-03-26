@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      20jun18	initial version
+        01      18mar20	make song position 64-bit
 
 */
 
@@ -80,7 +81,7 @@ protected:
 
 	// Helpers
 		void	UpdateBars();
-		void	UpdateBars(int nSongPos);
+		void	UpdateBars(LONGLONG nSongPos);
 		void	InvalidateBar(int iItem);
 		void	InvalidateAllBars();
 		void	UpdateDeviceContext();

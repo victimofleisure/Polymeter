@@ -166,6 +166,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -206,9 +207,11 @@
     <ClInclude Include="FolderDialog.h" />
     <ClInclude Include="GraphBar.h" />
     <ClInclude Include="GraphTypeDef.h" />
+    <ClInclude Include="Mapping.h" />
     <ClInclude Include="MidiEventColDef.h" />
     <ClInclude Include="MidiEventBar.h" />
-    <ClInclude Include="MidiStatusDef.h" />
+    <ClInclude Include="MappingBar.h" />
+    <ClInclude Include="MappingDef.h" />
     <ClInclude Include="MyDockablePane.h" />
     <ClInclude Include="PhaseBar.h" />
     <ClInclude Include="PianoBar.h" />
@@ -276,6 +279,7 @@
     <ClInclude Include="SplitView.h" />
     <ClInclude Include="SteadyStatic.h" />
     <ClInclude Include="StepParent.h" />
+    <ClInclude Include="StepValuesBar.h" />
     <ClInclude Include="StepView.h" />
     <ClInclude Include="PopupCombo.h" />
     <ClInclude Include="PopupEdit.h" />
@@ -334,7 +338,9 @@
     <ClCompile Include="CtrlResize.cpp" />
     <ClCompile Include="FolderDialog.cpp" />
     <ClCompile Include="GraphBar.cpp" />
+    <ClCompile Include="Mapping.cpp" />
     <ClCompile Include="MidiEventBar.cpp" />
+    <ClCompile Include="MappingBar.cpp" />
     <ClCompile Include="MyDockablePane.cpp" />
     <ClCompile Include="PhaseBar.cpp" />
     <ClCompile Include="PianoBar.cpp" />
@@ -388,6 +394,7 @@
     <ClCompile Include="SplitView.cpp" />
     <ClCompile Include="SteadyStatic.cpp" />
     <ClCompile Include="StepParent.cpp" />
+    <ClCompile Include="StepValuesBar.cpp" />
     <ClCompile Include="StepView.cpp" />
     <ClCompile Include="PopupCombo.cpp" />
     <ClCompile Include="PopupEdit.cpp" />
@@ -434,6 +441,7 @@
     <Image Include="res\Polymeter.ico" />
     <Image Include="res\PolymeterDoc.ico" />
     <Image Include="res\Toolbar.bmp" />
+    <Image Include="res\toolbar1.bmp" />
     <Image Include="res\Toolbar256.bmp" />
     <Image Include="UserImages.bmp" />
   </ItemGroup>

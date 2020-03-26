@@ -20,6 +20,8 @@
 		10		22mar19	add track invert command
 		11		15nov19	add option for signed velocity scaling
 		12		29feb20	add support for recording live events
+		13		18mar20	cache song position in document
+		14		20mar20	add mapping
 
 */
 
@@ -58,7 +60,7 @@ public:
 		HINT_STEP,				// step edit; pHint is CPropHint, m_iProp is step index
 		HINT_MASTER_PROP,		// master property edit; pHint is CPropHint
 		HINT_PLAY,				// start or stop playback
-		HINT_SONG_POS,			// song position change; pHint is CSongPosHint
+		HINT_SONG_POS,			// song position change
 		HINT_CHANNEL_PROP,		// channel property edit; pHint is CPropHint
 		HINT_MULTI_CHANNEL_PROP,	// multi-channel property edit; pHint is CMultiItemPropHint
 		HINT_TRACK_SELECTION,	// track selection
@@ -76,6 +78,9 @@ public:
 		HINT_PART_ARRAY,		// part array edit; pHint is CSelectionHint
 		HINT_MODULATION,		// modulation edit
 		HINT_CENTER_SONG_POS,	// center current position in song view
+		HINT_MAPPING_PROP,		// mapping property edit; pHint is CPropHint
+		HINT_MULTI_MAPPING_PROP,	// multi-mapping property edit; pHint is CMultiItemPropHint
+		HINT_MAPPING_ARRAY,		// inserting or deleting mappings; pHint is CSelectionHint
 		HINTS
 	};
 	enum {	// view types
@@ -116,11 +121,6 @@ public:
 	public:
 		const COptions	*m_pPrevOptions;	// previous options
 	};
-	class CSongPosHint : public CObject {
-	public:
-		CSongPosHint(LONGLONG nSongPos) : m_nSongPos(nSongPos) {}
-		LONGLONG	m_nSongPos;		// song position in ticks
-	};
 	class CSelectionHint : public CObject {
 	public:
 		CSelectionHint(const CIntArrayEx *parrSelection, int iFirstItem = 0, int nItems = 0) :
@@ -143,6 +143,7 @@ public:
 	double	m_fStepZoom;		// step view zoom
 	double	m_fSongZoom;		// song view zoom
 	int		m_nViewType;		// see view type enum
+	LONGLONG	m_nSongPos;		// cached song position
 	CRect	m_rStepSel;			// step view's rectangular step selection
 
 // Attributes
@@ -166,6 +167,8 @@ public:
 	bool	HaveStepSelection() const;
 	bool	HaveTrackOrStepSelection() const;
 	void	GetTrackIDMap(CTrackIDMap& mapTrackID) const;
+	void	SetMappingProperty(int iMapping, int iProp, int nVal);
+	void	SetMultiMappingProperty(const CIntArrayEx& arrSelection, int iProp, int nVal, CView* pSender = NULL);
 
 // Operations
 public:
@@ -251,6 +254,11 @@ public:
 	int		CalcSongTimeShift() const;
 	void	OnMidiOutputCaptureChange();
 	bool	ExportSongAsCSV(LPCTSTR pszDestPath, int nDuration, bool bSongMode);
+	void	CopyMappings(const CIntArrayEx& arrSelection);
+	void	DeleteMappings(const CIntArrayEx& arrSelection, bool bIsCut);
+	void	InsertMappings(int iInsert, const CMappingArray& arrMapping, bool bIsPaste);
+	void	MoveMappings(const CIntArrayEx& arrSelection, int iDropPos);
+	void	SortMappings(int iProp);
 
 // Overrides
 public:
@@ -282,6 +290,7 @@ protected:
 		CPresetArray	m_arrPreset;	// array of presets
 		CTrackGroupArray	m_arrPart;	// array of parts
 		CPackedModulationArray	m_arrMod;	// array of modulations
+		CIntArrayEx	m_arrMappingTrackIdx;	// array of mapping track indices
 	};
 	class CUndoMove : public CRefObj {
 	public:
@@ -352,6 +361,16 @@ protected:
 		CIntArrayEx	m_arrSelection;	// indices of selected items
 		CModulationArrayArray	m_arrModulator;	// array of modulator arrays
 	};
+	class CUndoMultiIntegerProp : public CRefObj {
+	public:
+		CIntArrayEx	m_arrSelection;	// indices of selected items
+		CIntArrayEx	m_arrProp;	// array of integer property values
+	};
+	class CUndoSelectedMappings : public CRefObj {
+	public:
+		CIntArrayEx	m_arrSelection;	// indices of selected mappings
+		CMappingArray	m_arrMapping;	// array of mappings
+	};
 	class CTrackArrayEdit {
 	public:
 		CTrackArrayEdit(CPolymeterDoc *pDoc);
@@ -380,6 +399,7 @@ protected:
 	void	WriteTrackModulations(CString sTrkID, const CTrack& trk) const;
 	void	ConvertLegacyFileFormat();
 	static	int TrackSortCompare(const void *pElem1, const void *pElem2);
+	static	void	MakeSelectionRange(CIntArrayEx& arrSelection, int iFirstItem, int nItems);
 	void	GetSelectAll(CIntArrayEx& arrSelection) const;
 	void	ApplyStepsArrayEdit(const CRect& rStepSel, bool bSelect);
 	bool	MakePasteSelection(CSize szData, CRect& rSelection) const;
@@ -446,6 +466,17 @@ protected:
 	void	RestorePartMove(const CUndoState& State);
 	void	SaveModulation(CUndoState& State) const;
 	void	RestoreModulation(const CUndoState& State);
+	void	SaveMapping(CUndoState& State) const;
+	void	RestoreMapping(const CUndoState& State);
+	void	SaveMultiMapping(CUndoState& State) const;
+	void	RestoreMultiMapping(const CUndoState& State);
+	void	SaveSelectedMappings(CUndoState& State) const;
+	void	RestoreSelectedMappings(const CUndoState& State);
+	void	RestoreMappingMove(const CUndoState& State);
+	void	SaveSortMappings(CUndoState& State);
+	void	RestoreSortMappings(const CUndoState& State);
+	void	SaveLearnMapping(CUndoState& State);
+	void	RestoreLearnMapping(const CUndoState& State);
 	bool	UndoDependencies();
 	bool	RedoDependencies();
 

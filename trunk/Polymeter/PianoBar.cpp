@@ -64,22 +64,22 @@ CPianoBar::CPianoBar()
 	m_bColorVelocity = false;
 	m_bKeyLabelsDirty = false;
 	m_ptContextMenu = CPoint(0, 0);
-	RdReg(RK_PIANO_BAR, RK_OUTPUT_CHANNEL, m_iOutputChannel);
-	RdReg(RK_PIANO_BAR, RK_PIANO_SIZE, m_iPianoSize);
-	RdReg(RK_PIANO_BAR, RK_KEY_LABELS, m_bShowKeyLabels);
-	RdReg(RK_PIANO_BAR, RK_ROTATE_LABELS, m_bRotateLabels);
-	RdReg(RK_PIANO_BAR, RK_KEY_COLORS, m_bColorVelocity);
+	RdReg(RK_PianoBar, RK_OUTPUT_CHANNEL, m_iOutputChannel);
+	RdReg(RK_PianoBar, RK_PIANO_SIZE, m_iPianoSize);
+	RdReg(RK_PianoBar, RK_KEY_LABELS, m_bShowKeyLabels);
+	RdReg(RK_PianoBar, RK_ROTATE_LABELS, m_bRotateLabels);
+	RdReg(RK_PianoBar, RK_KEY_COLORS, m_bColorVelocity);
 	m_iPianoSize = CLAMP(m_iPianoSize, 0, PIANO_SIZES - 1);	// just in case; avoid bounds error
 	m_arrAddEvent.SetSize(1);
 }
 
 CPianoBar::~CPianoBar()
 {
-	WrReg(RK_PIANO_BAR, RK_OUTPUT_CHANNEL, m_iOutputChannel);
-	WrReg(RK_PIANO_BAR, RK_PIANO_SIZE, m_iPianoSize);
-	WrReg(RK_PIANO_BAR, RK_KEY_LABELS, m_bShowKeyLabels);
-	WrReg(RK_PIANO_BAR, RK_ROTATE_LABELS, m_bRotateLabels);
-	WrReg(RK_PIANO_BAR, RK_KEY_COLORS, m_bColorVelocity);
+	WrReg(RK_PianoBar, RK_OUTPUT_CHANNEL, m_iOutputChannel);
+	WrReg(RK_PianoBar, RK_PIANO_SIZE, m_iPianoSize);
+	WrReg(RK_PianoBar, RK_KEY_LABELS, m_bShowKeyLabels);
+	WrReg(RK_PianoBar, RK_ROTATE_LABELS, m_bRotateLabels);
+	WrReg(RK_PianoBar, RK_KEY_COLORS, m_bColorVelocity);
 }
 
 void CPianoBar::AddEvents(const CMidiEventArray& arrEvent)

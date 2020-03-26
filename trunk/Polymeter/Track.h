@@ -23,6 +23,8 @@
 		13		12dec19	add GetPeriod
 		14		17feb20	move MIDI event class into track base
 		15		29feb20	add MIDI event array methods
+		16		16mar20	move get step index into track
+		17		19mar20	add MIDI message name lookup
 
 */
 
@@ -31,7 +33,9 @@
 #include "ArrayEx.h"
 #include "FixedArray.h"
 #include "Properties.h"	// for option info
+#include "Midi.h"		// for MIDI message enums
 #include "MidiFile.h"	// for import track array class
+#include "CritSec.h"
 
 class CTrackBase {
 public:
@@ -193,6 +197,11 @@ public:
 	static	int		FindModulationTypeInternalName(LPCTSTR pszName);
 	static	CString	GetRangeTypeName(int iType);
 	static	LPCTSTR	GetRangeTypeInternalName(int iType);
+	static	LPCTSTR	GetMidiChannelVoiceMsgName(int iMsg);
+	static	LPCTSTR	GetMidiSystemStatusMsgName(int iMsg);
+	static	int		FindMidiChannelVoiceMsgName(LPCTSTR pszName);
+	static	int		FindMidiSystemStatusMsgName(LPCTSTR pszName);
+	static	CString	GetTrackNoneString();
 
 // Operations
 	static	void	LoadStringResources();
@@ -206,6 +215,10 @@ protected:
 	static CString m_sTrackTypeName[TRACK_TYPES];
 	static CString m_sModulationTypeName[MODULATION_TYPES];
 	static CString m_sRangeTypeName[RANGE_TYPES];
+	static CString m_sTrack;	// track caption for unnamed tracks
+	static CString m_sTrackNone;	// caption for unspecified track
+	static const LPCTSTR m_arrMidiChannelVoiceMsgName[MIDI_CHANNEL_VOICE_MESSAGES];
+	static const LPCTSTR m_arrMidiSystemStatusMsgName[MIDI_SYSTEM_STATUS_MESSAGES];
 };
 
 inline const CTrackBase::PROPERTY_INFO& CTrackBase::GetPropertyInfo(int iProp)
@@ -289,6 +302,33 @@ inline LPCTSTR CTrackBase::GetRangeTypeInternalName(int iType)
 {
 	ASSERT(iType >= 0 && iType < RANGE_TYPES);
 	return m_oiRangeType[iType].pszName;
+}
+
+inline LPCTSTR CTrackBase::GetMidiChannelVoiceMsgName(int iMsg)
+{
+	ASSERT(iMsg >= 0 && iMsg < MIDI_CHANNEL_VOICE_MESSAGES);
+	return m_arrMidiChannelVoiceMsgName[iMsg];
+}
+
+inline LPCTSTR CTrackBase::GetMidiSystemStatusMsgName(int iMsg)
+{
+	ASSERT(iMsg >= 0 && iMsg < MIDI_SYSTEM_STATUS_MESSAGES);
+	return m_arrMidiSystemStatusMsgName[iMsg];
+}
+
+inline int CTrackBase::FindMidiChannelVoiceMsgName(LPCTSTR pszName)
+{
+	return ARRAY_FIND(m_arrMidiChannelVoiceMsgName, pszName);
+}
+
+inline int CTrackBase::FindMidiSystemStatusMsgName(LPCTSTR pszName)
+{
+	return ARRAY_FIND(m_arrMidiSystemStatusMsgName, pszName);
+}
+
+inline CString CTrackBase::GetTrackNoneString()
+{
+	return m_sTrackNone;
 }
 
 inline CTrackBase::CMidiEvent::CMidiEvent(DWORD nTime, DWORD dwEvent)
@@ -412,6 +452,7 @@ public:
 	bool	IsModulator() const;
 	bool	IsModulated() const;
 	void	GetPropertyValue(int iProp, void *pBuf, int nLen) const;
+	int		GetStepIndex(LONGLONG nPos) const;
 
 // Operations
 	int		CompareProperty(int iProp, const CTrack& track) const;

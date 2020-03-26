@@ -10,6 +10,7 @@
         00      20jun18	initial version
         01      15dec18	show unnamed tracks
         02      12dec19	add GetPeriod
+        03      18mar20	get song position from document instead of sequencer
 
 */
 
@@ -111,11 +112,8 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			}
 			break;
 		case CPolymeterDoc::HINT_SONG_POS:
-			{
-				CPolymeterDoc::CSongPosHint	*pSongPosHint = static_cast<CPolymeterDoc::CSongPosHint*>(pHint);
-				UpdateSongCounters();
-				m_wndPosBar.UpdateBars(static_cast<int>(pSongPosHint->m_nSongPos));
-			}
+			UpdateSongCounters();
+			m_wndPosBar.UpdateBars(pDoc->m_nSongPos);
 			break;
 		case CPolymeterDoc::HINT_VIEW_TYPE:
 			m_iPreset = pDoc->FindCurrentPreset();
@@ -886,12 +884,10 @@ inline void CLiveView::CPosBarCtrl::InvalidateAllBars()
 
 void CLiveView::CPosBarCtrl::UpdateBars()
 {
-	LONGLONG	nPos;
-	m_pDoc->m_Seq.GetPosition(nPos);
-	UpdateBars(static_cast<int>(nPos));
+	UpdateBars(m_pDoc->m_nSongPos);
 }
 
-void CLiveView::CPosBarCtrl::UpdateBars(int nSongPos)
+void CLiveView::CPosBarCtrl::UpdateBars(LONGLONG nSongPos)
 {
 	// this function is on the critical path so carefully benchmark any changes to it
 	static const COLORREF	clrBarBkgnd = RGB(0, 0, 128);

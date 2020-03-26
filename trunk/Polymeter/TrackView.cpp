@@ -12,6 +12,8 @@
 		02		15dec18	add label tip style to grid
 		03		19dec18	centralize property value ranges
 		04		27jan19	load track resource strings during startup
+		05		06mar20	work around buggy item changed notifications
+		06		17mar20	check m_bIsUpdating before posting selection change
 
 */
 
@@ -63,6 +65,7 @@ CTrackView::CTrackView()
 {
 	m_grid.TrackDropPos(true);
 	m_bIsUpdating = false;
+	m_bIsSelectionChanging = false;
 	m_nHdrHeight = 0;
 	m_nItemHeight = 0;
 }
@@ -529,6 +532,7 @@ BEGIN_MESSAGE_MAP(CTrackView, CView)
 	ON_NOTIFY(LVN_ENDSCROLL, IDC_TRACK_GRID, OnListEndScroll)
 	ON_NOTIFY(LVN_KEYDOWN, IDC_TRACK_GRID, OnListKeyDown)
 	ON_MESSAGE(UWM_LIST_SCROLL_KEY, OnListScrollKey)
+	ON_MESSAGE(UWM_LIST_SELECTION_CHANGE, OnListSelectionChange)
 	ON_WM_CONTEXTMENU()
 	ON_COMMAND(ID_LIST_COL_HDR_RESET, OnListColHdrReset)
 	ON_NOTIFY(HDN_ENDDRAG, 0, OnListHdrEndDrag)
@@ -658,11 +662,13 @@ void CTrackView::OnListItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
 	UNREFERENCED_PARAMETER(pResult);
 	NMLISTVIEW *pnmv = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 	if (pnmv->uChanged & LVIF_STATE) {
-		CPolymeterDoc	*pDoc = GetDocument();
-		if (!m_bIsUpdating) {
-			m_grid.GetSelection(pDoc->m_arrTrackSel);
-			pDoc->m_iTrackSelMark = m_grid.GetSelectionMark();
-			pDoc->UpdateAllViews(this, CPolymeterDoc::HINT_TRACK_SELECTION);
+		if (!m_bIsUpdating) {	// if not handling a document update
+			if (!m_bIsSelectionChanging) {	// if selection change isn't already pending
+				// use post message so that item selection isn't retrieved until after
+				// item changed notifications settle down; avoids empty selection bug
+				PostMessage(UWM_LIST_SELECTION_CHANGE);
+				m_bIsSelectionChanging = true;	// set pending flag
+			}
 		}
 	}
 }
@@ -705,6 +711,18 @@ LRESULT CTrackView::OnListScrollKey(WPARAM wParam, LPARAM lParam)
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
 	GetParentFrame()->SendMessage(UWM_TRACK_SCROLL, m_grid.GetTopIndex());
+	return 0;
+}
+
+LRESULT CTrackView::OnListSelectionChange(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	CPolymeterDoc	*pDoc = GetDocument();
+	m_grid.GetSelection(pDoc->m_arrTrackSel);
+	pDoc->m_iTrackSelMark = m_grid.GetSelectionMark();
+	pDoc->UpdateAllViews(this, CPolymeterDoc::HINT_TRACK_SELECTION);
+	m_bIsSelectionChanging = false;	// reset pending flag
 	return 0;
 }
 

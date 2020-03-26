@@ -52,6 +52,7 @@ protected:
 	bool	MakeRandomMasterProperty(int iProp, CComVariant& var);
 	bool	GetRandomStep(CPoint& ptStep) const;
 	bool	MakeRandomStepSelection(CRect& rSelection) const;
+	int		MakeRandomMappingProperty(int iProp);
 	CString	PrintSelection(CIntArrayEx& arrSelection) const;
 	CString	PrintSelection(CRect& rSelection) const;
 };

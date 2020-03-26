@@ -15,6 +15,7 @@
 		05		02jan19	add case for range type property
 		06		26feb19	change master property default to fail gracefully
 		07		02dec19	remove sort function, array now provides it
+		08		20mar20	add mapping
 
 		automated undo test for patch editing
  
@@ -83,6 +84,13 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_DELETE_PARTS,		0.1f},
 	{UCODE_MOVE_PARTS,			0.1f},
 	{UCODE_MODULATION,			1},
+	{UCODE_MAPPING_PROP,		0.1f},
+	{UCODE_MULTI_MAPPING_PROP,	0.1f},
+	{UCODE_CUT_MAPPINGS,		0.1f},
+	{UCODE_PASTE_MAPPINGS,		0.1f},
+	{UCODE_INSERT_MAPPING,		0.2f},
+	{UCODE_DELETE_MAPPINGS,		0.1f},
+	{UCODE_MOVE_MAPPINGS,		0.1f},
 };
 
 CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
@@ -237,6 +245,23 @@ bool CTrackUndoTest::MakeRandomStepSelection(CRect& rSelection) const
 	return(TRUE);
 }
 
+int CTrackUndoTest::MakeRandomMappingProperty(int iProp)
+{
+	switch (iProp) {
+	case CMapping::PROP_IN_EVENT:
+		return Random(CMapping::INPUT_EVENTS);
+	case CMapping::PROP_OUT_EVENT:
+		return Random(CMapping::OUTPUT_EVENTS);
+	case CMapping::PROP_IN_CHANNEL:
+	case CMapping::PROP_OUT_CHANNEL:
+		return Random(MIDI_CHANNELS);
+	case CMapping::PROP_TRACK:
+		return GetRandomItem();
+	default:
+		return Random(MIDI_NOTE_MAX);
+	}
+}
+
 CString	CTrackUndoTest::PrintSelection(CIntArrayEx& arrSelection) const
 {
 	CString	str;
@@ -291,6 +316,11 @@ LONGLONG CTrackUndoTest::GetSnapshot() const
 		LPCTSTR	pszName = preset.m_sName;
 		nSum += Fletcher64(pszName, preset.m_sName.GetLength() * sizeof(TCHAR));	// add preset name
 		nSum += Fletcher64(preset.m_arrTrackIdx.GetData(), preset.m_arrTrackIdx.GetSize());	// add preset track indices
+	}
+	int	nMappings = m_pDoc->m_Seq.m_mapping.GetCount();
+	for (int iMapping = 0; iMapping < nMappings; iMapping++) {	// for each mapping
+		const CMapping&	map = m_pDoc->m_Seq.m_mapping.GetAt(iMapping);
+		nSum += Fletcher64(&map, sizeof(CMapping));	// assumes vars are packed contiguously
 	}
 //	_tprintf(_T("%I64x\n"), nSum);
 	return(nSum);
@@ -368,7 +398,14 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 		break;
 	case UCODE_MASTER_PROP:
 		{
-			int	iProp = Random(CMasterProps::PROPERTIES);
+			int	iProp;
+			if (m_pDoc->m_Seq.IsPlaying()) {	// if playing
+				do {	// time division can't change while playing
+					iProp = Random(CMasterProps::PROPERTIES);
+				} while (iProp == CMasterProps::PROP_nTimeDiv);
+			} else {	// stopped
+				iProp = Random(CMasterProps::PROPERTIES);
+			}
 			CComVariant	var;
 			if (!MakeRandomMasterProperty(iProp, var))
 				return(DISABLED);
@@ -453,7 +490,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			CIntArrayEx	arrSelection;
 			if (!MakeRandomSelection(MIDI_CHANNELS, arrSelection))
 				return(DISABLED);
-			theApp.GetMainFrame()->GetChannelsBar().SetSelection(arrSelection);
+			theApp.GetMainFrame()->m_wndChannelsBar.SetSelection(arrSelection);
 			int	iProp = Random(CChannel::PROPERTIES);
 			int	nVal = Random(MIDI_NOTES + 1) - 1;
 			m_pDoc->NotifyUndoableEdit(iProp, UCODE_MULTI_CHANNEL_PROP);
@@ -476,8 +513,6 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			CIntArrayEx	arrSortLevel;
 			arrSortLevel.Add(iProp);
 			m_pDoc->SortTracks(arrSortLevel);
-			CPolymeterDoc::CPropHint	hint(0, iProp);
-			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_ARRAY);
 			PRINTF(_T("%s %s %d\n"), sUndoTitle, PrintSelection(arrSelection), iProp);
 		}
 		break;
@@ -765,6 +800,82 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			}
 			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
 			PRINTF(_T("%s %s %d %d\n"), sUndoTitle, PrintSelection(arrSelection), iModType, iModSource);
+		}
+		break;
+	case UCODE_MAPPING_PROP:
+	case UCODE_MULTI_MAPPING_PROP:
+		{
+			int iMapping = Random(m_pDoc->m_Seq.m_mapping.GetCount());
+			if (iMapping < 0)
+				return(DISABLED);
+			int	iProp = Random(CMapping::PROPERTIES);
+			int	nVal;
+			// if track property chosen but no tracks are available
+			if (iProp == CMapping::PROP_TRACK && !m_pDoc->GetTrackCount()) {
+				nVal = -1;	// avoid looping forever
+			} else {
+				int	nPrevVal = m_pDoc->m_Seq.m_mapping.GetProperty(iMapping, iProp);
+				do {
+					nVal = MakeRandomMappingProperty(iProp);
+				} while (nVal == nPrevVal);	// ensure different value
+			}
+			if (UndoCode == UCODE_MAPPING_PROP) {	// if single mapping
+				m_pDoc->SetMappingProperty(iMapping, iProp, nVal);
+				PRINTF(_T("%s %d %d %d\n"), sUndoTitle, iMapping, iProp, nVal);
+			} else {	// multiple mappings
+				int	nMappings = m_pDoc->m_Seq.m_mapping.GetCount();
+				CIntArrayEx	arrSelection;
+				if (!MakeRandomSelection(nMappings, arrSelection))
+					return(DISABLED);
+				m_pDoc->SetMultiMappingProperty(arrSelection, iProp, nVal);
+				PRINTF(_T("%s %s %d %d\n"), sUndoTitle, PrintSelection(arrSelection), iProp, nVal);
+			}
+		}
+		break;
+	case UCODE_PASTE_MAPPINGS:
+		{
+			if (!theApp.m_arrMappingClipboard.GetSize())
+				return(DISABLED);
+			int iInsPos = max(Random(m_pDoc->m_Seq.m_mapping.GetCount()), 0);
+			m_pDoc->InsertMappings(iInsPos, theApp.m_arrMappingClipboard, true);	// is paste
+			PRINTF(_T("%s %d\n"), sUndoTitle, iInsPos);
+		}
+		break;
+	case UCODE_INSERT_MAPPING:
+		{
+			CMappingArray	arrMapping;
+			arrMapping.SetSize(1);
+			for (int iProp = 0; iProp < CMapping::PROPERTIES; iProp++)
+				arrMapping[0].SetProperty(iProp, MakeRandomMappingProperty(iProp));
+			int iInsPos = max(Random(m_pDoc->m_Seq.m_mapping.GetCount()), 0);
+			m_pDoc->InsertMappings(iInsPos, arrMapping, true);	// not paste
+			PRINTF(_T("%s %d\n"), sUndoTitle, iInsPos);
+		}
+		break;
+	case UCODE_DELETE_MAPPINGS:
+	case UCODE_CUT_MAPPINGS:
+		{
+			int	nMappings = m_pDoc->m_Seq.m_mapping.GetCount(); 
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(nMappings, arrSelection))
+				return(DISABLED);
+			m_pDoc->DeleteMappings(arrSelection, UndoCode == UCODE_CUT_MAPPINGS);
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
+		}
+		break;
+	case UCODE_MOVE_MAPPINGS:
+		{
+			int	nMappings = m_pDoc->m_Seq.m_mapping.GetCount(); 
+			if (nMappings < 2)
+				return(DISABLED);
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(nMappings, arrSelection))
+				return(DISABLED);
+			int	iDropPos = Random(nMappings + 1);
+			if (!CDragVirtualListCtrl::CompensateDropPos(arrSelection, iDropPos))
+				return(DISABLED);
+			m_pDoc->MoveMappings(arrSelection, iDropPos);
+			PRINTF(_T("%s %s %d\n"), sUndoTitle, PrintSelection(arrSelection), iDropPos);
 		}
 		break;
 	default:

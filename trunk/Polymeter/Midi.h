@@ -11,6 +11,8 @@
 		01		17aug13	refactor
 		02		07oct14	add MIDI clock constants
 		03		28mar18	add inline functions
+		04		19mar20	add channel voice command to index macro
+		05		19mar20	add channel voice and system status messages
 
 		midi types and constants
 
@@ -19,7 +21,7 @@
 #ifndef MIDI_INCLUDED
 #define MIDI_INCLUDED
 
-enum {
+enum {	// channel voice messages
 	NOTE_OFF 		= 0x80,
 	NOTE_ON			= 0x90,
 	KEY_AFT			= 0xa0,
@@ -29,7 +31,7 @@ enum {
 	WHEEL			= 0xe0,
 };
 
-enum {
+enum {	// system messages
 	SYSEX			= 0xf0,
 	MTC_QTR_FRAME	= 0xf1,
 	SONG_POSITION	= 0xf2,
@@ -51,9 +53,19 @@ enum {
 	MIDI_NOTE_MAX	= MIDI_NOTES - 1,
 };
 
-#define MIDI_CTRLR_DEF(name) name,
-enum {	// generate MIDI controller enum from header file via macro
-	#include "MidiCtrlrDef.h"
+enum {	// MIDI channel voice messages
+	#define MIDICHANSTATDEF(name) MIDI_CVM_##name,
+	#include "MidiCtrlrDef.h"	// generate enum
+	MIDI_CHANNEL_VOICE_MESSAGES
+};
+enum {	// MIDI system status messages
+	#define MIDISYSSTATDEF(name) MIDI_SSM_##name,
+	#include "MidiCtrlrDef.h"	// generate enum
+	MIDI_SYSTEM_STATUS_MESSAGES
+};
+enum {	// MIDI controllers
+	#define MIDI_CTRLR_DEF(name) name,
+	#include "MidiCtrlrDef.h"	// generate enum
 };
 
 #define MIDI_STAT(msg)		LOBYTE(msg)
@@ -61,6 +73,7 @@ enum {	// generate MIDI controller enum from header file via macro
 #define MIDI_P2(msg)		LOBYTE(HIWORD(msg))
 #define MIDI_CMD(msg)		(msg & 0xf0)
 #define MIDI_CHAN(msg)		(msg & 0x0f)
+#define MIDI_CMD_IDX(msg)	((MIDI_CMD(msg) >> 4) - 8)
 #define CHAN_MODE_MSG(ctrl)	(ctrl >= 120)
 #define MIDI_CLOCK_PPQ		24
 #define MIDI_BEAT_CLOCKS	6

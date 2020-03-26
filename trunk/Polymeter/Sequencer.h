@@ -16,6 +16,8 @@
 		06		09sep19	add tempo event array
 		07		17feb20	move MIDI event class into track base
 		08		29feb20	add support for recording live events
+		09		16mar20	add scale, index and voicing modulation
+		10		20mar20	add mapping
 
 */
 
@@ -23,6 +25,7 @@
 
 #include "mmsystem.h"
 #include "SeqTrackArray.h"
+#include "Mapping.h"
 
 #define SEQ_DUMP_EVENTS 0
 
@@ -48,6 +51,9 @@ public:
 		#include "SequencerErrors.h"	// generate error enum
 		SEQERR_LAST,
 	};
+
+// Public data
+	CSeqMapping	m_mapping;		// maps MIDI input to parameters
 
 // Attributes
 	bool	IsOpen() const;
@@ -75,7 +81,6 @@ public:
 	void	GetStatistics(STATS& stats) const;
 	void	GetInitialMidiEvents(CDWordArrayEx& arrMidiEvent) const;
 	void	SetInitialMidiEvents(const CDWordArrayEx& arrMidiEvent);
-	int		GetStepIndex(int iTrack, LONGLONG nPos) const;
 	bool	GetSongMode() const;
 	void	SetSongMode(bool bEnable);
 	int		GetSongDurationSeconds() const;
@@ -86,10 +91,6 @@ public:
 	void	SetNoteOverlapMode(bool bPrevent);
 	const CMidiEventArray&	GetRecordedEvents() const;
 	void	SetRecordedEvents(const CMidiEventArray& arrEvent);
-	void	RemoveAllRecordedEvents();
-	void	AppendRecordedEvents(const CMidiEventArray& arrEvent);
-	void	DeleteRecordedEvents(int nStartTime, int nEndTime);
-	void	InsertRecordedEvents(int nInsertTime, int nDuration, CMidiEventArray& arrEvent);
 	int		GetRecordOffset() const;
 	void	SetRecordOffset(int nTicks);
 
@@ -113,6 +114,11 @@ public:
 	void	ChaseDubsFromCurPos();
 	void	FlushMidiOutputEvents();
 	static	int		ModWrap(int nVal, int nModulo);
+	void	AttachRecordedEvents(CMidiEventArray& arrEvent);
+	void	RemoveAllRecordedEvents();
+	void	AppendRecordedEvents(const CMidiEventArray& arrEvent);
+	void	DeleteRecordedEvents(int nStartTime, int nEndTime);
+	void	InsertRecordedEvents(int nInsertTime, int nDuration, CMidiEventArray& arrEvent);
 
 protected:
 // Types
@@ -175,6 +181,9 @@ protected:
 	BYTE	m_arrNoteRef[MIDI_CHANNELS][MIDI_NOTES];	// note reference counts
 	CMidiEventArray	m_arrOutputEvent;	// MIDI event buffer for capturing output
 	CMidiEventArray	m_arrRecordEvent;	// MIDI event buffer for recording live MIDI
+	CIntArrayEx	m_arrScale;			// array of notes in current scale, as signed offsets
+	CIntArrayEx	m_arrVoicing;		// array of voices to drop an octave, as scale indices
+	CDWordArrayEx	m_arrMappedEvent;	// array of translated MIDI events from mapping
 
 #if SEQ_DUMP_EVENTS
 	CArrayEx<CMidiEventStream, CMidiEventStream&>	m_arrDumpEvent;	// for debug only
@@ -190,6 +199,7 @@ protected:
 	void	MakeEvent(const CTrack& trk, DWORD dwTime, int nVal, CEvent& evt);
 	void	AddTrackEvents(int iTrack, int nCBStart);
 	void	AddNoteOffs(int nCBStart, int nCBEnd);
+	bool	IsRecordedEventPlayback() const;
 	void	AddRecordedEvents(int nCBStart, int nCBEnd);
 	bool	OutputMidiBuffer();
 	bool	WriteTimeDivision(int nTimeDiv);
@@ -203,6 +213,7 @@ protected:
 	void	QueueOutputEvents(int nEvents);
 	void	FixNoteOverlaps();
 	void	ChaseDubs(int nTime, bool bUpdateMutes = false);
+	int		SumModulations(const CTrack& trk, int iModType, int nAbsEvtTime);
 #if SEQ_DUMP_EVENTS
 	void	AddDumpEvent(const CMidiEventStream& arrEvt, int nEvents);
 	void	DumpEvents(LPCTSTR pszPath);

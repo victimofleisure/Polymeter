@@ -9,6 +9,7 @@
 		rev		date	comments
         00      23apr18	initial version
 		01		19dec18	centralize property value ranges
+		02		06mar20	add selection change handler and pending flag
 
 */
 
@@ -34,6 +35,7 @@ public:
 		UWM_TRACK_FIRST = WM_USER + 100,
 		UWM_TRACK_SCROLL,		// wParam: list control top item index
 		UWM_LIST_SCROLL_KEY,
+		UWM_LIST_SELECTION_CHANGE,
 		UWM_LIST_HDR_REORDER,
 	};
 
@@ -93,6 +95,7 @@ protected:
 // Member data
 	CTrackGridCtrl	m_grid;		// grid control
 	bool	m_bIsUpdating;		// true while updating
+	bool	m_bIsSelectionChanging;	// true while selection change is pending
 	int		m_nHdrHeight;		// header height, in logical coords
 	int		m_nItemHeight;		// item height, in logical coords
 	static	CListColumnState	m_gColState;	// global list column state
@@ -124,6 +127,7 @@ protected:
 	afx_msg void OnListEndScroll(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnListKeyDown(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg LRESULT OnListScrollKey(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnListSelectionChange(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnListHdrEndDrag(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnListHdrEndTrack(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg LRESULT OnListHdrReorder(WPARAM wParam, LPARAM lParam);

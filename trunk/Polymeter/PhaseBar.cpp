@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		12dec19	initial version
+		01		18mar20	get song position from document instead of sequencer
 		
 */
 
@@ -83,14 +84,11 @@ void CPhaseBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			OnTrackSelectionChange();
 			break;
 		case CPolymeterDoc::HINT_SONG_POS:
-			{
-				const CPolymeterDoc::CSongPosHint *pSongPosHint = static_cast<CPolymeterDoc::CSongPosHint*>(pHint);
-				m_nSongPos = pSongPosHint->m_nSongPos;
-				if (pDoc->IsTrackView()) {	// if showing track view
-					Invalidate();
-				} else {	// not showing track view
-					OnTrackMuteChange();	// assume track mutes may have changed
-				}
+			m_nSongPos = pDoc->m_nSongPos;
+			if (pDoc->IsTrackView()) {	// if showing track view
+				Invalidate();
+			} else {	// not showing track view
+				OnTrackMuteChange();	// assume track mutes may have changed
 			}
 			break;
 		case CPolymeterDoc::HINT_SOLO:
@@ -125,7 +123,7 @@ void CPhaseBar::Update()
 				m_arrOrbit[iOrbit].m_bMuted &= orbit.m_bMuted;	// accumulate mute
 			}
 		}
-		pDoc->m_Seq.GetPosition(m_nSongPos);
+		m_nSongPos = pDoc->m_nSongPos;
 	}
 }
 

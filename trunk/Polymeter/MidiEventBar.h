@@ -12,6 +12,7 @@
         02		29jan19	refactor to support both input and output
 		03		10feb19	add method to get array of channel status nicknames
 		04		17feb20	inherit MIDI event class from track base
+		05		19mar20	move MIDI message enums to Midi header
 
 */
 
@@ -33,7 +34,6 @@ public:
 public:
 	void	SetKeySignature(int nKeySig);
 	static	LPCTSTR	GetControllerName(int iController);
-	static	LPCTSTR	GetChannelStatusNickname(int iStatus);
 	static	void	GetChannelStatusNicknames(CStringArray& arrChanStatNick);
 	CString	GetChannelStatusName(int iStatus) const;
 
@@ -66,11 +66,6 @@ protected:
 		#include "MidiEventColDef.h"
 		COLUMNS
 	};
-	enum {	// MIDI channel voice messages
-		#define MIDICHANSTATDEF(name) CVM_##name,
-		#include "MidiStatusDef.h"
-		CHANNEL_VOICE_MESSAGES
-	};
 	enum {	// filters
 		FILTER_CHANNEL,
 		FILTER_MESSAGE,
@@ -85,13 +80,12 @@ protected:
 		SMID_FILTER_CHANNEL_FIRST = WM_USER + 1,
 		SMID_FILTER_CHANNEL_LAST = SMID_FILTER_CHANNEL_FIRST + MIDI_CHANNELS,
 		SMID_FILTER_MESSAGE_FIRST = SMID_FILTER_CHANNEL_LAST + 1,
-		SMID_FILTER_MESSAGE_LAST = SMID_FILTER_MESSAGE_FIRST + CHANNEL_VOICE_MESSAGES,
+		SMID_FILTER_MESSAGE_LAST = SMID_FILTER_MESSAGE_FIRST + MIDI_CHANNEL_VOICE_MESSAGES,
 	};
 	static const CListCtrlExSel::COL_INFO	m_arrColInfo[COLUMNS];	// list column info
-	static const int	m_arrChanStatID[CHANNEL_VOICE_MESSAGES];	// channel status message string resource IDs
-	static const int	m_arrSysStatID[];	// system status message string resource IDs
-	static const LPCTSTR	m_arrChanStatNickname[CHANNEL_VOICE_MESSAGES];	// internal channel status names
-	static const LPCTSTR	m_arrControllerName[];	// array of controller name strings
+	static const int	m_arrChanStatID[MIDI_CHANNEL_VOICE_MESSAGES];	// channel status message string resource IDs
+	static const int	m_arrSysStatID[MIDI_SYSTEM_STATUS_MESSAGES];	// system status message string resource IDs
+	static const LPCTSTR	m_arrControllerName[MIDI_NOTES];	// array of controller name strings
 	static const int	m_arrFilterCol[FILTERS];	// column index of each column that can be filtered
 	static const LPCTSTR	m_arrBarRegKey[BAR_DIRECTIONS];	// registry keys for input versus output
 	static CStringArrayEx	m_arrChanStatName;	// channel status message names
@@ -161,12 +155,6 @@ protected:
 	afx_msg void OnShowSystemMessages();
 	afx_msg void OnUpdateShowSystemMessages(CCmdUI *pCmdUI);
 };
-
-inline LPCTSTR CMidiEventBar::GetChannelStatusNickname(int iStatus)
-{
-	ASSERT(iStatus >= 0 && iStatus < CHANNEL_VOICE_MESSAGES);
-	return m_arrChanStatNickname[iStatus];
-}
 
 inline CString CMidiEventBar::GetChannelStatusName(int iStatus) const
 {

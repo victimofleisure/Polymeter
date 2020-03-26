@@ -15,6 +15,7 @@
 		05		22mar19	overload toggle steps for track selection
 		06		15nov19	in ScaleSteps, add signed scaling option
 		07		12dec19	add GetPeriod
+		08		16mar20	add get step index wrapper
 
 */
 
@@ -27,6 +28,7 @@
 class CSeqTrackArray : protected CTrackArray, public CTrackBase {
 public:
 // Attributes
+	WCritSec&	GetCritSec();
 	int		GetTrackCount() const;
 	void	SetTrackCount(int nTracks);
 	const CTrackArray&	GetTracks() const;
@@ -37,6 +39,7 @@ public:
 	void	SetTrack(int iTrack, const CTrack& track);
 	UINT	GetID(int iTrack) const;
 	CString	GetName(int iTrack) const;
+	CString	GetNameEx(int iTrack) const;
 	void	SetName(int iTrack, const CString& sName);
 	int		GetType(int iTrack) const;
 	void	SetType(int iTrack, int nType);
@@ -77,6 +80,7 @@ public:
 	void	SetSteps(const CRect& rSelection, STEP nStep);
 	void	ToggleSteps(const CRect& rSelection, UINT nFlags);
 	void	ToggleSteps(const CIntArrayEx& arrSelection, UINT nFlags);
+	int		GetStepIndex(int iTrack, LONGLONG nPos) const;
 	int		GetDubCount(int iTrack) const;
 	const CDub&	GetDub(int iTrack, int iDub) const;
 	void	GetTrackProperty(int iTrack, int iProp, CComVariant& var) const;
@@ -151,6 +155,11 @@ protected:
 	WCritSec	m_csTrack;		// critical section for serializing access to tracks
 	static	UINT	m_nNextUID;	// next unique ID
 };
+
+inline WCritSec& CSeqTrackArray::GetCritSec()
+{
+	return m_csTrack;
+}
 
 inline int CSeqTrackArray::GetTrackCount() const
 {
@@ -339,6 +348,11 @@ inline CTrackBase::STEP CSeqTrackArray::GetStep(int iTrack, int iStep) const
 inline void CSeqTrackArray::SetStep(int iTrack, int iStep, STEP nStep)
 {
 	GetAt(iTrack).m_arrStep[iStep] = nStep;
+}
+
+inline int CSeqTrackArray::GetStepIndex(int iTrack, LONGLONG nPos) const
+{
+	return GetAt(iTrack).GetStepIndex(nPos);
 }
 
 inline void CSeqTrackArray::GetSteps(int iTrack, CStepArray& arrStep) const

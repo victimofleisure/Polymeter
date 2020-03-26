@@ -8,6 +8,8 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+		01		17mar20	in OnUpdate, handle quant change same as length change
+		02		18mar20	get song position from document instead of sequencer
 
 */
 
@@ -126,12 +128,10 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			switch (iProp) {
 			case -1:	// all properties
 			case PROP_Length:
+			case PROP_Quant:
 				OnTrackSizeChange(iTrack);
 				if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
 					UpdateSongPositionNoRedraw(iTrack);	// update song position, no redraw
-				break;
-			case PROP_Quant:
-				OnTrackSizeChange(iTrack);
 				break;
 			case PROP_Offset:
 				if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
@@ -153,14 +153,11 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			switch (iProp) {
 			case -1:	// all properties
 			case PROP_Length:
+			case PROP_Quant:
 				UpdateTracks(pPropHint->m_arrSelection);
 				UpdateViewSize();
 				if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
 					UpdateSongPositionNoRedraw(pPropHint->m_arrSelection);	// update song position, no redraw
-				break;
-			case PROP_Quant:
-				UpdateTracks(pPropHint->m_arrSelection);
-				UpdateViewSize();
 				break;
 			case PROP_Offset:
 				if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
@@ -517,111 +514,102 @@ void CStepView::SetCurStep(int iTrack, int iStep)
 
 void CStepView::UpdateSongPositionNoRedraw(int iTrack)
 {
-	CSequencer&	seq = GetDocument()->m_Seq;
-	LONGLONG	nPos;
-	if (seq.GetPosition(nPos)) {	// if valid position
+	CPolymeterDoc	*pDoc = GetDocument();
+	LONGLONG	nPos = pDoc->m_nSongPos;
+	int	iStep = pDoc->m_Seq.GetStepIndex(iTrack, nPos);
+	m_arrTrackState[iTrack].m_iCurStep = iStep;
+}
+
+void CStepView::UpdateSongPositionNoRedraw(const CIntArrayEx& arrSelection)
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	LONGLONG	nPos = pDoc->m_nSongPos;
+	int	nSels = arrSelection.GetSize();
+	const CSequencer&	seq = pDoc->m_Seq;
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = arrSelection[iSel];
 		int	iStep = seq.GetStepIndex(iTrack, nPos);
 		m_arrTrackState[iTrack].m_iCurStep = iStep;
 	}
 }
 
-void CStepView::UpdateSongPositionNoRedraw(const CIntArrayEx& arrSelection)
-{
-	CSequencer&	seq = GetDocument()->m_Seq;
-	LONGLONG	nPos;
-	if (seq.GetPosition(nPos)) {	// if valid position
-		int	nSels = arrSelection.GetSize();
-		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-			int	iTrack = arrSelection[iSel];
-			int	iStep = seq.GetStepIndex(iTrack, nPos);
-			m_arrTrackState[iTrack].m_iCurStep = iStep;
-		}
-	}
-}
-
 void CStepView::UpdateSongPositionNoRedraw(const CRect& rSelection)
 {
-	CSequencer&	seq = GetDocument()->m_Seq;
-	LONGLONG	nPos;
-	if (seq.GetPosition(nPos)) {	// if valid position
-		for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
-			int	iStep = seq.GetStepIndex(iTrack, nPos);
-			m_arrTrackState[iTrack].m_iCurStep = iStep;
-		}
+	CPolymeterDoc	*pDoc = GetDocument();
+	LONGLONG	nPos = pDoc->m_nSongPos;
+	const CSequencer&	seq = pDoc->m_Seq;
+	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
+		int	iStep = seq.GetStepIndex(iTrack, nPos);
+		m_arrTrackState[iTrack].m_iCurStep = iStep;
 	}
 }
 
 void CStepView::UpdateSongPositionNoRedraw()
 {
-	CSequencer&	seq = GetDocument()->m_Seq;
-	LONGLONG	nPos;
-	if (seq.GetPosition(nPos)) {	// if valid position
-		int	nTracks = seq.GetTrackCount();
-		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-			int	iStep = seq.GetStepIndex(iTrack, nPos);
-			m_arrTrackState[iTrack].m_iCurStep = iStep;
-		}
+	CPolymeterDoc	*pDoc = GetDocument();
+	LONGLONG	nPos = pDoc->m_nSongPos;
+	const CSequencer&	seq = pDoc->m_Seq;
+	int	nTracks = seq.GetTrackCount();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		int	iStep = seq.GetStepIndex(iTrack, nPos);
+		m_arrTrackState[iTrack].m_iCurStep = iStep;
 	}
 }
 
 void CStepView::UpdateSongPosition(int iTrack)
 {
-	CSequencer&	seq = GetDocument()->m_Seq;
-	LONGLONG	nPos;
-	if (seq.GetPosition(nPos)) {	// if valid position
-		int	iStep = seq.GetStepIndex(iTrack, nPos);
-		SetCurStep(iTrack, iStep);
-	}
+	CPolymeterDoc	*pDoc = GetDocument();
+	LONGLONG	nPos = pDoc->m_nSongPos;
+	int	iStep = pDoc->m_Seq.GetStepIndex(iTrack, nPos);
+	SetCurStep(iTrack, iStep);
 }
 
 void CStepView::UpdateSongPosition(const CIntArrayEx& arrSelection)
 {
-	CSequencer&	seq = GetDocument()->m_Seq;
-	LONGLONG	nPos;
-	if (seq.GetPosition(nPos)) {	// if valid position
-		int	nSels = arrSelection.GetSize();
-		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-			int	iTrack = arrSelection[iSel];
-			int	iStep = seq.GetStepIndex(iTrack, nPos);
-			SetCurStep(iTrack, iStep);
-		}
+	CPolymeterDoc	*pDoc = GetDocument();
+	LONGLONG	nPos = pDoc->m_nSongPos;
+	CSequencer&	seq = pDoc->m_Seq;
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = arrSelection[iSel];
+		int	iStep = seq.GetStepIndex(iTrack, nPos);
+		SetCurStep(iTrack, iStep);
 	}
 }
 
 void CStepView::UpdateSongPosition()
 {
 	if (theApp.m_Options.m_View_bShowCurPos) {	// if showing current position
-		LONGLONG	nPos;
-		if (GetDocument()->m_Seq.GetPosition(nPos)) {	// if valid position
-			// The current steps are often positioned so that their bounding rectangle
-			// is most or all of the view, hence merely invalidating them would repaint
-			// far more steps than necessary. Steps that don't intersect the clipping
-			// region could in theory be eliminated via RectVisible, but this is also
-			// slow. This method is called by a fast periodic timer, making performance
-			// critical enough to justify explicitly drawing steps that need updating.
-			CClientDC	dc(this);	// create device context for client area
-			const CSequencer&	seq = GetDocument()->m_Seq;
-			CRect	rClient;
-			GetClientRect(rClient);
-			CPoint	ptScroll(GetScrollPosition());
-			int	iStartTrack = ptScroll.y / m_nTrackHeight;
-			int	iEndTrack = (ptScroll.y + rClient.Height()) / m_nTrackHeight;
-			int	nTracks = seq.GetTrackCount();
-			for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-				int	iNewStep = seq.GetStepIndex(iTrack, nPos);
-				int	iOldStep = m_arrTrackState[iTrack].m_iCurStep;
-				if (iNewStep != iOldStep) {	// if current step changed
-					bool	bIsTrackVisible = iTrack >= iStartTrack && iTrack <= iEndTrack;	// optimization
-					if (iOldStep >= 0) {	// if old current step valid
-						m_arrTrackState[iTrack].m_iCurStep = -1;	// draw depends on this
-						if (bIsTrackVisible)	// if track is visible
-							DrawClippedStep(&dc, rClient, seq, iTrack, iOldStep);	// remove highlight
-					}
-					m_arrTrackState[iTrack].m_iCurStep = iNewStep;
-					if (iNewStep >= 0) {	// if new current step valid
-						if (bIsTrackVisible)	// if track is visible
-							DrawClippedStep(&dc, rClient, seq, iTrack, iNewStep);	// add highlight
-					}
+		// The current steps are often positioned so that their bounding rectangle
+		// is most or all of the view, hence merely invalidating them would repaint
+		// far more steps than necessary. Steps that don't intersect the clipping
+		// region could in theory be eliminated via RectVisible, but this is also
+		// slow. This method is called by a fast periodic timer, making performance
+		// critical enough to justify explicitly drawing steps that need updating.
+		CClientDC	dc(this);	// create device context for client area
+		CPolymeterDoc	*pDoc = GetDocument();
+		LONGLONG	nPos = pDoc->m_nSongPos;
+		const CSequencer&	seq = pDoc->m_Seq;
+		CRect	rClient;
+		GetClientRect(rClient);
+		CPoint	ptScroll(GetScrollPosition());
+		int	iStartTrack = ptScroll.y / m_nTrackHeight;
+		int	iEndTrack = (ptScroll.y + rClient.Height()) / m_nTrackHeight;
+		int	nTracks = seq.GetTrackCount();
+		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+			int	iNewStep = seq.GetStepIndex(iTrack, nPos);
+			int	iOldStep = m_arrTrackState[iTrack].m_iCurStep;
+			if (iNewStep != iOldStep) {	// if current step changed
+				bool	bIsTrackVisible = iTrack >= iStartTrack && iTrack <= iEndTrack;	// optimization
+				if (iOldStep >= 0) {	// if old current step valid
+					m_arrTrackState[iTrack].m_iCurStep = -1;	// draw depends on this
+					if (bIsTrackVisible)	// if track is visible
+						DrawClippedStep(&dc, rClient, seq, iTrack, iOldStep);	// remove highlight
+				}
+				m_arrTrackState[iTrack].m_iCurStep = iNewStep;
+				if (iNewStep >= 0) {	// if new current step valid
+					if (bIsTrackVisible)	// if track is visible
+						DrawClippedStep(&dc, rClient, seq, iTrack, iNewStep);	// add highlight
 				}
 			}
 		}

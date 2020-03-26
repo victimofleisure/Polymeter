@@ -14,6 +14,7 @@
         04		03jan19	add playing document pointer
 		05		24feb20	overload profile functions
 		06		29feb20	add support for recording live events
+		07		20mar20	add mapping
 
 */
 
@@ -33,6 +34,7 @@
 #include "MidiDevices.h"
 #include "MidiFile.h"
 #include "AppRegKey.h"
+#include "Mapping.h"
 
 // CPolymeterApp:
 // See Polymeter.cpp for the implementation of this class
@@ -57,6 +59,7 @@ public:
 	bool	HandleDlgKeyMsg(MSG* pMsg);
 	static	bool	HandleScrollViewKeys(MSG *pMsg, CScrollView *pView);
 	static	DWORD	GetModifierKeyStates();
+	bool	DispatchEditKeys(MSG* pMsg, CWnd& wndTarget);
 	void	ApplyOptions(const COptions *pPrevOptions);
 	void	OnMidiError(MMRESULT nResult);
 	void	MidiInit();
@@ -102,9 +105,11 @@ public:
 	CTrack::CStepArrayArray m_arrStepClipboard;	// clipboard for steps
 	CTrack::CDubArrayArray	m_arrSongClipboard;	// clipboard for song dubs
 	CTrack::CModulationArray	m_arrModClipboard;	// clipboard for modulations
+	CMappingArray	m_arrMappingClipboard;	// clipboard for mappings
 	CMidiDevices	m_midiDevs;		// MIDI device information
 	bool	m_bTieNotes;	// if true, new notes are tied
 	bool	m_bCleanStateOnExit;	// if true, clean state before exiting
+	bool	m_bIsMidiLearn;	// if true, learning MIDI mappings
 	CTrack::CMidiEventArray	m_arrMidiInEvent;	// array of MIDI input events
 	int		m_nMidiInStartTime;	// first MIDI input event's time, in active document's ticks
 	CPolymeterDoc	*m_pPlayingDoc;	// pointer to playing document if any

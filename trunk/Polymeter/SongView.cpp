@@ -17,6 +17,7 @@
 		07		20nov19	try to fix sporadic unpainted cells by simplifying drawing
 		08		26dec19	in OnDraw, exclude song position marker from background fill
 		09		28dec19	in OnDraw, draw bottom outline of last row of cells
+		10		18mar20	get song position from document instead of sequencer
 
 */
 
@@ -108,9 +109,7 @@ void CSongView::OnInitialUpdate()
 	m_nZoom = round(InvPow(fZoomDelta, fDocZoom));
 	m_fZoom = fDocZoom;
 	m_fZoomDelta = fZoomDelta;
-	LONGLONG	nSongPos = 0;
-	pDoc->m_Seq.GetPosition(nSongPos);
-	m_nSongPosX = ConvertSongPosToX(static_cast<int>(nSongPos));
+	m_nSongPosX = ConvertSongPosToX(pDoc->m_nSongPos);
 	CScrollView::OnInitialUpdate();
 	UpdateViewSize();
 }
@@ -151,17 +150,9 @@ void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		}
 		break;
 	case CPolymeterDoc::HINT_SONG_POS:
-		if (GetDocument()->IsSongView()) {
-			CPolymeterDoc::CSongPosHint	*pSongPosHint = static_cast<CPolymeterDoc::CSongPosHint*>(pHint);
-			UpdateSongPos(static_cast<int>(pSongPosHint->m_nSongPos));
-		}
-		break;
 	case CPolymeterDoc::HINT_VIEW_TYPE:
 		if (GetDocument()->IsSongView()) {
-			LONGLONG	nSongPos;
-			if (GetDocument()->m_Seq.GetPosition(nSongPos)) {
-				UpdateSongPos(static_cast<int>(nSongPos));
-			}
+			UpdateSongPos(GetDocument()->m_nSongPos);
 		}
 		break;
 	case CPolymeterDoc::HINT_SONG_DUB:
@@ -225,9 +216,7 @@ void CSongView::SetZoom(int nZoom, bool bRedraw)
 	}
 	m_fZoom = fZoom;
 	CPolymeterDoc	*pDoc = GetDocument();
-	LONGLONG	nSongPos = 0;
-	pDoc->m_Seq.GetPosition(nSongPos);
-	m_nSongPosX = ConvertSongPosToX(static_cast<int>(nSongPos));	// recompute song position X for new zoom
+	m_nSongPosX = ConvertSongPosToX(pDoc->m_nSongPos);	// recompute song position X for new zoom
 	pDoc->m_fSongZoom = fZoom;
 	if (bRedraw) {
 		UpdateViewSize();
@@ -297,7 +286,7 @@ BOOL CSongView::OnScrollBy(CSize sizeScroll, BOOL bDoScroll)
 	return bResult;
 }
 
-void CSongView::UpdateSongPos(int nSongPos)
+void CSongView::UpdateSongPos(LONGLONG nSongPos)
 {
 	int	x = ConvertSongPosToX(nSongPos);
 	// if song position x-coord is changing, or song position indicator isn't visible

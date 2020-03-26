@@ -23,6 +23,8 @@
 		13		27jan19	cache type name strings instead of loading every time
 		14		03feb19	add return value to track array's import MIDI file
 		15		29feb20	add MIDI event array methods
+		16		16mar20	move get step index into track
+		17		19mar20	add MIDI message name lookup
 
 */
 
@@ -71,12 +73,26 @@ const CTrack::PROPERTY_FIELD	CTrack::m_arrPropertyField[PROPERTIES] = {
 CString CTrackBase::m_sTrackTypeName[TRACK_TYPES];
 CString CTrackBase::m_sModulationTypeName[MODULATION_TYPES];
 CString CTrackBase::m_sRangeTypeName[RANGE_TYPES];
+CString CTrackBase::m_sTrack;
+CString CTrackBase::m_sTrackNone;
+
+const LPCTSTR CTrackBase::m_arrMidiChannelVoiceMsgName[MIDI_CHANNEL_VOICE_MESSAGES] = {
+	#define MIDICHANSTATDEF(name) _T(#name),
+	#include "MidiCtrlrDef.h"
+};
+
+const LPCTSTR CTrackBase::m_arrMidiSystemStatusMsgName[MIDI_SYSTEM_STATUS_MESSAGES] = {
+	#define MIDISYSSTATDEF(name) _T(#name),
+	#include "MidiCtrlrDef.h"
+};
 
 void CTrackBase::LoadStringResources()
 {
 	CProperties::LoadOptionStrings(m_sTrackTypeName, m_oiTrackType, TRACK_TYPES);
 	CProperties::LoadOptionStrings(m_sModulationTypeName, m_oiModulationType, MODULATION_TYPES);
 	CProperties::LoadOptionStrings(m_sRangeTypeName, m_oiRangeType, RANGE_TYPES);
+	m_sTrack.LoadString(IDS_TYPE_TRACK);
+	m_sTrackNone.LoadString(IDS_NONE);
 }
 
 void CTrack::SetDefaults()
@@ -432,6 +448,25 @@ void CTrackGroupArray::OnTrackArrayEdit(const CIntArrayEx& arrTrackMap)
 				group.m_arrTrackIdx.RemoveAt(iLink);
 		}
 	}
+}
+
+int CTrack::GetStepIndex(LONGLONG nPos) const
+{
+	int	nLength = GetLength();
+	int	nQuant = m_nQuant;
+	int	nOffset = m_nOffset;
+	// similar to AddTrackEvents, but divide by nQuant instead nQuant * 2
+	int	nTrkStart = static_cast<int>(nPos) - nOffset;
+	int	iQuant = nTrkStart / nQuant;
+	int	nEvtTime = nTrkStart % nQuant;
+	if (nEvtTime < 0) {
+		iQuant--;
+		nEvtTime += nQuant;
+	}
+	int	iStep = iQuant % nLength;
+	if (iStep < 0)
+		iStep += nLength;
+	return iStep;
 }
 
 void CTrack::GetEvents(CStepEventArray& arrNote) const

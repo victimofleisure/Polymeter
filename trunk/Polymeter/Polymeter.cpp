@@ -15,6 +15,7 @@
 		05		29jan19	exclude system status messages from MIDI thru
 		06		24feb20	overload profile functions
 		07		29feb20	add support for recording live events
+		08		20mar20	add mapping
 
 */
 
@@ -70,6 +71,7 @@ CPolymeterApp::CPolymeterApp()
 	m_bTieNotes = false;
 	m_bCleanStateOnExit = false;
 	m_bIsRecordMidiIn = false;
+	m_bIsMidiLearn = false;
 	m_bHelpInit = false;
 	m_nMidiInStartTime = 0;
 	m_pPlayingDoc = NULL;
@@ -209,13 +211,8 @@ void CPolymeterApp::ResetWindowLayout()
 {
 	// registry keys listed here will be deleted
 	static const LPCTSTR pszCleanKey[] = {
-		RK_CHANNELS_BAR,
-		RK_CHILD_FRAME,
-		RK_MIDI_INPUT_BAR,
-		RK_MIDI_OUTPUT_BAR,
-		RK_MODULATIONS_BAR,
-		RK_PIANO_BAR,
-		RK_PROPERTIES_BAR,
+		#define MAINDOCKBARDEF(name, width, height, style) RK_##name##Bar,
+		#include "MainDockBarDef.h"	// generate keys for main dockable bars
 		RK_SONG_VIEW,
 		RK_STEP_VIEW,
 		RK_TRACK_VIEW,
@@ -363,6 +360,43 @@ DWORD CPolymeterApp::GetModifierKeyStates()
 	if (GetKeyState(VK_MENU) & GKS_DOWN)
 		nFlags |= MK_MBUTTON;	// substitute for non-existent menu flag
 	return nFlags;
+}
+
+bool CPolymeterApp::DispatchEditKeys(MSG* pMsg, CWnd& wndTarget)
+{
+	if (pMsg->message == WM_KEYDOWN) {
+		int	nModKeyFlags = theApp.GetModifierKeyStates();
+		UINT	nEditCmdID = 0;
+		switch (pMsg->wParam) {
+		case VK_INSERT:
+			nEditCmdID = ID_EDIT_INSERT;
+			break;
+		case VK_DELETE:
+			nEditCmdID = ID_EDIT_DELETE;
+			break;
+		case 'C':
+			if (nModKeyFlags == MK_CONTROL)
+				nEditCmdID = ID_EDIT_COPY;
+			break;
+		case 'X':
+			if (nModKeyFlags == MK_CONTROL)
+				nEditCmdID = ID_EDIT_CUT;
+			break;
+		case 'V':
+			if (nModKeyFlags == MK_CONTROL)
+				nEditCmdID = ID_EDIT_PASTE;
+			break;
+		case 'A':
+			if (nModKeyFlags == MK_CONTROL)
+				nEditCmdID = ID_EDIT_SELECT_ALL;
+			break;
+		}
+		if (nEditCmdID) {	// if edit command to dispatch
+			wndTarget.SendMessage(WM_COMMAND, nEditCmdID);
+			return true;
+		}
+	}
+	return false;
 }
 
 void CPolymeterApp::MakeStartCase(CString& str)
@@ -650,28 +684,44 @@ void CPolymeterApp::OnDeviceChange()
 
 void CALLBACK CPolymeterApp::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2)
 {
+	// this callback function runs in a worker thread context; 
+	// data shared with main thread may require serialization
+	static CDWordArrayEx	arrMappedEvent;
 	UNREFERENCED_PARAMETER(hMidiIn);
 	UNREFERENCED_PARAMETER(dwInstance);
-	UNREFERENCED_PARAMETER(dwParam2);	// will need this for timestamp
 //	_tprintf(_T("MidiInProc %d %d\n"), GetCurrentThreadId(), ::GetThreadPriority(GetCurrentThread()));
 	switch (wMsg) {
 	case MIM_DATA:
 		{
 //			_tprintf(_T("%x %d\n"), dwParam1, dwParam2);
+			CMainFrame	*pMainFrame = theApp.GetMainFrame();
 			if (MIDI_STAT(dwParam1) < SYSEX) {	// if channel voice message (exclude system status messages)
-				CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+				DWORD	dwEvent = static_cast<DWORD>(dwParam1);
+				CPolymeterDoc	*pDoc = pMainFrame->GetActiveMDIDoc();
 				if (pDoc != NULL && pDoc->m_Seq.IsOpen() && !pDoc->m_Seq.IsStopping()) {
-					DWORD	dwEvent = static_cast<DWORD>(dwParam1);
 					if (theApp.m_Options.m_Midi_bThru) {	// if MIDI thru enabled
+						if (pDoc->m_Seq.m_mapping.GetCount()) {
+							WCritSec::Lock	lock(pDoc->m_Seq.m_mapping.GetCritSec());	// serialize access to mappings
+							if (pDoc->m_Seq.m_mapping.GetArray().MapMidiEvent(dwEvent, arrMappedEvent)) {
+								int	nMaps = arrMappedEvent.GetSize();
+								for (int iMap = 0; iMap < nMaps; iMap++) {	// for each mapped event
+									DWORD	dwMappedEvent = arrMappedEvent[iMap];
+									pDoc->m_Seq.OutputLiveEvent(dwMappedEvent);
+									if (pMainFrame->m_wndMidiOutputBar.FastIsVisible())	// if MIDI output bar visible
+										pMainFrame->m_wndMidiOutputBar.PostMessage(UWM_MIDI_EVENT, dwParam2, dwMappedEvent);
+									// don't send mapped event to piano bar to avoid stuck note
+								}
+								goto EventWasMapped;	// input event was mapped so don't output it
+							}
+						}
 						pDoc->m_Seq.OutputLiveEvent(dwEvent);	// output event
-						CMidiEventBar&	wndMidiOut = theApp.GetMainFrame()->GetMidiOutputBar();
-						if (wndMidiOut.FastIsVisible()) {	// if MIDI output bar visible
-							wndMidiOut.PostMessage(UWM_MIDI_EVENT, dwParam2, dwParam1);
+						if (pMainFrame->m_wndMidiOutputBar.FastIsVisible())	// if MIDI output bar visible
+							pMainFrame->m_wndMidiOutputBar.PostMessage(UWM_MIDI_EVENT, dwParam2, dwEvent);
+						if (pMainFrame->m_wndPianoBar.FastIsVisible()) {	// if piano bar visible
+							if (MIDI_CMD(dwEvent) <= NOTE_ON)	// note events only
+								pMainFrame->m_wndPianoBar.PostMessage(UWM_MIDI_EVENT, dwParam2, dwEvent);
 						}
-						CPianoBar&	wndPiano = theApp.GetMainFrame()->GetPianoBar();
-						if (wndPiano.FastIsVisible()) {	// if piano bar visible
-							wndPiano.PostMessage(UWM_MIDI_EVENT, dwParam2, dwParam1);
-						}
+EventWasMapped:;
 					}
 				}
 				if (theApp.m_bIsRecordMidiIn) {	// if recording MIDI input
@@ -685,9 +735,15 @@ void CALLBACK CPolymeterApp::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwIn
 					CTrackBase::CMidiEvent	evt(static_cast<DWORD>(dwParam2), static_cast<DWORD>(dwParam1));
 					theApp.m_arrMidiInEvent.Add(evt);	// add event to MIDI input array
 				}
+				if (theApp.m_bIsMidiLearn) {	// if learning MIDI mappings
+					CMappingBar&	wndMapping  = pMainFrame->m_wndMappingBar;
+					if (wndMapping.FastIsVisible()) {	// if mapping bar visible
+						wndMapping.PostMessage(UWM_MIDI_EVENT, dwParam2, dwParam1);
+					}
+				}
 			}
-			if (theApp.GetMainFrame()->GetMidiInputBar().FastIsVisible()) {	// if MIDI input bar visible
-				theApp.GetMainFrame()->GetMidiInputBar().PostMessage(UWM_MIDI_EVENT, dwParam2, dwParam1);
+			if (pMainFrame->m_wndMidiInputBar.FastIsVisible()) {	// if MIDI input bar visible
+				pMainFrame->m_wndMidiInputBar.PostMessage(UWM_MIDI_EVENT, dwParam2, dwParam1);	// pass original message
 			}
 		}
 		break;

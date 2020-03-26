@@ -9,6 +9,7 @@
 		rev		date	comments
         00		23mar18	initial version
 		01		29jan19	add MIDI event message
+		02		20mar20	add track property message
 
 		global definitions and inlines
 
@@ -94,6 +95,7 @@ enum {	// application-wide user window messages, based on WP_APP
 	UWM_DEVICE_NODE_CHANGE,		// wParam: none, lParam: none
 	UWM_SHOW_CHANGING,			// wParam: none, lParam: none
 	UWM_MIDI_EVENT,				// wParam: timestamp, lParam: MIDI message
+	UWM_TRACK_PROPERTY,			// wParam: track index, lParam: LSW property value, MSW property index
 };
 
 // undo natter should always be zero in a shipping version
