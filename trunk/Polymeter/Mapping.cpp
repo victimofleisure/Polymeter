@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      20mar20	initial version
+		01		27mar20	match control parameter only if event uses it
 
 */
 
@@ -137,18 +138,15 @@ bool CMappingArray::MapMidiEvent(DWORD dwInEvent, CDWordArrayEx& arrOutEvent) co
 	arrOutEvent.FastRemoveAll();
 	bool	bIsMapped = false;
 	int	iInCmd = MIDI_CMD_IDX(dwInEvent);	// MIDI command index
-	int	nInChan = MIDI_CHAN(dwInEvent);	// MIDI channel 
+	int	iInChan = MIDI_CHAN(dwInEvent);		// MIDI channel index
+	int	iInControl = MIDI_P1(dwInEvent);	// MIDI control parameter
 	// The first four MIDI channel voice messages have a control parameter in P1, but the others don't.
-	int	nInControl;
-	if (iInCmd <= MIDI_CVM_CONTROL)	// if input message has a control parameter
-		nInControl = MIDI_P1(dwInEvent);	// MIDI control parameter
-	else	// input message lacks a control parameter
-		nInControl = 0;
 	int	nMappings = GetSize();
 	for (int iMapping = 0; iMapping < nMappings; iMapping++) {	// for each mapping
 		const CMapping&	map = GetAt(iMapping);
 		// compare the attributes that are less likely to match first, for a slight time saving
-		if (map.m_nInControl == nInControl && map.m_nInEvent == iInCmd && map.m_nInChannel == nInChan) {
+		if ((map.m_nInControl == iInControl || map.m_nInEvent > MIDI_CVM_CONTROL)	// if control parameter matches or doesn't matter
+		&& map.m_nInEvent == iInCmd && map.m_nInChannel == iInChan) {	// and command index and channel index also match
 			bIsMapped = true;
 			int	nDataVal;
 			if (iInCmd <= MIDI_CVM_CONTROL)	// if input message has a control parameter
