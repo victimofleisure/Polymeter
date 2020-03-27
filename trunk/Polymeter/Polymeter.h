@@ -15,6 +15,7 @@
 		05		24feb20	overload profile functions
 		06		29feb20	add support for recording live events
 		07		20mar20	add mapping
+		08		27mar20	fix MIDI device change detection
 
 */
 
@@ -64,7 +65,7 @@ public:
 	void	OnMidiError(MMRESULT nResult);
 	void	MidiInit();
 	bool	OpenMidiInputDevice(bool bEnable);
-	void	ResetMidiInputDevice();
+	void	CloseMidiInputDevice();
 	void	OnDeviceChange();
 	static	int		FindHelpID(int nResID);
 	bool	RecordMidiInput(bool bEnable);

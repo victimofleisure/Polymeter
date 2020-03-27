@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      17apr18	initial version
+		01		27mar20	refresh cache after displaying message box
 
 */
 
@@ -29,8 +30,119 @@ const int CMidiDevices::m_nDevCaption[DEVICE_TYPES] = {
 	IDS_MIDI_INPUT, IDS_MIDI_OUTPUT,
 };
 
-CMidiDevices::CMidiDevices()
+bool CMidiDevices::CDevice::operator==(const CDevice& dev) const
 {
+	return dev.m_sName == m_sName && dev.m_sID == m_sID; 
+}
+
+bool CMidiDevices::CSelection::operator==(const CSelection& sel) const
+{
+	for (int iType = 0; iType < DEVICE_TYPES; iType++) {	// for each device type
+		if (sel.m_arrDev[iType] != m_arrDev[iType])	// if devices are unequal
+			return false;
+	}
+	return true;
+}
+
+void CMidiDevices::CDeviceArray::SetIdx(int iDev)
+{
+	if (IsValid(iDev))
+		m_iDev = iDev;
+	else
+		m_iDev = -1;
+}
+
+CString CMidiDevices::CDeviceArray::GetName(int iDev) const
+{
+	if (IsValid(iDev))
+		return GetAt(iDev).m_sName;
+	else
+		return _T("");
+}
+
+CString	CMidiDevices::CDeviceArray::GetID(int iDev) const
+{
+	if (IsValid(iDev))
+		return GetAt(iDev).m_sID;
+	else
+		return _T("");
+}
+
+void CMidiDevices::CDeviceArray::GetDevice(int iDev, CDevice& dev) const
+{
+	if (IsValid(iDev))
+		dev = GetAt(iDev);
+	else
+		dev.Empty();
+}
+
+bool CMidiDevices::CDeviceArray::operator==(const CDeviceArray& arrDev) const
+{
+	if (m_iDev != arrDev.m_iDev)	// if device indices are unequal
+		return false;
+	return CArrayEx::operator==(arrDev);	// compare device arrays
+}
+
+int CMidiDevices::CDeviceArray::Find(CString sName, CString sID) const
+{
+	int	nDevs = GetSize();
+	for (int iDev = 0; iDev < nDevs; iDev++) {	// for each device
+		const CDevice&	info = GetAt(iDev);
+		if (info.m_sName == sName && info.m_sID == sID)	// if name and ID match
+			return iDev;
+	}
+	return -1;	// device not found
+}
+
+int CMidiDevices::CDeviceArray::Find(CString sName) const
+{
+	int	nDevs = GetSize();
+	for (int iDev = 0; iDev < nDevs; iDev++) {	// for each device
+		if (GetAt(iDev).m_sName == sName)	// if name matches
+			return iDev;
+	}
+	return -1;	// device not found
+}
+
+int CMidiDevices::CDeviceArray::Find(const CDeviceArray& arrDev) const
+{
+	CString	sName(arrDev.GetName(arrDev.GetIdx()));
+	CString	sID(arrDev.GetID(arrDev.GetIdx()));
+	int	iDev = Find(sName, sID);	// try finding device by name and ID first
+	if (iDev < 0) {	// if device not found by name and ID
+		// if name is unique in both our and caller's device arrays
+		if (GetNameCount(sName) == 1 && arrDev.GetNameCount(sName) == 1) {
+			iDev = Find(sName);	// try finding device by just name
+		}
+	}
+	return iDev;
+}
+
+int CMidiDevices::CDeviceArray::GetNameCount(CString sName) const
+{
+	int	nMatches = 0;
+	int	nDevs = GetSize();
+	for (int iDev = 0; iDev < nDevs; iDev++) {	// for each device
+		if (GetAt(iDev).m_sName == sName)	// if names match
+			nMatches++;	// bump match count
+	}
+	return(nMatches);	// return match count
+}
+
+bool CMidiDevices::operator==(const CMidiDevices& devs) const
+{
+	for (int iType = 0; iType < DEVICE_TYPES; iType++) {	// for each device type
+		if (devs.m_arrDev[iType] != m_arrDev[iType])	// if device arrays are unequal
+			return false;
+	}
+	return true;
+}
+
+void CMidiDevices::GetSelection(CSelection& sel) const
+{
+	for (int iType = 0; iType < DEVICE_TYPES; iType++) {	// for each device type
+		GetDevice(iType, sel.m_arrDev[iType]);	// get selected device info
+	}
 }
 
 void CMidiDevices::Update()
@@ -136,20 +248,6 @@ void CMidiDevices::DumpSystemState(CString& str) const
 	}
 }
 
-bool CMidiDevices::operator==(const CMidiDevices& devs) const
-{
-	for (int iType = 0; iType < DEVICE_TYPES; iType++) {	// for each device type
-		if (devs.m_arrDev[iType] != m_arrDev[iType])	// if device arrays are unequal
-			return false;
-	}
-	return true;
-}
-
-bool CMidiDevices::operator!=(const CMidiDevices& devs) const
-{
-	return !operator==(devs);
-}
-
 bool CMidiDevices::OnDeviceChange(const CMidiDevices& devsPrev, UINT& nChangeMask)
 {
 	nChangeMask = 0;
@@ -169,8 +267,10 @@ bool CMidiDevices::OnDeviceChange(const CMidiDevices& devsPrev, UINT& nChangeMas
 			return true;	// we're done
 		} else {	// devices are missing
 			sMsg.Insert(0, LDS(IDS_MIDI_DEVICES_MISSING) + _T("\n\n"));
-			if (AfxMessageBox(sMsg, MB_RETRYCANCEL | MB_ICONEXCLAMATION) == IDCANCEL)
+			if (AfxMessageBox(sMsg, MB_RETRYCANCEL | MB_ICONEXCLAMATION) == IDCANCEL) {
+				Update();	// refresh cache in case devices changed during message box
 				return false;	// user canceled
+			}
 		}
 	}
 }
@@ -183,117 +283,4 @@ bool CMidiDevices::OnDeviceChange(UINT& nChangeMask)
 	if (*this != devsPrev)	// if device state changed
 		nChangeMask |= CM_CHANGE;	// indicate change
 	return bResult;
-}
-
-CMidiDevices::CDevice::CDevice()
-{
-}
-
-CMidiDevices::CDevice::CDevice(CString sName, CString sID) : m_sName(sName), m_sID(sID)
-{
-}
-
-bool CMidiDevices::CDevice::operator==(const CDevice& dev) const
-{
-	return dev.m_sName == m_sName && dev.m_sID == m_sID; 
-}
-
-bool CMidiDevices::CDevice::operator!=(const CDevice& dev) const
-{
-	return !operator==(dev);
-}
-
-CMidiDevices::CDeviceArray::CDeviceArray()
-{
-	m_iDev = -1;
-}
-
-inline bool CMidiDevices::CDeviceArray::IsValid(int iDev) const
-{
-	return iDev >= 0 && iDev < GetSize();
-}
-
-inline int CMidiDevices::CDeviceArray::GetIdx() const
-{
-	return m_iDev;
-}
-
-void CMidiDevices::CDeviceArray::SetIdx(int iDev)
-{
-	if (IsValid(iDev))
-		m_iDev = iDev;
-	else
-		m_iDev = -1;
-}
-
-CString CMidiDevices::CDeviceArray::GetName(int iDev) const
-{
-	if (IsValid(iDev))
-		return GetAt(iDev).m_sName;
-	return _T("");
-}
-
-CString	CMidiDevices::CDeviceArray::GetID(int iDev) const
-{
-	if (IsValid(iDev))
-		return GetAt(iDev).m_sID;
-	return _T("");
-}
-
-int CMidiDevices::CDeviceArray::Find(CString sName, CString sID) const
-{
-	int	nDevs = GetSize();
-	for (int iDev = 0; iDev < nDevs; iDev++) {	// for each device
-		const CDevice&	info = GetAt(iDev);
-		if (info.m_sName == sName && info.m_sID == sID)	// if name and ID match
-			return iDev;
-	}
-	return -1;	// device not found
-}
-
-int CMidiDevices::CDeviceArray::Find(CString sName) const
-{
-	int	nDevs = GetSize();
-	for (int iDev = 0; iDev < nDevs; iDev++) {	// for each device
-		if (GetAt(iDev).m_sName == sName)	// if name matches
-			return iDev;
-	}
-	return -1;	// device not found
-}
-
-int CMidiDevices::CDeviceArray::Find(const CDeviceArray& arrDev) const
-{
-	CString	sName(arrDev.GetName(arrDev.GetIdx()));
-	CString	sID(arrDev.GetID(arrDev.GetIdx()));
-	int	iDev = Find(sName, sID);	// try finding device by name and ID first
-	if (iDev < 0) {	// if device not found by name and ID
-		// if name is unique in both our and caller's device arrays
-		if (GetNameCount(sName) == 1 && arrDev.GetNameCount(sName) == 1) {
-			iDev = Find(sName);	// try finding device by just name
-		}
-	}
-	return iDev;
-}
-
-int CMidiDevices::CDeviceArray::GetNameCount(CString sName) const
-{
-	int	nMatches = 0;
-	int	nDevs = GetSize();
-	for (int iDev = 0; iDev < nDevs; iDev++) {	// for each device
-		if (GetAt(iDev).m_sName == sName)	// if names match
-			nMatches++;	// bump match count
-	}
-	return(nMatches);	// return match count
-}
-
-bool CMidiDevices::CDeviceArray::operator==(const CDeviceArray& arrDev) const
-{
-	if (m_iDev != arrDev.m_iDev)	// if device indices are unequal
-		return false;
-	return CArrayEx::operator==(arrDev);	// compare device arrays
-}
-
-bool CMidiDevices::CDeviceArray::operator!=(const CDeviceArray& arrDev) const
-{
-	return !operator==(arrDev);
 }

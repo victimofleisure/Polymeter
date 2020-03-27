@@ -9,6 +9,7 @@
 		rev		date	comments
         00      27mar18	initial version
 		01		09jan19	in reset all, select first output device if any
+		02		27mar20	in UpdateMidiDevices, set current selection index
 		
 */
 
@@ -44,7 +45,8 @@ void COptionsDlg::UpdateMidiDevices()
 		int	iOption = theApp.m_midiDevs.GetIdx(iType) + 1;	// skip none option
 		CString	sName(Props.GetOptionName(iProp, iOption));	
 		CMFCPropertyGridProperty	*pProp = m_Grid.GetValueProperty(iProp);
-		pProp->SetValue(sName);
+		pProp->SetValue(sName);	// must also set current selection index
+		STATIC_DOWNCAST(CEnumPropertyGridProperty, pProp)->m_iCurSel = iOption;
 	}
 }
 

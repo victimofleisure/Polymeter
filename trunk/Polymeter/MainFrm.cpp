@@ -1153,6 +1153,7 @@ void CMainFrame::OnToolsMidiLearn()
 
 void CMainFrame::OnUpdateToolsMidiLearn(CCmdUI *pCmdUI)
 {
+	pCmdUI->Enable(m_wndMappingBar.FastIsVisible());
 	pCmdUI->SetCheck(theApp.m_bIsMidiLearn);
 }
 

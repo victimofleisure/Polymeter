@@ -16,6 +16,7 @@
 		06		24feb20	overload profile functions
 		07		29feb20	add support for recording live events
 		08		20mar20	add mapping
+		09		27mar20	fix MIDI device change detection
 
 */
 
@@ -461,10 +462,15 @@ bool CPolymeterApp::MakePopup(CMenu& Menu, int StartID, CStringArrayEx& Item, in
 
 void CPolymeterApp::ApplyOptions(const COptions *pPrevOptions)
 {
+	int	iPrevInputDev = m_midiDevs.GetIdx(CMidiDevices::INPUT);
 	m_midiDevs.SetIdx(CMidiDevices::INPUT, m_Options.m_Midi_iInputDevice - 1);
 	m_midiDevs.SetIdx(CMidiDevices::OUTPUT, m_Options.m_Midi_iOutputDevice - 1);
-	if (pPrevOptions != NULL)	// if during OnCreate, defer to delayed creation handler
-		OpenMidiInputDevice(m_midiDevs.GetIdx(CMidiDevices::INPUT) >= 0);
+	if (pPrevOptions != NULL) {	// if during OnCreate, defer to delayed creation handler
+		if (m_midiDevs.GetIdx(CMidiDevices::INPUT) != iPrevInputDev) {	// if MIDI input device changed
+			CloseMidiInputDevice();	// force reopen
+			OpenMidiInputDevice(m_midiDevs.GetIdx(CMidiDevices::INPUT) >= 0);
+		}
+	}
 }
 
 int CPolymeterApp::FindHelpID(int nResID)
@@ -637,7 +643,7 @@ bool CPolymeterApp::OpenMidiInputDevice(bool bEnable)
 	return true;
 }
 
-void CPolymeterApp::ResetMidiInputDevice()
+void CPolymeterApp::CloseMidiInputDevice()
 {
 	m_midiIn.Close();
 }
@@ -659,18 +665,17 @@ void CPolymeterApp::OnDeviceChange()
 	if (!m_bInMsgBox) {	// if not already displaying message box
 		CSaveObj<bool>	save(m_bInMsgBox, true);	// save and set reentry guard
 		UINT	nChangeMask;
-		if (m_midiDevs.OnDeviceChange(nChangeMask)) {	// if MIDI device change successful
-			if (nChangeMask & CMidiDevices::CM_INPUT) {	// if MIDI input device changed
-				ResetMidiInputDevice();
-				OpenMidiInputDevice(true);
-			}
-			if (nChangeMask & CMidiDevices::CM_OUTPUT) {	// if MIDI output device changed
-				CAllDocIter	iter;	// iterate all documents
-				CPolymeterDoc	*pDoc;
-				while ((pDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
-					pDoc->m_Seq.SetOutputDevice(m_midiDevs.GetIdx(CMidiDevices::OUTPUT));
-					pDoc->m_Seq.Abort();	// abort playback regardless
-				}
+		m_midiDevs.OnDeviceChange(nChangeMask);	// handle MIDI device change
+		if (nChangeMask & CMidiDevices::CM_INPUT) {	// if MIDI input device changed
+			CloseMidiInputDevice();	// force reopen
+			OpenMidiInputDevice(true);
+		}
+		if (nChangeMask & CMidiDevices::CM_OUTPUT) {	// if MIDI output device changed
+			CAllDocIter	iter;	// iterate all documents
+			CPolymeterDoc	*pDoc;
+			while ((pDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
+				pDoc->m_Seq.SetOutputDevice(m_midiDevs.GetIdx(CMidiDevices::OUTPUT));
+				pDoc->m_Seq.Abort();	// abort playback regardless
 			}
 		}
 		if (nChangeMask & CMidiDevices::CM_CHANGE) {	// if MIDI device state changed
