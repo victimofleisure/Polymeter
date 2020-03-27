@@ -256,6 +256,7 @@ open	close	type	description	rev	user
 03/17/20	03/17/20	done	changing track's Quant doesn't update its current position in Step view	0.0.28.000	
 03/25/18	03/20/20	done	MIDI mapping; both translation and mapping to track parameters, with manual assignment and learn mode	0.0.28.000	
 03/26/20	03/27/20	done	after disconnecting an input device and connecting a different input device, no MIDI input is received	0.0.28.001	
+03/27/20	03/27/20	done	mapping for input event that don't have a control parameter (wheel etc.) only works if control parameter is zero	0.0.28.002	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 03/22/18		hold	swing modulation; probably not feasible		
