@@ -1835,3 +1835,20 @@ void CMainFrame::OnDestroy()
 	theApp.OpenMidiInputDevice(false);
 	CMDIFrameWndEx::OnDestroy();
 }
+
+3/27/20 mapping property edit undo title
+
+If you specify which property was edited, be sure to delete these two resource strings:
+IDS_EDIT_MAPPING_PROPERTY
+IDS_EDIT_MULTI_MAPPING_PROPERTY
+and replace them with defines to zero, because they will be replaced by cases
+in CPolymeterDoc::GetUndoTitle.
+
+Also learning multiple mappings at once requires a second undo code:
+UCODE_LEARN_MULTI_MAPPING
+with different handling, presumably using CUndoMultiIntegerProp.
+Both of the learn edit methods should move into the document.
+void MappingLearn(int iMapping, DWORD nInMidiMsg);
+void MappingLearn(const CIntArrayEx& arrSelection, DWORD nInMidiMsg);
+
+
