@@ -80,6 +80,136 @@
 <li>To know a velocity's exact value, hold the cursor stationary over its bar for at least half a second, and the value will appear in a tool tip. The tool tip is also shown continuously while a drag is in progress.
 <li>The velocity pane is also used to edit values for track types other than note, including controller, aftertouch, patch change, wheel and modulator tracks.
 
+<p><hr>
+
+<p>Maximum track length
+
+<p>A track can now have up to millions of steps, depending on its Quant. This was achieved by completely replacing the default profile read/write implementation. This upgrade also made reading and writing the document much faster, with the difference being most noticeable for very long tracks.
+
+<p>Track length is still limited by several factors. The hard limit is that the product of the track's Length (in steps) and Quant (in ticks) can't exceed 2 billion. Attempting to exceed this limit causes the error message "Track too long." But well before reaching this upper limit, you'll experience problems with the track's steps not displaying correctly (or at all) in the Track view. This occurs because the width of the Track view is similarly limited, to around 100 million pixels.
+
+<p>For example, a Length of 1 million and a Quant of 30 gives a product of 30 million ticks, which seems doable. But how wide are the steps in pixels? At the default zoom, they're 20 pixels wide, necessitating a Track view width of 20 million pixels, which is already quite large. Zooming in a few times makes the track too wide, causing incorrect display. This view width / zoom limit may be addressed in a future release, but in the meantime it's recommended to keep tracks under a million steps, or even less if unusually large Quant values are used.
+
+<p>Recording MIDI input
+
+<p>The MIDI input recording feature is primarily intended for the case where a MIDI controller device is being routed through Polymeter to the output device. For example you might be using a MIDI controller to tweak the parameters of a software synth. If you record a live performance in Polymeter, it's not enough to record only your dubs. In order to entirely capture the performance, the controller moves must also be recorded. 
+
+<p>Recording of MIDI input is optional, and it's off by default, for backwards compatibility. To enable it, open the Options dialog and set the MIDI / Record Input option to true. Now when you do the Record command (Transport / Record), any MIDI events received from the input device will be recorded. Note that playback of the recorded events occurs ONLY in Song view. There's currently no way to directly view or edit the recorded events, though this may change in future versions.
+
+<p>The timing resolution is pretty good, but there can be problems with recording latency. If the recorded events are out of synch with the sequencer tracks, you can adjust their timing via a new Master parameter, Record Offset. This offset is in ticks. To make the recorded events earlier relative to the sequencer tracks (the usual case), enter a negative value.
+
+<p>It's unusual for the record offset to be specified in ticks as opposed to milliseconds, but it has one big advantage: once the record offset is correctly set for a given recording, you can subsequently change the song's tempo and the record offset remains correct.
+
+<p>There's no exact method for determining the amount of recording latency. The usual approach is to record yourself playing along with a click track and then adjust the recording by ear until it sounds in sync. You can also inspect the timing differences in the MIDI output view. On my system, the record latency is about 40ms, but your results will depend on your hardware configuration. Once you know your recording latency, you can compute the appropriate record offset for a given song via the following function:
+
+<p>offset = (tempo / 60) * PPQ * (latency / -1000)
+
+<p>This assumes the latency is specified in milliseconds. For example if latency is 40ms, tempo is 90 BPM, and PPQ is 120, the function is:
+
+<p>offset = (90 / 60) * 120 * (40 / -1000) 
+offset = 1.5 * 120 * -0.040
+offset = -7.2
+
+<p>So in this case the record offset should be -7 ticks.
+
+<p>Convergence calculator
+
+<p>This calculator shows all the convergences between a given set of loop lengths. If tracks are selected, the input comes from the track selection, otherwise you can enter a set numerically in the dialog.
+
+<p>If the input is from selected tracks, the results are shown in either steps or ticks, depending on the Quants of the selected tracks. There are three distinct cases:
+
+<ol>
+<li>The selected tracks all have the same Quant. In this case, the results are shown in steps.
+<li>The selected tracks have different Quants, but all the Quants are integer multiples of the smallest Quant. In this case, the results are shown in steps of the smallest Quant. For example, if the selected tracks have Quants of 30, 60, and 120, the results are shown in steps of 30 ticks.
+<li>Neither of the preceding cases apply. In this case, the results are shown in ticks. This can make the numbers much bigger, and may cause the calculator to take noticeably longer.
+</ol>
+
+<p>If you compare the results to the Time to Repeat function, bear in mind that Time to Repeat is shown in beats, which must be converted to either steps or ticks depending on the cases explained above.
+
+<p>If you prefer to enter a set numerically, make sure no tracks are selected when you show the calculator dialog. The set must consist of at least two comma-separated positive integers. Note that zero is not a positive integer. A valid input set could look like this:
+
+<p>2,3,5,7,11
+
+<p>Simply type the set and press Enter or Tab. To export the results, use the clipboard: copy the output edit control's text, using Ctrl+A and Ctrl+C or the context menu, and paste it into the desired application.
+
+<p>Note that the convergence calculator is also available as a <a href="links.html">script</a> (JavaScript) that should run in any browser including on mobile phones.
+
+<p><hr>
+
+<p>Polymeter 0.0.28 adds two major new features: mapping, and scales. It also allows step values to be edited numerically, as opposed to by dragging bars in the Velocities pane.
+
+<p>Mapping
+
+<p>The mapping feature supports both translation and mapping to parameters. An input MIDI message can be translated to any other MIDI message, and/or mapped to any track parameter except track name.
+
+<p>An input MIDI message can have multiple mappings, i.e. it can be translated to multiple messages, or mapped to multiple track parameters, or to the same parameter in multiple tracks, or any combination of these. The reverse is also true: different input MIDI messages can be translated to the same output message, or mapped to the same track parameter.
+
+<p>Translation facilitates tweaking synthesizer parameters with a control surface. It's likely that different songs will use different synthesizers and different modulation schemes. By setting up appropriate translations in Polymeter, the user can avoid reprogramming the control surface for each song. The control surface can always output the same messages; only the mappings need to change, and the mapping details are conveniently stored in the song's Polymeter document. More importantly, since Polymeter can record the MIDI input as well as the dubs, a performance can be recorded as events and then completely reconstructed afterwards.
+
+<p>Mapping to track parameters is particularly interesting for parameters that affect the rhythmic feel, such as Offset and Swing. The Range Start parameter is another fruitful target.  For some track parameters, the mapping's range may need to be adjusted for optimal results; see below.
+
+<p>Mapping is managed from the new Mapping dockable bar, displayed via View/Docking Windows/Mapping. Mappings can be inserted, deleted, copied, cut, pasted, and reordered via dragging. Mappings can also be sorted by left-clicking the appropriate item in the column header.
+
+<p>The mappings are displayed in a grid control, similar to the track view. Mappings are selected by left-clicking in the # column. Multiple mappings can be selected with Ctrl+click or Shift+click as usual. To edit a mapping property, left-click it. Depending on the column, either a drop list or an edit box is displayed. To set a value in multiple mappings at once, select multiple mappings, and then edit the desired property within one of them.
+
+<p>Each mapping consists of input and output event properties, a data range, and a track selection. The input properties include the input event type (note on, control, etc.), the input MIDI channel, and the note or control number if appropriate. Input properties can entered manually, or learned from the MIDI input (see below).
+
+<p>The output properties start with the output event type, which may be either a MIDI message (note on, control, etc.) or a track property. If the output event is a MIDI message, the mapping is a translation, in which case the output MIDI channel and the note/control number are also relevant. Otherwise, the mapping targets a track property, in which case the MIDI channel and note/control number don't matter, but the track selection is required.
+
+<p>To map a MIDI message to the same parameter in multiple tracks, create multiple mappings, one for each target track. It's easiest to do this via copy and paste: create a mapping for one of the tracks first, and when it's set up correctly, clone it as many times as needed, and finally edit the copies to target different tracks.
+
+<p>The range parameters (start value and end value) allow the input MIDI data to be shifted or scaled to any integer range. If the start is bigger than end, the control direction is reversed, in which case turning the knob up makes the value smaller.
+
+<p>The app also supports MIDI "learn" mode, i.e. the input messages can be learned from the MIDI input device. To do this, select a mapping in the Mapping bar, and then enable learn mode via Tools/MIDI Learn, or via the keyboard shortcut Ctrl+Shift+M, or via the Mapping bar's context menu. The background color of the selected mapping changes to green, indicating that this mapping will be learned. Now twiddle the intended knob on the MIDI input device, and the mapping's input properties will snap to the appropriate values for that knob. To learn other mappings, select them one at a time and twiddle their intended knobs. After all mappings have been learned, disable MIDI learn mode.
+
+<p>Scales
+
+<p>The scales feature consists of three interrelated modulation types: Scale, Index, and Voicing. The primary purpose of scale modulation is to decouple pitch selection from rhythm. The rhythm comes from the target track's steps, the pitch set comes from the scale and voicing modulation, and the pitch ordering comes from the index modulation.
+
+<p>When a track has one or more scale modulators, the track doesn't get its note in the usual way. Instead, it creates a dynamic scale, consisting of the current step values of each of the scale modulators. But which scale tone is used? This determined by index modulation.
+
+<p>Index modulation selects one of the tones in the current scale. A track that uses a scale should also have at least one index modulator. If it has multiple index modulators, they're summed. The resulting value is interpreted as a zero-origin index into the scale. If the index exceeds the number of scale tones in either direction, it's wrapped around as needed.
+
+<p>For example, suppose the target track has four scale modulators, and their current steps contain 0, 4, 7, and 11 respectively. This constitutes a Cmaj7 chord. If the target track's index modulator outputs 0, the first scale tone (C in this case) is selected; if it outputs 1, the second scale tone (E in this case) is selected, and so on.
+
+<p>The range track parameter also works differently in this case. The range if any is applied to the entire scale BEFORE the indexing operation, i.e. before the scale tone is selected.
+
+<p>The target track can still be note modulated. In this case the note shift is added to all of the scale tones, before range modulation and indexing.
+
+<p>Scale modulators can also have note modulators. These are applied first as the dynamic scale is being built.
+
+<p>Voicing
+
+<p>The scale can also be sorted and optionally converted into a drop voicing, by applying one or more voicing modulators to the target track. The voicing modulator's steps are interpreted as follows: If the step value is one or more, it selects a scale tone to be shifted down an octave (dropped). The numbering scheme is one-origin and starts from the highest-pitched scale tone, i.e. a value of 1 drops the highest scale tone, a value of 2 drops the second-highest scale tone, and so on, as shown below:
+
+<p>0 or below: The scale is sorted, but no voices are dropped.
+<br>1: The highest scale tone is shifted down an octave.
+<br>2: The second-highest scale tone is shifted down an octave.
+<br>3: The third-highest scale tone is shifted down an octave.
+<br>And so on. If a voicing modulator exceeds the number of tones in the scale, it's ignored.
+
+<p>Multiple voices can be dropped by applying multiple voicing modulators to the track. For example, to create a drop 2/4 voicing, apply two voicing modulators, one outputting 2 and the other outputting 4. Many other combinations are possible.
+
+<p>After any voice drops are applied, the scale tones are sorted again, and only then is a scale tone selected, based on the current index modulation.
+
+<p>Step Values
+
+<p>The Step Values bar lets you edit step values numerically, using a grid view. In some case this may be more convenient than dragging velocity bars in the Velocities pane. It's particularly useful for editing note modulator tracks and similar cases. 
+
+<p>To show or hide the Step Values bar, use View/Docking Windows/Step Values. Step values are shown for the selected tracks only. Note that selecting a large number of tracks at once may cause the Step Values bar to perform poorly. It's recommended that the Step Values bar be hidden when it's not needed.
+
+<p>To edit a step, left-click it, edit the value or type a new one, and then press one of the following keys:
+
+<p>Enter: Saves the edit.
+<br>Escape: Discards the edit.
+<br>Tab: Saves the edit and moves to the next column.
+<br>Shift+Tab: Saves the edit and moves to the previous column.
+<br>Ctrl+Down: Saves the edit and moves to the next row.
+<br>Ctrl+Up: Saves the edit and moves to the previous row.
+
+<p>Various display formats can be selected using the bar's context menu. If Signed is enabled, the steps are interpreted as signed values from &minus;64 to +64, otherwise they're considered unsigned values. If Notes is enabled, the steps are displayed as notes, with or without octave information, depending on whether Octaves is enabled. If Ties is enabled, the tie bit (the MSB) is included, otherwise it's masked off; this is an advanced feature, as is Hexadecimal display.
+
+
 <p>Back to <a href="index.html">Polymeter home page</a>
 
 <!--  content stops HERE  -->
