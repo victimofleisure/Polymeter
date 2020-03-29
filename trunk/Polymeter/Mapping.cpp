@@ -9,6 +9,7 @@
 		rev		date	comments
         00      20mar20	initial version
 		01		27mar20	match control parameter only if event uses it
+		02		29mar20	add get/set input message for selected mappings
 
 */
 
@@ -101,22 +102,14 @@ DWORD CMapping::GetInputMidiMsg() const
 	return MakeMidiMsg((m_nInEvent + 8) << 4, m_nInChannel, m_nInControl, 0);
 }
 
-bool CMapping::SetInputMidiMsg(DWORD nMsg)
+void CMapping::SetInputMidiMsg(DWORD nInMidiMsg)
 {
-	int	nEvent = MIDI_CMD_IDX(nMsg);
-	if (nEvent >= 0 && nEvent < MIDI_CHANNEL_VOICE_MESSAGES) {
-		int	nChannel = MIDI_CHAN(nMsg);
-		int	nControl;
-		if (nEvent <= MIDI_CVM_CONTROL)	// if message has control parameter
-			nControl = MIDI_P1(nMsg);
-		else	// no control parameter
-			nControl = 0;
-		m_nInEvent = nEvent;
-		m_nInChannel = nChannel;
-		m_nInControl = nControl;
-		return true;
-	}
-	return false;
+	// channel voice messages only; caller is responsible for ensuring this
+	int	iEvent = MIDI_CMD_IDX(nInMidiMsg);	// convert MIDI status to event index
+	ASSERT(iEvent >= 0 && iEvent < INPUT_EVENTS);	// check event index range
+	m_nInEvent = iEvent;
+	m_nInChannel = MIDI_CHAN(nInMidiMsg);
+	m_nInControl = MIDI_P1(nInMidiMsg);
 }
 
 void CMappingArray::Write() const
@@ -310,5 +303,33 @@ void CSeqMapping::SetTrackIndices(const CIntArrayEx& arrTrackIdx)
 	int	nMappings = GetCount();
 	for (int iMapping = 0; iMapping < nMappings; iMapping++) {	// for each mapping
 		m_arrMapping[iMapping].m_nTrack = arrTrackIdx[iMapping];
+	}
+}
+
+void CSeqMapping::GetInputMidiMsg(const CIntArrayEx& arrSelection, CIntArrayEx& arrInMidiMsg) const
+{
+	int	nSels = arrSelection.GetSize();
+	arrInMidiMsg.SetSize(nSels);
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected mapping
+		int	iMapping = arrSelection[iSel];
+		arrInMidiMsg[iSel] = m_arrMapping[iMapping].GetInputMidiMsg();
+	}
+}
+
+void CSeqMapping::SetInputMidiMsg(const CIntArrayEx& arrSelection, DWORD nInMidiMsg)
+{
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected mapping
+		int	iMapping = arrSelection[iSel];
+		m_arrMapping[iMapping].SetInputMidiMsg(nInMidiMsg);	// set input MIDI message
+	}
+}
+
+void CSeqMapping::SetInputMidiMsg(const CIntArrayEx& arrSelection, const CIntArrayEx& arrInMidiMsg)
+{
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected mapping
+		int	iMapping = arrSelection[iSel];
+		m_arrMapping[iMapping].SetInputMidiMsg(arrInMidiMsg[iSel]);
 	}
 }

@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		20mar20	initial version
+		01		29mar20	add learn multiple mappings; add map selected tracks
 		
 */
 
@@ -129,8 +130,11 @@ void CMappingBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
 			if (pPropHint->m_iProp >= 0)	// if property specified
 				m_grid.RedrawSubItem(pPropHint->m_iItem, pPropHint->m_iProp + 1);	// compensate for number column
-			else	// all properties
+			else {	// all properties
 				m_grid.RedrawItem(pPropHint->m_iItem);
+				if (pPropHint->m_iProp < -1)	// if selection requested
+					m_grid.SelectOnly(pPropHint->m_iItem);	// select this mapping
+			}
 		}
 		break;
 	case CPolymeterDoc::HINT_MULTI_MAPPING_PROP:
@@ -187,6 +191,8 @@ void CMappingBar::OnTrackArrayChange()
 void CMappingBar::OnMidiLearn()
 {
 	m_grid.Invalidate();	// redraw all grid items
+	if (!theApp.m_bIsMidiLearn)	// if learn disabled
+		m_arrPrevSelection.RemoveAll();
 }
 
 CWnd *CMappingBar::CModGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
@@ -347,6 +353,8 @@ BEGIN_MESSAGE_MAP(CMappingBar, CMyDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
 	ON_COMMAND(ID_TOOLS_MIDI_LEARN, OnToolsMidiLearn)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_MIDI_LEARN, OnUpdateToolsMidiLearn)
+	ON_COMMAND(ID_MAPPING_MAP_SELECTED_TRACKS, OnMapSelectedTracks)
+	ON_UPDATE_COMMAND_UI(ID_MAPPING_MAP_SELECTED_TRACKS, OnUpdateMapSelectedTracks)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -526,15 +534,23 @@ LRESULT CMappingBar::OnMidiEvent(WPARAM wParam, LPARAM lParam)
 	UNREFERENCED_PARAMETER(wParam);
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL) {
-		int	iItem = m_grid.GetSelectionMark();
-		if (iItem >= 0) {	// if item selected
-			CMapping	mapping(pDoc->m_Seq.m_mapping.GetAt(iItem));	// get current mapping
-			if (mapping.SetInputMidiMsg(static_cast<DWORD>(lParam))) {	// if valid MIDI message
-				pDoc->NotifyUndoableEdit(iItem, UCODE_LEARN_MAPPING, CUndoable::UE_COALESCE);
-				pDoc->m_Seq.m_mapping.SetAt(iItem, mapping);	// update mapping
-				pDoc->SetModifiedFlag();
-				CPolymeterDoc::CPropHint	hint(iItem);
-				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MAPPING_PROP, &hint);
+		int	iCVM = MIDI_CMD_IDX(lParam);	// convert MIDI status to channel voice message index
+		if (iCVM >= 0 && iCVM < MIDI_CHANNEL_VOICE_MESSAGES) {	// if valid channel voice message
+			if (iCVM > MIDI_CVM_CONTROL)	// if message doesn't have a control parameter
+				lParam = MIDI_STAT(lParam);	// zero everything but status byte, to avoid confusion
+			CIntArrayEx	arrSelection;
+			m_grid.GetSelection(arrSelection);
+			bool	bCoalesceEdit;
+			if (arrSelection != m_arrPrevSelection) {	// if selection changed
+				m_arrPrevSelection = arrSelection;
+				bCoalesceEdit = false;	// don't coalesce edit; create a new undo state
+			} else	// selection hasn't changed
+				bCoalesceEdit = true;	// coalesce edit to avoid a blizzard of undo states
+			if (arrSelection.GetSize() > 1) {	// if multiple selection
+				pDoc->LearnMappings(arrSelection, static_cast<DWORD>(lParam), bCoalesceEdit);
+			} else {	// not multiple selection
+				if (arrSelection.GetSize())	// if single selection
+					pDoc->LearnMapping(arrSelection[0], static_cast<DWORD>(lParam), bCoalesceEdit);
 			}
 		}
 	}	
@@ -568,9 +584,7 @@ void CMappingBar::OnEditPaste()
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
 	if (pDoc != NULL) {
-		int	iInsert = m_grid.GetSelectionMark();
-		if (iInsert < 0)
-			iInsert = m_grid.GetSelectedCount();
+		int	iInsert = m_grid.GetInsertPos();
 		pDoc->InsertMappings(iInsert, theApp.m_arrMappingClipboard, true);	// is paste
 	}
 }
@@ -586,12 +600,10 @@ void CMappingBar::OnEditInsert()
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL);
 	if (pDoc != NULL) {
-		int	iInsert = m_grid.GetSelectionMark();
-		if (iInsert < 0)
-			iInsert = m_grid.GetSelectedCount();
 		CMappingArray	arrMapping;
 		arrMapping.SetSize(1);
 		arrMapping[0].SetDefaults();
+		int	iInsert = m_grid.GetInsertPos();
 		pDoc->InsertMappings(iInsert, arrMapping, false);	// not paste
 	}
 }
@@ -633,4 +645,29 @@ void CMappingBar::OnToolsMidiLearn()
 void CMappingBar::OnUpdateToolsMidiLearn(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(theApp.m_bIsMidiLearn);
+}
+
+void CMappingBar::OnMapSelectedTracks()
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	ASSERT(pDoc != NULL);
+	if (pDoc != NULL && pDoc->GetSelectedCount()) {
+		int	nSels = pDoc->GetSelectedCount();
+		CMappingArray	arrMapping;
+		arrMapping.SetSize(nSels);
+		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+			int	iTrack = pDoc->m_arrTrackSel[iSel];
+			arrMapping[iSel].SetDefaults();
+			// InsertMappings expects m_nTrack to contain track's ID, not its index
+			arrMapping[iSel].m_nTrack = pDoc->m_Seq.GetID(iTrack);
+		}
+		int	iInsert = m_grid.GetInsertPos();
+		pDoc->InsertMappings(iInsert, arrMapping, false);
+	}
+}
+
+void CMappingBar::OnUpdateMapSelectedTracks(CCmdUI *pCmdUI)
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	pCmdUI->Enable(pDoc != NULL && pDoc->GetSelectedCount());
 }

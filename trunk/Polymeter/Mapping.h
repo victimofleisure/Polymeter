@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      20mar20	initial version
+		01		29mar20	add get/set input message for selected mappings
 
 */
 
@@ -26,7 +27,7 @@ public:
 	int		m_nOutControl;		// output controller number
 	int		m_nRangeStart;		// range start
 	int		m_nRangeEnd;		// range end
-	int		m_nTrack;			// track index if applicable
+	int		m_nTrack;			// track index if applicable, or -1 if none
 
 // Constants
 	enum {
@@ -43,7 +44,7 @@ public:
 	int		GetProperty(int iProp) const;
 	void	SetProperty(int iProp, int nVal);
 	DWORD	GetInputMidiMsg() const;
-	bool	SetInputMidiMsg(DWORD nMsg);
+	void	SetInputMidiMsg(DWORD nInMidiMsg);
 	bool	TargetIsTrack() const;
 	int		GetTrackProperty() const;
 	static LPCTSTR	GetInputEventName(int nInEvent);
@@ -122,6 +123,10 @@ public:
 	void	GetSelection(const CIntArrayEx& arrSelection, CMappingArray& arrMapping) const;
 	void	GetTrackIndices(CIntArrayEx& arrTrackIdx) const;
 	void	SetTrackIndices(const CIntArrayEx& arrTrackIdx);
+	void	SetInputMidiMsg(int iMapping, DWORD nInMidiMsg);
+	void	GetInputMidiMsg(const CIntArrayEx& arrSelection, CIntArrayEx& arrInMidiMsg) const;
+	void	SetInputMidiMsg(const CIntArrayEx& arrSelection, DWORD nInMidiMsg);
+	void	SetInputMidiMsg(const CIntArrayEx& arrSelection, const CIntArrayEx& arrInMidiMsg);
 
 // Operations
 	void	Attach(CMappingArray& arrMapping);
@@ -184,4 +189,9 @@ inline void CSeqMapping::GetRange(int iFirstMapping, int nMappings, CMappingArra
 inline void CSeqMapping::GetSelection(const CIntArrayEx& arrSelection, CMappingArray& arrMapping) const
 {
 	m_arrMapping.GetSelection(arrSelection, arrMapping);
+}
+
+inline void CSeqMapping::SetInputMidiMsg(int iMapping, DWORD nInMidiMsg)
+{
+	m_arrMapping[iMapping].SetInputMidiMsg(nInMidiMsg);
 }

@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		20mar20	initial version
+		01		29mar20	add property name accessors; add previous selection
 
 */
 
@@ -27,6 +28,8 @@ public:
 public:
 	CString GetInputEventName(int iEvent) const;
 	CString GetOutputEventName(int iEvent) const;
+	static const int	GetPropertyNameID(int iProp);
+	static const CString	GetPropertyName(int iProp);
 
 // Operations
 public:
@@ -70,6 +73,7 @@ protected:
 	CModGridCtrl	m_grid;		// grid control
 	CStringArrayEx	m_arrInputEventName;	// array of input event names
 	CStringArrayEx	m_arrOutputEventName;	// array of output event names
+	CIntArrayEx		m_arrPrevSelection;	// previous selection during MIDI learn
 
 // Helpers
 	void	InitEventNames();
@@ -105,6 +109,8 @@ protected:
 	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
 	afx_msg void OnToolsMidiLearn();
 	afx_msg void OnUpdateToolsMidiLearn(CCmdUI *pCmdUI);
+	afx_msg void OnMapSelectedTracks();
+	afx_msg void OnUpdateMapSelectedTracks(CCmdUI *pCmdUI);
 };
 
 inline CString CMappingBar::GetInputEventName(int iEvent) const
@@ -115,4 +121,15 @@ inline CString CMappingBar::GetInputEventName(int iEvent) const
 inline CString CMappingBar::GetOutputEventName(int iEvent) const
 {
 	return m_arrOutputEventName[iEvent];
+}
+
+inline const int CMappingBar::GetPropertyNameID(int iProp)
+{
+	ASSERT(iProp >= 0 && iProp < CMapping::PROPERTIES);
+	return m_arrColInfo[iProp + 1].nTitleID;	// account for number column
+}
+
+inline const CString CMappingBar::GetPropertyName(int iProp)
+{
+	return LDS(GetPropertyNameID(iProp));
 }

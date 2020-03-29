@@ -11,6 +11,7 @@
 		01		28nov18	add modify parts
 		02		22mar19	add invert
 		03		20mar20	add mapping
+		04		28mar20	add learn multiple mappings
 
 		undo code data
  
@@ -69,5 +70,6 @@ UCODE_DEF(DELETE_MAPPINGS)
 UCODE_DEF(MOVE_MAPPINGS)
 UCODE_DEF(SORT_MAPPINGS)
 UCODE_DEF(LEARN_MAPPING)
+UCODE_DEF(LEARN_MULTI_MAPPING)
 
 #undef UCODE_DEF

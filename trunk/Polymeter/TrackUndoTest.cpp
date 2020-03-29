@@ -16,6 +16,7 @@
 		06		26feb19	change master property default to fail gracefully
 		07		02dec19	remove sort function, array now provides it
 		08		20mar20	add mapping
+		09		29mar20	add sort and learn mapping
 
 		automated undo test for patch editing
  
@@ -91,6 +92,9 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_INSERT_MAPPING,		0.2f},
 	{UCODE_DELETE_MAPPINGS,		0.1f},
 	{UCODE_MOVE_MAPPINGS,		0.1f},
+	{UCODE_SORT_MAPPINGS,		0.1f},
+	{UCODE_LEARN_MAPPING,		0.1f},
+	{UCODE_LEARN_MULTI_MAPPING,	0.1f},
 };
 
 CTrackUndoTest::CTrackUndoTest(bool InitRunning) :
@@ -823,9 +827,8 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 				m_pDoc->SetMappingProperty(iMapping, iProp, nVal);
 				PRINTF(_T("%s %d %d %d\n"), sUndoTitle, iMapping, iProp, nVal);
 			} else {	// multiple mappings
-				int	nMappings = m_pDoc->m_Seq.m_mapping.GetCount();
 				CIntArrayEx	arrSelection;
-				if (!MakeRandomSelection(nMappings, arrSelection))
+				if (!MakeRandomSelection(m_pDoc->m_Seq.m_mapping.GetCount(), arrSelection))
 					return(DISABLED);
 				m_pDoc->SetMultiMappingProperty(arrSelection, iProp, nVal);
 				PRINTF(_T("%s %s %d %d\n"), sUndoTitle, PrintSelection(arrSelection), iProp, nVal);
@@ -876,6 +879,38 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 				return(DISABLED);
 			m_pDoc->MoveMappings(arrSelection, iDropPos);
 			PRINTF(_T("%s %s %d\n"), sUndoTitle, PrintSelection(arrSelection), iDropPos);
+		}
+		break;
+	case UCODE_SORT_MAPPINGS:
+		{
+			int	nMappings = m_pDoc->m_Seq.m_mapping.GetCount(); 
+			if (nMappings < 2)
+				return(DISABLED);
+			int	iProp = Random(CMapping::PROPERTIES);
+			m_pDoc->SortMappings(iProp);
+			PRINTF(_T("%s %d\n"), sUndoTitle, iProp);
+		}
+		break;
+	case UCODE_LEARN_MAPPING:
+		{
+			int iMapping = Random(m_pDoc->m_Seq.m_mapping.GetCount());
+			if (iMapping < 0)
+				return(DISABLED);
+			int	nInMidiMsg = MakeMidiMsg((Random(MIDI_CHANNEL_VOICE_MESSAGES) + 8) << 4,
+				Random(MIDI_CHANNELS), Random(MIDI_NOTES), 0);
+			m_pDoc->LearnMapping(iMapping, nInMidiMsg);
+			PRINTF(_T("%s %d %x\n"), sUndoTitle, iMapping, nInMidiMsg);
+		}
+		break;
+	case UCODE_LEARN_MULTI_MAPPING:
+		{
+			CIntArrayEx	arrSelection;
+			if (!MakeRandomSelection(m_pDoc->m_Seq.m_mapping.GetCount(), arrSelection))
+				return(DISABLED);
+			int	nInMidiMsg = MakeMidiMsg((Random(MIDI_CHANNEL_VOICE_MESSAGES) + 8) << 4,
+				Random(MIDI_CHANNELS), Random(MIDI_NOTES), 0);
+			m_pDoc->LearnMappings(arrSelection, nInMidiMsg);
+			PRINTF(_T("%s %s %x\n"), sUndoTitle, PrintSelection(arrSelection), nInMidiMsg);
 		}
 		break;
 	default:

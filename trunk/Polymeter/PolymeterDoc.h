@@ -22,6 +22,7 @@
 		12		29feb20	add support for recording live events
 		13		18mar20	cache song position in document
 		14		20mar20	add mapping
+		15		29mar20	add learn multiple mappings
 
 */
 
@@ -259,6 +260,8 @@ public:
 	void	InsertMappings(int iInsert, const CMappingArray& arrMapping, bool bIsPaste);
 	void	MoveMappings(const CIntArrayEx& arrSelection, int iDropPos);
 	void	SortMappings(int iProp);
+	void	LearnMapping(int iMapping, DWORD nInMidiMsg, bool bCoalesceEdit = false);
+	void	LearnMappings(const CIntArrayEx& arrSelection, DWORD nInMidiMsg, bool bCoalesceEdit = false);
 
 // Overrides
 public:
@@ -477,6 +480,8 @@ protected:
 	void	RestoreSortMappings(const CUndoState& State);
 	void	SaveLearnMapping(CUndoState& State);
 	void	RestoreLearnMapping(const CUndoState& State);
+	void	SaveLearnMultiMapping(CUndoState& State);
+	void	RestoreLearnMultiMapping(const CUndoState& State);
 	bool	UndoDependencies();
 	bool	RedoDependencies();
 

@@ -40,6 +40,7 @@
 		30		16mar20	bump file version for new modulation types
 		31		18mar20	cache song position in document
 		32		20mar20	add mapping
+		33		29mar20	add learn multiple mappings
 
 */
 
@@ -133,6 +134,8 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define IDS_EDIT_MASTER_PROP		0
 #define IDS_EDIT_CHANNEL_PROP		0
 #define IDS_EDIT_MULTI_CHANNEL_PROP	0
+#define IDS_EDIT_MAPPING_PROP		0
+#define IDS_EDIT_MULTI_MAPPING_PROP	0
 
 // define duplicate title IDs
 #define IDS_EDIT_REVERSE_RECT		IDS_EDIT_REVERSE
@@ -2184,11 +2187,33 @@ void CPolymeterDoc::SaveLearnMapping(CUndoState& State)
 void CPolymeterDoc::RestoreLearnMapping(const CUndoState& State)
 {
 	int	iMapping = State.GetCtrlID();
-	CMapping	mapping(m_Seq.m_mapping.GetAt(iMapping));
-	mapping.SetInputMidiMsg(State.m_Val.p.x.u);
-	m_Seq.m_mapping.SetAt(iMapping, mapping);
-	CPropHint	hint(iMapping);
+	m_Seq.m_mapping.SetInputMidiMsg(iMapping, State.m_Val.p.x.u);
+	CPropHint	hint(iMapping, -2);	// select this mapping
 	UpdateAllViews(NULL, HINT_MAPPING_PROP, &hint);
+}
+
+void CPolymeterDoc::SaveLearnMultiMapping(CUndoState& State)
+{
+	const CIntArrayEx	*parrSelection;
+	if (State.IsEmpty()) {	// if initial state
+		parrSelection = m_parrSelection;	// get fresh selection
+	} else {	// undoing or redoing; selection may have changed, so don't rely on it
+		const CUndoMultiIntegerProp	*pInfo = static_cast<CUndoMultiIntegerProp*>(State.GetObj());
+		parrSelection = &pInfo->m_arrSelection;	// use edit's original selection
+	}
+	CRefPtr<CUndoMultiIntegerProp>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_arrSelection = *parrSelection;
+	m_Seq.m_mapping.GetInputMidiMsg(*parrSelection, pInfo->m_arrProp);
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreLearnMultiMapping(const CUndoState& State)
+{
+	const CUndoMultiIntegerProp	*pInfo = static_cast<CUndoMultiIntegerProp*>(State.GetObj());
+	m_Seq.m_mapping.SetInputMidiMsg(pInfo->m_arrSelection, pInfo->m_arrProp);
+	CMultiItemPropHint	hint(pInfo->m_arrSelection);
+	UpdateAllViews(NULL, HINT_MULTI_MAPPING_PROP, &hint);
 }
 
 void CPolymeterDoc::SaveUndoState(CUndoState& State)
@@ -2318,6 +2343,9 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		break;
 	case UCODE_LEARN_MAPPING:
 		SaveLearnMapping(State);
+		break;
+	case UCODE_LEARN_MULTI_MAPPING:
+		SaveLearnMultiMapping(State);
 		break;
 	}
 }
@@ -2450,6 +2478,9 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_LEARN_MAPPING:
 		RestoreLearnMapping(State);
 		break;
+	case UCODE_LEARN_MULTI_MAPPING:
+		RestoreLearnMultiMapping(State);
+		break;
 	}
 }
 
@@ -2485,6 +2516,17 @@ CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 		{
 			int	iProp = State.GetCtrlID();
 			sTitle = CChannelsBar::GetPropertyName(iProp);
+		}
+		break;
+	case UCODE_MAPPING_PROP:
+	case UCODE_MULTI_MAPPING_PROP:
+		{
+			int	iProp;
+			if (LOWORD(State.GetCode()) == UCODE_MAPPING_PROP)
+				iProp = HIWORD(State.GetCode());
+			else
+				iProp = State.GetCtrlID();
+			sTitle = LDS(IDS_BAR_Mapping) + ' ' + CMappingBar::GetPropertyName(iProp);
 		}
 		break;
 	default:
@@ -3449,6 +3491,27 @@ void CPolymeterDoc::SortMappings(int iProp)
 	m_Seq.m_mapping.Sort(iProp);
 	CSelectionHint	hint(NULL);
 	UpdateAllViews(NULL, HINT_MAPPING_ARRAY, &hint);
+}
+
+void CPolymeterDoc::LearnMapping(int iMapping, DWORD nInMidiMsg, bool bCoalesceEdit)
+{
+	UINT	nUndoFlags = bCoalesceEdit ? UE_COALESCE : 0;
+	NotifyUndoableEdit(iMapping, UCODE_LEARN_MAPPING, nUndoFlags);
+	m_Seq.m_mapping.SetInputMidiMsg(iMapping, nInMidiMsg);	// update mapping
+	SetModifiedFlag();
+	CPolymeterDoc::CPropHint	hint(iMapping);
+	UpdateAllViews(NULL, CPolymeterDoc::HINT_MAPPING_PROP, &hint);
+}
+
+void CPolymeterDoc::LearnMappings(const CIntArrayEx& arrSelection, DWORD nInMidiMsg, bool bCoalesceEdit)
+{
+	m_parrSelection = &arrSelection;
+	UINT	nUndoFlags = bCoalesceEdit ? UE_COALESCE : 0;
+	NotifyUndoableEdit(0, UCODE_LEARN_MULTI_MAPPING, nUndoFlags);
+	m_Seq.m_mapping.SetInputMidiMsg(arrSelection, nInMidiMsg);	// update selected mappings
+	SetModifiedFlag();
+	CPolymeterDoc::CMultiItemPropHint	hint(arrSelection);
+	UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_MAPPING_PROP, &hint);
 }
 
 // CPolymeterDoc diagnostics
