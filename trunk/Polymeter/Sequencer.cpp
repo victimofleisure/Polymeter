@@ -29,6 +29,7 @@
 		19		29feb20	add support for recording live events
 		20		16mar20	add scale, index and voicing modulation
 		21		20mar20	add mapping
+		22		30mar20	fix index modulation; sort scale ascending
 
 */
 
@@ -605,19 +606,19 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 								}
 								int	nDrops = m_arrVoicing.GetSize();
 								if (nDrops) {	// if dropping at least one voice
-									m_arrScale.Sort(true);	// sort scale tones into descending order
+									m_arrScale.Sort();	// sort scale tones into ascending order
 									bool	bDropped = false;
 									for (int iDrop = 0; iDrop < nDrops; iDrop++) {	// for each voice drop
-										int	iTone = m_arrVoicing[iDrop] - 1;	// drop voicings are one-origin
+										int	iTone = nTones - m_arrVoicing[iDrop];	// drop voicings are one-origin
 										if (iTone >= 0 && iTone < nTones) {	// if index within scale
 											m_arrScale[iTone] -= 12;	// drop voice an octave
 											bDropped = true;
 										}
 									}
 									if (bDropped)	// if any voices were dropped
-										m_arrScale.Sort(true);	// re-sort scale tones
+										m_arrScale.Sort();	// re-sort scale tones
 								}
-								int	iTone = ModWrap(arrMod[MT_Index] - MIDI_NOTES / 2, nTones);
+								int	iTone = ModWrap(arrMod[MT_Index], nTones);
 								nNote = m_arrScale[iTone];
 							} else {	// scale not defined
 								if (trk.m_iRangeType != RT_NONE)	// if applying range to note
