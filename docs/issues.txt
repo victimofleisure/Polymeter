@@ -260,7 +260,7 @@ open	close	type	description	rev	user
 03/27/20	03/28/20	done	MIDI learn should support multiple selection; learn multiple mappings all at once	0.0.28.003	
 03/27/20	03/28/20	done	add mapping command Map Tracks that creates mappings for all selected tracks	0.0.28.003	
 03/28/20	03/28/20	done	undoing MIDI learn doesn't always restore control parameter	0.0.28.003	
-03/30/20	03/30/20	done	voicing should sort scale into ascending order, so that index zero corresponds lowest note	0.0.28.004	
+03/30/20	03/30/20	done	voicing should sort scale into ascending order, so that index zero corresponds to lowest scale tone	0.0.28.004	
 03/30/20	03/30/20	done	index modulation was being converted from unsigned to signed twice, causing incorrect results	0.0.28.004	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
