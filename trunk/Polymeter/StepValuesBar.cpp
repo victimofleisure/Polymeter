@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		17mar20	initial version
+		01		31mar20	account for key signature
 		
 */
 
@@ -116,6 +117,16 @@ void CStepValuesBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			}
 		}
 		break;
+	case CPolymeterDoc::HINT_MASTER_PROP:
+		{
+			const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+			switch (pPropHint->m_iProp) {
+			case CMasterProps::PROP_nKeySig:	// if key signature change
+				if (m_nStepFormat & STF_NOTES)	// if showing steps as notes
+					m_grid.Invalidate();
+				break;
+			}
+		}
 	}
 }
 
@@ -363,9 +374,9 @@ void CStepValuesBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 						if (nFormat & STF_NOTES) {	// if showing steps as notes
 							CNote	note(nStep);
 							if (nFormat & STF_OCTAVES)	// if showing octave
-								_tcscpy_s(item.pszText, item.cchTextMax, note.MidiName());
+								_tcscpy_s(item.pszText, item.cchTextMax, note.MidiName(pDoc->m_nKeySig));
 							else // hiding octave
-								_tcscpy_s(item.pszText, item.cchTextMax, note.Name());
+								_tcscpy_s(item.pszText, item.cchTextMax, note.Name(pDoc->m_nKeySig));
 						} else {	// show steps as numeric values
 							LPCTSTR	pszFormat;
 							if (nFormat & STF_HEX) {	// if showing hexadecimal
