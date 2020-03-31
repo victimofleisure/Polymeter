@@ -262,6 +262,7 @@ open	close	type	description	rev	user
 03/28/20	03/28/20	done	undoing MIDI learn doesn't always restore control parameter	0.0.28.003	
 03/30/20	03/30/20	done	voicing should sort scale into ascending order, so that index zero corresponds to lowest scale tone	0.0.28.004	
 03/30/20	03/30/20	done	index modulation was being converted from unsigned to signed twice, causing incorrect results	0.0.28.004	
+03/30/20	03/31/20	done	step values bar should account for key signature when displaying notes	0.0.28.005	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 03/22/18		hold	swing modulation; probably not feasible		
@@ -325,3 +326,4 @@ open	close	type	description	rev	user
 01/11/19		punt	in Piano view, if multiple instances of a note overlap, velocity color may be inaccurate; unavoidable		
 02/28/19		punt	song playback doesn't always match live output when modulator tracks have big quants; dub granularity issue		
 11/12/19		punt	popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful		
+03/30/20		todo	step values bar should provide a means of setting song position; Ctrl+click on grid item?		
