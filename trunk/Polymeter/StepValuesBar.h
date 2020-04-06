@@ -58,7 +58,8 @@ protected:
 		STF_OCTAVES		= 0x04,		// include octave in note name
 		STF_TIES		= 0x08,		// show tie bits
 		STF_HEX			= 0x10,		// show hexadecimal
-		STF_COLS_STEPS	= 0x20,		// in export, columns are steps and rows are tracks
+		STF_COLS_TRACKS	= 0x20,		// in export, columns are tracks and rows are steps
+		STF_DELIMIT_TAB	= 0x40,		// in export, delimit values with tabs instead of commas
 	};
 	static const COLORREF	m_arrStepColor[];	// step colors
 
@@ -109,4 +110,6 @@ protected:
 	afx_msg void OnUpdateEditCopy(CCmdUI *pCmdUI);
 	afx_msg void OnLayout(UINT nID);
 	afx_msg void OnUpdateLayout(CCmdUI *pCmdUI);
+	afx_msg void OnFormat(UINT nID);
+	afx_msg void OnUpdateFormat(CCmdUI *pCmdUI);
 };

@@ -10,6 +10,7 @@
         00		23mar18	initial version
 		01		01apr20	add generic context menu method
 		02		06apr20	in FormatNumberCommas, emulate GetNumberFormatEx
+		03		06apr20	in FormatNumberCommas, emulate GetNumberFormatEx
 
 */
 
@@ -129,9 +130,25 @@ void EnableChildWindows(CWnd& Wnd, bool Enable, bool Deep)
 	}
 }
 
+class CUpdateMenuCmdUI : public CCmdUI {
+public:
+	virtual void SetRadio(BOOL bOn);
+};
+
+void CUpdateMenuCmdUI::SetRadio(BOOL bOn)
+{
+	// framework's implementation draws a tiny dot that looks ridiculous
+	if (m_pMenu != NULL) {
+		if (m_pSubMenu != NULL)
+			return; // don't change popup menus indirectly
+		if (bOn)
+			m_pMenu->CheckMenuRadioItem(m_nID, m_nID, m_nID, MF_BYCOMMAND);
+	}
+}
+
 void UpdateMenu(CWnd *pWnd, CMenu *pMenu)
 {
-	CCmdUI	cui;
+	CUpdateMenuCmdUI	cui;
 	cui.m_pMenu = pMenu;
 	cui.m_nIndexMax = pMenu->GetMenuItemCount();
 	for (UINT i = 0; i < cui.m_nIndexMax; i++) {

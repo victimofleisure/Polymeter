@@ -319,26 +319,31 @@ bool CStepValuesBar::GetExportTable(CString& sTable)
 	if (nItemSels <= 0)
 		return false;
 	TCHAR	szText[32];
-	if (m_nStepFormat & STF_COLS_STEPS) {	// if columns are steps and rows are tracks
-		for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
-			for (int iItemSel = 0; iItemSel < nItemSels; iItemSel++) {	// for each selected item
-				int	iItem = arrItemSel[iItemSel];
-				int	iSubItem = iTrackSel + 1;	// account for number column
-				ConvertListItemToString(iItem, iSubItem, szText, _countof(szText));
-				if (iItemSel)
-					sTable += ',';
-				sTable += szText;
-			}
-			sTable += _T("\r\n");
-		}
-	} else {	// columns are tracks and rows are steps
+	TCHAR	cDelimiter;
+	if (m_nStepFormat & STF_DELIMIT_TAB)	// if tab delimited
+		cDelimiter = '\t';
+	else	// comma delimited
+		cDelimiter = ',';
+	if (m_nStepFormat & STF_COLS_TRACKS) {	// if columns are tracks and rows are steps
 		for (int iItemSel = 0; iItemSel < nItemSels; iItemSel++) {	// for each selected item
 			for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
 				int	iItem = arrItemSel[iItemSel];
 				int	iSubItem = iTrackSel + 1;	// account for number column
 				ConvertListItemToString(iItem, iSubItem, szText, _countof(szText));
 				if (iTrackSel)
-					sTable += ',';
+					sTable += cDelimiter;
+				sTable += szText;
+			}
+			sTable += _T("\r\n");
+		}
+	} else {	// columns are steps and rows are tracks
+		for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
+			for (int iItemSel = 0; iItemSel < nItemSels; iItemSel++) {	// for each selected item
+				int	iItem = arrItemSel[iItemSel];
+				int	iSubItem = iTrackSel + 1;	// account for number column
+				ConvertListItemToString(iItem, iSubItem, szText, _countof(szText));
+				if (iItemSel)
+					sTable += cDelimiter;
 				sTable += szText;
 			}
 			sTable += _T("\r\n");
@@ -374,6 +379,8 @@ BEGIN_MESSAGE_MAP(CStepValuesBar, CMyDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditSelectAll)
 	ON_COMMAND_RANGE(ID_STEP_VALUES_LAYOUT_COLS_STEPS, ID_STEP_VALUES_LAYOUT_COLS_TRACKS, OnLayout)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_STEP_VALUES_LAYOUT_COLS_STEPS, ID_STEP_VALUES_LAYOUT_COLS_TRACKS, OnUpdateLayout)
+	ON_COMMAND_RANGE(ID_STEP_VALUES_DELIMIT_COMMA, ID_STEP_VALUES_DELIMIT_TAB, OnFormat)
+	ON_UPDATE_COMMAND_UI_RANGE(ID_STEP_VALUES_DELIMIT_COMMA, ID_STEP_VALUES_DELIMIT_TAB, OnUpdateFormat)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -580,12 +587,25 @@ void CStepValuesBar::OnUpdateEditCopy(CCmdUI *pCmdUI)
 void CStepValuesBar::OnLayout(UINT nID)
 {
 	UNREFERENCED_PARAMETER(nID);
-	m_nStepFormat ^= STF_COLS_STEPS;
+	m_nStepFormat ^= STF_COLS_TRACKS;
 }
 
 void CStepValuesBar::OnUpdateLayout(CCmdUI *pCmdUI)
 {
-	bool	bColsAreSteps = (m_nStepFormat & STF_COLS_STEPS) != 0;
-	bool	bInvert = pCmdUI->m_nID != ID_STEP_VALUES_LAYOUT_COLS_STEPS;
-	pCmdUI->SetRadio(bColsAreSteps ^ bInvert);
+	bool	bColsAreTracks = (m_nStepFormat & STF_COLS_TRACKS) != 0;
+	bool	bInvert = pCmdUI->m_nID != ID_STEP_VALUES_LAYOUT_COLS_TRACKS;
+	pCmdUI->SetRadio(bColsAreTracks ^ bInvert);
+}
+
+void CStepValuesBar::OnFormat(UINT nID)
+{
+	UNREFERENCED_PARAMETER(nID);
+	m_nStepFormat ^= STF_DELIMIT_TAB;
+}
+
+void CStepValuesBar::OnUpdateFormat(CCmdUI *pCmdUI)
+{
+	bool	bFormatTabs = (m_nStepFormat & STF_DELIMIT_TAB) != 0;
+	bool	bInvert = pCmdUI->m_nID != ID_STEP_VALUES_DELIMIT_TAB;
+	pCmdUI->SetRadio(bFormatTabs ^ bInvert);
 }
