@@ -12,7 +12,6 @@
 */
 
 #pragma once
-#include "afxwin.h"
 
 // CTrackSortDlg dialog
 

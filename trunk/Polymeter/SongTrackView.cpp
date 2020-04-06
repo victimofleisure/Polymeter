@@ -8,6 +8,8 @@
 		revision history:
 		rev		date	comments
         00      30may18	initial version
+		01		05apr20	draw bottom gridline
+		02		06apr20	change background color to window color
 
 */
 
@@ -98,7 +100,7 @@ __forceinline CSize CSongTrackView::GetClientSize() const
 
 void CSongTrackView::OnDraw(CDC* pDC)
 {
-	COLORREF	clrBkgnd = GetSysColor(COLOR_3DFACE);
+	COLORREF	clrBkgnd = GetSysColor(COLOR_WINDOW);
 	COLORREF	clrText = GetSysColor(COLOR_CAPTIONTEXT);
 	COLORREF	clrHighlight = GetSysColor(COLOR_HIGHLIGHT);
 	COLORREF	clrHighlightText = GetSysColor(COLOR_HIGHLIGHTTEXT);
@@ -138,6 +140,11 @@ void CSongTrackView::OnDraw(CDC* pDC)
 			CRect	rItem(CPoint(0, y1), CSize(szClient.cx, m_nTrackHeight));
 			pDC->ExcludeClipRect(rItem);	// exclude item rectangle
 			y1 += m_nTrackHeight;
+		}
+		if (rClip.bottom > y1) {	// if clip rectangle includes bottom gridline
+			CRect	rLine(CPoint(rClip.left, y1), CSize(rClip.Width(), 1));
+			pDC->FillSolidRect(rLine, clrGridline);	// draw bottom gridline
+			pDC->ExcludeClipRect(rLine);	// exclude gridline rectangle
 		}
 	}
 	pDC->FillSolidRect(rClip, clrBkgnd);	// erase anything not excluded above

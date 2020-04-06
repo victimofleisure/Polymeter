@@ -16,6 +16,7 @@
 		06		04apr15	add GetInsertPos
 		07		24apr18	standardize names
 		08		17mar20	add method to delete all columns
+		09		01apr20	fix context menu top left if no selection
 
 		extended selection list control
  
@@ -239,6 +240,16 @@ bool CListCtrlExSel::ResetColumnOrder()
 	return(SetColumnOrder(arrOrder));
 }
 
+void CListCtrlExSel::ResetColumnHeader(const COL_INFO *pColInfo, int nColumns)
+{
+	SetRedraw(false);	// disable drawing to reduce flicker
+	ResetColumnWidths(pColInfo, nColumns);	// reset column widths
+	if (GetExtendedStyle() & LVS_EX_HEADERDRAGDROP)	// if column reordering enabled
+		VERIFY(ResetColumnOrder());	// reset column order too
+	SetRedraw();	// reenable drawing
+	Invalidate();
+}
+
 bool CListCtrlExSel::LoadArray(LPCTSTR pszSection, LPCTSTR pszKey, CIntArrayEx& Array, int nElems)
 {
 	Array.SetSize(nElems);
@@ -254,14 +265,28 @@ bool CListCtrlExSel::LoadArray(LPCTSTR pszSection, LPCTSTR pszKey, CIntArrayEx& 
 void CListCtrlExSel::FixContextMenuPoint(CPoint& point)
 {
 	if (point.x == -1 && point.y == -1) {	// if menu triggered via keyboard
-		int	iItem = GetSelectionMark();
 		CRect	rc;
-		if (iItem >= 0) {
-			GetItemRect(iItem, rc, LVIR_BOUNDS);
-			ClientToScreen(rc);
-		} else
-			GetWindowRect(rc);
-		point = rc.CenterPoint();
+		GetWindowRect(rc);
+		int	iItem = GetSelectionMark();
+		if (iItem >= 0) {	// if selection exists
+			CRect	rItem;
+			GetItemRect(iItem, rItem, LVIR_BOUNDS);
+			ClientToScreen(rItem);
+			CPoint	ptCtrItem(rItem.CenterPoint());
+			CPoint	ptCtrClient(rc.CenterPoint());
+			// if item center x within window
+			if (ptCtrItem.x >= rc.left && ptCtrItem.x < rc.right)
+				point.x = ptCtrItem.x;
+			else	// use client center x instead
+				point.x = ptCtrClient.x;
+			// if item center y within window
+			if (ptCtrItem.y >= rc.top && ptCtrItem.y < rc.bottom)
+				point.y = ptCtrItem.y;
+			else	// use client center y instead
+				point.y = ptCtrClient.y;
+		} else {	// no selection
+			point = rc.TopLeft();
+		}
 	}
 }
 

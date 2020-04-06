@@ -16,6 +16,7 @@
 		06		30may19	handle short MIDI messages only; ignore other event types
 		07		17feb20	inherit MIDI event class from track base
 		08		29feb20	add handler for MIDI event message
+		09		01apr20	standardize context menu handling
 
 */
 
@@ -302,18 +303,8 @@ void CPianoBar::OnSize(UINT nType, int cx, int cy)
 
 void CPianoBar::OnContextMenu(CWnd* pWnd, CPoint point)
 {
-	CRect	rc;
-	GetClientRect(rc);
-	if (point.x == -1 && point.y == -1) {
-		point = rc.TopLeft();
-		ClientToScreen(&point);
-	} else {
-		ClientToScreen(rc);
-		if (!rc.PtInRect(point)) {
-			CMyDockablePane::OnContextMenu(pWnd, point);
-			return;
-		}
-	}
+	if (FixContextMenuPoint(pWnd, point))
+		return;
 	m_ptContextMenu = point;
 	CMenu	menu;
 	VERIFY(menu.LoadMenu(IDR_PIANO_CTX));

@@ -10,6 +10,7 @@
         00		15apr18	initial version
 		01		15dec18	add label tip style to grid
 		02		28jan19	include divider in list column header hit test
+		03		01apr20	standardize context menu handling
 		
 */
 
@@ -230,23 +231,6 @@ void CChannelsBar::Update(const CIntArrayEx& arrSelection, int iProp)
 	}
 }
 
-bool CChannelsBar::ShowListColumnHeaderMenu(CWnd *pWnd, CListCtrl *pList, CPoint point)
-{
-	ASSERT(pWnd != NULL);
-	ASSERT(pList != NULL);
-	CPoint	ptGrid(point);
-	CHeaderCtrl	*pHdrCtrl = pList->GetHeaderCtrl();
-	pHdrCtrl->ScreenToClient(&ptGrid);
-	HDHITTESTINFO	hti = {ptGrid};
-	pHdrCtrl->HitTest(&hti);
-	if (hti.flags & (HHT_ONHEADER | HHT_NOWHERE | HHT_ONDIVIDER)) {
-		CMenu	menu;
-		menu.LoadMenu(IDR_LIST_COL_HDR);
-		return menu.GetSubMenu(0)->TrackPopupMenu(0, point.x, point.y, pWnd) != 0;
-	}
-	return false;
-}
-
 /////////////////////////////////////////////////////////////////////////////
 // CChannelsBar message map
 
@@ -343,16 +327,11 @@ DefaultDisplayItem:
 
 void CChannelsBar::OnContextMenu(CWnd* pWnd, CPoint point)
 {
-	if (ShowListColumnHeaderMenu(this, &m_grid, point))
+	if (FixListContextMenuPoint(pWnd, m_grid, point))
 		return;
-	CMyDockablePane::OnContextMenu(pWnd, point);
 }
 
 void CChannelsBar::OnListColHdrReset()
 {
-	m_grid.SetRedraw(false);	// disable drawing to reduce flicker
-	m_grid.ResetColumnWidths(m_arrColInfo, COLUMNS);
-	m_grid.ResetColumnOrder();
-	m_grid.SetRedraw();	// reenable drawing
-	m_grid.Invalidate();
+	m_grid.ResetColumnHeader(m_arrColInfo, COLUMNS);
 }

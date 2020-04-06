@@ -9,6 +9,7 @@
 		rev		date	comments
         00      20mar20	initial version
 		01		29mar20	add get/set input message for selected mappings
+		02		05apr20	add track step mapping
 
 */
 
@@ -35,9 +36,18 @@ public:
 		#include "MappingDef.h"	// generate member var enumeration
 		PROPERTIES
 	};
-	enum {
-		INPUT_EVENTS = MIDI_CHANNEL_VOICE_MESSAGES,
-		OUTPUT_EVENTS = MIDI_CHANNEL_VOICE_MESSAGES + CTrackBase::PROPERTIES,
+	enum {	// input events
+		#define MIDICHANSTATDEF(name) IN_##name,
+		#include "MidiCtrlrDef.h"	// enumerate MIDI channel voice messages
+		INPUT_EVENTS
+	};
+	enum {	// output events
+		#define MIDICHANSTATDEF(name) OUT_##name,
+		#include "MidiCtrlrDef.h"	// enumerate MIDI channel voice messages
+		#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) OUT_##name,
+		#include "TrackDef.h"	// enumerate track properties
+		OUT_Steps,	// track steps can also be targeted
+		OUTPUT_EVENTS
 	};
 
 // Attributes
@@ -45,8 +55,6 @@ public:
 	void	SetProperty(int iProp, int nVal);
 	DWORD	GetInputMidiMsg() const;
 	void	SetInputMidiMsg(DWORD nInMidiMsg);
-	bool	TargetIsTrack() const;
-	int		GetTrackProperty() const;
 	static LPCTSTR	GetInputEventName(int nInEvent);
 	static LPCTSTR	GetOutputEventName(int nOutEvent);
 	static int		FindInputEventName(LPCTSTR pszName);
@@ -58,27 +66,20 @@ public:
 	void	Write(LPCTSTR pszSection) const;
 };
 
-inline bool CMapping::TargetIsTrack() const
-{
-	return m_nOutEvent >= MIDI_CHANNEL_VOICE_MESSAGES;
-}
-
-inline int CMapping::GetTrackProperty() const
-{
-	return m_nOutEvent - MIDI_CHANNEL_VOICE_MESSAGES;
-}
-
 inline LPCTSTR CMapping::GetInputEventName(int nInEvent)
 {
 	return CTrackBase::GetMidiChannelVoiceMsgName(nInEvent);
 }
 
-inline LPCTSTR	CMapping::GetOutputEventName(int nOutEvent)
+inline LPCTSTR CMapping::GetOutputEventName(int nOutEvent)
 {
+	ASSERT(nOutEvent >= 0 && nOutEvent < OUTPUT_EVENTS);
 	if (nOutEvent < MIDI_CHANNEL_VOICE_MESSAGES)
 		return CTrackBase::GetMidiChannelVoiceMsgName(nOutEvent);
-	else
-		return CTrackBase::GetPropertyInternalName(nOutEvent - MIDI_CHANNEL_VOICE_MESSAGES);
+	nOutEvent -= MIDI_CHANNEL_VOICE_MESSAGES;
+	if (nOutEvent < CTrackBase::PROPERTIES)
+		return CTrackBase::GetPropertyInternalName(nOutEvent);
+	return _T("Step");
 }
 
 inline int CMapping::FindInputEventName(LPCTSTR pszName)

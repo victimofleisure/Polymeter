@@ -30,6 +30,9 @@
 		20		16mar20	add scale, index and voicing modulation
 		21		20mar20	add mapping
 		22		30mar20	fix index modulation; sort scale ascending
+		23		03apr20	add milliseconds to time format
+		24		04apr20	add chord modulation
+		25		06apr20	add callback too long error
 
 */
 
@@ -72,6 +75,7 @@ CSequencer::CSequencer()
 	m_bIsOutputCapture = false;
 	m_bPreventNoteOverlap = false;
 	ZeroMemory(&m_stats, sizeof(m_stats));
+	m_fLatencySecs = 0;
 }
 
 CSequencer::~CSequencer()
@@ -222,6 +226,7 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 		}
 		ZeroMemory(&m_stats, sizeof(m_stats));
 		m_stats.fCBTimeMin = DBL_MAX;
+		m_fLatencySecs = m_nLatency / 1000.0;	// invariant while playing
 		UpdateCallbackLength();
 		ResetCachedParameters();
 		m_nAltTempo = 0;
@@ -346,7 +351,6 @@ void CALLBACK CSequencer::MidiOutProc(HMIDIOUT hMidiOut, UINT wMsg, W64UINT dwIn
 
 __forceinline int CSequencer::ApplyNoteRange(int nNote, int nRangeStart, int iRangeType)
 {
-	const int OCTAVE = 12;
 	nNote = (nNote - nRangeStart) % OCTAVE;
 	if (iRangeType == RT_DUAL) {	// if dual octave range
 		nNote += nRangeStart;	// add start offset first
@@ -533,6 +537,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 			double	fTempoMod = 1;
 			int	arrMod[MODULATION_TYPES] = {0};	// initialize modulations to zero
 			m_arrScale.FastRemoveAll();
+			m_arrChord.FastRemoveAll();
 			m_arrVoicing.FastRemoveAll();
 			int	nMods = trk.m_arrModulator.GetSize();
 			for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
@@ -570,6 +575,14 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 							m_arrScale.Add(nTone);	// add tone to scale array
 						}
 						break;
+					case MT_Chord:
+						{
+							int	nTone = nStepVal - MIDI_NOTES / 2;
+							if (trkModSource.IsModulated())	// if modulation source is modulated
+								nTone += SumModulations(trkModSource, MT_Note, nAbsEvtTime);
+							m_arrChord.Add(nTone);	// add tone to chord array
+						}
+						break;
 					case MT_Voicing:
 						m_arrVoicing.Add(nStepVal - MIDI_NOTES / 2);	// add step to voicing array
 						break;
@@ -596,29 +609,39 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 							int	nVel = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
 							nVel = CLAMP(nVel, 0, MIDI_NOTE_MAX);
 							int	nNote = trk.m_nNote + arrMod[MT_Note];
-							int	nTones = m_arrScale.GetSize();
-							if (nTones) {	// if scale defined
+							int	nScaleTones = m_arrScale.GetSize();
+							if (nScaleTones) {	// if scale defined
 								int	nRangeStart = trk.m_nRangeStart + arrMod[MT_Range];
-								for (int iTone = 0; iTone < nTones; iTone++) {	// for each scale tone
+								for (int iTone = 0; iTone < nScaleTones; iTone++) {	// for each scale tone
 									m_arrScale[iTone] += nNote;
 									if (trk.m_iRangeType != RT_NONE)	// if applying range to note
 										m_arrScale[iTone] = ApplyNoteRange(m_arrScale[iTone], nRangeStart, trk.m_iRangeType);
+								}
+								int	nChordTones = m_arrChord.GetSize();
+								if (nChordTones) {	// if chord defined
+									for (int iChordTone = 0; iChordTone < nChordTones; iChordTone++) {	// for each chord tone
+										int		iScaleTone = m_arrChord[iChordTone];
+										iScaleTone = ModWrap(iScaleTone, nScaleTones);
+										m_arrChord[iChordTone] = m_arrScale[iScaleTone];	// map chord tone to scale tone
+									}
+									m_arrScale = m_arrChord;	// replace scale with chord
+									nScaleTones = nChordTones;
 								}
 								int	nDrops = m_arrVoicing.GetSize();
 								if (nDrops) {	// if dropping at least one voice
 									m_arrScale.Sort();	// sort scale tones into ascending order
 									bool	bDropped = false;
 									for (int iDrop = 0; iDrop < nDrops; iDrop++) {	// for each voice drop
-										int	iTone = nTones - m_arrVoicing[iDrop];	// drop voicings are one-origin
-										if (iTone >= 0 && iTone < nTones) {	// if index within scale
-											m_arrScale[iTone] -= 12;	// drop voice an octave
+										int	iTone = nScaleTones - m_arrVoicing[iDrop];	// drop voicings are one-origin
+										if (iTone >= 0 && iTone < nScaleTones) {	// if index within scale
+											m_arrScale[iTone] -= OCTAVE;	// drop voice an octave
 											bDropped = true;
 										}
 									}
 									if (bDropped)	// if any voices were dropped
 										m_arrScale.Sort();	// re-sort scale tones
 								}
-								int	iTone = ModWrap(arrMod[MT_Index], nTones);
+								int	iTone = ModWrap(arrMod[MT_Index], nScaleTones);
 								nNote = m_arrScale[iTone];
 							} else {	// scale not defined
 								if (trk.m_iRangeType != RT_NONE)	// if applying range to note
@@ -815,8 +838,11 @@ bool CSequencer::OutputMidiBuffer()
 	if (t > m_stats.fCBTimeMax)
 		m_stats.fCBTimeMax = t;
 	m_stats.fCBTimeSum += t;
-	if (t > m_nLatency / 1000.0)
+	if (t > m_fLatencySecs) {	// if callback took too long
 		m_stats.nOverruns++;
+		if (m_stats.nOverruns == 1)	// if first instance of this error
+			OnMidiError(SEQERR_CALLBACK_TOO_LONG);	// report error
+	}
 	return true;
 }
 
@@ -1045,10 +1071,10 @@ void CSequencer::ConvertPositionToString(LONGLONG nPos, CString& sPos) const
 		sPos.Format(_T("%lld:%03lld"), nBeat + 1, nTick);
 }
 
-bool CSequencer::ConvertStringToPosition(const CString& sPosition, LONGLONG& nPos) const
+bool CSequencer::ConvertStringToPosition(const CString& sPos, LONGLONG& nPos) const
 {
 	LONGLONG	nFld[3];
-	int	nFields = _stscanf_s(sPosition, _T("%lld:%lld:%lld"), &nFld[0], &nFld[1], &nFld[2]);
+	int	nFields = _stscanf_s(sPos, _T("%lld:%lld:%lld"), &nFld[0], &nFld[1], &nFld[2]);
 	LONGLONG	nMeasure, nBeat, nTick;
 	if (m_nMeter > 1) {	// if valid meter
 		switch (nFields) {
@@ -1096,36 +1122,47 @@ bool CSequencer::ConvertStringToPosition(const CString& sPosition, LONGLONG& nPo
 	return true;
 }
 
-LONGLONG CSequencer::ConvertPositionToSeconds(LONGLONG nPos) const
-{
-	return round64(static_cast<double>(nPos) / m_nTimeDiv / m_fTempo * 60);
-}
-
-LONGLONG CSequencer::ConvertSecondsToPosition(LONGLONG nSecs) const
-{
-	return round64(static_cast<double>(nSecs) / 60 * m_fTempo * m_nTimeDiv);
-}
-
-LONGLONG CSequencer::ConvertMillisecondsToPosition(LONGLONG nMillis) const
-{
-	return round64(static_cast<double>(nMillis) / 60000 * m_fTempo * m_nTimeDiv);
-}
-
 void CSequencer::ConvertPositionToTimeString(LONGLONG nPos, CString& sTime) const
 {
-	LONGLONG	nTime = ConvertPositionToSeconds(nPos);
+	LONGLONG	nTime = ConvertPositionToMilliseconds(nPos);
+	static const LPCTSTR pszFormatNegative = _T("-%d:%02d:%02d.%03d");
 	LPCTSTR	pszFormat;
 	if (nTime < 0) {	// if negative time
-		pszFormat = _T("-%lld:%02lld:%02lld");
+		pszFormat = pszFormatNegative;
 		nTime = -nTime;
-	} else
-		pszFormat = _T("%lld:%02lld:%02lld");
-	LONGLONG	nSecs = nTime % 60;
+	} else	// positive time
+		pszFormat = pszFormatNegative + 1;	// skip minus sign
+	int	nMillis = nTime % 1000;
+	nTime /= 1000;
+	int	nSecs = nTime % 60;
 	nTime /= 60;
-	LONGLONG	nMins = nTime % 60;
+	int	nMins = nTime % 60;
 	nTime /= 60;
-	LONGLONG	nHours = nTime;
-	sTime.Format(pszFormat, nHours, nMins, nSecs);
+	int	nHours = static_cast<int>(nTime);
+	sTime.Format(pszFormat, nHours, nMins, nSecs, nMillis);
+}
+
+bool CSequencer::ConvertTimeStringToPosition(const CString& sPos, LONGLONG& nPos) const
+{
+	LONGLONG	nFld[4];	// hours, minutes, seconds, milliseconds
+	int	nFields = _stscanf_s(sPos, _T("%lld:%lld:%lld.%lld"), &nFld[0], &nFld[1], &nFld[2], &nFld[3]);
+	if (nFields <= 0)
+		return false;
+	bool	bHasLeadingSign = false;
+	int	iChar = static_cast<int>(_tcsspn(sPos, _T(" ")));	// skip any leading spaces
+	if (sPos[iChar] == '-') {	// if first non-space is sign 
+		nFld[0] = -nFld[0];	// negate first field, as result will be negated
+		bHasLeadingSign = true;
+	} else	// leading sign not found
+		bHasLeadingSign = false;
+	static const int	nScale[4] = {60 * 60 * 1000, 60 * 1000, 1000, 1};
+	LONGLONG	nMillis = 0;
+	for (int iField = 0; iField < nFields; iField++)	// for each field
+		nMillis += nFld[iField] * nScale[iField];	// scale field and accumulate
+	nPos = ConvertMillisecondsToPosition(nMillis);
+	if (bHasLeadingSign)	// if leading sign present
+		nPos = -nPos;	// negate result
+	return true;
 }
 
 int CSequencer::GetSongDurationSeconds() const

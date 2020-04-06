@@ -8,11 +8,13 @@
 		revision history:
 		rev		date	comments
         00      27mar18	initial version
+		01		06apr20	add callback too long error
 		
 */
 
 SEQERRDEF(BUFFER_OVERRUN)
 SEQERRDEF(BAD_TIME_FORMAT)
 SEQERRDEF(TOO_MANY_RECURSIONS)
+SEQERRDEF(CALLBACK_TOO_LONG)
 
 #undef SEQERRDEF

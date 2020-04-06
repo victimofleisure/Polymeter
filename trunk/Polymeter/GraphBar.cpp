@@ -13,6 +13,8 @@
 		03		10feb19	move temp file path wrapper to app
 		04		09sep19	add tempo modulation color
 		05		16mar20	add colors for new modulation types
+		06		01apr20	standardize context menu handling
+		07		04apr20	add color for chord modulation
 
 */
 
@@ -46,6 +48,7 @@ IMPLEMENT_DYNAMIC(CGraphBar, CMyDockablePane)
 #define MOD_TYPE_COLOR_Position	"magenta"
 #define MOD_TYPE_COLOR_Tempo	"brown"
 #define MOD_TYPE_COLOR_Scale	"purple"
+#define MOD_TYPE_COLOR_Chord	"darkgreen"
 #define MOD_TYPE_COLOR_Index	"olive"
 #define MOD_TYPE_COLOR_Voicing	"orange"
 
@@ -469,18 +472,8 @@ void CGraphBar::OnShowChanged(bool bShow)
 
 void CGraphBar::DoContextMenu(CWnd* pWnd, CPoint point)
 {
-	CRect	rc;
-	GetClientRect(rc);
-	if (point.x == -1 && point.y == -1) {
-		point = rc.TopLeft();
-		ClientToScreen(&point);
-	} else {
-		ClientToScreen(rc);
-		if (!rc.PtInRect(point)) {
-			CMyDockablePane::OnContextMenu(pWnd, point);
-			return;
-		}
-	}
+	if (FixContextMenuPoint(pWnd, point))
+		return;
 	CMenu	menu;
 	VERIFY(menu.LoadMenu(IDR_GRAPH_CTX));
 	UpdateMenu(this, &menu);

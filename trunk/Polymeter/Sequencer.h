@@ -18,6 +18,8 @@
 		08		29feb20	add support for recording live events
 		09		16mar20	add scale, index and voicing modulation
 		10		20mar20	add mapping
+		11		03apr20	add milliseconds to time format
+		12		04apr20	add chord modulation
 
 */
 
@@ -104,10 +106,12 @@ public:
 	void	ConvertBeatToPosition(LONGLONG nMeasure, LONGLONG nBeat, LONGLONG nTick, LONGLONG& nPos) const;
 	void	ConvertPositionToString(LONGLONG nPos, CString& sPos) const;
 	bool	ConvertStringToPosition(const CString& sPos, LONGLONG& nPos) const;
+	void	ConvertPositionToTimeString(LONGLONG nPos, CString& sTime) const;
+	bool	ConvertTimeStringToPosition(const CString& sPos, LONGLONG& nPos) const;
 	LONGLONG	ConvertPositionToSeconds(LONGLONG nPos) const;
 	LONGLONG	ConvertSecondsToPosition(LONGLONG nSecs) const;
+	LONGLONG	ConvertPositionToMilliseconds(LONGLONG nPos) const;
 	LONGLONG	ConvertMillisecondsToPosition(LONGLONG nMillis) const;
-	void	ConvertPositionToTimeString(LONGLONG nPos, CString& sTime) const;
 	void	RecordDub(int iTrack);
 	void	RecordDub(const CIntArrayEx& arrSelection);
 	void	RecordDub();
@@ -142,6 +146,7 @@ protected:
 		BUFFERS = 2,				// number of playback buffers
 		DEF_BUFFER_SIZE = 4096,		// default buffer size, in events
 		MOD_MAX_RECURSIONS = 32,	// maximum number of modulation recursions
+		OCTAVE = 12,				// size of an octave in semitones
 	};
 
 // Member data
@@ -172,6 +177,7 @@ protected:
 	bool	m_bIsOutputCapture;		// true if capturing output events
 	bool	m_bPreventNoteOverlap;	// true if preventing note overlaps
 	STATS	m_stats;				// timing statistics
+	double	m_fLatencySecs;			// desired playback latency in fractional seconds
 	CMidiEventStream	m_arrMidiEvent[BUFFERS];	// array of MIDI event stream buffers
 	CMidiEventArray	m_arrEvent;			// array of track events
 	CMidiEventArray	m_arrNoteOff;		// array of pending note off events
@@ -181,8 +187,9 @@ protected:
 	BYTE	m_arrNoteRef[MIDI_CHANNELS][MIDI_NOTES];	// note reference counts
 	CMidiEventArray	m_arrOutputEvent;	// MIDI event buffer for capturing output
 	CMidiEventArray	m_arrRecordEvent;	// MIDI event buffer for recording live MIDI
-	CIntArrayEx	m_arrScale;			// array of notes in current scale, as signed offsets
-	CIntArrayEx	m_arrVoicing;		// array of voices to drop an octave, as scale indices
+	CIntArrayEx	m_arrScale;			// array of notes in current scale, as signed note offsets
+	CIntArrayEx	m_arrChord;			// array of tones to select from current scale, as scale indices
+	CIntArrayEx	m_arrVoicing;		// array of voices to drop an octave, as one-origin indices from top
 	CDWordArrayEx	m_arrMappedEvent;	// array of translated MIDI events from mapping
 
 #if SEQ_DUMP_EVENTS
@@ -355,3 +362,24 @@ inline void CSequencer::SetRecordOffset(int nTicks)
 {
 	m_nRecordOffset = nTicks;
 }
+
+inline LONGLONG CSequencer::ConvertPositionToSeconds(LONGLONG nPos) const
+{
+	return round64(static_cast<double>(nPos) / m_nTimeDiv / m_fTempo * 60);
+}
+
+inline LONGLONG CSequencer::ConvertSecondsToPosition(LONGLONG nSecs) const
+{
+	return round64(static_cast<double>(nSecs) / 60 * m_fTempo * m_nTimeDiv);
+}
+
+inline LONGLONG CSequencer::ConvertPositionToMilliseconds(LONGLONG nPos) const
+{
+	return round64(static_cast<double>(nPos) / m_nTimeDiv / m_fTempo * 60000);
+}
+
+inline LONGLONG CSequencer::ConvertMillisecondsToPosition(LONGLONG nMillis) const
+{
+	return round64(static_cast<double>(nMillis) / 60000 * m_fTempo * m_nTimeDiv);
+}
+

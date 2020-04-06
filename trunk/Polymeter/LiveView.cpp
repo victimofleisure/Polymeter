@@ -11,6 +11,7 @@
         01      15dec18	show unnamed tracks
         02      12dec19	add GetPeriod
         03      18mar20	get song position from document instead of sequencer
+		04		01apr20	standardize context menu handling
 
 */
 
@@ -688,7 +689,7 @@ void CLiveView::OnContextMenu(CWnd* pWnd, CPoint point)
 	UNREFERENCED_PARAMETER(pWnd);
 	int	iList = ListHitTest(point);
 	if (iList >= 0)
-		CChannelsBar::ShowListColumnHeaderMenu(this, &m_list[iList], point);
+		CPolymeterApp::ShowListColumnHeaderMenu(this, m_list[iList], point);
 }
 
 void CLiveView::OnLButtonDown(UINT nFlags, CPoint point)

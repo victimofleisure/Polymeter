@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		14jun18	initial version
+		01		01apr20	standardize context menu handling
 		
 */
 
@@ -123,17 +124,9 @@ END_MESSAGE_MAP()
 
 void CPresetsBar::OnContextMenu(CWnd* pWnd, CPoint point)
 {
-	UNREFERENCED_PARAMETER(pWnd);
-	if (point.x == -1 && point.y == -1) {
-		CRect	rc;
-		GetClientRect(rc);
-		point = rc.TopLeft();
-		ClientToScreen(&point);
-	}
-	CMenu	menu;
-	menu.LoadMenu(IDR_PRESETS_CTX);
-	UpdateMenu(this, &menu);
-	menu.GetSubMenu(0)->TrackPopupMenu(0, point.x, point.y, this);
+	if (FixListContextMenuPoint(pWnd, m_list, point))
+		return;
+	DoGenericContextMenu(IDR_PRESETS_CTX, point, this);
 }
 
 void CPresetsBar::OnTrackPresetCreate()

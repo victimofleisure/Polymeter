@@ -426,6 +426,15 @@
     <ClInclude Include="Mapping.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="D2DImageWriter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameSizeDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RecordDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Polymeter.cpp">
@@ -708,6 +717,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Mapping.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D2DImageWriter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RecordDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

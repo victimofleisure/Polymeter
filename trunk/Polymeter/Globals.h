@@ -9,7 +9,9 @@
 		rev		date	comments
         00		23mar18	initial version
 		01		29jan19	add MIDI event message
-		02		20mar20	add track property message
+		02		20mar20	add track property change message
+		03		01apr20	add generic context menu method
+		04		05apr20	add track step change message
 
 		global definitions and inlines
 
@@ -57,6 +59,7 @@ bool CopyStringToClipboard(HWND m_hWnd, const CString& strData);
 
 void EnableChildWindows(CWnd& Wnd, bool Enable, bool Deep = TRUE);
 void UpdateMenu(CWnd *pWnd, CMenu *pMenu);
+void DoGenericContextMenu(UINT nIDResource, CPoint point, CWnd* pWnd);
 bool FormatNumberCommas(LPCTSTR pszSrc, CString& sDst, int nPrecision = 0);
 int StringReplaceNoCase(CString& str, LPCTSTR pszOld, LPCTSTR pszNew);
 
@@ -95,7 +98,8 @@ enum {	// application-wide user window messages, based on WP_APP
 	UWM_DEVICE_NODE_CHANGE,		// wParam: none, lParam: none
 	UWM_SHOW_CHANGING,			// wParam: none, lParam: none
 	UWM_MIDI_EVENT,				// wParam: timestamp, lParam: MIDI message
-	UWM_TRACK_PROPERTY,			// wParam: track index, lParam: LSW property value, MSW property index
+	UWM_TRACK_PROPERTY_CHANGE,	// wParam: track index, lParam: property index
+	UWM_TRACK_STEP_CHANGE,		// wParam: track index, lParam: step index
 };
 
 // undo natter should always be zero in a shipping version

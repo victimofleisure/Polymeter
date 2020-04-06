@@ -23,6 +23,8 @@
 		13		17mar20	move bar docking into CreateDockingWindows
 		14		18mar20	cache song position in document
 		15		20mar20	add mapping
+		16		05apr20	add track step change handler
+		17		06apr20	on tempo change, update song time in status bar
 
 */
 
@@ -729,7 +731,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_MESSAGE(UWM_DEVICE_NODE_CHANGE, OnDeviceNodeChange)
 	ON_WM_DEVICECHANGE()
 	ON_COMMAND(ID_TOOLS_DEVICES, OnToolsDevices)
-	ON_MESSAGE(UWM_TRACK_PROPERTY, OnTrackProperty)
+	ON_MESSAGE(UWM_TRACK_PROPERTY_CHANGE, OnTrackPropertyChange)
+	ON_MESSAGE(UWM_TRACK_STEP_CHANGE, OnTrackStepChange)
 	ON_COMMAND(ID_EDIT_FIND, OnEditFind)
 	ON_COMMAND(ID_EDIT_REPLACE, OnEditReplace)
 	ON_REGISTERED_MESSAGE(WM_FINDREPLACE, OnFindReplace)
@@ -921,6 +924,7 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 		switch (iProp) {
 		case CMasterProps::PROP_fTempo:
 			pDoc->m_Seq.SetTempo(pDoc->m_fTempo);
+			UpdateSongPosition();	// update song time in status bar
 			break;
 		case CMasterProps::PROP_nTimeDiv:
 			// convert time division preset index to time division value in ticks
@@ -1020,16 +1024,33 @@ BOOL CMainFrame::OnDeviceChange(UINT nEventType, W64ULONG dwData)
 	return retc;	// true to allow device change
 }
 
-LRESULT CMainFrame::OnTrackProperty(WPARAM wParam, LPARAM lParam)
+LRESULT CMainFrame::OnTrackPropertyChange(WPARAM wParam, LPARAM lParam)
 {
 	// this message can be posted by worker threads, so proceed cautiously
-	int	iTrack = static_cast<int>(wParam);
-	int	iProp = HIWORD(lParam);
 	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
-	if (pDoc != NULL) {
+	if (pDoc != NULL) {	// if valid document
+		int	iTrack = static_cast<int>(wParam);
 		if (iTrack >= 0 && iTrack < pDoc->GetTrackCount()) {	// if valid track index
+			int	iProp = static_cast<int>(lParam);
 			CPolymeterDoc::CPropHint	hint(iTrack, iProp);
 			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_PROP, &hint);
+		}
+	}
+	return 0;
+}
+
+LRESULT CMainFrame::OnTrackStepChange(WPARAM wParam, LPARAM lParam)
+{
+	// this message can be posted by worker threads, so proceed cautiously
+	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
+	if (pDoc != NULL) {	// if valid document
+		int	iTrack = static_cast<int>(wParam);
+		if (iTrack >= 0 && iTrack < pDoc->GetTrackCount()) {	// if valid track index
+			int	iStep = static_cast<int>(lParam);
+			if (iStep >= 0 && iStep < pDoc->m_Seq.GetLength(iTrack)) {	// if valid step index
+				CPolymeterDoc::CPropHint	hint(iTrack, iStep);
+				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_STEP, &hint);
+			}
 		}
 	}
 	return 0;

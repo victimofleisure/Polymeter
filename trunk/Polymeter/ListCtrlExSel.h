@@ -19,6 +19,7 @@
 		09		05jun18	make LoadArray public
 		10		21jun18	add RedrawItem
 		11		17mar20	add method to delete all columns
+		12		01apr20	add ResetColumnHeader
 
 		extended selection list control
  
@@ -79,6 +80,7 @@ public:
 	bool	SaveColumnOrder(LPCTSTR pszSection, LPCTSTR pszKey);
 	bool	LoadColumnOrder(LPCTSTR pszSection, LPCTSTR pszKey);
 	bool	ResetColumnOrder();
+	void	ResetColumnHeader(const COL_INFO *pColInfo, int nColumns);
 	void	FixContextMenuPoint(CPoint& point);
 	void	EnableToolTips(BOOL bEnable = TRUE);
 	BOOL	RedrawItem(int iItem);

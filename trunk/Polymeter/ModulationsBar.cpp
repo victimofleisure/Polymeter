@@ -12,6 +12,7 @@
 		02		21jan19	fix paste not setting document modified flag
 		03		22jan19	use update all views consistently
 		04		19mar20	move edit key dispatching to app for reuse
+		05		01apr20	standardize context menu handling
 		
 */
 
@@ -511,19 +512,9 @@ LRESULT CModulationsBar::OnDeferredUpdate(WPARAM wParam, LPARAM lParam)
 
 void CModulationsBar::OnContextMenu(CWnd* pWnd, CPoint point)
 {
-	if (CChannelsBar::ShowListColumnHeaderMenu(this, &m_grid, point))
+	if (FixListContextMenuPoint(pWnd, m_grid, point))
 		return;
-	UNREFERENCED_PARAMETER(pWnd);
-	if (point.x == -1 && point.y == -1) {
-		CRect	rc;
-		GetClientRect(rc);
-		point = rc.TopLeft();
-		ClientToScreen(&point);
-	}
-	CMenu	menu;
-	menu.LoadMenu(IDR_MODULATION_CTX);
-	UpdateMenu(this, &menu);
-	menu.GetSubMenu(0)->TrackPopupMenu(0, point.x, point.y, this);
+	DoGenericContextMenu(IDR_MODULATION_CTX, point, this);
 }
 
 BOOL CModulationsBar::PreTranslateMessage(MSG* pMsg)
@@ -535,11 +526,7 @@ BOOL CModulationsBar::PreTranslateMessage(MSG* pMsg)
 
 void CModulationsBar::OnListColHdrReset()
 {
-	m_grid.SetRedraw(false);	// disable drawing to reduce flicker
-	m_grid.ResetColumnWidths(m_arrColInfo, COLUMNS);
-	m_grid.ResetColumnOrder();
-	m_grid.SetRedraw();	// reenable drawing
-	m_grid.Invalidate();
+	m_grid.ResetColumnHeader(m_arrColInfo, COLUMNS);
 }
 
 void CModulationsBar::OnEditCopy()

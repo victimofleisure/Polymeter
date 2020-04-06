@@ -16,6 +16,7 @@
 		06		29feb20	add support for recording live events
 		07		20mar20	add mapping
 		08		27mar20	fix MIDI device change detection
+		09		01apr20	add list column header reset handler
 
 */
 
@@ -73,6 +74,7 @@ public:
 	static	void	SnakeToStartCase(CString& str);
 	static	void	SnakeToUpperCamelCase(CString& str);
 	static	bool	MakePopup(CMenu& Menu, int StartID, CStringArrayEx& Item, int SelIdx);
+	static	bool	ShowListColumnHeaderMenu(CWnd *pWnd, CListCtrl& list, CPoint point);
 
 // Overrides
 	virtual BOOL InitInstance();

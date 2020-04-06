@@ -8,10 +8,13 @@
 		revision history:
 		rev		date	comments
         00		08jan19	initial version
+		01		01apr20	add ShowDockingContextMenu
 
 */
 
 #pragma once
+
+class CListCtrlExSel;
 
 class CMyDockablePane : public CDockablePane
 {
@@ -26,6 +29,9 @@ public:
 
 // Operations
 public:
+	bool	ShowDockingContextMenu(CWnd* pWnd, CPoint point);
+	bool	FixContextMenuPoint(CWnd *pWnd, CPoint& point);
+	bool	FixListContextMenuPoint(CWnd *pWnd, CListCtrlExSel& list, CPoint& point);
 
 // Implementation
 public:

@@ -14,6 +14,7 @@
 		04		27jan19	load track resource strings during startup
 		05		06mar20	work around buggy item changed notifications
 		06		17mar20	check m_bIsUpdating before posting selection change
+		07		01apr20	standardize context menu handling
 
 */
 
@@ -574,8 +575,9 @@ void CTrackView::OnSize(UINT nType, int cx, int cy)
 void CTrackView::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	UNREFERENCED_PARAMETER(pWnd);
-	if (CChannelsBar::ShowListColumnHeaderMenu(this, &m_grid, point))
+	if (CPolymeterApp::ShowListColumnHeaderMenu(this, m_grid, point))
 		return;
+	m_grid.FixContextMenuPoint(point);
 	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE);
 }
 
@@ -753,13 +755,9 @@ void CTrackView::OnListHdrEndTrack(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CTrackView::OnListColHdrReset()
 {
-	m_grid.SetRedraw(false);	// disable drawing to reduce flicker
-	m_grid.ResetColumnWidths(m_arrColInfo, COLUMNS);	// reset column widths
+	m_grid.ResetColumnHeader(m_arrColInfo, COLUMNS);
 	OnListHdrEndTrack(NULL, NULL);	// broadcast reset column widths to other views
-	m_grid.ResetColumnOrder();	// reset column order
 	OnListHdrReorder(0, 0);	// broadcast reset column order to other views
-	m_grid.SetRedraw();	// reenable drawing
-	m_grid.Invalidate();
 }
 
 void CTrackView::OnEditRename()

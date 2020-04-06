@@ -10,6 +10,7 @@
         00      20mar20	initial version
 		01		27mar20	match control parameter only if event uses it
 		02		29mar20	add get/set input message for selected mappings
+		03		05apr20	add track step mapping
 
 */
 
@@ -51,10 +52,6 @@ int CMapping::GetProperty(int iProp) const
 void CMapping::SetProperty(int iProp, int nVal)
 {
 	ASSERT(iProp >= 0 && iProp < PROPERTIES);
-	enum {
-		#define MAPPINGDEF(name, align, width, member, minval, maxval) PROP_##name,
-		#include "MappingDef.h"	// generate member enumeration
-	};
 	switch (iProp) {
 	#define MAPPINGDEF(name, align, width, member, minval, maxval) case PROP_##name: m_n##member = nVal; break;
 	#include "MappingDef.h"	// generate cases for each member
@@ -148,8 +145,7 @@ bool CMappingArray::MapMidiEvent(DWORD dwInEvent, CDWordArrayEx& arrOutEvent) co
 				nDataVal = MIDI_P1(dwInEvent);	// get data value from input message P1
 			int	nDeltaRange = map.m_nRangeEnd - map.m_nRangeStart;	// can be negative if start > end
 			nDataVal = round(nDataVal / 127.0 * nDeltaRange) + map.m_nRangeStart;	// apply range
-			int	iTrackProp = map.m_nOutEvent - MIDI_CHANNEL_VOICE_MESSAGES;
-			if (iTrackProp < 0) {	// if output event is a channel voice message
+			if (map.m_nOutEvent < MIDI_CHANNEL_VOICE_MESSAGES) {	// if output event is a channel voice message
 				nDataVal = CLAMP(nDataVal, 0, MIDI_NOTE_MAX);	// clamp result to valid MIDI data range
 				int	nP1, nP2;
 				if (map.m_nOutEvent <= MIDI_CVM_CONTROL) { // if output message has a control parameter
@@ -164,26 +160,45 @@ bool CMappingArray::MapMidiEvent(DWORD dwInEvent, CDWordArrayEx& arrOutEvent) co
 			} else {	// output event is a track property
 				CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 				if (pDoc != NULL) {	// if active document
-					switch (iTrackProp) {
-					case CTrack::PROP_Name:
-						break;	// not supported, fail quietly
+					switch (map.m_nOutEvent) {
+					case CMapping::OUT_Steps:
+						{
+							int	iTrack = map.m_nTrack;
+							if (iTrack >= 0) {	// if track index specified
+								if (map.m_nOutControl < pDoc->m_Seq.GetLength(iTrack)) {
+									nDataVal = CLAMP(nDataVal, 0, MIDI_NOTE_MAX);	// clamp data to step range
+									{	// lock track critical section
+										WCritSec::Lock	lock(pDoc->m_Seq.GetCritSec());	// serialize access to track array
+										pDoc->m_Seq.SetStep(iTrack, map.m_nOutControl, 
+											static_cast<CTrackBase::STEP>(nDataVal));
+									}	// unlock track critical section ASAP
+									// recipient should check track and step indices to make sure they're still valid
+									theApp.GetMainFrame()->PostMessage(UWM_TRACK_STEP_CHANGE,	// post message to update UI
+										iTrack, map.m_nOutControl);
+								}
+							}
+						}
+						break;
 					default:
 						int	iTrack = map.m_nTrack;
 						if (iTrack >= 0) {	// if track index specified
+							int	iTrackProp = map.m_nOutEvent - MIDI_CHANNEL_VOICE_MESSAGES;	// track property index
+							if (iTrackProp == CTrackBase::PROP_Name)	// if name property
+								break;	// unsupported, fail silently
 							int	nMinVal, nMaxVal;
 							CTrackBase::GetPropertyRange(iTrackProp, nMinVal, nMaxVal);
 							if (nMinVal != nMaxVal)	// if property specifies a range
-								nDataVal = CLAMP(nDataVal, nMinVal, nMaxVal);	// apply property range
+								nDataVal = CLAMP(nDataVal, nMinVal, nMaxVal);	// clamp data to property range
 							{	// lock track critical section
 								WCritSec::Lock	lock(pDoc->m_Seq.GetCritSec());	// serialize access to track array
 								if (iTrack < pDoc->GetTrackCount()) {	// if track index within valid range
 									CComVariant	var(nDataVal);
 									pDoc->m_Seq.SetTrackProperty(iTrack, iTrackProp, var);	// update track property
 								}
-							}	// unlock track critical section
+							}	// unlock track critical section ASAP
 							// recipient should check track index to make sure it's still within valid range
-							theApp.GetMainFrame()->PostMessage(UWM_TRACK_PROPERTY,	// post message to update UI
-								iTrack, MAKELONG(nDataVal, iTrackProp));
+							theApp.GetMainFrame()->PostMessage(UWM_TRACK_PROPERTY_CHANGE,	// post message to update UI
+								iTrack, iTrackProp);
 						}
 					}
 				}

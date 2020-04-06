@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		17mar20	initial version
+		01		06apr20	add copy text to clipboard
 
 */
 
@@ -57,6 +58,7 @@ protected:
 		STF_OCTAVES		= 0x04,		// include octave in note name
 		STF_TIES		= 0x08,		// show tie bits
 		STF_HEX			= 0x10,		// show hexadecimal
+		STF_COLS_STEPS	= 0x20,		// in export, columns are steps and rows are tracks
 	};
 	static const COLORREF	m_arrStepColor[];	// step colors
 
@@ -75,9 +77,12 @@ protected:
 	void	ToggleStepFormat(UINT nMask);
 	void	ShowHighlights(bool bEnable);
 	void	UpdateHighlights();
+	bool	GetExportTable(CString& sTable);
+	void	ConvertListItemToString(int iItem, int iSubItem, LPTSTR pszText, int cchTextMax);
 
 // Overrides
 	virtual	void OnShowChanged(bool bShow);
+	virtual	BOOL PreTranslateMessage(MSG* pMsg);
 
 // Generated message map functions
 	DECLARE_MESSAGE_MAP()
@@ -98,4 +103,10 @@ protected:
 	afx_msg void OnUpdateFormatTies(CCmdUI *pCmdUI);
 	afx_msg void OnFormatHex();
 	afx_msg void OnUpdateFormatHex(CCmdUI *pCmdUI);
+	afx_msg void OnEditSelectAll();
+	afx_msg void OnUpdateEditSelectAll(CCmdUI *pCmdUI);
+	afx_msg void OnEditCopy();
+	afx_msg void OnUpdateEditCopy(CCmdUI *pCmdUI);
+	afx_msg void OnLayout(UINT nID);
+	afx_msg void OnUpdateLayout(CCmdUI *pCmdUI);
 };

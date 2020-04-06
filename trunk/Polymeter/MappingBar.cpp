@@ -9,6 +9,8 @@
 		rev		date	comments
         00		20mar20	initial version
 		01		29mar20	add learn multiple mappings; add map selected tracks
+		02		01apr20	standardize context menu handling
+		03		05apr20	add track step mapping
 		
 */
 
@@ -71,6 +73,7 @@ void CMappingBar::InitEventNames()
 	for (int iProp = 0; iProp < CTrackBase::PROPERTIES; iProp++) {	// for each track property
 		m_arrOutputEventName[MIDI_CHANNEL_VOICE_MESSAGES + iProp] = LDS(CTrackBase::GetPropertyNameID(iProp));
 	}
+	m_arrOutputEventName[CMapping::OUT_Steps] = LDS(IDS_TRK_STEP);
 }
 
 void CMappingBar::OnShowChanged(bool bShow)
@@ -447,19 +450,9 @@ void CMappingBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CMappingBar::OnContextMenu(CWnd* pWnd, CPoint point)
 {
-	if (CChannelsBar::ShowListColumnHeaderMenu(this, &m_grid, point))
+	if (FixListContextMenuPoint(pWnd, m_grid, point))
 		return;
-	UNREFERENCED_PARAMETER(pWnd);
-	if (point.x == -1 && point.y == -1) {
-		CRect	rc;
-		GetClientRect(rc);
-		point = rc.TopLeft();
-		ClientToScreen(&point);
-	}
-	CMenu	menu;
-	menu.LoadMenu(IDR_MAPPING_CTX);
-	UpdateMenu(this, &menu);
-	menu.GetSubMenu(0)->TrackPopupMenu(0, point.x, point.y, this);
+	DoGenericContextMenu(IDR_MAPPING_CTX, point, this);
 }
 
 BOOL CMappingBar::PreTranslateMessage(MSG* pMsg)
@@ -471,11 +464,7 @@ BOOL CMappingBar::PreTranslateMessage(MSG* pMsg)
 
 void CMappingBar::OnListColHdrReset()
 {
-	m_grid.SetRedraw(false);	// disable drawing to reduce flicker
-	m_grid.ResetColumnWidths(m_arrColInfo, COLUMNS);
-	m_grid.ResetColumnOrder();
-	m_grid.SetRedraw();	// reenable drawing
-	m_grid.Invalidate();
+	m_grid.ResetColumnHeader(m_arrColInfo, COLUMNS);
 }
 
 void CMappingBar::OnListReorder(NMHDR* pNMHDR, LRESULT* pResult)

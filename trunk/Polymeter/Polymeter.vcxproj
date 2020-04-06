@@ -204,7 +204,9 @@
     <ClInclude Include="ConvergencesDlg.h" />
     <ClInclude Include="CritSec.h" />
     <ClInclude Include="CtrlResize.h" />
+    <ClInclude Include="D2DImageWriter.h" />
     <ClInclude Include="FolderDialog.h" />
+    <ClInclude Include="FrameSizeDef.h" />
     <ClInclude Include="GraphBar.h" />
     <ClInclude Include="GraphTypeDef.h" />
     <ClInclude Include="Mapping.h" />
@@ -269,6 +271,7 @@
     <ClInclude Include="Preset.h" />
     <ClInclude Include="PresetsBar.h" />
     <ClInclude Include="PreviewGridCtrl.h" />
+    <ClInclude Include="RecordDlg.h" />
     <ClInclude Include="RecursiveFileFind.h" />
     <ClInclude Include="RulerCtrl.h" />
     <ClInclude Include="Scale.h" />
@@ -336,6 +339,7 @@
     <ClCompile Include="ColoredButton.cpp" />
     <ClCompile Include="ConvergencesDlg.cpp" />
     <ClCompile Include="CtrlResize.cpp" />
+    <ClCompile Include="D2DImageWriter.cpp" />
     <ClCompile Include="FolderDialog.cpp" />
     <ClCompile Include="GraphBar.cpp" />
     <ClCompile Include="Mapping.cpp" />
@@ -384,6 +388,7 @@
     <ClCompile Include="Preset.cpp" />
     <ClCompile Include="PresetsBar.cpp" />
     <ClCompile Include="PreviewGridCtrl.cpp" />
+    <ClCompile Include="RecordDlg.cpp" />
     <ClCompile Include="RecursiveFileFind.cpp" />
     <ClCompile Include="RulerCtrl.cpp" />
     <ClCompile Include="Scale.cpp" />

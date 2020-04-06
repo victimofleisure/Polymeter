@@ -1,4 +1,4 @@
-// Copyleft 2018 Chris Korda
+// Copyleft 2019 Chris Korda
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 2 of the License, or any later version.
@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		12dec19	initial version
+        01		02apr20	add video export
 		
 */
 
@@ -66,6 +67,7 @@ protected:
 	int		m_iAnchorOrbit;			// index of orbital selection range anchor, or -1 if none
 	CD2DSizeF	m_szDPI;			// Direct2D resolution in dots per inch
 	bool	m_bUsingD2D;			// true if using Direct2D
+	int		m_nMaxPlanetWidth;		// in D2D device-independent pixels (DIPs)
 
 // Overrides
 	virtual	void OnShowChanged(bool bShow);
@@ -79,6 +81,7 @@ protected:
 	bool	IsValidOrbit(int iOrbit) const;
 	void	OnTrackSelectionChange();
 	void	OnTrackMuteChange();
+	bool	ExportVideo(LPCTSTR pszFolderPath, CSize szFrame, double fFrameRate, int nDurationFrames);
 
 // Generated message map functions
 	DECLARE_MESSAGE_MAP()
@@ -89,6 +92,9 @@ protected:
 	afx_msg LRESULT OnDrawD2D(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+	afx_msg void OnExportVideo();
+	afx_msg void OnUpdateExportVideo(CCmdUI *pCmdUI);
 };
 
 inline bool CPhaseBar::HaveDataTip() const

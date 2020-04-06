@@ -8,12 +8,14 @@
 		revision history:
 		rev		date	comments
         00		08jan19	initial version
+		01		01apr20	add ShowDockingContextMenu
 
 */
 
 #include "stdafx.h"
 #include "Polymeter.h"
 #include "MyDockablePane.h"
+#include "ListCtrlExSel.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -40,6 +42,44 @@ void CMyDockablePane::OnShowChanged(bool bShow)
 {
 	UNREFERENCED_PARAMETER(bShow);
 }
+
+bool CMyDockablePane::ShowDockingContextMenu(CWnd* pWnd, CPoint point)
+{
+	if (point.x == -1 && point.y == -1)	// if menu triggered via keyboard
+		return false;
+	CRect	rc;
+	GetClientRect(rc);
+	ClientToScreen(rc);
+	if (!rc.PtInRect(point)) {	// if point outside client area
+		OnContextMenu(pWnd, point);	// show docking context menu
+		return true;	// docking context menu was displayed
+	}
+	return false;
+}
+
+bool CMyDockablePane::FixContextMenuPoint(CWnd *pWnd, CPoint& point)
+{
+	if (ShowDockingContextMenu(pWnd, point))
+		return true;	// docking context menu was displayed
+	if (point.x == -1 && point.y == -1) {	// if menu triggered via keyboard
+		CRect	rc;
+		GetClientRect(rc);
+		point = rc.TopLeft();
+		ClientToScreen(&point);
+	}
+	return false;
+}
+
+bool CMyDockablePane::FixListContextMenuPoint(CWnd *pWnd, CListCtrlExSel& list, CPoint& point)
+{
+	if (ShowDockingContextMenu(pWnd, point))
+		return true;	// context menu was displayed
+	if (CPolymeterApp::ShowListColumnHeaderMenu(this, list, point))
+		return true;	// context menu was displayed
+	list.FixContextMenuPoint(point);
+	return false;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////
 // CMyDockablePane message map

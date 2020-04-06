@@ -13,6 +13,7 @@
 		03		10feb19	add method to get array of channel status nicknames
 		04		17feb20	inherit MIDI event class from track base
 		05		19mar20	move MIDI message enums to Midi header
+		06		01apr20	standardize context menu handling
 		
 */
 
@@ -463,18 +464,8 @@ GetDispInfoP1Default:
 
 void CMidiEventBar::OnContextMenu(CWnd* pWnd, CPoint point)
 {
-	CRect	rc;
-	GetClientRect(rc);
-	if (point.x == -1 && point.y == -1) {
-		point = rc.TopLeft();
-		ClientToScreen(&point);
-	} else {
-		ClientToScreen(rc);
-		if (!rc.PtInRect(point)) {
-			CMyDockablePane::OnContextMenu(pWnd, point);
-			return;
-		}
-	}
+	if (FixListContextMenuPoint(pWnd, m_list, point))
+		return;
 	CMenu	menu;
 	VERIFY(menu.LoadMenu(IDR_MIDI_EVENT_CTX));
 	UpdateMenu(this, &menu);
@@ -608,7 +599,7 @@ void CMidiEventBar::OnUpdateExport(CCmdUI *pCmdUI)
 
 void CMidiEventBar::OnListColHdrReset()
 {
-	m_list.ResetColumnWidths(m_arrColInfo, COLUMNS);
+	m_list.ResetColumnHeader(m_arrColInfo, COLUMNS);
 }
 
 void CMidiEventBar::OnShowSystemMessages()

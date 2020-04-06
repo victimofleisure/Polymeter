@@ -8,6 +8,8 @@
 		revision history:
 		rev		date	comments
         00		23mar18	initial version
+		01		01apr20	add generic context menu method
+		02		06apr20	in FormatNumberCommas, emulate GetNumberFormatEx
 
 */
 
@@ -147,23 +149,43 @@ void UpdateMenu(CWnd *pWnd, CMenu *pMenu)
 	}
 }
 
+void DoGenericContextMenu(UINT nIDResource, CPoint point, CWnd* pWnd)
+{
+	CMenu	menu;
+	VERIFY(menu.LoadMenu(nIDResource));
+	UpdateMenu(pWnd, &menu);
+	menu.GetSubMenu(0)->TrackPopupMenu(0, point.x, point.y, pWnd);
+}
+
 bool FormatNumberCommas(LPCTSTR pszSrc, CString& sDst, int nPrecision)
 {
-	USES_CONVERSION;
 	WCHAR	szDecimal[4];
 	WCHAR	szThousand[4];
 	if (!GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL, szDecimal, _countof(szDecimal)))
 		return false;
 	if (!GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, szThousand, _countof(szThousand)))
 		return false;
-	NUMBERFMTW	fmt = {nPrecision, 0, 3, szDecimal, szThousand};
-	int	nLen = GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, T2CW(pszSrc), &fmt, NULL, 0);
-	CStringW	sBuf;
-	LPWSTR	pBuf = sBuf.GetBuffer(nLen);
-	if (!GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, T2CW(pszSrc), &fmt, pBuf, nLen))
-		return false;
-	sBuf.ReleaseBuffer();
-	sDst = sBuf;
+	if (0) {	// GetNumberFormatEx crashes or fails in OSX via WineBottler
+		USES_CONVERSION;
+		NUMBERFMTW	fmt = {nPrecision, 0, 3, szDecimal, szThousand};
+		int	nLen = GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, T2CW(pszSrc), &fmt, NULL, 0);
+		CStringW	sBuf;
+		LPWSTR	pBuf = sBuf.GetBuffer(nLen);
+		if (!GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, T2CW(pszSrc), &fmt, pBuf, nLen))
+			return false;
+		sBuf.ReleaseBuffer();
+		sDst = sBuf;
+	} else {	// emulate the basics of GetNumberFormatEx
+		sDst = pszSrc;
+		int	nLen = sDst.GetLength();
+		if (nPrecision > 0 && nPrecision < nLen) {	// if precision specified and applicable
+			nLen -= nPrecision;
+			sDst.Insert(nLen, szDecimal);	// insert decimal separator
+		}
+		for (int iChar = nLen - 3; iChar > 0; iChar -= 3) {	// for each thousands group
+			sDst.Insert(iChar, szThousand);	// insert thousands separator
+		}
+	}
 	return true;
 }
 

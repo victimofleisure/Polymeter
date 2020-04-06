@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		15apr18	initial version
+		01		01apr20	standardize context menu handling
 		
 */
 
@@ -37,7 +38,6 @@ public:
 	void	Update(int iChan);
 	void	Update(int iChan, int iProp);
 	void	Update(const CIntArrayEx& arrSelection, int iProp);
-	static	bool	ShowListColumnHeaderMenu(CWnd *pWnd, CListCtrl *pList, CPoint point);
 
 // Implementation
 public:

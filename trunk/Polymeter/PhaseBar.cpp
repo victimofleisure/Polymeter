@@ -1,4 +1,4 @@
-// Copyleft 2018 Chris Korda
+// Copyleft 2019 Chris Korda
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
 // Software Foundation; either version 2 of the License, or any later version.
@@ -9,6 +9,7 @@
 		rev		date	comments
         00		12dec19	initial version
 		01		18mar20	get song position from document instead of sequencer
+        02		02apr20	add video export
 		
 */
 
@@ -19,6 +20,12 @@
 #include "PolymeterDoc.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include "D2DImageWriter.h"
+#include "SaveObj.h"
+#include "ProgressDlg.h"
+#include "PathStr.h"
+#include "FolderDialog.h"
+#include "RecordDlg.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -31,12 +38,15 @@ static char THIS_FILE[]=__FILE__;
 
 IMPLEMENT_DYNAMIC(CPhaseBar, CMyDockablePane)
 
+#define RK_EXPORT_FOLDER _T("ExportFolder")
+
 CPhaseBar::CPhaseBar()
 {
 	m_nSongPos = 0;
 	m_iTipOrbit = -1;
 	m_iAnchorOrbit = -1;
 	m_bUsingD2D = false;
+	m_nMaxPlanetWidth = MAX_PLANET_WIDTH;
 }
 
 CPhaseBar::~CPhaseBar()
@@ -226,6 +236,44 @@ void CPhaseBar::SelectTracksByPeriod(const CIntArrayEx& arrPeriod) const
 	}
 }
 
+bool CPhaseBar::ExportVideo(LPCTSTR pszFolderPath, CSize szFrame, double fFrameRate, int nDurationFrames)
+{
+	ASSERT(fFrameRate > 0);
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	ASSERT(pDoc != NULL);
+	if (pDoc == NULL)
+		return false;
+	CSaveObj<int>	saveMaxPlanetWidth(m_nMaxPlanetWidth, INT_MAX);
+	CSaveObj<LONGLONG>	saveSongPos(m_nSongPos, 0);
+	CD2DImageWriter	imgWriter;
+	if (!imgWriter.Create(szFrame))	// create image writer
+		return false;
+	double	fFrameDelta = (1 / fFrameRate) / 60 * pDoc->m_fTempo * pDoc->GetTimeDivisionTicks();
+	CPathStr	sFolderPath(pszFolderPath);
+	sFolderPath.Append(_T("\\img"));
+	CString	sFileExt(_T(".png"));
+	CString	sFrameNum;
+	CProgressDlg	dlg;
+	if (!dlg.Create(theApp.GetMainFrame()))	// create progress dialog
+		return false;
+	dlg.SetRange(0, nDurationFrames);
+	for (int iFrame = 0; iFrame < nDurationFrames; iFrame++) {	// for each frame
+		dlg.SetPos(iFrame);
+		if (dlg.Canceled())	// if user canceled
+			return false;
+		m_nSongPos = pDoc->m_nStartPos + round(iFrame * fFrameDelta);
+		pDoc->SetPosition(static_cast<int>(m_nSongPos));
+		imgWriter.m_rt.BeginDraw();
+		OnDrawD2D(0, reinterpret_cast<LPARAM>(&imgWriter.m_rt));
+		imgWriter.m_rt.EndDraw();
+		sFrameNum.Format(_T("%05d"), iFrame);
+		CString	sPath(sFolderPath + sFrameNum + sFileExt);
+		if (!imgWriter.Write(sPath))	// write image
+			return false;
+	}
+	return true;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CPhaseBar message map
 
@@ -237,6 +285,9 @@ BEGIN_MESSAGE_MAP(CPhaseBar, CMyDockablePane)
 	ON_WM_PAINT()
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONDOWN()
+	ON_WM_CONTEXTMENU()
+	ON_COMMAND(ID_PHASE_EXPORT_VIDEO, OnExportVideo)
+	ON_UPDATE_COMMAND_UI(ID_PHASE_EXPORT_VIDEO, OnUpdateExportVideo)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -288,7 +339,7 @@ LRESULT CPhaseBar::OnDrawD2D(WPARAM wParam, LPARAM lParam)
 	static const D2D1::ColorF	clrPlanetMuted(D2D1::ColorF::Red);
 	static const D2D1::ColorF	clrOrbitSelected(D2D1::ColorF::SkyBlue);
 	UNREFERENCED_PARAMETER(wParam);
-	CHwndRenderTarget* pRenderTarget = reinterpret_cast<CHwndRenderTarget*>(lParam);
+	CRenderTarget* pRenderTarget = reinterpret_cast<CRenderTarget*>(lParam);
 	ASSERT_VALID(pRenderTarget);
 	if (pRenderTarget->IsValid()) {	// if valid render target
 		CD2DSolidColorBrush	brOrbitNormal(pRenderTarget, clrOrbitNormal);	// create brushes
@@ -303,7 +354,7 @@ LRESULT CPhaseBar::OnDrawD2D(WPARAM wParam, LPARAM lParam)
 			int	nOrbits = m_arrOrbit.GetSize();
 			if (nOrbits) {	// if at least one orbit
 				double	fOrbitWidth = min(szRender.width, szRender.height) / (nOrbits * 2);
-				fOrbitWidth = min(fOrbitWidth, MAX_PLANET_WIDTH);
+				fOrbitWidth = min(fOrbitWidth, m_nMaxPlanetWidth);
 				D2D1_POINT_2F	ptOrigin = {szRender.width / 2, szRender.height / 2};
 				int	iPrevOrbit = -1;
 				int	iOrbit;
@@ -448,4 +499,40 @@ void CPhaseBar::OnLButtonDown(UINT nFlags, CPoint point)
 		}
 	}
 	CMyDockablePane::OnLButtonDown(nFlags, point);
+}
+
+void CPhaseBar::OnContextMenu(CWnd* pWnd, CPoint point)
+{
+	if (FixContextMenuPoint(pWnd, point))
+		return;
+	DoGenericContextMenu(IDR_PHASE_CTX, point, this);
+}
+
+void CPhaseBar::OnExportVideo()
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	ASSERT(pDoc != NULL);
+	if (pDoc == NULL)
+		return;
+	CString	sFolderPath(theApp.GetProfileString(RK_PhaseBar, RK_EXPORT_FOLDER));
+	UINT	nFlags = BIF_USENEWUI | BIF_RETURNONLYFSDIRS;
+	// browse for folder
+	CString	sTitle(LPCTSTR(ID_PHASE_EXPORT_VIDEO));
+	sTitle.Replace('\n', '\0');	// remove command title from prompt
+	if (CFolderDialog::BrowseFolder(sTitle, sFolderPath, NULL, nFlags, sFolderPath)) {
+		CRecordDlg	dlg;
+		dlg.m_nDurationSeconds = pDoc->m_nSongLength;
+		dlg.m_nDurationFrames = round(dlg.m_fFrameRate * pDoc->m_nSongLength);
+		if (dlg.DoModal() == IDOK) {	// get video options
+			theApp.WriteProfileString(RK_PhaseBar, RK_EXPORT_FOLDER, sFolderPath);
+			CSize	szFrame(dlg.m_nFrameWidth, dlg.m_nFrameHeight);
+			ExportVideo(sFolderPath, szFrame, dlg.m_fFrameRate, dlg.m_nDurationFrames);
+			Invalidate();
+		}
+	}
+}
+
+void CPhaseBar::OnUpdateExportVideo(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(theApp.GetMainFrame()->GetActiveMDIDoc() != NULL);
 }

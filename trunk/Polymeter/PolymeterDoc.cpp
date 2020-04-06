@@ -41,6 +41,8 @@
 		31		18mar20	cache song position in document
 		32		20mar20	add mapping
 		33		29mar20	add learn multiple mappings
+		34		03apr20	refactor go to position dialog for variable format
+		35		04apr20	bump file version for chord modulation
 
 */
 
@@ -83,7 +85,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	15
+#define	FILE_VERSION	16
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -126,6 +128,8 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_OFFSET_DLG		REG_SETTINGS _T("\\Offset")
 #define RK_OFFSET_TICKS		_T("nTicks")
 #define RK_RECORD_EVENTS	_T("RecordEvents")
+#define RK_GO_TO_POS_DLG	REG_SETTINGS _T("\\GoToPos")
+#define RK_GO_TO_POS_FORMAT	_T("nFormat")
 
 // define null title IDs for undo codes that have dynamic titles, or are insigificant
 #define IDS_EDIT_TRACK_PROP			0
@@ -184,7 +188,12 @@ CPolymeterDoc::~CPolymeterDoc()
 void CPolymeterDoc::CMySequencer::OnMidiError(MMRESULT nResult)
 {
 	theApp.GetMainFrame()->PostMessage(UWM_MIDI_ERROR, nResult, LPARAM(this));
-	Abort();	// abort playback and clean up
+	switch (nResult) {
+	case CSequencer::SEQERR_CALLBACK_TOO_LONG:
+		break;	// non-fatal error
+	default:
+		Abort();	// abort playback and clean up
+	}
 }
 
 BOOL CPolymeterDoc::OnNewDocument()
@@ -4080,14 +4089,13 @@ void CPolymeterDoc::OnTransportRewind()
 
 void CPolymeterDoc::OnTransportGoToPosition()
 {
-	CGoToPositionDlg	dlg;
-	m_Seq.ConvertPositionToString(m_Seq.GetStartPosition(), dlg.m_sPos);
-	if (dlg.DoModal() == IDOK) {
-		LONGLONG	nPos;
-		if (m_Seq.ConvertStringToPosition(dlg.m_sPos, nPos)) {
-			SetPosition(static_cast<int>(nPos));
-			UpdateAllViews(NULL, HINT_CENTER_SONG_POS);
-		}
+	CGoToPositionDlg	dlg(m_Seq);
+	dlg.m_nFormat = CPersist::GetInt(RK_GO_TO_POS_DLG, RK_GO_TO_POS_FORMAT, 0);
+	dlg.m_nPos = m_Seq.GetStartPosition();
+	if (dlg.DoModal() == IDOK && dlg.m_bConverted) {
+		SetPosition(static_cast<int>(dlg.m_nPos));
+		UpdateAllViews(NULL, HINT_CENTER_SONG_POS);
+		CPersist::WriteInt(RK_GO_TO_POS_DLG, RK_GO_TO_POS_FORMAT, dlg.m_nFormat);
 	}
 }
 

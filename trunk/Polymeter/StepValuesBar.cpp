@@ -9,6 +9,8 @@
 		rev		date	comments
         00		17mar20	initial version
 		01		31mar20	account for key signature
+		02		01apr20	standardize context menu handling
+		03		06apr20	add copy text to clipboard
 		
 */
 
@@ -287,6 +289,64 @@ void CStepValuesBar::ToggleStepFormat(UINT nMask)
 	m_grid.Invalidate();
 }
 
+void CStepValuesBar::ConvertListItemToString(int iItem, int iSubItem, LPTSTR pszText, int cchTextMax)
+{
+	NMLVDISPINFO	lvdi;
+	lvdi.item.mask = LVIF_TEXT;
+	lvdi.item.iItem = iItem;
+	lvdi.item.iSubItem = iSubItem;
+	lvdi.item.pszText = pszText;
+	lvdi.item.pszText[0] = '\0';
+	lvdi.item.cchTextMax = cchTextMax;
+	LRESULT	nResult;
+	OnListGetdispinfo(reinterpret_cast<LPNMHDR>(&lvdi), &nResult);
+}
+
+bool CStepValuesBar::GetExportTable(CString& sTable)
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	ASSERT(pDoc != NULL);
+	if (pDoc == NULL)
+		return false;
+	int	nTrackSels = pDoc->GetSelectedCount();
+	ASSERT(nTrackSels > 0);
+	if (nTrackSels <= 0)
+		return false;
+	CIntArrayEx	arrItemSel;
+	m_grid.GetSelection(arrItemSel);
+	int	nItemSels = arrItemSel.GetSize();
+	ASSERT(nItemSels > 0);
+	if (nItemSels <= 0)
+		return false;
+	TCHAR	szText[32];
+	if (m_nStepFormat & STF_COLS_STEPS) {	// if columns are steps and rows are tracks
+		for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
+			for (int iItemSel = 0; iItemSel < nItemSels; iItemSel++) {	// for each selected item
+				int	iItem = arrItemSel[iItemSel];
+				int	iSubItem = iTrackSel + 1;	// account for number column
+				ConvertListItemToString(iItem, iSubItem, szText, _countof(szText));
+				if (iItemSel)
+					sTable += ',';
+				sTable += szText;
+			}
+			sTable += _T("\r\n");
+		}
+	} else {	// columns are tracks and rows are steps
+		for (int iItemSel = 0; iItemSel < nItemSels; iItemSel++) {	// for each selected item
+			for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
+				int	iItem = arrItemSel[iItemSel];
+				int	iSubItem = iTrackSel + 1;	// account for number column
+				ConvertListItemToString(iItem, iSubItem, szText, _countof(szText));
+				if (iTrackSel)
+					sTable += ',';
+				sTable += szText;
+			}
+			sTable += _T("\r\n");
+		}
+	}
+	return true;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CStepValuesBar message map
 
@@ -308,6 +368,12 @@ BEGIN_MESSAGE_MAP(CStepValuesBar, CMyDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_STEP_VALUES_FORMAT_TIES, OnUpdateFormatTies)
 	ON_COMMAND(ID_STEP_VALUES_FORMAT_HEX, OnFormatHex)
 	ON_UPDATE_COMMAND_UI(ID_STEP_VALUES_FORMAT_HEX, OnUpdateFormatHex)
+	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditCopy)
+	ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditSelectAll)
+	ON_COMMAND_RANGE(ID_STEP_VALUES_LAYOUT_COLS_STEPS, ID_STEP_VALUES_LAYOUT_COLS_TRACKS, OnLayout)
+	ON_UPDATE_COMMAND_UI_RANGE(ID_STEP_VALUES_LAYOUT_COLS_STEPS, ID_STEP_VALUES_LAYOUT_COLS_TRACKS, OnUpdateLayout)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -426,17 +492,17 @@ void CStepValuesBar::OnListCustomdraw(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CStepValuesBar::OnContextMenu(CWnd* pWnd, CPoint point)
 {
-	UNREFERENCED_PARAMETER(pWnd);
-	if (point.x == -1 && point.y == -1) {
-		CRect	rc;
-		GetClientRect(rc);
-		point = rc.TopLeft();
-		ClientToScreen(&point);
-	}
-	CMenu	menu;
-	menu.LoadMenu(IDR_STEP_VALUES);
-	UpdateMenu(this, &menu);
-	menu.GetSubMenu(0)->TrackPopupMenu(0, point.x, point.y, this);
+	if (ShowDockingContextMenu(pWnd, point))
+		return;
+	m_grid.FixContextMenuPoint(point);
+	DoGenericContextMenu(IDR_STEP_VALUES_CTX, point, this);
+}
+
+BOOL CStepValuesBar::PreTranslateMessage(MSG* pMsg)
+{
+	if (theApp.DispatchEditKeys(pMsg, *this))
+		return true;
+	return CMyDockablePane::PreTranslateMessage(pMsg);
 }
 
 void CStepValuesBar::OnFormatSigned()
@@ -487,4 +553,39 @@ void CStepValuesBar::OnFormatHex()
 void CStepValuesBar::OnUpdateFormatHex(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_nStepFormat & STF_HEX);
+}
+
+void CStepValuesBar::OnEditSelectAll()
+{
+	m_grid.SelectAll();
+}
+
+void CStepValuesBar::OnUpdateEditSelectAll(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_grid.GetItemCount());
+}
+
+void CStepValuesBar::OnEditCopy()
+{
+	CString	sTable;
+	if (GetExportTable(sTable))
+		CopyStringToClipboard(theApp.GetMainFrame()->m_hWnd, sTable);
+}
+
+void CStepValuesBar::OnUpdateEditCopy(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_grid.GetSelectedCount());
+}
+
+void CStepValuesBar::OnLayout(UINT nID)
+{
+	UNREFERENCED_PARAMETER(nID);
+	m_nStepFormat ^= STF_COLS_STEPS;
+}
+
+void CStepValuesBar::OnUpdateLayout(CCmdUI *pCmdUI)
+{
+	bool	bColsAreSteps = (m_nStepFormat & STF_COLS_STEPS) != 0;
+	bool	bInvert = pCmdUI->m_nID != ID_STEP_VALUES_LAYOUT_COLS_STEPS;
+	pCmdUI->SetRadio(bColsAreSteps ^ bInvert);
 }

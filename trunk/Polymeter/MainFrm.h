@@ -18,6 +18,7 @@
 		08		03mar20	add convergences dialog
 		09		17mar20	add step values bar
 		10		20mar20	add mapping
+		11		05apr20	add track step change handler
 
 */
 
@@ -153,7 +154,8 @@ protected:
 	afx_msg LRESULT	OnMidiError(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT	OnDeviceNodeChange(WPARAM wParam, LPARAM lParam);
 	afx_msg BOOL OnDeviceChange(UINT nEventType, W64ULONG dwData);
-	afx_msg LRESULT OnTrackProperty(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnTrackPropertyChange(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnTrackStepChange(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnToolsDevices();
 	afx_msg void OnToolsConvergences();
 	afx_msg void OnToolsMidiLearn();

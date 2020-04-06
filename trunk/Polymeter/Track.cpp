@@ -25,6 +25,7 @@
 		15		29feb20	add MIDI event array methods
 		16		16mar20	move get step index into track
 		17		19mar20	add MIDI message name lookup
+		18		06apr20	in import steps, allow note names
 
 */
 
@@ -37,6 +38,7 @@
 #include "Midi.h"
 #include "ParseCSV.h"
 #include "SeqTrackArray.h"	// just for assigning track IDs
+#include "Note.h"	// just for assigning track IDs
 
 const CTrackBase::PROPERTY_INFO CTrackBase::m_arrPropertyInfo[PROPERTIES] = {
 	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
@@ -732,13 +734,26 @@ void CTrackArray::ImportSteps(LPCTSTR pszPath)
 	while (fIn.ReadString(sLine)) {	// for each line of input file
 		int	iStart = 0;
 		trk.m_arrStep.FastRemoveAll();
-		while (!(sToken = sLine.Tokenize(_T(","), iStart)).IsEmpty()) {
+		while (!(sToken = sLine.Tokenize(_T(", "), iStart)).IsEmpty()) {	// get token
 			int	nStep;
-			if (_stscanf_s(sToken, _T("%d"), &nStep) == 1)
-				trk.m_arrStep.Add(static_cast<BYTE>(nStep));
+			if (_stscanf_s(sToken, _T("%d"), &nStep) != 1) {	// if token isn't a number
+				CNote	note;
+				if (note.ParseMidi(sToken)) {	// if token is note name with octave
+					note -= 60;	// offset note for middle C
+					nStep = note + MIDI_NOTES / 2;	// convert to signed step
+				} else {	// token still unrecognized
+					if (note.Parse(sToken)) {	// if token is note name without octave
+						nStep = note + MIDI_NOTES / 2;	// convert to signed step
+					} else {	// token is invalid
+						continue;	// skip to next token
+					}
+				}
+				nStep = CLAMP(nStep, 0, MIDI_NOTE_MAX);	// clamp to valid note range
+			}
+			trk.m_arrStep.Add(static_cast<BYTE>(nStep));	// add step to steps array
 		}
-		if (trk.m_arrStep.GetSize())
-			Add(trk);
+		if (trk.m_arrStep.GetSize())	// if steps array isn't empty
+			Add(trk);	// add track
 	}
 }
 

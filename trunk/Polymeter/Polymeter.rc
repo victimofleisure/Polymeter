@@ -523,15 +523,23 @@ BEGIN
     END
 END
 
-IDR_STEP_VALUES MENU
+IDR_STEP_VALUES_CTX MENU
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "Signed",                      ID_STEP_VALUES_FORMAT_SIGNED
-        MENUITEM "Notes",                       ID_STEP_VALUES_FORMAT_NOTES
-        MENUITEM "Octaves",                     ID_STEP_VALUES_FORMAT_OCTAVES
-        MENUITEM "Ties",                        ID_STEP_VALUES_FORMAT_TIES
-        MENUITEM "Hex",                         ID_STEP_VALUES_FORMAT_HEX
+        MENUITEM "&Signed",                     ID_STEP_VALUES_FORMAT_SIGNED
+        MENUITEM "&Notes",                      ID_STEP_VALUES_FORMAT_NOTES
+        MENUITEM "&Octaves",                    ID_STEP_VALUES_FORMAT_OCTAVES
+        MENUITEM "&Ties",                       ID_STEP_VALUES_FORMAT_TIES
+        MENUITEM "&Hex",                        ID_STEP_VALUES_FORMAT_HEX
+        MENUITEM SEPARATOR
+        MENUITEM "&Copy",                       ID_EDIT_COPY
+        MENUITEM "Select &All",                 ID_EDIT_SELECT_ALL
+        POPUP "&Layout"
+        BEGIN
+            MENUITEM "Columns = &Steps",            ID_STEP_VALUES_LAYOUT_COLS_STEPS
+            MENUITEM "Columns = &Tracks",           ID_STEP_VALUES_LAYOUT_COLS_TRACKS
+        END
     END
 END
 
@@ -549,6 +557,14 @@ BEGIN
         MENUITEM "Select &All",                 ID_EDIT_SELECT_ALL
         MENUITEM "&Learn",                      ID_TOOLS_MIDI_LEARN
         MENUITEM "&Map Tracks",                 ID_MAPPING_MAP_SELECTED_TRACKS
+    END
+END
+
+IDR_PHASE_CTX MENU
+BEGIN
+    POPUP "ERT"
+    BEGIN
+        MENUITEM "Export &Video...",            ID_PHASE_EXPORT_VIDEO
     END
 END
 
@@ -671,14 +687,16 @@ BEGIN
     RTEXT           "",IDC_PROGRESS_PERCENT,139,27,40,15,SS_CENTERIMAGE
 END
 
-IDD_GO_TO_POSITION DIALOGEX 0, 0, 118, 47
+IDD_GO_TO_POSITION DIALOGEX 0, 0, 119, 61
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Go To Position"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    EDITTEXT        IDC_GO_TO_POS_EDIT,7,7,104,14,ES_AUTOHSCROLL
-    DEFPUSHBUTTON   "OK",IDOK,7,26,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,61,26,50,14
+    EDITTEXT        IDC_GO_TO_POS_EDIT,7,7,105,14,ES_AUTOHSCROLL
+    CONTROL         "&MBT",IDC_GO_TO_POS_FORMAT_MBT,"Button",BS_AUTORADIOBUTTON | WS_GROUP,23,25,30,10
+    CONTROL         "&Time",IDC_GO_TO_POS_FORMAT_TIME,"Button",BS_AUTORADIOBUTTON,63,25,33,10
+    DEFPUSHBUTTON   "OK",IDOK,7,40,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,62,40,50,14
 END
 
 IDD_EXPORT DIALOGEX 0, 0, 131, 63
@@ -811,6 +829,27 @@ BEGIN
     EDITTEXT        IDC_CONVERGE_OUTPUT,7,44,296,127,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL
 END
 
+IDD_RECORD DIALOGEX 0, 0, 219, 101
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Record"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "&Duration",-1,7,7,130,37
+    EDITTEXT        IDC_RECORD_DURATION,14,19,60,14,ES_AUTOHSCROLL
+    CONTROL         "&Time",IDC_RECORD_DURATION_UNIT,"Button",BS_AUTORADIOBUTTON | WS_GROUP,86,15,33,10
+    CONTROL         "&Frames",IDC_RECORD_DURATION_UNIT2,"Button",BS_AUTORADIOBUTTON,86,29,41,10
+    LTEXT           "Frame &Rate:",-1,149,9,42,8
+    EDITTEXT        IDC_RECORD_FRAME_RATE,149,19,40,14,ES_AUTOHSCROLL
+    LTEXT           "Frame &Size:",-1,7,47,41,8
+    COMBOBOX        IDC_RECORD_FRAME_SIZE,7,57,100,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Width:",IDC_RECORD_FRAME_WIDTH_CAP,116,47,23,8
+    EDITTEXT        IDC_RECORD_FRAME_WIDTH,116,57,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "&Height:",IDC_RECORD_FRAME_HEIGHT_CAP,164,47,24,8
+    EDITTEXT        IDC_RECORD_FRAME_HEIGHT,164,57,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    DEFPUSHBUTTON   "OK",IDOK,106,80,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,162,80,50,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -847,9 +886,9 @@ BEGIN
     IDD_GO_TO_POSITION, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 111
+        RIGHTMARGIN, 112
         TOPMARGIN, 7
-        BOTTOMMARGIN, 40
+        BOTTOMMARGIN, 54
     END
 
     IDD_EXPORT, DIALOG
@@ -922,6 +961,14 @@ BEGIN
         RIGHTMARGIN, 303
         TOPMARGIN, 7
         BOTTOMMARGIN, 171
+    END
+
+    IDD_RECORD, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 212
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 94
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -1059,15 +1106,16 @@ BEGIN
     IDS_EDIT_INSERT_TRACKS  "Insert Tracks"
     IDS_EDIT_INVERT         "Invert"
     IDS_EDIT_LEARN_MAPPING  "Learn Mapping"
+    IDS_EDIT_LEARN_MULTI_MAPPING "Learn Mappings"
     IDS_EDIT_MENU           "Edit"
     IDS_EDIT_MODIFY_PARTS   "Modify Parts"
     IDS_EDIT_MODULATION     "Modulation"
     IDS_EDIT_MOVE_MAPPINGS  "Move Mappings"
-    IDS_EDIT_MOVE_PARTS     "Move Parts"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_MOVE_PARTS     "Move Parts"
     IDS_EDIT_MOVE_PRESETS   "Move Presets"
     IDS_EDIT_MOVE_TRACKS    "Move Tracks"
     IDS_EDIT_MULTI_STEP_RECT "Multiple Steps"
@@ -1083,11 +1131,11 @@ BEGIN
     IDS_EDIT_SHIFT          "Shift"
     IDS_EDIT_SOLO           "Solo"
     IDS_EDIT_SORT_MAPPINGS  "Sort Mappings"
-    IDS_EDIT_TRACK_SORT     "Track Sort"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_TRACK_SORT     "Track Sort"
     IDS_EDIT_TRANSPOSE      "Transpose"
     IDS_EDIT_UNDO_FMT       "&Undo %s"
     IDS_EDIT_UPDATE_PART    "Update Part"
@@ -1106,12 +1154,12 @@ BEGIN
                             "In your internet browser, navigate to graphviz.org/download, scroll down to Executable Packages for Windows, and download the latest stable Windows release. If there's a choice between .msi or .zip, the .msi package is recommended because it has an installer. After Graphviz is installed (for .msi) or unzipped to a folder (for .zip), press OK to continue."
     IDS_GRAPHVIZ_IS_IT_PRESENT 
                             "The graphing feature requires Graphviz, a free and open source graph visualization software available from graphviz.org.\n\nGraphviz doesn't seem to be in its usual location. Is Graphviz already present on your system?"
-    IDS_GRAPHVIZ_IS_LOCATION_KNOWN 
-                            "Do you know where Graphviz is located on your system?"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_GRAPHVIZ_IS_LOCATION_KNOWN 
+                            "Do you know where Graphviz is located on your system?"
     IDS_GRAPHVIZ_IS_READY   "Graphviz is ready to use."
     IDS_GRAPHVIZ_NOT_FOUND_RETRY "Graphviz wasn't found. Try again?"
     IDS_GRAPHVIZ_OK_TO_SEARCH 
@@ -1131,11 +1179,11 @@ BEGIN
                             "Show direct and indirect modulators of selected tracks"
     IDS_HINT_GRAPH_SCOPE_SELECTED "Show direct modulators of selected tracks"
     IDS_HLINK_CANT_LAUNCH   "Can't launch browser."
-    IDS_IMPORT              "Import"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_IMPORT              "Import"
     IDS_IMPORT_ERR_FORMAT   "Format error."
     IDS_IMPORT_ERR_LOCATION "Row %d, Column %d"
     IDS_IMPORT_ERR_PROPERTY "Undefined property name."
@@ -1151,11 +1199,11 @@ BEGIN
     IDS_MAPPING_COL_RANGE_START "Range Start"
     IDS_MAPPING_COL_TRACK   "Track"
     IDS_MIDIEVT_COL_CHANNEL "Channel"
-    IDS_MIDIEVT_COL_MESSAGE "Message"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDIEVT_COL_MESSAGE "Message"
     IDS_MIDIEVT_COL_P1      "P1"
     IDS_MIDIEVT_COL_P2      "P2"
     IDS_MIDIEVT_COL_TIME    "Time"
@@ -1171,11 +1219,11 @@ BEGIN
     IDS_MIDI_SYS_STAT_EOX   "EOX"
     IDS_MIDI_SYS_STAT_MTC_QTR_FRAME "MTC Qtr Frame"
     IDS_MIDI_SYS_STAT_SONG_POSITION "Song Position"
-    IDS_MIDI_SYS_STAT_SONG_SELECT "Song Select"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDI_SYS_STAT_SONG_SELECT "Song Select"
     IDS_MIDI_SYS_STAT_START "Start"
     IDS_MIDI_SYS_STAT_STOP  "Stop"
     IDS_MIDI_SYS_STAT_SYSEX "System Exclusive"
@@ -1193,12 +1241,12 @@ BEGIN
                             "Always record dubs during playback and automatically save the recordings"
     IDS_OPT_DESC_General_bCheckForUpdates 
                             "Automatically check for newer version of app during startup"
-    IDS_OPT_DESC_General_bPropertyDescrips 
-                            "If true, show descriptions area in properties bar"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_General_bPropertyDescrips 
+                            "If true, show descriptions area in properties bar"
     IDS_OPT_DESC_Midi_bRecordInput "Enable recording from MIDI input device"
     IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
     IDS_OPT_DESC_Midi_iInputDevice "Selected MIDI input device"
@@ -1220,11 +1268,11 @@ BEGIN
     IDS_OPT_DESC_View_fZoomDelta "Zoom step size, as a percentage"
     IDS_OPT_DESC_View_nLiveFontHeight "Height of live view font, in pixels"
     IDS_OPT_GROUP_General   "General"
-    IDS_OPT_GROUP_Midi      "MIDI"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_GROUP_Midi      "MIDI"
     IDS_OPT_GROUP_View      "View"
     IDS_OPT_NAME_General_bAlwaysRecord "Always Record"
     IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
@@ -1240,11 +1288,11 @@ BEGIN
     IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
     IDS_OPT_NAME_View_bShowGMNames "Show General MIDI Names"
     IDS_OPT_NAME_View_bShowNoteNames "Show Note Names"
-    IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
     IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
     IDS_OPT_NAME_View_nLiveFontHeight "Live View Font Height"
     IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
@@ -1262,11 +1310,11 @@ BEGIN
     IDS_PDR_NAME_iNoteOverlap "Note Overlap"
     IDS_PDR_NAME_nKeySig    "Key Signature"
     IDS_PDR_NAME_nMeter     "Meter"
-    IDS_PDR_NAME_nRecordOffset "Record Offset"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_NAME_nRecordOffset "Record Offset"
     IDS_PDR_NAME_nSongLength "Song Length"
     IDS_PDR_NAME_nStartPos  "Start Position"
     IDS_PDR_NAME_nTimeDiv   "PPQ"
@@ -1274,20 +1322,22 @@ BEGIN
     IDS_RANGE_TYPE_DUAL     "Dual"
     IDS_RANGE_TYPE_NONE     "None"
     IDS_RANGE_TYPE_OCTAVE   "Octave"
+    IDS_RECDLG_CUSTOM       "Custom"
     IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
-    IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format"
+    IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format."
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
+    IDS_SEQERR_CALLBACK_TOO_LONG "Sequencer callback took too long."
     IDS_SEQERR_TOO_MANY_RECURSIONS 
                             "Modulation exceeded the maximum number of recursions."
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
     IDS_SM_FILTER_CHANNEL_ALL "Show all channels"
-    IDS_SM_FILTER_CHANNEL_SELECT "Show selected channel only"
-    IDS_SM_FILTER_MESSAGE_ALL "Show all messages"
-    IDS_SM_FILTER_MESSAGE_SELECT "Show selected message only"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_SM_FILTER_CHANNEL_SELECT "Show selected channel only"
+    IDS_SM_FILTER_MESSAGE_ALL "Show all messages"
+    IDS_SM_FILTER_MESSAGE_SELECT "Show selected message only"
     IDS_SM_OUTPUT_CHANNEL_NONE "Don't output notes"
     IDS_SM_OUTPUT_CHANNEL_SELECT "Output notes on this channel"
     IDS_SM_PIANO_SIZE       "Select piano size in keys"
@@ -1301,13 +1351,13 @@ BEGIN
     IDS_TIME_TO_REPEAT_GPF  "Greatest prime factor is "
     IDS_TIME_TO_REPEAT_TICKS "ticks"
     IDS_TIME_TO_REPEAT_YEARS "years"
-    IDS_TOOLBAR_CUSTOMIZE   "Customize..."
-    IDS_TOOLBAR_STANDARD    "Standard"
-    IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TOOLBAR_CUSTOMIZE   "Customize..."
+    IDS_TOOLBAR_STANDARD    "Standard"
+    IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
     IDS_TRACK_TYPE_CONTROL  "Control"
     IDS_TRACK_TYPE_KEY_AFT  "Key Aftertouch"
     IDS_TRACK_TYPE_MODULATOR "Modulator"
@@ -1316,18 +1366,19 @@ BEGIN
     IDS_TRACK_TYPE_TEMPO    "Tempo"
     IDS_TRACK_TYPE_WHEEL    "Wheel"
     IDS_TRK_Channel         "Channel"
+    IDS_TRK_Chord           "Chord"
     IDS_TRK_Duration        "Duration"
     IDS_TRK_Index           "Index"
     IDS_TRK_Length          "Length"
     IDS_TRK_Mute            "Mute"
-    IDS_TRK_Name            "Name"
-    IDS_TRK_Note            "Note"
-    IDS_TRK_Number          "#"
-    IDS_TRK_Offset          "Offset"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_Name            "Name"
+    IDS_TRK_Note            "Note"
+    IDS_TRK_Number          "#"
+    IDS_TRK_Offset          "Offset"
     IDS_TRK_Position        "Position"
     IDS_TRK_Quant           "Quant"
     IDS_TRK_Range           "Range"
@@ -1340,6 +1391,10 @@ BEGIN
     IDS_TRK_Type            "Type"
     IDS_TRK_Velocity        "Velocity"
     IDS_TRK_Voicing         "Voicing"
+END
+
+STRINGTABLE
+BEGIN
     IDS_TYPE_TRACK          "Track"
     IDS_VELOCITY            "Velocity"
     IDS_WINDOW_RESET_LAYOUT_WARN 
@@ -1379,7 +1434,7 @@ BEGIN
     ID_GRAPH_ZOOM_OUT       "Zoom out a level"
     ID_GRAPH_ZOOM_RESET     "Reset zoom to default"
     ID_INDICATOR_SONG_POS   "000000000.000"
-    ID_INDICATOR_SONG_TIME  "0000000:00:00"
+    ID_INDICATOR_SONG_TIME  "00000:00:00.000"
     ID_LIST_COL_HDR_RESET   "Reset column header to default state"
     ID_MAPPING_MAP_SELECTED_TRACKS 
                             "Create mappings for selected tracks\nMap Tracks"
@@ -1400,6 +1455,7 @@ END
 STRINGTABLE
 BEGIN
     ID_PARTS_SELECT_TRACKS  "Select tracks belonging to selected parts"
+    ID_PHASE_EXPORT_VIDEO   "Export video as image sequence\nExport Video"
     ID_PIANO_COLOR_VELOCITY "Color keys to show note velocities"
     ID_PIANO_INSERT_TRACK   "Insert track for selected note"
     ID_PIANO_ROTATE_LABELS  "Rotate key labels sideways"
@@ -1409,17 +1465,21 @@ BEGIN
     ID_STEP_VALUES_FORMAT_OCTAVES "Include octave in note name"
     ID_STEP_VALUES_FORMAT_SIGNED "Show steps as signed integers"
     ID_STEP_VALUES_FORMAT_TIES "Include tied note state"
+    ID_STEP_VALUES_LAYOUT_COLS_STEPS 
+                            "In export, columns are steps and rows are tracks"
+    ID_STEP_VALUES_LAYOUT_COLS_TRACKS 
+                            "In export, columns are tracks and rows are steps"
     ID_TOOLS_CONVERGENCES   "Show convergences calculator\nConvergences"
     ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
     ID_TOOLS_EXPORT_MODULATIONS 
                             "Export modulations to a CSV file\nExport Modulations"
-    ID_TOOLS_EXPORT_SONG    "Export song MIDI data to a CSV file\nExport Song"
-    ID_TOOLS_EXPORT_STEPS   "Export steps from selected tracks to a CSV file\nExport Steps"
-    ID_TOOLS_EXPORT_TRACKS  "Export selected tracks to a CSV file\nExport Tracks"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TOOLS_EXPORT_SONG    "Export song MIDI data to a CSV file\nExport Song"
+    ID_TOOLS_EXPORT_STEPS   "Export steps from selected tracks to a CSV file\nExport Steps"
+    ID_TOOLS_EXPORT_TRACKS  "Export selected tracks to a CSV file\nExport Tracks"
     ID_TOOLS_IMPORT_MODULATIONS 
                             "Import modulations from a CSV file\nImport Modulations"
     ID_TOOLS_IMPORT_STEPS   "Import steps from a CSV file\nImport Steps"
@@ -1434,13 +1494,13 @@ BEGIN
     ID_TRACK_INVERT         "Invert the selected tracks or steps\nInvert"
     ID_TRACK_LENGTH         "Set the length of one or more tracks\nLength"
     ID_TRACK_MUTE           "Mute or unmute the selected tracks\nMute"
-    ID_TRACK_OFFSET         "Offset the selected tracks by a given number of ticks\nOffset Tracks"
-    ID_TRACK_PART_CREATE    "Create new part from the selected tracks\nCreate Part"
-    ID_TRACK_PART_UPDATE    "Update the selected part from the selected tracks\nUpdate Part"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_OFFSET         "Offset the selected tracks by a given number of ticks\nOffset Tracks"
+    ID_TRACK_PART_CREATE    "Create new part from the selected tracks\nCreate Part"
+    ID_TRACK_PART_UPDATE    "Update the selected part from the selected tracks\nUpdate Part"
     ID_TRACK_PRESET_APPLY   "Apply the selected preset to the track mutes\nApply Preset"
     ID_TRACK_PRESET_CREATE  "Create a new preset from the track mutes\nCreate Preset"
     ID_TRACK_PRESET_UPDATE  "Update the selected preset from the track mutes\nUpdate Preset"
@@ -1454,13 +1514,13 @@ BEGIN
     ID_TRACK_SOLO           "Solo the selected tracks\nSolo"
     ID_TRACK_SORT           "Sort the selected tracks\nTrack Sort"
     ID_TRACK_STRETCH        "Stretch or shrink the selected tracks\nStretch"
-    ID_TRACK_TIE_NOTES      "Toggle tie notes mode; if on, new notes are tied\nTie Notes"
-    ID_TRACK_TRANSPOSE      "Transpose the selected tracks\nTranspose"
-    ID_TRACK_VELOCITY       "Transform the velocities of the selected tracks or steps\nVelocity"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_TIE_NOTES      "Toggle tie notes mode; if on, new notes are tied\nTie Notes"
+    ID_TRACK_TRANSPOSE      "Transpose the selected tracks\nTranspose"
+    ID_TRACK_VELOCITY       "Transform the velocities of the selected tracks or steps\nVelocity"
     ID_TRANSPORT_GO_TO_POSITION 
                             "Go to specified position within song\nGo To Position"
     ID_TRANSPORT_PAUSE      "Pause or continue playback\nPause"
@@ -1485,13 +1545,13 @@ BEGIN
     ID_VIEW_VELOCITIES      "Show or hide velocities pane\nVelocities"
     ID_VIEW_ZOOM_IN         "Zoom in\nZoom In"
     ID_VIEW_ZOOM_OUT        "Zoom out\nZoom Out"
-    ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
-    ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
-    ID_WINDOW_MANAGER       "&Windows..."
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
+    ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
+    ID_WINDOW_MANAGER       "&Windows..."
     ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"
 END
 
@@ -1599,11 +1659,6 @@ BEGIN
     AFX_IDS_SCRESTORE       "Restore the window to normal size"
     AFX_IDS_SCTASKLIST      "Activate Task List"
     AFX_IDS_MDICHILD        "Activate this window"
-END
-
-STRINGTABLE
-BEGIN
-    IDS_EDIT_LEARN_MULTI_MAPPING "Learn Mappings"
 END
 
 #endif    // English (United States) resources
