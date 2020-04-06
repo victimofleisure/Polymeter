@@ -1645,6 +1645,7 @@ void CTrackView::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 	NMLVCUSTOMDRAW* pLVCD = reinterpret_cast<NMLVCUSTOMDRAW*>(pNMHDR);
 	switch(pLVCD->nmcd.dwDrawStage) {
 	case CDDS_PREPAINT:
+		// could be conditional (only if any tracks need custom color)
 		*pResult = CDRF_NOTIFYITEMDRAW;
 		break;
 	case CDDS_ITEMPREPAINT:
@@ -1663,7 +1664,27 @@ void CTrackView::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 	}
 }
 
-performance impact seems negligible but it flickers a bit due to background erase in default color
+Performance impact seems negligible but it flickers a bit, presumably due to the
+background being erased in the default color. There's probably no way to solve
+that, other than double-buffering the grid control, which creates other issues.
+
+The item notifications are a significant amount of message traffic, and it would
+preferable to avoid this traffic unless it's really necessary (the user shouldn't
+have to pay for unused features). The initial custom draw notification is always
+sent, but the item notifications could be requested only if any of the items to 
+be painted have custom colors. Iterating all the tracks would work but it seems 
+excessive. In order to know what range of tracks should be checked for custom 
+coloring, the following lines are needed:
+
+int	iPageTop = m_grid.GetTopIndex();
+int	nPageItems = m_grid.GetCountPerPage();
+
+These lines take about 20us, except once in a long while they take between
+500us and 1ms for no obvious reason.
+
+But probably the biggest objection to the coloring idea is that it makes the
+UI look inconsistent. Why aren't the steps colored too? Maybe coloring just
+the non-empty steps is better?
 
 1/27/20 convergences
 
@@ -1850,5 +1871,75 @@ with different handling, presumably using CUndoMultiIntegerProp.
 Both of the learn edit methods should move into the document.
 void MappingLearn(int iMapping, DWORD nInMidiMsg);
 void MappingLearn(const CIntArrayEx& arrSelection, DWORD nInMidiMsg);
+
+4/2/20 new way
+
+Tempo started at 110 but I like 107 better; it's more swinging and 
+less overwhelming. Position -5:000 makes a song start, and there's
+a possible ending around 4:17 of 5:02. And a reentry point around 3:05.
+
+It's mostly C harmonic minor; the turnaround drops B to Bb, D to Db, 
+C to Cb and back to the top, which is key of Eb (D-7b5), key of Ab,
+key of Ab melodic minor (G altered or Db7#4).
+
+A break could be interesting, with different changes. Try going
+to the IV (F harmonic minor) but not every time or for same length.
+
+Maybe first jump to a break around 1:12?
+
+4/3/20 Unreleased tracks
+
+Solo piano, done:
+Ibaramu 5:29
+Ninu Meta 4:21
+Irubo 4:15
+Mo Bulu 4:51
+Ero Ayo 5:31
+(around 24:30)
+
+Misc:
+Stella By Starlight 3:34
+
+Full band, but needs porting to Reason:
+LCM 5:34
+Boogie Woogie 6:08
+Watergate 2:44
+Tritone 4:43
+Alternation 6:10
+(around 25:20)
+
+Full band, done:
+Kahelo	5:59
+Lodidi 6:14
+Charlie's Big Break 5:10
+Interago 5:11 (mastered)
+Kasita Mondo 6:00 (mastered)
+(around 28:30)
+
+4/4/20 OSX
+
+For Time To Repeat command, GetNumberFormatEx is the problem, see test app.
+
+4/4/20 Scale and chord modulation
+
+Chord modulation works fine, and permits Bergonzi's "numbers" system like
+ChordEase. But there's a subtle issue with indexing. Consider just scale
+and index. If the index is outside the scale, it currently wraps around.
+But this limits scales to one octave! Arguably it would be more useful if
+indexing out of range octaved the scale note up or down as needed.
+
+Why should scales be limited to an octave, unless you explicitly request that
+behavior by setting Range Type to octave? You could partially address this by
+adding more scale modulators so the scale covers multiple octaves, but you 
+shouldn't need to.
+
+The same issue probably applies to the Chord indexing; why should chords be
+limited to an octave?
+
+
+
+
+
+
 
 
