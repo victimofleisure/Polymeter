@@ -10,6 +10,7 @@ open	close	type	description	rev	user
 12/10/19		bug	steps aren't drawn when track's quant is very large (e.g. 30720) and step view is zoomed in		
 02/18/20		bug	song CSV export omits tempo map, because CMidiFile::ReadTracks doesn't support tempo map		
 03/04/20		bug	in step view, very long tracks aren't displayed when zoomed in; caused by scroll view's 32-bit limitations		
+04/07/20		bug	stopping sequencer occasionally causes MIDI error 65 (STILLPLAYING); happens every time in Mac Wine		
 03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -275,6 +276,7 @@ open	close	type	description	rev	user
 04/05/20	04/06/20	done	import steps should handle note names, with or without octaves	0.0.29.000	
 04/05/20	04/06/20	done	Step Values bar should support copying text to clipboard	0.0.29.000	
 04/06/20	04/06/20	done	editing tempo should update current time in status bar	0.0.29.000	
+04/05/20	04/07/20	done	Step Values bar should support standard editing commands, provided step selection is rectangular (Benoit)	0.0.29.002	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 03/22/18		hold	swing modulation; probably not feasible		
@@ -328,7 +330,6 @@ open	close	type	description	rev	user
 03/30/20		hold	step values bar should provide a means of setting song position		
 04/04/20		hold	scale modulation repeats same work for each track that uses the scale		
 04/05/20		hold	Step Values bar doesn't allow arbitrary rectangular selection; grid control limitation, custom view?		
-04/05/20		hold	Step Values bar should support standard editing commands (Benoit)		
 04/06/20		hold	optionally output MIDI clock and start / stop; tests show sync loss below 100 BPM		
 04/06/20		hold	extend sequence lead-in to fix initial timing glitch; multiply m_nCBLen in GetPosition and Play		
 05/13/20		hold	select custom colors for tracks (Benoit)		
@@ -344,3 +345,4 @@ open	close	type	description	rev	user
 01/11/19		punt	in Piano view, if multiple instances of a note overlap, velocity color may be inaccurate; unavoidable		
 02/28/19		punt	song playback doesn't always match live output when modulator tracks have big quants; dub granularity issue		
 11/12/19		punt	popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful		
+04/07/20		todo	attach and auto-hide are disabled for Piano and MIDI output bars, due to output capture management		
