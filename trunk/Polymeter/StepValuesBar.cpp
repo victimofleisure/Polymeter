@@ -168,7 +168,7 @@ void CStepValuesBar::OnTrackPropChange(int iProp)
 void CStepValuesBar::UpdateGrid(bool bSameNames)
 {
 	m_grid.Invalidate();
-	int	nPrevSels = m_grid.GetColumnCount() - 1;
+	int	nPrevSels = m_grid.GetColumnCount() - 1;	// account for number column
 	int	nSels = 0;
 	int	nItems = 0;
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
@@ -193,7 +193,7 @@ void CStepValuesBar::UpdateGrid(bool bSameNames)
 			m_nSongPos = pDoc->m_nSongPos;	// cache song position for rapid access
 	}
 	for (int iSel = nSels; iSel < nPrevSels; iSel++) {	// for each dead column
-		m_grid.DeleteColumn(nSels + 1);	// delete dead column
+		m_grid.DeleteColumn(nSels + 1);	// delete dead column; account for number column
 	}
 	m_grid.SetItemCountEx(nItems, 0);
 	if (m_bShowCurPos) {	// if showing current position
@@ -247,7 +247,7 @@ void CStepValuesBar::UpdateColumnNames()
 			for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 				int	iTrack = pDoc->m_arrTrackSel[iSel];
 				LPCTSTR	pszName = pDoc->m_Seq.GetName(iTrack);
-				m_grid.SetColumnName(iSel + 1, pszName);
+				m_grid.SetColumnName(iSel + 1, pszName);	// account for number column
 			}
 		}
 	}
