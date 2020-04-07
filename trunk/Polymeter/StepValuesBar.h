@@ -9,6 +9,7 @@
 		rev		date	comments
         00		17mar20	initial version
 		01		06apr20	add copy text to clipboard
+		02		07apr20	add standard editing commands
 
 */
 
@@ -69,7 +70,7 @@ protected:
 	LONGLONG	m_nSongPos;		// cached current song position in ticks
 	UINT	m_nStepFormat;		// step format bitmask; see enum above
 	COLORREF	m_clrBkgnd;		// cached background color of grid control
-	bool	m_bShowCurPos;		// true if highlighting current position
+	bool	m_bShowCurPos;		// true if highlighting current position and m_arrCurPos is valid
 
 // Helpers
 	void	OnTrackPropChange(int iProp);
@@ -80,6 +81,10 @@ protected:
 	void	UpdateHighlights();
 	bool	GetExportTable(CString& sTable);
 	void	ConvertListItemToString(int iItem, int iSubItem, LPTSTR pszText, int cchTextMax);
+	bool	GetRectSelection(CRect& rSel, bool bIsDeleting = false) const;
+	bool	HasRectSelection(bool bIsDeleting = false) const;
+	bool	HasSelection() const;
+	static	int		GetSelectedTrackCount(CPolymeterDoc *pDoc);
 
 // Overrides
 	virtual	void OnShowChanged(bool bShow);
@@ -94,6 +99,7 @@ protected:
 	afx_msg void OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnListCustomdraw(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+	afx_msg void OnListReorder(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnFormatSigned();
 	afx_msg void OnUpdateFormatSigned(CCmdUI *pCmdUI);
 	afx_msg void OnFormatNotes();
@@ -104,10 +110,18 @@ protected:
 	afx_msg void OnUpdateFormatTies(CCmdUI *pCmdUI);
 	afx_msg void OnFormatHex();
 	afx_msg void OnUpdateFormatHex(CCmdUI *pCmdUI);
-	afx_msg void OnEditSelectAll();
-	afx_msg void OnUpdateEditSelectAll(CCmdUI *pCmdUI);
 	afx_msg void OnEditCopy();
 	afx_msg void OnUpdateEditCopy(CCmdUI *pCmdUI);
+	afx_msg void OnEditPaste();
+	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
+	afx_msg void OnEditInsert();
+	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
+	afx_msg void OnEditDelete();
+	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
+	afx_msg void OnEditSelectAll();
+	afx_msg void OnUpdateEditSelectAll(CCmdUI *pCmdUI);
+	afx_msg void OnExportCopy();
+	afx_msg void OnUpdateExportCopy(CCmdUI *pCmdUI);
 	afx_msg void OnLayout(UINT nID);
 	afx_msg void OnUpdateLayout(CCmdUI *pCmdUI);
 	afx_msg void OnFormat(UINT nID);

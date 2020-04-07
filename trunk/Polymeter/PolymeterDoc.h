@@ -23,6 +23,7 @@
 		13		18mar20	cache song position in document
 		14		20mar20	add mapping
 		15		29mar20	add learn multiple mappings
+		16		07apr20	add move steps
 
 */
 
@@ -194,7 +195,7 @@ public:
 	void	InsertTracks(CTrackArray& arrTrack, int iInsPos = -1);
 	void	InsertTrack(CTrack& track, int iInsPos = -1);
 	void	DeleteTracks(bool bCopyToClipboard);
-	void	Drop(int iDropPos);
+	bool	Drop(int iDropPos);
 	void	SortTracks(const CIntArrayEx& arrSortLevel);
 	void	SetMute(int iTrack, bool bMute);
 	void	SetSelectedMutes(UINT nMuteMask);
@@ -202,6 +203,7 @@ public:
 	bool	DeleteSteps(const CRect& rSelection, bool bCopyToClipboard);
 	bool	PasteSteps(const CRect& rSelection);
 	bool	InsertStep(const CRect& rSelection);
+	bool	MoveSteps(const CRect& rSelection, int iDropPos);
 	static	void	MakeTrackSelection(const CRect& rStepSel, CIntArrayEx& arrTrackSel);
 	void	SetTrackLength(int iTrack, int nLength);
 	void	SetTrackLength(const CIntArrayEx& arrLength);
@@ -440,6 +442,8 @@ protected:
 	void	RestoreMultiStepRect(const CUndoState& State);
 	void	SaveClipboardSteps(CUndoState& State) const;
 	void	RestoreClipboardSteps(const CUndoState& State);
+	void	SaveMoveSteps(CUndoState& State) const;
+	void	RestoreMoveSteps(const CUndoState& State);
 	void	SaveReverse(CUndoState& State) const;
 	void	RestoreReverse(const CUndoState& State);
 	void	SaveReverseRect(CUndoState& State) const;

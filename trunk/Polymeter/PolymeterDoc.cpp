@@ -43,6 +43,7 @@
 		33		29mar20	add learn multiple mappings
 		34		03apr20	refactor go to position dialog for variable format
 		35		04apr20	bump file version for chord modulation
+		36		07apr20	add move steps; fix cut steps undo code
 
 */
 
@@ -620,14 +621,14 @@ void CPolymeterDoc::DeleteTracks(bool bCopyToClipboard)
 	SetModifiedFlag();
 }
 
-void CPolymeterDoc::Drop(int iDropPos)
+bool CPolymeterDoc::Drop(int iDropPos)
 {
 	const CIntArrayEx&	arrSelection = m_arrTrackSel;
 	int	nSels = arrSelection.GetSize();
 	ASSERT(nSels > 0);	// at least one track must be selected
 	// if multiple selection, or single selection and track is actually moving
 	if (nSels == 1 && (iDropPos == m_iTrackSelMark || iDropPos == m_iTrackSelMark + 1))
-		return;	// nothing to do
+		return false;	// nothing to do
 	int	nSelsBelowDrop = 0;
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		if (arrSelection[iSel] < iDropPos)	// if track's index is below drop position
@@ -645,6 +646,7 @@ void CPolymeterDoc::Drop(int iDropPos)
 	SelectRange(iDropPos, nSels, false);	// don't update views
 	UpdateAllViews(NULL, HINT_TRACK_ARRAY);
 	SetModifiedFlag();
+	return true;
 }
 
 void CPolymeterDoc::SortTracks(const CIntArrayEx& arrSortLevel)
@@ -809,7 +811,8 @@ bool CPolymeterDoc::DeleteSteps(const CRect& rSelection, bool bCopyToClipboard)
 	if (!IsRectStepSelection(rSelection, true))	// deleting
 		return false;
 	m_rUndoSel = rSelection;
-	NotifyUndoableEdit(0, UCODE_DELETE_STEPS);
+	int	nUndoCode = bCopyToClipboard ? UCODE_CUT_STEPS : UCODE_DELETE_STEPS;
+	NotifyUndoableEdit(0, nUndoCode);
 	if (bCopyToClipboard)
 		m_Seq.GetSteps(rSelection, theApp.m_arrStepClipboard);
 	m_Seq.DeleteSteps(rSelection);
@@ -844,6 +847,25 @@ bool CPolymeterDoc::InsertStep(const CRect& rSelection)
 	m_Seq.InsertStep(rPasteSel);
 	ApplyStepsArrayEdit(rPasteSel, true);	// select inserted steps
 	NotifyUndoableEdit(0, UCODE_INSERT_STEPS);
+	return true;
+}
+
+bool CPolymeterDoc::MoveSteps(const CRect& rSelection, int iDropPos)
+{
+	if (!IsRectStepSelection(rSelection, true))	// selection is deleted
+		return false;
+	CRect	rDrop(CPoint(iDropPos, rSelection.top), rSelection.Size());
+	if (!MakePasteSelection(rDrop.Size(), rDrop))
+		return false;
+	if (!IsRectStepSelection(rDrop))	// check drop rect too
+		return false;
+	m_rUndoSel = rSelection;	// pass selection to undo handler
+	NotifyUndoableEdit(iDropPos, UCODE_MOVE_STEPS);
+	CStepArrayArray	arrStep;
+	m_Seq.GetSteps(rSelection, arrStep);	// save selected steps
+	m_Seq.DeleteSteps(rSelection);	// delete selected steps
+	m_Seq.InsertSteps(rDrop, arrStep);	// insert selected steps at drop position
+	ApplyStepsArrayEdit(rDrop, true);	// set selection to drop rect
 	return true;
 }
 
@@ -1666,6 +1688,42 @@ void CPolymeterDoc::SaveClipboardSteps(CUndoState& State) const
 	}
 }
 
+void CPolymeterDoc::SaveMoveSteps(CUndoState& State) const
+{
+	CRect	rSelection;
+	if (State.IsEmpty()) {	// if initial state
+		rSelection = m_rUndoSel;	// get fresh selection
+	} else {	// undoing or redoing; selection may have changed, so don't rely on it
+		const CUndoRectSel	*pInfo = static_cast<CUndoRectSel*>(State.GetObj());
+		rSelection = pInfo->m_rSelection;	// use edit's original selection
+	}
+	CRefPtr<CUndoRectSel>	pInfo;
+	pInfo.CreateObj();
+	pInfo->m_rSelection = rSelection;
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreMoveSteps(const CUndoState& State)
+{
+	const CUndoRectSel	*pInfo = static_cast<CUndoRectSel*>(State.GetObj());
+	const CRect&	rSelection = pInfo->m_rSelection;
+	CRect	rDrop(CPoint(State.GetCtrlID(), rSelection.top), rSelection.Size());
+	CRect	rSource, rDest;
+	if (IsUndoing()) {
+		rSource	= rDrop;
+		rDest = rSelection;
+	} else {
+		rSource	= rSelection;
+		rDest = rDrop;
+	}
+	CStepArrayArray	arrStep;
+	m_Seq.GetSteps(rSource, arrStep);
+	m_Seq.DeleteSteps(rSource);
+	m_Seq.InsertSteps(rDest, arrStep);
+	CRectSelPropHint	hint(rDest, true);	// set selection
+	UpdateAllViews(NULL, HINT_STEPS_ARRAY, &hint);
+}
+
 void CPolymeterDoc::RestoreClipboardSteps(const CUndoState& State)
 {
 	CUndoMultiStepRect	*pClipboard = static_cast<CUndoMultiStepRect *>(State.GetObj());
@@ -2275,6 +2333,9 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 	case UCODE_DELETE_STEPS:
 		SaveClipboardSteps(State);
 		break;
+	case UCODE_MOVE_STEPS:
+		SaveMoveSteps(State);
+		break;
 	case UCODE_VELOCITY:
 	case UCODE_SHIFT:
 	case UCODE_FILL_STEPS:
@@ -2408,6 +2469,9 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 	case UCODE_INSERT_STEPS:
 	case UCODE_DELETE_STEPS:
 		RestoreClipboardSteps(State);
+		break;
+	case UCODE_MOVE_STEPS:
+		RestoreMoveSteps(State);
 		break;
 	case UCODE_VELOCITY:
 	case UCODE_SHIFT:

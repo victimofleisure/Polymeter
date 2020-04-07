@@ -13,6 +13,7 @@
 		03		10feb19	add method to get array of channel status nicknames
 		04		17feb20	inherit MIDI event class from track base
 		05		19mar20	move MIDI message enums to Midi header
+		06		07apr20	add output bar member flag
 
 */
 
@@ -108,6 +109,7 @@ protected:
 	CIntArrayEx	m_arrFilterPass;	// if filtering, indices of events that pass filter
 	LPCTSTR	m_pszRegKey;			// registry key; depends on input versus output
 	int		m_nEventTime;			// time of current MIDI event, in ticks
+	bool	m_bIsOutputBar;			// true if output bar
 	bool	m_bIsFiltering;			// true if filtering events
 	bool	m_bIsPaused;			// true if playback is paused
 	bool	m_bShowNoteNames;		// true if showing note names

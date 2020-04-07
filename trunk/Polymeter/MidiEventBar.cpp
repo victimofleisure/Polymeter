@@ -14,7 +14,8 @@
 		04		17feb20	inherit MIDI event class from track base
 		05		19mar20	move MIDI message enums to Midi header
 		06		01apr20	standardize context menu handling
-		
+		07		07apr20	only output bar should enable output capture
+
 */
 
 #include "stdafx.h"
@@ -84,6 +85,7 @@ CMidiEventBar::CMidiEventBar(bool bIsOutputBar)
 {
 	m_pszRegKey = m_arrBarRegKey[bIsOutputBar];
 	m_nEventTime = 0;
+	m_bIsOutputBar = bIsOutputBar;
 	m_bIsFiltering = false;
 	m_bIsPaused = false;
 	m_bShowNoteNames = true;
@@ -300,8 +302,10 @@ void CMidiEventBar::OnShowChanged(bool bShow)
 {
 	UNREFERENCED_PARAMETER(bShow);
 	RemoveAllEvents();
-	if (theApp.m_pPlayingDoc != NULL)	// if document is playing
-		theApp.m_pPlayingDoc->OnMidiOutputCaptureChange();
+	if (m_bIsOutputBar) {	// if we're the output bar
+		if (theApp.m_pPlayingDoc != NULL)	// if document is playing
+			theApp.m_pPlayingDoc->OnMidiOutputCaptureChange();	// enable output capture
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////

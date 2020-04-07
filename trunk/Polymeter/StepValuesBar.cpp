@@ -11,6 +11,7 @@
 		01		31mar20	account for key signature
 		02		01apr20	standardize context menu handling
 		03		06apr20	add copy text to clipboard
+		04		07apr20	add standard editing commands
 		
 */
 
@@ -52,6 +53,14 @@ CStepValuesBar::~CStepValuesBar()
 	CPersist::WriteInt(RK_StepValuesBar, RK_FORMAT_MASK, m_nStepFormat);
 }
 
+inline int CStepValuesBar::GetSelectedTrackCount(CPolymeterDoc *pDoc)
+{
+	if (pDoc != NULL)
+		return min(pDoc->GetSelectedCount(), MAX_TRACKS);
+	else
+		return 0;
+}
+
 void CStepValuesBar::OnShowChanged(bool bShow)
 {
 	if (bShow) {
@@ -71,7 +80,13 @@ void CStepValuesBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		UpdateGrid();
 		break;
 	case CPolymeterDoc::HINT_STEPS_ARRAY:
-		UpdateGrid(true);	// no need to update column names
+		{
+			UpdateGrid(true);	// no need to update column names
+			const CPolymeterDoc::CRectSelPropHint *pRectSelHint = static_cast<CPolymeterDoc::CRectSelPropHint *>(pHint);
+			m_grid.Deselect();
+			if (pRectSelHint->m_bSelect)
+				m_grid.SelectRange(pRectSelHint->m_rSelection.left, pRectSelHint->m_rSelection.Width());
+		}
 		break;
 	case CPolymeterDoc::HINT_STEP:
 		{
@@ -158,9 +173,8 @@ void CStepValuesBar::UpdateGrid(bool bSameNames)
 	int	nItems = 0;
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL) {
-		nSels = pDoc->GetSelectedCount();
+		nSels = GetSelectedTrackCount(pDoc);
 		if (nSels) {	// if tracks selected
-			nSels = min(nSels, MAX_TRACKS);	// limit number of columns
 			for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 				int	iTrack = pDoc->m_arrTrackSel[iSel];
 				if (!bSameNames) {	// if names may have changed
@@ -191,9 +205,10 @@ void CStepValuesBar::UpdateGrid(bool bSameNames)
 void CStepValuesBar::ShowHighlights(bool bEnable)
 {
 	if (bEnable) {	// if showing
-		int nSels = max(m_grid.GetColumnCount() - 1, 0);
+		CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+		int	nSels = GetSelectedTrackCount(pDoc);
 		m_arrCurPos.FastSetSize(nSels);
-		memset(m_arrCurPos.GetData(), -1, m_arrCurPos.GetSize() * sizeof(int));
+		memset(m_arrCurPos.GetData(), -1, nSels * sizeof(int));
 		UpdateHighlights();
 	} else {	// hiding
 		int	nSels = m_arrCurPos.GetSize();
@@ -209,7 +224,8 @@ void CStepValuesBar::UpdateHighlights()
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL) {
-		int nSels = m_arrCurPos.GetSize();
+		int	nSels = GetSelectedTrackCount(pDoc);
+		nSels = min(nSels, m_arrCurPos.GetSize());	// extra cautious
 		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 			int	iTrack = pDoc->m_arrTrackSel[iSel];
 			int	iPrevStep = m_arrCurPos[iSel];
@@ -226,9 +242,8 @@ void CStepValuesBar::UpdateColumnNames()
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL) {
-		int	nSels = pDoc->GetSelectedCount();
+		int	nSels = GetSelectedTrackCount(pDoc);
 		if (nSels) {	// if tracks selected
-			nSels = min(nSels, MAX_TRACKS);	// limit number of columns
 			for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 				int	iTrack = pDoc->m_arrTrackSel[iSel];
 				LPCTSTR	pszName = pDoc->m_Seq.GetName(iTrack);
@@ -308,7 +323,7 @@ bool CStepValuesBar::GetExportTable(CString& sTable)
 	ASSERT(pDoc != NULL);
 	if (pDoc == NULL)
 		return false;
-	int	nTrackSels = pDoc->GetSelectedCount();
+	int	nTrackSels = GetSelectedTrackCount(pDoc);
 	ASSERT(nTrackSels > 0);
 	if (nTrackSels <= 0)
 		return false;
@@ -352,6 +367,46 @@ bool CStepValuesBar::GetExportTable(CString& sTable)
 	return true;
 }
 
+bool CStepValuesBar::GetRectSelection(CRect& rSel, bool bIsDeleting) const
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc == NULL)
+		return false;
+	int	nTrackSels = pDoc->GetSelectedCount();
+	if (!nTrackSels)	// if no tracks selected
+		return false;
+	int	iSel;
+	for (iSel = 1; iSel < nTrackSels; iSel++) {	// for each selected track except first one
+		if (pDoc->m_arrTrackSel[iSel] != pDoc->m_arrTrackSel[iSel - 1] + 1)	// if non-sequential
+			return false;	// selected tracks aren't contiguous
+	}
+	CIntArrayEx	arrStepSel;
+	m_grid.GetSelection(arrStepSel);
+	int	nStepSels = arrStepSel.GetSize();
+	if (!nStepSels)	// if no steps selected
+		return false;
+	for (iSel = 1; iSel < nStepSels; iSel++) {	// for each selected step except first one
+		if (arrStepSel[iSel] != arrStepSel[iSel - 1] + 1)	// if non-sequential
+			return false;	// selected steps aren't contiguous
+	}
+	// columns are steps, rows are tracks
+	rSel = CRect(arrStepSel[0], pDoc->m_arrTrackSel[0],
+		arrStepSel[nStepSels - 1] + 1, pDoc->m_arrTrackSel[nTrackSels - 1] + 1);
+	return pDoc->IsRectStepSelection(rSel, bIsDeleting);
+}
+
+bool CStepValuesBar::HasRectSelection(bool bIsDeleting) const
+{
+	CRect	rSel;
+	return GetRectSelection(rSel, bIsDeleting);
+}
+
+bool CStepValuesBar::HasSelection() const
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	return pDoc != NULL && pDoc->GetSelectedCount() && m_grid.GetSelectedCount();
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CStepValuesBar message map
 
@@ -363,6 +418,7 @@ BEGIN_MESSAGE_MAP(CStepValuesBar, CMyDockablePane)
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_STEP_GRID, OnListGetdispinfo)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_STEP_GRID, OnListCustomdraw)
 	ON_WM_CONTEXTMENU()
+	ON_NOTIFY(ULVN_REORDER, IDC_STEP_GRID, OnListReorder)
 	ON_COMMAND(ID_STEP_VALUES_FORMAT_SIGNED, OnFormatSigned)
 	ON_UPDATE_COMMAND_UI(ID_STEP_VALUES_FORMAT_SIGNED, OnUpdateFormatSigned)
 	ON_COMMAND(ID_STEP_VALUES_FORMAT_NOTES, OnFormatNotes)
@@ -375,8 +431,18 @@ BEGIN_MESSAGE_MAP(CStepValuesBar, CMyDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_STEP_VALUES_FORMAT_HEX, OnUpdateFormatHex)
 	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditCopy)
+	ON_COMMAND(ID_EDIT_CUT, OnEditDelete)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditDelete)
+	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
+	ON_COMMAND(ID_EDIT_INSERT, OnEditInsert)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
+	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
 	ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditSelectAll)
+	ON_COMMAND(ID_STEP_VALUES_EXPORT_COPY, OnExportCopy)
+	ON_UPDATE_COMMAND_UI(ID_STEP_VALUES_EXPORT_COPY, OnUpdateExportCopy)
 	ON_COMMAND_RANGE(ID_STEP_VALUES_LAYOUT_COLS_STEPS, ID_STEP_VALUES_LAYOUT_COLS_TRACKS, OnLayout)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_STEP_VALUES_LAYOUT_COLS_STEPS, ID_STEP_VALUES_LAYOUT_COLS_TRACKS, OnUpdateLayout)
 	ON_COMMAND_RANGE(ID_STEP_VALUES_DELIMIT_COMMA, ID_STEP_VALUES_DELIMIT_TAB, OnFormat)
@@ -393,7 +459,7 @@ int CStepValuesBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	m_bShowCurPos = theApp.m_Options.m_View_bShowCurPos;
 	DWORD	dwStyle = WS_CHILD | WS_VISIBLE 
-		| LVS_REPORT | LVS_OWNERDATA | LVS_NOSORTHEADER;
+		| LVS_REPORT | LVS_OWNERDATA | LVS_NOSORTHEADER | LVS_SHOWSELALWAYS;
 	if (!m_grid.Create(dwStyle, CRect(0, 0, 0, 0), this, IDC_STEP_GRID))	// create grid control
 		return -1;
 	DWORD	dwListExStyle = LVS_EX_LABELTIP | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER;
@@ -482,14 +548,17 @@ void CStepValuesBar::OnListCustomdraw(NMHDR* pNMHDR, LRESULT* pResult)
 		if (pLVCD->iSubItem > 0) {	// skip index column
 			COLORREF	clrItem;
 			int	iSel = pLVCD->iSubItem - 1;
-			if (m_arrCurPos[iSel] == static_cast<int>(pLVCD->nmcd.dwItemSpec)) {	// if item at current position
-				CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-				if (pDoc != NULL && iSel < pDoc->GetSelectedCount()) {
-					int	iTrack = pDoc->m_arrTrackSel[iSel];
-					clrItem = m_arrStepColor[pDoc->m_Seq.GetMute(iTrack)];	// highlight item
-				} else	// can't get selection
+			if (iSel >= 0 && iSel < m_arrCurPos.GetSize()) {	// extra cautious
+				if (m_arrCurPos[iSel] == static_cast<int>(pLVCD->nmcd.dwItemSpec)) {	// if item at current position
+					CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+					if (pDoc != NULL && iSel < pDoc->GetSelectedCount()) {
+						int	iTrack = pDoc->m_arrTrackSel[iSel];
+						clrItem = m_arrStepColor[pDoc->m_Seq.GetMute(iTrack)];	// highlight item
+					} else	// can't get selection
+						clrItem = m_clrBkgnd;	// default background
+				} else	// item not at current position
 					clrItem = m_clrBkgnd;	// default background
-			} else	// item not at current position
+			} else	// selection index out of range
 				clrItem = m_clrBkgnd;	// default background
 			pLVCD->clrTextBk = clrItem;
 		}
@@ -503,6 +572,23 @@ void CStepValuesBar::OnContextMenu(CWnd* pWnd, CPoint point)
 		return;
 	m_grid.FixContextMenuPoint(point);
 	DoGenericContextMenu(IDR_STEP_VALUES_CTX, point, this);
+}
+
+void CStepValuesBar::OnListReorder(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	UNREFERENCED_PARAMETER(pNMHDR);	// NMLISTVIEW
+	UNREFERENCED_PARAMETER(pResult);
+	int	iDropPos = m_grid.GetCompensatedDropPos();
+	if (iDropPos >= 0) {	// if items are actually moving
+		CRect	rSel;
+		if (GetRectSelection(rSel, true)) {	// deleting
+			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+			ASSERT(pDoc != NULL);
+			if (!pDoc->MoveSteps(rSel, iDropPos))
+				AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+		} else
+			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+	}
 }
 
 BOOL CStepValuesBar::PreTranslateMessage(MSG* pMsg)
@@ -574,14 +660,81 @@ void CStepValuesBar::OnUpdateEditSelectAll(CCmdUI *pCmdUI)
 
 void CStepValuesBar::OnEditCopy()
 {
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL) {
+		CRect	rSel;
+		if (GetRectSelection(rSel))
+			pDoc->GetTrackSteps(rSel, theApp.m_arrStepClipboard);
+	}
+}
+
+void CStepValuesBar::OnUpdateEditCopy(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(HasRectSelection());
+}
+
+void CStepValuesBar::OnEditPaste()
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL) {
+		CRect	rSel;
+		if (GetRectSelection(rSel))
+			pDoc->PasteSteps(rSel);
+		else
+			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+	}
+}
+
+void CStepValuesBar::OnUpdateEditPaste(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(HasRectSelection() && theApp.m_arrStepClipboard.GetSize());
+}
+
+void CStepValuesBar::OnEditInsert()
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL) {
+		CRect	rSel;
+		if (GetRectSelection(rSel))
+			pDoc->InsertStep(rSel);
+		else
+			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+	}
+}
+
+void CStepValuesBar::OnUpdateEditInsert(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(HasRectSelection());
+}
+
+void CStepValuesBar::OnEditDelete()
+{
+	bool	bCopyToClipboard = GetCurrentMessage()->wParam == ID_EDIT_CUT;
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL) {
+		CRect	rSel;
+		if (GetRectSelection(rSel, true))
+			pDoc->DeleteSteps(rSel, bCopyToClipboard);
+		else
+			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+	}
+}
+
+void CStepValuesBar::OnUpdateEditDelete(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(HasRectSelection());
+}
+
+void CStepValuesBar::OnExportCopy()
+{
 	CString	sTable;
 	if (GetExportTable(sTable))
 		CopyStringToClipboard(theApp.GetMainFrame()->m_hWnd, sTable);
 }
 
-void CStepValuesBar::OnUpdateEditCopy(CCmdUI *pCmdUI)
+void CStepValuesBar::OnUpdateExportCopy(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_grid.GetSelectedCount());
+	pCmdUI->Enable(HasSelection());
 }
 
 void CStepValuesBar::OnLayout(UINT nID)

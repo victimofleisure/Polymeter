@@ -527,15 +527,25 @@ IDR_STEP_VALUES_CTX MENU
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "&Signed",                     ID_STEP_VALUES_FORMAT_SIGNED
-        MENUITEM "&Notes",                      ID_STEP_VALUES_FORMAT_NOTES
-        MENUITEM "&Octaves",                    ID_STEP_VALUES_FORMAT_OCTAVES
-        MENUITEM "&Ties",                       ID_STEP_VALUES_FORMAT_TIES
-        MENUITEM "&Hex",                        ID_STEP_VALUES_FORMAT_HEX
+        POPUP "&Format"
+        BEGIN
+            MENUITEM "&Signed",                     ID_STEP_VALUES_FORMAT_SIGNED
+            MENUITEM "&Notes",                      ID_STEP_VALUES_FORMAT_NOTES
+            MENUITEM "&Octaves",                    ID_STEP_VALUES_FORMAT_OCTAVES
+            MENUITEM "&Ties",                       ID_STEP_VALUES_FORMAT_TIES
+            MENUITEM "&Hex",                        ID_STEP_VALUES_FORMAT_HEX
+        END
         MENUITEM SEPARATOR
+        MENUITEM "C&ut",                        ID_EDIT_CUT
         MENUITEM "&Copy",                       ID_EDIT_COPY
+        MENUITEM "&Paste",                      ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "&Insert",                     ID_EDIT_INSERT
+        MENUITEM "&Delete",                     ID_EDIT_DELETE
         MENUITEM "Select &All",                 ID_EDIT_SELECT_ALL
-        POPUP "&Export"
+        MENUITEM SEPARATOR
+        MENUITEM "&Export",                     ID_STEP_VALUES_EXPORT_COPY
+        POPUP "&Options"
         BEGIN
             MENUITEM "Columns = &Steps",            ID_STEP_VALUES_LAYOUT_COLS_STEPS
             MENUITEM "Columns = &Tracks",           ID_STEP_VALUES_LAYOUT_COLS_TRACKS
@@ -1403,6 +1413,7 @@ BEGIN
     IDS_WINDOW_RESET_LAYOUT_WARN 
                             "Reset all windows to their default layout? This action can't be undone, and the application will be restarted."
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
+    IDS_EDIT_MOVE_STEPS     "Move Steps"
 END
 
 STRINGTABLE
@@ -1465,6 +1476,8 @@ BEGIN
     ID_PIANO_SHOW_KEY_LABELS "Show note names on piano keys"
     ID_STEP_VALUES_DELIMIT_COMMA "Export comma delimited values"
     ID_STEP_VALUES_DELIMIT_TAB "Export tab delimited values"
+    ID_STEP_VALUES_EXPORT_COPY 
+                            "Export selected steps as text and copy them to the clipboard"
     ID_STEP_VALUES_FORMAT_HEX "Show values in hexadecimal"
     ID_STEP_VALUES_FORMAT_NOTES "Show steps as notes"
     ID_STEP_VALUES_FORMAT_OCTAVES "Include octave in note name"
@@ -1474,11 +1487,11 @@ BEGIN
                             "In export, columns are steps and rows are tracks"
     ID_STEP_VALUES_LAYOUT_COLS_TRACKS 
                             "In export, columns are tracks and rows are steps"
-    ID_TOOLS_CONVERGENCES   "Show convergences calculator\nConvergences"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TOOLS_CONVERGENCES   "Show convergences calculator\nConvergences"
     ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
     ID_TOOLS_EXPORT_MODULATIONS 
                             "Export modulations to a CSV file\nExport Modulations"
@@ -1496,11 +1509,11 @@ BEGIN
     ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks or steps\nVelocity Range "
     ID_TRACK_FILL           "Fill selected tracks or steps with a range of values"
     ID_TRACK_GROUP          "Group the selected tracks into a part\nGroup"
-    ID_TRACK_INVERT         "Invert the selected tracks or steps\nInvert"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_INVERT         "Invert the selected tracks or steps\nInvert"
     ID_TRACK_LENGTH         "Set the length of one or more tracks\nLength"
     ID_TRACK_MUTE           "Mute or unmute the selected tracks\nMute"
     ID_TRACK_OFFSET         "Offset the selected tracks by a given number of ticks\nOffset Tracks"
@@ -1516,11 +1529,11 @@ BEGIN
     ID_TRACK_SHIFT_LEFT     "Shift the selected tracks or steps left\nShift Left"
     ID_TRACK_SHIFT_RIGHT    "Shift the selected tracks or steps right\nShift Right"
     ID_TRACK_SHIFT_STEPS    "Shift the selection left or right a given number of steps\nShift Steps"
-    ID_TRACK_SOLO           "Solo the selected tracks\nSolo"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_SOLO           "Solo the selected tracks\nSolo"
     ID_TRACK_SORT           "Sort the selected tracks\nTrack Sort"
     ID_TRACK_STRETCH        "Stretch or shrink the selected tracks\nStretch"
     ID_TRACK_TIE_NOTES      "Toggle tie notes mode; if on, new notes are tied\nTie Notes"
@@ -1547,11 +1560,11 @@ BEGIN
     ID_VIEW_TYPE_LIVE       "Show the live view\nLive View"
     ID_VIEW_TYPE_SONG       "Show the song view\nSong View"
     ID_VIEW_TYPE_TRACK      "Show the track view\nTrack View"
-    ID_VIEW_VELOCITIES      "Show or hide velocities pane\nVelocities"
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_VELOCITIES      "Show or hide velocities pane\nVelocities"
     ID_VIEW_ZOOM_IN         "Zoom in\nZoom In"
     ID_VIEW_ZOOM_OUT        "Zoom out\nZoom Out"
     ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"

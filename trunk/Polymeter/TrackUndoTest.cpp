@@ -17,6 +17,7 @@
 		07		02dec19	remove sort function, array now provides it
 		08		20mar20	add mapping
 		09		29mar20	add sort and learn mapping
+		10		07apr20	add move steps
 
 		automated undo test for patch editing
  
@@ -64,6 +65,7 @@ const CTrackUndoTest::EDIT_INFO CTrackUndoTest::m_EditInfo[] = {
 	{UCODE_PASTE_STEPS,			2},
 	{UCODE_INSERT_STEPS,		1},
 	{UCODE_DELETE_STEPS,		1},
+	{UCODE_MOVE_STEPS,			0.2f},
 	{UCODE_VELOCITY,			0.1f},
 	{UCODE_REVERSE,				0.1f},
 	{UCODE_REVERSE_RECT,		0.1f},
@@ -473,7 +475,8 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 				return(DISABLED);
 			m_pDoc->m_arrTrackSel = arrSelection;
 			int	iInsPos = GetRandomInsertPos();
-			m_pDoc->Drop(iInsPos);
+			if (!m_pDoc->Drop(iInsPos))
+				return(DISABLED);
 			PRINTF(_T("%s %s %d\n"), sUndoTitle, PrintSelection(arrSelection), iInsPos);
 		}
 		break;
@@ -560,6 +563,19 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (!MakeRandomStepSelection(rSelection))
 				return(DISABLED);
 			if (!m_pDoc->InsertStep(rSelection))
+				return(DISABLED);
+			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(rSelection));
+		}
+		break;
+	case UCODE_MOVE_STEPS:
+		{
+			CRect	rSelection;
+			if (!MakeRandomStepSelection(rSelection))
+				return(DISABLED);
+			CPoint	ptStep;
+			if (!GetRandomStep(ptStep))
+				return(DISABLED);
+			if (!m_pDoc->MoveSteps(rSelection, ptStep.x))
 				return(DISABLED);
 			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(rSelection));
 		}

@@ -12,6 +12,7 @@
 		02		22mar19	add invert
 		03		20mar20	add mapping
 		04		28mar20	add learn multiple mappings
+		05		07apr20	add move steps
 
 		undo code data
  
@@ -34,6 +35,7 @@ UCODE_DEF(CUT_STEPS)
 UCODE_DEF(PASTE_STEPS)
 UCODE_DEF(INSERT_STEPS)
 UCODE_DEF(DELETE_STEPS)
+UCODE_DEF(MOVE_STEPS)
 UCODE_DEF(VELOCITY)
 UCODE_DEF(VELOCITY_RECT)
 UCODE_DEF(REVERSE)
