@@ -6,11 +6,14 @@ open	close	type	description	rev	user
 05/30/19		bug	modulation list is empty regardless of track selection; can't reproduce it, brain fire?		
 11/04/19		bug	GraphViz times out if modulation is too complicated; introduce variable timeout option?		
 11/12/19		bug	MDI tab control disappears after opening or closing document; hard to reproduce		
-12/03/19		bug	playback is lags behind UI by one tick (0.5 seconds) at tempo of 1 with GS Synth (see phase test)		
+12/03/19		bug	playback lags behind UI by one tick (0.5 seconds) at tempo of 1 with GS Synth (see phase test)		
 12/10/19		bug	steps aren't drawn when track's quant is very large (e.g. 30720) and step view is zoomed in		
 02/18/20		bug	song CSV export omits tempo map, because CMidiFile::ReadTracks doesn't support tempo map		
 03/04/20		bug	in step view, very long tracks aren't displayed when zoomed in; caused by scroll view's 32-bit limitations		
-04/07/20		bug	stopping sequencer occasionally causes MIDI error 65 (STILLPLAYING); happens every time in Mac Wine		
+04/07/20		bug	stopping sequencer occasionally causes MIDI error 65 (still playing); happens every time in Mac Wine		
+04/10/20		bug	sequencer is taking too long; probable cause is time critical winmm thread preempting sequencer callback		
+04/15/20		bug	canceling Find / Replace dialog crashes debug version, but only when run without debugger, WTF		
+04/17/20		bug	convergence dialog can take too long in some cases, stalling UI; show progress bar or use worker thread		
 03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -277,13 +280,16 @@ open	close	type	description	rev	user
 04/05/20	04/06/20	done	Step Values bar should support copying text to clipboard	0.0.29.000	
 04/06/20	04/06/20	done	editing tempo should update current time in status bar	0.0.29.000	
 04/05/20	04/07/20	done	Step Values bar should support standard editing commands, provided step selection is rectangular (Benoit)	0.0.29.002	
+04/06/20	04/14/20	done	optionally output MIDI clock and start / stop / song position	0.0.30.000	
+04/14/18	04/15/20	done	Insert Group command in modulation dialog; list boxes instead of drop lists, select multiple sources at once	0.0.30.000	
+04/16/20	04/17/20	done	Step Values bar should support editing multiple steps at once, within a contiguous range of selected items	0.0.30.000	
+05/13/20	04/17/20	done	assign custom colors to tracks (Benoit)	0.0.30.000	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 03/22/18		hold	swing modulation; probably not feasible		
 03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 03/22/18		hold	radio groups; member tracks automatically mute each other so that only one member sounds at a time		
 03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
-03/22/18		hold	offset modulation; possibly feasible by delaying notes until subsequent callbacks		
 03/25/18		hold	animated visualization		
 03/25/18		hold	playback can be slow to start, due to device open delay; keep output device open all the time?		
 03/25/18		hold	output timing is unreliable at start of playback; likely only fixable by keeping output device open all the time		
@@ -299,7 +305,6 @@ open	close	type	description	rev	user
 06/21/18		hold	track merge command; combine tracks that have identical settings and non-overlapping steps		
 07/05/18		hold	command to change track, part and preset names to title case		
 07/14/18		hold	channel volume sliders in live view; solving wrong problem?		
-07/14/18		hold	modulation wizard; drop lists are cumbersome for large numbers of tracks		
 07/17/18		hold	live view list controls should have grid lines but default color is too bright; draw gridlines in custom draw?		
 07/26/18		hold	live view should show approaching intersections between different loop lengths		
 07/26/18		hold	transpose within selected key; only doable if selected tracks are all in that key?		
@@ -323,16 +328,18 @@ open	close	type	description	rev	user
 12/09/18		hold	add hide/unhide column commands to track list header's context menu; where to store previous width?		
 12/12/18		hold	grid control's header should display tooltip for truncated column names; must subclass header control?		
 01/19/19		hold	document I/O doesn't support Unicode track names; initialize INI file with UTF-16 LE BOM (doubles file size)		
-02/28/19		hold	song export length doesn't account for negative start position		
+02/28/19		hold	song export length doesn't account for negative start position; why is this so difficult?		
 03/25/19		hold	piano bar should be able to show channels separately via multiple keyboards; harder than it sounds		
 06/12/19		hold	option for space bar to start/stop playback without needing to also press Ctrl key; causes many UI conflicts		
 03/02/20		hold	separate window for viewing/editing recorded MIDI input		
 03/30/20		hold	step values bar should provide a means of setting song position		
-04/04/20		hold	scale modulation repeats same work for each track that uses the scale		
+04/04/20		hold	scale modulation often repeats same work for each track that uses the scale; but not always!		
 04/05/20		hold	Step Values bar doesn't allow arbitrary rectangular selection; grid control limitation, custom view?		
-04/06/20		hold	optionally output MIDI clock and start / stop; tests show sync loss below 100 BPM		
 04/06/20		hold	extend sequence lead-in to fix initial timing glitch; multiply m_nCBLen in GetPosition and Play		
-05/13/20		hold	select custom colors for tracks (Benoit)		
+04/07/20		hold	attach and auto-hide are disabled for Piano and MIDI output bars, due to output capture management		
+04/10/20		hold	post-voicing sort could be replaced with insert sorted, but benchmark shows little room for improvement		
+04/11/20		hold	channel modulation; but is it really necessary? Same effect is acheivable with mute modulations		
+04/11/20		hold	window that shows current song time in huge font; excessive?		
 05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
@@ -345,4 +352,5 @@ open	close	type	description	rev	user
 01/11/19		punt	in Piano view, if multiple instances of a note overlap, velocity color may be inaccurate; unavoidable		
 02/28/19		punt	song playback doesn't always match live output when modulator tracks have big quants; dub granularity issue		
 11/12/19		punt	popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful		
-04/07/20		todo	attach and auto-hide are disabled for Piano and MIDI output bars, due to output capture management		
+03/22/18		todo	offset modulation; possibly feasible by delaying notes until subsequent callbacks		
+04/07/20		todo	properties bar should derive from custom dockable pane		

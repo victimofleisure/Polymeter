@@ -97,7 +97,7 @@
 <TD>12/03/19</TD>
 <TD>&nbsp;</TD>
 <TD>bug</TD>
-<TD>playback is lags behind UI by one tick (0.5 seconds) at tempo of 1 with GS Synth (see phase test)</TD>
+<TD>playback lags behind UI by one tick (0.5 seconds) at tempo of 1 with GS Synth (see phase test)</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -129,7 +129,31 @@
 <TD>04/07/20</TD>
 <TD>&nbsp;</TD>
 <TD>bug</TD>
-<TD>stopping sequencer occasionally causes MIDI error 65 (STILLPLAYING); happens every time in Mac Wine</TD>
+<TD>stopping sequencer occasionally causes MIDI error 65 (still playing); happens every time in Mac Wine</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/10/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>sequencer is taking too long; probable cause is time critical winmm thread preempting sequencer callback</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/15/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>canceling Find / Replace dialog crashes debug version, but only when run without debugger, WTF</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/17/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>convergence dialog can take too long in some cases, stalling UI; show progress bar or use worker thread</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2262,6 +2286,38 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>04/06/20</TD>
+<TD>04/14/20</TD>
+<TD>done</TD>
+<TD>optionally output MIDI clock and start / stop / song position</TD>
+<TD>0.0.30.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/14/18</TD>
+<TD>04/15/20</TD>
+<TD>done</TD>
+<TD>Insert Group command in modulation dialog; list boxes instead of drop lists, select multiple sources at once</TD>
+<TD>0.0.30.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/16/20</TD>
+<TD>04/17/20</TD>
+<TD>done</TD>
+<TD>Step Values bar should support editing multiple steps at once, within a contiguous range of selected items</TD>
+<TD>0.0.30.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/13/20</TD>
+<TD>04/17/20</TD>
+<TD>done</TD>
+<TD>assign custom colors to tracks (Benoit)</TD>
+<TD>0.0.30.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -2306,14 +2362,6 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>03/22/18</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>offset modulation; possibly feasible by delaying notes until subsequent callbacks</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2434,14 +2482,6 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>channel volume sliders in live view; solving wrong problem?</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>07/14/18</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>modulation wizard; drop lists are cumbersome for large numbers of tracks</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2633,7 +2673,7 @@
 <TD>02/28/19</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>song export length doesn't account for negative start position</TD>
+<TD>song export length doesn't account for negative start position; why is this so difficult?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2673,7 +2713,7 @@
 <TD>04/04/20</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>scale modulation repeats same work for each track that uses the scale</TD>
+<TD>scale modulation often repeats same work for each track that uses the scale; but not always!</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2689,23 +2729,39 @@
 <TD>04/06/20</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>optionally output MIDI clock and start / stop; tests show sync loss below 100 BPM</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>04/06/20</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
 <TD>extend sequence lead-in to fix initial timing glitch; multiply m_nCBLen in GetPosition and Play</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>05/13/20</TD>
+<TD>04/07/20</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>select custom colors for tracks (Benoit)</TD>
+<TD>attach and auto-hide are disabled for Piano and MIDI output bars, due to output capture management</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/10/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>post-voicing sort could be replaced with insert sorted, but benchmark shows little room for improvement</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/11/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>channel modulation; but is it really necessary? Same effect is acheivable with mute modulations</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/11/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>window that shows current song time in huge font; excessive?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2806,10 +2862,18 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>03/22/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>offset modulation; possibly feasible by delaying notes until subsequent callbacks</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>04/07/20</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>attach and auto-hide are disabled for Piano and MIDI output bars, due to output capture management</TD>
+<TD>properties bar should derive from custom dockable pane</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>

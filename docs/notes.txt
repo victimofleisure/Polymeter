@@ -1890,30 +1890,31 @@ Maybe first jump to a break around 1:12?
 4/3/20 Unreleased tracks
 
 Solo piano, done:
-Ibaramu 5:29
-Ninu Meta 4:21
-Irubo 4:15
-Mo Bulu 4:51
-Ero Ayo 5:31
-(around 24:30)
+Ero Ayo 	5:31 (Happy Thoughts, Joy of Thinking, Device of Joy)
+Mo Bulu 	4:51 (I'm Blue)
+Irubo 		4:15 (Ritual)
+Ninu Meta 	4:21 (In Three)
+Ibaramu 	5:29 (Harmonious)
+Yipo 		4:44 (Rolls, Twist)
+(around 29:10)
 
 Misc:
 Stella By Starlight 3:34
 
 Full band, but needs porting to Reason:
-LCM 5:34
-Boogie Woogie 6:08
-Watergate 2:44
-Tritone 4:43
-Alternation 6:10
+LCM		5:34
+Boogie Woogie 	6:08
+Watergate 	2:44
+Tritone 	4:43
+Alternation 	6:10
 (around 25:20)
 
 Full band, done:
-Kahelo	5:59
-Lodidi 6:14
-Charlie's Big Break 5:10
-Interago 5:11 (mastered)
-Kasita Mondo 6:00 (mastered)
+Kahelo			5:59
+Lodidi 			6:14
+Charlie's Big Break 	5:10
+Interago 		5:11 (mastered)
+Kasita Mondo 		6:00 (mastered)
 (around 28:30)
 
 4/4/20 OSX
@@ -1925,21 +1926,245 @@ For Time To Repeat command, GetNumberFormatEx is the problem, see test app.
 Chord modulation works fine, and permits Bergonzi's "numbers" system like
 ChordEase. But there's a subtle issue with indexing. Consider just scale
 and index. If the index is outside the scale, it currently wraps around.
-But this limits scales to one octave! Arguably it would be more useful if
-indexing out of range octaved the scale note up or down as needed.
+But this limits the scale to one octave! Arguably it would be more useful
+if indexing out of range octaved the scale note up or down as needed.
 
-Why should scales be limited to an octave, unless you explicitly request that
-behavior by setting Range Type to octave? You could partially address this by
-adding more scale modulators so the scale covers multiple octaves, but you 
-shouldn't need to.
+Why should scales be limited to an octave, unless you explicitly request
+that behavior by setting Range Type to octave? You can work around it by 
+adding more scale modulators so that the scale covers multiple octaves, 
+but that might not be intuitive. It also uses a lot of tracks.
 
-The same issue probably applies to the Chord indexing; why should chords be
-limited to an octave?
+The same issue applies to the Chord indexing; why should chords be limited
+to an octave?
 
+Changing this is complicated and could affect preexisting songs, so it's
+probably better to just use multi-octave scales and chords in cases where
+the difference matters. See the file "chord modulation test.plm" for a
+demonstration of multi-octave scales and chords and why they're needed.
 
+Most of time I'm using Range modulation in which case it's a non-issue.
 
+4/8/20 docking bars to tabbed panes: visible but inactive
 
+Re the issue with not being able to dock Piano and MIDI bars to a tabbed pane: 
+I looked into that some more. It's a non-trivial issue with pros and cons that 
+need consideration. But the short form is this: Currently, keeping many of the 
+bars in tabbed panes may make the UI sluggish. This is especially true of the 
+Step Values bar!
 
+When a bar is docked to a tabbed pane, Windows considers it "visible" even if 
+it's not the active tab, in which case it's not actually visible to the user. 
+In my current implementation, such "visible but inactive" bars receive document 
+updates (affecting performance), though they don't get "painted".
+
+It seems reasonable that hidden bars shouldn't consume any CPU cycles. When a 
+bar gets "shown" my code assumes it's "dirty" (meaning it wasn't being updated 
+while it was "hidden"), and updates it. But there's a catch to that work-saving 
+strategy: bars that show real-time events (e.g. the Piano and MIDI event bars) 
+will miss events that occur while they're hidden. This is why when you show 
+the Piano bar, it doesn't display notes that were already in progress by the 
+time you showed the bar; it missed those events.
+
+It's also why I had to disable tabbed docking for Piano and MIDI event bars. 
+Those bars have big impact, because they oblige the sequencer to send a 
+"monitoring" copy of the entire output MIDI sequence to the main thread. If 
+those bars were allowed to tab-dock (or auto-hide), they would drag 
+performance even though they might not be visible to the user. This seemed 
+wrong to me, so I disallowed it.
+
+It's a messy situation with competing design goals. On the one hand, it's 
+nice if bars don't consume resources while they're "hidden". On the other 
+hand, it's annoying that when you show the Piano or MIDI event bars, events 
+that occurred while they were hidden are missing.
+
+4/8/20 Yipo
+
+It's in 33. The feel is 17 + 16, typically 5 + 4 * 7.
+
+4/9/20 Sound design: what Reason drum sounds did I like back in the day?
+
+When It Rains:
+Bd_Xtc1 (pitch 27, tone 39)
+Clp_Xtc6 (pitch -10, tone 23)
+Sd3_Kru (pitch 26)
+Tom2_Dubfire (pitch 59)
+Hh3_Vintage (pitch 12)
+Ride2_Xtc6 (pitch 26 or -17)
+Sh_Xfile1 (pitch 22)
+Oh_FatBoy (pitch 2)
+Tmb_Chemical (pitch 4)
+
+This Is Cheese:
+Bd_Xtc1 (pitch 27, tone 11)
+Clp_Abstract (pitch -10, tone 23)
+Sd2_HardKnox
+Sd2_Sexy (pitch 18)
+Tom_Xtc1  (pitch 49)
+CYM3 1JAZZ (pitch -22)
+Sh_Xfile1 (pitch -16)
+Hh_Xfile2
+Oh2_Xfile2
+Clp_Xtc7 (pitch 6)
+Sh_Jeepkeys (pitch 4, tone 22)
+Bongo_Hardknox (pitch -20 or -36)
+Bd2_One2 (pitch -7 or -30)
+
+Save the Planet:
+Bd_Xtc1 (pitch 27, tone 39)
+Clp_RawDirt (pitch 14, tone 23)
+Sd_Numbers (pitch 20)
+Sd2_Sexy (pitch 8)
+Hh3_Vintage (pitch 12)
+Crash_Xtc
+Cb_Brassic
+Sh_XFile1 (pitch 16)
+Oh_FatBoy (pitch 10)
+Hh2_Sexy
+
+4/10/20 More Than Four 
+
+Europa master volume is 12.1 dB
+
+Try replacing "Played with eleven" with "Combined with eleven".
+It makes the meaning clearer and probably sounds better too.
+
+The vocal has a lot of big transients. Adding 2.5x compression
+helped a lot, but it probably needs de-essing too.
+
+The kick is solid but not sure if there's enough bass. Maybe 
+try boosting the lows on the synth line.
+
+4/11/20 Sequencer Callback taking too long
+
+It happend quite a few times while working on "More Than Four."
+Callback times as long as nearly 20ms were observed. Today I'm
+not seeing it. I looped the track's peak section, and after ten
+I see callback times of 31% max and 0.1% average. It's unclear 
+what if anything the trouble was. Could the laptop have been 
+thermally throttling the CPU? The fan was on pretty high. I 
+did have Firefox running in the background without realizing 
+it, and that's a big CPU-burner, so maybe that's all it was.
+
+Just to be sure, I benchmarked the scale re-sort after voices
+are dropped, to make sure the sort isn't taking too long. Over
+500 samples it used 1 microsecond maximum. Not much hope of 
+optimizing that!
+
+I did find a few spots where the "fast" versions of CArrayEx
+methods could be subsituted. Here's the benchmark code. It 
+really ought to be easier to do this.
+
+static STATS stat = {0, 0, DBL_MAX};
+CBenchmark b2;///@@@
+{
+	if (bDropped)	// if any voices were dropped
+		m_arrScale.Sort();	// re-sort scale tones
+}
+double t = b2.Elapsed();///@@@
+stat.nCallbacks++;
+stat.fCBTimeSum += t;
+if (t < stat.fCBTimeMin) stat.fCBTimeMin = t;
+if (t > stat.fCBTimeMax) stat.fCBTimeMax = t;
+if (stat.nCallbacks == 500) printf("min=%f max=%f avg=%f\n", stat.fCBTimeMin, stat.fCBTimeMax, stat.fCBTimeSum / stat.nCallbacks);
+
+4/16/20 process chord before transposing and applying range
+
+The previous code did the transpose and range window loop
+BEFORE the chord processing, but this is dumb. Why waste
+time transposing notes that won't be used? Only notes that
+get picked by the chord should be processed further. This
+this potentially saves quite a bit of work, e.g. with a 
+hepatonic scale and tetrachords (the usual case) nearly 
+half the scale tones were transposed and range windowed 
+needlessly. It's an easy fix, and testing shows no impact
+on the output data.
+
+4/16/20 Sequencer Callback taking too long: profile results
+
+AddTrackEvents is consuming 99.9% of the CPU time, no surprise
+there. But what IS a surprise is that the new scale / chord 
+code doesn't seem to be the problem; it's consuming less than 
+1% of the time. So what's taking so long in AddTrackEvents? 
+
+Using the main section of "Shelter in Bass" as a test file.
+
+Let's try SumModulations next. Sure looks like SumModulations
+related to the problem.
+
+RecurseModulations is also seems to be part of the problem.
+Interesting! In a typical run, the callback max time was 16.5ms,
+and the RecurseModulations max time was 6.7ms, or about 40% 
+of the total max time.
+
+Next let's try profiling around AddTrackEvents's calls to 
+RecurseModulations and SumModulations.
+
+Weird! In this case callback max time is 6.9ms but the 
+profiled calls are only 75 microseconds. Something isn't 
+adding up here. Could it be a thread issue? Could the 
+callback be getting preempted? Better check the callback
+thread's priority. Nope, the callback thread priority is 
+running at priority 2 (Highest), as expected.
+
+Aha! Examining the threads window reveals that the callback
+thread has competition, from an unidentified worker thread in 
+winmm.dll running at Time Critical priority. So obviously if
+that thread blocks for any significant length of time, the
+sequencer callback will take too long. This suggests a test.
+Let's try disabling the output, i.e. do all the usual work
+but send an empty buffer to the MIDI stream handle. If the
+Time Critical thread is consuming CPU time in proportion to
+the density of the output MIDI stream, this test should 
+eliminate that thread as a source of preemption.
+
+We still need to output the NOP to get callbacks. Just to be
+sure the optimizer doesn't outwit the test somehow, we'll 
+output the real buffer to the app's queue for the Piano bar, 
+then set the buffer to contain only NOP and output it to 
+the MIDI stream.
+
+OK. Sure looks like the Time Critical thread is the culprit!
+After five minutes, callback max time is 2.6ms, and profile
+around AddTrackEvents (but inside critical section) is 2.1ms.
+
+Let's wait and see if the callback ever takes too long. So,
+after 15 minutes, the numbers are 3.9ms (callback) and 3.3ms
+(AddTrackEvents), and the "callback took too long" error
+hasn't occurred. If these numbers are to be believed, the 
+only solution is to increase the latency. For very dense 
+sequences, the mysterious Time Critical winmm thread is 
+taking long enough to disrupt callback scheduling.
+
+If the profile were to include entering the critical section, 
+would the callback and AddTrackEvents benchmarks match even 
+more closely? Answer: Yes, now they're consistently within 
+a few microseconds of each other. So AddTrackEvents is most
+of the app's work, but we already knew that.
+
+Contention for the track critical section can't be the issue,
+because the only other contenders are the editing functions 
+in CSeqTrackArray, and no editing occurs during this test.
+
+Could it have something to do with the output capture and its 
+associated double buffering strategy? We could try hiding the
+Piano bar. Doubtful but it's an easy test. Answer: No.
+
+Could it be related to loopMIDI or Reason? Not that it would 
+matter since they're both indispensible.
+
+4/16/20 RecurseModulations optimization
+
+Since we've established it does a lot of the work, further
+optimizing this method might be helpful. calling GetStepIndex
+before the recursion is wasteful because the recursion
+result might do a continue, in which the iModStep returned
+by GetStepIndex isn't used.
+
+Seems like we could just move nPosMod2 outside the recursion
+scope, init it zero, and then the GetStepIndex can move after
+the recursion. Same idea in SumModulations.
+
+Better check the output of this change carefully!
 
 
 
