@@ -12,6 +12,7 @@
 		02		01apr20	standardize context menu handling
 		03		06apr20	add copy text to clipboard
 		04		07apr20	add standard editing commands
+		05		17apr20	add multi-step editing
 		
 */
 
@@ -231,7 +232,7 @@ void CStepValuesBar::UpdateHighlights()
 			int	iPrevStep = m_arrCurPos[iSel];
 			if (iPrevStep >= 0)	// if previous position is valid
 				m_grid.RedrawSubItem(iPrevStep, iSel + 1);	// redraw item at previous position
-			int	iStep = pDoc->m_Seq.GetTrack(iTrack).GetStepIndex(m_nSongPos);
+			int	iStep = pDoc->m_Seq.GetStepIndex(iTrack, m_nSongPos);
 			m_arrCurPos[iSel] = iStep;	// update current position
 			m_grid.RedrawSubItem(iStep, iSel + 1);	// redraw item at updated current position
 		}
@@ -291,7 +292,16 @@ void CStepValuesBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 					nStep |= (nPrevStep & SB_TIE);	// copy previous tie bit
 				}
 				if (nStep != nPrevStep) {	// if step value changed
-					pDoc->SetTrackStep(iTrack, iStep, static_cast<STEP>(nStep));
+					CIntArrayEx	arrSelection;
+					GetSelection(arrSelection);
+					int	iFirstItem, nItems;
+					GetSelectionRange(arrSelection, iStep, iFirstItem, nItems);
+					if (nItems > 1) {	// if edit is within a selection range of at least two items
+						CRect	rStepSel(CPoint(iFirstItem, iTrack), CSize(nItems, 1));
+						pDoc->SetTrackSteps(rStepSel, static_cast<STEP>(nStep));	// multi-step edit
+					} else {
+						pDoc->SetTrackStep(iTrack, iStep, static_cast<STEP>(nStep));
+					}
 				}
 			}
 		}
@@ -405,6 +415,29 @@ bool CStepValuesBar::HasSelection() const
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	return pDoc != NULL && pDoc->GetSelectedCount() && m_grid.GetSelectedCount();
+}
+
+void CStepValuesBar::GetSelectionRange(CIntArrayEx& arrSelection, int iItem, int& iFirstItem, int& nItems)
+{
+	// find target item index in selection array
+	int	iStart = INT64TO32(arrSelection.Find(iItem));
+	if (iStart < 0) {	// if item not found
+		iFirstItem = 0;	// selection excludes target item; return empty range
+		nItems = 0;
+		return;
+	}
+	int	iEnd = iStart;	// copy starting position before it changes
+	int	iNextItem = iItem;
+	// while selection remains contiguous below starting position
+	while (iStart > 0 && arrSelection[iStart - 1] == --iNextItem)
+		iStart--;	// decrement range's lower limit
+	iNextItem = iItem;
+	int	nSels = arrSelection.GetSize();
+	// while selection remains contiguous above starting position
+	while (iEnd < nSels - 1 && arrSelection[iEnd + 1] == ++iNextItem)
+		iEnd++;	// increment range's upper limit
+	iFirstItem = arrSelection[iStart];	// map lower limit from selection index to item index
+	nItems = iEnd - iStart + 1;	// compute size of range
 }
 
 /////////////////////////////////////////////////////////////////////////////

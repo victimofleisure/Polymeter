@@ -44,6 +44,8 @@
 		34		03apr20	refactor go to position dialog for variable format
 		35		04apr20	bump file version for chord modulation
 		36		07apr20	add move steps; fix cut steps undo code
+		37		14apr20	add send MIDI clock option
+		38		17apr20	add track color; bump file version
 
 */
 
@@ -86,13 +88,14 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	16
+#define	FILE_VERSION	17
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
 
 #define RK_TRACK_COUNT	_T("Tracks")
 #define RK_TRACK_LENGTH	_T("Length")
+#define RK_TRACK_COLOR	_T("Color")
 #define RK_TRACK_STEP	_T("Step")
 #define RK_TRACK_DUB_ARRAY	_T("Dub")
 #define RK_TRACK_DUB_COUNT	_T("Dubs")
@@ -353,6 +356,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 				RdReg(sTrkID, _T(#name), trk.m_##prefix##name);
 		#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 		#include "TrackDef.h"		// generate code to read track properties
+		trk.m_clrCustom = theApp.GetProfileInt(sTrkID, RK_TRACK_COLOR, -1);
 		int	nLength = theApp.GetProfileInt(sTrkID, RK_TRACK_LENGTH, INIT_STEPS);
 		trk.m_arrStep.SetSize(nLength);
 		DWORD	nReadSize = nLength;
@@ -415,6 +419,8 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 				WrReg(sTrkID, _T(#name), trk.m_##prefix##name);
 		#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 		#include "TrackDef.h"		// generate code to write track properties
+		if (static_cast<int>(trk.m_clrCustom) >= 0)	// if track color specified
+			theApp.WriteProfileInt(sTrkID, RK_TRACK_COLOR, trk.m_clrCustom);
 		theApp.WriteProfileInt(sTrkID, RK_TRACK_LENGTH, trk.GetLength());
 		CPersist::WriteBinary(sTrkID, RK_TRACK_STEP, trk.m_arrStep.GetData(), trk.GetUsedStepCount());
 		DWORD	nDubs = trk.m_arrDub.GetSize();
@@ -2560,17 +2566,22 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 {
 	CString	sTitle;
-	switch (LOWORD(State.GetCode())) {
+	int	nUndoCode = LOWORD(State.GetCode());
+	switch (nUndoCode) {
 	case UCODE_TRACK_PROP:
-		{
-			int	iProp = HIWORD(State.GetCode());
-			sTitle.LoadString(GetPropertyNameID(iProp));
-		}
-		break;
 	case UCODE_MULTI_TRACK_PROP:
 		{
-			int	iProp = State.GetCtrlID();
-			sTitle.LoadString(GetPropertyNameID(iProp));
+			int	iProp;
+			if (nUndoCode == UCODE_TRACK_PROP)
+				iProp = HIWORD(State.GetCode());
+			else
+				iProp = State.GetCtrlID();
+			int	nID;
+			if (iProp >= 0)
+				nID = GetPropertyNameID(iProp);
+			else
+				nID = IDS_MAIN_TRACK_COLORS;
+			sTitle.LoadString(nID);
 		}
 		break;
 	case UCODE_TRACK_STEP:
@@ -2595,7 +2606,7 @@ CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 	case UCODE_MULTI_MAPPING_PROP:
 		{
 			int	iProp;
-			if (LOWORD(State.GetCode()) == UCODE_MAPPING_PROP)
+			if (nUndoCode == UCODE_MAPPING_PROP)
 				iProp = HIWORD(State.GetCode());
 			else
 				iProp = State.GetCtrlID();
@@ -2603,7 +2614,7 @@ CString CPolymeterDoc::GetUndoTitle(const CUndoState& State)
 		}
 		break;
 	default:
-		sTitle.LoadString(m_arrUndoTitleId[LOWORD(State.GetCode())]);
+		sTitle.LoadString(m_arrUndoTitleId[nUndoCode]);
 	}
 	return sTitle;
 }
@@ -2698,6 +2709,11 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 			AfxMessageBox(IDS_MIDI_NO_OUTPUT_DEVICE);
 			return false;
 		}
+		if (theApp.m_Options.m_Midi_bSendMidiClock	// if sending MIDI clock sync
+		&& !m_Seq.IsValidMidiSongPosition(m_Seq.GetStartPosition())) {	// and song position isn't compatible
+			if (AfxMessageBox(IDS_MIDI_INCOMPATIBLE_SONG_POSITION, MB_OKCANCEL | MB_ICONINFORMATION) != IDOK)
+				return false;	// user canceled; otherwise sequencer quantizes song position
+		}
 		if (bRecord) {	// if recording
 			if (theApp.m_Options.m_Midi_bRecordInput)
 				theApp.RecordMidiInput(true);
@@ -2722,6 +2738,7 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 			bOutputCapture = true;	// enable MIDI output capture
 		}
 		m_Seq.SetRecordOffset(m_nRecordOffset);
+		m_Seq.SetSendMidiClock(theApp.m_Options.m_Midi_bSendMidiClock);
 	} else {	// stopping playback
 		theApp.m_pPlayingDoc = NULL;
 	}

@@ -25,6 +25,7 @@
 		15		29feb20	add MIDI event array methods
 		16		16mar20	move get step index into track
 		17		19mar20	add MIDI message name lookup
+		18		17apr20	add track color
 
 */
 
@@ -44,6 +45,7 @@ public:
 		#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) PROP_##name,
 		#include "TrackDef.h"		// generate enumeration
 		PROPERTIES,
+		PROP_COLOR = -1,			// color property isn't a track grid column
 	};
 	enum {
 		INIT_STEPS = 32,			// initial number of steps
@@ -96,6 +98,12 @@ public:
 	typedef CByteArrayEx CStepArray;	// array of sequencer steps
 	typedef CArrayEx<CStepArray, CStepArray&> CStepArrayArray;	// array of step arrays
 	typedef CBoolArrayEx CMuteArray;	// array of mutes
+	struct MIDI_STREAM_EVENT {
+		DWORD   dwDeltaTime;		// ticks since last event
+		DWORD   dwStreamID;			// reserved; must be zero
+		DWORD   dwEvent;			// event type and parameters
+	};
+	typedef CArrayEx<MIDI_STREAM_EVENT, MIDI_STREAM_EVENT&> CMidiEventStream;
 	class CMidiEvent {
 	public:
 		CMidiEvent() {};
@@ -106,6 +114,7 @@ public:
 		bool	operator>(const CMidiEvent &evt) const;
 		bool	operator<=(const CMidiEvent &evt) const;
 		bool	operator>=(const CMidiEvent &evt) const;
+		operator	MIDI_STREAM_EVENT() const;	// casting operator
 		int		m_nTime;		// time in ticks
 		DWORD	m_dwEvent;		// MIDI event
 		bool	TimeInRange(int nStartTime, int nEndTime) const;
@@ -367,6 +376,12 @@ inline bool CTrackBase::CMidiEvent::operator>=(const CMidiEvent &evt) const
 	return !operator<(evt);
 }
 
+inline CTrackBase::CMidiEvent::operator CTrackBase::MIDI_STREAM_EVENT() const
+{
+	MIDI_STREAM_EVENT	evt = {m_nTime, 0, m_dwEvent};
+	return evt;
+}
+
 inline bool CTrackBase::CMidiEvent::TimeInRange(int nStartTime, int nEndTime) const
 {
 	return m_nTime >= nStartTime && m_nTime < nEndTime;
@@ -442,6 +457,7 @@ public:
 	UINT	m_nUID;				// unique ID
 	int		m_iDub;				// index of current dub
 	CModulationArray	m_arrModulator;	// array of track indices of modulators
+	COLORREF	m_clrCustom;	// custom track color or -1 if none
 
 // Attributes
 	int		GetLength() const;

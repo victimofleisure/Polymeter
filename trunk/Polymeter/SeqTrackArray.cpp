@@ -17,6 +17,7 @@
 		07		15nov19	in ScaleSteps, add signed scaling option
 		08		02mar20	in GetChannelUsage, exclude tempo tracks
 		09		19mar20	add GetNameEx to handle default track names
+		10		17apr20	add track color
 
 */
 
@@ -173,6 +174,9 @@ void CSeqTrackArray::GetTrackProperty(int iTrack, int iProp, CComVariant& var) c
 	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
 		case PROP_##name: var = Get##name(iTrack); break;
 	#include "TrackDef.h"		// generate code to get track properties
+	case PROP_COLOR:
+		var = GetColor(iTrack);
+		break;
 	default:
 		NODEFAULTCASE;
 	}
@@ -184,6 +188,13 @@ void CSeqTrackArray::SetTrackProperty(int iTrack, int iProp, const CComVariant& 
 	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
 		case PROP_##name: { type val; GetVariant(var, val); Set##name(iTrack, val); } break;
 	#include "TrackDef.h"		// generate code to set track properties
+	case PROP_COLOR:
+		{
+			COLORREF	clr;
+			GetVariant(var, clr);
+			SetColor(iTrack, clr);
+			break;
+		}
 	default:
 		NODEFAULTCASE;
 	}

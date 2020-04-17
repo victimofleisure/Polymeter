@@ -20,6 +20,7 @@
 		10		20mar20	add mapping
 		11		03apr20	add milliseconds to time format
 		12		04apr20	add chord modulation
+		13		14apr20	add send MIDI clock option
 
 */
 
@@ -95,6 +96,8 @@ public:
 	void	SetRecordedEvents(const CMidiEventArray& arrEvent);
 	int		GetRecordOffset() const;
 	void	SetRecordOffset(int nTicks);
+	void	SetSendMidiClock(bool bEnable);
+	bool	IsValidMidiSongPosition(int nSongPos) const;
 
 // Operations
 	bool	Play(bool bEnable, bool bRecord = false);
@@ -126,12 +129,6 @@ public:
 
 protected:
 // Types
-	struct MIDI_STREAM_EVENT {
-		DWORD   dwDeltaTime;		// ticks since last event
-		DWORD   dwStreamID;			// reserved; must be zero
-		DWORD   dwEvent;			// event type and parameters
-	};
-	typedef CArrayEx<MIDI_STREAM_EVENT, MIDI_STREAM_EVENT&> CMidiEventStream;
 	struct MIDI_PARAMS {
 	public:
 		char	arrKeyAft[MIDI_CHANNELS][MIDI_NOTES];	// key aftertouch
@@ -167,6 +164,8 @@ protected:
 	int		m_nRecursions;			// current depth of recursive modulation
 	int		m_iRecordEvent;			// index of next recorded event to output
 	int		m_nRecordOffset;		// offset added to recorded event times during playback, in ticks
+	int		m_nMidiClockPeriod;		// number of ticks per MIDI clock (timebase / 24)
+	int		m_nMidiClockTimer;		// number of ticks remaining until next MIDI clock
 	bool	m_bIsPlaying;			// true if playing
 	bool	m_bIsPaused;			// true if paused
 	bool	m_bIsStopping;			// true if stopping
@@ -176,6 +175,7 @@ protected:
 	bool	m_bIsSongMode;			// true if applying track dubs
 	bool	m_bIsOutputCapture;		// true if capturing output events
 	bool	m_bPreventNoteOverlap;	// true if preventing note overlaps
+	bool	m_bIsSendingMidiClock;	// true if sending MIDI clock
 	STATS	m_stats;				// timing statistics
 	double	m_fLatencySecs;			// desired playback latency in fractional seconds
 	CMidiEventStream	m_arrMidiEvent[BUFFERS];	// array of MIDI event stream buffers
@@ -221,6 +221,8 @@ protected:
 	void	FixNoteOverlaps();
 	void	ChaseDubs(int nTime, bool bUpdateMutes = false);
 	int		SumModulations(const CTrack& trk, int iModType, int nAbsEvtTime);
+	DWORD	GetMidiSongPositionMsg(int nMidiSongPos) const;
+	void	QuantizeStartPositionForSync(int& nMidiSongPos);
 #if SEQ_DUMP_EVENTS
 	void	AddDumpEvent(const CMidiEventStream& arrEvt, int nEvents);
 	void	DumpEvents(LPCTSTR pszPath);
@@ -363,6 +365,12 @@ inline void CSequencer::SetRecordOffset(int nTicks)
 	m_nRecordOffset = nTicks;
 }
 
+inline void CSequencer::SetSendMidiClock(bool bEnable)
+{
+	ASSERT(!m_bIsPlaying);
+	m_bIsSendingMidiClock = bEnable;
+}
+
 inline LONGLONG CSequencer::ConvertPositionToSeconds(LONGLONG nPos) const
 {
 	return round64(static_cast<double>(nPos) / m_nTimeDiv / m_fTempo * 60);
@@ -382,4 +390,3 @@ inline LONGLONG CSequencer::ConvertMillisecondsToPosition(LONGLONG nMillis) cons
 {
 	return round64(static_cast<double>(nMillis) / 60000 * m_fTempo * m_nTimeDiv);
 }
-

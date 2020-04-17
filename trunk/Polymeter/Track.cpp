@@ -26,6 +26,7 @@
 		16		16mar20	move get step index into track
 		17		19mar20	add MIDI message name lookup
 		18		06apr20	in import steps, allow note names
+		19		17apr20	add track color
 
 */
 
@@ -105,6 +106,7 @@ void CTrack::SetDefaults()
 	m_arrStep.SetSize(INIT_STEPS);	// length is actually step array size
 	m_nUID = 0;
 	m_iDub = 0;
+	m_clrCustom = COLORREF(-1);
 }
 
 int CTrack::GetUsedStepCount() const

@@ -16,6 +16,7 @@
 		06		15nov19	in ScaleSteps, add signed scaling option
 		07		12dec19	add GetPeriod
 		08		16mar20	add get step index wrapper
+		09		17apr20	add track color
 
 */
 
@@ -149,6 +150,8 @@ public:
 	bool	CalcVelocityRange(int iTrack, int& nMinVel, int& nMaxVel, int iStartStep = 0, int nRangeSteps = 0) const;
 	int		CalcMaxTrackLength(const CIntArrayEx& arrSelection) const;
 	int		CalcMaxTrackLength(const CRect& rSelection) const;
+	COLORREF	GetColor(int iTrack) const;
+	void	SetColor(int iTrack, COLORREF clr);
 
 protected:
 // Member data
@@ -428,4 +431,14 @@ inline void CSeqTrackArray::SetModulationSource(int iTrack, int iMod, int iModSo
 inline void CSeqTrackArray::GetModulations(int iTrack, CModulationArray& arrMod) const
 {
 	arrMod = GetAt(iTrack).m_arrModulator;
+}
+
+inline COLORREF	CSeqTrackArray::GetColor(int iTrack) const
+{
+	return GetAt(iTrack).m_clrCustom;
+}
+
+inline void CSeqTrackArray::SetColor(int iTrack, COLORREF clr)
+{
+	GetAt(iTrack).m_clrCustom = clr;
 }

@@ -214,6 +214,7 @@
     <ClInclude Include="MidiEventBar.h" />
     <ClInclude Include="MappingBar.h" />
     <ClInclude Include="MappingDef.h" />
+    <ClInclude Include="ModulationDlg.h" />
     <ClInclude Include="MyDockablePane.h" />
     <ClInclude Include="PhaseBar.h" />
     <ClInclude Include="PianoBar.h" />
@@ -345,6 +346,7 @@
     <ClCompile Include="Mapping.cpp" />
     <ClCompile Include="MidiEventBar.cpp" />
     <ClCompile Include="MappingBar.cpp" />
+    <ClCompile Include="ModulationDlg.cpp" />
     <ClCompile Include="MyDockablePane.cpp" />
     <ClCompile Include="PhaseBar.cpp" />
     <ClCompile Include="PianoBar.cpp" />

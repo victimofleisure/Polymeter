@@ -11,6 +11,7 @@
 		01		14dec18	add clipboard support and sorting
 		02		22jan19	remove document change handler
 		03		19mar20	move default track name to track base class
+		04		15apr20	add insert group command
 
 */
 
@@ -107,4 +108,5 @@ protected:
 	afx_msg void OnSortByType();
 	afx_msg void OnSortBySource();
 	afx_msg void OnUpdateSort(CCmdUI *pCmdUI);
+	afx_msg void OnInsertGroup();
 };

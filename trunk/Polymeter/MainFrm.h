@@ -19,6 +19,7 @@
 		09		17mar20	add step values bar
 		10		20mar20	add mapping
 		11		05apr20	add track step change handler
+		12		17apr20	add track color picker to toolbar
 
 */
 
@@ -110,6 +111,7 @@ protected:  // control bar embedded members
 
 // Constants
 	static const UINT m_arrIndicatorID[];	// array of status bar indicator IDs
+	static const COLORREF m_arrTrackColor[];	// palette of track colors
 
 // Data members
 	CPolymeterDoc	*m_pActiveDoc;		// pointer to active document, or NULL if none
@@ -120,6 +122,7 @@ protected:  // control bar embedded members
 	CString	m_sReplaceText;				// replace text
 	bool	m_bFindMatchCase;			// true if find should match case
 	CSequencer::CMidiEventArray m_arrMIDIOutputEvent;	// array of MIDI output events
+	CMFCColorMenuButton	*m_pbtnTrackColor;	// pointer to track color menu button
 
 // Helpers
 	BOOL	CreateDockingWindows();
@@ -175,6 +178,10 @@ protected:
 	afx_msg void OnUpdateViewModulations(CCmdUI *pCmdUI);
 	afx_msg void OnWindowFullScreen();
 	afx_msg void OnWindowResetLayout();
+	afx_msg LRESULT OnResetToolBar(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnGetDocumentColors(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnTrackColor();
+	afx_msg void OnUpdateTrackColor(CCmdUI *pCmdUI);
 };
 
 inline HACCEL CMainFrame::GetAccelTable() const

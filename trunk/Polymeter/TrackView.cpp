@@ -15,6 +15,7 @@
 		05		06mar20	work around buggy item changed notifications
 		06		17mar20	check m_bIsUpdating before posting selection change
 		07		01apr20	standardize context menu handling
+		08		17apr20	add track color
 
 */
 
@@ -164,6 +165,8 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			if (theApp.m_Options.m_View_bShowNoteNames != pPropHint->m_pPrevOptions->m_View_bShowNoteNames
 			|| theApp.m_Options.m_View_bShowGMNames != pPropHint->m_pPrevOptions->m_View_bShowGMNames)
 				UpdateNotes();
+			if (theApp.m_Options.m_View_bShowTrackColors != pPropHint->m_pPrevOptions->m_View_bShowTrackColors)
+				m_grid.Invalidate();
 		}
 		break;
 	case CPolymeterDoc::HINT_MASTER_PROP:
@@ -542,6 +545,7 @@ BEGIN_MESSAGE_MAP(CTrackView, CView)
 	ON_MESSAGE(UWM_LIST_HDR_REORDER, OnListHdrReorder)
 	ON_COMMAND(ID_EDIT_RENAME, OnEditRename)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_RENAME, OnUpdateEditRename)
+	ON_NOTIFY(NM_CUSTOMDRAW, IDC_TRACK_GRID, OnCustomDraw)
 END_MESSAGE_MAP()
 
 // CTrackView message handlers
@@ -770,4 +774,30 @@ void CTrackView::OnEditRename()
 void CTrackView::OnUpdateEditRename(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_grid.GetSelectionMark() >= 0);
+}
+
+void CTrackView::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	NMLVCUSTOMDRAW* pLVCD = reinterpret_cast<NMLVCUSTOMDRAW*>(pNMHDR);
+	switch(pLVCD->nmcd.dwDrawStage) {
+	case CDDS_PREPAINT:
+		if (theApp.m_Options.m_View_bShowTrackColors)
+			*pResult = CDRF_NOTIFYITEMDRAW;
+		else
+			*pResult = CDRF_DODEFAULT;
+		break;
+	case CDDS_ITEMPREPAINT:
+		{
+			int	iItem = static_cast<int>(pLVCD->nmcd.dwItemSpec);
+			CPolymeterDoc	*pDoc = GetDocument();
+			ASSERT(pDoc != NULL);
+			int	clrCustom = pDoc->m_Seq.GetColor(iItem);
+			if (clrCustom >= 0)
+				pLVCD->clrTextBk = clrCustom;
+		}
+		*pResult = CDRF_DODEFAULT;
+		break;
+	default:
+		*pResult = CDRF_DODEFAULT;
+	}
 }

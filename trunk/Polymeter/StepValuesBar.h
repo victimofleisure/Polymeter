@@ -10,6 +10,7 @@
         00		17mar20	initial version
 		01		06apr20	add copy text to clipboard
 		02		07apr20	add standard editing commands
+		03		17apr20	add multi-step editing
 
 */
 
@@ -85,6 +86,7 @@ protected:
 	bool	HasRectSelection(bool bIsDeleting = false) const;
 	bool	HasSelection() const;
 	static	int		GetSelectedTrackCount(CPolymeterDoc *pDoc);
+	static	void	GetSelectionRange(CIntArrayEx& arrSelection, int iItem, int& iFirstItem, int& nItems);
 
 // Overrides
 	virtual	void OnShowChanged(bool bShow);

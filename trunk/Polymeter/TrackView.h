@@ -10,6 +10,7 @@
         00      23apr18	initial version
 		01		19dec18	centralize property value ranges
 		02		06mar20	add selection change handler and pending flag
+		03		17apr20	add track color
 
 */
 
@@ -134,6 +135,7 @@ protected:
 	afx_msg void OnListColHdrReset();
 	afx_msg void OnEditRename();
 	afx_msg void OnUpdateEditRename(CCmdUI *pCmdUI);
+	afx_msg void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 inline CPolymeterDoc* CTrackView::GetDocument() const

@@ -25,6 +25,7 @@
 		15		20mar20	add mapping
 		16		05apr20	add track step change handler
 		17		06apr20	on tempo change, update song time in status bar
+		18		17apr20	add track color picker to toolbar
 
 */
 
@@ -88,6 +89,13 @@ enum {	// application looks; alpha order to match corresponding resource IDs
 
 static UINT WM_FINDREPLACE = ::RegisterWindowMessage(FINDMSGSTRING);
 
+const COLORREF CMainFrame::m_arrTrackColor[] = {
+	0x201d9e, 0x2720d6, 0x265fdf, 0x204f84, 0x2a7ec2, 0x7eb0f1, 0xb2dcf3, 0x1d96f7,
+	0x2bc0f6, 0x1fecf8, 0x00ebc5, 0x4bc6a5, 0xaddac6, 0x479c37, 0x438468, 0x1a5503,
+	0x667767, 0x9eb81f, 0x998c00, 0xc1b88e, 0xdcc3a7, 0xe7b759, 0xb67044, 0xa16c5b,
+	0x82362b, 0xcac8f9, 0xa17ab8, 0x9b4cb4, 0xc408e6, 0x8d1073, 0x737373, 0xc9c9c9,
+};
+
 // CMainFrame construction/destruction
 
 CMainFrame::CMainFrame() : m_wndMidiInputBar(false), m_wndMidiOutputBar(true)
@@ -97,6 +105,7 @@ CMainFrame::CMainFrame() : m_wndMidiInputBar(false), m_wndMidiOutputBar(true)
 	m_pActiveDoc = NULL;
 	m_pFindDlg = NULL;
 	m_bFindMatchCase = false;
+	m_pbtnTrackColor = NULL;
 }
 
 CMainFrame::~CMainFrame()
@@ -751,6 +760,10 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_COMMAND(ID_TOOLS_CONVERGENCES, OnToolsConvergences)
 	ON_COMMAND(ID_TOOLS_MIDI_LEARN, OnToolsMidiLearn)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_MIDI_LEARN, OnUpdateToolsMidiLearn)
+	ON_REGISTERED_MESSAGE(AFX_WM_RESETTOOLBAR, OnResetToolBar)
+	ON_REGISTERED_MESSAGE(AFX_WM_GETDOCUMENTCOLORS, OnGetDocumentColors)
+	ON_COMMAND(ID_TRACK_COLOR, OnTrackColor)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_COLOR, OnUpdateTrackColor)
 END_MESSAGE_MAP()
 
 // CMainFrame message handlers
@@ -1193,4 +1206,52 @@ void CMainFrame::OnWindowResetLayout()
 		theApp.m_bCleanStateOnExit = true;
 		PostMessage(WM_CLOSE);
 	}
+}
+
+LRESULT CMainFrame::OnResetToolBar(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	if (m_pbtnTrackColor == NULL) {
+		m_pbtnTrackColor = new CMFCColorMenuButton(ID_TRACK_COLOR, LDS(IDS_MAIN_TRACK_COLORS));
+		m_pbtnTrackColor->EnableAutomaticButton(LDS(IDS_COLOR_MENU_AUTOMATIC), COLORREF(-1));
+		m_pbtnTrackColor->EnableOtherButton(LDS(IDS_COLOR_MENU_MORE_COLORS));
+		m_pbtnTrackColor->EnableDocumentColors(LDS(IDS_MAIN_TRACK_COLORS));
+		m_pbtnTrackColor->SetColumnsNumber(8);
+	}
+	m_wndToolBar.ReplaceButton(ID_TRACK_COLOR, *m_pbtnTrackColor);
+	return 0;
+}
+
+LRESULT CMainFrame::OnGetDocumentColors(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	CList<COLORREF, COLORREF>* plistColor = (CList<COLORREF, COLORREF>*)lParam;
+	plistColor->RemoveAll();
+	int	nColors = _countof(m_arrTrackColor);
+	for (int iColor = 0; iColor < nColors; iColor++) {
+		plistColor->AddTail(m_arrTrackColor[iColor]);
+	}
+	return 0;
+}
+
+void CMainFrame::OnTrackColor()
+{
+	COLORREF	clr = m_pbtnTrackColor->GetColorByCmdID(ID_TRACK_COLOR);
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL) {
+		pDoc->NotifyUndoableEdit(CPolymeterDoc::PROP_COLOR, UCODE_MULTI_TRACK_PROP);
+		int	nSels = pDoc->GetSelectedCount();
+		for (int iSel = 0; iSel < nSels; iSel++) {
+			int	iTrack = pDoc->m_arrTrackSel[iSel];
+			pDoc->m_Seq.SetColor(iTrack, clr);
+		}
+		pDoc->Deselect();
+	}
+}
+
+void CMainFrame::OnUpdateTrackColor(CCmdUI *pCmdUI)
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	pCmdUI->Enable(theApp.m_Options.m_View_bShowTrackColors && pDoc != NULL && pDoc->GetSelectedCount());
 }

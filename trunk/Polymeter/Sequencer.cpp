@@ -33,6 +33,10 @@
 		23		03apr20	add milliseconds to time format
 		24		04apr20	add chord modulation
 		25		06apr20	add callback too long error
+		26		11apr20	replace some array calls with fast versions
+		27		14apr20	add send MIDI clock option
+		28		16apr20	apply range to scale after picking chord tones
+		29		16apr20	in recursion methods, compute step index only if needed
 
 */
 
@@ -74,6 +78,7 @@ CSequencer::CSequencer()
 	m_bIsSongMode = false;
 	m_bIsOutputCapture = false;
 	m_bPreventNoteOverlap = false;
+	m_bIsSendingMidiClock = false;
 	ZeroMemory(&m_stats, sizeof(m_stats));
 	m_fLatencySecs = 0;
 }
@@ -214,11 +219,43 @@ inline void CSequencer::ResetCachedParameters()
 		ZeroMemory(m_arrNoteRef, sizeof(m_arrNoteRef));	// zero note reference counts
 }
 
+bool CSequencer::IsValidMidiSongPosition(int nSongPos) const
+{
+	int	nMidiBeat = m_nTimeDiv / 4;	// sixteenth note in ticks
+	return nSongPos >= 0	// MIDI song position limitations: must be positive
+		&& (nSongPos % nMidiBeat) == 0	// and evenly divisible by a MIDI beat
+		&& (nSongPos / nMidiBeat) < 0x4000;	// and less than 16K in MIDI beats
+}
+
+void CSequencer::QuantizeStartPositionForSync(int& nMidiSongPos)
+{
+	if (m_nStartPos > 0) {	// if start position is greater than zero
+		int	nMidiBeat = m_nTimeDiv / 4;	// sixteenth note in ticks
+		nMidiSongPos = m_nStartPos / nMidiBeat;
+		if (m_nStartPos % nMidiBeat >= nMidiBeat / 2)	// if remainder exceeds halfway
+			nMidiSongPos++;	// round up
+		nMidiSongPos &= 0x3fff;	// limit to 16K in MIDI beats
+		m_nStartPos = nMidiSongPos * nMidiBeat;	// quantize start position to nearest MIDI beat
+	} else {	// start position is zero or less
+		nMidiSongPos = 0;	// MIDI song position can't be negative
+		m_nStartPos = 0;	// start song from position zero
+	}
+}
+
+DWORD CSequencer::GetMidiSongPositionMsg(int nMidiSongPos) const
+{
+	// byte 0: command, byte 1: position's low 7 bits, byte 2: position's high 7 bits
+	return SONG_POSITION | ((nMidiSongPos & 0x7f) << 8) | ((nMidiSongPos >> 7) << 16);
+}
+
 bool CSequencer::Play(bool bEnable, bool bRecord)
 {
 	if (bEnable == m_bIsPlaying)	// if already in requested state
 		return true;	// nothing to do
 	if (bEnable) {	// if playing
+		int	nMidiSongPos = 0;
+		if (m_bIsSendingMidiClock)	// if sending MIDI clock
+			QuantizeStartPositionForSync(nMidiSongPos);	// ensure start position is sync-compatible
 		if (bRecord) {	// if recording
 			OnRecordStart(m_nStartPos);
 			if (m_arrRecordEvent.GetSize())	// if recorded events
@@ -233,6 +270,8 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 		m_nCBTime = m_nStartPos;
 		m_nPosOffset = m_nStartPos;
 		m_iBuffer = 0;
+		m_nMidiClockPeriod = m_nTimeDiv / 24;
+		m_nMidiClockTimer = 0;
 		m_bIsStopping = false;
 		m_bIsTempoChange = false;
 		m_bIsPositionChange = false;
@@ -255,13 +294,22 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 		}
 		CMidiEventStream&	arrEvt = m_arrMidiEvent[0];
 		const int	nInitEvents = m_arrInitMidiEvent.GetSize();
-		for (int iEvent = 0; iEvent < nInitEvents; iEvent++) {
-			arrEvt[iEvent].dwDeltaTime = 0;
-			arrEvt[iEvent].dwEvent = m_arrInitMidiEvent[iEvent];
+		for (int iEvent = 0; iEvent < nInitEvents; iEvent++) {	// for each initial MIDI event
+			arrEvt[iEvent] = CMidiEvent(0, m_arrInitMidiEvent[iEvent]);	// copy event to output buffer
 		}
 		int	nEvents = nInitEvents;
-		arrEvt[nEvents].dwDeltaTime = m_nCBLen;
-		arrEvt[nEvents].dwEvent = MEVT_NOP << 24;
+		if (m_bIsSendingMidiClock) {	// if sending MIDI clock
+			int	nStartCmd;
+			if (nMidiSongPos) {	// if starting after MIDI beat zero
+				arrEvt[nEvents] = CMidiEvent(0, GetMidiSongPositionMsg(nMidiSongPos));	// add song position message
+				nEvents++;
+				nStartCmd = CONTINUE;	// use continue message with song position, per MIDI specification
+			} else	// starting at MIDI beat zero
+				nStartCmd = START;	// use start message
+			arrEvt[nEvents] = CMidiEvent(0, nStartCmd);	// add start or continue message to output buffer
+			nEvents++;
+		}
+		arrEvt[nEvents] = CMidiEvent(m_nCBLen, MEVT_NOP << 24);	// pad time to start of next callback
 		nEvents++;
 #if SEQ_DUMP_EVENTS
 		m_arrDumpEvent.RemoveAll();
@@ -286,6 +334,8 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 		LONGLONG	nEndTime = 0;
 		if (bRecord)	// if recording
 			GetPosition(nEndTime);	// get end of song position
+		if (m_bIsSendingMidiClock)	// if sending MIDI clock
+			OutputLiveEvent(STOP);	// output stop message
 		CHECK(midiStreamStop(m_hStrm));	// stop playback
 		for (int iBuf = 0; iBuf < BUFFERS; iBuf++) {	// for each buffer, unprepare buffer
 			CHECK(midiOutUnprepareHeader(reinterpret_cast<HMIDIOUT>(m_hStrm), &m_arrMsgHdr[iBuf], sizeof(MIDIHDR)));
@@ -391,38 +441,40 @@ __forceinline int CSequencer::GetNoteDuration(const CStepArray& arrStep, int nSt
 __forceinline void CSequencer::OutputControlEvent(const CTrack& trk, int nTime, int nVal)
 {
 	CMidiEvent	evt;
+	int	nChannel = trk.m_nChannel;
+	int	nNote = trk.m_nNote;
 	char	cVal = static_cast<char>(nVal);
 	switch (trk.m_iType) {
 	case TT_KEY_AFT:
-		if (cVal == m_MidiCache.arrKeyAft[trk.m_nChannel][trk.m_nNote])	// if value unchanged
+		if (cVal == m_MidiCache.arrKeyAft[nChannel][nNote])	// if value unchanged
 			return;	// no operation
-		m_MidiCache.arrKeyAft[trk.m_nChannel][trk.m_nNote] = cVal;	// update cache
-		evt.m_dwEvent = MakeMidiMsg(KEY_AFT, trk.m_nChannel, trk.m_nNote, nVal);
+		m_MidiCache.arrKeyAft[nChannel][nNote] = cVal;	// update cache
+		evt.m_dwEvent = MakeMidiMsg(KEY_AFT, nChannel, nNote, nVal);
 		break;
 	case TT_CONTROL:
-		if (cVal == m_MidiCache.arrControl[trk.m_nChannel][trk.m_nNote])	// if value unchanged
+		if (cVal == m_MidiCache.arrControl[nChannel][nNote])	// if value unchanged
 			return;	// no operation
-		m_MidiCache.arrControl[trk.m_nChannel][trk.m_nNote] = cVal;	// update cache
-		evt.m_dwEvent = MakeMidiMsg(CONTROL, trk.m_nChannel, trk.m_nNote, nVal);
+		m_MidiCache.arrControl[nChannel][nNote] = cVal;	// update cache
+		evt.m_dwEvent = MakeMidiMsg(CONTROL, nChannel, nNote, nVal);
 		break;
 	case TT_PATCH:
-		if (cVal == m_MidiCache.arrPatch[trk.m_nChannel])	// if value unchanged
+		if (cVal == m_MidiCache.arrPatch[nChannel])	// if value unchanged
 			return;	// no operation
-		m_MidiCache.arrPatch[trk.m_nChannel] = cVal;	// update cache
-		evt.m_dwEvent = MakeMidiMsg(PATCH, trk.m_nChannel, nVal, 0);
+		m_MidiCache.arrPatch[nChannel] = cVal;	// update cache
+		evt.m_dwEvent = MakeMidiMsg(PATCH, nChannel, nVal, 0);
 		break;
 	case TT_CHAN_AFT:
-		if (cVal == m_MidiCache.arrChanAft[trk.m_nChannel])	// if value unchanged
+		if (cVal == m_MidiCache.arrChanAft[nChannel])	// if value unchanged
 			return;	// no operation
-		m_MidiCache.arrChanAft[trk.m_nChannel] = cVal;	// update cache
-		evt.m_dwEvent = MakeMidiMsg(CHAN_AFT, trk.m_nChannel, nVal, 0);
+		m_MidiCache.arrChanAft[nChannel] = cVal;	// update cache
+		evt.m_dwEvent = MakeMidiMsg(CHAN_AFT, nChannel, nVal, 0);
 		break;
 	case TT_WHEEL:
-		if (cVal == m_MidiCache.arrWheel[trk.m_nChannel])	// if value unchanged
+		if (cVal == m_MidiCache.arrWheel[nChannel])	// if value unchanged
 			return;	// no operation
-		m_MidiCache.arrWheel[trk.m_nChannel] = cVal;	// update cache
+		m_MidiCache.arrWheel[nChannel] = cVal;	// update cache
 		// if above midpoint (zero in signed 7-bit), set LSB so bend upper limit is exact
-		evt.m_dwEvent = MakeMidiMsg(WHEEL, trk.m_nChannel, nVal > 0x40 ? 0x7f : 0, nVal);	// LSB, MSB
+		evt.m_dwEvent = MakeMidiMsg(WHEEL, nChannel, nVal > 0x40 ? 0x7f : 0, nVal);	// LSB, MSB
 		break;
 	default:
 		NODEFAULTCASE;
@@ -445,21 +497,21 @@ bool CSequencer::RecurseModulations(int iTrack, int nAbsEvtTime, int& nPosMod)
 		if (iModSource >= 0 && iModSource < nTracks && !GetMute(iModSource)) {
 			if (iModType == MT_Mute || iModType == MT_Position) {	// if modulation type is mute or position
 				const CTrack&	trkModSource = GetTrack(iModSource);
-				int	iModStep = trkModSource.GetStepIndex(nAbsEvtTime);
+				int	nPosMod2 = 0;
 				if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
 					if (m_nRecursions >= MOD_MAX_RECURSIONS) {	// if maximum recursion depth reached
 						OnMidiError(SEQERR_TOO_MANY_RECURSIONS);
 						return true;	// abort recursion
 					}
-					int	nPosMod2;
 					m_nRecursions++;	// increment recursion depth
 					bool	bMute = RecurseModulations(iModSource, nAbsEvtTime, nPosMod2);	// traverse sub-modulations
 					m_nRecursions--;	// decrement recursion depth
 					if (bMute)	// if recursion returned mute
 						continue;	// skip this modulator
-					if (nPosMod2)	// if recursion returned a non-zero position modulation
-						iModStep = ModWrap(iModStep - nPosMod2, trkModSource.GetLength());	// modulate position
 				}
+				int	iModStep = trkModSource.GetStepIndex(nAbsEvtTime);
+				if (nPosMod2)	// if recursion returned a non-zero position modulation
+					iModStep = ModWrap(iModStep - nPosMod2, trkModSource.GetLength());	// modulate position
 				if (iModType == MT_Mute) {	// if mute modulation
 					if (trkModSource.m_arrStep[iModStep] & SB_VELOCITY)	// if non-zero step
 						return true;	// abandon this branch and return mute
@@ -484,15 +536,15 @@ int CSequencer::SumModulations(const CTrack& trk, int iModType, int nAbsEvtTime)
 			int	iModSource = mod.m_iSource;
 			if (iModSource >= 0 && iModSource < GetTrackCount() && !GetMute(iModSource)) {	// if modulator is valid and unmuted
 				const CTrack&	trkModSource = GetTrack(iModSource);
-				int	iModStep = trkModSource.GetStepIndex(nAbsEvtTime);
+				int	nPosMod = 0;
 				if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
-					int	nPosMod;
 					m_nRecursions = 0;
 					if (RecurseModulations(iModSource, nAbsEvtTime, nPosMod))	// recurse into modulator's modulations
 						continue;	// recursion returned mute, so skip this modulator
-					if (nPosMod)	// if recursion returned a non-zero position modulation
-						iModStep = ModWrap(iModStep - nPosMod, trkModSource.GetLength());	// modulate position
 				}
+				int	iModStep = trkModSource.GetStepIndex(nAbsEvtTime);
+				if (nPosMod)	// if recursion returned a non-zero position modulation
+					iModStep = ModWrap(iModStep - nPosMod, trkModSource.GetLength());	// modulate position
 				int	nStep = trkModSource.m_arrStep[iModStep] - MIDI_NOTES / 2;
 				nSum += nStep;
 			}
@@ -611,12 +663,6 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 							int	nNote = trk.m_nNote + arrMod[MT_Note];
 							int	nScaleTones = m_arrScale.GetSize();
 							if (nScaleTones) {	// if scale defined
-								int	nRangeStart = trk.m_nRangeStart + arrMod[MT_Range];
-								for (int iTone = 0; iTone < nScaleTones; iTone++) {	// for each scale tone
-									m_arrScale[iTone] += nNote;
-									if (trk.m_iRangeType != RT_NONE)	// if applying range to note
-										m_arrScale[iTone] = ApplyNoteRange(m_arrScale[iTone], nRangeStart, trk.m_iRangeType);
-								}
 								int	nChordTones = m_arrChord.GetSize();
 								if (nChordTones) {	// if chord defined
 									for (int iChordTone = 0; iChordTone < nChordTones; iChordTone++) {	// for each chord tone
@@ -626,6 +672,12 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 									}
 									m_arrScale = m_arrChord;	// replace scale with chord
 									nScaleTones = nChordTones;
+								}
+								int	nRangeStart = trk.m_nRangeStart + arrMod[MT_Range];
+								for (int iTone = 0; iTone < nScaleTones; iTone++) {	// for each scale tone
+									m_arrScale[iTone] += nNote;	// transpose
+									if (trk.m_iRangeType != RT_NONE)	// if applying range to note
+										m_arrScale[iTone] = ApplyNoteRange(m_arrScale[iTone], nRangeStart, trk.m_iRangeType);
 								}
 								int	nDrops = m_arrVoicing.GetSize();
 								if (nDrops) {	// if dropping at least one voice
@@ -726,12 +778,12 @@ void CSequencer::AddRecordedEvents(int nCBStart, int nCBEnd)
 					int	nMaps = m_arrMappedEvent.GetSize();
 					for (int iMap = 0; iMap < nMaps; iMap++) {	// for each translated event
 						evtOut.m_dwEvent = m_arrMappedEvent[iMap];
-						m_arrEvent.InsertSorted(evtOut);	// insert translated event
+						m_arrEvent.FastInsertSorted(evtOut);	// insert translated event
 					}
 					goto EventWasMapped;	// input event was mapped so don't output it
 				}
 			}
-			m_arrEvent.InsertSorted(evtOut);	// insert event
+			m_arrEvent.FastInsertSorted(evtOut);	// insert event
 EventWasMapped:;
 			m_iRecordEvent++;	// increment recorded event index
 		} else
@@ -752,7 +804,7 @@ bool CSequencer::OutputMidiBuffer()
 			m_bIsTempoChange = false;	// reset signal
 			int	iTempo = round(CMidiFile::MICROS_PER_MINUTE / m_fTempo);
 			CMidiEvent	evtTempo(0, (MEVT_TEMPO << 24) | iTempo);	// at callback start time
-			m_arrEvent.Add(evtTempo);	// add tempo event
+			m_arrEvent.FastAdd(evtTempo);	// add tempo event
 		}
 		// if position changed, turn off any active notes before adding new events
 		if (m_bIsPositionChange) {	// if position changed
@@ -760,7 +812,7 @@ bool CSequencer::OutputMidiBuffer()
 			int	nEvents = m_arrNoteOff.GetSize();
 			for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each active note
 				m_arrNoteOff[iEvent].m_nTime = 0;	// at callback start time
-				m_arrEvent.Add(m_arrNoteOff[iEvent]);	// add note off event
+				m_arrEvent.FastAdd(m_arrNoteOff[iEvent]);	// add note off event
 			}
 			m_arrNoteOff.FastRemoveAll();	// empty note off array
 		}
@@ -784,6 +836,14 @@ bool CSequencer::OutputMidiBuffer()
 			AddRecordedEvents(nCBStart, nCBEnd);	// add recorded events for this callback period
 	}	// leave callback critical section, releasing lock on callback state
 	AddNoteOffs(nCBStart, nCBEnd);	// add note off events for this callback period
+	if (m_bIsSendingMidiClock) {	// if sending MIDI clock
+		while (m_nMidiClockTimer < m_nCBLen) {	// while MIDI clock timer less than callback period
+			CMidiEvent	evtClock(m_nMidiClockTimer, CLOCK);
+			m_arrEvent.FastInsertSorted(evtClock);	// output MIDI clock
+			m_nMidiClockTimer += m_nMidiClockPeriod;	// increment MIDI clock timer by clock period
+		}
+		m_nMidiClockTimer -= m_nCBLen;	// decrement MIDI clock timer by callback period
+	}
 	m_iBuffer ^= 1;	// swap playback buffers
 	// fill MIDI output buffer with events created above
 	CMidiEventStream&	arrEvt = m_arrMidiEvent[m_iBuffer];
@@ -799,7 +859,7 @@ bool CSequencer::OutputMidiBuffer()
 			m_arrEvent.FastInsertSorted(m_arrTempoEvent[iTempoEvt]);	// insert into event array
 		}
 		CMidiEvent	evt(m_nCBLen, MEVT_NOP << 24);
-		m_arrEvent.Add(evt);	// pad time to start of next callback
+		m_arrEvent.FastAdd(evt);	// pad time to start of next callback
 		nEvents++;
 		if (nEvents >= arrEvt.GetSize()) {	// if events exceed output buffer size
 			OnMidiError(SEQERR_BUFFER_OVERRUN);
@@ -922,7 +982,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 	for (int iEvt = 0; iEvt < nInitEvents; iEvt++) {	// for each initial event
 		int	iChan = MIDI_CHAN(m_arrInitMidiEvent[iEvt]);
 		CMidiFile::MIDI_EVENT	evt = {m_nStartPos, m_arrInitMidiEvent[iEvt]};
-		arrMidiEvent[iChan].Add(evt);	// add initial event to per-channel array
+		arrMidiEvent[iChan].FastAdd(evt);	// add initial event to per-channel array
 	}
 	CMidiEventArray arrSongTempoEvent;
 	int	nTracks = GetSize();
@@ -945,7 +1005,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 			midiEvt.DeltaT = evt.m_nTime + nCBTime;	// convert to song time
 			midiEvt.Msg = evt.m_dwEvent;
 			int	iChan = MIDI_CHAN(evt.m_dwEvent);
-			arrMidiEvent[iChan].Add(midiEvt);	// add event to per-channel array
+			arrMidiEvent[iChan].FastAdd(midiEvt);	// add event to per-channel array
 		}
 		int	nTempoEvts = m_arrTempoEvent.GetSize();
 		for (int iTempoEvt = 0; iTempoEvt < nTempoEvts; iTempoEvt++) {	// for each tempo event
