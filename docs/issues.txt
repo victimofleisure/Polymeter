@@ -284,6 +284,7 @@ open	close	type	description	rev	user
 04/14/18	04/15/20	done	Insert Group command in modulation dialog; list boxes instead of drop lists, select multiple sources at once	0.0.30.000	
 04/16/20	04/17/20	done	Step Values bar should support editing multiple steps at once, within a contiguous range of selected items	0.0.30.000	
 05/13/20	04/17/20	done	assign custom colors to tracks (Benoit)	0.0.30.000	
+04/17/20	04/18/20	done	optimize add track events; don't iterate modulators for tracks that are muted or are modulators	0.0.30.001	
 03/22/18		hold	context-sensitive help		
 03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 03/22/18		hold	swing modulation; probably not feasible		

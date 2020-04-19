@@ -2164,7 +2164,115 @@ Seems like we could just move nPosMod2 outside the recursion
 scope, init it zero, and then the GetStepIndex can move after
 the recursion. Same idea in SumModulations.
 
-Better check the output of this change carefully!
+Better check the output of this change carefully! [seems ok]
+
+4/17/20 mix notes
+
+Shelter In Bass: string part is a bit too loud according to 
+Kim and I tend to agree, maybe -2 dB? Or EQ it differently?
+This is a question for Mike. But it's masking the piano 
+and percussion too much.
+
+4/18/20 more on callback taking too long: memory usage?
+
+Investigate whether the callback thread is allocating memory. 
+It shouldn't be. Once all the various dynamic arrays are big 
+enough they should stay put provided the sequence density
+doesn't increase.
+
+int MyAllocHook(int nAllocType, void *pvData, size_t nSize, int nBlockUse, 
+				long lRequest, const unsigned char * szFileName, int nLine)
+{
+	// need this to call printf else infinite loop since printf allocates
+	if ( nBlockUse == _CRT_BLOCK )
+		return( TRUE );
+	if (GetThreadPriority(GetCurrentThread()) == THREAD_PRIORITY_HIGHEST) { // only sequencer callback thread
+		printf("%lld %s %d\n", nSize, szFileName, nLine);
+	}
+	return true;
+}
+
+// in InitInstance
+_CrtSetAllocHook(MyAllocHook);
+
+Result of this test is negative: the sequencer callback thread 
+doesn't do any unexpected memory allocations.
+
+To write to console without using printf, can do some variant of this:
+
+		static COORD coord;
+		DWORD	out;
+		TCHAR	buf[16];
+		_i64tot_s(nSize, buf, _countof(buf), 10); // for 64-bit vals
+  		WriteConsoleOutputCharacter(GetStdHandle(STD_OUTPUT_HANDLE), buf, _tcslen(buf), coord, &out);
+		coord.Y++; // need to handle scrolling or at least wrap around!
+
+
+4/18/20 epic time wasting in AddTrackEvents
+
+1. Muted tracks process all of their modulators, pointlessly.
+2. Modulator tracks process all their modulators, pointlessly.
+3. When a mute modulator returns true, processing continues, pointlessly.
+
+No wonder the sequencer callback is taking so long!
+All of these are easily fixable with a slight refactoring.
+
+One unexpected result of the enhancements: if a track has many 
+modulators, and some of them are mute modulators, performance will 
+likely be improved if the mute modulators come first in the modulator
+list. This is because when a mute modulator mutes the track, the 
+"goto next_step" aborts any further processing for the current step, 
+including the (possibly recursive) evaluation of other modulators. 
+That's potentially a significant savings. It could be a reason to 
+sort modulators by modulation type instead of by source track.
+
+4/18/20 high-frequency memory reallocation
+
+OnUpdateEditUndo and OnUpdateEditRedo reallocate memory whenever
+the mouse moves, due to loading the undo or redo prefix from a string 
+resource and then appending the edit-specific title to it. This work
+can be avoided by overloading CUndoManager::OnUpdateTitles and doing
+the prefixing there instead. But that's not all: CToolCmdUI::SetText
+also creates a CString, in order to remove the trailing label, and
+CToolCmdUI is a private class buried in afxtoolbar.cpp. And it's
+renamed to CMFCToolBarCmdUI via #define, nice.
+
+Then there's all the stuff that gets updated during play:
+
+CClientDC in CStepView::UpdateSongPosition: how to avoid this?
+Can be avoided by using GetDC and ReleaseDC instead of CClientDC,
+but it makes a mess of the drawing code; HDC must be passed around.
+CClientDC appears to allocate a large buffer, on the order of 14K.
+
+CClientDC in in CSongView::UpdateSongPos: how to avoid this?
+GetDC/ReleaseDC isn't enough because UpdateWindow is called and that
+sends a paint message to CView::OnPaint which instantiates a CPaintDC.
+Still it might save time to construct only one DC wrapper instead of two.
+Also CClientDC is constructed long before it's used, not that it matters.
+
+Updating the song position and time also reallocates memory, due to 
+CString. The Format statement alone is between 5 and 10 microseconds.
+The sequencer methods could write to fixed-size buffers instead, but
+this makes a mess of various things and will attract bugs.
+
+And then there's the mysterious message loop that occurs when the
+mouse hovers over a list control, or over a property sheet item that
+isn't abbreviated. It allocates at high frequency, no doubt due to
+calling FromHandle. It's somehow related to tool tips. There's also
+some connection to a mysterious timer message with event ID 3. That's
+not an official AFX timer ID, and according to the message hooks it
+appears to be posted rather than sent, making the source impossible to
+determine. But it's probably sent by a tool tip control, possibly one
+associated with the list control. There are dozens of unidentified tool
+tip controls associated with the app, but having no parent window.
+
+This timer ID 3 issue or whatever it is also occurs in a stock 2012
+app if you hover the mouse over one of the tree controls. The tree
+controls also have item tooltips. Another sign it's tooltip related.
+
+
+
+
 
 
 
