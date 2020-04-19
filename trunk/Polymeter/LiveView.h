@@ -9,6 +9,7 @@
 		rev		date	comments
         00      20jun18	initial version
         01      18mar20	make song position 64-bit
+		02		19apr20	give position bar control its own device context
 
 */
 
@@ -84,10 +85,13 @@ protected:
 		void	UpdateBars(LONGLONG nSongPos);
 		void	InvalidateBar(int iItem);
 		void	InvalidateAllBars();
-		void	UpdateDeviceContext();
+
+	// Overrides
+		BOOL	PreCreateWindow(CREATESTRUCT& cs);
 
 	// Message handlers
 		DECLARE_MESSAGE_MAP()
+		afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 		afx_msg void OnSize(UINT nType, int cx, int cy);
 		afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 		afx_msg void OnPaint();

@@ -18,6 +18,7 @@
 		08		11feb13	add OnUpdateTitles and SetPos
 		09		01may14	widen nCtrlID and nCode to 32-bit
 		10		25apr18	standardize names
+		11		19apr20	return const string reference from title accessors
 
         undoable edit interface
  
@@ -53,8 +54,8 @@ public:
 	bool	IsRedoing() const;
 	bool	IsModified() const;
 	void	ResetModifiedFlag();
-	LPCTSTR	GetUndoTitle();
-	LPCTSTR	GetRedoTitle();
+	const CString&	GetUndoTitle();
+	const CString&	GetRedoTitle();
 	int		GetLevels() const;
 	void	SetLevels(int nLevels);
 	void	SetRoot(CUndoable *pRoot);
@@ -152,12 +153,12 @@ inline int CUndoManager::GetLevels() const
 	return(m_nLevels);
 }
 
-inline LPCTSTR CUndoManager::GetUndoTitle()
+inline const CString& CUndoManager::GetUndoTitle()
 {
 	return(m_sUndoTitle);
 }
 
-inline LPCTSTR CUndoManager::GetRedoTitle()
+inline const CString& CUndoManager::GetRedoTitle()
 {
 	return(m_sRedoTitle);
 }

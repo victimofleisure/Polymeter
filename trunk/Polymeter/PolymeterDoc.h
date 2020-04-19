@@ -24,6 +24,7 @@
 		14		20mar20	add mapping
 		15		29mar20	add learn multiple mappings
 		16		07apr20	add move steps
+		17		19apr20	optimize undo/redo menu item prefixing
 
 */
 
@@ -132,11 +133,20 @@ public:
 		int		m_iFirstItem;	// if selection range, index of first selected item
 		int		m_nItems;		// if selection range, number of selected items
 	};
+	class CMyUndoManager : public CUndoManager {
+	public:
+		CMyUndoManager();
+		virtual	void	OnUpdateTitles();
+		CString	m_sUndoMenuItem;	// undo's edit menu item string; prefixed undo title
+		CString	m_sRedoMenuItem;	// redo's edit menu item string; prefixed redo title
+		static	CString	m_sUndoPrefix;	// prefix for undo's edit menu item, from resource
+		static	CString	m_sRedoPrefix;	// prefix for redo's edit menu item, from resource
+	};
 
 // Public data
 	CMySequencer	m_Seq;		// sequencer instance
 	int		m_nFileVersion;		// file version number
-	CUndoManager	m_UndoMgr;	// undo manager
+	CMyUndoManager	m_UndoMgr;	// undo manager
 	CChannelArray	m_arrChannel;	// array of channels
 	CIntArrayEx	m_arrTrackSel;	// array of indices of selected tracks
 	CPresetArray	m_arrPreset;	// array of presets

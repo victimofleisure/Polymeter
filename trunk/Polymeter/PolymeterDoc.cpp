@@ -46,6 +46,7 @@
 		36		07apr20	add move steps; fix cut steps undo code
 		37		14apr20	add send MIDI clock option
 		38		17apr20	add track color; bump file version
+		39		19apr20	optimize undo/redo menu item prefixing
 
 */
 
@@ -166,6 +167,9 @@ const LPCTSTR CPolymeterDoc::m_arrViewTypeName[VIEW_TYPES] = {
 CPolymeterDoc::CTrackSortInfo CPolymeterDoc::m_infoTrackSort;
 const CIntArrayEx	*CPolymeterDoc::m_parrSelection;
 
+CString	CPolymeterDoc::CMyUndoManager::m_sUndoPrefix;
+CString	CPolymeterDoc::CMyUndoManager::m_sRedoPrefix;
+
 // CPolymeterDoc construction/destruction
 
 CPolymeterDoc::CPolymeterDoc() 
@@ -198,6 +202,25 @@ void CPolymeterDoc::CMySequencer::OnMidiError(MMRESULT nResult)
 	default:
 		Abort();	// abort playback and clean up
 	}
+}
+
+CPolymeterDoc::CMyUndoManager::CMyUndoManager()
+{
+	if (m_sUndoPrefix.IsEmpty()) {	// if prefixes not loaded yet
+		m_sUndoPrefix.LoadString(IDS_EDIT_UNDO_PREFIX);
+		m_sUndoPrefix += ' ';	// add separator
+		m_sRedoPrefix.LoadString(IDS_EDIT_REDO_PREFIX);
+		m_sRedoPrefix += ' ';	// add separator
+	}
+	OnUpdateTitles();
+}
+
+void CPolymeterDoc::CMyUndoManager::OnUpdateTitles()
+{
+	// append here instead of in undo/redo update command UI handlers,
+	// to reduce high-frequency memory reallocation when mouse moves
+	m_sUndoMenuItem = m_sUndoPrefix + GetUndoTitle();
+	m_sRedoMenuItem = m_sRedoPrefix + GetRedoTitle();
 }
 
 BOOL CPolymeterDoc::OnNewDocument()
@@ -3800,9 +3823,7 @@ void CPolymeterDoc::OnEditUndo()
 void CPolymeterDoc::OnUpdateEditUndo(CCmdUI *pCmdUI)
 {
 	if (!CFocusEdit::UpdateUndo(pCmdUI)) {
-		CString	Text;
-		Text.Format(LDS(IDS_EDIT_UNDO_FMT), GetUndoManager()->GetUndoTitle());
-		pCmdUI->SetText(Text);
+		pCmdUI->SetText(m_UndoMgr.m_sUndoMenuItem);
 		pCmdUI->Enable(m_UndoMgr.CanUndo());
 	}
 }
@@ -3816,9 +3837,7 @@ void CPolymeterDoc::OnEditRedo()
 
 void CPolymeterDoc::OnUpdateEditRedo(CCmdUI *pCmdUI)
 {
-	CString	Text;
-	Text.Format(LDS(IDS_EDIT_REDO_FMT), GetUndoManager()->GetRedoTitle());
-	pCmdUI->SetText(Text);
+	pCmdUI->SetText(m_UndoMgr.m_sRedoMenuItem);
 	pCmdUI->Enable(m_UndoMgr.CanRedo());
 }
 

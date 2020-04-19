@@ -12,6 +12,7 @@
         02      12dec19	add GetPeriod
         03      18mar20	get song position from document instead of sequencer
 		04		01apr20	standardize context menu handling
+		05		19apr20	give position bar control its own device context
 
 */
 
@@ -179,7 +180,6 @@ void CLiveView::Update()
 	m_list[LIST_PARTS].SetItemCountEx(m_arrPart.GetSize(), 0);	// invalidate all
 	m_list[LIST_PRESETS].SetItemCountEx(pDoc->m_arrPreset.GetSize(), 0);	// invalidate all
 	UpdatePartLengths();
-	m_wndPosBar.UpdateDeviceContext();	// avoids creating DC in critical path
 	Invalidate();
 }
 
@@ -926,17 +926,30 @@ void CLiveView::CPosBarCtrl::UpdateBars(LONGLONG nSongPos)
 	}
 }
 
-inline void CLiveView::CPosBarCtrl::UpdateDeviceContext()
-{
-	m_dcPos.Detach();
-	m_dcPos.Attach(::GetDC(GetSafeHwnd()));
-}
-
 BEGIN_MESSAGE_MAP(CLiveView::CPosBarCtrl, CWnd)
+	ON_WM_CREATE()
 	ON_WM_SIZE()
 	ON_WM_ERASEBKGND()
 	ON_WM_PAINT()
 END_MESSAGE_MAP()
+
+BOOL CLiveView::CPosBarCtrl::PreCreateWindow(CREATESTRUCT& cs)
+{
+	cs.lpszClass = AfxRegisterWndClass(	// create our own window class
+		CS_OWNDC,								// request our own private device context
+		theApp.LoadStandardCursor(IDC_ARROW),	// standard cursor
+		NULL,									// no background brush
+		theApp.LoadIcon(IDR_MAINFRAME));		// app's icon
+	return CWnd::PreCreateWindow(cs);
+}
+
+int CLiveView::CPosBarCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+	if (CWnd::OnCreate(lpCreateStruct) == -1)
+		return -1;
+	m_dcPos.Attach(::GetDC(m_hWnd));	// private device context doesn't need to be released
+	return 0;
+}
 
 void CLiveView::CPosBarCtrl::OnSize(UINT nType, int cx, int cy)
 {

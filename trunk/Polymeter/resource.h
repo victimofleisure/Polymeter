@@ -100,7 +100,7 @@
 #define IDS_EDIT_PASTE_STEPS            264
 #define IDS_EDIT_PASTE_TRACKS           265
 #define IDS_EDIT_RECORD                 266
-#define IDS_EDIT_REDO_FMT               267
+#define IDS_EDIT_REDO_PREFIX            267
 #define IDS_EDIT_RENAME_PART            268
 #define IDS_EDIT_RENAME_PRESET          269
 #define IDS_EDIT_REVERSE                270
@@ -110,7 +110,7 @@
 #define IDS_EDIT_SORT_MAPPINGS          274
 #define IDS_EDIT_TRACK_SORT             275
 #define IDS_EDIT_TRANSPOSE              276
-#define IDS_EDIT_UNDO_FMT               277
+#define IDS_EDIT_UNDO_PREFIX            277
 #define IDS_EDIT_UPDATE_PART            278
 #define IDS_EDIT_UPDATE_PRESET          279
 #define IDS_EDIT_VELOCITY               280

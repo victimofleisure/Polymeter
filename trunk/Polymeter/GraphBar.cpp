@@ -15,6 +15,7 @@
 		05		16mar20	add colors for new modulation types
 		06		01apr20	standardize context menu handling
 		07		04apr20	add color for chord modulation
+		08		19apr20	don't set browser window name; fixes OLE exception
 
 */
 
@@ -843,7 +844,8 @@ int CGraphBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CMyDockablePane::OnCreate(lpCreateStruct) == -1)
 		return -1;
-	if (!m_wndBrowser.CreateControl(CLSID_WebBrowser, _T("Graph"),
+	// don't set window name, otherwise OLE throws member not found
+	if (!m_wndBrowser.CreateControl(CLSID_WebBrowser, _T("E"),
 		WS_VISIBLE | WS_CHILD, CRect(0, 0, 0, 0), this, AFX_IDW_PANE_FIRST))
 		return -1;
 	return 0;

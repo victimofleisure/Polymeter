@@ -37,6 +37,7 @@
 		27		14apr20	add send MIDI clock option
 		28		16apr20	apply range to scale after picking chord tones
 		29		16apr20	in recursion methods, compute step index only if needed
+		30		18apr20	optimize add track events
 
 */
 
@@ -586,65 +587,66 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 					trk.m_iDub++;
 				}
 			}
-			double	fTempoMod = 1;
-			int	arrMod[MODULATION_TYPES] = {0};	// initialize modulations to zero
-			m_arrScale.FastRemoveAll();
-			m_arrChord.FastRemoveAll();
-			m_arrVoicing.FastRemoveAll();
-			int	nMods = trk.m_arrModulator.GetSize();
-			for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
-				const CModulation&	mod = trk.m_arrModulator[iMod];
-				int	iModSource = mod.m_iSource;
-				int	iModType = mod.m_iType;
-				if (iModSource >= 0 && iModSource < nTracks && !GetMute(iModSource)) {	// if modulator is valid and unmuted
-					const CTrack&	trkModSource = GetTrack(iModSource);
-					int	iModStep = trkModSource.GetStepIndex(nAbsEvtTime);
-					if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
-						int	nPosMod;
-						m_nRecursions = 0;
-						if (RecurseModulations(iModSource, nAbsEvtTime, nPosMod))	// recurse into modulator's modulations
-							continue;	// recursion returned mute, so skip this modulator
-						if (nPosMod)	// if recursion returned a non-zero position modulation
-							iModStep = ModWrap(iModStep - nPosMod, trkModSource.GetLength());	// modulate position
-					}
-					int	nStepVal = trkModSource.m_arrStep[iModStep] & SB_VELOCITY;
-					switch (iModType) {
-					case MT_Mute:
-						arrMod[MT_Mute] |= nStepVal != 0;	// mute track if any of its mute modulators are active
-						break;
-					case MT_Tempo:
-						{
-							// duration is repurposed as tempo change percentage
-							double	fValNorm = double(nStepVal - MIDI_NOTES / 2) / (MIDI_NOTES / 2);
-							fTempoMod *= pow(2, fValNorm * trkModSource.m_nDuration / 100.0);
+			if (!trk.m_bMute && trk.m_iType != TT_MODULATOR) {	// if track isn't muted and isn't a modulator
+				double	fTempoMod = 1;
+				int	arrMod[MODULATION_TYPES] = {0};	// initialize modulations to zero
+				m_arrScale.FastRemoveAll();
+				m_arrChord.FastRemoveAll();
+				m_arrVoicing.FastRemoveAll();
+				int	nMods = trk.m_arrModulator.GetSize();
+				for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
+					const CModulation&	mod = trk.m_arrModulator[iMod];
+					int	iModSource = mod.m_iSource;
+					int	iModType = mod.m_iType;
+					if (iModSource >= 0 && iModSource < nTracks && !GetMute(iModSource)) {	// if modulator is valid and unmuted
+						const CTrack&	trkModSource = GetTrack(iModSource);
+						int	iModStep = trkModSource.GetStepIndex(nAbsEvtTime);
+						if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
+							int	nPosMod;
+							m_nRecursions = 0;
+							if (RecurseModulations(iModSource, nAbsEvtTime, nPosMod))	// recurse into modulator's modulations
+								continue;	// recursion returned mute, so skip this modulator
+							if (nPosMod)	// if recursion returned a non-zero position modulation
+								iModStep = ModWrap(iModStep - nPosMod, trkModSource.GetLength());	// modulate position
 						}
-						break;
-					case MT_Scale:
-						{
-							int	nTone = nStepVal - MIDI_NOTES / 2;
-							if (trkModSource.IsModulated())	// if modulation source is modulated
-								nTone += SumModulations(trkModSource, MT_Note, nAbsEvtTime);
-							m_arrScale.Add(nTone);	// add tone to scale array
+						int	nStepVal = trkModSource.m_arrStep[iModStep] & SB_VELOCITY;
+						switch (iModType) {
+						case MT_Mute:
+							if (nStepVal)	// if track is muted by mute modulator
+								goto next_step;	// skip this step
+							break;
+						case MT_Tempo:
+							{
+								// duration is repurposed as tempo change percentage
+								double	fValNorm = double(nStepVal - MIDI_NOTES / 2) / (MIDI_NOTES / 2);
+								fTempoMod *= pow(2, fValNorm * trkModSource.m_nDuration / 100.0);
+							}
+							break;
+						case MT_Scale:
+							{
+								int	nTone = nStepVal - MIDI_NOTES / 2;
+								if (trkModSource.IsModulated())	// if modulation source is modulated
+									nTone += SumModulations(trkModSource, MT_Note, nAbsEvtTime);
+								m_arrScale.Add(nTone);	// add tone to scale array
+							}
+							break;
+						case MT_Chord:
+							{
+								int	nTone = nStepVal - MIDI_NOTES / 2;
+								if (trkModSource.IsModulated())	// if modulation source is modulated
+									nTone += SumModulations(trkModSource, MT_Note, nAbsEvtTime);
+								m_arrChord.Add(nTone);	// add tone to chord array
+							}
+							break;
+						case MT_Voicing:
+							m_arrVoicing.Add(nStepVal - MIDI_NOTES / 2);	// add step to voicing array
+							break;
+						default:
+							nStepVal -= MIDI_NOTES / 2;	// convert step value to signed offset
+							arrMod[iModType] += nStepVal;	// accumulate modulation value
 						}
-						break;
-					case MT_Chord:
-						{
-							int	nTone = nStepVal - MIDI_NOTES / 2;
-							if (trkModSource.IsModulated())	// if modulation source is modulated
-								nTone += SumModulations(trkModSource, MT_Note, nAbsEvtTime);
-							m_arrChord.Add(nTone);	// add tone to chord array
-						}
-						break;
-					case MT_Voicing:
-						m_arrVoicing.Add(nStepVal - MIDI_NOTES / 2);	// add step to voicing array
-						break;
-					default:
-						nStepVal -= MIDI_NOTES / 2;	// convert step value to signed offset
-						arrMod[iModType] += nStepVal;	// accumulate modulation value
 					}
 				}
-			}
-			if (!trk.m_bMute && !arrMod[MT_Mute]) {	// if track isn't muted
 				int	iModStep;
 				if (arrMod[MT_Position]) {	// if modulating position
 					iModStep = (iStep - arrMod[MT_Position]) % nLength;
@@ -715,25 +717,24 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 							m_arrNoteOff.FastInsertSorted(evt);	// add pending note off to array
 						}
 					}
-				} else if (trk.m_iType != TT_MODULATOR) {	// track type isn't note or modulator
-					if (trk.m_iType == TT_TEMPO) {	// if track type is tempo
-						int	nVal = trk.m_arrStep[iModStep] & SB_VELOCITY;
-						double	fValNorm = double(nVal - MIDI_NOTES / 2) / (MIDI_NOTES / 2);
-						double	fTempoOut = m_fTempo * pow(2, fValNorm * trk.m_nDuration / 100.0) * fTempoMod;
-						int	iTempo = round(CMidiFile::MICROS_PER_MINUTE / fTempoOut);
-						if (iTempo != m_nAltTempo) {	// if altered tempo actually changed
-							m_nAltTempo = iTempo;	// update shadow
-							CMidiEvent	evtTempo(nEvtTime, (MEVT_TEMPO << 24) | iTempo);
-							m_arrTempoEvent.FastAdd(evtTempo);	// add tempo event
-						}
-					} else {	// track type is control event
-						int	nVal = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
-						nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
-						OutputControlEvent(trk, nEvtTime, nVal);
+				} else if (trk.m_iType == TT_TEMPO) {	// if track type is tempo
+					int	nVal = trk.m_arrStep[iModStep] & SB_VELOCITY;
+					double	fValNorm = double(nVal - MIDI_NOTES / 2) / (MIDI_NOTES / 2);
+					double	fTempoOut = m_fTempo * pow(2, fValNorm * trk.m_nDuration / 100.0) * fTempoMod;
+					int	iTempo = round(CMidiFile::MICROS_PER_MINUTE / fTempoOut);
+					if (iTempo != m_nAltTempo) {	// if altered tempo actually changed
+						m_nAltTempo = iTempo;	// update shadow
+						CMidiEvent	evtTempo(nEvtTime, (MEVT_TEMPO << 24) | iTempo);
+						m_arrTempoEvent.FastAdd(evtTempo);	// add tempo event
 					}
+				} else {	// track type is control event
+					int	nVal = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
+					nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
+					OutputControlEvent(trk, nEvtTime, nVal);
 				}
 			}
 		}
+next_step:
 		iStep++;	// advance to next track step
 		if (iStep >= nLength)	// if track length reached
 			iStep -= nLength;	// wrap to start of track

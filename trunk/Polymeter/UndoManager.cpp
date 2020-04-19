@@ -27,13 +27,13 @@
 		17		07may15	in DumpState, use address format for object pointer
 		18		23jun15	in SwapState, save to temporary in case restore throws
 		19		25apr18	standardize names
+		20		19apr20	remove unused resource header
 
         undoable edit interface
  
 */
 
 #include "stdafx.h"
-#include "Resource.h"
 #include "UndoManager.h"
 #include "Undoable.h"
 
