@@ -1826,7 +1826,7 @@ about three ticks. No idea why!
 
 Key is to use Reason for all such tests, because it has only 1ms of
 latency. Using GS Synth is dumb because it has tons of latency which
-corrupts the tests. Test setup requires to loopMIDI ports and two
+corrupts the tests. Test setup requires two loopMIDI ports and two
 instances of Polymeter.
 
 Polymeter_2 -> loopMIDI_2 -> Polymeter_1 -> loopMIDI_1 -> Reason
@@ -1890,13 +1890,23 @@ Maybe first jump to a break around 1:12?
 4/3/20 Unreleased tracks
 
 Solo piano, done:
-Ero Ayo 	5:31 (Happy Thoughts, Joy of Thinking, Device of Joy)
-Mo Bulu 	4:51 (I'm Blue)
-Irubo 		4:15 (Ritual)
-Ninu Meta 	4:21 (In Three)
-Ibaramu 	5:29 (Harmonious)
-Yipo 		4:44 (Rolls, Twist)
-(around 29:10)
+Ero Ayo 	120	5:31 	Happy Thoughts, Joy of Thinking, Device of Joy
+Mo Bulu 	125	4:51 	I'm Blue
+Irubo 		123	4:15 	Ritual
+Ninu Meta 	90	4:21 	In Three
+Ibaramu 	140	5:29 	Harmonious
+Yipo 		107	4:44 	Rolls, Twist
+Fun Ife		100	5:01 	For Love
+(around 34:10)
+
+filenames (double-check this! [checked])
+Ero ABC2
+Mo Bulu
+Irubo 3 cresc
+Ninu Meta B2 run
+Ibaramu
+Yipo
+Fun Ife2
 
 Misc:
 Stella By Starlight 3:34
@@ -1915,7 +1925,9 @@ Lodidi 			6:14
 Charlie's Big Break 	5:10
 Interago 		5:11 (mastered)
 Kasita Mondo 		6:00 (mastered)
-(around 28:30)
+More Than Four		4:46
+Shelter In Bass		4:23
+
 
 4/4/20 OSX
 

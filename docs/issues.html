@@ -137,7 +137,7 @@
 <TD>04/10/20</TD>
 <TD>&nbsp;</TD>
 <TD>bug</TD>
-<TD>sequencer is taking too long; probable cause is time critical winmm thread preempting sequencer callback</TD>
+<TD>sequencer is taking too long; probable cause is time-critical winmm thread preempting sequencer callback</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -153,7 +153,7 @@
 <TD>04/17/20</TD>
 <TD>&nbsp;</TD>
 <TD>bug</TD>
-<TD>convergence dialog can take too long in some cases, stalling UI; show progress bar or use worker thread</TD>
+<TD>Convergences and Time To Repeat commands can take too long, stalling UI; show progress bar or use worker thread</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2326,6 +2326,46 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>04/22/20</TD>
+<TD>04/22/20</TD>
+<TD>done</TD>
+<TD>if Modulations bar's grid is empty, modulation sort is disabled; only disable if there's no track selection</TD>
+<TD>0.0.30.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/22/20</TD>
+<TD>04/30/20</TD>
+<TD>done</TD>
+<TD>in Step Values bar, multi-step edit doesn't work if value is unchanged but differs from other steps in the range</TD>
+<TD>0.0.30.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/30/20</TD>
+<TD>04/30/20</TD>
+<TD>done</TD>
+<TD>list scrolling gets stuck if app loses focus during item drag; list's CancelDrag must kill scroll timer</TD>
+<TD>0.0.30.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/30/20</TD>
+<TD>04/30/20</TD>
+<TD>done</TD>
+<TD>Window menu's Windows command displays incorrect status bar hint; fix EnableWindowsDialog params</TD>
+<TD>0.0.30.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/05/20</TD>
+<TD>05/06/20</TD>
+<TD>done</TD>
+<TD>receiving MIDI input that's mapped to track properties stalls UI during playback; main frame's OnUpdate was resetting view timer for every update</TD>
+<TD>0.0.30.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -2882,6 +2922,14 @@
 <TD>&nbsp;</TD>
 <TD>todo</TD>
 <TD>properties bar should derive from custom dockable pane</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
