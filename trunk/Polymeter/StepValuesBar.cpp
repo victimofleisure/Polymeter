@@ -13,6 +13,7 @@
 		03		06apr20	add copy text to clipboard
 		04		07apr20	add standard editing commands
 		05		17apr20	add multi-step editing
+		06		30apr20	fix multi-step editing change detection
 		
 */
 
@@ -254,6 +255,14 @@ void CStepValuesBar::UpdateColumnNames()
 	}
 }
 
+inline bool CStepValuesBar::StepCompare(STEP step1, STEP step2, bool bVelocityOnly)
+{
+	if (bVelocityOnly)
+		return (step1 & SB_VELOCITY) == (step2 & SB_VELOCITY);
+	else
+		return step1 == step2;
+}
+
 void CStepValuesBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 {
 	UNREFERENCED_PARAMETER(pszText);
@@ -266,41 +275,52 @@ void CStepValuesBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 			if (iStep < pDoc->m_Seq.GetLength(iTrack)) {	// if step in range
 				CStepValuesBar	*pBar = STATIC_DOWNCAST(CStepValuesBar, GetParent());
 				UINT	nFormat = pBar->m_nStepFormat;
-				int	nStep = 0;
+				int	nStepVal = 0;
 				if (nFormat & STF_NOTES) {	// if showing steps as notes
-					CNote	note(nStep);
+					CNote	note(nStepVal);
 					if (nFormat & STF_OCTAVES) {	// if showing octave
 						note.ParseMidi(pszText);
 					} else {	// hiding octave
 						note.Parse(pszText);
 					}
-					nStep = note;
+					nStepVal = note;
 				} else {	// show steps as numeric values
 					LPCTSTR	pszFormat;
 					if (nFormat & STF_HEX)	// if showing hexadecimal
 						pszFormat = _T("%x");
 					else	// showing decimal
 						pszFormat = _T("%d");
-					if (_stscanf_s(pszText, pszFormat, &nStep) != 1)
+					if (_stscanf_s(pszText, pszFormat, &nStepVal) != 1)
 						return;	// conversion failed
 				}
 				if (nFormat & STF_SIGNED)	// if interpreting steps as signed values
-					nStep += MIDI_NOTES / 2;
-				int	nPrevStep = pDoc->m_Seq.GetStep(iTrack, iStep);
-				if (!(nFormat & STF_TIES)) {	// if ignoring tie bits
-					nStep &= SB_VELOCITY;	// mask off all but velocity
-					nStep |= (nPrevStep & SB_TIE);	// copy previous tie bit
+					nStepVal += MIDI_NOTES / 2;
+				STEP	nStep = static_cast<STEP>(nStepVal);
+				CIntArrayEx	arrSelection;
+				GetSelection(arrSelection);
+				int	iFirstItem, nItems;
+				GetSelectionRange(arrSelection, iStep, iFirstItem, nItems);
+				bool	bVelocityOnly = !(nFormat & STF_TIES);	// if not showing ties, process velocity only
+				bool	bChanged;
+				if (nItems > 1) {	// if edit is within a selection range of at least two items
+					int	iEndItem = iFirstItem + nItems;
+					int	iItem;
+					for (iItem = iFirstItem; iItem < iEndItem; iItem++) {	// for each step in range
+						STEP	nPrevStep = pDoc->m_Seq.GetStep(iTrack, iItem);
+						if (!StepCompare(nStep, nPrevStep, bVelocityOnly))	// if steps differ
+							break;
+					}
+					bChanged = iItem < iEndItem;	// true if one or more steps would change
+				} else {	// single step edit
+					STEP	nPrevStep = pDoc->m_Seq.GetStep(iTrack, iStep);
+					bChanged = !StepCompare(nStep, nPrevStep, bVelocityOnly);	// if steps differ
 				}
-				if (nStep != nPrevStep) {	// if step value changed
-					CIntArrayEx	arrSelection;
-					GetSelection(arrSelection);
-					int	iFirstItem, nItems;
-					GetSelectionRange(arrSelection, iStep, iFirstItem, nItems);
+				if (bChanged) {	// if step value changed
 					if (nItems > 1) {	// if edit is within a selection range of at least two items
 						CRect	rStepSel(CPoint(iFirstItem, iTrack), CSize(nItems, 1));
-						pDoc->SetTrackSteps(rStepSel, static_cast<STEP>(nStep));	// multi-step edit
+						pDoc->SetTrackSteps(rStepSel, static_cast<STEP>(nStep), bVelocityOnly);	// multi-step edit
 					} else {
-						pDoc->SetTrackStep(iTrack, iStep, static_cast<STEP>(nStep));
+						pDoc->SetTrackStep(iTrack, iStep, static_cast<STEP>(nStep), bVelocityOnly);	// single step edit
 					}
 				}
 			}

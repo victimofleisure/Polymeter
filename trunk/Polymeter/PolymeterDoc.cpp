@@ -47,6 +47,7 @@
 		37		14apr20	add send MIDI clock option
 		38		17apr20	add track color; bump file version
 		39		19apr20	optimize undo/redo menu item prefixing
+		40		30apr20	add velocity only flag to set step methods
 
 */
 
@@ -789,20 +790,26 @@ void CPolymeterDoc::Solo()
 	UpdateAllViews(NULL, HINT_SOLO);
 }
 
-void CPolymeterDoc::SetTrackStep(int iTrack, int iStep, STEP nStep)
+void CPolymeterDoc::SetTrackStep(int iTrack, int iStep, STEP nStep, bool bVelocityOnly)
 {
 	NotifyUndoableEdit(iStep, MAKELONG(UCODE_TRACK_STEP, iTrack));
-	m_Seq.SetStep(iTrack, iStep, nStep);
+	if (bVelocityOnly)
+		m_Seq.SetStepVelocity(iTrack, iStep, nStep);
+	else
+		m_Seq.SetStep(iTrack, iStep, nStep);
 	SetModifiedFlag();
 	CPropHint	hint(iTrack, iStep);
 	UpdateAllViews(NULL, HINT_STEP, &hint);
 }
 
-void CPolymeterDoc::SetTrackSteps(const CRect& rSelection, STEP nStep)
+void CPolymeterDoc::SetTrackSteps(const CRect& rSelection, STEP nStep, bool bVelocityOnly)
 {
 	m_rUndoSel = rSelection;
 	NotifyUndoableEdit(0, UCODE_MULTI_STEP_RECT);
-	m_Seq.SetSteps(rSelection, nStep);
+	if (bVelocityOnly)
+		m_Seq.SetStepVelocities(rSelection, nStep);
+	else
+		m_Seq.SetSteps(rSelection, nStep);
 	SetModifiedFlag();
 	CRectSelPropHint	hint(rSelection);
 	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);

@@ -1151,7 +1151,7 @@ BEGIN
     IDS_EDIT_PASTE_STEPS    "Paste Steps"
     IDS_EDIT_PASTE_TRACKS   "Paste Tracks"
     IDS_EDIT_RECORD         "Record"
-    IDS_EDIT_REDO_PREFIX       "&Redo"
+    IDS_EDIT_REDO_PREFIX    "&Redo"
     IDS_EDIT_RENAME_PART    "Rename Part"
     IDS_EDIT_RENAME_PRESET  "Rename Preset"
     IDS_EDIT_REVERSE        "Reverse"
@@ -1165,7 +1165,7 @@ BEGIN
     IDS_EDIT_SORT_MAPPINGS  "Sort Mappings"
     IDS_EDIT_TRACK_SORT     "Track Sort"
     IDS_EDIT_TRANSPOSE      "Transpose"
-    IDS_EDIT_UNDO_PREFIX       "&Undo"
+    IDS_EDIT_UNDO_PREFIX    "&Undo"
     IDS_EDIT_UPDATE_PART    "Update Part"
     IDS_EDIT_UPDATE_PRESET  "Update Preset"
     IDS_EDIT_VELOCITY       "Velocity"
@@ -1437,6 +1437,7 @@ BEGIN
     IDS_WINDOW_RESET_LAYOUT_WARN 
                             "Reset all windows to their default layout? This action can't be undone, and the application will be restarted."
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
+    IDS_WINDOW_MANAGER      "&Windows..."
 END
 
 STRINGTABLE
@@ -1578,7 +1579,7 @@ END
 STRINGTABLE
 BEGIN
     ID_VIEW_CHANNELS        "Show or hide the channels bar\nChannels"
-    ID_VIEW_CUSTOMIZE       " "
+    ID_VIEW_CUSTOMIZE       "Customize the application's interface\nCustomize"
     ID_VIEW_MODULATIONS     "Show or hide the modulations bar\nModulations"
     ID_VIEW_PARTS           "Show or hide the parts bar\nParts"
     ID_VIEW_PRESETS         "Show or hide the presets bar\nPresets"
@@ -1595,7 +1596,7 @@ BEGIN
     ID_VIEW_ZOOM_OUT        "Zoom out\nZoom Out"
     ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
-    ID_WINDOW_MANAGER       "&Windows..."
+    ID_WINDOW_MANAGER       "Manage child windows\nWindows"
     ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"
 END
 

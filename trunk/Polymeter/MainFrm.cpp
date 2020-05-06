@@ -26,6 +26,8 @@
 		16		05apr20	add track step change handler
 		17		06apr20	on tempo change, update song time in status bar
 		18		17apr20	add track color picker to toolbar
+		19		30apr20	fix window manager command's hint
+		20		06may20	check for no-op before setting view timer
 
 */
 
@@ -105,6 +107,7 @@ CMainFrame::CMainFrame() : m_wndMidiInputBar(false), m_wndMidiOutputBar(true)
 	m_pActiveDoc = NULL;
 	m_pFindDlg = NULL;
 	m_bFindMatchCase = false;
+	m_bIsViewTimerSet = false;
 	m_pbtnTrackColor = NULL;
 }
 
@@ -192,7 +195,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	OnApplicationLook(theApp.m_nAppLook + ID_VIEW_APPLOOK_FIRST);
 
 	// Enable enhanced windows management dialog
-	EnableWindowsDialog(ID_WINDOW_MANAGER, ID_WINDOW_MANAGER, TRUE);
+	EnableWindowsDialog(ID_WINDOW_MANAGER, IDS_WINDOW_MANAGER, TRUE);
 
 	// Enable toolbar and docking window menu replacement
 	EnablePaneMenu(TRUE, ID_VIEW_CUSTOMIZE, strCustomize, ID_VIEW_TOOLBAR);
@@ -320,8 +323,10 @@ void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 	if (pDoc != NULL) {
 		if (pPrevOptions != NULL) {
 			if (theApp.m_Options.m_View_fUpdateFreq != pPrevOptions->m_View_fUpdateFreq) {
-				if (theApp.m_pPlayingDoc != NULL)	// if document is playing
+				if (theApp.m_pPlayingDoc != NULL) {	// if document is playing
+					m_bIsViewTimerSet = false;	// spoof no-op test
 					SetViewTimer(true);
+				}
 			}
 		}
 	}
@@ -332,12 +337,15 @@ void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 
 void CMainFrame::SetViewTimer(bool bEnable)
 {
+	if (bEnable == m_bIsViewTimerSet)	// if already in requested state
+		return;	// nothing to do
 	if (bEnable) {	// if starting timer
 		ASSERT(theApp.m_Options.m_View_fUpdateFreq);	// else divide by zero
 		int	nPeriod = round(1000.0 / theApp.m_Options.m_View_fUpdateFreq);
 		SetTimer(VIEW_TIMER_ID, nPeriod, NULL);
 	} else	// stopping timer
 		KillTimer(VIEW_TIMER_ID);
+	m_bIsViewTimerSet = bEnable;
 }
 
 void CMainFrame::SetDockingWindowIcons(BOOL bHiColorIcons)

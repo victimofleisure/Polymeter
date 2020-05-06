@@ -25,6 +25,7 @@
 		15		29mar20	add learn multiple mappings
 		16		07apr20	add move steps
 		17		19apr20	optimize undo/redo menu item prefixing
+		18		30apr20	add velocity only flag to set step methods
 
 */
 
@@ -162,8 +163,8 @@ public:
 	int		GetTrackCount() const;
 	int		GetSelectedCount() const;
 	bool	GetSelected(int iTrack) const;
-	void	SetTrackStep(int iTrack, int iStep, STEP nStep);
-	void	SetTrackSteps(const CRect& rSelection, STEP nStep);
+	void	SetTrackStep(int iTrack, int iStep, STEP nStep, bool bVelocityOnly = false);
+	void	SetTrackSteps(const CRect& rSelection, STEP nStep, bool bVelocityOnly = false);
 	void	ToggleTrackSteps(const CRect& rSelection, UINT nFlags);
 	void	ToggleTrackSteps(UINT nFlags);
 	bool	GetTrackSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const;

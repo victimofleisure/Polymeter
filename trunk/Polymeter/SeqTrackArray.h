@@ -17,6 +17,7 @@
 		07		12dec19	add GetPeriod
 		08		16mar20	add get step index wrapper
 		09		17apr20	add track color
+		10		30apr20	add step velocity accessors
 
 */
 
@@ -74,11 +75,13 @@ public:
 	void	SetMutes(const CMuteArray& arrMute);
 	STEP	GetStep(int iTrack, int iStep) const;
 	void	SetStep(int iTrack, int iStep, STEP nStep);
+	void	SetStepVelocity(int iTrack, int iStep, int nVelocity);
 	void	GetSteps(int iTrack, CStepArray& arrStep) const;
 	void	SetSteps(int iTrack, const CStepArray& arrStep);
 	void	GetSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const;
 	void	SetSteps(const CRect& rSelection, const CStepArrayArray& arrStepArray);
 	void	SetSteps(const CRect& rSelection, STEP nStep);
+	void	SetStepVelocities(const CRect& rSelection, int nVelocity);
 	void	ToggleSteps(const CRect& rSelection, UINT nFlags);
 	void	ToggleSteps(const CIntArrayEx& arrSelection, UINT nFlags);
 	int		GetStepIndex(int iTrack, LONGLONG nPos) const;
@@ -351,6 +354,11 @@ inline CTrackBase::STEP CSeqTrackArray::GetStep(int iTrack, int iStep) const
 inline void CSeqTrackArray::SetStep(int iTrack, int iStep, STEP nStep)
 {
 	GetAt(iTrack).m_arrStep[iStep] = nStep;
+}
+
+inline void CSeqTrackArray::SetStepVelocity(int iTrack, int iStep, int nVelocity)
+{
+	GetAt(iTrack).SetStepVelocity(iStep, nVelocity);
 }
 
 inline int CSeqTrackArray::GetStepIndex(int iTrack, LONGLONG nPos) const

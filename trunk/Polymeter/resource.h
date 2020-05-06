@@ -308,8 +308,9 @@
 #define IDS_TRK_Voicing                 472
 #define IDS_TYPE_TRACK                  473
 #define IDS_VELOCITY                    474
-#define IDS_WINDOW_RESET_LAYOUT_WARN    475
-#define IDP_OLE_INIT_FAILED             476
+#define IDS_WINDOW_MANAGER              475
+#define IDS_WINDOW_RESET_LAYOUT_WARN    476
+#define IDP_OLE_INIT_FAILED             477
 #define IDC_ABOUT_LICENSE               1001
 #define IDC_ABOUT_VERSION               1002
 #define IDC_CONVERGE_INPUT              1003
@@ -487,7 +488,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                1
-#define _APS_NEXT_RESOURCE_VALUE        477
+#define _APS_NEXT_RESOURCE_VALUE        478
 #define _APS_NEXT_COMMAND_VALUE         32889
 #define _APS_NEXT_CONTROL_VALUE         1054
 #define _APS_NEXT_SYMED_VALUE           101

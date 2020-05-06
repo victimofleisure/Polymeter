@@ -26,6 +26,7 @@
 		16		16mar20	move get step index into track
 		17		19mar20	add MIDI message name lookup
 		18		17apr20	add track color
+		19		30apr20	add step velocity accessors
 
 */
 
@@ -469,6 +470,8 @@ public:
 	bool	IsModulated() const;
 	void	GetPropertyValue(int iProp, void *pBuf, int nLen) const;
 	int		GetStepIndex(LONGLONG nPos) const;
+	int		GetStepVelocity(int iStep) const;
+	void	SetStepVelocity(int iStep, int nVelocity);
 
 // Operations
 	int		CompareProperty(int iProp, const CTrack& track) const;
@@ -535,6 +538,17 @@ inline bool CTrack::IsModulator() const
 inline bool CTrack::IsModulated() const
 {
 	return m_arrModulator.GetSize() > 0;
+}
+
+inline int CTrack::GetStepVelocity(int iStep) const
+{
+	return m_arrStep[iStep] & SB_VELOCITY;
+}
+
+inline void CTrack::SetStepVelocity(int iStep, int nVelocity)
+{
+	m_arrStep[iStep] &= ~SB_VELOCITY;
+	m_arrStep[iStep] |= nVelocity & SB_VELOCITY;
 }
 
 class CTrackArray : public CArrayEx<CTrack, CTrack&> {

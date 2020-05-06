@@ -18,6 +18,7 @@
 		08		02mar20	in GetChannelUsage, exclude tempo tracks
 		09		19mar20	add GetNameEx to handle default track names
 		10		17apr20	add track color
+		11		30apr20	add step velocity accessors
 
 */
 
@@ -123,6 +124,15 @@ void CSeqTrackArray::SetSteps(const CRect& rSelection, STEP nStep)
 		int	iEndStep = min(rSelection.right, GetLength(iTrack));
 		for (int iStep = rSelection.left; iStep < iEndStep; iStep++)	// for each step in range
 			GetAt(iTrack).m_arrStep[iStep] = nStep;
+	}
+}
+
+void CSeqTrackArray::SetStepVelocities(const CRect& rSelection, int nVelocity)
+{
+	for (int iTrack = rSelection.top; iTrack < rSelection.bottom; iTrack++) {	// for each selected track
+		int	iEndStep = min(rSelection.right, GetLength(iTrack));
+		for (int iStep = rSelection.left; iStep < iEndStep; iStep++)	// for each step in range
+			GetAt(iTrack).SetStepVelocity(iStep, nVelocity);
 	}
 }
 

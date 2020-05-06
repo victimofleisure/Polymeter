@@ -25,6 +25,7 @@
 		15		16jun18	make CompensateDropPos static
 		16		01nov18	set focus when drag begins
 		17		01nov18	cancel drag if window loses focus
+		18		30apr20	in cancel drag, kill scroll timer
 
         virtual list control with drag reordering
  
@@ -108,6 +109,8 @@ void CDragVirtualListCtrl::CancelDrag()
 				SetItemState(iItem, LVIS_FOCUSED, LVIS_FOCUSED);	// set focused style
 		}
 		ReleaseCapture();
+		KillTimer(m_nScrollTimer);
+		m_nScrollTimer = 0;
 	}
 }
 

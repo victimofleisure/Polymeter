@@ -14,6 +14,7 @@
 		04		19mar20	move edit key dispatching to app for reuse
 		05		01apr20	standardize context menu handling
 		06		15apr20	add insert group command
+		07		22apr20	fix OnUpdateSort; enable if tracks selected
 
 */
 
@@ -718,7 +719,8 @@ void CModulationsBar::OnSortBySource()
 
 void CModulationsBar::OnUpdateSort(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(!m_bShowDifferences && m_grid.GetItemCount());
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	pCmdUI->Enable(pDoc != NULL && pDoc->GetSelectedCount());
 }
 
 void CModulationsBar::OnInsertGroup()
