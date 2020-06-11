@@ -1897,37 +1897,60 @@ Ninu Meta 	90	4:21 	In Three
 Ibaramu 	140	5:29 	Harmonious
 Yipo 		107	4:44 	Rolls, Twist
 Fun Ife		100	5:01 	For Love
-(around 34:10)
+Roro		120	5:00	Gently
+(around 39:10)
 
 filenames (double-check this! [checked])
-Ero ABC2
-Mo Bulu
-Irubo 3 cresc
-Ninu Meta B2 run
-Ibaramu
-Yipo
-Fun Ife2
+Ero ABC2	10/20/19 4:13 pm
+Mo Bulu		10/21/19 7:24 pm
+Irubo 3 cresc	10/25/19 5:58 pm
+Ninu Meta B2 run	11/7/19 6:35 pm
+Ibaramu		11/21/19 4:09 am
+Yipo		4/8/20 8:00 pm
+Fun Ife2  	4/28/20 2:01 am
+Roro		5/17/20 6:13 pm
+
+(or could be Roro bass boost)
 
 Misc:
 Stella By Starlight 3:34
 
 Full band, but needs porting to Reason:
-LCM		5:34
-Boogie Woogie 	6:08
 Watergate 	2:44
 Tritone 	4:43
 Alternation 	6:10
 (around 25:20)
 
-Full band, done:
-Kahelo			5:59
-Lodidi 			6:14
-Charlie's Big Break 	5:10
-Interago 		5:11 (mastered)
-Kasita Mondo 		6:00 (mastered)
-More Than Four		4:46
-Shelter In Bass		4:23
+LCM 3/17/20: live set 004 rec1c merge B3 no intro pad
+Boogie Woogie 2/1/20: range modulation merged rec1
+Boogie Woogie 2/17/20: range modulation merged rec1 ac bass
+Watergate 11/30/19: watergate1 pos 2c rec1
 
+Full band, done:
+Kahelo			120	5:59
+Lodidi 			130	6:14
+Charlie's Big Break 	130	5:10
+Interago 		125	5:11 (mastered)
+Kasita Mondo 		130	6:00 (mastered)
+More Than Four		120	4:46
+Shelter In Bass		120	4:23
+Moonchego		123	8:20
+Pleasant Mistake	125	5:35
+LCM (drums only)	123	5:53	
+Heard a Moon 		120	6:08 (was Boogie Woogie)
+
+LCM			123	5:34	
+
+files:
+Kahelo fast intro mix	9/14/19 1:48 pm
+Lodidi 2b mix		7/9/19 6:56 am
+Charlie's Big Break mix	6/30/19 11:39 pm
+more than four mix	4/11/20 2:31 am
+Shelter in Bass mix	4/16/20 6:59 pm
+Moonchego 04 mix	5/7/20 9:44 pm
+Pleasant Mistake vox less chorus	5/29/20 3:24 am
+LCM Kika		5/23/20 11:59 am
+Heard a Moon		5/29/20 9:32 pm
 
 4/4/20 OSX
 
@@ -2038,7 +2061,7 @@ Hh2_Sexy
 Europa master volume is 12.1 dB
 
 Try replacing "Played with eleven" with "Combined with eleven".
-It makes the meaning clearer and probably sounds better too.
+It would make the meaning clearer and might sound better too.
 
 The vocal has a lot of big transients. Adding 2.5x compression
 helped a lot, but it probably needs de-essing too.
@@ -2127,7 +2150,7 @@ Let's try disabling the output, i.e. do all the usual work
 but send an empty buffer to the MIDI stream handle. If the
 Time Critical thread is consuming CPU time in proportion to
 the density of the output MIDI stream, this test should 
-eliminate that thread as a source of preemption.
+eliminate that thread as a source of preemption or blocking.
 
 We still need to output the NOP to get callbacks. Just to be
 sure the optimizer doesn't outwit the test somehow, we'll 
@@ -2163,6 +2186,12 @@ Piano bar. Doubtful but it's an easy test. Answer: No.
 
 Could it be related to loopMIDI or Reason? Not that it would 
 matter since they're both indispensible.
+
+It's probably not preemption or blocking, because we're running
+on a quad-core CPU and the multimedia thread doesn't share any
+critical sections with our callback. It's more likely that the
+start of our callback is somehow delayed, perhaps because the 
+multimedia driver is overworked by excessive sequence density.
 
 4/16/20 RecurseModulations optimization
 
@@ -2282,7 +2311,133 @@ This timer ID 3 issue or whatever it is also occurs in a stock 2012
 app if you hover the mouse over one of the tree controls. The tree
 controls also have item tooltips. Another sign it's tooltip related.
 
+4/21/20 Offset modulation
 
+MODTYPEDEF(Offset)
+
+case MT_Offset:
+	arrMod[iModType] += nStepVal;	// offset is unsigned
+	break;
+
+// declare evt much later! REMOVE these two lines:
+
+if (nDurSteps) {	// if at start of note
+	CMidiEvent	evt;
+	evt.m_nTime = nEvtTime;
+
+// need this instead:
+
+	nNote = CLAMP(nNote, 0, MIDI_NOTE_MAX);
+	CMidiEvent	evt;
+	evt.m_nTime = nEvtTime + arrMod[MT_Offset];
+	evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, nNote, nVel);
+	if (evt.m_nTime < m_nCBLen)	// if note starts during this callback
+		m_arrEvent.FastInsertSorted(evt);	// add note to sorted array for output
+	else {	// note starts during a subsequent callback
+		evt.m_nTime += nCBStart;	// convert to absolute time
+		m_arrNoteOff.FastInsertSorted(evt);	// schedule delayed note
+	}
+	int	nDuration = nDurSteps * nQuant + trk.m_nDuration + arrMod[MT_Duration];	// add duration offset
+	if (nDurSteps & 1) {	// if odd duration
+		if (bIsOdd)	// if odd step
+			nDuration -= nSwing;	// subtract swing from duration
+		else	// even step
+			nDuration += nSwing;	// add swing to duration
+	}
+	nDuration = max(nDuration, 1);	// keep duration above zero
+	evt.m_nTime = nAbsEvtTime + arrMod[MT_Offset] + nDuration;	// absolute time
+	evt.m_dwEvent &= ~0xff0000;	// zero note's velocity
+	m_arrNoteOff.FastInsertSorted(evt);	// add pending note off to array
+}
+
+5/6/20 Moonchego
+
+Watch out for parameters getting reset by mapping, especially in Reason.
+The inital synth levels should be:
+drums: 100
+pad: 0.0 dB
+lead: 93
+bass: 100
+vox: 100
+
+5/17/20 converting tetrachords from a flat list to a four-row table via Excel
+
+assuming the list of note values is in column A, set cell B1 to this:
+=INDEX($A:$A,(COLUMN(B1) - 2) * 4 + MOD(ROW(B1) - 1, 4) + 1,1)
+and then copy/paste as needed
+To convert cells from note numbers to MIDI note names, use this:
+=CONCATENATE(CHOOSE(MOD(A1, 12)+1,"C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"),QUOTIENT(A1,12)-1)
+
+5/21/20 Roro vs. Roro bass boost
+
+In Roro bass boost, the bottom note has the same velocity as the upper three notes, instead of -10.
+Kim complained about wanting the lower notes to be a bit louder, but I don't hear it that way.
+I like the softness of the original. The bass boost version feels too heavy-handed on the low notes.
+The title means "gently" so it should be gentle. But perhaps this choice should be revisited during mastering.
+
+5/21/20 LCM mix
+
+Claps weren't correctly assigned to individual mixer channel in the exported wav file; could affect pan / level.
+Pad seems overly loud and attack seems too slow?
+
+6/9/20 override MIDI input channel
+
+Option indices are zero origin, so must reserve zero for none.
+
+if (theApp.m_Options.m_Midi_nInputChannel > 0)
+	dwEvent = (dwEvent & ~0xf) | (theApp.m_Options.m_Midi_nInputChannel - 1)
+
+Overriding dwEvent post-mapping seems easy at first.
+But it introduces inconsistencies, because dwParam1 is also used:
+1. The MIDI input bar will show the original channel. Maybe OK?
+2. Recorded MIDI input will have the original channel. Confusing.
+The latter is hard to fix because changing the channel for an input message
+that was mapped will break the mapping when the recording is played back.
+Overriding the channel pre-mapping always breaks the mappings, not only 
+during playback of a recording, and breaks learn mode too, so it's a mess either way.
+
+6/11/20 go to convergence
+
+This method has questionable utility and is no substitute for a phase map.
+It can lock up the program if nConvSize is big and the song uses a lot of 
+different prime lengths. This could be demonstrated with "Ala Aye". If the 
+phase bar is hidden, the orbit array must be explicitly updated first.
+
+void CPhaseBar::GotoNextConvergence(int nConvSize, bool bReverse) const
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL) {
+		int	nSelected = 0;
+		int	nOrbits = m_arrOrbit.GetSize();
+		for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {
+			if (m_arrOrbit[iOrbit].m_bSelected)
+				nSelected++;
+		}
+		int	nPos = static_cast<int>(m_nSongPos);
+		int	nDelta = bReverse ? -1 : 1;
+		if (nSelected)
+			nConvSize = min(nConvSize, nSelected);
+		else
+			nConvSize = min(nConvSize, nOrbits);
+		while (1) {
+			nPos += nDelta;
+			int	nHits = 0;
+			for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {
+				const COrbit& orbit = m_arrOrbit[iOrbit];
+				if (!nSelected || orbit.m_bSelected) {
+					if (!(nPos % orbit.m_nPeriod)) {
+						nHits++;
+						if (nHits >= nConvSize) {
+							pDoc->SetPosition(nPos);
+							pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_CENTER_SONG_POS);
+							return;
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
 
 

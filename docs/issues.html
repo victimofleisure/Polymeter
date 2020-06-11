@@ -89,7 +89,7 @@
 <TD>11/12/19</TD>
 <TD>&nbsp;</TD>
 <TD>bug</TD>
-<TD>MDI tab control disappears after opening or closing document; hard to reproduce</TD>
+<TD>MDI tab control sometimes disappears after opening or closing document; hard to reproduce</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -134,6 +134,14 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>04/07/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>attempting to open MIDI device that's already open gives misleading out of memory error message</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>04/10/20</TD>
 <TD>&nbsp;</TD>
 <TD>bug</TD>
@@ -153,7 +161,7 @@
 <TD>04/17/20</TD>
 <TD>&nbsp;</TD>
 <TD>bug</TD>
-<TD>Convergences and Time To Repeat commands can take too long, stalling UI; show progress bar or use worker thread</TD>
+<TD>Time To Repeat command can take too long, stalling UI; show progress bar or use worker thread</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2366,6 +2374,46 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>05/22/20</TD>
+<TD>05/23/20</TD>
+<TD>done</TD>
+<TD>negative voicing value should raise voice an octave up instead of lowering it an octave down</TD>
+<TD>0.0.31.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/06/20</TD>
+<TD>06/03/20</TD>
+<TD>done</TD>
+<TD>undo record doesn't restore input events</TD>
+<TD>0.0.31.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/06/20</TD>
+<TD>06/03/20</TD>
+<TD>done</TD>
+<TD>add option to record live input only, preserving dubs</TD>
+<TD>0.0.31.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/22/18</TD>
+<TD>06/08/20</TD>
+<TD>done</TD>
+<TD>offset modulation; feasible by delaying notes until subsequent callbacks</TD>
+<TD>0.0.31.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>04/17/20</TD>
+<TD>06/10/20</TD>
+<TD>done</TD>
+<TD>Convergences commands can take too long, stalling UI; show progress bar</TD>
+<TD>0.0.31.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -2378,14 +2426,6 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>03/22/18</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>swing modulation; probably not feasible</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2790,6 +2830,14 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>04/07/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>properties bar should derive from custom dockable pane; doesn't matter for the moment</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>04/10/20</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
@@ -2810,6 +2858,22 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>window that shows current song time in huge font; excessive?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>05/27/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>force MIDI thru to a specified channel; useful for controllers that lack channel setting, but complicates MidiInProc</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>03/22/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>swing modulation; acheivable with offset modulation so no need</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2910,26 +2974,10 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>03/22/18</TD>
+<TD>06/08/20</TD>
 <TD>&nbsp;</TD>
 <TD>todo</TD>
-<TD>offset modulation; possibly feasible by delaying notes until subsequent callbacks</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>04/07/20</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>properties bar should derive from custom dockable pane</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
+<TD>song view should show loop lengths, possibly in a separate timeline pane</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
