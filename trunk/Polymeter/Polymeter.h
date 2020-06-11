@@ -17,6 +17,7 @@
 		07		20mar20	add mapping
 		08		27mar20	fix MIDI device change detection
 		09		01apr20	add list column header reset handler
+		10		03jun20	add global recording state
 
 */
 
@@ -113,6 +114,7 @@ public:
 	bool	m_bTieNotes;	// if true, new notes are tied
 	bool	m_bCleanStateOnExit;	// if true, clean state before exiting
 	bool	m_bIsMidiLearn;	// if true, learning MIDI mappings
+	bool	m_bIsRecording;	// true if recording dubs and/or MIDI input
 	CTrack::CMidiEventArray	m_arrMidiInEvent;	// array of MIDI input events
 	int		m_nMidiInStartTime;	// first MIDI input event's time, in active document's ticks
 	CPolymeterDoc	*m_pPlayingDoc;	// pointer to playing document if any

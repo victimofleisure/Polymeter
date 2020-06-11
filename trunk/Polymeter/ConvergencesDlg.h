@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      03mar20	initial version
+        01      10jun20	add progress dialog
 
 */
 
@@ -30,7 +31,7 @@ public:
 		bool operator<(const CInfo& info) const { return m_nConv < info.m_nConv; }
 	};
 	typedef CArrayEx<CInfo, CInfo&> CInfoArray;
-	void	Find(const CULongLongArray& arrIn);
+	bool	Find(const CULongLongArray& arrIn);
 	const CULongLongArray&	GetInput() const { return m_arrIn; }
 	const CInfoArray&	GetOutput() const { return m_arrOut; }
 
@@ -39,7 +40,7 @@ protected:
 	CInfoArray	m_arrOut;	// array of output convergences
 	CInfo	m_info;			// improves performance by avoiding reallocation
 	void	FindCombinations(int n, int r);
-	void	FindAllCombinations(int n, int rmin);
+	bool	FindAllCombinations(int n, int rmin);
 };
 
 class CConvergencesDlg : public CDialog
@@ -64,11 +65,15 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 // Constants
+	enum {
+		UWM_CALC_CONVERGENCE = WM_USER + 1215
+	};
 	static const CCtrlResize::CTRL_LIST	m_arrCtrl[];
 
 // Data members
 	CCtrlResize	m_Resize;	// control resizer
 	bool	m_bInMsgBox;	// true while showing message box
+	bool	m_bWasShown;	// true if dialog was shown
 	CSize	m_szInit;		// dialog's initial size
 	CString	m_sPrevIn;		// previous input string
 
@@ -76,7 +81,7 @@ protected:
 	bool	CvtStringToSet(const CString& sIn, CConvergenceFinder::CULongLongArray& arrIn);
 	static	CString CvtSetToString(const CConvergenceFinder::CULongLongArray& arr);
 	CString	CvtOutputToString(const CConvergenceFinder& finder);
-	void	CalcConvergences(const CConvergenceFinder::CULongLongArray& arrIn);
+	bool	CalcConvergences(const CConvergenceFinder::CULongLongArray& arrIn);
 	void	CalcConvergencesForEditInput();
 	void	CalcConvergencesForSelectedTracks();
 
@@ -90,4 +95,6 @@ protected:
 	afx_msg void OnKillfocusInput();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
+	afx_msg LRESULT OnCalcConvergence(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 };

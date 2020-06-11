@@ -48,6 +48,9 @@
 		38		17apr20	add track color; bump file version
 		39		19apr20	optimize undo/redo menu item prefixing
 		40		30apr20	add velocity only flag to set step methods
+		41		19may20	refactor record dub methods to include conditional
+		42		23may20	bump file version for negative voicing modulation
+		43		03jun20	in record undo, restore recorded MIDI events 
 
 */
 
@@ -90,7 +93,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	17
+#define	FILE_VERSION	18
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -461,7 +464,7 @@ void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
 	WrReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
 	WrReg(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
 	WrReg(RK_VIEW_TYPE, CString(m_arrViewTypeName[m_nViewType]));
-	if (m_Seq.GetRecordedEvents().GetSize())	// if recorded events to write
+	if (m_Seq.GetRecordedEventCount())	// if recorded events to write
 		theApp.WriteProfileArray(m_Seq.GetRecordedEvents(), REG_SETTINGS, RK_RECORD_EVENTS);
 	if (m_Seq.m_mapping.GetArray().GetSize())	// if mappings to write
 		m_Seq.m_mapping.GetArray().Write();
@@ -745,8 +748,7 @@ void CPolymeterDoc::SetMute(int iTrack, bool bMute)
 {
 	NotifyUndoableEdit(iTrack, MAKELONG(UCODE_TRACK_PROP, PROP_Mute));
 	m_Seq.SetMute(iTrack, bMute);	// set track mute
-	if (m_Seq.IsRecording())
-		m_Seq.RecordDub(iTrack);
+	m_Seq.RecordDub(iTrack);
 	SetModifiedFlag();
 	CPropHint	hint(iTrack, PROP_Mute);
 	UpdateAllViews(NULL, HINT_TRACK_PROP, &hint);
@@ -766,8 +768,7 @@ void CPolymeterDoc::SetSelectedMutes(UINT nMuteMask)
 			bMute = nMuteMask & MB_MUTE;	// set mute
 		m_Seq.SetMute(iTrack, bMute);
 	}
-	if (m_Seq.IsRecording())
-		m_Seq.RecordDub(m_arrTrackSel);
+	m_Seq.RecordDub(m_arrTrackSel);
 	SetModifiedFlag();
 	CMultiItemPropHint	hint(arrSelection, PROP_Mute);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
@@ -784,8 +785,7 @@ void CPolymeterDoc::Solo()
 		arrSolo[m_arrTrackSel[iSel]] = true;	// set solo flag
 	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
 		m_Seq.SetMute(iTrack, !arrSolo[iTrack]);	// apply solo
-	if (m_Seq.IsRecording())
-		m_Seq.RecordDub();	// all tracks
+	m_Seq.RecordDub();	// all tracks
 	SetModifiedFlag();
 	UpdateAllViews(NULL, HINT_SOLO);
 }
@@ -1358,7 +1358,7 @@ void CPolymeterDoc::RestoreTrackProperty(const CUndoState& State)
 	default:
 		NODEFAULTCASE;
 	}
-	if (iProp == PROP_Mute && m_Seq.IsRecording())
+	if (iProp == PROP_Mute)	// if property is mute
 		m_Seq.RecordDub(iTrack);
 	CPropHint	hint(iTrack, iProp);
 	UpdateAllViews(NULL, HINT_TRACK_PROP, &hint);
@@ -1395,7 +1395,7 @@ void CPolymeterDoc::RestoreMultiTrackProperty(const CUndoState& State)
 		int	iTrack = pInfo->m_arrSelection[iSel];
 		m_Seq.SetTrackProperty(iTrack, iProp, pInfo->m_arrVal[iSel]);
 	}
-	if (iProp == PROP_Mute && m_Seq.IsRecording())
+	if (iProp == PROP_Mute)	// if property is mute
 		m_Seq.RecordDub(pInfo->m_arrSelection);
 	CMultiItemPropHint	hint(pInfo->m_arrSelection, iProp);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
@@ -1836,10 +1836,8 @@ void CPolymeterDoc::RestoreReverseRect(const CUndoState& State)
 	}
 }
 
-void CPolymeterDoc::SaveDubs(CUndoState& State) const
+void CPolymeterDoc::SaveDubs(CUndoState& State, CUndoDub *pInfo) const
 {
-	CRefPtr<CUndoDub>	pInfo;
-	pInfo.CreateObj();
 	int	iStartTrack, nTracks;
 	if (State.IsEmpty()) {	// if initial state
 		CRange<int>	rngTrack(m_rUndoSel.top, m_rUndoSel.bottom);
@@ -1856,14 +1854,28 @@ void CPolymeterDoc::SaveDubs(CUndoState& State) const
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
 		pInfo->m_arrDub[iTrack] = m_Seq.GetTrack(iStartTrack + iTrack).m_arrDub;
 	}
+}
+
+void CPolymeterDoc::SaveDubs(CUndoState& State) const
+{
+	CRefPtr<CUndoDub>	pInfo;
+	pInfo.CreateObj();
+	SaveDubs(State, pInfo);
 	State.SetObj(pInfo);
 }
 
-void CPolymeterDoc::RestoreDubs(const CUndoState& State)
+void CPolymeterDoc::SaveRecord(CUndoState& State) const
 {
-	if (State.GetCode() == UCODE_RECORD)
-		Play(false);	// stop recording before restoring dubs
-	const CUndoDub	*pInfo = static_cast<CUndoDub*>(State.GetObj());
+	CRefPtr<CUndoRecord>	pInfo;	// derived from CUndoDub
+	pInfo.CreateObj();
+	SaveDubs(State, pInfo);	// upcast to dubs undo state
+	pInfo->m_arrRecordMidiEvent = m_Seq.GetRecordedEvents();
+	pInfo->m_nSongLength = m_nSongLength;
+	State.SetObj(pInfo);
+}
+
+void CPolymeterDoc::RestoreDubs(const CUndoDub *pInfo)
+{
 	int	nTracks = pInfo->m_arrDub.GetSize();
 	int	iStartTrack = pInfo->m_iTrack;
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
@@ -1873,8 +1885,24 @@ void CPolymeterDoc::RestoreDubs(const CUndoState& State)
 	CRect	rCellSel(CPoint(0, iStartTrack), CSize(INT_MAX, nTracks));	// full width of view
 	CRectSelPropHint	hint(rCellSel);
 	UpdateAllViews(NULL, HINT_SONG_DUB, &hint);
-	if (State.GetCode() == UCODE_RECORD)
-		UpdateSongLength();	// restore song length from dubs
+}
+
+void CPolymeterDoc::RestoreDubs(const CUndoState& State)
+{
+	const CUndoDub	*pInfo = static_cast<CUndoDub*>(State.GetObj());
+	RestoreDubs(pInfo);
+}
+
+void CPolymeterDoc::RestoreRecord(const CUndoState& State)
+{
+	Play(false);	// stop recording before restoring dubs
+	const CUndoRecord *pInfo = static_cast<CUndoRecord*>(State.GetObj());
+	RestoreDubs(pInfo);	// upcast to dubs undo state
+	m_Seq.SetRecordedEvents(pInfo->m_arrRecordMidiEvent);
+	m_nSongLength = pInfo->m_nSongLength;
+	CPropHint	hint(0, CMasterProps::PROP_nSongLength);
+	UpdateAllViews(NULL, HINT_MASTER_PROP, &hint);
+	SetPosition(m_nStartPos);	// rewind
 }
 
 void CPolymeterDoc::SaveMute(CUndoState& State) const
@@ -1906,8 +1934,7 @@ void CPolymeterDoc::RestoreMute(const CUndoState& State)
 		int	iTrack = pInfo->m_arrSelection[iSel];
 		m_Seq.SetMute(iTrack, pInfo->m_arrMute[iSel]);
 	}
-	if (m_Seq.IsRecording())
-		m_Seq.RecordDub(pInfo->m_arrSelection);
+	m_Seq.RecordDub(pInfo->m_arrSelection);
 	CMultiItemPropHint	hint(pInfo->m_arrSelection, PROP_Mute);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_PROP, &hint);
 }
@@ -1927,8 +1954,7 @@ void CPolymeterDoc::RestoreSolo(const CUndoState& State)
 	for (int iTrack = 0; iTrack < nTracks; iTrack++)
 		m_Seq.SetMute(iTrack, pInfo->m_arrMute[iTrack]);
 	UpdateAllViews(NULL, HINT_SOLO);
-	if (m_Seq.IsRecording())
-		m_Seq.RecordDub();	// all tracks
+	m_Seq.RecordDub();	// all tracks
 }
 
 void CPolymeterDoc::SavePresetName(CUndoState& State) const
@@ -2387,8 +2413,10 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 		SaveReverseRect(State);
 		break;
 	case UCODE_DUB:
-	case UCODE_RECORD:
 		SaveDubs(State);
+		break;
+	case UCODE_RECORD:
+		SaveRecord(State);
 		break;
 	case UCODE_MUTE:
 		SaveMute(State);
@@ -2524,8 +2552,10 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		RestoreReverseRect(State);
 		break;
 	case UCODE_DUB:
-	case UCODE_RECORD:
 		RestoreDubs(State);
+		break;
+	case UCODE_RECORD:
+		RestoreRecord(State);
 		break;
 	case UCODE_MUTE:
 		RestoreMute(State);
@@ -2744,18 +2774,18 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 			if (AfxMessageBox(IDS_MIDI_INCOMPATIBLE_SONG_POSITION, MB_OKCANCEL | MB_ICONINFORMATION) != IDOK)
 				return false;	// user canceled; otherwise sequencer quantizes song position
 		}
+		if (theApp.m_pPlayingDoc != NULL) {	// if a document is playing
+			theApp.m_pPlayingDoc->StopPlayback();	// do post-play processing
+		}
 		if (bRecord) {	// if recording
-			if (theApp.m_Options.m_Midi_bRecordInput)
-				theApp.RecordMidiInput(true);
+			theApp.RecordMidiInput(theApp.m_Options.IsRecordMidi());
 			m_rUndoSel = CRect(0, 0, 0, m_Seq.GetTrackCount());
 			NotifyUndoableEdit(0, UCODE_RECORD);
-		}
-		if (theApp.m_pPlayingDoc != NULL) {	// if another document is playing
-			bool	bWasRecording = theApp.m_pPlayingDoc->m_Seq.IsRecording();
-			theApp.m_pPlayingDoc->m_Seq.Play(false);	// stop other document; only one can play at a time
-			theApp.m_pPlayingDoc->OnPlay(false, bWasRecording);	// do post-play processing
+			if (m_Seq.GetRecordedEventCount())
+				m_Seq.TruncateRecordedEvents(m_Seq.GetStartPosition());
 		}
 		theApp.m_pPlayingDoc = this;
+		theApp.m_bIsRecording = bRecord;
 		UpdateChannelEvents();	// queue channel events to be output at start of playback
 		CMidiEventBar&	wndMidiOutput = theApp.GetMainFrame()->m_wndMidiOutputBar;
 		if (wndMidiOutput.IsVisible()) {	// if MIDI output bar is visible
@@ -2770,40 +2800,41 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 		m_Seq.SetRecordOffset(m_nRecordOffset);
 		m_Seq.SetSendMidiClock(theApp.m_Options.m_Midi_bSendMidiClock);
 	} else {	// stopping playback
-		theApp.m_pPlayingDoc = NULL;
+		StopPlayback();
 	}
 	m_Seq.SetMidiOutputCapture(bOutputCapture);
 	bool	bRetVal;
-	bool	bWasRecording = m_Seq.IsRecording();
-	bRetVal = m_Seq.Play(bPlay, bRecord);
+	bool	bRecordDubs = bRecord && theApp.m_Options.IsRecordDubs();
+	bRetVal = m_Seq.Play(bPlay, bRecordDubs);
 	UpdateAllViews(NULL, HINT_PLAY);
-	OnPlay(bPlay, bWasRecording);	// do post-play processing
 	return bRetVal;
 }
 
-void CPolymeterDoc::OnPlay(bool bPlay, bool bRecord)
+void CPolymeterDoc::StopPlayback()
 {
-	if (!bPlay) {	// if stopping
-		if (bRecord) {	// if ending a recording
-			UpdateSongLength();
-			if (theApp.IsRecordingMidiInput())
-				SaveRecordedMidiInput();
-			if (theApp.m_Options.m_General_bAlwaysRecord) {	// if always recording
-				CString	sPath;
-				if (CreateAutoSavePath(sPath)) {	// if auto-save path created
-					WriteProperties(sPath);	// automatically save document
-					SetModifiedFlag(false);
-				}
-			} else	// normal recording
-				SetModifiedFlag();
-		} else {
-			if (theApp.IsRecordingMidiInput())
-				RecordToTracks(false);
-		}
-		CPianoBar&	wndPiano = theApp.GetMainFrame()->m_wndPianoBar;
-		if (wndPiano.IsVisible())
-			wndPiano.RemoveAllEvents();
+	m_Seq.Play(false);	// stop playing
+	bool	bWasRecording = theApp.m_bIsRecording;
+	theApp.m_pPlayingDoc = NULL;	// reset global state first in case of exceptions
+	theApp.m_bIsRecording = false;
+	if (bWasRecording) {	// if ending a recording
+		UpdateSongLength();
+		if (theApp.IsRecordingMidiInput())
+			SaveRecordedMidiInput();
+		if (theApp.m_Options.m_General_bAlwaysRecord) {	// if always recording
+			CString	sPath;
+			if (CreateAutoSavePath(sPath)) {	// if auto-save path created
+				WriteProperties(sPath);	// automatically save document
+				SetModifiedFlag(false);
+			}
+		} else	// normal recording
+			SetModifiedFlag();
+	} else {	// not ending a recording
+		if (theApp.IsRecordingMidiInput())
+			RecordToTracks(false);
 	}
+	CPianoBar&	wndPiano = theApp.GetMainFrame()->m_wndPianoBar;
+	if (wndPiano.IsVisible())
+		wndPiano.RemoveAllEvents();
 }
 
 bool CPolymeterDoc::CreateAutoSavePath(CString& sPath) const
@@ -3105,8 +3136,7 @@ void CPolymeterDoc::ApplyPreset(int iPreset)
 {
 	NotifyUndoableEdit(0, UCODE_APPLY_PRESET);
 	m_Seq.SetMutes(m_arrPreset[iPreset].m_arrMute);
-	if (m_Seq.IsRecording())
-		m_Seq.RecordDub();
+	m_Seq.RecordDub();
 	SetModifiedFlag();
 	UpdateAllViews(NULL, HINT_SOLO);
 }
@@ -4186,7 +4216,7 @@ void CPolymeterDoc::OnTransportRecord()
 
 void CPolymeterDoc::OnUpdateTransportRecord(CCmdUI *pCmdUI)
 {
-	pCmdUI->SetCheck(m_Seq.IsRecording());
+	pCmdUI->SetCheck(theApp.m_bIsRecording);
 }
 
 void CPolymeterDoc::OnTransportRewind()
@@ -4213,8 +4243,8 @@ void CPolymeterDoc::OnTransportRecordTracks()
 
 void CPolymeterDoc::OnUpdateTransportRecordTracks(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(theApp.IsMidiInputDeviceOpen() && !m_Seq.IsRecording());
-	pCmdUI->SetCheck(theApp.IsRecordingMidiInput() && !m_Seq.IsRecording());
+	pCmdUI->Enable(theApp.IsMidiInputDeviceOpen() && !theApp.m_bIsRecording);
+	pCmdUI->SetCheck(theApp.IsRecordingMidiInput() && !theApp.m_bIsRecording);
 }
 
 void CPolymeterDoc::OnViewTypeTrack()

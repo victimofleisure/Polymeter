@@ -125,7 +125,7 @@ public:
 		int		Chase(int nTime) const;
 		int		FindEvents(int nStartTime, int nEndTime, int& iEndEvent) const;
 		void	GetEvents(int nStartTime, int nEndTime, CMidiEventArray& arrEvent) const;
-		void	DeleteEvents(int nStartTime);
+		void	TruncateEvents(int nStartTime);
 		void	DeleteEvents(int nStartTime, int nEndTime);
 		void	InsertEvents(int nInsertTime, int nDuration, CMidiEventArray& arrEvent);
 		void	Dump() const;

@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      03mar20	initial version
+        01      10jun20	add progress dialog
 
 */
 
@@ -20,6 +21,7 @@
 #include "Polymeter.h"
 #include "MainFrm.h"
 #include "PolymeterDoc.h"
+#include "ProgressDlg.h"
 
 void CConvergenceFinder::FindCombinations(int n, int r)
 {
@@ -40,13 +42,30 @@ void CConvergenceFinder::FindCombinations(int n, int r)
 	} while (std::next_permutation(v.begin(), v.end()));
 }
 
-void CConvergenceFinder::FindAllCombinations(int n, int rmin)
+bool CConvergenceFinder::FindAllCombinations(int n, int rmin)
 {
-	for (int i = rmin; i <= n; i++)
+	CProgressDlg	dlg;
+	CWaitCursor	wc;
+	ULONGLONG	tStart = GetTickCount64();
+	bool	bIsDlgCreated = false;
+	DWORD	dwTimeoutTicks = 1000;
+	for (int i = rmin; i <= n; i++) {
+		if (bIsDlgCreated) {
+			dlg.SetPos(i);
+			if (dlg.Canceled())
+				return false;
+		}
 		FindCombinations(n, i);
+		if (!bIsDlgCreated && GetTickCount64() - tStart > dwTimeoutTicks) {
+			bIsDlgCreated = true;
+			dlg.Create();
+			dlg.SetRange(rmin, n);
+		}
+	}
+	return true;
 }
 
-void CConvergenceFinder::Find(const CULongLongArray& arrIn)
+bool CConvergenceFinder::Find(const CULongLongArray& arrIn)
 {
 	m_arrIn.RemoveAll();
 	// sort input values and remove any duplicates
@@ -54,7 +73,7 @@ void CConvergenceFinder::Find(const CULongLongArray& arrIn)
 		ULONGLONG	nVal = arrIn[iIn];
 		m_arrIn.InsertSortedUnique(nVal);
 	}
-	FindAllCombinations(m_arrIn.GetSize(), 2);	// at least two members
+	return FindAllCombinations(m_arrIn.GetSize(), 2);	// at least two members
 }
 
 const CCtrlResize::CTRL_LIST CConvergencesDlg::m_arrCtrl[] = {
@@ -69,6 +88,7 @@ CConvergencesDlg::CConvergencesDlg()
 	//{{AFX_DATA_INIT(CConvergencesDlg)
 	//}}AFX_DATA_INIT
 	m_bInMsgBox = false;
+	m_bWasShown = false;
 }
 
 void CConvergencesDlg::DoDataExchange(CDataExchange* pDX)
@@ -112,7 +132,7 @@ CString CConvergencesDlg::CvtOutputToString(const CConvergenceFinder& finder)
 {
 	const CConvergenceFinder::CULongLongArray& arrIn = finder.GetInput();
 	const CConvergenceFinder::CInfoArray& arrOut = finder.GetOutput();
-	CString	sVal, sOut, sFactor;
+	CString	sVal, sOut;
 	sOut += _T("Input: [") + CvtSetToString(arrIn) + _T("]\r\n");
 	sVal.Format(_T("%d"), arrOut.GetSize());
 	sOut += _T("Convergences: ") + sVal + _T("\r\n");
@@ -120,20 +140,21 @@ CString CConvergencesDlg::CvtOutputToString(const CConvergenceFinder& finder)
 		const CConvergenceFinder::CInfo&	info = arrOut[iConv];
 		sVal.Format(_T("%llu"), info.m_nConv);
 		sOut += sVal + _T("\t[");
-		sFactor = CvtSetToString(arrOut[iConv].m_arrFactor);
-		sOut += sFactor + _T("]\r\n");
+		sOut += CvtSetToString(arrOut[iConv].m_arrFactor) + _T("]\r\n");
 	}
 	return sOut;
 }
 
-void CConvergencesDlg::CalcConvergences(const CConvergenceFinder::CULongLongArray& arrIn)
+bool CConvergencesDlg::CalcConvergences(const CConvergenceFinder::CULongLongArray& arrIn)
 {
 	CConvergenceFinder	finder;
 	CConvergenceFinder::CInfoArray	arrOut;
-	CWaitCursor	wc;	// calculation can be slow for big input sets
-	finder.Find(arrIn);
-	CString	sOut(CvtOutputToString(finder));
-	m_editOut.SetWindowText(sOut);
+	bool	bResult = finder.Find(arrIn);
+	if (bResult) {
+		CString	sOut(CvtOutputToString(finder));
+		m_editOut.SetWindowText(sOut);
+	}
+	return bResult;
 }
 
 void CConvergencesDlg::CalcConvergencesForEditInput()
@@ -195,7 +216,8 @@ void CConvergencesDlg::CalcConvergencesForSelectedTracks()
 			}
 			m_editIn.SetWindowText(sIn);
 			m_sPrevIn = sIn;
-			CalcConvergences(arrIn);
+			if (!CalcConvergences(arrIn))
+				OnCancel();
 		}
 	}
 }
@@ -209,6 +231,8 @@ BEGIN_MESSAGE_MAP(CConvergencesDlg, CDialog)
 	ON_WM_SIZE()
 	ON_EN_KILLFOCUS(IDC_CONVERGE_INPUT, OnKillfocusInput)
 	ON_WM_GETMINMAXINFO()
+	ON_WM_SHOWWINDOW()
+	ON_MESSAGE(UWM_CALC_CONVERGENCE, OnCalcConvergence)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -222,7 +246,6 @@ BOOL CConvergencesDlg::OnInitDialog()
 	CRect	rWnd;
 	GetWindowRect(rWnd);
 	m_szInit = rWnd.Size();
-	CalcConvergencesForSelectedTracks();
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
@@ -260,4 +283,21 @@ BOOL CConvergencesDlg::PreTranslateMessage(MSG* pMsg)
 		}
 	}
 	return CDialog::PreTranslateMessage(pMsg);
+}
+
+void CConvergencesDlg::OnShowWindow(BOOL bShow, UINT nStatus)
+{
+	CDialog::OnShowWindow(bShow, nStatus);
+	if (bShow && !m_bWasShown) {
+		m_bWasShown = true;
+		PostMessage(UWM_CALC_CONVERGENCE);
+	}
+}
+
+LRESULT CConvergencesDlg::OnCalcConvergence(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(wParam);
+	UNREFERENCED_PARAMETER(lParam);
+	CalcConvergencesForSelectedTracks();
+	return 0;
 }

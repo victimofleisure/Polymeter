@@ -13,6 +13,7 @@
 		03		29feb20	add record input option
 		04		14apr20	add send MIDI clock option
 		05		17apr20	add track color option
+		06		03jun20	add record input options
 
 */
 
@@ -37,7 +38,7 @@ PROPDEF(	Midi,		NONE,		VAR,		int,		nBufferSize,		4096,		1,			USHRT_MAX,	NULL,		0
 PROPDEF(	Midi,		NONE,		VAR,		bool,		bThru,				1,			0,			0,			NULL,		0)
 PROPDEF(	Midi,		NONE,		VAR,		short,		nDefaultVelocity,	100,		1,			127,		NULL,		0)
 PROPDEF(	Midi,		NONE,		ENUM,		int,		iInputQuant,		INQNT_16,	0,			0,			NULL,		0)
-PROPDEF(	Midi,		NONE,		VAR,		bool,		bRecordInput,		0,			0,			0,			NULL,		0)
+PROPDEF(	Midi,		NONE,		ENUM,		int,		nRecordInput,		0,			0,			0,			m_oiRecordInput, RECORD_INPUT_OPTS)
 PROPDEF(	Midi,		NONE,		VAR,		bool,		bSendMidiClock,		0,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		float,		fUpdateFreq,		20.0f,		1.0f,		60.0f,		NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowCurPos,		1,			0,			0,			NULL,		0)
@@ -74,4 +75,13 @@ INPUTQUANTDEF(192)
 INPUTQUANTDEF(256)
 
 #undef INPUTQUANTDEF
+#endif
+
+#ifdef RECORDINPUTOPT
+
+RECORDINPUTOPT(DubsOnly)
+RECORDINPUTOPT(DubsAndMidi)
+RECORDINPUTOPT(MidiOnly)
+
+#undef RECORDINPUTOPT
 #endif

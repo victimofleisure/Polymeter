@@ -38,6 +38,9 @@
 		28		16apr20	apply range to scale after picking chord tones
 		29		16apr20	in recursion methods, compute step index only if needed
 		30		18apr20	optimize add track events
+		31		19may20	refactor record dub methods to include conditional
+		32		23may20	negative voicing modulation raises instead of dropping
+		33		09jun20	add offset modulation
 
 */
 
@@ -259,8 +262,6 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 			QuantizeStartPositionForSync(nMidiSongPos);	// ensure start position is sync-compatible
 		if (bRecord) {	// if recording
 			OnRecordStart(m_nStartPos);
-			if (m_arrRecordEvent.GetSize())	// if recorded events
-				m_arrRecordEvent.DeleteEvents(m_nStartPos);	// truncate
 		}
 		ZeroMemory(&m_stats, sizeof(m_stats));
 		m_stats.fCBTimeMin = DBL_MAX;
@@ -613,7 +614,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 						switch (iModType) {
 						case MT_Mute:
 							if (nStepVal)	// if track is muted by mute modulator
-								goto next_step;	// skip this step
+								goto lblNextStep;	// skip this step
 							break;
 						case MT_Tempo:
 							{
@@ -641,6 +642,9 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 						case MT_Voicing:
 							m_arrVoicing.Add(nStepVal - MIDI_NOTES / 2);	// add step to voicing array
 							break;
+						case MT_Offset:
+							arrMod[iModType] += nStepVal;	// offset modulation is unsigned (delay only)
+							break;
 						default:
 							nStepVal -= MIDI_NOTES / 2;	// convert step value to signed offset
 							arrMod[iModType] += nStepVal;	// accumulate modulation value
@@ -658,8 +662,6 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 					if (trk.m_arrStep[iModStep]) {	// if step isn't empty
 						int	nDurSteps = GetNoteDuration(trk.m_arrStep, nLength, iModStep);
 						if (nDurSteps) {	// if at start of note
-							CMidiEvent	evt;
-							evt.m_nTime = nEvtTime;
 							int	nVel = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
 							nVel = CLAMP(nVel, 0, MIDI_NOTE_MAX);
 							int	nNote = trk.m_nNote + arrMod[MT_Note];
@@ -690,6 +692,12 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 										if (iTone >= 0 && iTone < nScaleTones) {	// if index within scale
 											m_arrScale[iTone] -= OCTAVE;	// drop voice an octave
 											bDropped = true;
+										} else {	// negative value means raise instead of drop
+											iTone = nScaleTones * 2 - iTone;	// still one-origin from top note
+											if (iTone >= 0 && iTone < nScaleTones) {	// if index within scale
+												m_arrScale[iTone] += OCTAVE;	// raise voice an octave
+												bDropped = true;
+											}
 										}
 									}
 									if (bDropped)	// if any voices were dropped
@@ -702,8 +710,20 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 									nNote = ApplyNoteRange(nNote, trk.m_nRangeStart + arrMod[MT_Range], trk.m_iRangeType);
 							}
 							nNote = CLAMP(nNote, 0, MIDI_NOTE_MAX);
+							CMidiEvent	evt;
+							evt.m_nTime = nEvtTime;
 							evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, nNote, nVel);
+							if (arrMod[MT_Offset] > 0) {	// if offset modulation is active, delay note
+								evt.m_nTime += arrMod[MT_Offset];	// add offset modulation to event time
+								nAbsEvtTime += arrMod[MT_Offset];	// add offset modulation to absolute time
+								if (evt.m_nTime >= m_nCBLen) {	// if delayed note starts after this callback
+									evt.m_nTime = nAbsEvtTime;	// make event time absolute instead of callback-relative
+									m_arrNoteOff.FastInsertSorted(evt);	// schedule delayed note via note off array
+									goto lblNoteScheduled;
+								}
+							}
 							m_arrEvent.FastInsertSorted(evt);	// add note to sorted array for output
+lblNoteScheduled:;
 							int	nDuration = nDurSteps * nQuant + trk.m_nDuration + arrMod[MT_Duration];	// add duration offset
 							if (nDurSteps & 1) {	// if odd duration
 								if (bIsOdd)	// if odd step
@@ -734,7 +754,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 				}
 			}
 		}
-next_step:
+lblNextStep:
 		iStep++;	// advance to next track step
 		if (iStep >= nLength)	// if track length reached
 			iStep -= nLength;	// wrap to start of track
@@ -781,11 +801,11 @@ void CSequencer::AddRecordedEvents(int nCBStart, int nCBEnd)
 						evtOut.m_dwEvent = m_arrMappedEvent[iMap];
 						m_arrEvent.FastInsertSorted(evtOut);	// insert translated event
 					}
-					goto EventWasMapped;	// input event was mapped so don't output it
+					goto lblEventWasMapped;	// input event was mapped so don't output it
 				}
 			}
 			m_arrEvent.FastInsertSorted(evtOut);	// insert event
-EventWasMapped:;
+lblEventWasMapped:;
 			m_iRecordEvent++;	// increment recorded event index
 		} else
 			break;
@@ -1232,21 +1252,21 @@ int CSequencer::GetSongDurationSeconds() const
 	return static_cast<int>(ConvertPositionToSeconds(nSongTicks)) + 1;	// round up
 }
 
-void CSequencer::RecordDub(int iTrack)
+void CSequencer::AddDubNow(int iTrack)
 {
 	LONGLONG	nPos;
 	if (GetPosition(nPos))
 		AddDub(iTrack, static_cast<int>(nPos));
 }
 
-void CSequencer::RecordDub(const CIntArrayEx& arrSelection)
+void CSequencer::AddDubNow(const CIntArrayEx& arrSelection)
 {
 	LONGLONG	nPos;
 	if (GetPosition(nPos))
 		AddDub(arrSelection, static_cast<int>(nPos));
 }
 
-void CSequencer::RecordDub()
+void CSequencer::AddDubNow()
 {
 	LONGLONG	nPos;
 	if (GetPosition(nPos))
@@ -1317,6 +1337,12 @@ void CSequencer::RemoveAllRecordedEvents()
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to record event buffer
 	m_arrRecordEvent.RemoveAll();
+}
+
+void CSequencer::TruncateRecordedEvents(int nStartTime)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to record event buffer
+	m_arrRecordEvent.TruncateEvents(nStartTime);
 }
 
 void CSequencer::DeleteRecordedEvents(int nStartTime, int nEndTime)

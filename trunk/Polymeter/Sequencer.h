@@ -21,6 +21,7 @@
 		11		03apr20	add milliseconds to time format
 		12		04apr20	add chord modulation
 		13		14apr20	add send MIDI clock option
+		14		19may20	refactor record dub methods to include conditional
 
 */
 
@@ -92,6 +93,7 @@ public:
 	void	GetMidiOutputEvents(CMidiEventArray& arrMidiEvent);
 	bool	GetNoteOverlapMode() const;
 	void	SetNoteOverlapMode(bool bPrevent);
+	int		GetRecordedEventCount() const;
 	const CMidiEventArray&	GetRecordedEvents() const;
 	void	SetRecordedEvents(const CMidiEventArray& arrEvent);
 	int		GetRecordOffset() const;
@@ -118,12 +120,16 @@ public:
 	void	RecordDub(int iTrack);
 	void	RecordDub(const CIntArrayEx& arrSelection);
 	void	RecordDub();
+	void	AddDubNow(int iTrack);
+	void	AddDubNow(const CIntArrayEx& arrSelection);
+	void	AddDubNow();
 	void	ChaseDubsFromCurPos();
 	void	FlushMidiOutputEvents();
 	static	int		ModWrap(int nVal, int nModulo);
 	void	AttachRecordedEvents(CMidiEventArray& arrEvent);
 	void	RemoveAllRecordedEvents();
 	void	AppendRecordedEvents(const CMidiEventArray& arrEvent);
+	void	TruncateRecordedEvents(int nStartTime);
 	void	DeleteRecordedEvents(int nStartTime, int nEndTime);
 	void	InsertRecordedEvents(int nInsertTime, int nDuration, CMidiEventArray& arrEvent);
 
@@ -350,6 +356,11 @@ inline bool CSequencer::GetNoteOverlapMode() const
 	return m_bPreventNoteOverlap;
 }
 
+inline int CSequencer::GetRecordedEventCount() const
+{
+	return m_arrRecordEvent.GetSize();
+}
+
 inline const CSequencer::CMidiEventArray& CSequencer::GetRecordedEvents() const
 {
 	return m_arrRecordEvent;
@@ -389,4 +400,22 @@ inline LONGLONG CSequencer::ConvertPositionToMilliseconds(LONGLONG nPos) const
 inline LONGLONG CSequencer::ConvertMillisecondsToPosition(LONGLONG nMillis) const
 {
 	return round64(static_cast<double>(nMillis) / 60000 * m_fTempo * m_nTimeDiv);
+}
+
+inline void CSequencer::RecordDub(int iTrack)
+{
+	if (IsRecording())
+		AddDubNow(iTrack);
+}
+
+inline void CSequencer::RecordDub(const CIntArrayEx& arrSelection)
+{
+	if (IsRecording())
+		AddDubNow(arrSelection);
+}
+
+inline void CSequencer::RecordDub()
+{
+	if (IsRecording())
+		AddDubNow();
 }

@@ -26,6 +26,7 @@
 		16		07apr20	add move steps
 		17		19apr20	optimize undo/redo menu item prefixing
 		18		30apr20	add velocity only flag to set step methods
+		19		03jun20	in record undo, restore recorded MIDI events 
 
 */
 
@@ -237,7 +238,6 @@ public:
 	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
 	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
 	bool	Play(bool bPlay, bool bRecord = false);
-	void	OnPlay(bool bPlay, bool bRecord);
 	void	UpdateSongLength();
 	void	SetDubs(const CRect& rSelection, double fTicksPerCell, bool bMute);
 	void	ToggleDubs(const CRect& rSelection, double fTicksPerCell);
@@ -353,6 +353,11 @@ protected:
 		int		m_iTrack;	// first track of selection
 		CDubArrayArray	m_arrDub;	// array of dub arrays, one for each selected track
 	};
+	class CUndoRecord : public CUndoDub {
+	public:
+		CMidiEventArray	m_arrRecordMidiEvent;	// array of recorded MIDI events
+		int		m_nSongLength;	// length of song, in seconds
+	};
 	class CUndoMute : public CRefObj {
 	public:
 		CIntArrayEx	m_arrSelection;	// indices of selected tracks
@@ -425,6 +430,7 @@ protected:
 	int		CellToTime(int iCell, double fTicksPerCell, int nSongTimeShift) const;
 	bool	PromptForExportParams(bool bSongMode, int& nDuration);
 	void	SaveRecordedMidiInput();
+	void	StopPlayback();
 
 // Undo helpers
 	void	SaveTrackProperty(CUndoState& State) const;
@@ -459,8 +465,12 @@ protected:
 	void	RestoreReverse(const CUndoState& State);
 	void	SaveReverseRect(CUndoState& State) const;
 	void	RestoreReverseRect(const CUndoState& State);
+	void	SaveDubs(CUndoState& State, CUndoDub *pInfo) const;
 	void	SaveDubs(CUndoState& State) const;
+	void	SaveRecord(CUndoState& State) const;
+	void	RestoreDubs(const CUndoDub *pInfo);
 	void	RestoreDubs(const CUndoState& State);
+	void	RestoreRecord(const CUndoState& State);
 	void	SaveMute(CUndoState& State) const;
 	void	RestoreMute(const CUndoState& State);
 	void	SaveSolo(CUndoState& State) const;

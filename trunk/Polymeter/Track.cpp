@@ -235,7 +235,7 @@ void CTrackBase::CMidiEventArray::GetEvents(int nStartTime, int nEndTime, CMidiE
 	}
 }
 
-void CTrackBase::CMidiEventArray::DeleteEvents(int nStartTime)
+void CTrackBase::CMidiEventArray::TruncateEvents(int nStartTime)
 {
 	int	iStart = Chase(nStartTime);
 	int	nDeletes = GetSize() - iStart;

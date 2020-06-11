@@ -9,6 +9,7 @@
 		rev		date	comments
         00      27mar18	initial version
 		01		20feb19	rename option info vars
+		02		03jun20	add record input options
 		
 */
 
@@ -21,6 +22,11 @@
 
 const COptions::OPTION_INFO COptions::m_oiGroup[GROUPS] = {
 	#define GROUPDEF(name) {_T(#name), IDS_OPT_GROUP_##name},
+	#include "OptionsDef.h"
+};
+
+const COptions::OPTION_INFO COptions::m_oiRecordInput[RECORD_INPUT_OPTS] = {
+	#define RECORDINPUTOPT(name) {_T(#name), IDS_RECORD_INPUT_OPT_##name},
 	#include "OptionsDef.h"
 };
 

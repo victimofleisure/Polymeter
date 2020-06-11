@@ -18,6 +18,7 @@
 		08		20mar20	add mapping
 		09		27mar20	fix MIDI device change detection
 		10		01apr20	add list column header reset handler
+		11		03jun20	add global recording state
 
 */
 
@@ -74,6 +75,7 @@ CPolymeterApp::CPolymeterApp()
 	m_bCleanStateOnExit = false;
 	m_bIsRecordMidiIn = false;
 	m_bIsMidiLearn = false;
+	m_bIsRecording = false;
 	m_bHelpInit = false;
 	m_nMidiInStartTime = 0;
 	m_pPlayingDoc = NULL;

@@ -16,6 +16,7 @@
 		06		01apr20	standardize context menu handling
 		07		04apr20	add color for chord modulation
 		08		19apr20	don't set browser window name; fixes OLE exception
+		09		08jun20	add color for offset modulation
 
 */
 
@@ -52,6 +53,7 @@ IMPLEMENT_DYNAMIC(CGraphBar, CMyDockablePane)
 #define MOD_TYPE_COLOR_Chord	"darkgreen"
 #define MOD_TYPE_COLOR_Index	"olive"
 #define MOD_TYPE_COLOR_Voicing	"orange"
+#define MOD_TYPE_COLOR_Offset	"turquoise"
 
 // adding a new modulation type requires adding a new color name above
 const LPCTSTR CGraphBar::m_arrModTypeColor[CTrack::MODULATION_TYPES] = {

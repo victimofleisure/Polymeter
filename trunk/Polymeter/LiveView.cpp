@@ -13,6 +13,8 @@
         03      18mar20	get song position from document instead of sequencer
 		04		01apr20	standardize context menu handling
 		05		19apr20	give position bar control its own device context
+		06		19may20	refactor record dub methods to include conditional
+		07		03jun20	get recording state from app instead of sequencer
 
 */
 
@@ -283,8 +285,7 @@ void CLiveView::SetMute(int iItem, bool bEnable, bool bDeferUpdate)
 		pDoc->m_Seq.SetMute(iPart, bEnable);
 	}
 	if (!bDeferUpdate) {	// if not deferring update
-		if (pDoc->m_Seq.IsRecording())	// if recording
-			pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
+		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 		m_list[LIST_PARTS].RedrawItem(iItem);
 		m_wndPosBar.InvalidateBar(iItem);
 	}
@@ -303,8 +304,7 @@ void CLiveView::SetSelectedMutes(bool bEnable)
 		m_wndPosBar.InvalidateBar(iItem);
 		SetMute(iItem, bEnable, true);	// defer update until after this loop
 	}
-	if (pDoc->m_Seq.IsRecording())	// if recording
-		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
+	pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 	m_list[LIST_PARTS].Deselect();
 	if (!pDoc->m_Seq.IsPlaying())	// if stopped
 		m_wndPosBar.UpdateBars();
@@ -325,8 +325,7 @@ void CLiveView::ToggleMute(int iItem, bool bDeferUpdate)
 		pDoc->m_Seq.ToggleMute(iPart);
 	}
 	if (!bDeferUpdate) {	// if not deferring update
-		if (pDoc->m_Seq.IsRecording())	// if recording
-			pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
+		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 		m_list[LIST_PARTS].RedrawItem(iItem);
 		m_wndPosBar.InvalidateBar(iItem);
 	}
@@ -345,8 +344,7 @@ void CLiveView::ToggleSelectedMutes()
 		m_wndPosBar.InvalidateBar(iItem);
 		ToggleMute(iItem, true);	// defer update until after this loop
 	}
-	if (pDoc->m_Seq.IsRecording())	// if recording
-		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
+	pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 	m_list[LIST_PARTS].Deselect();
 	if (!pDoc->m_Seq.IsPlaying())	// if stopped
 		m_wndPosBar.UpdateBars();
@@ -356,8 +354,7 @@ void CLiveView::ApplyPreset(int iPreset)
 {
 	CPolymeterDoc	*pDoc = GetDocument();
 	pDoc->m_Seq.SetMutes(pDoc->m_arrPreset[iPreset].m_arrMute);
-	if (pDoc->m_Seq.IsRecording())	// if recording
-		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
+	pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 	m_iPreset = iPreset;
 	OnTrackMuteChange();
 }
@@ -414,8 +411,7 @@ void CLiveView::SoloSelectedParts()
 		}
 	}
 	pDoc->m_Seq.SetMutes(arrMute);
-	if (pDoc->m_Seq.IsRecording())	// if recording
-		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
+	pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 	m_list[LIST_PARTS].Deselect();
 	m_list[LIST_PARTS].Invalidate();
 	m_wndPosBar.InvalidateAllBars();
@@ -469,7 +465,7 @@ void CLiveView::OnDraw(CDC* pDC)
 		int	y = (m_nListHdrHeight - szStatus.cy) / 2;
 		pDC->TextOut(rStatus.left + STATUS_OFFSET, y, sStatus);
 		pDC->SelectObject(hPrevFont);	// restore previous font
-		if (pDoc->m_Seq.IsRecording()) {	// if recording
+		if (theApp.m_bIsRecording) {	// if recording
 			HGDIOBJ	hPrevBrush = pDC->SelectObject(GetStockObject(DC_BRUSH));
 			COLORREF	clrRecordIcon(RGB(255, 0, 0));
 			pDC->SetDCBrushColor(clrRecordIcon);

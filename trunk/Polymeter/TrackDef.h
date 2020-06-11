@@ -14,6 +14,7 @@
 		04		09sep19	add tempo track type and tempo modulation
 		05		16mar20	add scale, index and voicing modulation
 		06		04apr20	add chord modulation
+		07		08jun20	add offset modulation
 
 */
 
@@ -76,6 +77,7 @@ MODTYPEDEF(Scale)
 MODTYPEDEF(Chord)
 MODTYPEDEF(Index)
 MODTYPEDEF(Voicing)
+MODTYPEDEF(Offset)
 
 #undef MODTYPEDEF
 #endif	// MODTYPEDEF

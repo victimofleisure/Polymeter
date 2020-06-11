@@ -9,6 +9,7 @@
 		rev		date	comments
         00      27mar18	initial version
 		01		20feb19	rename option info vars
+		02		03jun20	add record input options
 		
 */
 
@@ -39,7 +40,13 @@ public:
 		#include "OptionsDef.h"
 		INPUT_QUANTS
 	};
+	enum {
+		#define RECORDINPUTOPT(name) RECORD_INPUT_OPT_##name,
+		#include "OptionsDef.h"
+		RECORD_INPUT_OPTS
+	};
 	static const OPTION_INFO	m_oiGroup[GROUPS];	// group names
+	static const OPTION_INFO	m_oiRecordInput[RECORD_INPUT_OPTS];	// record input options
 	static const PROPERTY_INFO	m_Info[PROPERTIES];	// fixed info for each property
 	static const int	m_arrInputQuant[INPUT_QUANTS];	// input quantizations, as denominators
 
@@ -47,6 +54,8 @@ public:
 	double	GetZoomDeltaFrac() const;
 	static	int		GetInputQuantization(int iInQuant);
 	int		GetInputQuantization() const;
+	bool	IsRecordDubs() const;
+	bool	IsRecordMidi() const;
 
 // Operations
 	void	ReadProperties();
@@ -85,4 +94,14 @@ inline int COptions::GetInputQuantization(int iInQuant)
 inline int COptions::GetInputQuantization() const
 {
 	return GetInputQuantization(m_Midi_iInputQuant);
+}
+
+inline bool COptions::IsRecordDubs() const
+{
+	return m_Midi_nRecordInput <= RECORD_INPUT_OPT_DubsAndMidi;
+}
+
+inline bool COptions::IsRecordMidi() const
+{
+	return m_Midi_nRecordInput >= RECORD_INPUT_OPT_DubsAndMidi;
 }
