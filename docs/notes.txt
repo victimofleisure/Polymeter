@@ -2440,6 +2440,36 @@ void CPhaseBar::GotoNextConvergence(int nConvSize, bool bReverse) const
 }
 
 
+6/13/20 negative input to modulo function, handled correctly
 
+int	m = 5;
+for (int i = 10; i >= -10; i--) {
+	int	x;
+	if (i >= 0)
+		x = i - i % m;
+	else
+		x = i - (i + 1) % m - m + 1;
+	printf("%d\t%d\n", i, x);
+}
 
-
+10      10
+9       5
+8       5
+7       5
+6       5
+5       5
+4       0
+3       0
+2       0
+1       0
+0       0
+-1      -5
+-2      -5
+-3      -5
+-4      -5
+-5      -5
+-6      -10
+-7      -10
+-8      -10
+-9      -10
+-10     -10
