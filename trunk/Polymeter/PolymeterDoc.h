@@ -27,6 +27,7 @@
 		17		19apr20	optimize undo/redo menu item prefixing
 		18		30apr20	add velocity only flag to set step methods
 		19		03jun20	in record undo, restore recorded MIDI events 
+		20		13jun20	add find convergence
 
 */
 
@@ -170,7 +171,7 @@ public:
 	void	ToggleTrackSteps(UINT nFlags);
 	bool	GetTrackSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const;
 	bool	IsRectStepSelection(const CRect& rSelection, bool bIsDeleting = false) const;
-	void	SetPosition(int nPos);
+	void	SetPosition(int nPos, bool bCenterSongPos = false);
 	bool	IsTrackView() const;
 	bool	IsSongView() const;
 	bool	IsLiveView() const;
@@ -530,6 +531,8 @@ protected:
 	afx_msg void OnTransportGoToPosition();
 	afx_msg void OnTransportRecordTracks();
 	afx_msg void OnUpdateTransportRecordTracks(CCmdUI *pCmdUI);
+	afx_msg void OnTransportConvergenceNext();
+	afx_msg void OnTransportConvergencePrevious();
 	afx_msg void OnViewTypeTrack();
 	afx_msg void OnViewTypeSong();
 	afx_msg void OnViewTypeLive();

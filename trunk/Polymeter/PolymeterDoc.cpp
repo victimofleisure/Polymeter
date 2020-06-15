@@ -51,6 +51,7 @@
 		41		19may20	refactor record dub methods to include conditional
 		42		23may20	bump file version for negative voicing modulation
 		43		03jun20	in record undo, restore recorded MIDI events 
+		44		13jun20	add find convergence
 
 */
 
@@ -1902,7 +1903,7 @@ void CPolymeterDoc::RestoreRecord(const CUndoState& State)
 	m_nSongLength = pInfo->m_nSongLength;
 	CPropHint	hint(0, CMasterProps::PROP_nSongLength);
 	UpdateAllViews(NULL, HINT_MASTER_PROP, &hint);
-	SetPosition(m_nStartPos);	// rewind
+	OnTransportRewind();
 }
 
 void CPolymeterDoc::SaveMute(CUndoState& State) const
@@ -2934,14 +2935,16 @@ void CPolymeterDoc::UpdateSongLength()
 	m_nSongLength = m_Seq.GetSongDurationSeconds();
 	CPropHint	hint(0, CMasterProps::PROP_nSongLength);
 	UpdateAllViews(NULL, HINT_MASTER_PROP, &hint);
-	SetPosition(m_nStartPos);	// rewind
+	OnTransportRewind();
 }
 
-void CPolymeterDoc::SetPosition(int nPos)
+void CPolymeterDoc::SetPosition(int nPos, bool bCenterSongPos)
 {
 	m_Seq.SetPosition(nPos);
 	m_nSongPos = nPos;
 	theApp.GetMainFrame()->UpdateSongPosition();	// updates all views
+	if (bCenterSongPos)
+		UpdateAllViews(NULL, HINT_CENTER_SONG_POS);
 }
 
 bool CPolymeterDoc::ShowGMDrums(int iTrack) const
@@ -3088,8 +3091,7 @@ bool CPolymeterDoc::GotoNextDub(bool bReverse)
 	int	nNextTime;
 	if (!m_Seq.FindNextDubTime(static_cast<int>(m_nSongPos), nNextTime, bReverse))
 		return false;
-	SetPosition(nNextTime);
-	UpdateAllViews(NULL, HINT_CENTER_SONG_POS);
+	SetPosition(nNextTime, true);	// center song position
 	return true;
 }
 
@@ -3698,6 +3700,8 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_COMMAND(ID_TRANSPORT_GO_TO_POSITION, OnTransportGoToPosition)
 	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_RECORD_TRACKS, OnUpdateTransportRecordTracks)
 	ON_COMMAND(ID_TRANSPORT_RECORD_TRACKS, OnTransportRecordTracks)
+	ON_COMMAND(ID_TRANSPORT_CONVERGENCE_NEXT, OnTransportConvergenceNext)
+	ON_COMMAND(ID_TRANSPORT_CONVERGENCE_PREVIOUS, OnTransportConvergencePrevious)
 	ON_COMMAND(ID_VIEW_TYPE_SONG, OnViewTypeSong)
 	ON_COMMAND(ID_VIEW_TYPE_TRACK, OnViewTypeTrack)
 	ON_COMMAND(ID_VIEW_TYPE_LIVE, OnViewTypeLive)
@@ -4230,8 +4234,7 @@ void CPolymeterDoc::OnTransportGoToPosition()
 	dlg.m_nFormat = CPersist::GetInt(RK_GO_TO_POS_DLG, RK_GO_TO_POS_FORMAT, 0);
 	dlg.m_nPos = m_Seq.GetStartPosition();
 	if (dlg.DoModal() == IDOK && dlg.m_bConverted) {
-		SetPosition(static_cast<int>(dlg.m_nPos));
-		UpdateAllViews(NULL, HINT_CENTER_SONG_POS);
+		SetPosition(static_cast<int>(dlg.m_nPos), true);	// center song position
 		CPersist::WriteInt(RK_GO_TO_POS_DLG, RK_GO_TO_POS_FORMAT, dlg.m_nFormat);
 	}
 }
@@ -4245,6 +4248,26 @@ void CPolymeterDoc::OnUpdateTransportRecordTracks(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(theApp.IsMidiInputDeviceOpen() && !theApp.m_bIsRecording);
 	pCmdUI->SetCheck(theApp.IsRecordingMidiInput() && !theApp.m_bIsRecording);
+}
+
+void CPolymeterDoc::OnTransportConvergenceNext()
+{
+	theApp.GetMainFrame()->m_wndMenuBar.RestoreFocus();	// accelerator uses menu key
+	LONGLONG	nPos = theApp.GetMainFrame()->m_wndPhaseBar.FindNextConvergence(false);
+	if (nPos > INT_MAX)
+		AfxMessageBox(IDS_DOC_CONVERGENCE_OUT_OF_RANGE);
+	else
+		SetPosition(static_cast<int>(nPos), true);	// center song position
+}
+
+void CPolymeterDoc::OnTransportConvergencePrevious()
+{
+	theApp.GetMainFrame()->m_wndMenuBar.RestoreFocus();	// accelerator uses menu key
+	LONGLONG	nPos = theApp.GetMainFrame()->m_wndPhaseBar.FindNextConvergence(true);
+	if (nPos < INT_MIN)
+		AfxMessageBox(IDS_DOC_CONVERGENCE_OUT_OF_RANGE);
+	else
+		SetPosition(static_cast<int>(nPos), true);	// center song position
 }
 
 void CPolymeterDoc::OnViewTypeTrack()

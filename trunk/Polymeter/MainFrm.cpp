@@ -28,6 +28,7 @@
 		18		17apr20	add track color picker to toolbar
 		19		30apr20	fix window manager command's hint
 		20		06may20	check for no-op before setting view timer
+		21		13jun20	add find convergence
 
 */
 
@@ -98,6 +99,8 @@ const COLORREF CMainFrame::m_arrTrackColor[] = {
 	0x82362b, 0xcac8f9, 0xa17ab8, 0x9b4cb4, 0xc408e6, 0x8d1073, 0x737373, 0xc9c9c9,
 };
 
+#define RK_CONVERGENCE_SIZE _T("nConvergenceSize")
+
 // CMainFrame construction/destruction
 
 CMainFrame::CMainFrame() : m_wndMidiInputBar(false), m_wndMidiOutputBar(true)
@@ -109,10 +112,12 @@ CMainFrame::CMainFrame() : m_wndMidiInputBar(false), m_wndMidiOutputBar(true)
 	m_bFindMatchCase = false;
 	m_bIsViewTimerSet = false;
 	m_pbtnTrackColor = NULL;
+	m_nConvergenceSize = theApp.GetProfileInt(REG_SETTINGS, RK_CONVERGENCE_SIZE, CONVERGENCE_SIZE_DEFAULT);
 }
 
 CMainFrame::~CMainFrame()
 {
+	theApp.WriteProfileInt(REG_SETTINGS, RK_CONVERGENCE_SIZE, m_nConvergenceSize);
 }
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -710,6 +715,16 @@ bool CMainFrame::DoFindReplace()
 	return true;	// success: one or more matches were found
 }
 
+int	CMainFrame::FindMenuItem(const CMenu *pMenu, UINT nItemID)
+{
+	int	nItems = pMenu->GetMenuItemCount();
+	for (int iItem = 0; iItem < nItems; iItem++) {
+		if (pMenu->GetMenuItemID(iItem) == nItemID)
+			return(iItem);	// return item's position
+	}
+	return(-1);
+}
+
 // CMainFrame diagnostics
 
 #ifdef _DEBUG
@@ -772,6 +787,11 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_REGISTERED_MESSAGE(AFX_WM_GETDOCUMENTCOLORS, OnGetDocumentColors)
 	ON_COMMAND(ID_TRACK_COLOR, OnTrackColor)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_COLOR, OnUpdateTrackColor)
+	ON_WM_INITMENUPOPUP()
+	ON_COMMAND_RANGE(ID_CONVERGENCE_SIZE_START, ID_CONVERGENCE_SIZE_END, OnTransportConvergenceSize)
+	ON_UPDATE_COMMAND_UI_RANGE(ID_CONVERGENCE_SIZE_START, ID_CONVERGENCE_SIZE_END, OnUpdateTransportConvergenceSize)
+	ON_COMMAND(ID_TRANSPORT_CONVERGENCE_SIZE_ALL, OnTransportConvergenceSizeAll)
+	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_CONVERGENCE_SIZE_ALL, OnUpdateTransportConvergenceSizeAll)
 END_MESSAGE_MAP()
 
 // CMainFrame message handlers
@@ -1262,4 +1282,45 @@ void CMainFrame::OnUpdateTrackColor(CCmdUI *pCmdUI)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	pCmdUI->Enable(theApp.m_Options.m_View_bShowTrackColors && pDoc != NULL && pDoc->GetSelectedCount());
+}
+
+void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
+{
+	CMDIFrameWndEx::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
+	if (!bSysMenu && pPopupMenu->GetMenuItemCount() == 1) {
+		int	iItem = FindMenuItem(pPopupMenu, ID_TRANSPORT_CONVERGENCE_SIZE_ALL);
+		if (iItem >= 0) {
+			CString	sItem;
+			for (int iSize = 0; iSize < CONVERGENCE_SIZES; iSize++) {	// for each size
+				sItem.Format(_T("%d"), CONVERGENCE_SIZE_MIN + iSize);
+				int	iAmpersand = iSize >= CONVERGENCE_SIZES - 1;
+				sItem.Insert(iAmpersand, '&');
+				pPopupMenu->InsertMenu(iSize, MF_STRING | MF_BYPOSITION, ID_CONVERGENCE_SIZE_START + iSize, sItem);
+			}
+		}
+	}
+}
+
+void CMainFrame::OnTransportConvergenceSize(UINT nID)
+{
+	int	iSize = nID - ID_CONVERGENCE_SIZE_START;
+	ASSERT(iSize >= 0 && iSize < CONVERGENCE_SIZES);
+	m_nConvergenceSize = iSize + CONVERGENCE_SIZE_MIN;
+}
+
+void CMainFrame::OnUpdateTransportConvergenceSize(CCmdUI *pCmdUI)
+{
+	int	iSize = pCmdUI->m_nID - ID_CONVERGENCE_SIZE_START;
+	ASSERT(iSize >= 0 && iSize < CONVERGENCE_SIZES);
+	pCmdUI->SetRadio(iSize + CONVERGENCE_SIZE_MIN == m_nConvergenceSize);
+}
+
+void CMainFrame::OnTransportConvergenceSizeAll()
+{
+	m_nConvergenceSize = INT_MAX;
+}
+
+void CMainFrame::OnUpdateTransportConvergenceSizeAll(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetRadio(m_nConvergenceSize == INT_MAX);
 }

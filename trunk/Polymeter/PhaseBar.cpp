@@ -10,6 +10,7 @@
         00		12dec19	initial version
 		01		18mar20	get song position from document instead of sequencer
         02		02apr20	add video export
+		03		13jun20	add find convergence
 		
 */
 
@@ -39,6 +40,8 @@ static char THIS_FILE[]=__FILE__;
 IMPLEMENT_DYNAMIC(CPhaseBar, CMyDockablePane)
 
 #define RK_EXPORT_FOLDER _T("ExportFolder")
+
+#define LIMIT_FIND_CONVERGENCE_TO_32_BITS
 
 CPhaseBar::CPhaseBar()
 {
@@ -272,6 +275,142 @@ bool CPhaseBar::ExportVideo(LPCTSTR pszFolderPath, CSize szFrame, double fFrameR
 			return false;
 	}
 	return true;
+}
+
+LONGLONG CPhaseBar::FindNextConvergence(const CLongLongArray& arrMod, LONGLONG nStartPos, INT_PTR nConvSize)
+{
+	INT_PTR	nMods = arrMod.GetSize();
+	ASSERT(nMods > 0);
+	nConvSize = min(nConvSize, nMods);	// else infinite loop
+	CLongLongArray	arrPos;
+	arrPos.SetSize(nMods);
+	// initialize current position array
+	if (nStartPos >= 0) {	// if start position is positive or zero
+		for (INT_PTR iMod = 0; iMod < nMods; iMod++) {	// for each modulo
+			arrPos[iMod] = nStartPos - nStartPos % arrMod[iMod];
+		}
+	} else {	// start position is below zero
+		for (INT_PTR iMod = 0; iMod < nMods; iMod++) {	// for each modulo
+			arrPos[iMod] = nStartPos - (nStartPos + 1) % arrMod[iMod] - arrMod[iMod] + 1;
+		}
+	}
+	// find nearest integer multiple
+	LONGLONG	nNearestPos = INT64_MAX;
+	INT_PTR	iNearest = 0;
+	for (INT_PTR iMod = 0; iMod < nMods; iMod++) {	// for each modulo
+		LONGLONG	nSum = arrPos[iMod] + arrMod[iMod];	// compute next multiple
+		if (nSum < nNearestPos) {	// if next multiple is nearer
+			nNearestPos = nSum;
+			iNearest = iMod;
+		}
+	}
+	while (1) {
+		arrPos[iNearest] = nNearestPos;	// update selected modulo's current position
+		LONGLONG	nNextNearestPos = INT64_MAX;
+		iNearest = 0;
+		INT_PTR	nMatches = 0;
+		for (INT_PTR iMod = 0; iMod < nMods; iMod++) {	// for each modulo
+			if (arrPos[iMod] == nNearestPos) {	// if current position matches target
+				nMatches++;
+				if (nMatches >= nConvSize) {	// if requisite number of matches reached
+					return nNearestPos;
+				}
+			}
+			LONGLONG	nSum = arrPos[iMod] + arrMod[iMod];	// compute next multiple
+			if (nSum < nNextNearestPos) {	// if next multiple is nearer
+				nNextNearestPos = nSum;
+				iNearest = iMod;
+			}
+		}
+#ifdef LIMIT_FIND_CONVERGENCE_TO_32_BITS
+		if (nNextNearestPos > INT_MAX)
+			return nNextNearestPos;
+#endif
+		nNearestPos = nNextNearestPos;
+	}
+}
+
+LONGLONG CPhaseBar::FindPrevConvergence(const CLongLongArray& arrMod, LONGLONG nStartPos, INT_PTR nConvSize)
+{
+	INT_PTR	nMods = arrMod.GetSize();
+	ASSERT(nMods > 0);
+	nConvSize = min(nConvSize, nMods);	// else infinite loop
+	CLongLongArray	arrPos;
+	arrPos.SetSize(nMods);
+	// initialize current position array
+	if (nStartPos <= 0) {	// if start position is negative or zero
+		for (INT_PTR iMod = 0; iMod < nMods; iMod++) {	// for each modulo
+			arrPos[iMod] = nStartPos - nStartPos % arrMod[iMod];
+		}
+	} else {	// start position is above zero
+		for (INT_PTR iMod = 0; iMod < nMods; iMod++) {	// for each modulo
+			arrPos[iMod] = nStartPos - (nStartPos - 1) % arrMod[iMod] + arrMod[iMod] - 1;
+		}
+	}
+	// find nearest integer multiple
+	LONGLONG	nNearestPos = INT64_MIN;
+	INT_PTR	iNearest = 0;
+	for (INT_PTR iMod = 0; iMod < nMods; iMod++) {	// for each modulo
+		LONGLONG	nSum = arrPos[iMod] - arrMod[iMod];	// compute next multiple
+		if (nSum > nNearestPos) {	// if next multiple is nearer
+			nNearestPos = nSum;
+			iNearest = iMod;
+		}
+	}
+	while (1) {
+		arrPos[iNearest] = nNearestPos;	// update selected modulo's current position
+		LONGLONG	nNextNearestPos = INT64_MIN;
+		iNearest = 0;
+		INT_PTR	nMatches = 0;
+		for (INT_PTR iMod = 0; iMod < nMods; iMod++) {	// for each modulo
+			if (arrPos[iMod] == nNearestPos) {	// if current position matches target
+				nMatches++;
+				if (nMatches >= nConvSize) {	// if requisite number of matches reached
+					return nNearestPos;
+				}
+			}
+			LONGLONG	nSum = arrPos[iMod] - arrMod[iMod];	// compute next multiple
+			if (nSum > nNextNearestPos) {	// if next multiple is nearer
+				nNextNearestPos = nSum;
+				iNearest = iMod;
+			}
+		}
+#ifdef LIMIT_FIND_CONVERGENCE_TO_32_BITS
+		if (nNextNearestPos < INT_MIN)
+			return nNextNearestPos;
+#endif
+		nNearestPos = nNextNearestPos;
+	}
+}
+
+LONGLONG CPhaseBar::FindNextConvergence(bool bReverse)
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	ASSERT(pDoc != NULL);
+	if (pDoc == NULL)
+		return 0;
+	int	nConvSize = theApp.GetMainFrame()->GetConvergenceSize();
+	if (!FastIsVisible())	// if we're hidden
+		Update();	// we don't get document updates while hidden
+	CLongLongArray	arrMod;	// array of modulos for convergence finder
+	int	nOrbits = m_arrOrbit.GetSize();
+	arrMod.SetSize(nOrbits);	// allocate enough space for worst case
+	int	nSelected = pDoc->GetSelectedCount();
+	int	nMods = 0;
+	for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
+		const COrbit& orbit = m_arrOrbit[iOrbit];
+		if (!nSelected || orbit.m_bSelected) {	// if no selection or orbit is selected
+			arrMod[nMods] = orbit.m_nPeriod;	// add orbit's period to modulo array
+			nMods++;
+		}
+	}
+	arrMod.SetSize(nMods);	// resize to actual number of modulos
+	CWaitCursorEx	wc(nConvSize > 4);	// if more than four modulos, show wait cursor
+	if (bReverse) {
+		return FindPrevConvergence(arrMod, m_nSongPos, nConvSize);
+	} else {
+		return FindNextConvergence(arrMod, m_nSongPos, nConvSize);
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -332,6 +332,14 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Re&wind",                     ID_TRANSPORT_REWIND
         MENUITEM "&Go To Position...",          ID_TRANSPORT_GO_TO_POSITION
+        MENUITEM SEPARATOR
+        MENUITEM "&Next Convergence",           ID_TRANSPORT_CONVERGENCE_NEXT
+        MENUITEM "Pre&vious Convergence",       ID_TRANSPORT_CONVERGENCE_PREVIOUS
+        POPUP "Convergence &Size"
+        BEGIN
+            MENUITEM "&All",                        ID_TRANSPORT_CONVERGENCE_SIZE_ALL
+        END
+        MENUITEM SEPARATOR
         MENUITEM "Record &Tracks",              ID_TRANSPORT_RECORD_TRACKS
     END
     POPUP "&Tools"
@@ -614,6 +622,7 @@ BEGIN
     VK_F1,          ID_HELP_FINDER,         VIRTKEY, NOINVERT
     VK_F6,          ID_NEXT_PANE,           VIRTKEY, NOINVERT
     VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT, NOINVERT
+    "M",            ID_TOOLS_MIDI_LEARN,    VIRTKEY, SHIFT, CONTROL, NOINVERT
     "O",            ID_TOOLS_OPTIONS,       VIRTKEY, SHIFT, CONTROL, NOINVERT
     "F",            ID_TRACK_FILL,          VIRTKEY, SHIFT, CONTROL, NOINVERT
     "G",            ID_TRACK_GROUP,         VIRTKEY, CONTROL, NOINVERT
@@ -653,7 +662,8 @@ BEGIN
     VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
     "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
     VK_F11,         ID_WINDOW_FULL_SCREEN,  VIRTKEY, NOINVERT
-    "M",            ID_TOOLS_MIDI_LEARN,    VIRTKEY, SHIFT, CONTROL, NOINVERT
+    VK_LEFT,        ID_TRANSPORT_CONVERGENCE_PREVIOUS, VIRTKEY, ALT, NOINVERT
+    VK_RIGHT,       ID_TRANSPORT_CONVERGENCE_NEXT, VIRTKEY, ALT, NOINVERT
 END
 
 
@@ -1606,6 +1616,9 @@ BEGIN
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "Manage child windows\nWindows"
     ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"
+    ID_TRANSPORT_CONVERGENCE_NEXT "Go to next convergence\nNext Convergence"
+    ID_TRANSPORT_CONVERGENCE_PREVIOUS 
+                            "Go to previous convergence\nPrevious Convergence"
 END
 
 STRINGTABLE
@@ -1712,6 +1725,17 @@ BEGIN
     AFX_IDS_SCRESTORE       "Restore the window to normal size"
     AFX_IDS_SCTASKLIST      "Activate Task List"
     AFX_IDS_MDICHILD        "Activate this window"
+END
+
+STRINGTABLE
+BEGIN
+    ID_TRANSPORT_CONVERGENCE_SIZE_ALL 
+                            "Require all modulos to coincide\nFull Convergence"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_DOC_CONVERGENCE_OUT_OF_RANGE "Convergence is out of range."
 END
 
 #endif    // English (United States) resources

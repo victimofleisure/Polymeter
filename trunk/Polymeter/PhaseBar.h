@@ -9,7 +9,8 @@
 		rev		date	comments
         00		12dec19	initial version
         01		02apr20	add video export
-		
+		02		13jun20	add find convergence
+
 */
 
 #pragma once
@@ -25,23 +26,6 @@ class CPhaseBar : public CMyDockablePane
 public:
 	CPhaseBar();
 
-// Attributes
-public:
-	bool	HaveDataTip() const;
-
-// Operations
-public:
-	void	OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
-	void	Update();
-	void	ShowDataTip(bool bShow);
-
-// Overrides
-
-// Implementation
-public:
-	virtual ~CPhaseBar();
-
-protected:
 // Types
 	class COrbit {
 	public:
@@ -52,7 +36,29 @@ protected:
 		bool	m_bMuted;			// true if orbit is muted
 	};
 	typedef CArrayEx<COrbit, COrbit&> COrbitArray;
+	typedef CArrayEx<LONGLONG, LONGLONG> CLongLongArray;
 
+// Attributes
+public:
+	bool	HaveDataTip() const;
+	const COrbitArray& GetOrbitArray() const;
+
+// Operations
+public:
+	void	OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
+	void	Update();
+	void	ShowDataTip(bool bShow);
+	static	LONGLONG	FindNextConvergence(const CLongLongArray& arrMod, LONGLONG nStartPos, INT_PTR nConvSize);
+	static	LONGLONG	FindPrevConvergence(const CLongLongArray& arrMod, LONGLONG nStartPos, INT_PTR nConvSize);
+	LONGLONG	FindNextConvergence(bool bReverse = false);
+
+// Overrides
+
+// Implementation
+public:
+	virtual ~CPhaseBar();
+
+protected:
 // Constants
 	enum {
 		MAX_PLANET_WIDTH = 30,		// in D2D device-independent pixels (DIPs)
@@ -107,3 +113,7 @@ inline bool CPhaseBar::IsValidOrbit(int iOrbit) const
 	return iOrbit >= 0 && iOrbit < m_arrOrbit.GetSize();
 }
 
+inline const CPhaseBar::COrbitArray& CPhaseBar::GetOrbitArray() const
+{
+	return m_arrOrbit;
+}

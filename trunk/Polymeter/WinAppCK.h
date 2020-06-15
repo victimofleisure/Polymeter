@@ -22,6 +22,7 @@
 		12		03may18	remove VC6 cruft and methods that moved to file scope
 		13		28jan19	add GetLogicalDrives
 		14		10feb19	add temp file path wrapper
+		15		13jun20	add conditional wait cursor wrapper
 
         enhanced application
  
@@ -103,4 +104,33 @@ inline bool CTempFilePath::IsEmpty() const
 inline const CString& CTempFilePath::GetPath() const
 {
 	return m_sPath;
+}
+
+class CWaitCursorEx {
+public:
+	CWaitCursorEx(bool bShow = true);
+	~CWaitCursorEx();
+	void	Restore();
+	void	Show(bool bShow);
+
+protected:
+	bool	m_bShow;	// true if showing wait cursor
+};
+
+inline CWaitCursorEx::CWaitCursorEx(bool bShow) : m_bShow(bShow)
+{ 
+	if (bShow)
+		AfxGetApp()->BeginWaitCursor();
+}
+
+inline CWaitCursorEx::~CWaitCursorEx()
+{
+	if (m_bShow)
+		AfxGetApp()->EndWaitCursor();
+}
+
+inline void CWaitCursorEx::Restore()
+{
+	if (m_bShow)
+		AfxGetApp()->RestoreWaitCursor();
 }

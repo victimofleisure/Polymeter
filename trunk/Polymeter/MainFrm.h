@@ -21,6 +21,7 @@
 		11		05apr20	add track step change handler
 		12		17apr20	add track color picker to toolbar
 		13		06may20	add view timer flag
+		14		13jun20	add find convergence
 
 */
 
@@ -79,6 +80,7 @@ public:
 	bool	PropertiesBarHasFocus() const;
 	CString	GetSongPositionString() const;
 	CString	GetSongTimeString() const;
+	int		GetConvergenceSize() const;
 
 // Public data
 	CMFCMenuBar     m_wndMenuBar;
@@ -93,6 +95,7 @@ public:
 	void	OnUpdate(CView* pSender, LPARAM lHint = 0, CObject* pHint = NULL);
 	void	UpdateSongPosition();
 	void	FullScreen(bool bEnable);
+	static	int		FindMenuItem(const CMenu *pMenu, UINT nItemID);
 
 // Overrides
 public:
@@ -113,6 +116,14 @@ protected:  // control bar embedded members
 // Constants
 	static const UINT m_arrIndicatorID[];	// array of status bar indicator IDs
 	static const COLORREF m_arrTrackColor[];	// palette of track colors
+	enum {
+		CONVERGENCE_SIZE_MIN = 1,
+		CONVERGENCE_SIZE_MAX = 10,
+		CONVERGENCE_SIZE_DEFAULT = 2,
+		CONVERGENCE_SIZES = CONVERGENCE_SIZE_MAX - CONVERGENCE_SIZE_MIN + 1,
+		ID_CONVERGENCE_SIZE_START = 0xC000,	// far above our menu resource IDs
+		ID_CONVERGENCE_SIZE_END = ID_CONVERGENCE_SIZE_START + CONVERGENCE_SIZES - 1,
+	};
 
 // Data members
 	CPolymeterDoc	*m_pActiveDoc;		// pointer to active document, or NULL if none
@@ -125,6 +136,7 @@ protected:  // control bar embedded members
 	bool	m_bIsViewTimerSet;			// true if view timer is set
 	CSequencer::CMidiEventArray m_arrMIDIOutputEvent;	// array of MIDI output events
 	CMFCColorMenuButton	*m_pbtnTrackColor;	// pointer to track color menu button
+	int		m_nConvergenceSize;			// minimum number of modulos in a convergence
 
 // Helpers
 	BOOL	CreateDockingWindows();
@@ -184,6 +196,11 @@ protected:
 	afx_msg LRESULT OnGetDocumentColors(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnTrackColor();
 	afx_msg void OnUpdateTrackColor(CCmdUI *pCmdUI);
+	afx_msg void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
+	afx_msg void OnTransportConvergenceSize(UINT nID);
+	afx_msg void OnUpdateTransportConvergenceSize(CCmdUI *pCmdUI);
+	afx_msg void OnTransportConvergenceSizeAll();
+	afx_msg void OnUpdateTransportConvergenceSizeAll(CCmdUI *pCmdUI);
 };
 
 inline HACCEL CMainFrame::GetAccelTable() const
@@ -215,4 +232,9 @@ inline CString CMainFrame::GetSongPositionString() const
 inline CString CMainFrame::GetSongTimeString() const
 {
 	return m_sSongTime;
+}
+
+inline int CMainFrame::GetConvergenceSize() const
+{
+	return m_nConvergenceSize;
 }

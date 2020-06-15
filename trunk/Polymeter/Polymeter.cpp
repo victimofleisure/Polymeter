@@ -19,6 +19,7 @@
 		09		27mar20	fix MIDI device change detection
 		10		01apr20	add list column header reset handler
 		11		03jun20	add global recording state
+		12		15jun20	add child frame and settings to reset window layout
 
 */
 
@@ -217,10 +218,12 @@ void CPolymeterApp::ResetWindowLayout()
 	static const LPCTSTR pszCleanKey[] = {
 		#define MAINDOCKBARDEF(name, width, height, style) RK_##name##Bar,
 		#include "MainDockBarDef.h"	// generate keys for main dockable bars
+		RK_CHILD_FRAME,
 		RK_SONG_VIEW,
 		RK_STEP_VIEW,
 		RK_TRACK_VIEW,
 		RK_LIVE_VIEW,
+		REG_SETTINGS,
 		_T("Options\\Expand"),
 	};
 	CSettingsStoreSP regSP;
