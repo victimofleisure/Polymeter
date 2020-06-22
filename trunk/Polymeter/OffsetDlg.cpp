@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      21may18	initial version
+		01		18jun20	if dialog caption ID is specified, also use it as help ID
 
 */
 
@@ -50,9 +51,11 @@ END_MESSAGE_MAP()
 BOOL COffsetDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-	if (m_nDlgCaptionID)
+	if (m_nDlgCaptionID) {	// if dialog caption specified
 		SetWindowText(LDS(m_nDlgCaptionID));
-	if (m_nEditCaptionID)
+		m_nIDHelp = m_nDlgCaptionID;
+	}
+	if (m_nEditCaptionID)	// if edit caption specified
 		GetDlgItem(IDC_OFFSET_CAPTION)->SetWindowText(LDS(m_nEditCaptionID));
 	// can't use type-checking downcast here because control isn't wrapped
 	CSpinButtonCtrl	*pSpinCtrl = reinterpret_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_OFFSET_SPIN));

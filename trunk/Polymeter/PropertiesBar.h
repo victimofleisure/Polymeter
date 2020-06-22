@@ -9,15 +9,17 @@
 		rev		date	comments
         00      25mar18	initial version
 		01		29jan19	remove set initial properties
-		
+		02		17jun20	derive from customized dockable pane
+
 */
 
 #pragma once
 
+#include "MyDockablePane.h"
 #include "PropertiesGrid.h"
 #include "MasterProps.h"
 
-class CPropertiesBar : public CDockablePane
+class CPropertiesBar : public CMyDockablePane
 {
 // Construction
 public:

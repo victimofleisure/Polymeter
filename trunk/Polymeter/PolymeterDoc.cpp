@@ -52,6 +52,7 @@
 		42		23may20	bump file version for negative voicing modulation
 		43		03jun20	in record undo, restore recorded MIDI events 
 		44		13jun20	add find convergence
+		45		18jun20	add track modulation command
 
 */
 
@@ -84,6 +85,7 @@
 #include "VelocityView.h"	// for waveforms in TrackFill
 #include "MidiFile.h"
 #include "VelocityDlg.h"
+#include "ModulationDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -3666,6 +3668,29 @@ void CPolymeterDoc::LearnMappings(const CIntArrayEx& arrSelection, DWORD nInMidi
 	UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_MAPPING_PROP, &hint);
 }
 
+void CPolymeterDoc::CreateModulation(int iSelItem)
+{
+	ASSERT(GetSelectedCount());
+	HWND	hFocusWnd = GetFocus();
+	CModulationDlg	dlg(this);
+	if (dlg.DoModal() == IDOK) {
+		ASSERT(dlg.m_arrMod.GetSize());	// at least one modulator
+		NotifyUndoableEdit(0, UCODE_MODULATION);
+		int	nTrackSels = GetSelectedCount();
+		for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
+			int	iTrack = m_arrTrackSel[iTrackSel];	// get index of target track
+			int	iMod = iSelItem;
+			if (iMod < 0)	// if no selection
+				iMod = m_Seq.GetModulationCount(iTrack);	// append
+			m_Seq.InsertModulations(iTrack, iMod, dlg.m_arrMod);	// insert modulation array
+		}
+		SetModifiedFlag();
+		UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
+	}
+	if (hFocusWnd != NULL)
+		SetFocus(hFocusWnd);	// restore focus after modal dialog
+}
+
 // CPolymeterDoc diagnostics
 
 #ifdef _DEBUG
@@ -3761,6 +3786,8 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_SOLO, OnUpdateTrackSolo)
 	ON_COMMAND(ID_TRACK_MUTE, OnTrackMute)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_MUTE, OnUpdateTrackMute)
+	ON_COMMAND(ID_TRACK_MODULATION, OnTrackModulation)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_MODULATION, OnUpdateEditDelete)
 	ON_COMMAND(ID_TRACK_PRESET_CREATE, OnTrackPresetCreate)
 	ON_COMMAND(ID_TRACK_PRESET_APPLY, OnTrackPresetApply)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_PRESET_APPLY, OnUpdateTrackPresetApply)
@@ -4308,6 +4335,11 @@ void CPolymeterDoc::OnTrackSort()
 		dlg.GetSortLevels(arrLevel);
 		SortTracks(arrLevel);
 	}
+}
+
+void CPolymeterDoc::OnTrackModulation()
+{
+	CreateModulation();
 }
 
 void CPolymeterDoc::OnTrackPresetCreate()

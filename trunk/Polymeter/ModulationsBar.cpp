@@ -15,6 +15,9 @@
 		05		01apr20	standardize context menu handling
 		06		15apr20	add insert group command
 		07		22apr20	fix OnUpdateSort; enable if tracks selected
+		08		18jun20	move insert group implementation to document
+		09		20jun20	limit insert position for paste and insert
+		10		22jun20	fix selection after paste, insert, and delete
 
 */
 
@@ -25,7 +28,6 @@
 #include "PolymeterDoc.h"
 #include "UndoCodes.h"
 #include "PopupCombo.h"
-#include "ModulationDlg.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -567,12 +569,12 @@ void CModulationsBar::OnEditPaste()
 	if (pDoc != NULL && pDoc->GetSelectedCount()) {	// if track selection exists
 		CPolymeterDoc::CTrackIDMap	mapTrackID;
 		pDoc->GetTrackIDMap(mapTrackID);
-		int	nMods = theApp.m_arrModClipboard.GetSize();
-		if (nMods) {
+		int	nPasteMods = theApp.m_arrModClipboard.GetSize();
+		if (nPasteMods) {
 			pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
 			CModulationArray	arrMod;
-			arrMod.SetSize(nMods);
-			for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation in clipboard
+			arrMod.SetSize(nPasteMods);
+			for (int iMod = 0; iMod < nPasteMods; iMod++) {	// for each modulation in clipboard
 				const CModulation&	mod = theApp.m_arrModClipboard[iMod];
 				int	iModSource = -1;
 				mapTrackID.Lookup(mod.m_iSource, iModSource);
@@ -583,12 +585,31 @@ void CModulationsBar::OnEditPaste()
 			for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
 				int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
 				int	iMod = iSelItem;
+				int	nTrackMods = pDoc->m_Seq.GetModulationCount(iTrack);
 				if (iMod < 0)	// if no selection
-					iMod = pDoc->m_Seq.GetModulationCount(iTrack);	// append
+					iMod = nTrackMods;	// append
+				else
+					iMod = min(iMod, nTrackMods);	// limit insert position to after last element
 				pDoc->m_Seq.InsertModulations(iTrack, iMod, arrMod);	// insert clipboard modulations
 			}
 			pDoc->SetModifiedFlag();
+			int	nPrevMods = m_arrModulator.GetSize();
 			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
+			if (m_bShowDifferences) {	// if showing differences
+				m_grid.Deselect();	// remove selection
+				for (int iMod = 0; iMod < nPasteMods; iMod++) {	// for each pasted modulation
+					int	iItem = static_cast<int>(m_arrModulator.Find(arrMod[iMod]));	// find pasted element
+					if (iItem >= 0)	// if pasted element found in modulator array
+						m_grid.Select(iItem);	// select pasted item
+				}
+			} else {	// hiding differences
+				if (iSelItem < 0)	// if no selection
+					iSelItem = nPrevMods;	// appended
+				if (iSelItem >= 0)	// if valid item index
+					m_grid.SelectRange(iSelItem, nPasteMods);	// select pasted items
+				else	// invalid item index
+					m_grid.Deselect();	// remove selection
+			}
 		}
 	}
 }
@@ -611,16 +632,26 @@ void CModulationsBar::OnEditInsert()
 		for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
 			int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
 			int	iMod = iSelItem;
+			int	nTrackMods = pDoc->m_Seq.GetModulationCount(iTrack);
 			if (iMod < 0)	// if no selection
-				iMod = pDoc->m_Seq.GetModulationCount(iTrack);	// append
+				iMod = nTrackMods;	// append
+			else
+				iMod = min(iMod, nTrackMods);	// limit insert position to after last element
 			pDoc->m_Seq.InsertModulation(iTrack, iMod, mod);
 		}
 		pDoc->SetModifiedFlag();
+		int	nPrevMods = m_arrModulator.GetSize();
 		pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
-		if (iSelItem < 0)	// if no selection
-			iSelItem = m_arrModulator.GetSize() - 1;	// appended
-		if (iSelItem >= 0)
-			m_grid.SelectOnly(iSelItem);
+		if (m_bShowDifferences) {	// if showing differences
+			iSelItem = static_cast<int>(m_arrModulator.Find(mod));	// find inserted element
+		} else {	// hiding differences
+			if (iSelItem < 0)	// if no selection
+				iSelItem = nPrevMods;	// appended
+		}
+		if (iSelItem >= 0)	// if valid item index
+			m_grid.SelectOnly(iSelItem);	// select inserted item
+		else	// invalid item index
+			m_grid.Deselect();	// remove selection
 	}
 }
 
@@ -651,6 +682,7 @@ void CModulationsBar::OnEditDelete()
 		}
 		pDoc->SetModifiedFlag();
 		pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
+		m_grid.Deselect();	// remove selection
 	}
 }
 
@@ -728,24 +760,7 @@ void CModulationsBar::OnInsertGroup()
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL && pDoc->GetSelectedCount());
 	if (pDoc != NULL) {
-		CWnd	*pFocusWnd = GetFocus();
-		CModulationDlg	dlg(pDoc);
-		if (dlg.DoModal() == IDOK) {
-			ASSERT(dlg.m_arrMod.GetSize());	// at least one modulator
-			pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
-			int	iSelItem = m_grid.GetSelection();
-			int	nTrackSels = pDoc->GetSelectedCount();
-			for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
-				int	iTrack = pDoc->m_arrTrackSel[iTrackSel];	// get index of target track
-				int	iMod = iSelItem;
-				if (iMod < 0)	// if no selection
-					iMod = pDoc->m_Seq.GetModulationCount(iTrack);	// append
-				pDoc->m_Seq.InsertModulations(iTrack, iMod, dlg.m_arrMod);	// insert modulation array
-			}
-			pDoc->SetModifiedFlag();
-			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
-		}
-		if (pFocusWnd != NULL)
-			pFocusWnd->SetFocus();	// restore focus after modal dialog
+		int	iSelItem = m_grid.GetSelection();
+		pDoc->CreateModulation(iSelItem);
 	}
 }

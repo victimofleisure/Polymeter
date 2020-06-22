@@ -9,6 +9,7 @@
 		rev		date	comments
         00      30may18	initial version
 		01		08dec18	add origin shift to handle negative times
+		02		17jun20	in command help handler, try tracking help first
 
 */
 
@@ -251,8 +252,8 @@ BOOL CSongParent::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO
 
 LRESULT CSongParent::OnCommandHelp(WPARAM wParam, LPARAM lParam)
 {
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
+	if (theApp.OnTrackingHelp(wParam, lParam))	// try tracking help first
+		return TRUE;
 	theApp.WinHelp(GetDlgCtrlID());
 	return TRUE;
 }

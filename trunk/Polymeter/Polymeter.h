@@ -18,6 +18,7 @@
 		08		27mar20	fix MIDI device change detection
 		09		01apr20	add list column header reset handler
 		10		03jun20	add global recording state
+		11		17jun20	add tracking help handler
 
 */
 
@@ -70,6 +71,7 @@ public:
 	void	CloseMidiInputDevice();
 	void	OnDeviceChange();
 	static	int		FindHelpID(int nResID);
+	LRESULT	OnTrackingHelp(WPARAM wParam, LPARAM lParam);
 	bool	RecordMidiInput(bool bEnable);
 	static	void	MakeStartCase(CString& str);
 	static	void	SnakeToStartCase(CString& str);

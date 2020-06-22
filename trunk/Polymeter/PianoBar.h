@@ -14,6 +14,7 @@
 		04		02feb19	add output channel; output notes on key press
 		05		17feb20	inherit MIDI event class from track base
 		06		29feb20	add handler for MIDI event message
+		07		18jun20	add command help to handle channel filter string reuse
 
 */
 
@@ -78,7 +79,7 @@ protected:
 	};
 	static const PIANO_RANGE	m_arrPianoRange[PIANO_SIZES];	// range for each piano size
 	enum {	// submenu command ID ranges
-		SMID_FILTER_CHANNEL_FIRST = WM_USER + 1,
+		SMID_FILTER_CHANNEL_FIRST = ID_APP_DYNAMIC_SUBMENU_BASE,
 		SMID_FILTER_CHANNEL_LAST = SMID_FILTER_CHANNEL_FIRST + MIDI_CHANNELS,
 		SMID_OUTPUT_CHANNEL_FIRST = SMID_FILTER_CHANNEL_LAST + 1,
 		SMID_OUTPUT_CHANNEL_LAST = SMID_OUTPUT_CHANNEL_FIRST + MIDI_CHANNELS,
@@ -117,6 +118,7 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu);
+	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg void OnWindowPosChanged(WINDOWPOS* lpwndpos);
 	afx_msg void OnParentNotify(UINT message, LPARAM lParam);

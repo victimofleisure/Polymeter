@@ -9,6 +9,7 @@
 		rev		date	comments
         00		08jan19	initial version
 		01		01apr20	add ShowDockingContextMenu
+		02		17jun20	in command help handler, try tracking help first
 
 */
 
@@ -110,8 +111,8 @@ void CMyDockablePane::OnExitMenuLoop(BOOL bIsTrackPopupMenu)
 
 LRESULT CMyDockablePane::OnCommandHelp(WPARAM wParam, LPARAM lParam)
 {
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
+	if (theApp.OnTrackingHelp(wParam, lParam))	// try tracking help first
+		return TRUE;
 	theApp.WinHelp(GetDlgCtrlID());
 	return TRUE;
 }

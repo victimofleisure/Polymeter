@@ -17,6 +17,7 @@
 		07		04apr20	add color for chord modulation
 		08		19apr20	don't set browser window name; fixes OLE exception
 		09		08jun20	add color for offset modulation
+		10		18jun20	add hint for layout menu items
 
 */
 
@@ -879,6 +880,8 @@ void CGraphBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
 		if (nItemID >= SMID_GRAPH_SCOPE_FIRST) {
 			if (nItemID <= SMID_GRAPH_SCOPE_LAST) {
 				nItemID = m_arrHintGraphScopeID[nItemID - SMID_GRAPH_SCOPE_FIRST];
+			} else if (nItemID <= SMID_GRAPH_LAYOUT_LAST) {
+				nItemID = IDS_HINT_GRAPH_LAYOUT;
 			}
 		}
 	}

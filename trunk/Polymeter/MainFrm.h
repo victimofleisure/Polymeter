@@ -22,6 +22,7 @@
 		12		17apr20	add track color picker to toolbar
 		13		06may20	add view timer flag
 		14		13jun20	add find convergence
+		15		18jun20	add message string handler for convergence size hint
 
 */
 
@@ -121,7 +122,7 @@ protected:  // control bar embedded members
 		CONVERGENCE_SIZE_MAX = 10,
 		CONVERGENCE_SIZE_DEFAULT = 2,
 		CONVERGENCE_SIZES = CONVERGENCE_SIZE_MAX - CONVERGENCE_SIZE_MIN + 1,
-		ID_CONVERGENCE_SIZE_START = 0xC000,	// far above our menu resource IDs
+		ID_CONVERGENCE_SIZE_START = ID_APP_DYNAMIC_SUBMENU_BASE,
 		ID_CONVERGENCE_SIZE_END = ID_CONVERGENCE_SIZE_START + CONVERGENCE_SIZES - 1,
 	};
 
@@ -197,6 +198,7 @@ protected:
 	afx_msg void OnTrackColor();
 	afx_msg void OnUpdateTrackColor(CCmdUI *pCmdUI);
 	afx_msg void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
+	afx_msg LRESULT OnSetMessageString(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnTransportConvergenceSize(UINT nID);
 	afx_msg void OnUpdateTransportConvergenceSize(CCmdUI *pCmdUI);
 	afx_msg void OnTransportConvergenceSizeAll();

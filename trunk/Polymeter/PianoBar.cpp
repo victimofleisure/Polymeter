@@ -17,6 +17,7 @@
 		07		17feb20	inherit MIDI event class from track base
 		08		29feb20	add handler for MIDI event message
 		09		01apr20	standardize context menu handling
+		10		18jun20	add command help to handle channel filter string reuse
 
 */
 
@@ -259,6 +260,7 @@ BEGIN_MESSAGE_MAP(CPianoBar, CMyDockablePane)
 	ON_WM_WINDOWPOSCHANGED()
 	ON_WM_CONTEXTMENU()
 	ON_WM_MENUSELECT()
+	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 	ON_WM_PARENTNOTIFY()
 	ON_COMMAND_RANGE(SMID_FILTER_CHANNEL_FIRST, SMID_FILTER_CHANNEL_LAST, OnFilterChannel)
 	ON_COMMAND_RANGE(SMID_OUTPUT_CHANNEL_FIRST, SMID_OUTPUT_CHANNEL_LAST, OnOutputChannel)
@@ -364,6 +366,27 @@ void CPianoBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
 		}
 	}
 	CMyDockablePane::OnMenuSelect(nItemID, nFlags, hSysMenu);
+}
+
+LRESULT CPianoBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)
+{
+	// the filter channel hint strings are borrowed from the MIDI event bar,
+	// hence they must be remapped here to display an appropriate help topic
+	UINT	nTrackingID = theApp.GetMainFrame()->GetTrackingID();
+	UINT	nNewID;
+	switch (nTrackingID) {
+	case IDS_SM_FILTER_CHANNEL_ALL:
+	case IDS_SM_FILTER_CHANNEL_SELECT:
+		nNewID = IDS_HINT_PIANO_FILTER_CHANNEL;
+		break;
+	default:
+		nNewID = 0;
+	}
+	if (nNewID) {	// if tracking ID was remapped
+		theApp.WinHelp(nNewID);
+		return TRUE;
+	}
+	return CMyDockablePane::OnCommandHelp(wParam, lParam);
 }
 
 void CPianoBar::OnWindowPosChanged(WINDOWPOS* lpwndpos)

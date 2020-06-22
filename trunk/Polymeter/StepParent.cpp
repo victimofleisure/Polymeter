@@ -9,6 +9,7 @@
 		rev		date	comments
         00      09may18	initial version
 		01		09may19	align origin button with velocity bar midpoint
+		02		17jun20	in command help handler, try tracking help first
 
 */
 
@@ -341,8 +342,8 @@ BOOL CStepParent::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO
 
 LRESULT CStepParent::OnCommandHelp(WPARAM wParam, LPARAM lParam)
 {
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
+	if (theApp.OnTrackingHelp(wParam, lParam))	// try tracking help first
+		return TRUE;
 	theApp.WinHelp(GetDlgCtrlID());
 	return TRUE;
 }

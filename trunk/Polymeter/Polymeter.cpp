@@ -20,6 +20,7 @@
 		10		01apr20	add list column header reset handler
 		11		03jun20	add global recording state
 		12		15jun20	add child frame and settings to reset window layout
+		13		17jun20	add tracking help handler
 
 */
 
@@ -55,9 +56,9 @@
 
 #define RK_TIE_NOTES _T("bTieNotes")
 
-#include "HelpIDs.h"
+#include "HelpIDs.h"	// help IDs generated automatically by doc2web
 const CPolymeterApp::HELP_RES_MAP CPolymeterApp::m_HelpResMap[] = {
-	#include "HelpResMap.h"
+	#include "HelpResMap.h"		// manually-maintained help resource map
 };
 
 // CPolymeterApp construction
@@ -546,6 +547,13 @@ void CPolymeterApp::CloseHtmlHelp()
 		::HtmlHelp(NULL, NULL, HH_CLOSE_ALL, 0);
 		m_bHelpInit = FALSE;
 	}
+}
+
+LRESULT	CPolymeterApp::OnTrackingHelp(WPARAM wParam, LPARAM lParam)
+{
+	if (GetMainFrame()->IsTracking())
+		return GetMainFrame()->SendMessage(WM_COMMANDHELP, wParam, lParam);
+	return FALSE;
 }
 
 // CPolymeterApp message handlers

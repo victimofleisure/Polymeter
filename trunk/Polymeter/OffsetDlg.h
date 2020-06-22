@@ -28,14 +28,14 @@ public:
 // Dialog Data
 	enum { IDD = IDD_OFFSET };
 
-protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
-	DECLARE_MESSAGE_MAP()
-public:
 	int		m_nDlgCaptionID;
 	int		m_nEditCaptionID;
 	CRange<int>	m_rngOffset;
 	int		m_nOffset;
+
+protected:
+	DECLARE_MESSAGE_MAP()
 	virtual BOOL OnInitDialog();
 };

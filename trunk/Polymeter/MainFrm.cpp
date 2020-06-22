@@ -29,6 +29,7 @@
 		19		30apr20	fix window manager command's hint
 		20		06may20	check for no-op before setting view timer
 		21		13jun20	add find convergence
+		22		18jun20	add message string handler for convergence size hint
 
 */
 
@@ -59,7 +60,7 @@
 IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWndEx)
 
 const int  iMaxUserToolbars = 10;
-const UINT uiFirstUserToolBarId = AFX_IDW_CONTROLBAR_FIRST + 40;
+const UINT uiFirstUserToolBarId = ID_APP_DOCKING_BAR_FIRST;
 const UINT uiLastUserToolBarId = uiFirstUserToolBarId + iMaxUserToolbars - 1;
 
 const UINT CMainFrame::m_arrIndicatorID[] =
@@ -788,6 +789,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_COMMAND(ID_TRACK_COLOR, OnTrackColor)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_COLOR, OnUpdateTrackColor)
 	ON_WM_INITMENUPOPUP()
+	ON_MESSAGE(WM_SETMESSAGESTRING, OnSetMessageString)
 	ON_COMMAND_RANGE(ID_CONVERGENCE_SIZE_START, ID_CONVERGENCE_SIZE_END, OnTransportConvergenceSize)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_CONVERGENCE_SIZE_START, ID_CONVERGENCE_SIZE_END, OnUpdateTransportConvergenceSize)
 	ON_COMMAND(ID_TRANSPORT_CONVERGENCE_SIZE_ALL, OnTransportConvergenceSizeAll)
@@ -1299,6 +1301,13 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
 			}
 		}
 	}
+}
+
+LRESULT CMainFrame::OnSetMessageString(WPARAM wParam, LPARAM lParam)
+{
+	if (wParam >= ID_CONVERGENCE_SIZE_START && wParam <= ID_CONVERGENCE_SIZE_END)
+		wParam = IDS_HINT_MAIN_CONVERGENCE_SIZE;
+	return CMDIFrameWndEx::OnSetMessageString(wParam, lParam);
 }
 
 void CMainFrame::OnTransportConvergenceSize(UINT nID)

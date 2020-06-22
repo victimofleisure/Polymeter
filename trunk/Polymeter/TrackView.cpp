@@ -16,6 +16,7 @@
 		06		17mar20	check m_bIsUpdating before posting selection change
 		07		01apr20	standardize context menu handling
 		08		17apr20	add track color
+		09		17jun20	in command help handler, try tracking help first
 
 */
 
@@ -587,8 +588,8 @@ void CTrackView::OnContextMenu(CWnd* pWnd, CPoint point)
 
 LRESULT CTrackView::OnCommandHelp(WPARAM wParam, LPARAM lParam)
 {
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
+	if (theApp.OnTrackingHelp(wParam, lParam))	// try tracking help first
+		return TRUE;
 	theApp.WinHelp(GetDlgCtrlID());
 	return TRUE;
 }

@@ -28,6 +28,7 @@
 		18		30apr20	add velocity only flag to set step methods
 		19		03jun20	in record undo, restore recorded MIDI events 
 		20		13jun20	add find convergence
+		21		18jun20	add track modulation command
 
 */
 
@@ -276,6 +277,7 @@ public:
 	void	SortMappings(int iProp);
 	void	LearnMapping(int iMapping, DWORD nInMidiMsg, bool bCoalesceEdit = false);
 	void	LearnMappings(const CIntArrayEx& arrSelection, DWORD nInMidiMsg, bool bCoalesceEdit = false);
+	void	CreateModulation(int iSelItem = -1);
 
 // Overrides
 public:
@@ -581,6 +583,7 @@ protected:
 	afx_msg void OnUpdateTrackSolo(CCmdUI *pCmdUI);
 	afx_msg void OnTrackMute();
 	afx_msg void OnUpdateTrackMute(CCmdUI *pCmdUI);
+	afx_msg void OnTrackModulation();
 	afx_msg void OnTrackPresetCreate();
 	afx_msg void OnTrackPresetApply();
 	afx_msg void OnUpdateTrackPresetApply(CCmdUI *pCmdUI);

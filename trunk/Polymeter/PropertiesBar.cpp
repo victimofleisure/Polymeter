@@ -9,6 +9,7 @@
 		rev		date	comments
         00      25mar18	initial version
 		01		29jan19	remove set initial properties
+		02		17jun20	derive from customized dockable pane
 		
 */
 
@@ -101,7 +102,7 @@ void CPropertiesBar::CMyPropertiesGridCtrl::SetCustomValue(int iProp, const CCom
 /////////////////////////////////////////////////////////////////////////////
 // CPropertiesBar message map
 
-BEGIN_MESSAGE_MAP(CPropertiesBar, CDockablePane)
+BEGIN_MESSAGE_MAP(CPropertiesBar, CMyDockablePane)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
 //	ON_COMMAND(ID_EXPAND_ALL, OnExpandAllProperties)
@@ -132,7 +133,7 @@ void CPropertiesBar::AdjustLayout()
 
 int CPropertiesBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-	if (CDockablePane::OnCreate(lpCreateStruct) == -1)
+	if (CMyDockablePane::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
 	if (!m_Grid.Create(WS_VISIBLE | WS_CHILD, CRect(0, 0, 0, 0), this, IDC_PROPERTIES_GRID))
@@ -153,14 +154,14 @@ int CPropertiesBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CPropertiesBar::OnDestroy()
 {
-	CDockablePane::OnDestroy();
+	CMyDockablePane::OnDestroy();
 	m_Grid.SaveGroupExpansion(RK_PropertiesBar RK_EXPAND);
 	AfxGetApp()->WriteProfileInt(RK_PropertiesBar, RK_DESCRIPTION_ROWS, m_Grid.GetActualDescriptionRows());
 }
 
 void CPropertiesBar::OnSize(UINT nType, int cx, int cy)
 {
-	CDockablePane::OnSize(nType, cx, cy);
+	CMyDockablePane::OnSize(nType, cx, cy);
 	AdjustLayout();
 }
 
@@ -185,19 +186,19 @@ void CPropertiesBar::OnUpdateSortProperties(CCmdUI* pCmdUI)
 
 void CPropertiesBar::OnSetFocus(CWnd* pOldWnd)
 {
-	CDockablePane::OnSetFocus(pOldWnd);
+	CMyDockablePane::OnSetFocus(pOldWnd);
 	m_Grid.SetFocus();
 }
 
 void CPropertiesBar::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 {
-	CDockablePane::OnSettingChange(uFlags, lpszSection);
+	CMyDockablePane::OnSettingChange(uFlags, lpszSection);
 }
 
 LRESULT CPropertiesBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)
 {
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
+	if (theApp.OnTrackingHelp(wParam, lParam))	// try tracking help first
+		return TRUE;
 	int	iProp = m_Grid.GetCurSelIdx();
 	int	nID = 0;
 	if (iProp >= 0 && iProp < CMasterProps::PROPERTIES)	// if valid property index

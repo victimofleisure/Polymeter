@@ -85,6 +85,13 @@ template<typename T> inline bool SafeCreateObject(CRuntimeClass *pRuntimeClass, 
 #define BENCH_START CBenchmark b;
 #define BENCH_STOP printf("%f\n", b.Elapsed());
 
+// base ID for dynamic submenus, far above menu resource IDs and below MFC reserved IDs
+#define ID_APP_DYNAMIC_SUBMENU_BASE 0xc800
+
+enum {	// substitute resource IDs for remapping help topics
+	IDS_HINT_PIANO_FILTER_CHANNEL = ID_APP_DYNAMIC_SUBMENU_BASE - 100,
+};
+
 enum {	// application-wide user window messages, based on WP_APP
 	UWM_FIRST = WM_APP,
 	UWM_HANDLE_DLG_KEY,			// wParam: MSG pointer, lParam: none
