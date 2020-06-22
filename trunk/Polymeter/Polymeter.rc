@@ -643,7 +643,7 @@ BEGIN
     "H",            ID_TRACK_SHIFT_STEPS,   VIRTKEY, CONTROL, NOINVERT
     VK_OEM_5,       ID_TRACK_SOLO,          VIRTKEY, CONTROL, NOINVERT
     "S",            ID_TRACK_SORT,          VIRTKEY, CONTROL, ALT, NOINVERT
-    "S",            ID_TRACK_STRETCH,       VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "E",            ID_TRACK_STRETCH,       VIRTKEY, SHIFT, CONTROL, NOINVERT
     "T",            ID_TRACK_TIE_NOTES,     VIRTKEY, CONTROL, NOINVERT
     "T",            ID_TRACK_TRANSPOSE,     VIRTKEY, SHIFT, CONTROL, NOINVERT
     "V",            ID_TRACK_VELOCITY,      VIRTKEY, SHIFT, CONTROL, NOINVERT
@@ -668,6 +668,7 @@ BEGIN
     VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
     "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
     VK_F11,         ID_WINDOW_FULL_SCREEN,  VIRTKEY, NOINVERT
+    "S",            ID_FILE_SAVE_AS,        VIRTKEY, SHIFT, CONTROL, NOINVERT
 END
 
 
@@ -1226,6 +1227,8 @@ BEGIN
     IDS_HINT_GRAPH_SCOPE_RECURSIVE 
                             "Show direct and indirect modulators of selected tracks"
     IDS_HINT_GRAPH_SCOPE_SELECTED "Show direct modulators of selected tracks"
+    IDS_HINT_MAIN_CONVERGENCE_SIZE 
+                            "Require at least this many modulos to coincide"
     IDS_HLINK_CANT_LAUNCH   "Can't launch browser."
     IDS_IMPORT              "Import"
     IDS_IMPORT_ERR_FORMAT   "Format error."
@@ -1237,11 +1240,11 @@ BEGIN
     IDS_MAPPING_COL_IN_CONTROL "In Control"
     IDS_MAPPING_COL_IN_EVENT "In Event"
     IDS_MAPPING_COL_NUMBER  "#"
-    IDS_MAPPING_COL_OUT_CHANNEL "Out Channel"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MAPPING_COL_OUT_CHANNEL "Out Channel"
     IDS_MAPPING_COL_OUT_CONTROL "Out Control"
     IDS_MAPPING_COL_OUT_EVENT "Out Event"
     IDS_MAPPING_COL_RANGE_END "Range End"
@@ -1258,11 +1261,11 @@ BEGIN
     IDS_MIDI_INPUT          "Input"
     IDS_MIDI_MSG_NOTE_OFF   "Note Off"
     IDS_MIDI_MSG_NOTE_ON    "Note On"
-    IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
     IDS_MIDI_OUTPUT         "Output"
     IDS_MIDI_SYS_STAT_ACTIVE_SENSING "Active Sensing"
     IDS_MIDI_SYS_STAT_CLOCK "Clock"
@@ -1278,11 +1281,11 @@ BEGIN
     IDS_MIDI_SYS_STAT_TUNE_REQUEST "Tune Request"
     IDS_MOD_DIFFERENCES     "<Differences>"
     IDS_MOD_SOURCE          "Source"
-    IDS_NONE                "<None>"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_NONE                "<None>"
     IDS_NOTE_OVERLAP_Allow  "Allow"
     IDS_NOTE_OVERLAP_Prevent "Prevent"
     IDS_OFFSET_NOTES        "Semitones:"
@@ -1304,11 +1307,11 @@ BEGIN
     IDS_OPT_DESC_Midi_nBufferSize "Size of MIDI event buffer, in bytes"
     IDS_OPT_DESC_Midi_nDefaultVelocity 
                             "Default note velocity or controller value for new steps"
-    IDS_OPT_DESC_Midi_nLatency "Desired MIDI latency, in milliseconds"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_Midi_nLatency "Desired MIDI latency, in milliseconds"
     IDS_OPT_DESC_Midi_nRecordInput 
                             "Type of data captured by the Record command"
     IDS_OPT_DESC_View_bShowCurPos 
@@ -1330,11 +1333,11 @@ BEGIN
     IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
     IDS_OPT_NAME_General_bPropertyDescrips "Show Property Descriptions"
     IDS_OPT_NAME_Midi_bSendMidiClock "Send MIDI Clock"
-    IDS_OPT_NAME_Midi_bThru "Thru"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_Midi_bThru "Thru"
     IDS_OPT_NAME_Midi_iInputDevice "Input Device"
     IDS_OPT_NAME_Midi_iInputQuant "Input Quantization"
     IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
@@ -1350,12 +1353,12 @@ BEGIN
     IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
     IDS_OPT_NAME_View_nLiveFontHeight "Live View Font Height"
     IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
-    IDS_PDR_DESC_iNoteOverlap 
-                            "How to handle overlapping instances of the same note on a channel"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_DESC_iNoteOverlap 
+                            "How to handle overlapping instances of the same note on a channel"
     IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
     IDS_PDR_DESC_nMeter     "Number of beats in a measure"
     IDS_PDR_DESC_nRecordOffset 
@@ -1372,11 +1375,11 @@ BEGIN
     IDS_PDR_NAME_nSongLength "Song Length"
     IDS_PDR_NAME_nStartPos  "Start Position"
     IDS_PDR_NAME_nTimeDiv   "PPQ"
-    IDS_PROPS_MORE_COLORS   "More Colors..."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PROPS_MORE_COLORS   "More Colors..."
     IDS_RANGE_TYPE_DUAL     "Dual"
     IDS_RANGE_TYPE_NONE     "None"
     IDS_RANGE_TYPE_OCTAVE   "Octave"
@@ -1393,11 +1396,11 @@ BEGIN
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
     IDS_SM_FILTER_CHANNEL_ALL "Show all channels"
     IDS_SM_FILTER_CHANNEL_SELECT "Show selected channel only"
-    IDS_SM_FILTER_MESSAGE_ALL "Show all messages"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_SM_FILTER_MESSAGE_ALL "Show all messages"
     IDS_SM_FILTER_MESSAGE_SELECT "Show selected message only"
     IDS_SM_OUTPUT_CHANNEL_NONE "Don't output notes"
     IDS_SM_OUTPUT_CHANNEL_SELECT "Output notes on this channel"
@@ -1413,11 +1416,11 @@ BEGIN
     IDS_TIME_TO_REPEAT_TICKS "ticks"
     IDS_TIME_TO_REPEAT_YEARS "years"
     IDS_TOOLBAR_CUSTOMIZE   "Customize..."
-    IDS_TOOLBAR_STANDARD    "Standard"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TOOLBAR_STANDARD    "Standard"
     IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
     IDS_TRACK_TYPE_CONTROL  "Control"
     IDS_TRACK_TYPE_KEY_AFT  "Key Aftertouch"
@@ -1433,11 +1436,11 @@ BEGIN
     IDS_TRK_Length          "Length"
     IDS_TRK_Mute            "Mute"
     IDS_TRK_Name            "Name"
-    IDS_TRK_Note            "Note"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_Note            "Note"
     IDS_TRK_Number          "#"
     IDS_TRK_Offset          "Offset"
     IDS_TRK_Position        "Position"
@@ -1453,11 +1456,11 @@ BEGIN
     IDS_TRK_Velocity        "Velocity"
     IDS_TRK_Voicing         "Voicing"
     IDS_TYPE_TRACK          "Track"
-    IDS_VELOCITY            "Velocity"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_VELOCITY            "Velocity"
     IDS_WINDOW_MANAGER      "&Windows..."
     IDS_WINDOW_RESET_LAYOUT_WARN 
                             "Reset all windows to their default layout? This action can't be undone, and the application will be restarted."
@@ -1467,8 +1470,6 @@ END
 STRINGTABLE
 BEGIN
     IDR_MAINFRAME           "Polymeter"
-    IDS_HINT_MAIN_CONVERGENCE_SIZE 
-                            "Require at least this many modulos to coincide"
 END
 
 STRINGTABLE
