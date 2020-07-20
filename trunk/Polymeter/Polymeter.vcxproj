@@ -325,6 +325,7 @@
     <ClInclude Include="VelocityView.h" />
     <ClInclude Include="Version.h" />
     <ClInclude Include="VersionInfo.h" />
+    <ClInclude Include="ViewTypeDef.h" />
     <ClInclude Include="Win32Console.h" />
     <ClInclude Include="WinAppCK.h" />
     <ClInclude Include="WObject.h" />

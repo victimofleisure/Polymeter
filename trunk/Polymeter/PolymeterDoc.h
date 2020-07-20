@@ -29,6 +29,7 @@
 		19		03jun20	in record undo, restore recorded MIDI events 
 		20		13jun20	add find convergence
 		21		18jun20	add track modulation command
+		22		09jul20	move view type handling from document to child frame
 
 */
 
@@ -91,11 +92,10 @@ public:
 		HINTS
 	};
 	enum {	// view types
-		VIEW_TRACK,
-		VIEW_SONG,
-		VIEW_LIVE,
+		#define VIEWTYPEDEF(name) VIEW_##name,
+		#include "ViewTypeDef.h"	// generate view type enum
 		VIEW_TYPES,
-		DEFAULT_VIEW_TYPE = VIEW_TRACK
+		DEFAULT_VIEW_TYPE = VIEW_Track
 	};
 
 // Types
@@ -158,11 +158,12 @@ public:
 	int		m_iTrackSelMark;	// track selection mark
 	double	m_fStepZoom;		// step view zoom
 	double	m_fSongZoom;		// song view zoom
-	int		m_nViewType;		// see view type enum
+	int		m_nViewType;		// see view type enum; child frames may have different view types
 	LONGLONG	m_nSongPos;		// cached song position
 	CRect	m_rStepSel;			// step view's rectangular step selection
 
 // Attributes
+	void	SetViewType(int nViewType);
 	int		GetTrackCount() const;
 	int		GetSelectedCount() const;
 	bool	GetSelected(int iTrack) const;
@@ -173,10 +174,6 @@ public:
 	bool	GetTrackSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const;
 	bool	IsRectStepSelection(const CRect& rSelection, bool bIsDeleting = false) const;
 	void	SetPosition(int nPos, bool bCenterSongPos = false);
-	bool	IsTrackView() const;
-	bool	IsSongView() const;
-	bool	IsLiveView() const;
-	void	SetViewType(int nViewType);
 	bool	ShowGMDrums(int iTrack) const;
 	void	SetPresetName(int iPreset, CString sName);
 	void	SetPartName(int iPart, CString sName);
@@ -535,12 +532,6 @@ protected:
 	afx_msg void OnUpdateTransportRecordTracks(CCmdUI *pCmdUI);
 	afx_msg void OnTransportConvergenceNext();
 	afx_msg void OnTransportConvergencePrevious();
-	afx_msg void OnViewTypeTrack();
-	afx_msg void OnViewTypeSong();
-	afx_msg void OnViewTypeLive();
-	afx_msg void OnUpdateViewTypeSong(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateViewTypeTrack(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateViewTypeLive(CCmdUI *pCmdUI);
 	afx_msg void OnEditCopy();
 	afx_msg void OnEditCut();
 	afx_msg void OnEditDelete();
@@ -609,21 +600,6 @@ inline int CPolymeterDoc::GetSelectedCount() const
 inline bool CPolymeterDoc::GetSelected(int iTrack) const
 {
 	return m_arrTrackSel.Find(iTrack) >= 0;
-}
-
-inline bool CPolymeterDoc::IsTrackView() const
-{
-	return m_nViewType == VIEW_TRACK;
-}
-
-inline bool CPolymeterDoc::IsSongView() const
-{
-	return m_nViewType == VIEW_SONG;
-}
-
-inline bool CPolymeterDoc::IsLiveView() const
-{
-	return m_nViewType == VIEW_LIVE;
 }
 
 inline bool CPolymeterDoc::HaveStepSelection() const

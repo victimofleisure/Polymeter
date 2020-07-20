@@ -11,6 +11,7 @@
 		01		12nov18	add method to center current position
 		02		10dec18	add song time shift to handle negative times
 		03		18mar20	make song position 64-bit
+		04		09jul20	add pointer to parent frame
 
 */
 
@@ -24,6 +25,7 @@
 
 class CSongParent;
 class CStepView;
+class CChildFrame;
 
 class CSongView : public CScrollView
 {
@@ -39,6 +41,7 @@ protected: // create from serialization only
 // Public data
 	CSongParent	*m_pParent;		// pointer to parent view
 	CStepView	*m_pStepView;	// pointer to step view, for track selection
+	CChildFrame	*m_pParentFrame;	// pointer to parent frame
 
 // Attributes
 public:

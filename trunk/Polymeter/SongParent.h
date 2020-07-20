@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      30may18	initial version
+		01		09jul20	add pointer to parent frame
 
 */
 
@@ -21,6 +22,7 @@
 
 class CSongView;
 class CSongTrackView;
+class CChildFrame;
 
 class CSongParent : public CSplitView
 {
@@ -44,6 +46,7 @@ public:
 // Public data
 	CSongView	*m_pSongView;		// pointer to song view
 	CSongTrackView	*m_pSongTrackView;	// pointer to song track view
+	CChildFrame	*m_pParentFrame;	// pointer to parent frame
 
 // Operations
 public:
@@ -63,7 +66,6 @@ public:
 // Attributes
 
 // Operations
-	void	ShowVelocityView(bool bShow);
 	void	OnSongScroll(CSize szScroll);
 	void	OnSongZoom();
 	void	UpdatePersistentState();

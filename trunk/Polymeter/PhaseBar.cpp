@@ -11,6 +11,7 @@
 		01		18mar20	get song position from document instead of sequencer
         02		02apr20	add video export
 		03		13jun20	add find convergence
+		04		09jul20	get view type from child frame instead of document
 		
 */
 
@@ -27,6 +28,7 @@
 #include "PathStr.h"
 #include "FolderDialog.h"
 #include "RecordDlg.h"
+#include "ChildFrm.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -98,13 +100,14 @@ void CPhaseBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			break;
 		case CPolymeterDoc::HINT_SONG_POS:
 			m_nSongPos = pDoc->m_nSongPos;
-			if (pDoc->IsTrackView()) {	// if showing track view
+			if (theApp.GetMainFrame()->GetActiveChildFrame()->IsTrackView()) {	// if showing track view
 				Invalidate();
 			} else {	// not showing track view
 				OnTrackMuteChange();	// assume track mutes may have changed
 			}
 			break;
 		case CPolymeterDoc::HINT_SOLO:
+		case CPolymeterDoc::HINT_VIEW_TYPE:
 			OnTrackMuteChange();
 			break;
 		}

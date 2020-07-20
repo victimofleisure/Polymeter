@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+		01		09jul20	move view type handling from document to child frame
 
 */
 
@@ -38,10 +39,19 @@ public:
 		ID_VIEW_SONG,
 		ID_VIEW_LIVE,
 	};
+	enum {	// view types
+		#define VIEWTYPEDEF(name) VIEW_##name,
+		#include "ViewTypeDef.h"	// generate view type enum
+		VIEW_TYPES,
+	};
 
 // Attributes
 public:
+	int		GetViewType() const;
 	void	SetViewType(int nViewType);
+
+	#define VIEWTYPEDEF(name) bool Is##name##View() const { return m_nViewType == VIEW_##name; }
+	#include "ViewTypeDef.h"	// generate view type accessors
 
 // Operations
 public:
@@ -82,7 +92,7 @@ protected:
 
 // Member data
 	CMySplitterWnd	m_wndSplitter;
-	int		m_nViewType;			// view type; see enum in CPolymeterDoc
+	int		m_nViewType;			// view type; see enum in CPolymeterDoc (may differ from document's view type)
 	int		m_nSplitPos;			// cached split position for this instance
 	static	int		m_nGlobSplitPos;	// global split position for all documents
 
@@ -96,4 +106,15 @@ protected:
 	afx_msg void OnTrackLength();
 	afx_msg void OnUpdateTrackLength(CCmdUI *pCmdUI);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnViewTypeTrack();
+	afx_msg void OnViewTypeSong();
+	afx_msg void OnViewTypeLive();
+	afx_msg void OnUpdateViewTypeSong(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateViewTypeTrack(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateViewTypeLive(CCmdUI *pCmdUI);
 };
+
+inline int CChildFrame::GetViewType() const
+{
+	return m_nViewType;
+}

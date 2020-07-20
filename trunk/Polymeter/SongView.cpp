@@ -18,6 +18,8 @@
 		08		26dec19	in OnDraw, exclude song position marker from background fill
 		09		28dec19	in OnDraw, draw bottom outline of last row of cells
 		10		18mar20	get song position from document instead of sequencer
+		11		09jul20	get view type from child frame instead of document
+		12		15jul20	handle solo hint for live view
 
 */
 
@@ -34,6 +36,7 @@
 #include "UndoCodes.h"
 #include "SongTrackView.h"
 #include "StepView.h"
+#include "ChildFrm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -66,6 +69,7 @@ CSongView::CSongView()
 {
 	m_pParent = NULL;
 	m_pStepView = NULL;
+	m_pParentFrame = NULL;
 	m_nTrackHeight = 20;
 	m_nCellWidth = 20;
 	m_nZoom = 0;
@@ -128,6 +132,7 @@ void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_MULTI_TRACK_STEPS:
 	case CPolymeterDoc::HINT_STEPS_ARRAY:
 	case CPolymeterDoc::HINT_TRACK_SELECTION:
+	case CPolymeterDoc::HINT_SOLO:
 		Invalidate();
 		break;
 	case CPolymeterDoc::HINT_TRACK_ARRAY:
@@ -151,7 +156,7 @@ void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		break;
 	case CPolymeterDoc::HINT_SONG_POS:
 	case CPolymeterDoc::HINT_VIEW_TYPE:
-		if (GetDocument()->IsSongView()) {
+		if (m_pParentFrame->IsSongView()) {	// if showing song view
 			UpdateSongPos(GetDocument()->m_nSongPos);
 		}
 		break;

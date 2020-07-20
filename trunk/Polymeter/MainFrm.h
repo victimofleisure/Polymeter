@@ -23,6 +23,10 @@
 		13		06may20	add view timer flag
 		14		13jun20	add find convergence
 		15		18jun20	add message string handler for convergence size hint
+		16		27jun20	add docking bar enumeration and name IDs
+		17		04jul20	add commands to create new tab groups
+		18		05jul20	refactor update song position
+		19		09jul20	add pointer to active child frame
 
 */
 
@@ -45,12 +49,16 @@
 
 // docking bar IDs are relative to AFX_IDW_CONTROLBAR_FIRST
 enum {	// docking bar IDs; don't change, else bar placement won't be restored
-	ID_APP_DOCKING_BAR_FIRST = AFX_IDW_CONTROLBAR_FIRST + 40,
+	ID_APP_DOCKING_BAR_START = AFX_IDW_CONTROLBAR_FIRST + 40,
 	#define MAINDOCKBARDEF(name, width, height, style) ID_BAR_##name,
 	#include "MainDockBarDef.h"	// generate docking bar IDs
+	ID_APP_DOCKING_BAR_END,
+	ID_APP_DOCKING_BAR_FIRST = ID_APP_DOCKING_BAR_START + 1,
+	ID_APP_DOCKING_BAR_LAST = ID_APP_DOCKING_BAR_END - 1,
 };
 
 class CPolymeterDoc;
+class CChildFrame;
 
 // need these for generation of docking bar members
 #define CMidiInputBar CMidiEventBar
@@ -72,12 +80,18 @@ public:
 		SBP_SONG_TIME,
 		STATUS_BAR_PANES
 	};
+	enum {	// enumerate docking bars
+		#define MAINDOCKBARDEF(name, width, height, style) DOCKING_BAR_##name,
+		#include "MainDockBarDef.h"	// generate docking bar enumeration
+		DOCKING_BARS
+	};
 
 // Attributes
 public:
 	HACCEL	GetAccelTable() const;
 	CMFCStatusBar&	GetStatusBar();
 	CPolymeterDoc	*GetActiveMDIDoc();
+	CChildFrame	*GetActiveChildFrame();
 	bool	PropertiesBarHasFocus() const;
 	CString	GetSongPositionString() const;
 	CString	GetSongTimeString() const;
@@ -92,9 +106,9 @@ public:
 
 // Operations
 public:
-	void	OnActivateView(CView *pView);
+	void	OnActivateView(CView *pView, CChildFrame *pChildFrame);
 	void	OnUpdate(CView* pSender, LPARAM lHint = 0, CObject* pHint = NULL);
-	void	UpdateSongPosition();
+	void	UpdateSongPosition(const CPolymeterDoc *pDoc);
 	void	FullScreen(bool bEnable);
 	static	int		FindMenuItem(const CMenu *pMenu, UINT nItemID);
 
@@ -125,9 +139,11 @@ protected:  // control bar embedded members
 		ID_CONVERGENCE_SIZE_START = ID_APP_DYNAMIC_SUBMENU_BASE,
 		ID_CONVERGENCE_SIZE_END = ID_CONVERGENCE_SIZE_START + CONVERGENCE_SIZES - 1,
 	};
+	static const UINT m_arrDockingBarNameID[DOCKING_BARS];	// array of docking bar name IDs
 
 // Data members
 	CPolymeterDoc	*m_pActiveDoc;		// pointer to active document, or NULL if none
+	CChildFrame	*m_pActiveChildFrame;	// pointer to active child frame, or NULL if none
 	CString	m_sSongPos;					// song position string
 	CString	m_sSongTime;				// song time string
 	CFindReplaceDialog	*m_pFindDlg;	// pointer to find dialog
@@ -138,6 +154,7 @@ protected:  // control bar embedded members
 	CSequencer::CMidiEventArray m_arrMIDIOutputEvent;	// array of MIDI output events
 	CMFCColorMenuButton	*m_pbtnTrackColor;	// pointer to track color menu button
 	int		m_nConvergenceSize;			// minimum number of modulos in a convergence
+	CString	m_sStatusHint;				// status bar hint string
 
 // Helpers
 	BOOL	CreateDockingWindows();
@@ -203,11 +220,15 @@ protected:
 	afx_msg void OnUpdateTransportConvergenceSize(CCmdUI *pCmdUI);
 	afx_msg void OnTransportConvergenceSizeAll();
 	afx_msg void OnUpdateTransportConvergenceSizeAll(CCmdUI *pCmdUI);
+	afx_msg void OnWindowNewHorizontalTabGroup();
+	afx_msg void OnUpdateWindowNewHorizontalTabGroup(CCmdUI *pCmdUI);
+	afx_msg void OnWindowNewVerticalTabGroup();
+	afx_msg void OnUpdateWindowNewVerticalTabGroup(CCmdUI *pCmdUI);
 };
 
 inline HACCEL CMainFrame::GetAccelTable() const
 {
-	return(m_hAccelTable);
+	return m_hAccelTable;
 }
 
 inline CMFCStatusBar& CMainFrame::GetStatusBar()
@@ -217,7 +238,12 @@ inline CMFCStatusBar& CMainFrame::GetStatusBar()
 
 inline CPolymeterDoc *CMainFrame::GetActiveMDIDoc()
 {
-	return(m_pActiveDoc);
+	return m_pActiveDoc;
+}
+
+inline CChildFrame *CMainFrame::GetActiveChildFrame()
+{
+	return m_pActiveChildFrame;
 }
 
 inline bool CMainFrame::PropertiesBarHasFocus() const

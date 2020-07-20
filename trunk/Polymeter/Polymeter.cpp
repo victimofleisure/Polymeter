@@ -21,6 +21,7 @@
 		11		03jun20	add global recording state
 		12		15jun20	add child frame and settings to reset window layout
 		13		17jun20	add tracking help handler
+		14		28jun20	do track parameter mappings even if no output device
 
 */
 
@@ -735,13 +736,13 @@ void CALLBACK CPolymeterApp::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwIn
 			if (MIDI_STAT(dwParam1) < SYSEX) {	// if channel voice message (exclude system status messages)
 				DWORD	dwEvent = static_cast<DWORD>(dwParam1);
 				CPolymeterDoc	*pDoc = pMainFrame->GetActiveMDIDoc();
-				if (pDoc != NULL && pDoc->m_Seq.IsOpen() && !pDoc->m_Seq.IsStopping()) {
-					if (theApp.m_Options.m_Midi_bThru) {	// if MIDI thru enabled
-						if (pDoc->m_Seq.m_mapping.GetCount()) {
+				if (pDoc != NULL) {	// if active document exists
+					if (pDoc->m_Seq.IsOpen() && !pDoc->m_Seq.IsStopping()) {	// if MIDI output device is open
+						if (pDoc->m_Seq.m_mapping.GetCount()) {	// if mappings exist
 							WCritSec::Lock	lock(pDoc->m_Seq.m_mapping.GetCritSec());	// serialize access to mappings
-							if (pDoc->m_Seq.m_mapping.GetArray().MapMidiEvent(dwEvent, arrMappedEvent)) {
+							if (pDoc->m_Seq.m_mapping.GetArray().MapMidiEvent(dwEvent, arrMappedEvent)) {	// if events were mapped
 								int	nMaps = arrMappedEvent.GetSize();
-								for (int iMap = 0; iMap < nMaps; iMap++) {	// for each mapped event
+								for (int iMap = 0; iMap < nMaps; iMap++) {	// for each translated event
 									DWORD	dwMappedEvent = arrMappedEvent[iMap];
 									pDoc->m_Seq.OutputLiveEvent(dwMappedEvent);
 									if (pMainFrame->m_wndMidiOutputBar.FastIsVisible())	// if MIDI output bar visible
@@ -751,14 +752,21 @@ void CALLBACK CPolymeterApp::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, W64UINT dwIn
 								goto EventWasMapped;	// input event was mapped so don't output it
 							}
 						}
-						pDoc->m_Seq.OutputLiveEvent(dwEvent);	// output event
-						if (pMainFrame->m_wndMidiOutputBar.FastIsVisible())	// if MIDI output bar visible
-							pMainFrame->m_wndMidiOutputBar.PostMessage(UWM_MIDI_EVENT, dwParam2, dwEvent);
-						if (pMainFrame->m_wndPianoBar.FastIsVisible()) {	// if piano bar visible
-							if (MIDI_CMD(dwEvent) <= NOTE_ON)	// note events only
-								pMainFrame->m_wndPianoBar.PostMessage(UWM_MIDI_EVENT, dwParam2, dwEvent);
+						if (theApp.m_Options.m_Midi_bThru) {	// if MIDI thru enabled
+							pDoc->m_Seq.OutputLiveEvent(dwEvent);	// output event
+							if (pMainFrame->m_wndMidiOutputBar.FastIsVisible())	// if MIDI output bar visible
+								pMainFrame->m_wndMidiOutputBar.PostMessage(UWM_MIDI_EVENT, dwParam2, dwEvent);
+							if (pMainFrame->m_wndPianoBar.FastIsVisible()) {	// if piano bar visible
+								if (MIDI_CMD(dwEvent) <= NOTE_ON)	// note events only
+									pMainFrame->m_wndPianoBar.PostMessage(UWM_MIDI_EVENT, dwParam2, dwEvent);
+							}
 						}
 EventWasMapped:;
+					} else {	// MIDI output device is closed, stopped, or nonexistent
+						if (pDoc->m_Seq.m_mapping.GetCount()) {	// if mappings exist
+							WCritSec::Lock	lock(pDoc->m_Seq.m_mapping.GetCritSec());	// serialize access to mappings
+							pDoc->m_Seq.m_mapping.GetArray().MapMidiEvent(dwEvent, arrMappedEvent);	// do track property mappings
+						}
 					}
 				}
 				if (theApp.m_bIsRecordMidiIn) {	// if recording MIDI input

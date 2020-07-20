@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      09may18	initial version
+		01		09jul20	add pointer to parent frame
 
 */
 
@@ -23,6 +24,7 @@ class CTrackView;
 class CMuteView;
 class CStepView;
 class CVelocityView;
+class CChildFrame;
 
 class CStepParent : public CSplitView
 {
@@ -52,6 +54,7 @@ public:
 	CStepView	*m_pStepView;		// pointer to step view
 	CMuteView	*m_pMuteView;		// pointer to mute view
 	CVelocityView	*m_pVeloView;	// pointer to velocity view
+	CChildFrame	*m_pParentFrame;	// pointer to parent frame
 
 // Operations
 public:

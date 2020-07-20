@@ -17,6 +17,7 @@
 		07		01apr20	standardize context menu handling
 		08		17apr20	add track color
 		09		17jun20	in command help handler, try tracking help first
+		10		09jul20	add pointer to parent frame
 
 */
 
@@ -34,6 +35,7 @@
 #include "SaveObj.h"
 #include "Note.h"
 #include "Persist.h"
+#include "ChildFrm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -66,6 +68,7 @@ const LPCTSTR CTrackView::m_arrGMDrumName[] = {
 
 CTrackView::CTrackView()
 {
+	m_pParentFrame = NULL;
 	m_grid.TrackDropPos(true);
 	m_bIsUpdating = false;
 	m_bIsSelectionChanging = false;
@@ -694,7 +697,7 @@ void CTrackView::OnListEndScroll(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	UNREFERENCED_PARAMETER(pNMHDR);	// NMLVSCROLL
 	UNREFERENCED_PARAMETER(pResult);
-	GetParentFrame()->SendMessage(UWM_TRACK_SCROLL, m_grid.GetTopIndex());
+	m_pParentFrame->SendMessage(UWM_TRACK_SCROLL, m_grid.GetTopIndex());
 }
 
 void CTrackView::OnListKeyDown(NMHDR* pNMHDR, LRESULT* pResult)
@@ -717,7 +720,7 @@ LRESULT CTrackView::OnListScrollKey(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
-	GetParentFrame()->SendMessage(UWM_TRACK_SCROLL, m_grid.GetTopIndex());
+	m_pParentFrame->SendMessage(UWM_TRACK_SCROLL, m_grid.GetTopIndex());
 	return 0;
 }
 

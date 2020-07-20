@@ -376,6 +376,9 @@ BEGIN
         MENUITEM "&New Window",                 ID_WINDOW_NEW
         MENUITEM "&Full Screen",                ID_WINDOW_FULL_SCREEN
         MENUITEM "&Reset Layout",               ID_WINDOW_RESET_LAYOUT
+        MENUITEM SEPARATOR
+        MENUITEM "New &Horizontal Tab Group",   ID_WINDOW_NEW_HORZ_TAB_GROUP
+        MENUITEM "New &Vertical Tab Group",     ID_WINDOW_NEW_VERT_TAB_GROUP
     END
     POPUP "&Help"
     BEGIN
@@ -1235,15 +1238,16 @@ BEGIN
     IDS_IMPORT_ERR_LOCATION "Row %d, Column %d"
     IDS_IMPORT_ERR_PROPERTY "Undefined property name."
     IDS_IMPORT_ERR_RANGE    "Range error."
+    IDS_MAIN_DOCKING_BAR_HINT_FMT "Show or hide the %1 window"
     IDS_MAIN_TRACK_COLORS   "Track Colors"
     IDS_MAPPING_COL_IN_CHANNEL "In Channel"
     IDS_MAPPING_COL_IN_CONTROL "In Control"
     IDS_MAPPING_COL_IN_EVENT "In Event"
-    IDS_MAPPING_COL_NUMBER  "#"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MAPPING_COL_NUMBER  "#"
     IDS_MAPPING_COL_OUT_CHANNEL "Out Channel"
     IDS_MAPPING_COL_OUT_CONTROL "Out Control"
     IDS_MAPPING_COL_OUT_EVENT "Out Event"
@@ -1260,11 +1264,11 @@ BEGIN
                             "Song position is incompatible with MIDI clock sync.\nPlayback will start from the nearest sixteenth note."
     IDS_MIDI_INPUT          "Input"
     IDS_MIDI_MSG_NOTE_OFF   "Note Off"
-    IDS_MIDI_MSG_NOTE_ON    "Note On"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDI_MSG_NOTE_ON    "Note On"
     IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
     IDS_MIDI_OUTPUT         "Output"
     IDS_MIDI_SYS_STAT_ACTIVE_SENSING "Active Sensing"
@@ -1280,11 +1284,11 @@ BEGIN
     IDS_MIDI_SYS_STAT_SYSTEM_RESET "System Reset"
     IDS_MIDI_SYS_STAT_TUNE_REQUEST "Tune Request"
     IDS_MOD_DIFFERENCES     "<Differences>"
-    IDS_MOD_SOURCE          "Source"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MOD_SOURCE          "Source"
     IDS_NONE                "<None>"
     IDS_NOTE_OVERLAP_Allow  "Allow"
     IDS_NOTE_OVERLAP_Prevent "Prevent"
@@ -1305,12 +1309,12 @@ BEGIN
                             "Quantization for converting MIDI input to steps"
     IDS_OPT_DESC_Midi_iOutputDevice "Selected MIDI output device"
     IDS_OPT_DESC_Midi_nBufferSize "Size of MIDI event buffer, in bytes"
-    IDS_OPT_DESC_Midi_nDefaultVelocity 
-                            "Default note velocity or controller value for new steps"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_Midi_nDefaultVelocity 
+                            "Default note velocity or controller value for new steps"
     IDS_OPT_DESC_Midi_nLatency "Desired MIDI latency, in milliseconds"
     IDS_OPT_DESC_Midi_nRecordInput 
                             "Type of data captured by the Record command"
@@ -1332,11 +1336,11 @@ BEGIN
     IDS_OPT_NAME_General_bAlwaysRecord "Always Record"
     IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
     IDS_OPT_NAME_General_bPropertyDescrips "Show Property Descriptions"
-    IDS_OPT_NAME_Midi_bSendMidiClock "Send MIDI Clock"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_Midi_bSendMidiClock "Send MIDI Clock"
     IDS_OPT_NAME_Midi_bThru "Thru"
     IDS_OPT_NAME_Midi_iInputDevice "Input Device"
     IDS_OPT_NAME_Midi_iInputQuant "Input Quantization"
@@ -1352,11 +1356,11 @@ BEGIN
     IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
     IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
     IDS_OPT_NAME_View_nLiveFontHeight "Live View Font Height"
-    IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
     IDS_PDR_DESC_iNoteOverlap 
                             "How to handle overlapping instances of the same note on a channel"
     IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
@@ -1374,11 +1378,11 @@ BEGIN
     IDS_PDR_NAME_nRecordOffset "Record Offset"
     IDS_PDR_NAME_nSongLength "Song Length"
     IDS_PDR_NAME_nStartPos  "Start Position"
-    IDS_PDR_NAME_nTimeDiv   "PPQ"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_NAME_nTimeDiv   "PPQ"
     IDS_PROPS_MORE_COLORS   "More Colors..."
     IDS_RANGE_TYPE_DUAL     "Dual"
     IDS_RANGE_TYPE_NONE     "None"
@@ -1395,11 +1399,11 @@ BEGIN
                             "Modulation exceeded the maximum number of recursions."
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
     IDS_SM_FILTER_CHANNEL_ALL "Show all channels"
-    IDS_SM_FILTER_CHANNEL_SELECT "Show selected channel only"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_SM_FILTER_CHANNEL_SELECT "Show selected channel only"
     IDS_SM_FILTER_MESSAGE_ALL "Show all messages"
     IDS_SM_FILTER_MESSAGE_SELECT "Show selected message only"
     IDS_SM_OUTPUT_CHANNEL_NONE "Don't output notes"
@@ -1415,11 +1419,11 @@ BEGIN
     IDS_TIME_TO_REPEAT_GPF  "Greatest prime factor is "
     IDS_TIME_TO_REPEAT_TICKS "ticks"
     IDS_TIME_TO_REPEAT_YEARS "years"
-    IDS_TOOLBAR_CUSTOMIZE   "Customize..."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TOOLBAR_CUSTOMIZE   "Customize..."
     IDS_TOOLBAR_STANDARD    "Standard"
     IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
     IDS_TRACK_TYPE_CONTROL  "Control"
@@ -1435,11 +1439,11 @@ BEGIN
     IDS_TRK_Index           "Index"
     IDS_TRK_Length          "Length"
     IDS_TRK_Mute            "Mute"
-    IDS_TRK_Name            "Name"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_Name            "Name"
     IDS_TRK_Note            "Note"
     IDS_TRK_Number          "#"
     IDS_TRK_Offset          "Offset"
@@ -1455,11 +1459,11 @@ BEGIN
     IDS_TRK_Type            "Type"
     IDS_TRK_Velocity        "Velocity"
     IDS_TRK_Voicing         "Voicing"
-    IDS_TYPE_TRACK          "Track"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TYPE_TRACK          "Track"
     IDS_VELOCITY            "Velocity"
     IDS_WINDOW_MANAGER      "&Windows..."
     IDS_WINDOW_RESET_LAYOUT_WARN 
@@ -1630,6 +1634,10 @@ BEGIN
     ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "Manage child windows\nWindows"
+    ID_WINDOW_NEW_HORZ_TAB_GROUP 
+                            "Create a new horizontal tab group\nNew Horizontal Tab Group"
+    ID_WINDOW_NEW_VERT_TAB_GROUP 
+                            "Create a new horizontal tab group \nNew Vertical Tab Group"
     ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"
 END
 

@@ -10,6 +10,8 @@
         00      09may18	initial version
 		01		09may19	align origin button with velocity bar midpoint
 		02		17jun20	in command help handler, try tracking help first
+		03		09jul20	add pointer to parent frame
+		04		14jul20	add mute view vertical scrolling
 
 */
 
@@ -52,6 +54,7 @@ CStepParent::CStepParent()
 	m_pTrackView = NULL;
 	m_pMuteView = NULL;
 	m_pStepView = NULL;
+	m_pParentFrame = NULL;
 	m_nRulerHeight = 0;
 	m_bIsScrolling = true;	// prevents premature scrolling during creation
 	m_bIsVeloSigned = m_bGlobIsVeloSigned;
@@ -149,7 +152,7 @@ void CStepParent::OnStepScroll(CSize szScroll)
 		}
 		if (szScroll.cy) {	// if y scroll
 			m_pTrackView->SetVScrollPos(ptScroll.y);
-			m_pMuteView->Invalidate();
+			m_pMuteView->OnVertScroll();
 		}
 	}
 }
@@ -365,6 +368,8 @@ void CStepParent::OnParentNotify(UINT message, LPARAM lParam)
 				MapWindowPoints(m_pStepView, &ptCursor, 1);	// map cursor position to song view's coords
 				int	x = ptCursor.x + m_pStepView->GetScrollPosition().x;	// account for scrolling
 				int	nPos = m_pStepView->ConvertXToSongPos(x);	// convert to song position
+				// MDI child activation updates song mode, but parent notification happens first
+				GetDocument()->m_Seq.SetSongMode(false);	// reset song mode before setting song position
 				GetDocument()->SetPosition(nPos);	// set song position
 			}
 			m_pStepView->SetFocus();	// focus step view
@@ -394,7 +399,7 @@ LRESULT CStepParent::OnTrackScroll(WPARAM wParam, LPARAM lParam)
 		CPoint	ptScrollMax(m_pStepView->GetMaxScrollPos());
 		ptScroll.y = CLAMP(ptScroll.y, 0, ptScrollMax.y);
 		m_pStepView->ScrollToPosition(ptScroll);
-		m_pMuteView->Invalidate();
+		m_pMuteView->OnVertScroll();
 	}
 	return 0;
 }

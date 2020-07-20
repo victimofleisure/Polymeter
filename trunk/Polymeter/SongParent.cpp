@@ -10,6 +10,7 @@
         00      30may18	initial version
 		01		08dec18	add origin shift to handle negative times
 		02		17jun20	in command help handler, try tracking help first
+		03		09jul20	add pointer to parent frame
 
 */
 
@@ -49,6 +50,7 @@ CSongParent::CSongParent()
 	m_bIsSplitVert = true;
 	m_pSongView = NULL;
 	m_pSongTrackView = NULL;
+	m_pParentFrame = NULL;
 	m_nRulerHeight = 20;
 	m_nNameWidth = m_nGlobNameWidth;
 	m_bIsScrolling = true;	// prevents premature scrolling during creation
@@ -213,6 +215,7 @@ BOOL CSongParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 	if (!SafeCreateObject(RUNTIME_CLASS(CSongTrackView), m_pSongTrackView))
 		return false;
 	// give child views pointers to parent or siblings, before creating windows
+	m_pSongView->m_pParentFrame = m_pParentFrame;
 	m_pSongView->m_pParent = this;
 	m_pSongTrackView->m_pSongView = m_pSongView;
 	CChildFrame	*pChildFrm = STATIC_DOWNCAST(CChildFrame, pParentWnd);
@@ -275,8 +278,10 @@ void CSongParent::OnParentNotify(UINT message, LPARAM lParam)
 				MapWindowPoints(m_pSongView, &ptCursor, 1);	// map cursor position to song view's coords
 				int	x = ptCursor.x + m_pSongView->GetScrollPosition().x;	// account for scrolling
 				int	nPos = m_pSongView->ConvertXToSongPos(x);	// convert to song position
+				// MDI child activation updates song mode, but parent notification happens first
+				GetDocument()->m_Seq.SetSongMode(true);	// set song mode before setting song position
 				GetDocument()->SetPosition(nPos);	// set song position
-				m_pSongView->SetFocus();	// focus step view
+				m_pSongView->SetFocus();	// focus song view
 			}
 		}
 		break;
@@ -286,7 +291,7 @@ void CSongParent::OnParentNotify(UINT message, LPARAM lParam)
 			if (PtInRuler(ptCursor)) {	// if clicked within ruler
 				m_pSongView->ResetSelection();	// reset song selection
 				GetDocument()->Deselect();	// reset track selection
-				m_pSongView->SetFocus();	// focus step view
+				m_pSongView->SetFocus();	// focus song view
 			}
 		}
 		break;

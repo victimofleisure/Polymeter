@@ -10,6 +10,7 @@
         00      23mar18	initial version
 		01		17mar20	in OnUpdate, handle quant change same as length change
 		02		18mar20	get song position from document instead of sequencer
+		03		09jul20	get view type from child frame instead of document
 
 */
 
@@ -25,6 +26,7 @@
 #include "UndoCodes.h"
 #include "StepParent.h"
 #include "MuteView.h"
+#include "ChildFrm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -70,6 +72,7 @@ IMPLEMENT_DYNCREATE(CStepView, CScrollView)
 CStepView::CStepView()
 {
 	m_pParent = NULL;
+	m_pParentFrame = NULL;
 	m_nTrackHeight = 20;
 	m_nBeatWidth = m_nTrackHeight * 4;
 	m_nZoom = 0;
@@ -195,7 +198,7 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		UpdateSongPosition();
 		break;
 	case CPolymeterDoc::HINT_SONG_POS:
-		if (GetDocument()->IsTrackView()) {
+		if (m_pParentFrame->IsTrackView()) {	// if showing track view
 			UpdateSongPosition();
 		}
 		break;
@@ -244,14 +247,14 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		}
 		break;
 	case CPolymeterDoc::HINT_VIEW_TYPE:
-		if (GetDocument()->IsTrackView()) {	// if track view
+		if (m_pParentFrame->IsTrackView()) {	// if track view
 			UpdateSongPosition();
-		} else if (GetDocument()->IsLiveView()) {	// else if live view
+		} else if (m_pParentFrame->IsLiveView()) {	// else if live view
 			ResetStepSelection();	// disable most editing commands
 		}
 		break;
 	case CPolymeterDoc::HINT_SOLO:
-		if (GetDocument()->IsTrackView() && theApp.m_Options.m_View_bShowCurPos) {
+		if (m_pParentFrame->IsTrackView() && theApp.m_Options.m_View_bShowCurPos) {
 			Invalidate();	// repaint each track's current position
 		}
 		break;

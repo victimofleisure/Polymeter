@@ -176,6 +176,8 @@
 {ID_VIEW_ZOOM_RESET,					IDH_Menus_View_Zoom_Reset},
 {ID_WINDOW_FULL_SCREEN, 				IDH_Menus_Window_Full_Screen},
 {ID_WINDOW_MANAGER, 					IDH_Menus_Window_Windows},
+{ID_WINDOW_NEW_HORZ_TAB_GROUP,			IDH_Menus_Window_New_Horizontal_Tab_Group},
+{ID_WINDOW_NEW_VERT_TAB_GROUP,			IDH_Menus_Window_New_Vertical_Tab_Group},
 {ID_WINDOW_RESET_LAYOUT,				IDH_Menus_Window_Reset_Layout},
 
 // dialog IDs

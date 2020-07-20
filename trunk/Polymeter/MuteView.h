@@ -8,6 +8,9 @@
 		revision history:
 		rev		date	comments
         00      15may18	initial version
+		01		09jul20	add pointer to parent frame
+		02		14jul20	add vertical scrolling
+		03		15jul20	add mute caching for song mode
 
 */
 
@@ -20,6 +23,7 @@
 #include "GDIUtils.h"
 
 class CStepView;
+class CChildFrame;
 
 class CMuteView : public CView, public CTrackBase
 {
@@ -30,7 +34,8 @@ protected: // create from serialization only
 // Constants
 
 // Public data
-	CStepView	*m_pStepView;
+	CStepView	*m_pStepView;	// pointer to parent view
+	CChildFrame	*m_pParentFrame;	// pointer to parent frame
 
 // Attributes
 public:
@@ -48,6 +53,7 @@ public:
 	void	UpdateSelection();
 	int		HitTest(CPoint point, bool bIgnoreX = false) const;
 	void	EndDrag();
+	void	OnVertScroll();
 
 // Overrides
 public:
@@ -88,14 +94,19 @@ protected:
 	int		m_nTrackHeight;		// track height, in client coords
 	CPoint	m_ptDragOrigin;		// drag origin, in scrolled client coords
 	int		m_nDragState;		// drag state; see enum above
-	bool	m_bOriginMute;		// true if original mute was set
+	bool	m_bIsMuteCacheValid;	// true if cached mute states are valid
 	CIntRange	m_rngMute;		// mute selection range
 	CRgnData	m_rgndStepSel;	// region data for step selection overlap removal
+	int		m_nScrollPos;		// current scroll position
 	int		m_nScrollDelta;		// scroll by this amount per timer tick
 	W64UINT	m_nScrollTimer;		// if non-zero, timer instance for scrolling
+	CBoolArrayEx	m_arrCachedMute;	// array of cached mute states for visible tracks
 
 // Helpers
 	CSize	GetClientSize() const;
+	void	MonitorMuteChanges();
+	void	ConditionallyMonitorMuteChanges();
+	void	InvalidateMuteCache();
 
 // Generated message map functionsq
 protected:
@@ -131,3 +142,9 @@ inline int CMuteView::GetViewWidth() const
 {
 	return m_nViewWidth;
 }
+
+inline void CMuteView::InvalidateMuteCache()
+{
+	m_bIsMuteCacheValid = false;
+}
+

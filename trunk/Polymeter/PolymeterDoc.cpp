@@ -53,6 +53,9 @@
 		43		03jun20	in record undo, restore recorded MIDI events 
 		44		13jun20	add find convergence
 		45		18jun20	add track modulation command
+		46		05jul20	pass document pointer to UpdateSongPosition
+		47		09jul20	move view type handling from document to child frame
+		48		17jul20	in read properties, set cached song position
 
 */
 
@@ -166,9 +169,8 @@ const int CPolymeterDoc::m_arrUndoTitleId[UNDO_CODES] = {
 };
 
 const LPCTSTR CPolymeterDoc::m_arrViewTypeName[VIEW_TYPES] = {
-	_T("Track"),
-	_T("Song"),
-	_T("Live"),
+	#define VIEWTYPEDEF(name) _T(#name),
+	#include "ViewTypeDef.h"	// generate view type name array
 };
 
 CPolymeterDoc::CTrackSortInfo CPolymeterDoc::m_infoTrackSort;
@@ -228,6 +230,17 @@ void CPolymeterDoc::CMyUndoManager::OnUpdateTitles()
 	// to reduce high-frequency memory reallocation when mouse moves
 	m_sUndoMenuItem = m_sUndoPrefix + GetUndoTitle();
 	m_sRedoMenuItem = m_sRedoPrefix + GetRedoTitle();
+}
+
+void CPolymeterDoc::SetViewType(int nViewType)
+{
+	if (nViewType != m_nViewType) {	// if view type changed
+		m_nViewType = nViewType;
+		m_Seq.SetSongMode(nViewType == VIEW_Song);
+		UpdateAllViews(NULL, HINT_VIEW_TYPE);
+		if (nViewType == VIEW_Live)	// if showing live view
+			Deselect();	// disable most editing commands
+	}
 }
 
 BOOL CPolymeterDoc::OnNewDocument()
@@ -366,6 +379,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 	m_Seq.SetNoteOverlapMode(m_iNoteOverlap != CMasterProps::NOTE_OVERLAP_Allow);
 	m_Seq.SetMeter(m_nMeter);
 	m_Seq.SetPosition(m_nStartPos);
+	m_nSongPos = m_nStartPos;	// also set our cached song position
 	int	nTracks = 0;
 	RdReg(RK_TRACK_COUNT, nTracks);
 	ASSERT(!GetTrackCount());	// track array should be empty for proper initialization
@@ -1254,23 +1268,6 @@ bool CPolymeterDoc::TransformStepVelocity(const CRect& rSelection, int nVelocity
 	UpdateAllViews(NULL, HINT_MULTI_STEP, &hint);
 	SetModifiedFlag();
 	return true;
-}
-
-void CPolymeterDoc::SetViewType(int nViewType)
-{
-	if (nViewType == m_nViewType)	// if already in requested state
-		return;	// nothing to do
-	m_nViewType = nViewType;
-	m_Seq.SetSongMode(nViewType == VIEW_SONG);
-	POSITION	pos = GetFirstViewPosition();
-	ASSERT(pos != NULL);	// must have at least one view
-	CView	*pView = GetNextView(pos);
-	ASSERT(pView != NULL);
-	CFrameWnd	*pFrame = pView->GetParentFrame();
-	CChildFrame	*pChildFrame = STATIC_DOWNCAST(CChildFrame, pFrame);
-	pChildFrame->SetViewType(nViewType);
-	if (nViewType == VIEW_LIVE)
-		Deselect();	// disable most editing commands
 }
 
 bool CPolymeterDoc::ValidateTrackLength(int nLength, int nQuant) const
@@ -2944,7 +2941,7 @@ void CPolymeterDoc::SetPosition(int nPos, bool bCenterSongPos)
 {
 	m_Seq.SetPosition(nPos);
 	m_nSongPos = nPos;
-	theApp.GetMainFrame()->UpdateSongPosition();	// updates all views
+	UpdateAllViews(NULL, CPolymeterDoc::HINT_SONG_POS);
 	if (bCenterSongPos)
 		UpdateAllViews(NULL, HINT_CENTER_SONG_POS);
 }
@@ -3727,12 +3724,6 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_COMMAND(ID_TRANSPORT_RECORD_TRACKS, OnTransportRecordTracks)
 	ON_COMMAND(ID_TRANSPORT_CONVERGENCE_NEXT, OnTransportConvergenceNext)
 	ON_COMMAND(ID_TRANSPORT_CONVERGENCE_PREVIOUS, OnTransportConvergencePrevious)
-	ON_COMMAND(ID_VIEW_TYPE_SONG, OnViewTypeSong)
-	ON_COMMAND(ID_VIEW_TYPE_TRACK, OnViewTypeTrack)
-	ON_COMMAND(ID_VIEW_TYPE_LIVE, OnViewTypeLive)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_TYPE_SONG, OnUpdateViewTypeSong)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_TYPE_TRACK, OnUpdateViewTypeTrack)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_TYPE_LIVE, OnUpdateViewTypeLive)
 	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
 	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
@@ -3808,9 +3799,15 @@ BOOL CPolymeterDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	TRY {
 		ReadProperties(lpszPathName);
 		if (m_nViewType != DEFAULT_VIEW_TYPE) {	// if view type isn't default
+			POSITION	posView = GetFirstViewPosition();
+			ASSERT(posView != NULL);
+			CView	*pView = GetNextView(posView);
+			ASSERT(pView != NULL);
+			CChildFrame	*pChildFrame = DYNAMIC_DOWNCAST(CChildFrame, pView->GetParentFrame());
+			ASSERT(pChildFrame != NULL);
 			int	nViewType = m_nViewType;
-			m_nViewType = DEFAULT_VIEW_TYPE;	// spoof no-op test
-			SetViewType(nViewType);
+			m_nViewType = -1;	// spoof no-op test
+			pChildFrame->SetViewType(nViewType);
 		}
 	}
 	CATCH(CFileException, e) {
@@ -4142,7 +4139,7 @@ void CPolymeterDoc::OnTrackTranspose()
 
 void CPolymeterDoc::OnUpdateTrackTranspose(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(IsTrackView() && GetSelectedCount());
+	pCmdUI->Enable(GetSelectedCount());
 }
 
 void CPolymeterDoc::OnTrackVelocity()
@@ -4295,36 +4292,6 @@ void CPolymeterDoc::OnTransportConvergencePrevious()
 		AfxMessageBox(IDS_DOC_CONVERGENCE_OUT_OF_RANGE);
 	else
 		SetPosition(static_cast<int>(nPos), true);	// center song position
-}
-
-void CPolymeterDoc::OnViewTypeTrack()
-{
-	SetViewType(VIEW_TRACK);
-}
-
-void CPolymeterDoc::OnUpdateViewTypeTrack(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetRadio(IsTrackView());
-}
-
-void CPolymeterDoc::OnViewTypeSong()
-{
-	SetViewType(VIEW_SONG);
-}
-
-void CPolymeterDoc::OnUpdateViewTypeSong(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetRadio(IsSongView());
-}
-
-void CPolymeterDoc::OnViewTypeLive()
-{
-	SetViewType(VIEW_LIVE);
-}
-
-void CPolymeterDoc::OnUpdateViewTypeLive(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetRadio(IsLiveView());
 }
 
 void CPolymeterDoc::OnTrackSort()

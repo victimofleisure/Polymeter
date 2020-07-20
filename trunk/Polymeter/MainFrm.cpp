@@ -30,6 +30,11 @@
 		20		06may20	check for no-op before setting view timer
 		21		13jun20	add find convergence
 		22		18jun20	add message string handler for convergence size hint
+		23		24jun20	after taskbar activate, redraw all mini frames
+		24		27jun20	add status hints for docking windows submenu
+		25		04jul20	add commands to create new tab groups
+		26		05jul20	refactor update song position
+		27		09jul20	let child frame activation determine song mode
 
 */
 
@@ -50,6 +55,7 @@
 #include "dbt.h"	// for device change types
 #include "TrackView.h"
 #include "ConvergencesDlg.h"
+#include "ChildFrm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -60,7 +66,7 @@
 IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWndEx)
 
 const int  iMaxUserToolbars = 10;
-const UINT uiFirstUserToolBarId = ID_APP_DOCKING_BAR_FIRST;
+const UINT uiFirstUserToolBarId = ID_APP_DOCKING_BAR_LAST + 1;
 const UINT uiLastUserToolBarId = uiFirstUserToolBarId + iMaxUserToolbars - 1;
 
 const UINT CMainFrame::m_arrIndicatorID[] =
@@ -102,6 +108,11 @@ const COLORREF CMainFrame::m_arrTrackColor[] = {
 
 #define RK_CONVERGENCE_SIZE _T("nConvergenceSize")
 
+const UINT CMainFrame::m_arrDockingBarNameID[DOCKING_BARS] = {
+	#define MAINDOCKBARDEF(name, width, height, style) IDS_BAR_##name,
+	#include "MainDockBarDef.h"	// generate docking bar names
+};
+
 // CMainFrame construction/destruction
 
 CMainFrame::CMainFrame() : m_wndMidiInputBar(false), m_wndMidiOutputBar(true)
@@ -109,6 +120,7 @@ CMainFrame::CMainFrame() : m_wndMidiInputBar(false), m_wndMidiOutputBar(true)
 	theApp.m_nAppLook = theApp.GetInt(_T("ApplicationLook"), APPLOOK_VS_2008);
 	theApp.m_pMainWnd = this;
 	m_pActiveDoc = NULL;
+	m_pActiveChildFrame = NULL;
 	m_pFindDlg = NULL;
 	m_bFindMatchCase = false;
 	m_bIsViewTimerSet = false;
@@ -265,8 +277,9 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 	return TRUE;
 }
 
-void CMainFrame::OnActivateView(CView *pView)
+void CMainFrame::OnActivateView(CView *pView, CChildFrame *pChildFrame)
 {
+	m_pActiveChildFrame = pChildFrame;
 	// dynamic cast because other view types are possible, e.g. print preview
 	CPolymeterDoc	*pDoc;
 	if (pView != NULL)
@@ -297,6 +310,9 @@ void CMainFrame::OnActivateView(CView *pView)
 		m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);	// update song position in status bar
 		m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);	// update song time in status bar
 		m_wndPianoBar.SetKeySignature(nKeySig);
+	}
+	if (pDoc != NULL && pChildFrame->m_nWindow > 0) {	// if document has multiple child frames
+		pDoc->SetViewType(pChildFrame->GetViewType());	// document's view type matches active child frame; also sets song mode
 	}
 }
 
@@ -419,8 +435,9 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			{
 				const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
 				switch (pPropHint->m_iProp) {
+				case CMasterProps::PROP_fTempo:
 				case CMasterProps::PROP_nMeter:
-					UpdateSongPosition();	// update song position in status bar
+					UpdateSongPosition(pDoc);	// update song position and time in status bar
 					break;
 				case CMasterProps::PROP_nKeySig:
 					if (pDoc->m_Seq.IsPlaying() && m_wndMidiOutputBar.IsVisible())
@@ -509,6 +526,9 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 					m_wndPartsBar.Deselect();	// deselect
 			}
 			break;
+		case CPolymeterDoc::HINT_SONG_POS:
+			UpdateSongPosition(pDoc);	// updates song position and time in status bar
+			break;
 		}
 		bool	bIsPlaying = pDoc->m_Seq.IsPlaying();
 		m_wndPropertiesBar.Enable(CMasterProps::PROP_nTimeDiv, !bIsPlaying);
@@ -530,18 +550,14 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		m_wndMappingBar.OnUpdate(pSender, lHint, pHint);
 }
 
-void CMainFrame::UpdateSongPosition()
+void CMainFrame::UpdateSongPosition(const CPolymeterDoc *pDoc)
 {
-	LONGLONG	nPos;
-	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
-	if (pDoc->m_Seq.GetPosition(nPos)) {	// if valid song position
-		pDoc->m_nSongPos = nPos;
-		pDoc->m_Seq.ConvertPositionToString(nPos, m_sSongPos);
-		m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);
-		pDoc->m_Seq.ConvertPositionToTimeString(nPos, m_sSongTime);
-		m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);
-		pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_SONG_POS);
-	}
+	ASSERT(pDoc != NULL);
+	LONGLONG	nSongPos = pDoc->m_nSongPos;
+	pDoc->m_Seq.ConvertPositionToString(nSongPos, m_sSongPos);
+	m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);
+	pDoc->m_Seq.ConvertPositionToTimeString(nSongPos, m_sSongTime);
+	m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);
 }
 
 #ifdef _WIN64
@@ -794,6 +810,10 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_CONVERGENCE_SIZE_START, ID_CONVERGENCE_SIZE_END, OnUpdateTransportConvergenceSize)
 	ON_COMMAND(ID_TRANSPORT_CONVERGENCE_SIZE_ALL, OnTransportConvergenceSizeAll)
 	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_CONVERGENCE_SIZE_ALL, OnUpdateTransportConvergenceSizeAll)
+	ON_COMMAND(ID_WINDOW_NEW_HORZ_TAB_GROUP, OnWindowNewHorizontalTabGroup)
+	ON_UPDATE_COMMAND_UI(ID_WINDOW_NEW_HORZ_TAB_GROUP, OnUpdateWindowNewHorizontalTabGroup)
+	ON_COMMAND(ID_WINDOW_NEW_VERT_TAB_GROUP, OnWindowNewVerticalTabGroup)
+	ON_UPDATE_COMMAND_UI(ID_WINDOW_NEW_VERT_TAB_GROUP, OnUpdateWindowNewVerticalTabGroup)
 END_MESSAGE_MAP()
 
 // CMainFrame message handlers
@@ -929,7 +949,7 @@ LRESULT CMainFrame::OnAfterTaskbarActivate(WPARAM wParam, LPARAM lParam)
 //	SetWindowPos(NULL, -1, -1, -1, -1, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 //	RedrawWindow(NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_UPDATENOW | RDW_ALLCHILDREN | RDW_ERASE);
 
-//	m_dockManager.RedrawAllMiniFrames();
+	m_dockManager.RedrawAllMiniFrames();	// needed else floating dock bars leave their nonclient area unpainted
 
 	HWND hwndMDIChild = (HWND)lParam;
 	if (hwndMDIChild != NULL && ::IsWindow(hwndMDIChild))
@@ -967,7 +987,6 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 		switch (iProp) {
 		case CMasterProps::PROP_fTempo:
 			pDoc->m_Seq.SetTempo(pDoc->m_fTempo);
-			UpdateSongPosition();	// update song time in status bar
 			break;
 		case CMasterProps::PROP_nTimeDiv:
 			// convert time division preset index to time division value in ticks
@@ -975,7 +994,6 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 			break;
 		case CMasterProps::PROP_nMeter:
 			pDoc->m_Seq.SetMeter(pDoc->m_nMeter);
-			UpdateSongPosition();	// update song position in status bar
 			m_wndPropertiesBar.SetProperty(*pDoc, CMasterProps::PROP_nStartPos);	// update start position's format
 			break;
 		case CMasterProps::PROP_nSongLength:
@@ -1014,21 +1032,26 @@ LRESULT	CMainFrame::OnMidiError(WPARAM wParam, LPARAM lParam)
 
 void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 {
-	if (nIDEvent == VIEW_TIMER_ID) {
-		UpdateSongPosition();
-		if (theApp.m_pPlayingDoc != NULL) {
+	if (nIDEvent == VIEW_TIMER_ID) {	// if view timer
+		CPolymeterDoc	*pPlayingDoc = theApp.m_pPlayingDoc;
+		if (pPlayingDoc != NULL) {	// if playing document exists
+			LONGLONG	nPos;
+			if (pPlayingDoc->m_Seq.GetPosition(nPos)) {	// if valid song position
+				pPlayingDoc->m_nSongPos = nPos;
+				pPlayingDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_SONG_POS);
+			}
 			bool	bShowingMidiOutputBar = m_wndMidiOutputBar.FastIsVisible();
 			bool	bShowingPianoBar = m_wndPianoBar.FastIsVisible();
 			if (bShowingMidiOutputBar || bShowingPianoBar) {
 				// we swap buffers with sequencer, so our buffer is a member var to avoid reallocation
-				theApp.m_pPlayingDoc->m_Seq.GetMidiOutputEvents(m_arrMIDIOutputEvent);	// swap buffers
+				pPlayingDoc->m_Seq.GetMidiOutputEvents(m_arrMIDIOutputEvent);	// swap buffers
 			}
 			if (bShowingMidiOutputBar)
 				m_wndMidiOutputBar.AddEvents(m_arrMIDIOutputEvent);	// queue latest installment
 			if (bShowingPianoBar)
 				m_wndPianoBar.AddEvents(m_arrMIDIOutputEvent);	// queue latest installment
 		}
-	} else
+	} else	// not view timer
 		CMDIFrameWndEx::OnTimer(nIDEvent);
 }
 
@@ -1307,6 +1330,13 @@ LRESULT CMainFrame::OnSetMessageString(WPARAM wParam, LPARAM lParam)
 {
 	if (wParam >= ID_CONVERGENCE_SIZE_START && wParam <= ID_CONVERGENCE_SIZE_END)
 		wParam = IDS_HINT_MAIN_CONVERGENCE_SIZE;
+	else if (wParam >= ID_APP_DOCKING_BAR_FIRST && wParam <= ID_APP_DOCKING_BAR_LAST) {
+		INT_PTR	iBar = wParam - ID_APP_DOCKING_BAR_FIRST;
+		AfxFormatString1(m_sStatusHint, IDS_MAIN_DOCKING_BAR_HINT_FMT, LDS(m_arrDockingBarNameID[iBar]));
+		wParam = 0;
+		LPCTSTR	pszStatusHint = m_sStatusHint;
+		lParam = reinterpret_cast<LPARAM>(pszStatusHint);
+	}
 	return CMDIFrameWndEx::OnSetMessageString(wParam, lParam);
 }
 
@@ -1332,4 +1362,24 @@ void CMainFrame::OnTransportConvergenceSizeAll()
 void CMainFrame::OnUpdateTransportConvergenceSizeAll(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetRadio(m_nConvergenceSize == INT_MAX);
+}
+
+void CMainFrame::OnWindowNewHorizontalTabGroup()
+{
+	MDITabNewGroup(FALSE);
+}
+
+void CMainFrame::OnUpdateWindowNewHorizontalTabGroup(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(GetMDITabsContextMenuAllowedItems() & AFX_MDI_CREATE_HORZ_GROUP);
+}
+
+void CMainFrame::OnWindowNewVerticalTabGroup()
+{
+	MDITabNewGroup(TRUE);
+}
+
+void CMainFrame::OnUpdateWindowNewVerticalTabGroup(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(GetMDITabsContextMenuAllowedItems() & AFX_MDI_CREATE_VERT_GROUP);
 }

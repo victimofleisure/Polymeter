@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+		01		09jul20	add pointer to parent frame
 
 */
 
@@ -21,6 +22,7 @@
 
 class CSequencer;
 class CStepParent;
+class CChildFrame;
 
 class CStepView : public CScrollView, public CTrackBase
 {
@@ -38,7 +40,8 @@ protected: // create from serialization only
 	};
 
 // Public data
-	CStepParent	*m_pParent;
+	CStepParent	*m_pParent;			// pointer to parent view
+	CChildFrame	*m_pParentFrame;	// pointer to parent frame
 
 // Attributes
 public:
@@ -68,6 +71,7 @@ public:
 	void	EndDrag();
 	void	OnTrackLength(CPoint point);
 	int		ConvertXToSongPos(int x) const;
+	void	UpdateMute(int iTrack);
 
 // Overrides
 public:
@@ -154,7 +158,6 @@ protected:
 	void	UpdateTrack(int iTrack);
 	void	UpdateTracks(const CIntArrayEx& arrSelection);
 	void	UpdateTracks(const CRect& rSelection);
-	void	UpdateMute(int iTrack);
 	void	UpdateMutes(const CIntArrayEx& arrSelection);
 	void	UpdateMutes();
 	void	UpdateGrid(int iTrack);

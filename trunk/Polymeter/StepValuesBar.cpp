@@ -14,6 +14,7 @@
 		04		07apr20	add standard editing commands
 		05		17apr20	add multi-step editing
 		06		30apr20	fix multi-step editing change detection
+		07		09jul20	add update case for solo document hint
 		
 */
 
@@ -146,6 +147,11 @@ void CStepValuesBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				break;
 			}
 		}
+	case CPolymeterDoc::HINT_SOLO:
+	case CPolymeterDoc::HINT_VIEW_TYPE:
+		if (m_bShowCurPos)	// if showing current position
+			UpdateHighlights();
+		break;
 	}
 }
 

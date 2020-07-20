@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      23mar18	initial version
+		01		09jul20	move view type handling from document to child frame
 
 */
 
@@ -49,7 +50,7 @@ CChildFrame::CChildFrame()
 	m_pStepParent = NULL;
 	m_pSongParent = NULL;
 	m_pLiveView = NULL;
-	m_nViewType = CPolymeterDoc::VIEW_TRACK;
+	m_nViewType = CPolymeterDoc::DEFAULT_VIEW_TYPE;
 	m_nSplitPos = INIT_SPLIT_POS;
 }
 
@@ -75,42 +76,42 @@ BOOL CChildFrame::PreCreateWindow(CREATESTRUCT& cs)
 
 void CChildFrame::SetViewType(int nViewType)
 {
-	if (nViewType == m_nViewType)
-		return;
-	switch (nViewType) {
-	case CPolymeterDoc::VIEW_TRACK:
-		{
-			m_pSongParent->ShowWindow(SW_HIDE);
-			m_pLiveView->ShowWindow(SW_HIDE);
-			m_wndSplitter.ShowWindow(SW_SHOW);
-			SetActiveView(m_pTrackView);
+	if (nViewType != m_nViewType) {	// if view type changed
+		switch (nViewType) {
+		case VIEW_Track:
+			{
+				m_pSongParent->ShowWindow(SW_HIDE);
+				m_pLiveView->ShowWindow(SW_HIDE);
+				m_wndSplitter.ShowWindow(SW_SHOW);
+				SetActiveView(m_pTrackView);
+			}
+			break;
+		case VIEW_Song:
+			{
+				m_wndSplitter.ShowWindow(SW_HIDE);
+				m_pLiveView->ShowWindow(SW_HIDE);
+				CRect	rc;
+				GetClientRect(rc);
+				m_pSongParent->MoveWindow(0, 0, rc.Width(), rc.Height());
+				m_pSongParent->ShowWindow(SW_SHOW);
+				SetActiveView(m_pSongParent->m_pSongView);
+			}
+			break;
+		case VIEW_Live:
+			{
+				m_wndSplitter.ShowWindow(SW_HIDE);
+				m_pSongParent->ShowWindow(SW_HIDE);
+				CRect	rc;
+				GetClientRect(rc);
+				m_pLiveView->MoveWindow(0, 0, rc.Width(), rc.Height());
+				m_pLiveView->ShowWindow(SW_SHOW);
+				SetActiveView(m_pLiveView);
+			}
+			break;
 		}
-		break;
-	case CPolymeterDoc::VIEW_SONG:
-		{
-			m_wndSplitter.ShowWindow(SW_HIDE);
-			m_pLiveView->ShowWindow(SW_HIDE);
-			CRect	rc;
-			GetClientRect(rc);
-			m_pSongParent->MoveWindow(0, 0, rc.Width(), rc.Height());
-			m_pSongParent->ShowWindow(SW_SHOW);
-			SetActiveView(m_pSongParent->m_pSongView);
-		}
-		break;
-	case CPolymeterDoc::VIEW_LIVE:
-		{
-			m_wndSplitter.ShowWindow(SW_HIDE);
-			m_pSongParent->ShowWindow(SW_HIDE);
-			CRect	rc;
-			GetClientRect(rc);
-			m_pLiveView->MoveWindow(0, 0, rc.Width(), rc.Height());
-			m_pLiveView->ShowWindow(SW_SHOW);
-			SetActiveView(m_pLiveView);
-		}
-		break;
+		m_nViewType = nViewType;
 	}
-	m_nViewType = nViewType;
-	m_pTrackView->GetDocument()->UpdateAllViews(NULL, CPolymeterDoc::HINT_VIEW_TYPE);
+	m_pTrackView->GetDocument()->SetViewType(nViewType);	// unconditional
 }
 
 // CChildFrame diagnostics
@@ -181,6 +182,12 @@ BEGIN_MESSAGE_MAP(CChildFrame, CMDIChildWndEx)
 	ON_COMMAND(ID_TRACK_LENGTH, OnTrackLength)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_LENGTH, OnUpdateTrackLength)
 	ON_WM_SIZE()
+	ON_COMMAND(ID_VIEW_TYPE_SONG, OnViewTypeSong)
+	ON_COMMAND(ID_VIEW_TYPE_TRACK, OnViewTypeTrack)
+	ON_COMMAND(ID_VIEW_TYPE_LIVE, OnViewTypeLive)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_TYPE_SONG, OnUpdateViewTypeSong)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_TYPE_TRACK, OnUpdateViewTypeTrack)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_TYPE_LIVE, OnUpdateViewTypeLive)
 END_MESSAGE_MAP()
 
 // CChildFrame message handlers
@@ -189,11 +196,11 @@ void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeact
 {
 	CMDIChildWndEx::OnMDIActivate(bActivate, pActivateWnd, pDeactivateWnd);
 	if (bActivate) {	// if activating
-		theApp.GetMainFrame()->OnActivateView(GetActiveView());	// notify main frame
+		theApp.GetMainFrame()->OnActivateView(GetActiveView(), this);	// notify main frame
 		UpdatePersistentState();
 	} else {	// deactivating
 		if (pActivateWnd == NULL)	// if no document
-			theApp.GetMainFrame()->OnActivateView(NULL);	// notify main frame
+			theApp.GetMainFrame()->OnActivateView(NULL, NULL);	// notify main frame
 	}
 }
 
@@ -208,12 +215,17 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	if (!m_wndSplitter.CreateView(0, PANE_STEP, RUNTIME_CLASS(CStepParent), CSize(0, 0), pContext))
 		return false;
 	m_pTrackView = STATIC_DOWNCAST(CTrackView, m_wndSplitter.GetPane(0, PANE_TRACK));
+	m_pTrackView->m_pParentFrame = this;
 	m_pStepParent = STATIC_DOWNCAST(CStepParent, m_wndSplitter.GetPane(0, PANE_STEP));
 	m_pStepParent->m_pTrackView = m_pTrackView;
+	m_pStepParent->m_pParentFrame = this;
+	m_pStepParent->m_pStepView->m_pParentFrame = this;
+	m_pStepParent->m_pMuteView->m_pParentFrame = this;
 	m_pStepParent->SetRulerHeight(m_pTrackView->GetHeaderHeight());
 	m_pStepParent->SetTrackHeight(m_pTrackView->GetItemHeight());
 	if (!SafeCreateObject(RUNTIME_CLASS(CSongParent), m_pSongParent))
 		return false;
+	m_pSongParent->m_pParentFrame = this;
 	DWORD	dwSongStyle = WS_CHILD;
 	if (!m_pSongParent->Create(NULL, NULL, dwSongStyle, CRect(0, 0, 0, 0), this, ID_VIEW_SONG, pContext))
 		return false;
@@ -224,6 +236,7 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	DWORD	dwLiveStyle = WS_CHILD;
 	if (!m_pLiveView->Create(NULL, NULL, dwLiveStyle, CRect(0, 0, 0, 0), this, ID_VIEW_LIVE, pContext))
 		return false;
+	m_pLiveView->m_pParentFrame = this;
 	return true;
 }
 
@@ -235,17 +248,17 @@ BOOL CChildFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO
 	case ID_VIEW_ZOOM_RESET:
 	case ID_VIEW_VELOCITIES:
 		switch (m_nViewType) {
-		case CPolymeterDoc::VIEW_TRACK:
+		case VIEW_Track:
 			return m_pStepParent->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
-		case CPolymeterDoc::VIEW_SONG:
+		case VIEW_Song:
 			return m_pSongParent->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
-		case CPolymeterDoc::VIEW_LIVE:
+		case VIEW_Live:
 			return m_pLiveView->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
 		}
 		break;
 	case ID_NEXT_PANE:
 	case ID_PREV_PANE:
-		if (m_nViewType == CPolymeterDoc::VIEW_TRACK) {
+		if (m_nViewType == VIEW_Track) {
 			if (nCode == CN_COMMAND) {
 				HWND	hWnd = ::GetFocus();
 				CView	*pView;
@@ -281,18 +294,48 @@ void CChildFrame::OnTrackLength()
 
 void CChildFrame::OnUpdateTrackLength(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_pTrackView->GetDocument()->IsTrackView());
+	pCmdUI->Enable(IsTrackView());
 }
 
 void CChildFrame::OnSize(UINT nType, int cx, int cy)
 {
 	CMDIChildWndEx::OnSize(nType, cx, cy);
 	switch (m_nViewType) {
-	case CPolymeterDoc::VIEW_SONG:
+	case VIEW_Song:
 		m_pSongParent->MoveWindow(0, 0, cx, cy);
 		break;
-	case CPolymeterDoc::VIEW_LIVE:
+	case VIEW_Live:
 		m_pLiveView->MoveWindow(0, 0, cx, cy);
 		break;
 	}
+}
+
+void CChildFrame::OnViewTypeTrack()
+{
+	SetViewType(VIEW_Track);
+}
+
+void CChildFrame::OnUpdateViewTypeTrack(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetRadio(IsTrackView());
+}
+
+void CChildFrame::OnViewTypeSong()
+{
+	SetViewType(VIEW_Song);
+}
+
+void CChildFrame::OnUpdateViewTypeSong(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetRadio(IsSongView());
+}
+
+void CChildFrame::OnViewTypeLive()
+{
+	SetViewType(VIEW_Live);
+}
+
+void CChildFrame::OnUpdateViewTypeLive(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetRadio(IsLiveView());
 }

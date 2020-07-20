@@ -27,6 +27,7 @@
 		17		19mar20	add MIDI message name lookup
 		18		06apr20	in import steps, allow note names
 		19		17apr20	add track color
+		20		30jun20	support controller messages in MIDI file import
 
 */
 
@@ -639,11 +640,12 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 				nMaxTime = nTime;
 			int	nMsg = arrEvent[iEvent].Msg;
 			int	nCmd = MIDI_CMD(nMsg);
+			int	nKey;
+			TRACK_INFO	info;
 			if (nCmd == NOTE_ON || nCmd == NOTE_OFF) {	// if note command
 				int	nChan = MIDI_CHAN(nMsg);
 				int	nNote = MIDI_P1(nMsg);
-				int	nKey = MAKELONG(nNote, nChan);	// map key is note within channel
-				TRACK_INFO	info;
+				nKey = MAKELONG(nNote, nChan);	// map key is note within channel
 				if (!mapTrack.Lookup(nKey, info)) {	// if key not found
 					info.iTrack = arrOutTrack.GetSize();
 					info.nStartTime = -1;	// initial state is scanning for note
@@ -675,8 +677,51 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 						info.nStartTime = -1;	// resume scanning for note
 					}
 				}
-				mapTrack.SetAt(nKey, info);	// update record
+			} else if (nCmd >= KEY_AFT && nCmd <= WHEEL) {	// if other channel message
+				int	nChan = MIDI_CHAN(nMsg);
+				int	nNote;
+				if (nCmd <= CONTROL) {	// if control or key aftertouch message
+					nNote = MIDI_P1(nMsg);
+					if (nCmd == CONTROL && CHAN_MODE_MSG(nNote))	// channel mode controller messages not supported
+						continue;
+				} else	// not control or key aftertouch message
+					nNote = MIDI_NOTES / 2;	// default note number
+				nKey = MAKELONG(nNote, MAKEWORD(nChan, nCmd));	// map key is note/control within channel within command
+				if (!mapTrack.Lookup(nKey, info)) {	// if key not found
+					info.iTrack = arrOutTrack.GetSize();
+					info.nStartTime = 0;	// initial time is used as step index of previous event
+					if (nCmd == WHEEL)	// if pitch bend message
+						info.nVelocity = MIDI_NOTES / 2;	// assume wheel initially centered
+					else	// not pitch bend message
+						info.nVelocity = 0;	// assume controller initially at zero
+					CTrack	trk(true);	// set track defaults
+					// assume track types and MIDI messages are in the same order, but shifted by one
+					trk.m_iType = MIDI_CMD_IDX(nMsg) - MIDI_CVM_NOTE_ON;	// note off isn't a track type
+					trk.m_nChannel = nChan;
+					trk.m_nNote = nNote;
+					trk.m_nQuant = nOutQuant;
+					trk.m_sName = arrInTrackName[iTrack];
+					arrOutTrack.Add(trk);	// add new track to output array
+				}			
+				int	iEvtStep = round(double(nTime) / nInQuant);
+				CTrack&	trk = arrOutTrack[info.iTrack];
+				trk.m_arrStep.SetSize(iEvtStep + 1);
+				CTrack::STEP	stepCur;
+				if (nCmd <= CONTROL)	// if control or key aftertouch message
+					stepCur = MIDI_P2(nMsg);	// second parameter is value
+				else	// not control message
+					stepCur = MIDI_P1(nMsg);	// first parameter is value
+				trk.m_arrStep[iEvtStep] = stepCur;
+				CTrack::STEP	stepPrev = static_cast<CTrack::STEP>(info.nVelocity);
+				for (int iStep = info.nStartTime; iStep < iEvtStep; iStep++) {	// for each step since previous event
+					trk.m_arrStep[iStep] = stepPrev;	// repeat previous step value
+				}
+				info.nStartTime = iEvtStep;
+				info.nVelocity = stepCur;
+			} else {	// unsupported MIDI command
+				continue;	// process next event
 			}
+			mapTrack.SetAt(nKey, info);	// update track info map
 		}
 	}
 	int	nMaxSteps = round(double(nMaxTime) / nInQuant);	// compute maximum track length
@@ -688,8 +733,23 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 		return false;
 	arrTrackPtr.SetSize(nOutTracks);	// allocate track pointers
 	for (int iTrack = 0; iTrack < nOutTracks; iTrack++) {	// for each output track
-		arrOutTrack[iTrack].m_arrStep.SetSize(nMaxSteps);	// make all tracks as long as longest track
-		arrTrackPtr[iTrack] = &arrOutTrack[iTrack];	// init track pointer
+		CTrack&	trk = arrOutTrack[iTrack];
+		trk.m_arrStep.SetSize(nMaxSteps);	// make all tracks as long as longest track
+		arrTrackPtr[iTrack] = &trk;	// init track pointer
+		if (trk.m_iType != CTrack::TT_NOTE) {	// if track type isn't note
+			UINT	nCmd = (trk.m_iType + MIDI_CVM_NOTE_ON + 8) << 4;	// track types start with note on
+			int	nKey = MAKELONG(trk.m_nNote, MAKEWORD(trk.m_nChannel, nCmd));	// note/control, channel, command
+			TRACK_INFO	info;
+			BOOL	bIsFound = mapTrack.Lookup(nKey, info);	// find track's corresponding info
+			ASSERT(bIsFound);	// should always be found, else logic error above
+			if (bIsFound) {	// if track info found
+				int	nSteps = trk.GetLength();
+				// for each step between track's last input event and end of track
+				for (int iStep = info.nStartTime + 1; iStep < nSteps; iStep++) {
+					trk.m_arrStep[iStep] = static_cast<CTrack::STEP>(info.nVelocity);	// repeat last step value
+				}
+			}
+		}
 	}
 	qsort(arrTrackPtr.GetData(), nOutTracks, sizeof(CTrack *), ImportSortCmp);	// sort track pointers
 	SetSize(nOutTracks);	// allocate member track array

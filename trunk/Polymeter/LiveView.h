@@ -10,6 +10,8 @@
         00      20jun18	initial version
         01      18mar20	make song position 64-bit
 		02		19apr20	give position bar control its own device context
+		03		05jul20	add track property change handler
+		04		09jul20	add pointer to parent frame
 
 */
 
@@ -21,6 +23,8 @@
 #include "LiveListCtrl.h"
 #include "SteadyStatic.h"
 
+class CChildFrame;
+
 class CLiveView : public CView
 {
 protected: // create from serialization only
@@ -30,6 +34,7 @@ protected: // create from serialization only
 // Constants
 
 // Public data
+	CChildFrame	*m_pParentFrame;	// pointer to parent frame
 
 // Attributes
 public:
@@ -152,6 +157,8 @@ protected:
 	CSteadyStatic	m_wndSongCounter[SONG_COUNTERS];	// array of song position static controls
 	CBrush	m_brSoloBtnHover;		// solo button hover brush
 	CPosBarCtrl	m_wndPosBar;		// position bar control
+	CBoolArrayEx	m_arrCachedMute;	// array of cached mute states for visible tracks
+	bool	m_bIsMuteCacheValid;	// true if cached mute states are valid
 
 // Helpers
 	void	UpdateSongCounters();
@@ -164,6 +171,10 @@ protected:
 	void	GetStatusRect(CRect& rStatus) const;
 	void	UpdateStatus();
 	void	OnTrackMuteChange();
+	void	OnTrackPropChange(int iTrack, int iProp);
+	void	ApplyMuteChanges();
+	void	MonitorMuteChanges();
+	void	InvalidateMuteCache();
 
 // Overrides
 	virtual void OnInitialUpdate();
@@ -196,4 +207,9 @@ protected:
 inline CPolymeterDoc* CLiveView::GetDocument() const
 {
 	return reinterpret_cast<CPolymeterDoc*>(m_pDocument);
+}
+
+inline void CLiveView::InvalidateMuteCache()
+{
+	m_bIsMuteCacheValid = false;
 }

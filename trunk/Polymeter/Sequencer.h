@@ -22,6 +22,7 @@
 		12		04apr20	add chord modulation
 		13		14apr20	add send MIDI clock option
 		14		19may20	refactor record dub methods to include conditional
+		15		17jul20	refactor set song mode
 
 */
 
@@ -86,7 +87,7 @@ public:
 	void	GetInitialMidiEvents(CDWordArrayEx& arrMidiEvent) const;
 	void	SetInitialMidiEvents(const CDWordArrayEx& arrMidiEvent);
 	bool	GetSongMode() const;
-	void	SetSongMode(bool bEnable);
+	void	SetSongMode(bool bEnable, bool bChaseDubs = false);
 	int		GetSongDurationSeconds() const;
 	int		GetStartPosition() const;
 	void	SetMidiOutputCapture(bool bEnable);
@@ -331,11 +332,6 @@ inline void CSequencer::SetInitialMidiEvents(const CDWordArrayEx& arrMidiEvent)
 inline bool CSequencer::GetSongMode() const
 {
 	return m_bIsSongMode;
-}
-
-inline void CSequencer::SetSongMode(bool bEnable)
-{
-	m_bIsSongMode = bEnable;
 }
 
 inline int CSequencer::GetStartPosition() const

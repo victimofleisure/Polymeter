@@ -41,6 +41,7 @@
 		31		19may20	refactor record dub methods to include conditional
 		32		23may20	negative voicing modulation raises instead of dropping
 		33		09jun20	add offset modulation
+		34		17jul20	set song mode now optionally chases dubs
 
 */
 
@@ -1282,11 +1283,20 @@ void CSequencer::ChaseDubs(int nTime, bool bUpdateMutes)
 
 void CSequencer::ChaseDubsFromCurPos()
 {
-	if (m_bIsPlaying && m_bIsSongMode) {
-		LONGLONG	nPos;
-		if (GetPosition(nPos))
-			ChaseDubs(static_cast<int>(nPos), true);	// set mutes
+	if (m_bIsSongMode) {
+		WCritSec::Lock	lock(m_csTrack);	// serialize access to callback time
+		ChaseDubs(m_nCBTime, true);	// chase to current callback time; set mutes
 	}
+}
+
+void CSequencer::SetSongMode(bool bEnable, bool bChaseDubs)
+{
+	if (bChaseDubs && bEnable) {
+		WCritSec::Lock	lock(m_csTrack);	// serialize access to song mode and callback time
+		m_bIsSongMode = true;	// enable song mode
+		ChaseDubs(m_nCBTime, true);	// chase to current callback time; set mutes
+	} else
+		m_bIsSongMode = bEnable;
 }
 
 void CSequencer::QueueOutputEvents(int nEvents)

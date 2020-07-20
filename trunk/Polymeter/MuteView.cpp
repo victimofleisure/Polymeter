@@ -9,6 +9,9 @@
 		rev		date	comments
         00      15may18	initial version
 		01		22mar19	left-click not on button now toggles selection
+		02		09jul20	handle song position updates in multi-window case
+		03		14jul20	add vertical scrolling
+		04		15jul20	add mute caching for song mode
 
 */
 
@@ -24,6 +27,7 @@
 #include "UndoCodes.h"
 #include "StepView.h"
 #include "StepParent.h"
+#include "ChildFrm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -43,10 +47,13 @@ const COLORREF CMuteView::m_arrMuteColor[] = {
 CMuteView::CMuteView()
 {
 	m_pStepView = NULL;
+	m_pParentFrame = NULL;
 	m_nTrackHeight = 20;
 	m_ptDragOrigin = CPoint(0, 0);
 	m_nDragState = DS_NONE;
+	InvalidateMuteCache();
 	m_rngMute.SetEmpty();
+	m_nScrollPos = 0;
 	m_nScrollDelta = 0;
 	m_nScrollTimer = 0;
 }
@@ -80,6 +87,7 @@ void CMuteView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_NONE:
 	case CPolymeterDoc::HINT_TRACK_ARRAY:
 		Invalidate();	// repaint entire view
+		InvalidateMuteCache();
 		break;
 	case CPolymeterDoc::HINT_TRACK_PROP:
 		{
@@ -90,6 +98,7 @@ void CMuteView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			case -1:	// all properties
 			case PROP_Mute:
 				UpdateMute(iTrack);
+				InvalidateMuteCache();
 				break;
 			}
 		}
@@ -102,6 +111,7 @@ void CMuteView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			case -1:	// all properties
 			case PROP_Mute:
 				UpdateMutes(pPropHint->m_arrSelection);
+				InvalidateMuteCache();
 				break;
 			}
 		}
@@ -111,6 +121,14 @@ void CMuteView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		break;
 	case CPolymeterDoc::HINT_SOLO:
 		Invalidate();
+		InvalidateMuteCache();
+		break;
+	case CPolymeterDoc::HINT_SONG_POS:
+		ConditionallyMonitorMuteChanges();
+		break;
+	case CPolymeterDoc::HINT_VIEW_TYPE:
+		InvalidateMuteCache();	// caution is the better part of valor
+		ConditionallyMonitorMuteChanges();
 		break;
 	}
 }
@@ -205,6 +223,75 @@ void CMuteView::EndDrag()
 	}
 }
 
+void CMuteView::OnVertScroll()
+{
+	int	nScrollPos = m_pStepView->GetScrollPosition().y;
+	if (nScrollPos != m_nScrollPos) {	// if scroll position changed
+		int	nScrollDelta = m_nScrollPos - nScrollPos;
+		if (nScrollDelta)	// if non-zero scroll delta
+			ScrollWindow(0, nScrollDelta);
+		m_nScrollPos = nScrollPos;	// update shadow
+		InvalidateMuteCache();	// scrolling invalidates cache
+	}
+}
+
+__forceinline void CMuteView::ConditionallyMonitorMuteChanges()
+{
+	// if document has multiple child frames and our frame is showing track view
+	if (m_pParentFrame->m_nWindow > 0 && m_pParentFrame->IsTrackView() 
+	&& GetDocument()->m_Seq.GetSongMode()) {	// and we're in song mode
+		MonitorMuteChanges();
+	}
+}
+
+void CMuteView::MonitorMuteChanges()
+{
+	// We're showing the track view, but the sequencer is in song mode,
+	// presumably because our document has another child frame that's
+	// showing song view, and that other child frame is active. In song
+	// mode, the sequencer asynchronously modifies track mutes, and
+	// since it doesn't provide notifications, we continuously monitor
+	// for mute changes, to avoid wastefully repainting all our mute 
+	// buttons for every song position update. We detect mute changes
+	// by caching the states of the visible mute buttons and comparing
+	// the sequencer's corresponding track mutes to our cached values.
+	// For this scheme to work, all code paths that modify one or more
+	// mutes or scroll or resize our window must invalidate the cache.
+	const CSequencer&	seq = GetDocument()->m_Seq;
+	int	nTracks = seq.GetTrackCount();
+	if (nTracks) {
+		CRect	rClient;
+		GetClientRect(rClient);
+		int	nScrollY = m_pStepView->GetScrollPosition().y;
+		int	iFirstTrack = (rClient.top - 1 + nScrollY) / m_nTrackHeight;
+		iFirstTrack = CLAMP(iFirstTrack, 0, nTracks - 1);
+		int	iLastTrack = (rClient.bottom - 1 + nScrollY) / m_nTrackHeight;
+		iLastTrack = CLAMP(iLastTrack, 0, nTracks - 1);
+		int	nMutes = iLastTrack - iFirstTrack + 1;	// number of visible mute buttons
+		if (m_bIsMuteCacheValid) {	// if mute cache is valid
+			for (int iMute = 0; iMute < nMutes; iMute++) {	// for each visible mute button
+				int	iTrack = iMute + iFirstTrack;	// offset to corresponding track
+				bool	bIsMuted = seq.GetMute(iTrack);
+				if (m_arrCachedMute[iMute] != bIsMuted) {	// if sequencer's mute state differs from our cached copy
+					m_arrCachedMute[iMute] = bIsMuted;	// update cache
+					UpdateMute(iTrack);	// redraw mute button
+					// song position change won't redraw current step if new position maps to same step index
+					m_pStepView->UpdateMute(iTrack);	// redraw current step if needed
+				}
+			}
+		} else {	// mute cache is invalid, so rebuild it
+			m_arrCachedMute.FastSetSize(nMutes);	// resize cache array if needed
+			for (int iMute = 0; iMute < nMutes; iMute++) {	// for each visible mute button
+				int	iTrack = iMute + iFirstTrack;	// offset to corresponding track
+				m_arrCachedMute[iMute] = seq.GetMute(iTrack);	// store sequencer's mute state in our cache
+				m_pStepView->UpdateMute(iTrack);	// redraw current step if needed
+			}
+			m_bIsMuteCacheValid = true;	// mark cache valid
+			Invalidate();	// assume all mute buttons are invalid; redraw them all
+		}
+	}
+}
+
 void CMuteView::OnDraw(CDC* pDC)
 {
 	CRect	rClip;
@@ -284,6 +371,7 @@ BOOL CMuteView::PreTranslateMessage(MSG* pMsg)
 void CMuteView::OnSize(UINT nType, int cx, int cy)
 {
 	CView::OnSize(nType, cx, cy);
+	InvalidateMuteCache();	// sizing invalidates cache
 }
 
 void CMuteView::OnLButtonDown(UINT nFlags, CPoint point)
@@ -325,7 +413,6 @@ void CMuteView::OnRButtonDown(UINT nFlags, CPoint point)
 		m_nDragState = DS_TRACK;
 		m_ptDragOrigin = point + m_pStepView->GetScrollPosition();
 		m_rngMute.SetEmpty();
-		m_bOriginMute = pDoc->GetSelected(iTrack);
 		pDoc->ToggleSelection(iTrack);
 		m_rngMute = iTrack;
 	} else	// hit background

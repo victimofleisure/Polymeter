@@ -15,6 +15,8 @@
 		05		19apr20	give position bar control its own device context
 		06		19may20	refactor record dub methods to include conditional
 		07		03jun20	get recording state from app instead of sequencer
+		08		05jul20	handle track and multi-track property updates
+		09		09jul20	get view type from child frame instead of document
 
 */
 
@@ -26,6 +28,7 @@
 #include "PolymeterDoc.h"
 #include "MainFrm.h"
 #include "LiveView.h"
+#include "ChildFrm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -51,6 +54,7 @@ const LPCTSTR CLiveView::m_nListName[LISTS] = {
 
 CLiveView::CLiveView()
 {
+	m_pParentFrame = NULL;
 	m_nListHdrHeight = 0;
 	m_nListItemHeight = 0;
 	for (int iList = 0; iList < LISTS; iList++)	// for each list
@@ -59,6 +63,7 @@ CLiveView::CLiveView()
 	m_iPreset = -1;
 	m_iTopPart = 0;
 	m_wndPosBar.m_pLiveView = this;
+	m_bIsMuteCacheValid = false;
 }
 
 CLiveView::~CLiveView()
@@ -81,9 +86,6 @@ BOOL CLiveView::PreCreateWindow(CREATESTRUCT& cs)
 void CLiveView::OnInitialUpdate()
 {
 	CView::OnInitialUpdate();
-	if (GetDocument()->IsLiveView()) {
-		Update();
-	}
 }
 
 void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
@@ -92,11 +94,56 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	UNREFERENCED_PARAMETER(pHint);
 //	printf("CLiveView::OnUpdate %x %d %x\n", pSender, lHint, pHint);
 	CPolymeterDoc	*pDoc = GetDocument();
-	if (pDoc->IsLiveView()) {	// if showing live view
+	if (m_pParentFrame->IsLiveView()) {	// if showing live view
 		switch (lHint) {
+		case CPolymeterDoc::HINT_NONE:
 		case CPolymeterDoc::HINT_TRACK_ARRAY:
 		case CPolymeterDoc::HINT_PART_ARRAY:
 			Update();
+			InvalidateMuteCache();
+			break;
+		case CPolymeterDoc::HINT_TRACK_PROP:
+			{
+				const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+				int	iProp = pPropHint->m_iProp;
+				switch (iProp) {
+				case CTrack::PROP_Length:
+				case CTrack::PROP_Quant:
+					UpdatePartLengths();
+					break;
+				default:
+					OnTrackPropChange(pPropHint->m_iItem, iProp);
+					if (iProp == CTrack::PROP_Mute) {	// if mute property 
+						if (!pDoc->m_Seq.IsPlaying())	// if stopped
+							m_wndPosBar.UpdateBars();
+						InvalidateMuteCache();
+					}
+					break;
+				}
+			}
+			break;
+		case CPolymeterDoc::HINT_MULTI_TRACK_PROP:
+			{
+				const CPolymeterDoc::CMultiItemPropHint	*pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
+				int	iProp = pPropHint->m_iProp;
+				switch (iProp) {
+				case CTrack::PROP_Length:
+				case CTrack::PROP_Quant:
+					UpdatePartLengths();
+					break;
+				default:
+					int	nSels = pPropHint->m_arrSelection.GetSize();
+					for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+						OnTrackPropChange(pPropHint->m_arrSelection[iSel], iProp);
+					}
+					if (iProp == CTrack::PROP_Mute) {	// if mute property
+						if (!pDoc->m_Seq.IsPlaying())	// if stopped
+							m_wndPosBar.UpdateBars();
+						InvalidateMuteCache();
+					}
+					break;
+				}
+			}
 			break;
 		case CPolymeterDoc::HINT_PRESET_ARRAY:
 			m_list[LIST_PRESETS].SetItemCountEx(pDoc->m_arrPreset.GetSize(), 0);	// invalidate all
@@ -117,7 +164,11 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			break;
 		case CPolymeterDoc::HINT_SONG_POS:
 			UpdateSongCounters();
-			m_wndPosBar.UpdateBars(pDoc->m_nSongPos);
+			// if document has multiple child frames and sequencer is in song mode
+			if (m_pParentFrame->m_nWindow > 0 && pDoc->m_Seq.GetSongMode()) {
+				MonitorMuteChanges();
+			}
+			m_wndPosBar.UpdateBars(pDoc->m_nSongPos);	// order matters; monitoring may invalidate bars
 			break;
 		case CPolymeterDoc::HINT_VIEW_TYPE:
 			m_iPreset = pDoc->FindCurrentPreset();
@@ -126,6 +177,7 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			UpdateSongCounters();
 			pDoc->MakePartMutesConsistent();
 			pDoc->MakePresetMutesConsistent();
+			InvalidateMuteCache();
 			break;
 		case CPolymeterDoc::HINT_OPTIONS:
 			{
@@ -151,8 +203,32 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			break;
 		case CPolymeterDoc::HINT_SOLO:
 			OnTrackMuteChange();
+			InvalidateMuteCache();
 			break;
 		}
+	}
+}
+
+void CLiveView::OnTrackPropChange(int iTrack, int iProp)
+{
+	switch (iProp) {
+	case CTrack::PROP_Name:
+		{
+			int	iPart = static_cast<int>(m_arrPart.Find(iTrack));
+			if (iPart >= 0)	// if track's part found
+				m_list[LIST_PARTS].RedrawItem(iPart);
+		}
+		break;
+	case CTrack::PROP_Mute:
+		{
+			// this only handles tracks that don't belong to a part
+			int	iPart = static_cast<int>(m_arrPart.Find(iTrack));
+			if (iPart >= 0) {	// if track's part found
+				m_list[LIST_PARTS].RedrawItem(iPart);
+				m_wndPosBar.InvalidateBar(iPart);	// caller must also update bars
+			}
+		}
+		break;
 	}
 }
 
@@ -208,6 +284,8 @@ void CLiveView::UpdatePartLengths()
 		}
 		m_wndPosBar.InvalidateBar(iItem);
 	}
+	if (!pDoc->m_Seq.IsPlaying())	// if stopped
+		m_wndPosBar.UpdateBars();
 	if (!m_nListItemHeight && nItems)
 		UpdateListItemHeight();
 }
@@ -262,6 +340,12 @@ int CLiveView::FindPart(int iPart) const
 	return -1;
 }
 
+__forceinline void CLiveView::ApplyMuteChanges()
+{
+	GetDocument()->UpdateAllViews(this, CPolymeterDoc::HINT_SOLO);
+	InvalidateMuteCache();
+}
+
 bool CLiveView::GetMute(int iItem) const
 {
 	int	iTrack = GetTrackIdx(iItem);
@@ -288,6 +372,7 @@ void CLiveView::SetMute(int iItem, bool bEnable, bool bDeferUpdate)
 		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 		m_list[LIST_PARTS].RedrawItem(iItem);
 		m_wndPosBar.InvalidateBar(iItem);
+		ApplyMuteChanges();
 	}
 	if (!pDoc->m_Seq.IsPlaying())	// if stopped
 		m_wndPosBar.UpdateBars();
@@ -308,6 +393,7 @@ void CLiveView::SetSelectedMutes(bool bEnable)
 	m_list[LIST_PARTS].Deselect();
 	if (!pDoc->m_Seq.IsPlaying())	// if stopped
 		m_wndPosBar.UpdateBars();
+	ApplyMuteChanges();
 }
 
 void CLiveView::ToggleMute(int iItem, bool bDeferUpdate)
@@ -328,6 +414,7 @@ void CLiveView::ToggleMute(int iItem, bool bDeferUpdate)
 		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 		m_list[LIST_PARTS].RedrawItem(iItem);
 		m_wndPosBar.InvalidateBar(iItem);
+		ApplyMuteChanges();
 	}
 	if (!pDoc->m_Seq.IsPlaying())	// if stopped
 		m_wndPosBar.UpdateBars();
@@ -348,6 +435,7 @@ void CLiveView::ToggleSelectedMutes()
 	m_list[LIST_PARTS].Deselect();
 	if (!pDoc->m_Seq.IsPlaying())	// if stopped
 		m_wndPosBar.UpdateBars();
+	ApplyMuteChanges();
 }
 
 void CLiveView::ApplyPreset(int iPreset)
@@ -357,6 +445,7 @@ void CLiveView::ApplyPreset(int iPreset)
 	pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 	m_iPreset = iPreset;
 	OnTrackMuteChange();
+	ApplyMuteChanges();
 }
 
 void CLiveView::OnTrackMuteChange()
@@ -417,6 +506,7 @@ void CLiveView::SoloSelectedParts()
 	m_wndPosBar.InvalidateAllBars();
 	if (!pDoc->m_Seq.IsPlaying())	// if stopped
 		m_wndPosBar.UpdateBars();
+	ApplyMuteChanges();
 }
 
 BOOL CLiveView::PreTranslateMessage(MSG* pMsg)
@@ -442,6 +532,47 @@ void CLiveView::UpdateStatus()
 	CRect	rStatus;
 	GetStatusRect(rStatus);
 	InvalidateRect(rStatus);
+}
+
+void CLiveView::MonitorMuteChanges()
+{
+	// We're showing the live view, but the sequencer is in song mode,
+	// presumably because our document has another child frame that's
+	// showing song view, and that other child frame is active. In song
+	// mode, the sequencer asynchronously modifies track mutes, and
+	// since it doesn't provide notifications, we continuously monitor
+	// for mute changes, to avoid wastefully repainting all parts list
+	// items for every song position update. We detect mute changes by
+	// caching the mute state of each of our parts and comparing the 
+	// sequencer's corresponding track mutes to our cached values. We
+	// assume the members of each part have a consistent mute state. 
+	// For this scheme to work, all code paths that modify one or more
+	// mutes must invalidate the cache. 
+	const CSequencer&	seq = GetDocument()->m_Seq;
+	if (m_bIsMuteCacheValid) {	// if mute cache is valid
+		int	nParts = m_arrPart.GetSize();
+		for (int iPart = 0; iPart < nParts; iPart++) {	// for each part
+			int	iTrack = GetTrackIdx(iPart);	// map part to track index
+			if (iTrack >= 0) {	// if non-empty part
+				bool	bIsMuted = seq.GetMute(iTrack);
+				if (bIsMuted != m_arrCachedMute[iPart]) {	// if sequencer's mute state differs from cache
+					m_arrCachedMute[iPart] = bIsMuted;	// update cache
+					m_list[LIST_PARTS].RedrawItem(iPart);
+					m_wndPosBar.InvalidateBar(iPart);	// caller must also update bars or change won't show
+				}
+			}
+		}
+	} else {	// mute cache is invalid, so rebuild it
+		int	nParts = m_arrPart.GetSize();
+		m_arrCachedMute.FastSetSize(nParts);
+		for (int iPart = 0; iPart < nParts; iPart++) {	// for each part
+			int	iTrack = GetTrackIdx(iPart);	// map part to track index
+			if (iTrack >= 0)	// if non-empty part
+				m_arrCachedMute[iPart] = seq.GetMute(iTrack);	// cache sequencer's mute state
+		}
+		m_bIsMuteCacheValid = true;	// mark cache valid
+		OnTrackMuteChange();
+	}
 }
 
 void CLiveView::OnDraw(CDC* pDC)

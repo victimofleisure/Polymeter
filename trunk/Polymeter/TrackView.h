@@ -11,6 +11,7 @@
 		01		19dec18	centralize property value ranges
 		02		06mar20	add selection change handler and pending flag
 		03		17apr20	add track color
+		04		09jul20	add pointer to parent frame
 
 */
 
@@ -21,6 +22,7 @@
 #include "Track.h"
 
 class CPolymeterDoc;
+class CChildFrame;
 
 class CTrackView : public CView, public CTrackBase
 {
@@ -56,6 +58,9 @@ public:
 	static	void	LoadPersistentState();
 	static	void	SavePersistentState();
 	void	UpdatePersistentState(bool bNoRedraw = false);
+
+// Public data
+	CChildFrame	*m_pParentFrame;	// pointer to parent frame
 
 protected:
 // Types

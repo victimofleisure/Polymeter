@@ -438,6 +438,9 @@
     <ClInclude Include="ModulationDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ViewTypeDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Polymeter.cpp">
