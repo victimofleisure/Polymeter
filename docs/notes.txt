@@ -2473,3 +2473,146 @@ for (int i = 10; i >= -10; i--) {
 -8      -10
 -9      -10
 -10     -10
+
+
+6/16/20 Passion for Numbers ( <34#s )
+
+Front cover: 
+		double	fMidX = szCanvas.cx / 2 - 30;
+
+		for (int iCol = 0; iCol <= nCols + 1; iCol++) {
+
+	CSize	szBitmap(3780, 3685);
+
+Back cover:
+		double	fWidth = arrLen[iRow] * (fXScale * 0.969);
+
+
+	CSize	szBitmap(3839, 2693);
+
+Text:
+
+CHRIS KORDA
+
+PASSION FOR NUMBERS
+
+A1. Ero Ayo   A2. Mo Bulu   A3. Irubo   A4. Ninu Meta
+B1. Ibaramu   B2. Yipo   B3. Fun Ife   B4. Roro
+
+Big text is 48 pt Helvetica Black
+
+Label:
+
+1087 x 1087 (safe area)
+then expand to 1229 to reach edge of bleed
+
+
+6/20/20 Modulation bar selection issues
+
+Delete / Cut: removing selection is no problem, just add Deselect call:
+
+pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
+m_grid.Deselect();
+
+Paste / Insert: easy if Show Differences is OFF, but harder if it's on
+
+// this ONLY works if Show Differences is OFF
+int	nPrevMods = m_arrModulator.GetSize();
+pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
+if (iSelItem < 0)	// if no selection
+	iSelItem = nPrevMods;	// appended
+if (iSelItem >= 0)
+	m_grid.SelectRange(iSelItem, nMods);
+else
+	m_grid.Deselect();
+
+What to do if Show Differences is on? Search m_arrModulator for the first pasted element?
+
+Restoring selection after undo is not currently possible because the track selection 
+might be different when the undo occurs. This is yet another reason why track 
+selection should be an insignificant edit that's saved systematically instead 
+of in an adhoc way. Also the Show Differences flag would need to be saved and 
+restored because like track selection it also affects which modulators are shown.
+
+
+6/23/20 MFC Customize subsystem is incompatible with renumbering resource IDs
+
+The easy experiment: 
+1. Add some commands to the standard toolbar. Create some new keyboard shortcuts too.
+Now exit the app and edit the project as follows.
+2. Create a new menu command called ID_APP_ALPHA (guaranteed to be the first command) 
+and renumber the resource IDs. This shifts every app-defined command ID up by one.
+3. Rerun the app. The custom toolbar commands still have the same names, but they no
+longer trigger the intended commands. They may also move around on the toolbar. The 
+keyboard shortcuts are also shifted.
+All of this is predictable because the Customize system stores command IDs. So that's
+an epic fail. When the app is next upgraded, if the upgrade adds new commands (or 
+removes or renames existing commands), any customizations the user made will likely 
+be partially or completely scrambled. That sounds like a good reason not to allow it, 
+but maybe it could be OK to allow it and put a warning in the manual?
+
+The only other solution I can think of is to strictly adhere to this procedure:
+1. Avoid renaming or deleting existing commands, or if it's unavoidable, retain the 
+command's original ID by preserving the corresponding hint resource string (though
+the string can be empty or just contain a single space, or "X" or whatever).
+2. New commands must have a special prefix that provides versioning and forces newly
+added commands to the end of the renumbered command ID range. For example, the
+prefix ID_a??_ could work. The first upgrade would use this prefix:
+ID_a00_A_NEW_COMMAND
+ID_a00_NEW_COMMAND_IN_THE_SAME_RELEASE
+The next upgrade would use an incremented prefix:
+ID_a01_A_NEW_COMMAND_IN_A_SUBSEQUENT_RELEASE
+This works so long as command names don't start with a lowercase letter. Since the
+version number can use not only 0-9 but also A-Z and a-z, the prefix allows around
+100,000 upgrades (26 * 62 * 62) which seems adequate for a production app. If you 
+exceed 3,844 upgrades (after ID_azz_) you roll over to ID_b00_ and so on. This
+scheme doesn't require any changes to the venerable resource renumbering app.
+
+Another issue: menus and especially context menus often have groups of options (with 
+checkboxes or radio buttons) that depend on having a contiguous range of command IDs.
+Adding a command to such a group also potentially shifts the app's command IDs. To 
+maintain the above procedure in such cases will be significant work: the entire group
+has to be copied to a new range of command IDs, leaving the old range reserved. This
+will result in a lot of "dead wood" i.e. legacy command hint resource strings. In
+practice there seem to be relatively few such cases (search for "ON_COMMAND_RANGE").
+
+One way to check for compatibility is to file compare the old and new Resource.h.
+If you see any changes other than appends, it's incompatible. Clearly this approach
+would be unworkable during development, but once the app is in production it might 
+be reasonable if Customize is important enough to warrant it.
+
+7/5/20 Multiple windows of a document
+
+There are two related issues:
+if document has multiple windows, changing view type affects first window instead of active one
+if document has multiple windows with different view types, properties may be inconsistent between windows
+
+The first issue might not be solvable with the current architecture. It's unclear.
+
+The second issue isn't too bad with song view and track view. Here the only obvious
+symptom is that the Track/Length command doesn't work (it's disabled).
+But with live view and track view, there are more problens.
+Muting/unmuting tracks in live view doesn't update track view (but the reverse works).
+Same for selecting a preset or soloing in live view.
+
+7/10/20 Menu key stops working after switching documents via Ctrl+Tab
+
+To replicate it:
+1. run app
+2. create a 2nd document
+3. select the 1st document via left-clicking its tab
+4. select the 2nd document via Ctrl+Tab
+5. Press Alt+F4 to exit the app; nothing happens
+
+7/20/20 Undo test with changing view type
+
+	if (!Random(10)) {
+		POSITION pos = m_pDoc->GetFirstViewPosition();
+		CView	*pView = m_pDoc->GetNextView(pos);
+		CChildFrame	*pFrame = DYNAMIC_DOWNCAST(CChildFrame, pView->GetParentFrame());
+		pFrame->SetViewType(Random(2)); // track or song view only
+	}
+
+Note that including Live view will cause checksum errors, because Live view 
+potentially changes track mutes without creating an undoable event, in order 
+to keep parts and presets consistent.
