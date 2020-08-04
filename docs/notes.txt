@@ -2616,3 +2616,58 @@ To replicate it:
 Note that including Live view will cause checksum errors, because Live view 
 potentially changes track mutes without creating an undoable event, in order 
 to keep parts and presets consistent.
+
+7/22/20 Showing dockable bars menu
+
+The work is done by this apparently public method:
+CDockingManager::BuildPanesMenu(CMenu& menu, BOOL bToolbarsOnly)
+
+8/1/20 mysterious MIDI error 65
+
+#define MIDIERR_STILLPLAYING  (MIDIERR_BASE + 1)   /* still something playing */
+
+It occurs when stopping the sequencer. It almost never happens under Windows,
+but it appears to happen every time on a Mac with Wine Bottler. The error's
+definition is "Cannot perform this operation while media data is still playing. 
+Reset the device, or wait until the data is finished playing." That should tell
+us something. The problem is we don't know which MIDI streams function is
+causing it. We stop the stream, unprepare the buffers, and finally close the
+device. Hypothesis: we're attempting to unprepare a buffer before the driver
+has finished with it.
+
+Does midiStreamStop return before the buffers are returned, or wait? The Windows
+documentation is a bit vague on this point. "When you call this function, any 
+pending system-exclusive or stream output buffers are returned to the callback
+mechanism and the MHDR_DONE bit is set in the dwFlags member of the MIDIHDR 
+structure." Notice it doesn't say exactly WHEN the output buffers are returned.
+It that's the issue, you'd think making the callback time much longer would 
+provoke the error, but I tried that and it didn't make any difference.
+
+If this really is the issue, it's an easy fix. In the MIDI callback's MOM_DONE
+case, if the stopping flag is set, increment a count of done buffers. In the Play
+function, after stopping the stream, wait for this count to reach the number of
+buffers, while sleeping periodically. Or more properly, in the callback, when the
+done buffer count reaches the desired number, set an event, and in the Play
+function, wait on the event with a timeout.
+
+If the unprepare is doing it, another possible solution would be to loop on
+unprepare as long as it returns MIDIERR_STILLPLAYING, with a Sleep to avoid
+burning CPU. This is more or less shooting the messenger.
+
+Without a Mac to test against, there's no way to reproduce the issue, so no way
+to prove the above solution would help. I would tend to think it's a Mac / Wine
+MIDI implementation issue except I have very rarle seen it under Windows. It's
+possible it's driver-dependent.
+
+The easiest test is to just put a Sleep(1000) after midiStreamStop and see if
+that fixes the problem in MacOS. I give it even odds.
+
+Another hypothesis is that calling midiStreamOut from within the callback is 
+actually a terrible idea, even though it seems to work. MSDN discourages any
+calls to MIDI functions, but examples in the wild vary. Some examples only set
+an event in the callback, others call midiStreamOut as we do. The event is a
+royal pain in the ass because it means creating a whole other worker thread
+and incurring all the overhead and complexity associated with that.
+
+
+

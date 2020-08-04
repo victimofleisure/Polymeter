@@ -16,7 +16,6 @@ id	open	close	type	description	rev	user
 358	04/17/20		bug	Time To Repeat command can take too long, stalling UI; show progress bar or use worker thread		
 376	06/20/20		bug	undoing modulation edit doesn't restore modulation selection; can't without also restoring track selection and Show Differences state		
 392	07/10/20		bug	Alt key commands don't work mode while cursor is hovering over MDI tab; affects stock VS2012 app too		
-393	07/17/20		bug	switching to song view should set all mutes to match song's current dub state (chase); must be synchronous		
 1	03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 2	03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 3	03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -318,9 +317,14 @@ id	open	close	type	description	rev	user
 390	07/09/20	07/09/20	done	live view actions don't update Phase bar's mute states when playback is stopped	0.0.32.000	
 391	07/09/20	07/09/20	done	solo command doesn't update Step Values bar's mute states when playback is stopped	0.0.32.000	
 384	07/04/20	07/17/20	done	if document has multiple windows with different view types, song mode causes mute state inconsistencies	0.0.32.000	
+397	07/28/20	07/28/20	done	add custom option to transport convergence size submenu	0.0.33.000	
+394	07/21/20	07/29/20	done	standardize status hints, e.g. View/Velocities	0.0.33.000	
+398	07/28/20	07/29/20	done	song view should show tool tips for truncated track names	0.0.33.000	
+399	07/31/20	07/31/20	done	changing length or quant of multiple tracks at once doesn't update Phase bar	0.0.33.000	
+400	08/03/20	08/04/20	done	next/previous pane command is unreliable; child frame doesn't always receive the command	0.0.33.000	
 17	03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
-19	03/22/18		hold	radio groups; member tracks automatically mute each other so that only one member sounds at a time		
+19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
 50	03/25/18		hold	animated visualization; Phase bar is a good start, but others?		
 51	03/25/18		hold	playback can be slow to start, due to device open delay; keep output device open all the time?		
@@ -376,6 +380,9 @@ id	open	close	type	description	rev	user
 372	06/08/20		hold	song view should show loop lengths and their covergences graphically, possibly in a separate timeline pane		
 373	06/13/20		hold	in phase bar, optionally hide muted tracks; affects find convergence due to orbit array reuse		
 383	07/01/20		hold	add more input quants; possible useful with larger time divisions		
+393	07/17/20		hold	switching to song view should set all mutes to match song's current dub state (chase); must be synchronous		
+395	07/22/20		hold	optionally show Phase diagram or other visualization in Live view; menu bar is hidden in full screen mode		
+396	07/22/20		hold	transition from one document to another without stopping playback; conflicts with recording implementation		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
