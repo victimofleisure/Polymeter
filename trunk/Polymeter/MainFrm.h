@@ -27,6 +27,7 @@
 		17		04jul20	add commands to create new tab groups
 		18		05jul20	refactor update song position
 		19		09jul20	add pointer to active child frame
+		20		28jul20	add custom convergence size
 
 */
 
@@ -220,6 +221,8 @@ protected:
 	afx_msg void OnUpdateTransportConvergenceSize(CCmdUI *pCmdUI);
 	afx_msg void OnTransportConvergenceSizeAll();
 	afx_msg void OnUpdateTransportConvergenceSizeAll(CCmdUI *pCmdUI);
+	afx_msg void OnTransportConvergenceSizeCustom();
+	afx_msg void OnUpdateTransportConvergenceSizeCustom(CCmdUI *pCmdUI);
 	afx_msg void OnWindowNewHorizontalTabGroup();
 	afx_msg void OnUpdateWindowNewHorizontalTabGroup(CCmdUI *pCmdUI);
 	afx_msg void OnWindowNewVerticalTabGroup();

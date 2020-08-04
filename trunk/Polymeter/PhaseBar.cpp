@@ -12,6 +12,7 @@
         02		02apr20	add video export
 		03		13jun20	add find convergence
 		04		09jul20	get view type from child frame instead of document
+		05		31jul20	fix multi-track length or quant change
 		
 */
 
@@ -75,7 +76,7 @@ void CPhaseBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				case CTrackBase::PROP_Quant:
 					Update();
 					break;
-				case  CTrackBase::PROP_Mute:
+				case CTrackBase::PROP_Mute:
 					OnTrackMuteChange();
 					break;
 				}
@@ -85,6 +86,10 @@ void CPhaseBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			{
 				const CPolymeterDoc::CMultiItemPropHint	*pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
 				switch (pPropHint->m_iProp) {
+				case CTrackBase::PROP_Length:
+				case CTrackBase::PROP_Quant:
+					Update();
+					break;
 				case CTrack::PROP_Mute:
 					OnTrackMuteChange();
 					break;

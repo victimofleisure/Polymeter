@@ -35,6 +35,7 @@
 		25		04jul20	add commands to create new tab groups
 		26		05jul20	refactor update song position
 		27		09jul20	let child frame activation determine song mode
+		28		28jul20	add custom convergence size
 
 */
 
@@ -56,6 +57,7 @@
 #include "TrackView.h"
 #include "ConvergencesDlg.h"
 #include "ChildFrm.h"
+#include "OffsetDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -810,6 +812,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_CONVERGENCE_SIZE_START, ID_CONVERGENCE_SIZE_END, OnUpdateTransportConvergenceSize)
 	ON_COMMAND(ID_TRANSPORT_CONVERGENCE_SIZE_ALL, OnTransportConvergenceSizeAll)
 	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_CONVERGENCE_SIZE_ALL, OnUpdateTransportConvergenceSizeAll)
+	ON_COMMAND(ID_TRANSPORT_CONVERGENCE_SIZE_CUSTOM, OnTransportConvergenceSizeCustom)
+	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_CONVERGENCE_SIZE_CUSTOM, OnUpdateTransportConvergenceSizeCustom)
 	ON_COMMAND(ID_WINDOW_NEW_HORZ_TAB_GROUP, OnWindowNewHorizontalTabGroup)
 	ON_UPDATE_COMMAND_UI(ID_WINDOW_NEW_HORZ_TAB_GROUP, OnUpdateWindowNewHorizontalTabGroup)
 	ON_COMMAND(ID_WINDOW_NEW_VERT_TAB_GROUP, OnWindowNewVerticalTabGroup)
@@ -1312,7 +1316,7 @@ void CMainFrame::OnUpdateTrackColor(CCmdUI *pCmdUI)
 void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
 {
 	CMDIFrameWndEx::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
-	if (!bSysMenu && pPopupMenu->GetMenuItemCount() == 1) {
+	if (!bSysMenu && pPopupMenu->GetMenuItemCount() == 2) {	// menu initially contains items for All and Custom
 		int	iItem = FindMenuItem(pPopupMenu, ID_TRANSPORT_CONVERGENCE_SIZE_ALL);
 		if (iItem >= 0) {
 			CString	sItem;
@@ -1362,6 +1366,23 @@ void CMainFrame::OnTransportConvergenceSizeAll()
 void CMainFrame::OnUpdateTransportConvergenceSizeAll(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetRadio(m_nConvergenceSize == INT_MAX);
+}
+
+void CMainFrame::OnTransportConvergenceSizeCustom()
+{
+	COffsetDlg	dlg;
+	dlg.m_nOffset = m_nConvergenceSize;
+	dlg.m_nDlgCaptionID = IDS_CONVERGENCE_SIZE;
+	dlg.m_nEditCaptionID = IDS_CONVERGENCE_SIZE_EDIT_CAPTION;
+	dlg.m_rngOffset = CRange<int>(CONVERGENCE_SIZE_MIN, INT_MAX);
+	if (dlg.DoModal() == IDOK) {
+		m_nConvergenceSize = dlg.m_nOffset;
+	}
+}
+
+void CMainFrame::OnUpdateTransportConvergenceSizeCustom(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetRadio(m_nConvergenceSize > CONVERGENCE_SIZE_MAX && m_nConvergenceSize < INT_MAX);
 }
 
 void CMainFrame::OnWindowNewHorizontalTabGroup()

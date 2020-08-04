@@ -144,6 +144,7 @@
 {ID_TRANSPORT_CONVERGENCE_NEXT, 		IDH_Menus_Transport_Next_Convergence},
 {ID_TRANSPORT_CONVERGENCE_PREVIOUS, 	IDH_Menus_Transport_Previous_Convergence},
 {ID_TRANSPORT_CONVERGENCE_SIZE_ALL, 	IDH_Menus_Transport_Convergence_Size},
+{ID_TRANSPORT_CONVERGENCE_SIZE_CUSTOM, 	IDH_Menus_Transport_Convergence_Size},
 {ID_TRANSPORT_GO_TO_POSITION,			IDH_Menus_Transport_Go_To_Position},
 {ID_TRANSPORT_PAUSE,					IDH_Menus_Transport_Pause},
 {ID_TRANSPORT_PLAY, 					IDH_Menus_Transport_Play},
@@ -242,7 +243,9 @@
 {IDS_SM_OUTPUT_CHANNEL_SELECT,			0},
 {IDS_SM_PIANO_SIZE,						0},
 
-// handle use of COffsetDlg by different commands
+// handle use of COffsetDlg by multiple commands
 {IDS_EDIT_ROTATE,						IDH_Menus_Track_Rotate_Rotate_Steps},
 {IDS_EDIT_SHIFT,						IDH_Menus_Track_Shift_Shift_Steps},
 {IDS_TRK_Offset,						IDH_Menus_Track_Rotate_Offset_Tracks},
+{IDS_EDIT_TRANSPOSE,					IDH_Menus_Track_Transpose},
+{IDS_CONVERGENCE_SIZE,					IDH_Menus_Transport_Convergence_Size},

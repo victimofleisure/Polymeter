@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      30may18	initial version
+		01		29jul20	add tool tip for truncated names
 
 */
 
@@ -39,6 +40,7 @@ public:
 // Operations
 public:
 	void	ScrollToPosition(int nScrollPos);
+	int		HitTest(CPoint point) const;
 
 // Overrides
 public:
@@ -59,15 +61,21 @@ protected:
 // Constants
 	enum {
 		TEXT_X = 4,
+		TOOL_TIP_ID = 1,
 	};
 
 // Member data
 	int		m_nTrackHeight;		// track height, in client coords
 	int		m_iSelMark;			// selection mark
 	int		m_nScrollPos;		// scroll position
+	CToolTipCtrl	m_wndTip;	// tool tip
+	CPoint	m_ptTipTool;		// top left corner of tool tip's tool rectangle, in client coords
+	bool	m_bTipShown;		// true if tip is showing; otherwise tool point is invalid
 
 // Helpers
 	CSize	GetClientSize() const;
+	bool	CreateToolTip();
+	void	RemoveToolTip();
 
 // Generated message map functionsq
 protected:
@@ -75,6 +83,8 @@ protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnToolTipShow(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 inline CPolymeterDoc* CSongTrackView::GetDocument() const

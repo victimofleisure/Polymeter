@@ -9,6 +9,7 @@
 		rev		date	comments
         00      23mar18	initial version
 		01		09jul20	move view type handling from document to child frame
+		02		03aug20	fix next/previous pane handling
 
 */
 
@@ -258,16 +259,17 @@ BOOL CChildFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO
 		break;
 	case ID_NEXT_PANE:
 	case ID_PREV_PANE:
-		if (m_nViewType == VIEW_Track) {
-			if (nCode == CN_COMMAND) {
-				HWND	hWnd = ::GetFocus();
-				CView	*pView;
-				if (::IsChild(m_pStepParent->m_hWnd, hWnd))	// if any step view has focus
-					pView = m_pTrackView;	// activate track view
-				else	// any other window has focus
-					pView = m_pStepParent;	// activate step view 
-				SetActiveView(pView);
+		if (nCode == CN_COMMAND) {
+			HWND	hWnd = ::GetFocus();
+			if (!::IsChild(m_hWnd, hWnd)) {	// if focus window isn't our child
+				if (m_pViewActive != NULL) {	// if active view exists
+					CView	*pView = m_pViewActive;
+					m_pViewActive = NULL;	// spoof nop test
+					SetActiveView(pView);	// reactivate view
+					return TRUE;	// handled
+				}
 			}
+		} else if (nCode == CN_UPDATE_COMMAND_UI) {
 			return TRUE;	// handled
 		}
 		break;

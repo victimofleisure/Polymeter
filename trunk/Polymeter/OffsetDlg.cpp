@@ -9,6 +9,7 @@
 		rev		date	comments
         00      21may18	initial version
 		01		18jun20	if dialog caption ID is specified, also use it as help ID
+		02		28jul20	add data range validation
 
 */
 
@@ -41,6 +42,8 @@ void COffsetDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_OFFSET_EDIT, m_nOffset);
+	if (!m_rngOffset.IsEmpty())	// if range specified
+		DDV_MinMaxInt(pDX, m_nOffset, m_rngOffset.Start, m_rngOffset.End);	// enforce range
 }
 
 BEGIN_MESSAGE_MAP(COffsetDlg, CDialog)
@@ -59,7 +62,7 @@ BOOL COffsetDlg::OnInitDialog()
 		GetDlgItem(IDC_OFFSET_CAPTION)->SetWindowText(LDS(m_nEditCaptionID));
 	// can't use type-checking downcast here because control isn't wrapped
 	CSpinButtonCtrl	*pSpinCtrl = reinterpret_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_OFFSET_SPIN));
-	if (!m_rngOffset.IsEmpty())
+	if (!m_rngOffset.IsEmpty())	// if range specified
 		pSpinCtrl->SetRange32(m_rngOffset.Start, m_rngOffset.End);	// set spin control range
 	return TRUE;  // return TRUE unless you set the focus to a control
 }

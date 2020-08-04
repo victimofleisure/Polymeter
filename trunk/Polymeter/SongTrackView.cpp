@@ -10,6 +10,7 @@
         00      30may18	initial version
 		01		05apr20	draw bottom gridline
 		02		06apr20	change background color to window color
+		03		29jul20	add tool tip for truncated names
 
 */
 
@@ -42,6 +43,8 @@ CSongTrackView::CSongTrackView()
 	m_nTrackHeight = 20;
 	m_iSelMark = -1;
 	m_nScrollPos = 0;
+	m_ptTipTool = CPoint(0, 0);
+	m_bTipShown = false;
 }
 
 CSongTrackView::~CSongTrackView()
@@ -89,6 +92,9 @@ void CSongTrackView::ScrollToPosition(int nScrollPos)
 	if (nDeltaY)
 		ScrollWindow(0, nDeltaY);
 	m_nScrollPos = nScrollPos;
+	if (m_bTipShown) {	// if tip is showing
+		RemoveToolTip();
+	}
 }
 
 __forceinline CSize CSongTrackView::GetClientSize() const
@@ -150,12 +156,46 @@ void CSongTrackView::OnDraw(CDC* pDC)
 	pDC->FillSolidRect(rClip, clrBkgnd);	// erase anything not excluded above
 }
 
+int CSongTrackView::HitTest(CPoint point) const
+{
+	int	iTrack = (point.y + m_nScrollPos) / m_nTrackHeight;
+	int	nTracks = GetDocument()->GetTrackCount();
+	if (iTrack >= 0 && iTrack < nTracks)
+		return iTrack;
+	return -1;
+}
+
+bool CSongTrackView::CreateToolTip()
+{
+	if (!m_wndTip.Create(this))
+		return false;
+	if (!m_wndTip.AddTool(this, _T(""), CRect(0, 0, 0, 0), TOOL_TIP_ID))
+		return false;
+	CToolInfo	ti;
+	if (!m_wndTip.GetToolInfo(ti, this, TOOL_TIP_ID))
+		return false;
+	ti.uFlags |= TTF_TRANSPARENT;	// forward mouse messages to parent, else tip flashes
+	m_wndTip.SetToolInfo(&ti);
+	m_wndTip.SetDelayTime(TTDT_INITIAL, 0);	// show tip immediately
+	m_wndTip.SendMessage(WM_SETFONT, WPARAM(GetStockObject(DEFAULT_GUI_FONT)));
+	return true;
+}
+
+void CSongTrackView::RemoveToolTip()
+{
+	m_wndTip.ShowWindow(SW_HIDE);	// hide tip immediately
+	m_wndTip.Activate(false);
+	m_bTipShown = false;
+}
+
 // CSongTrackView message map
 
 BEGIN_MESSAGE_MAP(CSongTrackView, CView)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
 	ON_WM_LBUTTONDOWN()
+	ON_WM_MOUSEMOVE()
+	ON_NOTIFY(TTN_SHOW, 0, OnToolTipShow)
 END_MESSAGE_MAP()
 
 // CSongTrackView message handlers
@@ -175,6 +215,9 @@ BOOL CSongTrackView::PreTranslateMessage(MSG* pMsg)
 			return TRUE;	// key was handled so don't process further
 		if (CPolymeterApp::HandleScrollViewKeys(pMsg, m_pSongView))
 			return TRUE;
+	} else if (pMsg->message >= WM_MOUSEFIRST && pMsg->message < WM_MOUSELAST) {
+		if (m_wndTip.m_hWnd)	// if tool tip control created
+			m_wndTip.RelayEvent(pMsg);	// relay mouse message to tool tip control
 	}
 	return CView::PreTranslateMessage(pMsg);
 }
@@ -211,4 +254,52 @@ void CSongTrackView::OnLButtonDown(UINT nFlags, CPoint point)
 		pDoc->Deselect();
 	}
 	CView::OnLButtonDown(nFlags, point);
+}
+
+void CSongTrackView::OnMouseMove(UINT nFlags, CPoint point)
+{
+	bool	bNeedTip = false;
+	int	iTrack = HitTest(point);
+	if (iTrack >= 0) {	// if cursor over a track
+		CClientDC	dc(this);
+		dc.SelectObject(GetStockObject(DEFAULT_GUI_FONT));
+		CPolymeterDoc	*pDoc = GetDocument();
+		CSize	szText = dc.GetTextExtent(pDoc->m_Seq.GetName(iTrack));	// measure track name
+		CRect	rc;
+		GetClientRect(rc);
+		if (TEXT_X + szText.cx > rc.Width()) {	// if track name is truncated
+			bNeedTip = true;	// tool tip is needed
+			int	y = iTrack * m_nTrackHeight - m_nScrollPos;
+			CPoint	ptTool(0, y);
+			if (!m_bTipShown || ptTool != m_ptTipTool) {	// if tip isn't shown, or its location has changed
+				if (!m_wndTip.m_hWnd) {	// if tool tip control not yet created
+					bool	bIsCreated = CreateToolTip();	// create tool tip control
+					ASSERT(bIsCreated);
+					if (!bIsCreated)	// if tool tip creation failed
+						goto lblToolTipError;
+				}
+				m_ptTipTool = ptTool;	// do before SetToolRect, so show notification uses updated location
+				m_bTipShown = true;
+				m_wndTip.UpdateTipText(pDoc->m_Seq.GetName(iTrack), this, TOOL_TIP_ID);
+				CRect	rTool(ptTool, CSize(rc.Width(), m_nTrackHeight));
+				m_wndTip.SetToolRect(this, TOOL_TIP_ID, rTool);
+				m_wndTip.Activate(true);
+			}
+		}
+	}
+	if (m_bTipShown && !bNeedTip) {	// if tip is showing needlessly
+		RemoveToolTip();
+	}
+lblToolTipError:
+	CView::OnMouseMove(nFlags, point);
+}
+
+void CSongTrackView::OnToolTipShow(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	UNREFERENCED_PARAMETER(pNMHDR);
+	CPoint	ptTip(m_ptTipTool);
+	ptTip.x -= GetSystemMetrics(SM_CXEDGE);	// account for window edge, so tip text lines up with underlying text
+	ClientToScreen(&ptTip);	// convert to screen coords
+	m_wndTip.SetWindowPos(NULL, ptTip.x, ptTip.y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);	// reposition tip
+	*pResult = true;	// suppress default positioning
 }
