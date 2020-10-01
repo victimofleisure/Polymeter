@@ -27,6 +27,8 @@
 		17		19mar20	add MIDI message name lookup
 		18		17apr20	add track color
 		19		30apr20	add step velocity accessors
+		20		28sep20	add sort methods to track group array
+		21		30sep20	add get track selection to track group array
 
 */
 
@@ -615,4 +617,11 @@ public:
 	void	Write(LPCTSTR pszSection) const;
 	void	Dump() const;
 	void	GetTrackRefs(CIntArrayEx& arrTrackIdx) const;
+	void	SortByName(CPtrArrayEx *parrSortedPtr = NULL);
+	void	SortByTrack(CPtrArrayEx *parrSortedPtr = NULL);
+	void	GetTrackSelection(const CIntArrayEx& arrGroupSel, CIntArrayEx& arrTrackSel) const;
+
+protected:
+	static int	SortCompareName(const void *pElem1, const void *pElem2);
+	static int	SortCompareTrack(const void *pElem1, const void *pElem2);
 };

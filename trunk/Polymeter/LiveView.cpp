@@ -17,6 +17,8 @@
 		07		03jun20	get recording state from app instead of sequencer
 		08		05jul20	handle track and multi-track property updates
 		09		09jul20	get view type from child frame instead of document
+		10		08sep20	if deferring update, don't update position bars
+		11		24sep20	order parts by lowest track index
 
 */
 
@@ -247,13 +249,16 @@ void CLiveView::Update()
 	arrTrackIdx.SetSize(nTracks);
 	pDoc->m_arrPart.GetTrackRefs(arrTrackIdx);
 	m_arrPart.RemoveAll();
+	CBoolArrayEx	arrPartAdded;
+	arrPartAdded.SetSize(pDoc->m_arrPart.GetSize());
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-		if (arrTrackIdx[iTrack] < 0)	// if track doesn't belong to a part
+		int	iPart = arrTrackIdx[iTrack];
+		if (iPart < 0)	// if track doesn't belong to a part
 			m_arrPart.Add(iTrack);
-	}
-	int	nParts = pDoc->m_arrPart.GetSize();
-	for (int iPart = 0; iPart < nParts; iPart++) {	// for each part
-		m_arrPart.Add(iPart | PART_GROUP_MASK);	// flag index to identify as group
+		else if (!arrPartAdded[iPart]) {	// if part not yet added
+			arrPartAdded[iPart] = true;
+			m_arrPart.Add(iPart | PART_GROUP_MASK);	// flag index to identify as group
+		}
 	}
 	m_list[LIST_PARTS].SetItemCountEx(m_arrPart.GetSize(), 0);	// invalidate all
 	m_list[LIST_PRESETS].SetItemCountEx(pDoc->m_arrPreset.GetSize(), 0);	// invalidate all
@@ -372,10 +377,10 @@ void CLiveView::SetMute(int iItem, bool bEnable, bool bDeferUpdate)
 		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 		m_list[LIST_PARTS].RedrawItem(iItem);
 		m_wndPosBar.InvalidateBar(iItem);
+		if (!pDoc->m_Seq.IsPlaying())	// if stopped
+			m_wndPosBar.UpdateBars();
 		ApplyMuteChanges();
 	}
-	if (!pDoc->m_Seq.IsPlaying())	// if stopped
-		m_wndPosBar.UpdateBars();
 }
 
 void CLiveView::SetSelectedMutes(bool bEnable)
@@ -414,10 +419,10 @@ void CLiveView::ToggleMute(int iItem, bool bDeferUpdate)
 		pDoc->m_Seq.RecordDub();	// record dub ASAP, before updating UI
 		m_list[LIST_PARTS].RedrawItem(iItem);
 		m_wndPosBar.InvalidateBar(iItem);
+		if (!pDoc->m_Seq.IsPlaying())	// if stopped
+			m_wndPosBar.UpdateBars();
 		ApplyMuteChanges();
 	}
-	if (!pDoc->m_Seq.IsPlaying())	// if stopped
-		m_wndPosBar.UpdateBars();
 }
 
 void CLiveView::ToggleSelectedMutes()

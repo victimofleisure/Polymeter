@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		19jun18	initial version
+		01		28sep20	add sort messages
 		
 */
 
@@ -59,4 +60,7 @@ protected:
 	afx_msg void OnUpdateTrackPartUpdate(CCmdUI *pCmdUI);
 	afx_msg void OnSelectTracks();
 	afx_msg void OnUpdateSelectTracks(CCmdUI *pCmdUI);
+	afx_msg void OnSortByName();
+	afx_msg void OnSortByTrack();
+	afx_msg void OnUpdateSort(CCmdUI *pCmdUI);
 };

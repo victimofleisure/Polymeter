@@ -12,6 +12,7 @@
 		02		20mar20	add track property change message
 		03		01apr20	add generic context menu method
 		04		05apr20	add track step change message
+		05		07sep20	add apply preset and part messages
 
 		global definitions and inlines
 
@@ -107,6 +108,8 @@ enum {	// application-wide user window messages, based on WP_APP
 	UWM_MIDI_EVENT,				// wParam: timestamp, lParam: MIDI message
 	UWM_TRACK_PROPERTY_CHANGE,	// wParam: track index, lParam: property index
 	UWM_TRACK_STEP_CHANGE,		// wParam: track index, lParam: step index
+	UWM_PRESET_APPLY,			// wParam: preset index, lParam: none
+	UWM_PART_APPLY,				// wParam: part index, lParam: bool mute state
 };
 
 // undo natter should always be zero in a shipping version

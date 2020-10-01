@@ -28,6 +28,8 @@
 		18		06apr20	in import steps, allow note names
 		19		17apr20	add track color
 		20		30jun20	support controller messages in MIDI file import
+		21		28sep20	add sort methods to track group array
+		22		30sep20	add get track selection to track group array
 
 */
 
@@ -1168,6 +1170,62 @@ void CTrackGroupArray::GetTrackRefs(CIntArrayEx& arrTrackIdx) const
 		for (int iMbr = 0; iMbr < nMbrs; iMbr++) {	// for each of group's members
 			int	iTrack = GetAt(iGroup).m_arrTrackIdx[iMbr];
 			arrTrackIdx[iTrack] = iGroup;
+		}
+	}
+}
+
+void CTrackGroupArray::SortByName(CPtrArrayEx *parrSortedPtr)
+{
+	SortIndirect(SortCompareName, parrSortedPtr);
+}
+
+void CTrackGroupArray::SortByTrack(CPtrArrayEx *parrSortedPtr)
+{
+	// track indices aren't guaranteed to be in ascending order, so for each preset,
+	// find its lowest track index, store it in preset, and remove it after sorting
+	W64INT iElem;
+	for (iElem = 0; iElem < m_nSize; iElem++) {	// for each group
+		CIntArrayEx&	arrTrackIdx = GetAt(iElem).m_arrTrackIdx;
+		int	iMinTrack = static_cast<int>(arrTrackIdx.FindMin());	// find lowest track index
+		if (iMinTrack >= 0)	// if lowest track index found, iMinTrack is its index within array
+			iMinTrack = arrTrackIdx[iMinTrack];	// convert index within array to track index
+		arrTrackIdx.InsertAt(0, iMinTrack);	// push into front of array for SortCompareTrack
+	}
+	SortIndirect(SortCompareTrack, parrSortedPtr);	// sort groups by first track index
+	for (iElem = 0; iElem < m_nSize; iElem++) {	// for each group
+		GetAt(iElem).m_arrTrackIdx.RemoveAt(0);	// remove lowest track index
+	}
+}
+
+int CTrackGroupArray::SortCompareName(const void *pElem1, const void *pElem2)
+{
+	const CTrackGroup	*pGroup1 = *(const CTrackGroup **)pElem1;
+	const CTrackGroup	*pGroup2 = *(const CTrackGroup **)pElem2;
+	return _tcscmp(pGroup1->m_sName, pGroup2->m_sName);
+}
+
+int	CTrackGroupArray::SortCompareTrack(const void *pElem1, const void *pElem2)
+{
+	const CTrackGroup	*pGroup1 = *(const CTrackGroup **)pElem1;
+	const CTrackGroup	*pGroup2 = *(const CTrackGroup **)pElem2;
+	int	iTrack1 = pGroup1->m_arrTrackIdx[0];	// caller guarantees non-empty array
+	int	iTrack2 = pGroup2->m_arrTrackIdx[0];
+	return iTrack1 < iTrack2 ? -1 : (iTrack1 > iTrack2 ? 1 : 0);
+}
+
+void CTrackGroupArray::GetTrackSelection(const CIntArrayEx& arrGroupSel, CIntArrayEx& arrTrackSel) const
+{
+	// member tracks aren't necessarily in ascending order, even within a single group,
+	// but track selection MUST be ascending order, else insert/delete selection breaks
+	arrTrackSel.FastRemoveAll();	// empty destination array
+	int	nGroupSels = arrGroupSel.GetSize();
+	for (int iGroupSel = 0; iGroupSel < nGroupSels; iGroupSel++) {	// for each selected group
+		int	iGroup = arrGroupSel[iGroupSel];
+		const CTrackGroup&	Group = GetAt(iGroup);
+		int	nMbrs = Group.m_arrTrackIdx.GetSize();
+		for (int iMbr = 0; iMbr < nMbrs; iMbr++) {	// for each of group's member tracks
+			int	iTrack = Group.m_arrTrackIdx[iMbr];
+			arrTrackSel.InsertSortedUnique(iTrack);	// add track index to sorted track selection
 		}
 	}
 }

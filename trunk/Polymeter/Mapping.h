@@ -10,6 +10,7 @@
         00      20mar20	initial version
 		01		29mar20	add get/set input message for selected mappings
 		02		05apr20	add track step mapping
+		03		07sep20	add preset and part mapping
 
 */
 
@@ -46,9 +47,16 @@ public:
 		#include "MidiCtrlrDef.h"	// enumerate MIDI channel voice messages
 		#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) OUT_##name,
 		#include "TrackDef.h"	// enumerate track properties
-		OUT_Steps,	// track steps can also be targeted
+		#define MAPPINGDEF_SPECIAL_TARGET(name) OUT_##name,
+		#include "MappingDef.h"	// enumerate special targets
 		OUTPUT_EVENTS
 	};
+	enum {	// special targets
+		#define MAPPINGDEF_SPECIAL_TARGET(name) SPOUTEVT_##name,
+		#include "MappingDef.h"	// enumerate special targets
+		SPECIAL_TARGETS
+	};
+	static const LPCTSTR	m_arrSpecialTarget[SPECIAL_TARGETS];
 
 // Attributes
 	int		GetProperty(int iProp) const;
@@ -71,32 +79,9 @@ inline LPCTSTR CMapping::GetInputEventName(int nInEvent)
 	return CTrackBase::GetMidiChannelVoiceMsgName(nInEvent);
 }
 
-inline LPCTSTR CMapping::GetOutputEventName(int nOutEvent)
-{
-	ASSERT(nOutEvent >= 0 && nOutEvent < OUTPUT_EVENTS);
-	if (nOutEvent < MIDI_CHANNEL_VOICE_MESSAGES)
-		return CTrackBase::GetMidiChannelVoiceMsgName(nOutEvent);
-	nOutEvent -= MIDI_CHANNEL_VOICE_MESSAGES;
-	if (nOutEvent < CTrackBase::PROPERTIES)
-		return CTrackBase::GetPropertyInternalName(nOutEvent);
-	return _T("Step");
-}
-
 inline int CMapping::FindInputEventName(LPCTSTR pszName)
 {
 	return CTrackBase::FindMidiChannelVoiceMsgName(pszName);
-}
-
-inline int CMapping::FindOutputEventName(LPCTSTR pszName)
-{
-	int	nEvent = CTrackBase::FindMidiChannelVoiceMsgName(pszName);	// search channel voice message names
-	if (nEvent < 0) {	// if name isn't channel voice message
-		nEvent = CTrackBase::FindPropertyInternalName(pszName);	// search track property names
-		if (nEvent < 0)	// if name isn't track property either
-			return -1;	// name is undefined
-		nEvent += MIDI_CHANNEL_VOICE_MESSAGES;	// account for channel voice messages
-	}
-	return nEvent;
 }
 
 class CMappingArray : public CArrayEx<CMapping, CMapping&> {

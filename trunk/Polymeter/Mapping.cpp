@@ -11,6 +11,7 @@
 		01		27mar20	match control parameter only if event uses it
 		02		29mar20	add get/set input message for selected mappings
 		03		05apr20	add track step mapping
+		04		07sep20	add preset and part mapping
 
 */
 
@@ -25,6 +26,11 @@
 #define RK_MAPPING_SECTION _T("Mapping")
 #define RK_MAPPING_IN_EVENT _T("InEvent")
 #define RK_MAPPING_OUT_EVENT _T("OutEvent")
+
+const LPCTSTR CMapping::m_arrSpecialTarget[SPECIAL_TARGETS] = {
+	#define MAPPINGDEF_SPECIAL_TARGET(name) _T(#name),
+	#include "MappingDef.h"	// generate names of special output events
+};
 
 void CMapping::SetDefaults()
 {
@@ -58,13 +64,45 @@ void CMapping::SetProperty(int iProp, int nVal)
 	}
 }
 
+LPCTSTR CMapping::GetOutputEventName(int nOutEvent)
+{
+	ASSERT(nOutEvent >= 0 && nOutEvent < OUTPUT_EVENTS);
+	if (nOutEvent < MIDI_CHANNEL_VOICE_MESSAGES)
+		return CTrackBase::GetMidiChannelVoiceMsgName(nOutEvent);
+	nOutEvent -= MIDI_CHANNEL_VOICE_MESSAGES;
+	if (nOutEvent < CTrackBase::PROPERTIES)
+		return CTrackBase::GetPropertyInternalName(nOutEvent);
+	nOutEvent -= CTrackBase::PROPERTIES;
+	return m_arrSpecialTarget[nOutEvent];
+}
+
+int CMapping::FindOutputEventName(LPCTSTR pszName)
+{
+	int	nEvent = CTrackBase::FindMidiChannelVoiceMsgName(pszName);	// search channel voice message names
+	if (nEvent >= 0)	// if name is channel voice message
+		return nEvent;
+	nEvent = CTrackBase::FindPropertyInternalName(pszName);	// search track property names
+	if (nEvent >= 0)	// if name is track property
+		return nEvent + MIDI_CHANNEL_VOICE_MESSAGES;	// account for channel voice messages
+	nEvent = ArrayFind(m_arrSpecialTarget, SPECIAL_TARGETS, pszName);
+	if (nEvent >= 0)	// if name is special output event
+		return nEvent + MIDI_CHANNEL_VOICE_MESSAGES + CTrackBase::PROPERTIES;	// account for track properties too
+	return -1;	// unknown name
+}
+
 void CMapping::Read(LPCTSTR pszSection)
 {
 	CString	sName;
 	sName = CPersist::GetString(pszSection, RK_MAPPING_IN_EVENT);
 	m_nInEvent = FindInputEventName(sName);
+	ASSERT(m_nInEvent >= 0);	// check for unknown input event name
+	if (m_nInEvent < 0)	// if unknown input event name
+		m_nInEvent = 0;		// avoid range errors downstream
 	sName = CPersist::GetString(pszSection, RK_MAPPING_OUT_EVENT);
 	m_nOutEvent = FindOutputEventName(sName);
+	ASSERT(m_nOutEvent >= 0);	// check for unknown output event name
+	if (m_nOutEvent < 0)	// if unknown output event name
+		m_nOutEvent = 0;		// avoid range errors downstream
 	// conditional to exclude events is optimized away in release build
 	#define MAPPINGDEF(name, align, width, member, minval, maxval) \
 		if (PROP_##name != PROP_IN_EVENT && PROP_##name != PROP_OUT_EVENT) \
@@ -157,11 +195,11 @@ bool CMappingArray::MapMidiEvent(DWORD dwInEvent, CDWordArrayEx& arrOutEvent) co
 				}
 				DWORD	nMsg = MakeMidiMsg((map.m_nOutEvent + 8) << 4, map.m_nOutChannel, nP1, nP2);
 				arrOutEvent.Add(nMsg);	// add translated event to destination array
-			} else {	// output event is a track property
+			} else {	// output event isn't a channel voice property
 				CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 				if (pDoc != NULL) {	// if active document
 					switch (map.m_nOutEvent) {
-					case CMapping::OUT_Steps:
+					case CMapping::OUT_Step:
 						{
 							int	iTrack = map.m_nTrack;
 							if (iTrack >= 0) {	// if track index specified
@@ -178,6 +216,12 @@ bool CMappingArray::MapMidiEvent(DWORD dwInEvent, CDWordArrayEx& arrOutEvent) co
 								}
 							}
 						}
+						break;
+					case CMapping::OUT_Preset:
+						theApp.GetMainFrame()->PostMessage(UWM_PRESET_APPLY, nDataVal);
+						break;
+					case CMapping::OUT_Part:
+						theApp.GetMainFrame()->PostMessage(UWM_PART_APPLY, map.m_nOutControl, nDataVal);
 						break;
 					default:
 						int	iTrack = map.m_nTrack;

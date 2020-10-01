@@ -34,6 +34,7 @@
 		24		25feb19	fix missing default count in FastRemoveAt
 		25		26feb19	add FastInsertSorted
 		26		01apr19	add FastInsertSortedUnique
+		27		26sep20	add indirect sort
 
 		enhanced array with copy ctor, assignment, and fast const access
  
@@ -120,6 +121,7 @@ public:
 	void	InsertSelection(const CIntArrayEx& arrSelection, CArrayEx& arrInsert);
 	void	DeleteSelection(const CIntArrayEx& arrSelection);
 	void	MoveSelection(const CIntArrayEx& arrSelection, int iDropPos);
+	void	SortIndirect(int (__cdecl *_PtFuncCompare)(const void *, const void *), CPtrArrayEx *parrSortedPtr = NULL);
 };
 
 template<class TYPE, class ARG_TYPE>
@@ -311,6 +313,7 @@ AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::SetSelection(const CIntArrayEx& arrSel
 template<class TYPE, class ARG_TYPE>
 AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::InsertSelection(const CIntArrayEx& arrSelection, CArrayEx& arrInsert)
 {
+	// assume selection in ascending order
 	int	nSels = arrSelection.GetSize();
 	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected item
 		InsertAt(arrSelection[iSel], arrInsert[iSel]);
@@ -319,6 +322,7 @@ AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::InsertSelection(const CIntArrayEx& arr
 template<class TYPE, class ARG_TYPE>
 AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::DeleteSelection(const CIntArrayEx& arrSelection)
 {
+	// assume selection in ascending order
 	int	nSels = arrSelection.GetSize();
 	for (int iSel = nSels - 1; iSel >= 0; iSel--)	// reverse iterate for deletion stability
 		RemoveAt(arrSelection[iSel]);
@@ -337,6 +341,27 @@ AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::MoveSelection(const CIntArrayEx& arrSe
 		RemoveAt(iItem);
 	}
 	InsertAt(iDropPos, &arrInsert);
+}
+
+template<class TYPE, class ARG_TYPE>
+AFX_INLINE void CArrayEx<TYPE, ARG_TYPE>::SortIndirect(int (__cdecl *_PtFuncCompare)(const void *, const void *), CPtrArrayEx *parrSortedPtr)
+{
+	W64INT	nElems = m_nSize;
+	CPtrArrayEx	arrObPtr;
+	arrObPtr.SetSize(nElems);
+	W64INT	iElem;
+	for (iElem = 0; iElem < nElems; iElem++) {	// create pointers to elements
+		arrObPtr[iElem] = &GetAt(iElem);
+	}
+	qsort(arrObPtr.GetData(), nElems, sizeof(PVOID), _PtFuncCompare);	// sort element pointers
+	CArrayEx<TYPE, ARG_TYPE>	arrOb;
+	arrOb.SetSize(nElems);
+	for (iElem = 0; iElem < nElems; iElem++) {	// copy elements in sorted order to temporary array
+		arrOb[iElem] = *static_cast<TYPE*>(arrObPtr[iElem]);
+	}
+	*this = arrOb;	// copy sorted temporary array to this array
+	if (parrSortedPtr != NULL)	// if caller wants sorted element pointers
+		parrSortedPtr->Swap(arrObPtr);	// move sorted element pointers to caller's array
 }
 
 // template to find an element in an array

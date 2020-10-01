@@ -442,6 +442,12 @@ BEGIN
         MENUITEM "&Rename",                     ID_EDIT_RENAME
         MENUITEM "&Update",                     ID_TRACK_PART_UPDATE
         MENUITEM "&Tracks",                     ID_PARTS_SELECT_TRACKS
+        MENUITEM SEPARATOR
+        POPUP "&Sort"
+        BEGIN
+            MENUITEM "By &Name",                    ID_PARTS_SORT_BY_NAME
+            MENUITEM "By &Track",                   ID_PARTS_SORT_BY_TRACK
+        END
     END
 END
 
@@ -1472,6 +1478,7 @@ BEGIN
     IDS_WINDOW_RESET_LAYOUT_WARN 
                             "Reset all windows to their default layout? This action can't be undone, and the application will be restarted."
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
+    IDS_EDIT_SORT_PARTS     "Sort Parts"
 END
 
 STRINGTABLE
@@ -1529,6 +1536,8 @@ STRINGTABLE
 BEGIN
     ID_MODULATION_SORT_BY_TYPE "Sort modulations by type"
     ID_PARTS_SELECT_TRACKS  "Select tracks belonging to selected parts"
+    ID_PARTS_SORT_BY_NAME   "Sort parts by name"
+    ID_PARTS_SORT_BY_TRACK  "Sort parts by first track"
     ID_PHASE_EXPORT_VIDEO   "Export video as image sequence\nExport Video"
     ID_PIANO_COLOR_VELOCITY "Color keys to show note velocities"
     ID_PIANO_INSERT_TRACK   "Insert track for selected note"
@@ -1542,13 +1551,13 @@ BEGIN
     ID_STEP_VALUES_FORMAT_NOTES "Show steps as notes"
     ID_STEP_VALUES_FORMAT_OCTAVES "Include octave in note name"
     ID_STEP_VALUES_FORMAT_SIGNED "Show steps as signed integers"
-    ID_STEP_VALUES_FORMAT_TIES "Include tied note state"
-    ID_STEP_VALUES_LAYOUT_COLS_STEPS 
-                            "In export, columns are steps and rows are tracks"
 END
 
 STRINGTABLE
 BEGIN
+    ID_STEP_VALUES_FORMAT_TIES "Include tied note state"
+    ID_STEP_VALUES_LAYOUT_COLS_STEPS 
+                            "In export, columns are steps and rows are tracks"
     ID_STEP_VALUES_LAYOUT_COLS_TRACKS 
                             "In export, columns are tracks and rows are steps"
     ID_TOOLS_CONVERGENCES   "Show convergences calculator\nConvergences"
@@ -1566,12 +1575,12 @@ BEGIN
     ID_TOOLS_OPTIONS        "Edit the options\nOptions"
     ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
     ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for the selected tracks to repeat\nTime to Repeat"
-    ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks or steps\nVelocity Range "
-    ID_TRACK_COLOR          "Assign color to selected tracks\nTrack Color"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks or steps\nVelocity Range "
+    ID_TRACK_COLOR          "Assign color to selected tracks\nTrack Color"
     ID_TRACK_FILL           "Fill selected tracks or steps with a range of values\nFill"
     ID_TRACK_GROUP          "Group the selected tracks into a part\nCreate Group"
     ID_TRACK_INVERT         "Invert the selected tracks or steps\nInvert"
@@ -1586,12 +1595,12 @@ BEGIN
     ID_TRACK_PRESET_UPDATE  "Update the selected preset from the track mutes\nUpdate Preset"
     ID_TRACK_REVERSE        "Reverse the selected tracks or steps\nReverse"
     ID_TRACK_ROTATE_LEFT    "Rotate the selected tracks or steps left\nRotate Left"
-    ID_TRACK_ROTATE_RIGHT   "Rotate the selected tracks or steps right\nRotate Right"
-    ID_TRACK_ROTATE_STEPS   "Rotate the selection left or right a given number of steps\nRotate Steps"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_ROTATE_RIGHT   "Rotate the selected tracks or steps right\nRotate Right"
+    ID_TRACK_ROTATE_STEPS   "Rotate the selection left or right a given number of steps\nRotate Steps"
     ID_TRACK_SHIFT_LEFT     "Shift the selected tracks or steps left\nShift Left"
     ID_TRACK_SHIFT_RIGHT    "Shift the selected tracks or steps right\nShift Right"
     ID_TRACK_SHIFT_STEPS    "Shift the selection left or right a given number of steps\nShift Steps"
@@ -1610,22 +1619,22 @@ BEGIN
                             "Customize number of modulos to coincide\nCustom Convergence"
     ID_TRANSPORT_GO_TO_POSITION 
                             "Go to specified position within song\nGo To Position"
-    ID_TRANSPORT_PAUSE      "Pause or continue playback\nPause"
-    ID_TRANSPORT_PLAY       "Start or stop playback\nPlay"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRANSPORT_PAUSE      "Pause or continue playback\nPause"
+    ID_TRANSPORT_PLAY       "Start or stop playback\nPlay"
     ID_TRANSPORT_RECORD     "Start or stop recording\nRecord"
     ID_TRANSPORT_RECORD_TRACKS 
                             "Start or stop recording MIDI input to tracks\nRecord Tracks"
     ID_TRANSPORT_REWIND     "Rewind to start of song\nRewind"
-    ID_VIEW_CHANNELS        "Show or hide the channels bar\nShow Channels"
-    ID_VIEW_CUSTOMIZE       "Customize the application's interface\nCustomize"
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_CHANNELS        "Show or hide the channels bar\nShow Channels"
+    ID_VIEW_CUSTOMIZE       "Customize the application's interface\nCustomize"
     ID_VIEW_MODULATIONS     "Show or hide the modulations bar\nShow Modulations"
     ID_VIEW_PARTS           "Show or hide the parts bar\nShow Parts"
     ID_VIEW_PRESETS         "Show or hide the presets bar\nShow Presets"
@@ -1641,6 +1650,10 @@ BEGIN
     ID_WINDOW_MANAGER       "Manage child windows\nWindows"
     ID_WINDOW_NEW_HORZ_TAB_GROUP 
                             "Create a new horizontal tab group\nNew Horizontal Tab Group"
+END
+
+STRINGTABLE
+BEGIN
     ID_WINDOW_NEW_VERT_TAB_GROUP 
                             "Create a new horizontal tab group \nNew Vertical Tab Group"
     ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"

@@ -56,6 +56,7 @@
 		46		05jul20	pass document pointer to UpdateSongPosition
 		47		09jul20	move view type handling from document to child frame
 		48		17jul20	in read properties, set cached song position
+		49		28sep20	add part sort
 
 */
 
@@ -2162,6 +2163,32 @@ void CPolymeterDoc::RestorePartMove(const CUndoState& State)
 	UpdateAllViews(NULL, HINT_PART_ARRAY, &hint);
 }
 
+void CPolymeterDoc::SavePartSort(CUndoState& State) const
+{
+	if (UndoMgrIsIdle()) {	// if initial state
+		CRefPtr<CUndoSelection>	pInfo;
+		pInfo.CreateObj();
+		ASSERT(m_parrSelection != NULL);
+		pInfo->m_arrSelection = *m_parrSelection;
+		State.SetObj(pInfo);
+	}
+}
+
+void CPolymeterDoc::RestorePartSort(const CUndoState& State)
+{
+	const CUndoSelection	*pInfo = static_cast<CUndoSelection*>(State.GetObj());
+	CTrackGroupArray	arrPart;
+	if (IsUndoing()) {	// if undoing
+		arrPart = m_arrPart;
+		m_arrPart.SetSelection(pInfo->m_arrSelection, arrPart);
+	} else {	// redoing
+		m_arrPart.GetSelection(pInfo->m_arrSelection, arrPart);
+		m_arrPart = arrPart;
+	}
+	CSelectionHint	hint(NULL);
+	UpdateAllViews(NULL, HINT_PART_ARRAY, &hint);
+}
+
 void CPolymeterDoc::SaveModulation(CUndoState& State) const
 {
 	const CIntArrayEx	*parrSelection;
@@ -2454,6 +2481,9 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 	case UCODE_MOVE_PARTS:
 		SavePresetMove(State);	// reuse, not an error
 		break;
+	case UCODE_SORT_PARTS:
+		SavePartSort(State);
+		break;
 	case UCODE_MODULATION:
 		SaveModulation(State);
 		break;
@@ -2592,6 +2622,9 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		break;
 	case UCODE_MOVE_PARTS:
 		RestorePartMove(State);
+		break;
+	case UCODE_SORT_PARTS:
+		RestorePartSort(State);
 		break;
 	case UCODE_MODULATION:
 		RestoreModulation(State);
@@ -3281,8 +3314,31 @@ void CPolymeterDoc::UpdatePart(int iPart)
 	if (!CheckForPartOverlap(iPart))
 		return;
 #endif
+	SetModifiedFlag();
 	NotifyUndoableEdit(iPart, UCODE_UPDATE_PART);
 	m_arrPart[iPart].m_arrTrackIdx = m_arrTrackSel;
+}
+
+void CPolymeterDoc::SortParts(bool bByTrack)
+{
+	CPtrArrayEx	arrSortedPartPtr;	// receives pointers to sorted parts
+	if (bByTrack)
+		m_arrPart.SortByTrack(&arrSortedPartPtr);
+	else
+		m_arrPart.SortByName(&arrSortedPartPtr);
+	CIntArrayEx	arrSortedPartIdx;
+	int	nParts = arrSortedPartPtr.GetSize();
+	arrSortedPartIdx.SetSize(nParts);
+	for (int iPart = 0; iPart < nParts; iPart++) {	// convert sorted part pointers to indices
+		INT_PTR	iSortedPart = static_cast<CTrackGroup*>(arrSortedPartPtr[iPart]) - m_arrPart.GetData();
+		arrSortedPartIdx[iPart] = static_cast<int>(iSortedPart);	// limited to INT_MAX parts
+	}
+	m_parrSelection	= &arrSortedPartIdx;	// pass sorted part indices to undo callback
+	NotifyUndoableEdit(0, UCODE_SORT_PARTS);
+	m_parrSelection = NULL;	// reset selection pointer
+	SetModifiedFlag();
+	CSelectionHint	hint(NULL);
+	UpdateAllViews(NULL, HINT_PART_ARRAY, &hint);
 }
 
 void CPolymeterDoc::DeleteParts(const CIntArrayEx& arrSelection)

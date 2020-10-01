@@ -73,6 +73,7 @@ public:
 	void	ToggleMute(int iTrack);
 	void	GetMutes(CMuteArray& arrMute) const;
 	void	SetMutes(const CMuteArray& arrMute);
+	void	SetSelectedMutes(const CIntArrayEx& arrSelection, bool bMute);
 	STEP	GetStep(int iTrack, int iStep) const;
 	void	SetStep(int iTrack, int iStep, STEP nStep);
 	void	SetStepVelocity(int iTrack, int iStep, int nVelocity);

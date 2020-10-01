@@ -36,6 +36,7 @@
 		26		05jul20	refactor update song position
 		27		09jul20	let child frame activation determine song mode
 		28		28jul20	add custom convergence size
+		29		07sep20	add apply preset message
 
 */
 
@@ -784,6 +785,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_COMMAND(ID_TOOLS_DEVICES, OnToolsDevices)
 	ON_MESSAGE(UWM_TRACK_PROPERTY_CHANGE, OnTrackPropertyChange)
 	ON_MESSAGE(UWM_TRACK_STEP_CHANGE, OnTrackStepChange)
+	ON_MESSAGE(UWM_PRESET_APPLY, OnPresetApply)
+	ON_MESSAGE(UWM_PART_APPLY, OnPartApply)
 	ON_COMMAND(ID_EDIT_FIND, OnEditFind)
 	ON_COMMAND(ID_EDIT_REPLACE, OnEditReplace)
 	ON_REGISTERED_MESSAGE(WM_FINDREPLACE, OnFindReplace)
@@ -1121,6 +1124,38 @@ LRESULT CMainFrame::OnTrackStepChange(WPARAM wParam, LPARAM lParam)
 				CPolymeterDoc::CPropHint	hint(iTrack, iStep);
 				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_STEP, &hint);
 			}
+		}
+	}
+	return 0;
+}
+
+LRESULT CMainFrame::OnPresetApply(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(lParam);
+	// this message can be posted by worker threads, so proceed cautiously
+	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
+	if (pDoc != NULL) {	// if valid document
+		int	iPreset = static_cast<int>(wParam);
+		if (iPreset >= 0 && iPreset < pDoc->m_arrPreset.GetSize()) {
+			pDoc->m_Seq.SetMutes(pDoc->m_arrPreset[iPreset].m_arrMute);
+			pDoc->m_Seq.RecordDub();
+			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_SOLO);
+		}
+	}
+	return 0;
+}
+
+LRESULT CMainFrame::OnPartApply(WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(lParam);
+	// this message can be posted by worker threads, so proceed cautiously
+	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
+	if (pDoc != NULL) {	// if valid document
+		int	iPart = static_cast<int>(wParam);
+		if (iPart >= 0 && iPart < pDoc->m_arrPart.GetSize()) {
+			pDoc->m_Seq.SetSelectedMutes(pDoc->m_arrPart[iPart].m_arrTrackIdx, lParam != 0);
+			pDoc->m_Seq.RecordDub();
+			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_SOLO);
 		}
 	}
 	return 0;

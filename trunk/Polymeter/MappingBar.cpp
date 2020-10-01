@@ -11,6 +11,7 @@
 		01		29mar20	add learn multiple mappings; add map selected tracks
 		02		01apr20	standardize context menu handling
 		03		05apr20	add track step mapping
+		04		07sep20	add preset and part mapping
 		
 */
 
@@ -73,7 +74,9 @@ void CMappingBar::InitEventNames()
 	for (int iProp = 0; iProp < CTrackBase::PROPERTIES; iProp++) {	// for each track property
 		m_arrOutputEventName[MIDI_CHANNEL_VOICE_MESSAGES + iProp] = LDS(CTrackBase::GetPropertyNameID(iProp));
 	}
-	m_arrOutputEventName[CMapping::OUT_Steps] = LDS(IDS_TRK_STEP);
+	m_arrOutputEventName[CMapping::OUT_Step] = LDS(IDS_TRK_STEP);
+	m_arrOutputEventName[CMapping::OUT_Preset] = LDS(IDS_BAR_Presets);
+	m_arrOutputEventName[CMapping::OUT_Part] = LDS(IDS_BAR_Parts);
 }
 
 void CMappingBar::OnShowChanged(bool bShow)

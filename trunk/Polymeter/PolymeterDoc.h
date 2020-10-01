@@ -30,6 +30,7 @@
 		20		13jun20	add find convergence
 		21		18jun20	add track modulation command
 		22		09jul20	move view type handling from document to child frame
+		23		28sep20	add part sort
 
 */
 
@@ -255,6 +256,7 @@ public:
 	void	DeleteParts(const CIntArrayEx& arrSelection);
 	void	MoveParts(const CIntArrayEx& arrSelection, int iDropPos);
 	void	UpdatePart(int iPart);
+	void	SortParts(bool bByTrack);
 	void	MakePartMutesConsistent();
 	void	MakePresetMutesConsistent();
 	bool	CheckForPartOverlap(int iTargetPart = -1);
@@ -492,6 +494,8 @@ protected:
 	void	SaveSelectedParts(CUndoState& State) const;
 	void	RestoreSelectedParts(const CUndoState& State);
 	void	RestorePartMove(const CUndoState& State);
+	void	SavePartSort(CUndoState& State) const;
+	void	RestorePartSort(const CUndoState& State);
 	void	SaveModulation(CUndoState& State) const;
 	void	RestoreModulation(const CUndoState& State);
 	void	SaveMapping(CUndoState& State) const;

@@ -13,6 +13,7 @@
 		03		20mar20	add mapping
 		04		28mar20	add learn multiple mappings
 		05		07apr20	add move steps
+		06		28sep20	add sort parts
 
 		undo code data
  
@@ -60,6 +61,7 @@ UCODE_DEF(RENAME_PART)
 UCODE_DEF(DELETE_PARTS)
 UCODE_DEF(MOVE_PARTS)
 UCODE_DEF(MODIFY_PARTS)
+UCODE_DEF(SORT_PARTS)
 UCODE_DEF(MODULATION)
 UCODE_DEF(FILL_STEPS)
 UCODE_DEF(INVERT)

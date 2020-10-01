@@ -13,6 +13,7 @@
 		03		31dec18	refactor to reuse code
 		04		02dec19	add sort method
 		05		16mar20	add insert sorted descending
+		06		26sep20	add find min/max element
 
 */
 
@@ -393,6 +394,48 @@ void Sort(bool bDescending = FALSE)
 {
 	qsort(m_pData, m_nSize, sizeof(CArrayEx_TYPE), 
 		bDescending ? SortCompareDescending : SortCompareAscending);
+}
+
+INT_PTR FindMin() const
+{
+	if (!m_nSize)
+		return -1;
+	INT_PTR	iMin = 0;
+	for (INT_PTR iElem = 1; iElem < m_nSize; iElem++) {
+		if (GetAt(iElem) < GetAt(iMin))
+			iMin = iElem;
+	}
+	return iMin;
+}
+
+INT_PTR FindMax() const
+{
+	if (!m_nSize)
+		return -1;
+	INT_PTR	iMax = 0;
+	for (INT_PTR iElem = 1; iElem < m_nSize; iElem++) {
+		if (GetAt(iElem) > GetAt(iMax))
+			iMax = iElem;
+	}
+	return iMax;
+}
+
+bool IsAscending() const
+{
+	for (INT_PTR iElem = 0; iElem < m_nSize - 1; iElem++) {
+		if (GetAt(iElem + 1) < GetAt(iElem))	// if next element is less
+			return false;
+	}
+	return true;
+}
+
+bool IsDescending() const
+{
+	for (INT_PTR iElem = 0; iElem < m_nSize - 1; iElem++) {
+		if (GetAt(iElem + 1) > GetAt(iElem))	// if next element is greater
+			return false;
+	}
+	return true;
 }
 
 #undef CArrayEx_TYPE

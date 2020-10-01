@@ -9,6 +9,8 @@
 		rev		date	comments
         00		19jun18	initial version
 		01		01apr20	standardize context menu handling
+		02		28sep20	add sort messages
+		03		30sep20	move track selection into track group class
 		
 */
 
@@ -69,10 +71,8 @@ void CPartsBar::SetItemText(int iItem, LPCTSTR pszText)
 
 void CPartsBar::ApplyItem(int iItem)
 {
-	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	ASSERT(pDoc != NULL);
-	if (pDoc != NULL)	// run-time check for safety
-		pDoc->Select(pDoc->m_arrPart[iItem].m_arrTrackIdx);
+	UNREFERENCED_PARAMETER(iItem);
+	OnSelectTracks();
 }
 
 void CPartsBar::Delete()
@@ -119,6 +119,10 @@ BEGIN_MESSAGE_MAP(CPartsBar, CListBar)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_PART_UPDATE, OnUpdateTrackPartUpdate)
 	ON_COMMAND(ID_PARTS_SELECT_TRACKS, OnSelectTracks)
 	ON_UPDATE_COMMAND_UI(ID_PARTS_SELECT_TRACKS, OnUpdateSelectTracks)
+	ON_COMMAND(ID_PARTS_SORT_BY_NAME, OnSortByName)
+	ON_UPDATE_COMMAND_UI(ID_PARTS_SORT_BY_NAME, OnUpdateSort)
+	ON_COMMAND(ID_PARTS_SORT_BY_TRACK, OnSortByTrack)
+	ON_UPDATE_COMMAND_UI(ID_PARTS_SORT_BY_TRACK, OnUpdateSort)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -164,12 +168,8 @@ void CPartsBar::OnSelectTracks()
 	if (pDoc != NULL) {	// run-time check for safety
 		CIntArrayEx	arrPartSel;
 		m_list.GetSelection(arrPartSel);
-		int	nPartSels = arrPartSel.GetSize();
 		CIntArrayEx	arrTrackSel;
-		for (int iPartSel = 0; iPartSel < nPartSels; iPartSel++) {	// for each selected part
-			int	iPart = arrPartSel[iPartSel];
-			arrTrackSel.Append(pDoc->m_arrPart[iPart].m_arrTrackIdx);	// append part's member tracks
-		}
+		pDoc->m_arrPart.GetTrackSelection(arrPartSel, arrTrackSel);
 		pDoc->Select(arrTrackSel);	// select member tracks
 	}
 }
@@ -177,4 +177,23 @@ void CPartsBar::OnSelectTracks()
 void CPartsBar::OnUpdateSelectTracks(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_list.GetSelectedCount());
+}
+
+void CPartsBar::OnSortByName()
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL)
+		pDoc->SortParts(false);	// by name
+}
+
+void CPartsBar::OnSortByTrack()
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL)
+		pDoc->SortParts(true);	// by track
+}
+
+void CPartsBar::OnUpdateSort(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_list.GetItemCount());
 }

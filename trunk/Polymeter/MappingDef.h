@@ -8,10 +8,13 @@
 		revision history:
 		rev		date	comments
 		00		20mar20	initial version
+		01		07sep20	add special output events
  
 		mapping column and member definitions
 
 */
+
+#ifdef MAPPINGDEF
 
 //			name			align			width	member			minval	maxval
 #ifdef MAPPINGDEF_INCLUDE_NUMBER
@@ -29,3 +32,15 @@ MAPPINGDEF(	TRACK,			LVCFMT_LEFT,	200,	Track,			0,		0)
 
 #undef MAPPINGDEF
 #undef MAPPINGDEF_INCLUDE_NUMBER
+
+#endif // MAPPINGDEF
+
+#ifdef MAPPINGDEF_SPECIAL_TARGET
+
+MAPPINGDEF_SPECIAL_TARGET(Step)
+MAPPINGDEF_SPECIAL_TARGET(Preset)
+MAPPINGDEF_SPECIAL_TARGET(Part)
+
+#undef MAPPINGDEF_SPECIAL_TARGET
+
+#endif // MAPPINGDEF_SPECIAL_TARGET

@@ -87,6 +87,13 @@ void CSeqTrackArray::SetMutes(const CMuteArray& arrMute)
 		SetMute(iTrack, arrMute[iTrack]);
 }
 
+void CSeqTrackArray::SetSelectedMutes(const CIntArrayEx& arrSelection, bool bMute)
+{
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected track
+		SetMute(arrSelection[iSel], bMute);
+}
+
 void CSeqTrackArray::GetSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const
 {
 	int	nRows = rSelection.Height();

@@ -28,6 +28,7 @@
 		18		05jul20	refactor update song position
 		19		09jul20	add pointer to active child frame
 		20		28jul20	add custom convergence size
+		21		07sep20	add apply preset and part messages
 
 */
 
@@ -192,6 +193,8 @@ protected:
 	afx_msg BOOL OnDeviceChange(UINT nEventType, W64ULONG dwData);
 	afx_msg LRESULT OnTrackPropertyChange(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnTrackStepChange(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnPresetApply(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnPartApply(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnToolsDevices();
 	afx_msg void OnToolsConvergences();
 	afx_msg void OnToolsMidiLearn();
