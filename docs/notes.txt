@@ -1910,7 +1910,8 @@ Yipo		4/8/20 8:00 pm
 Fun Ife2  	4/28/20 2:01 am
 Roro		5/17/20 6:13 pm
 
-(or could be Roro bass boost)
+(DO NOT USE Roro bass boost)
+(CORRECTION Roro Reason file is Roro shorter ritards 8/6/20) 
 
 Misc:
 Stella By Starlight 3:34
@@ -2656,7 +2657,7 @@ burning CPU. This is more or less shooting the messenger.
 
 Without a Mac to test against, there's no way to reproduce the issue, so no way
 to prove the above solution would help. I would tend to think it's a Mac / Wine
-MIDI implementation issue except I have very rarle seen it under Windows. It's
+MIDI implementation issue except I have very rarely seen it under Windows. It's
 possible it's driver-dependent.
 
 The easiest test is to just put a Sleep(1000) after midiStreamStop and see if
@@ -2669,5 +2670,133 @@ an event in the callback, others call midiStreamOut as we do. The event is a
 royal pain in the ass because it means creating a whole other worker thread
 and incurring all the overhead and complexity associated with that.
 
+8/7/20 show step selection in velocity view
+
+	int	iStepSelRight;
+	int	iStepSelLeft = 0;	// avoids uninitialized variable warning
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+...
+		if (iTrack < rStepSel.bottom && iTrack >= rStepSel.top) {	// if track within step selection
+			iStepSelLeft = rStepSel.left;
+			iStepSelRight = rStepSel.right;
+		} else
+			iStepSelRight = 0;	// left doesn't matter if right is zero
+		for (int iStep = iFirstStep; iStep <= iLastStep; iStep++) {	// for each step
+...
+				COLORREF clrBar;
+				if (iStep < iStepSelRight && iStep >= iStepSelLeft)	// if step within step selection
+					clrBar = clrBarSelected;
+				else
+					clrBar = clrBarNormal;
+				pDC->FillSolidRect(rBar, clrBar);
+
+It works, but it makes the step view responsible for invalidating the velocity view. 
+Depending on how that's done it adds significant overhead especially when dragging
+the step selection. It's easy to just invalidate the entire velocity view in all
+cases, but it's inefficient.
+
+8/12/20 subtitles
+
+Easiest for YouTube is .sbv format:
+hh:mm:ss.000,hh:mm:ss.000
+blah blah
+
+hh:mm:ss.000,hh:mm:ss.000
+more blah blah
+
+[and so on]
+
+Export the song from Polymeter, using Tools/Export/Song
+Isolate the vocals note on events and load them into Excel
+Excel funtion to convert MIDI MBT to time in days:
+=(a1/120*(60/T)+0.1)/86400
+where T is tempo (assuming 120 PPQ)
+and 0.1 is time offset in seconds
+for Overshoot subtitles were too early, +1/10 of a second was about right
+86400 is seconds in a day
+
+Format the times with this Custom format:
+[h]:mm:ss.000
+
+Now the hard part: getting the on/off times in pairs, and matching them 
+with the lyrics. Couldn't figure out how to do it with Excel, by hand is a PITA.
 
 
+8/12/20 Apologize chorus lyrics order confusion:
+
+The audio goes like this:
+
+Apologize
+For the dying seas
+Apologize
+For the clear-cut trees
+Apologize
+For needless birth
+Apologize
+To what’s left of earth
+Apologize
+For overpopulation
+Apologize
+For mass migration
+Apologize
+To the United Nations
+Apologize
+To future generations
+
+9/5/20 Note Number input mapping type
+
+It might be helpful to have a note mapping that gets the data byte from the
+note number rather than the velocity. To be useful it should also ignore note
+off messages. This would permit a keyboard to be used for Preset changes, for 
+example. However by default it would utilize the entire range of MIDI notes 
+on the given channel, which would be very wasteful in most cases. This could
+be addressed by re-purposing the Range Start / End parameters to be the range
+of notes included in the mapping, but that's a confusing kludge.
+
+This still doesn't solve the problem of how to use a keyboard for toggling
+binary switches, for example Mute states. Here the problem is who owns the
+toggle state. For Mute states specifically the Mute state itself could be
+be its own toggle state, and this is advantageous because it will remain
+consistent with the UI. But for a general solution that won't work. The
+same applies to Part mute states.
+
+The toggle problem exists because many common controllers don't support 
+reprogramming what their keys or buttons send, or make it very difficult.
+
+Another approach to these problems is instead of trying to make a general 
+solution, create a custom implementation of Part and Preset mappings for 
+ranges of MIDI notes. This would be more work to develop, because it would
+need custom UI, file storage, etc. but would allow the most specificity.
+
+Still another approach would be to add a new Switching attribute to the 
+mapping parameters, consisting of Normal or Toggle. In Toggle mode, the
+target parameter would toggle between 0 and 127. This would solve control
+of Parts via MIDI keyboard, and would also be useful in other cases for
+example toggling the steps in a track.
+
+9/9/20 Gray Code
+
+Try using gray code in SetPerm for generating permutational harmony.
+It might generate smoother transitions.
+
+uint BinaryToGray(uint num)
+{	
+	return num ^ (num >> 1);
+}
+
+9/23/20 ordering of tracks within a preset
+
+A preset's track indices aren't necessarily in ascending order. This is 
+easily demonstrated by making a preset and then reordering its tracks.
+In order to interdisperse presets with tracks in track order, it's
+essential to know the minimum track index for each preset, and this
+will need to be determined by iterating. The only other way around it
+would be to keep presets always sorted but this would be much more
+costly and there's no need.
+
+Arguably the array class should include methods to find the minimum
+or maximum element.
+
+Also, CPart::GetTrackRefs should return the number of tracks that
+belong to parts. This would make it possible to preallocate the
+part array CLiveView::Update(), instead of using Add.

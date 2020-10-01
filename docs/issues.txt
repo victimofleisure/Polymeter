@@ -322,6 +322,11 @@ id	open	close	type	description	rev	user
 398	07/28/20	07/29/20	done	song view should show tool tips for truncated track names	0.0.33.000	
 399	07/31/20	07/31/20	done	changing length or quant of multiple tracks at once doesn't update Phase bar	0.0.33.000	
 400	08/03/20	08/04/20	done	next/previous pane command is unreliable; child frame doesn't always receive the command	0.0.33.000	
+404	08/22/20	09/07/20	done	add preset and part mapping, so presets can be selected and parts can be muted/unmuted via MIDI message	0.0.34.000	
+406	09/07/20	09/07/20	done	step mapping saved in document crashes app when document is reopened	0.0.34.000	
+408	09/20/20	09/24/20	done	in live view, order parts by their lowest track index and merge them with ungrouped tracks instead of appending	0.0.34.000	
+409	09/24/20	09/28/20	done	add commands to sort parts by name or lowest track index	0.0.34.000	
+411	09/30/20	09/30/20	done	selecting a part's tracks via parts bar followed by cut or delete crashes if part's tracks aren't in ascending order	0.0.34.000	
 17	03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
@@ -383,6 +388,11 @@ id	open	close	type	description	rev	user
 393	07/17/20		hold	switching to song view should set all mutes to match song's current dub state (chase); must be synchronous		
 395	07/22/20		hold	optionally show Phase diagram or other visualization in Live view; menu bar is hidden in full screen mode		
 396	07/22/20		hold	transition from one document to another without stopping playback; conflicts with recording implementation		
+401	08/05/20		hold	find and replace for step values		
+402	08/05/20		hold	indicate step selection in Step view's velocities pane		
+403	08/22/20		hold	preset track type, interpreting step value as preset index; requires moving preset array into sequencer		
+405	08/22/20		hold	in mapping, add Note Number input event type: get data value from note's index, ignoring velocity and note off		
+410	09/28/20		hold	live view position bars for track groups should reflect LCM of periods instead of maximum period; could be slow		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
@@ -399,3 +409,4 @@ id	open	close	type	description	rev	user
 301	11/12/19		punt	popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful		
 22	03/22/18		todo	context-sensitive help		
 23	03/22/18		todo	enable UI customization; new command IDs must be prefixed so renumbering doesn't change existing IDs		
+407	09/17/20		todo	select all unmuted tracks		
