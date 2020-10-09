@@ -57,6 +57,8 @@
 		47		09jul20	move view type handling from document to child frame
 		48		17jul20	in read properties, set cached song position
 		49		28sep20	add part sort
+        50      07oct20	in TimeToRepeat, standardize unique period method
+		51		07oct20	in stretch tracks, make interpolation optional
 
 */
 
@@ -132,6 +134,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_EXPORT_DURATION	_T("nDuration")
 #define RK_STRETCH_DLG		REG_SETTINGS _T("\\Stretch")
 #define RK_STRETCH_PERCENT	_T("fPercent")
+#define RK_STRETCH_LERP		_T("bLerp")
 #define RK_PART_SECTION		_T("Part")
 #define RK_FILL				REG_SETTINGS _T("\\Fill")
 #define RK_FILL_VAL_START	_T("nValStart")
@@ -317,6 +320,13 @@ void CPolymeterDoc::SelectAll(bool bUpdate)
 	m_arrTrackSel.SetSize(nSels);
 	for (int iSel = 0; iSel < nSels; iSel++)
 		m_arrTrackSel[iSel] = iSel;
+	if (bUpdate)
+		UpdateAllViews(NULL, HINT_TRACK_SELECTION);
+}
+
+void CPolymeterDoc::SelectMuted(bool bMuteState, bool bUpdate)
+{
+	m_Seq.GetMutedTracks(m_arrTrackSel, bMuteState);
 	if (bUpdate)
 		UpdateAllViews(NULL, HINT_TRACK_SELECTION);
 }
@@ -3438,7 +3448,7 @@ bool CPolymeterDoc::DoShiftDialog(int& nSteps, bool bIsRotate)
 	return nSteps != 0;
 }
 
-void CPolymeterDoc::StretchTracks(double fScale)
+void CPolymeterDoc::StretchTracks(double fScale, bool bInterpolate)
 {
 	ASSERT(GetSelectedCount());
 	NotifyUndoableEdit(PROP_Length, UCODE_MULTI_TRACK_PROP);
@@ -3446,7 +3456,7 @@ void CPolymeterDoc::StretchTracks(double fScale)
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = m_arrTrackSel[iSel];
 		CStepArray	arrStep;
-		if (m_Seq.GetTrack(iTrack).Stretch(fScale, arrStep))
+		if (m_Seq.GetTrack(iTrack).Stretch(fScale, arrStep, bInterpolate))
 			m_Seq.SetSteps(iTrack, arrStep);	// update track's step array
 	}
 	SetModifiedFlag();
@@ -3464,6 +3474,8 @@ void CPolymeterDoc::TrackFill(const CIntArrayEx& arrTrackSel, CRange<int> rngSte
 		fDeltaT = nSteps / fFrequency;
 	else
 		fDeltaT = 0;	// avoid divide by zero
+	if (fPower == 1)
+		fPower = 0;	// avoid divide by zero
 	double	fScale = fPower - 1;
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = arrTrackSel[iSel];	// get track index
@@ -4405,9 +4417,11 @@ void CPolymeterDoc::OnStretchTracks()
 	CStretchDlg	dlg;
 	dlg.m_rng = CRange<double>(1e-1, 1e5);
 	dlg.m_fVal = CPersist::GetDouble(RK_STRETCH_DLG, RK_STRETCH_PERCENT, 100);
+	dlg.m_bInterpolate = CPersist::GetInt(RK_STRETCH_DLG, RK_STRETCH_LERP, TRUE);
 	if (dlg.DoModal() == IDOK) {
 		CPersist::WriteDouble(RK_STRETCH_DLG, RK_STRETCH_PERCENT, dlg.m_fVal);
-		StretchTracks(dlg.m_fVal / 100);
+		CPersist::WriteInt(RK_STRETCH_DLG, RK_STRETCH_LERP, dlg.m_bInterpolate);
+		StretchTracks(dlg.m_fVal / 100, dlg.m_bInterpolate != 0);
 	}
 }
 
@@ -4441,17 +4455,16 @@ void CPolymeterDoc::OnToolsTimeToRepeat()
 	if (!nSels)	// if empty selection
 		return;
 	int	nTimeDiv = m_Seq.GetTimeDivision();
-	CArrayEx<ULONGLONG, ULONGLONG>	arrDuration;
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		int	iTrack = m_arrTrackSel[iSel];
-		ULONGLONG	nDuration = m_Seq.GetPeriod(iTrack);	// track duration in ticks
-		if (arrDuration.BinarySearch(nDuration) < 0)	// eliminate duplicates to avoid needless LCM
-			arrDuration.InsertSorted(nDuration);	// ascending sort may improve LCM performance
-	}
+	CArrayEx<ULONGLONG, ULONGLONG>	arrPeriod;
+	int	nCommonUnit = m_Seq.FindCommonUnit(m_arrTrackSel);
+	m_Seq.GetUniquePeriods(m_arrTrackSel, arrPeriod, nCommonUnit);
 	CWaitCursor	wc;	// LCM can take a while
-	ULONGLONG	nLCM = CNumberTheory::LeastCommonMultiple(arrDuration.GetData(), arrDuration.GetSize());
-	ULONGLONG	nBeats = nLCM / nTimeDiv;	// convert ticks to beats
-	int	nTicks = nLCM % nTimeDiv;	// compute remainder in ticks
+	ULONGLONG	nLCM = CNumberTheory::LeastCommonMultiple(arrPeriod.GetData(), arrPeriod.GetSize());
+	ULONGLONG	nLCMTicks = nLCM;
+	if (nCommonUnit)	// if common unit specified
+		nLCMTicks *= nCommonUnit;	// convert LCM from common unit back to ticks
+	ULONGLONG	nBeats = nLCMTicks / nTimeDiv;	// convert ticks to beats
+	int	nTicks = nLCMTicks % nTimeDiv;	// compute remainder in ticks
 	CString	sMsg, sVal;
 	sMsg.Format(_T("%llu"), nBeats);
 	FormatNumberCommas(sMsg, sMsg);
@@ -4460,7 +4473,7 @@ void CPolymeterDoc::OnToolsTimeToRepeat()
 		sVal.Format(_T("%d"), nTicks);
 		sMsg += _T(" + ") + sVal + ' ' + LDS(IDS_TIME_TO_REPEAT_TICKS);
 	}
-	double	fSeconds = double(nLCM) / nTimeDiv / (m_Seq.GetTempo() / 60);
+	double	fSeconds = double(nLCMTicks) / nTimeDiv / (m_Seq.GetTempo() / 60);
 	CTimeSpan	ts = round64(fSeconds);	// convert beats to time in seconds
 	CString	sTime(ts.Format(_T("%H:%M:%S")));	// convert time in seconds to string
 	LONGLONG	nDays = ts.GetDays();

@@ -29,6 +29,7 @@
 		19		30apr20	add step velocity accessors
 		20		28sep20	add sort methods to track group array
 		21		30sep20	add get track selection to track group array
+		22		07oct20	in stretch, make interpolation optional
 
 */
 
@@ -484,8 +485,8 @@ public:
 	void	CopyKeepingID(const CTrack& track);
 	void	DumpModulations() const;
 	void	GetEvents(CStepEventArray& arrNote) const;
-	bool	Stretch(double fScale, CStepArray& arrStep) const;
-	static	void	Resample(const double *pInSamp, int nInSamps, double *pOutSamp, int nOutSamps);
+	bool	Stretch(double fScale, CStepArray& arrStep, bool bInterpolate = true) const;
+	static	void	Resample(const double *pInSamp, W64INT nInSamps, double *pOutSamp, W64INT nOutSamps, bool bInterpolate = true);
 
 protected:
 // Types

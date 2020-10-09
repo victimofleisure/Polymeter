@@ -31,6 +31,7 @@
 		21		18jun20	add track modulation command
 		22		09jul20	move view type handling from document to child frame
 		23		28sep20	add part sort
+		24		07oct20	in stretch tracks, make interpolation optional
 
 */
 
@@ -198,6 +199,7 @@ public:
 	void	SelectOnly(int iTrack, bool bUpdate = true);
 	void	SelectRange(int iStartTrack, int nSels, bool bUpdate = true);
 	void	SelectAll(bool bUpdate = true);
+	void	SelectMuted(bool bMuteState = true, bool bUpdate = true);
 	void	Deselect(bool bUpdate = true);
 	void	ToggleSelection(int iTrack, bool bUpdate = true);
 	int		GetInsertPos() const;
@@ -262,7 +264,7 @@ public:
 	bool	CheckForPartOverlap(int iTargetPart = -1);
 	bool	CreateAutoSavePath(CString& sPath) const;
 	static	bool	DoShiftDialog(int& nSteps, bool bIsRotate = false);
-	void	StretchTracks(double fScale);
+	void	StretchTracks(double fScale, bool bInterpolate = true);
 	bool	TrackFill(const CRect *prStepSel);
 	void	TrackFill(const CIntArrayEx& arrTrackSel, CRange<int> rngStep, CRange<int> rngVal, int iFunction, double fFrequency, double fPhase, double fPower);
 	bool	GotoNextDub(bool bReverse = false);

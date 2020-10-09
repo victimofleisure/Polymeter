@@ -30,6 +30,8 @@
 		20		30jun20	support controller messages in MIDI file import
 		21		28sep20	add sort methods to track group array
 		22		30sep20	add get track selection to track group array
+		23		07oct20	in stretch, make interpolation optional
+		24		07oct20	fix fencepost error in resampling
 
 */
 
@@ -521,7 +523,7 @@ void CTrack::GetEvents(CStepEventArray& arrNote) const
 	}
 }
 
-void CTrack::Resample(const double *pInSamp, int nInSamps, double *pOutSamp, int nOutSamps)
+void CTrack::Resample(const double *pInSamp, W64INT nInSamps, double *pOutSamp, W64INT nOutSamps, bool bInterpolate)
 {
 	ASSERT(pInSamp != NULL);
 	ASSERT(nInSamps > 0);
@@ -529,27 +531,34 @@ void CTrack::Resample(const double *pInSamp, int nInSamps, double *pOutSamp, int
 	ASSERT(nOutSamps > 0);
 	if (nInSamps > 0) {	// if at least one input sample
 		double	fScale;
-		if (nOutSamps > 1)	// if at least two output samples
-			fScale = double(nInSamps - 1) / (nOutSamps - 1);
+		if (nOutSamps > 0)	// if at least one output sample
+			fScale = double(nInSamps) / nOutSamps;
 		else	// too few output samples; degenerate case
 			fScale = 1;	// avoid divide by zero
-		for (int iOutSamp = 0; iOutSamp < nOutSamps; iOutSamp++) {	// for each output sample
-			double	fFrac, fInt;
-			fFrac = modf(iOutSamp * fScale, &fInt);
-			int	iInSamp1 = round(fInt);
-			int	iInSamp2 = min(iInSamp1 + 1, nInSamps - 1);
-			double	y1 = pInSamp[iInSamp1];
-			double	y2 = pInSamp[iInSamp2];
-			double	fDelta = y2 - y1;
-			pOutSamp[iOutSamp] = y1 + fDelta * fFrac;	// linear interpolation
+		if (bInterpolate) {	// if interpolating
+			for (W64INT iOutSamp = 0; iOutSamp < nOutSamps; iOutSamp++) {	// for each output sample
+				double	fFrac, fInt;
+				fFrac = modf(iOutSamp * fScale, &fInt);
+				W64INT	iInSamp1 = roundW64INT(fInt);
+				W64INT	iInSamp2 = min(iInSamp1 + 1, nInSamps - 1);
+				double	y1 = pInSamp[iInSamp1];
+				double	y2 = pInSamp[iInSamp2];
+				double	fDelta = y2 - y1;
+				pOutSamp[iOutSamp] = y1 + fDelta * fFrac;	// linear interpolation
+			}
+		} else {	// not interpolating
+			for (W64INT iOutSamp = 0; iOutSamp < nOutSamps; iOutSamp++) {	// for each output sample
+				W64INT	iInSamp = truncW64INT(iOutSamp * fScale);
+				pOutSamp[iOutSamp] = pInSamp[iInSamp];	// nearest neighbor
+			}
 		}
 	} else {	// too few input samples; degenerate case
-		for (int iOutSamp = 0; iOutSamp < nOutSamps; iOutSamp++)
+		for (W64INT iOutSamp = 0; iOutSamp < nOutSamps; iOutSamp++)
 			pOutSamp[iOutSamp] = 0;	// zero output sample
 	}
 }
 
-bool CTrack::Stretch(double fScale, CStepArray& arrStep) const
+bool CTrack::Stretch(double fScale, CStepArray& arrStep, bool bInterpolate) const
 {
 	ASSERT(fScale > 0);
 	ASSERT(!arrStep.GetSize());	// destination array must be empty
@@ -592,9 +601,9 @@ bool CTrack::Stretch(double fScale, CStepArray& arrStep) const
 		int	nInSamps = m_arrStep.GetSize();
 		fInSamp.SetSize(nInSamps);
 		for (int iSamp = 0; iSamp < nInSamps; iSamp++)	// copy steps array into input data buffer
-			fInSamp[iSamp] = m_arrStep[iSamp];
+			fInSamp[iSamp] = m_arrStep[iSamp] & SB_VELOCITY;	// velocity only; ignore tie bit
 		fOutSamp.SetSize(nSteps);
-		Resample(fInSamp.GetData(), nInSamps, fOutSamp.GetData(), nSteps);
+		Resample(fInSamp.GetData(), nInSamps, fOutSamp.GetData(), nSteps, bInterpolate);
 		for (int iSamp = 0; iSamp < nSteps; iSamp++)	// retrieve resampled data into steps array
 			arrStep[iSamp] = static_cast<STEP>(round(fOutSamp[iSamp]));
 	}

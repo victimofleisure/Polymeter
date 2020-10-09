@@ -9,6 +9,7 @@
 		rev		date	comments
         00      03mar20	initial version
         01      10jun20	add progress dialog
+        02      07oct20	move unique period method into track array
 
 */
 
@@ -180,32 +181,8 @@ void CConvergencesDlg::CalcConvergencesForSelectedTracks()
 	CConvergenceFinder::CULongLongArray	arrIn;
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL && pDoc->GetSelectedCount()) {
-		int	nSels = pDoc->GetSelectedCount();
-		int	iSel;
-		// find minimum quant for selected tracks
-		int	nMinQuant = pDoc->m_Seq.GetQuant(pDoc->m_arrTrackSel[0]);
-		for (iSel = 1; iSel < nSels; iSel++) {
-			int	iTrack = pDoc->m_arrTrackSel[iSel];
-			int	nQuant = pDoc->m_Seq.GetQuant(iTrack);
-			if (nQuant < nMinQuant)
-				nMinQuant = nQuant;
-		}
-		for (iSel = 0; iSel < nSels; iSel++) {	// for selected tracks
-			int	iTrack = pDoc->m_arrTrackSel[iSel];
-			int	nQuant = pDoc->m_Seq.GetQuant(iTrack);
-			// if this track's quant isn't evenly divisible by minimum quant
-			if (nQuant % nMinQuant) {
-				nMinQuant = 0;	// no common unit, so show results in ticks
-				break;
-			}
-		}		
-		for (iSel = 0; iSel < nSels; iSel++) {	// for selected tracks
-			int	iTrack = pDoc->m_arrTrackSel[iSel];
-			ULONGLONG	nPeriod = pDoc->m_Seq.GetPeriod(iTrack);
-			if (nMinQuant)	// if minimum quant specified
-				nPeriod /= nMinQuant;	// convert period to minimum quant
-			arrIn.InsertSortedUnique(nPeriod);
-		}
+		int	nCommonUnit = pDoc->m_Seq.FindCommonUnit(pDoc->m_arrTrackSel);
+		pDoc->m_Seq.GetUniquePeriods(pDoc->m_arrTrackSel, arrIn, nCommonUnit);
 		if (arrIn.GetSize() > 1) {
 			CString	sVal, sIn;
 			for (int iIn = 0; iIn < arrIn.GetSize(); iIn++) {

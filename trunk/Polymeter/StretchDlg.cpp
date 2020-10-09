@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      05oct18	initial version
+		01		07oct20	add interpolate checkbox
 
 */
 
@@ -25,6 +26,7 @@ IMPLEMENT_DYNAMIC(CStretchDlg, CDialog)
 
 CStretchDlg::CStretchDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(IDD, pParent)
+	, m_bInterpolate(FALSE)
 {
 	m_nDlgCaptionID = 0;
 	m_nEditCaptionID = 0;
@@ -41,6 +43,7 @@ void CStretchDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_STRETCH_EDIT, m_fVal);
 	DDV_MinMaxDouble(pDX, m_fVal, m_rng.Start, m_rng.End);
+	DDX_Check(pDX, IDC_STRETCH_INTERPOLATE, m_bInterpolate);
 }
 
 BEGIN_MESSAGE_MAP(CStretchDlg, CDialog)

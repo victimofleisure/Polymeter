@@ -18,6 +18,7 @@
 		08		16mar20	add get step index wrapper
 		09		17apr20	add track color
 		10		30apr20	add step velocity accessors
+        11      07oct20	add min quant, common unit, and unique period methods
 
 */
 
@@ -107,7 +108,7 @@ public:
 	void	SetModulations(const CPackedModulationArray& arrMod);
 	int		GetChannelUsage(int *parrFirstTrack, bool bExcludeMuted = false) const;
 	static	UINT	GetCurrentID();
-
+	
 // Operations
 	static	UINT	AssignID();
 	void	AssignID(int iTrack);
@@ -156,6 +157,11 @@ public:
 	int		CalcMaxTrackLength(const CRect& rSelection) const;
 	COLORREF	GetColor(int iTrack) const;
 	void	SetColor(int iTrack, COLORREF clr);
+	int		FindMinQuant(const CIntArrayEx& arrTrackSel) const;
+	int		FindCommonUnit(const CIntArrayEx& arrTrackSel) const;
+	void	GetUniquePeriods(const CIntArrayEx& arrTrackSel, CArrayEx<ULONGLONG, ULONGLONG>& arrPeriod, int nCommonUnit = 0) const;
+	int		CountMutedTracks(bool bMuteState = true) const;
+	void	GetMutedTracks(CIntArrayEx& arrTrackSel, bool bMuteState = true) const;
 
 protected:
 // Member data

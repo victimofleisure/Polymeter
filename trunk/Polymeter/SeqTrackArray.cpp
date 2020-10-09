@@ -19,6 +19,7 @@
 		09		19mar20	add GetNameEx to handle default track names
 		10		17apr20	add track color
 		11		30apr20	add step velocity accessors
+        12      07oct20	add min quant, common unit, and unique period methods
 
 */
 
@@ -837,4 +838,67 @@ int CSeqTrackArray::CalcMaxTrackLength(const CRect& rSelection) const
 			nMaxSteps = nSteps;
 	}
 	return nMaxSteps;
+}
+
+int	CSeqTrackArray::FindMinQuant(const CIntArrayEx& arrTrackSel) const
+{
+	int	nMinQuant = GetAt(arrTrackSel[0]).m_nQuant;
+	int	nSels = arrTrackSel.GetSize();
+	for (int iSel = 1; iSel < nSels; iSel++) {	// for selected tracks
+		int	nQuant = GetAt(arrTrackSel[iSel]).m_nQuant;
+		if (nQuant < nMinQuant)
+			nMinQuant = nQuant;
+	}
+	return nMinQuant;
+}
+
+int	CSeqTrackArray::FindCommonUnit(const CIntArrayEx& arrTrackSel) const
+{
+	int	nMinQuant = FindMinQuant(arrTrackSel);	// find minimum quant for selected tracks
+	int	nSels = arrTrackSel.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for selected tracks
+		int	nQuant = GetAt(arrTrackSel[iSel]).m_nQuant;
+		if (nQuant % nMinQuant)	// if this track's quant isn't evenly divisible by minimum quant
+			return 0;	// failure, no common unit
+	}
+	return nMinQuant;
+}
+
+void CSeqTrackArray::GetUniquePeriods(const CIntArrayEx& arrTrackSel, CArrayEx<ULONGLONG, ULONGLONG>& arrPeriod, int nCommonUnit) const
+{
+	arrPeriod.FastRemoveAll();
+	int	nSels = arrTrackSel.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for selected tracks
+		int	iTrack = arrTrackSel[iSel];
+		ULONGLONG	nPeriod = GetPeriod(iTrack);
+		if (nCommonUnit)	// if common unit specified
+			nPeriod /= nCommonUnit;	// convert period to common unit
+		// ascending sort and elimination of duplicates improves LCM performance
+		arrPeriod.InsertSortedUnique(nPeriod);
+	}
+}
+
+int CSeqTrackArray::CountMutedTracks(bool bMuteState) const
+{
+	int	nCount = 0;
+	int	nTracks = GetTrackCount();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
+		if (GetMute(iTrack) == bMuteState)
+			nCount++;
+	}
+	return nCount;
+}
+
+void CSeqTrackArray::GetMutedTracks(CIntArrayEx& arrTrackSel, bool bMuteState) const
+{
+	int	nCount = CountMutedTracks(bMuteState);
+	arrTrackSel.SetSize(nCount);
+	int	iSel = 0;
+	int	nTracks = GetTrackCount();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
+		if (GetMute(iTrack) == bMuteState) {
+			arrTrackSel[iSel] = iTrack;
+			iSel++;
+		}
+	}
 }

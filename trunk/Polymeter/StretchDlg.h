@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      05oct18	initial version
+		01		07oct20	add interpolate checkbox
 
 */
 
@@ -38,4 +39,5 @@ public:
 	CRange<double>	m_rng;
 	double	m_fVal;
 	virtual BOOL OnInitDialog();
+	BOOL	m_bInterpolate;
 };
