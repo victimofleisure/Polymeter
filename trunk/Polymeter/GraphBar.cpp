@@ -18,6 +18,9 @@
 		08		19apr20	don't set browser window name; fixes OLE exception
 		09		08jun20	add color for offset modulation
 		10		18jun20	add hint for layout menu items
+		11		16oct20	specify layout via command line parameter
+		12		18oct20	search both 32-bit and 64-bit program folders
+		13		19oct20	after calling dot, verify that output file exists
 
 */
 
@@ -80,6 +83,14 @@ const int CGraphBar::m_arrHintGraphScopeID[GRAPH_SCOPES] = {
 const LPCTSTR CGraphBar::m_arrGraphLayout[GRAPH_LAYOUTS] = {
 	#define GRAPHLAYOUTDEF(name) _T(#name),
 	#include "GraphTypeDef.h"
+};
+
+const LPCTSTR CGraphBar::m_arrGraphExeName = _T("dot.exe");
+const LPCTSTR CGraphBar::m_arrGraphFindExeName[] = {
+	// GraphViz folder is identified by the existence of these executables
+	_T("dot.exe"),
+	_T("gvgen.exe"),
+	_T("gvpack.exe"),
 };
 
 #define RK_GRAPH_SCOPE _T("Scope")
@@ -254,36 +265,36 @@ UINT CGraphBar::GraphThread(LPVOID pParam)
 	CPathStr	sGraphPath(sDataPath);
 	sGraphPath.RenameExtension(_T(".svg"));	// same as data path except extension
 	CString	sCmdLine;
-	LPCTSTR	pszExeName = m_arrGraphLayout[params.m_iGraphLayout];
+	LPCTSTR	pszLayout = m_arrGraphLayout[params.m_iGraphLayout];
 	CPathStr	sExePath(m_sGraphvizPath);
-	sExePath.Append(pszExeName);
-	sCmdLine.Format(_T("%s.exe -Tsvg -o\"%s\" \"%s\""), sExePath, sGraphPath, sDataPath);
+	sExePath.Append(m_arrGraphExeName);
+	sCmdLine.Format(_T("%s -K%s -Tsvg -o\"%s\" \"%s\""), sExePath, pszLayout, sGraphPath, sDataPath);
 	TCHAR	*pCmdLine = sCmdLine.GetBuffer(0);
 	STARTUPINFO	si;
 	GetStartupInfo(&si);
 	PROCESS_INFORMATION	pi;
 	UINT	dwFlags = CREATE_NO_WINDOW;	// avoid flashing console window
-	DWORD	dwExitMsg = 0;
+	DWORD	dwExitMsg = UWM_GRAPH_ERROR;	// assume failure
 	DWORD	dwExitParam = 0;
 	if (CreateProcess(NULL, pCmdLine, NULL, NULL, FALSE, dwFlags, NULL, NULL, &si, &pi)) {
 		static const int GRAPH_TIMEOUT = 30000;	// generous timeout
 		int	nStatus = WaitForSingleObject(pi.hThread, GRAPH_TIMEOUT);
-		CloseHandle(pi.hProcess);	// close both handles to avoid handle leak
-		CloseHandle(pi.hThread);
 		switch (nStatus) {
 		case WAIT_OBJECT_0:
-			dwExitMsg = UWM_GRAPH_DONE;
+			if (PathFileExists(sGraphPath))
+				dwExitMsg = UWM_GRAPH_DONE;
+			else
+				dwExitParam = ERROR_FILE_NOT_FOUND;
 			break;
 		case WAIT_TIMEOUT:
-			dwExitMsg = UWM_GRAPH_ERROR;
 			dwExitParam = ERROR_TIMEOUT;
 			break;
 		default:
-			dwExitMsg = UWM_GRAPH_ERROR;
 			dwExitParam = GetLastError();
 		}
+		CloseHandle(pi.hProcess);	// close both handles to avoid handle leak
+		CloseHandle(pi.hThread);
 	} else {	// create process error
-		dwExitMsg = UWM_GRAPH_ERROR;
 		dwExitParam = GetLastError();
 	}
 	CWnd&	wndParent = theApp.GetMainFrame()->m_wndGraphBar;
@@ -565,10 +576,11 @@ BOOL CGraphBar::CBrowserWnd::PreTranslateMessage(MSG *pMsg)
 
 bool CGraphBar::FindGraphvizExes(CString sFolderPath)
 {
-	for (int iLayout = 0; iLayout < GRAPH_LAYOUTS; iLayout++) {	// for each layout
-		CPathStr	sLayoutPath(sFolderPath);
-		sLayoutPath.Append(m_arrGraphLayout[iLayout] + CString(".exe"));
-		if (!PathFileExists(sLayoutPath))	// if layout executable not found
+	int	nExes = _countof(m_arrGraphFindExeName);
+	for (int iExe = 0; iExe < nExes; iExe++) {	// for each executable
+		CPathStr	sExePath(sFolderPath);
+		sExePath.Append(m_arrGraphFindExeName[iExe]);
+		if (!PathFileExists(sExePath))	// if layout executable not found
 			return false;
 	}
 	return true;	// all layout executables found
@@ -591,26 +603,29 @@ bool CGraphBar::FindGraphvizExesFlexible(CPathStr& sFolderPath)
 
 bool CGraphBar::FindGraphvizFast(CString& sGraphvizPath)
 {
-	// assume graphviz was installed in its default location: a subfolder of program files (x86),
-	// the name of which starts with graphviz, and containing an executables subfolder named bin
+	// assume graphviz was installed in its default location: a subfolder of program files,
+	// the name of which starts with graphviz, containing an executables subfolder named bin
 	sGraphvizPath.Empty();
-	CString	sProgramFilesX86;
-	if (!theApp.GetSpecialFolderPath(CSIDL_PROGRAM_FILESX86, sProgramFilesX86)) {
-		ASSERT(0);	// drastic error, should never happen
-		return false;
-	}
-	CFileFind	finder;
-	CString	sWildcard(sProgramFilesX86 + _T("\\*.*"));
-	BOOL bWorking = finder.FindFile(sWildcard);
-	while (bWorking) {	// iterate subfolders of program files (x86)
-		bWorking = finder.FindNextFile();
-		if (finder.IsDirectory() && !finder.IsDots()	// if subfolder
-		&& !finder.GetFileName().Left(8).CompareNoCase(_T("graphviz"))) {	// and name matches
-			CPathStr	sBinSubfolder(finder.GetFilePath());
-			sBinSubfolder.Append(_T("bin"));	// search bin subfolder
-			if (FindGraphvizExes(sBinSubfolder)) {	// if needed executables found
-				sGraphvizPath = sBinSubfolder;
-				return true;	// all is good
+	static const int arrFolder[] = {CSIDL_PROGRAM_FILES, CSIDL_PROGRAM_FILESX86};
+	for (int iFolder = 0; iFolder < _countof(arrFolder); iFolder++) {
+		CString	sProgramFiles;
+		if (!theApp.GetSpecialFolderPath(arrFolder[iFolder], sProgramFiles)) {
+			ASSERT(0);	// drastic error, should never happen
+			return false;
+		}
+		CFileFind	finder;
+		CString	sWildcard(sProgramFiles + _T("\\*.*"));
+		BOOL bWorking = finder.FindFile(sWildcard);
+		while (bWorking) {	// iterate subfolders of program files (x86)
+			bWorking = finder.FindNextFile();
+			if (finder.IsDirectory() && !finder.IsDots()	// if subfolder
+			&& !finder.GetFileName().Left(8).CompareNoCase(_T("graphviz"))) {	// and name matches
+				CPathStr	sBinSubfolder(finder.GetFilePath());
+				sBinSubfolder.Append(_T("bin"));	// search bin subfolder
+				if (FindGraphvizExes(sBinSubfolder)) {	// if needed executables found
+					sGraphvizPath = sBinSubfolder;
+					return true;	// all is good
+				}
 			}
 		}
 	}

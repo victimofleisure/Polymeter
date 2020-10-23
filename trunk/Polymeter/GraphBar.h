@@ -9,6 +9,7 @@
 		rev		date	comments
         00		25jan19	initial version
 		01		10feb19	move temp file path wrapper to app
+		02		16oct20	add array of executable names to find
 		
 */
 
@@ -126,6 +127,8 @@ protected:
 	static const int		m_arrGraphScopeID[GRAPH_SCOPES];
 	static const int		m_arrHintGraphScopeID[GRAPH_SCOPES];
 	static const LPCTSTR	m_arrGraphLayout[GRAPH_LAYOUTS];
+	static const LPCTSTR	m_arrGraphExeName;			// name of graphing executable
+	static const LPCTSTR	m_arrGraphFindExeName[];	// array of executable names to find
 
 // Member data
 	CBrowserWnd	m_wndBrowser;	// web browser client window
