@@ -330,6 +330,7 @@ id	open	close	type	description	rev	user
 412	10/07/20	10/07/20	done	Time to Repeat should compute greatest prime factor in common unit if possible	0.0.34.001	
 413	10/07/20	10/07/20	done	in Stretch command, make interpolation of non-note tracks optional	0.0.34.001	
 414	10/08/20	10/08/20	done	stretch interpolation is skewed, and should ignore tie bit	0.0.34.001	
+415	10/15/20	10/19/20	done	can't find GraphViz 2.44; layout executables are missing, specify layout via dot parameter, support x64	0.0.34.002	
 17	03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
@@ -397,6 +398,7 @@ id	open	close	type	description	rev	user
 405	08/22/20		hold	in mapping, add Note Number input event type: get data value from note's index, ignoring velocity and note off		
 407	09/17/20		hold	select all unmuted tracks; hardly worth cluttering up the Edit menu?		
 410	09/28/20		hold	live view position bars for track groups should reflect LCM of periods instead of maximum period; could be slow		
+416	10/20/20		hold	GraphViz PDF output looks better than SVG (if Adobe is installed) but it overrides our context menu		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		

@@ -2800,3 +2800,16 @@ or maximum element.
 Also, CPart::GetTrackRefs should return the number of tracks that
 belong to parts. This would make it possible to preallocate the
 part array CLiveView::Update(), instead of using Add.
+
+10/18/20 GraphViz 2.44.1 not working
+
+Tried with both 32-bit and 64-bit installers. In both cases dot.exe fails with this error:
+There is no layout engine support for "dot"
+Perhaps "dot -c" needs to be run (with installer's privileges) to register the plugins?
+
+Their installer should take care of this but it doesn't.
+
+Also 2.44 often bungles the graph size, causing the graph to be too small or clipped.
+
+Version 2.38 doesn't have either of these problems.
+
