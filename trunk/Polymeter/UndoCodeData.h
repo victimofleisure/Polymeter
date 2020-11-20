@@ -14,6 +14,7 @@
 		04		28mar20	add learn multiple mappings
 		05		07apr20	add move steps
 		06		28sep20	add sort parts
+		07		16nov20	add time division
 
 		undo code data
  
@@ -75,5 +76,6 @@ UCODE_DEF(MOVE_MAPPINGS)
 UCODE_DEF(SORT_MAPPINGS)
 UCODE_DEF(LEARN_MAPPING)
 UCODE_DEF(LEARN_MULTI_MAPPING)
+UCODE_DEF(TIME_DIVISION)
 
 #undef UCODE_DEF

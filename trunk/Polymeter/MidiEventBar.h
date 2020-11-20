@@ -14,6 +14,7 @@
 		04		17feb20	inherit MIDI event class from track base
 		05		19mar20	move MIDI message enums to Midi header
 		06		07apr20	add output bar member flag
+		07		18nov20	enable auto-hide and attach
 
 */
 
@@ -128,8 +129,6 @@ protected:
 	void	ResetFilters();
 
 // Overrides
-	virtual BOOL CanAutoHide() const;
-	virtual BOOL CanBeAttached() const;
 	virtual	void OnShowChanged(bool bShow);
 
 // Generated message map functions

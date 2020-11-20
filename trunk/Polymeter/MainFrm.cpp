@@ -37,6 +37,10 @@
 		27		09jul20	let child frame activation determine song mode
 		28		28jul20	add custom convergence size
 		29		07sep20	add apply preset message
+		30		05nov20	report find/replace search text not found
+		31		16nov20	find/replace handler must not destroy window
+		32		16nov20	refactor UpdateSongPosition
+		33		19nov20	move bar updating to bar update handlers
 
 */
 
@@ -299,19 +303,14 @@ void CMainFrame::OnActivateView(CView *pView, CChildFrame *pChildFrame)
 		}
 		int	nKeySig;
 		if (pDoc != NULL) {	// if valid document
-			LONGLONG	nPos;
-			if (pDoc->m_Seq.GetPosition(nPos)) {	// if valid song position
-				pDoc->m_Seq.ConvertPositionToString(nPos, m_sSongPos);
-				pDoc->m_Seq.ConvertPositionToTimeString(nPos, m_sSongTime);
-			}
+			UpdateSongPositionStrings(pDoc);
 			nKeySig = pDoc->m_nKeySig;
 		} else {	// no document
 			m_sSongPos.Empty();
 			m_sSongTime.Empty();
 			nKeySig = 0;
 		}
-		m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);	// update song position in status bar
-		m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);	// update song time in status bar
+		UpdateSongPositionDisplay();
 		m_wndPianoBar.SetKeySignature(nKeySig);
 	}
 	if (pDoc != NULL && pChildFrame->m_nWindow > 0) {	// if document has multiple child frames
@@ -430,9 +429,6 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		switch (lHint) {
 		case CPolymeterDoc::HINT_NONE:
 			m_wndPropertiesBar.SetProperties(*pDoc);	// update properties bar
-			m_wndChannelsBar.Update();	// update channels bar
-			m_wndPresetsBar.Update();
-			m_wndPartsBar.Update();
 			break;
 		case CPolymeterDoc::HINT_MASTER_PROP:
 			{
@@ -456,81 +452,9 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				m_wndPropertiesBar.SetProperties(*pDoc);	// update properties bar
 			}
 			break;
-		case CPolymeterDoc::HINT_CHANNEL_PROP:
-			{
-				const CPolymeterDoc::CPropHint	*pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
-				int	iChan = pPropHint->m_iItem;
-				int	iProp = pPropHint->m_iProp;
-				if (pSender != reinterpret_cast<CView *>(&m_wndChannelsBar)) {	// if sender isn't channels bar
-					m_wndChannelsBar.Update(iChan, iProp);	// update channels bar
-				}
-				pDoc->OutputChannelEvent(iChan, iProp);
-			}
-			break;
-		case CPolymeterDoc::HINT_MULTI_CHANNEL_PROP:
-			{
-				const CPolymeterDoc::CMultiItemPropHint	*pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
-				const CIntArrayEx& arrSelection = pPropHint->m_arrSelection;
-				int	iProp = pPropHint->m_iProp;
-				if (pSender != reinterpret_cast<CView *>(&m_wndChannelsBar)) {	// if sender isn't channels bar
-					m_wndChannelsBar.Update(arrSelection, iProp);	// update channels bar
-				}
-				int	nSels = arrSelection.GetSize();
-				for (int iSel = 0; iSel < nSels; iSel++) {
-					int	iChan = arrSelection[iSel];
-					pDoc->OutputChannelEvent(iChan, iProp);
-				}
-			}
-			break;
-		case CPolymeterDoc::HINT_OPTIONS:
-			{
-				const CPolymeterDoc::COptionsPropHint *pPropHint = static_cast<CPolymeterDoc::COptionsPropHint *>(pHint);
-				if (theApp.m_Options.m_View_bShowGMNames != pPropHint->m_pPrevOptions->m_View_bShowGMNames)
-					m_wndChannelsBar.Update();	// update channels bar so patches are redisplayed in new format
-			}
-			break;
-		case CPolymeterDoc::HINT_PRESET_NAME:
-			{
-				const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
-				int	iPreset = pPropHint->m_iItem;
-				m_wndPresetsBar.RedrawItem(iPreset);
-				m_wndPresetsBar.SelectOnly(iPreset);
-			}
-			break;
-		case CPolymeterDoc::HINT_PRESET_ARRAY:
-			{
-				const CPolymeterDoc::CSelectionHint *pSelHint = static_cast<CPolymeterDoc::CSelectionHint *>(pHint);
-				m_wndPresetsBar.Update();
-				if (pSelHint->m_parrSelection != NULL)	// if selection array exists
-					m_wndPresetsBar.SetSelection(*pSelHint->m_parrSelection);	// set selection
-				else if (pSelHint->m_nItems)	// if selection range exists
-					m_wndPresetsBar.SelectRange(pSelHint->m_iFirstItem, pSelHint->m_nItems);	// select range
-				else	// no selection
-					m_wndPresetsBar.Deselect();	// deselect
-			}
-			break;
-		case CPolymeterDoc::HINT_PART_NAME:
-			{
-				const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
-				int	iPart = pPropHint->m_iItem;
-				m_wndPartsBar.RedrawItem(iPart);
-				m_wndPartsBar.SelectOnly(iPart);
-			}
-			break;
-		case CPolymeterDoc::HINT_PART_ARRAY:
-			{
-				const CPolymeterDoc::CSelectionHint *pSelHint = static_cast<CPolymeterDoc::CSelectionHint *>(pHint);
-				m_wndPartsBar.Update();
-				if (pSelHint->m_parrSelection != NULL)	// if selection array exists
-					m_wndPartsBar.SetSelection(*pSelHint->m_parrSelection);	// set selection
-				else if (pSelHint->m_nItems)	// if selection range exists
-					m_wndPartsBar.SelectRange(pSelHint->m_iFirstItem, pSelHint->m_nItems);	// select range
-				else	// no selection
-					m_wndPartsBar.Deselect();	// deselect
-			}
-			break;
 		case CPolymeterDoc::HINT_SONG_POS:
-			UpdateSongPosition(pDoc);	// updates song position and time in status bar
+			// assume song position and time strings were already updated
+			UpdateSongPositionDisplay();	// update song position and time in status bar
 			break;
 		}
 		bool	bIsPlaying = pDoc->m_Seq.IsPlaying();
@@ -539,10 +463,17 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	} else {	// no active document
 		CMasterProps	props;	// default properties
 		m_wndPropertiesBar.SetProperties(props);	// update properties bar
-		m_wndChannelsBar.Update();	// update channels bar
 		SetViewTimer(false);
 	}
-	m_wndModulationsBar.OnUpdate(pSender, lHint, pHint);	// update modulation bar
+	// relay update to visible bars
+	if (m_wndChannelsBar.FastIsVisible())
+		m_wndChannelsBar.OnUpdate(pSender, lHint, pHint);
+	if (m_wndPartsBar.FastIsVisible())
+		m_wndPartsBar.OnUpdate(pSender, lHint, pHint);
+	if (m_wndPresetsBar.FastIsVisible())
+		m_wndPresetsBar.OnUpdate(pSender, lHint, pHint);
+	if (m_wndModulationsBar.FastIsVisible())
+		m_wndModulationsBar.OnUpdate(pSender, lHint, pHint);
 	if (m_wndGraphBar.FastIsVisible())
 		m_wndGraphBar.OnUpdate(pSender, lHint, pHint);
 	if (m_wndPhaseBar.FastIsVisible())
@@ -555,12 +486,22 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 
 void CMainFrame::UpdateSongPosition(const CPolymeterDoc *pDoc)
 {
+	UpdateSongPositionStrings(pDoc);
+	UpdateSongPositionDisplay();
+}
+
+void CMainFrame::UpdateSongPositionStrings(const CPolymeterDoc *pDoc)
+{
 	ASSERT(pDoc != NULL);
-	LONGLONG	nSongPos = pDoc->m_nSongPos;
-	pDoc->m_Seq.ConvertPositionToString(nSongPos, m_sSongPos);
-	m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);
-	pDoc->m_Seq.ConvertPositionToTimeString(nSongPos, m_sSongTime);
-	m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);
+	LONGLONG	nSongPos = pDoc->m_nSongPos;	// get cached song position from document
+	pDoc->m_Seq.ConvertPositionToString(nSongPos, m_sSongPos);	// update song position string
+	pDoc->m_Seq.ConvertPositionToTimeString(nSongPos, m_sSongTime);	// update song time string
+}
+
+void CMainFrame::UpdateSongPositionDisplay()
+{
+	m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);	// update song position in status bar
+	m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);	// update song time in status bar
 }
 
 #ifdef _WIN64
@@ -663,6 +604,7 @@ void CMainFrame::CreateFindReplaceDlg(bool bReplace)
 
 bool CMainFrame::DoFindReplace()
 {
+	ASSERT(m_pFindDlg != NULL);
 	if (m_pFindDlg == NULL)
 		return false;
 	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
@@ -730,6 +672,8 @@ bool CMainFrame::DoFindReplace()
 				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_PROP, &hint);	// update views
 				pDoc->SetModifiedFlag();
 			}
+		} else {	// matching track name not found
+			return false;	// failure: string not found
 		}
 	}
 	return true;	// success: one or more matches were found
@@ -997,7 +941,7 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 			break;
 		case CMasterProps::PROP_nTimeDiv:
 			// convert time division preset index to time division value in ticks
-			pDoc->m_Seq.SetTimeDivision(pDoc->GetTimeDivisionTicks());
+			pDoc->ChangeTimeDivision(pDoc->GetTimeDivisionTicks());
 			break;
 		case CMasterProps::PROP_nMeter:
 			pDoc->m_Seq.SetMeter(pDoc->m_nMeter);
@@ -1045,6 +989,7 @@ void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 			LONGLONG	nPos;
 			if (pPlayingDoc->m_Seq.GetPosition(nPos)) {	// if valid song position
 				pPlayingDoc->m_nSongPos = nPos;
+				UpdateSongPositionStrings(pPlayingDoc);	// views are updated before main frame
 				pPlayingDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_SONG_POS);
 			}
 			bool	bShowingMidiOutputBar = m_wndMidiOutputBar.FastIsVisible();
@@ -1180,10 +1125,10 @@ LRESULT CMainFrame::OnFindReplace(WPARAM wParam, LPARAM lParam)
 			m_sFindText = pDlg->GetFindString();	// save find string
 			m_sReplaceText = pDlg->GetReplaceString();	// save replace string
 			m_bFindMatchCase = (pDlg->m_fr.Flags & FR_MATCHCASE) != 0;	// save match case option
-			pDlg->DestroyWindow();	// destroy dialog
 			m_pFindDlg = NULL;	// mark dialog destroyed
 		} else {	// not terminating
-			DoFindReplace();	// do find/replace
+			if (!DoFindReplace())	// do find/replace
+				AfxMessageBox(AFX_IDP_E_SEARCHTEXTNOTFOUND);
 		}
 	}
 	return 0;

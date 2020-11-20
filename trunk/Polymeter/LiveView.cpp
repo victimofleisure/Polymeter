@@ -19,6 +19,7 @@
 		09		09jul20	get view type from child frame instead of document
 		10		08sep20	if deferring update, don't update position bars
 		11		24sep20	order parts by lowest track index
+		12		16nov20	meter and tempo change must update song position
 
 */
 
@@ -93,7 +94,6 @@ void CLiveView::OnInitialUpdate()
 void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
 	UNREFERENCED_PARAMETER(pSender);
-	UNREFERENCED_PARAMETER(pHint);
 //	printf("CLiveView::OnUpdate %x %d %x\n", pSender, lHint, pHint);
 	CPolymeterDoc	*pDoc = GetDocument();
 	if (m_pParentFrame->IsLiveView()) {	// if showing live view
@@ -194,6 +194,10 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				switch (pPropHint->m_iProp) {
 				case CMasterProps::PROP_fTempo:
 				case CMasterProps::PROP_nMeter:
+					theApp.GetMainFrame()->UpdateSongPositionStrings(pDoc);	// views are updated before main frame
+					UpdateSongCounters();
+					UpdateStatus();
+					break;
 				case CMasterProps::PROP_nKeySig:
 					UpdateStatus();
 					break;

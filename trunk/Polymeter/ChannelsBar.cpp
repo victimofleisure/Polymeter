@@ -11,6 +11,8 @@
 		01		15dec18	add label tip style to grid
 		02		28jan19	include divider in list column header hit test
 		03		01apr20	standardize context menu handling
+		04		19nov20	add update and show changed handlers
+		05		19nov20	move set channel property methods to document
 		
 */
 
@@ -56,6 +58,62 @@ CChannelsBar::~CChannelsBar()
 {
 }
 
+void CChannelsBar::OnShowChanged(bool bShow)
+{
+	// we only receive document updates if we're visible; see CMainFrame::OnUpdate
+	if (bShow)	// if showing bar
+		Update();	// repopulate grid
+}
+
+void CChannelsBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+{
+	UNREFERENCED_PARAMETER(pSender);
+//	printf("CChannelsBar::OnUpdate %x %d %x\n", pSender, lHint, pHint);
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL) {
+		switch (lHint) {
+		case CPolymeterDoc::HINT_NONE:
+			Update();
+			break;
+		case CPolymeterDoc::HINT_CHANNEL_PROP:
+			{
+				const CPolymeterDoc::CPropHint	*pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+				int	iChan = pPropHint->m_iItem;
+				int	iProp = pPropHint->m_iProp;
+				if (pSender != reinterpret_cast<CView *>(this)) {	// if sender isn't us
+					Update(iChan, iProp);
+				}
+				pDoc->OutputChannelEvent(iChan, iProp);
+			}
+			break;
+		case CPolymeterDoc::HINT_MULTI_CHANNEL_PROP:
+			{
+				const CPolymeterDoc::CMultiItemPropHint	*pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
+				const CIntArrayEx& arrSelection = pPropHint->m_arrSelection;
+				int	iProp = pPropHint->m_iProp;
+				if (pSender != reinterpret_cast<CView *>(this)) {	// if sender isn't us
+					Update(arrSelection, iProp);
+				}
+				int	nSels = arrSelection.GetSize();
+				for (int iSel = 0; iSel < nSels; iSel++) {
+					int	iChan = arrSelection[iSel];
+					pDoc->OutputChannelEvent(iChan, iProp);
+				}
+			}
+			break;
+		case CPolymeterDoc::HINT_OPTIONS:
+			{
+				const CPolymeterDoc::COptionsPropHint *pPropHint = static_cast<CPolymeterDoc::COptionsPropHint *>(pHint);
+				if (theApp.m_Options.m_View_bShowGMNames != pPropHint->m_pPrevOptions->m_View_bShowGMNames)
+					Update();	// update channels bar so patches are redisplayed in new format
+			}
+			break;
+		}
+	} else {	// no document
+		Update();
+	}
+}
+
 class CPopupIntEdit : public CPopupNumEdit {	// this belongs somewhere else
 public:
 	virtual void ValToStr(CString& Str);
@@ -82,8 +140,7 @@ CWnd *CChannelsBar::CChannelsGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwS
 {
 	UNREFERENCED_PARAMETER(pParentWnd);
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	ASSERT(pDoc != NULL);
-	if (pDoc == NULL)	// run-time check anyway
+	if (pDoc == NULL)	// run-time check
 		return NULL;
 	m_varPreEdit.Clear();	// init pre-edit value to invalid state
 	int	iChan = m_iEditRow;
@@ -154,24 +211,13 @@ void CChannelsBar::CChannelsGridCtrl::OnItemChange(LPCTSTR pszText)
 				break;
 		}
 		if (iSel < nSels) {	// if at least one channel's property changed
-			pDoc->NotifyUndoableEdit(iProp, UCODE_MULTI_CHANNEL_PROP);
-			for (iSel = 0; iSel < nSels; iSel++) {	// for each selected channel
-				int	iSelChan = arrSelection[iSel];
-				pDoc->m_arrChannel[iSelChan].SetProperty(iProp, nVal);	// set property
-			}
-			CPolymeterDoc::CMultiItemPropHint	hint(arrSelection, iProp);
 			CView	*pSender = reinterpret_cast<CView *>(GetParent());	// sender is parent
-			pDoc->UpdateAllViews(pSender, CPolymeterDoc::HINT_MULTI_CHANNEL_PROP, &hint);
-			pDoc->SetModifiedFlag();
+			pDoc->SetMultiChannelProperty(arrSelection, iProp, nVal, pSender);
 		}
 	} else {	// single selection
 		if (nVal != pDoc->m_arrChannel[iChan].GetProperty(iProp)) {	// if property changed
-			pDoc->NotifyUndoableEdit(MAKELONG(iChan, iProp), UCODE_CHANNEL_PROP);
-			pDoc->m_arrChannel[iChan].SetProperty(iProp, nVal);	// set property
-			CPolymeterDoc::CPropHint	hint(iChan, iProp);
 			CView	*pSender = reinterpret_cast<CView *>(GetParent());	// sender is parent
-			pDoc->UpdateAllViews(pSender, CPolymeterDoc::HINT_CHANNEL_PROP, &hint);
-			pDoc->SetModifiedFlag();
+			pDoc->SetChannelProperty(iChan, iProp, nVal, pSender);
 		}
 	}
 }
@@ -212,11 +258,13 @@ void CChannelsBar::Update()
 
 void CChannelsBar::Update(int iChan)
 {
+	ASSERT(iChan >= 0 && iChan < MIDI_CHANNELS);
 	m_grid.RedrawItem(iChan);
 }
 
 void CChannelsBar::Update(int iChan, int iProp)
 {
+	ASSERT(iChan >= 0 && iChan < MIDI_CHANNELS);
 	ASSERT(iProp >= 0 && iProp < CChannel::PROPERTIES);
 	m_grid.RedrawSubItem(iChan, iProp + 1);	// skip column name
 }

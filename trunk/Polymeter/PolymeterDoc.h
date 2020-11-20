@@ -32,6 +32,9 @@
 		22		09jul20	move view type handling from document to child frame
 		23		28sep20	add part sort
 		24		07oct20	in stretch tracks, make interpolation optional
+		25		06nov20	refactor velocity transforms and add replace
+		26		16nov20	add tick dependencies
+		27		19nov20	add set channel property methods
 
 */
 
@@ -48,6 +51,7 @@
 #include "Range.h"
 
 class COptions;
+class CVelocityTransform;
 
 class CPolymeterDoc : public CDocument, public CMasterProps, public CUndoable, public CTrackBase
 {
@@ -182,7 +186,9 @@ public:
 	bool	HaveStepSelection() const;
 	bool	HaveTrackOrStepSelection() const;
 	void	GetTrackIDMap(CTrackIDMap& mapTrackID) const;
-	void	SetMappingProperty(int iMapping, int iProp, int nVal);
+	void	SetChannelProperty(int iChan, int iProp, int nVal, CView *pSender = NULL);
+	void	SetMultiChannelProperty(const CIntArrayEx& arrSelection, int iProp, int nVal, CView *pSender = NULL);
+	void	SetMappingProperty(int iMapping, int iProp, int nVal, CView *pSender = NULL);
 	void	SetMultiMappingProperty(const CIntArrayEx& arrSelection, int iProp, int nVal, CView* pSender = NULL);
 
 // Operations
@@ -232,10 +238,10 @@ public:
 	void	RotateTracksOrSteps(int nOffset);
 	bool	IsTranspositionSafe(int nNoteDelta) const;
 	bool	Transpose(int nNoteDelta);
-	bool	IsVelocityChangeSafe(int nVelocityOffset, double fVelocityScale = 1, const CRect *prStepSel = NULL, CRange<int> *prngVelocity = NULL, bool bSigned = false) const;
+	bool	IsVelocityChangeSafe(const CVelocityTransform& trans, const CRect *prStepSel = NULL, CRange<int> *prngVelocity = NULL) const;
 	bool	OffsetTrackVelocity(int nVelocityOffset);
-	bool	TransformStepVelocity(int nVelocityOffset, double fVelocityScale = 1, bool bSigned = false);
-	bool	TransformStepVelocity(const CRect& rSelection, int nVelocityOffset, double fVelocityScale = 1, bool bSigned = false);
+	bool	TransformStepVelocity(CVelocityTransform& trans);
+	bool	TransformStepVelocity(const CRect& rSelection, CVelocityTransform& trans);
 	bool	ValidateTrackLength(int nLength, int nQuant) const;
 	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
 	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
@@ -279,6 +285,7 @@ public:
 	void	LearnMapping(int iMapping, DWORD nInMidiMsg, bool bCoalesceEdit = false);
 	void	LearnMappings(const CIntArrayEx& arrSelection, DWORD nInMidiMsg, bool bCoalesceEdit = false);
 	void	CreateModulation(int iSelItem = -1);
+	void	ChangeTimeDivision(int nNewTimeDivTicks);
 
 // Overrides
 public:
@@ -396,6 +403,13 @@ protected:
 		CIntArrayEx	m_arrSelection;	// indices of selected mappings
 		CMappingArray	m_arrMapping;	// array of mappings
 	};
+	class CUndoTimeDivision : public CRefObj {
+	public:
+		CTickDependsArray	m_arrTickDepends;	// array of tick-dependent track members
+		int		m_nTimeDivTicks;	// time division in ticks per quarter note
+		int		m_nStartPos;		// start position in ticks
+		LONGLONG	m_nSongPos;		// song position in ticks
+	};
 	class CTrackArrayEdit {
 	public:
 		CTrackArrayEdit(CPolymeterDoc *pDoc);
@@ -435,6 +449,8 @@ protected:
 	bool	PromptForExportParams(bool bSongMode, int& nDuration);
 	void	SaveRecordedMidiInput();
 	void	StopPlayback();
+	void	TransformStepVelocity(int iTrack, int iStep, int nSteps, CVelocityTransform &trans);
+	bool	PostTransformStepVelocity(const CVelocityTransform &trans, const CRect *prStepSel);
 
 // Undo helpers
 	void	SaveTrackProperty(CUndoState& State) const;
@@ -513,6 +529,8 @@ protected:
 	void	RestoreLearnMapping(const CUndoState& State);
 	void	SaveLearnMultiMapping(CUndoState& State);
 	void	RestoreLearnMultiMapping(const CUndoState& State);
+	void	SaveTimeDivision(CUndoState& State);
+	void	RestoreTimeDivision(const CUndoState& State);
 	bool	UndoDependencies();
 	bool	RedoDependencies();
 

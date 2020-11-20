@@ -20,6 +20,7 @@
 		10		27apr18	handle reordered columns
 		11		04jun18	give popup edit control non-zero ID
 		12		15dec18	only handle tab key if control key is up
+		13		17nov20	in OnLButtonDown, set focus before editing subitem
 
 		grid control
  
@@ -167,7 +168,10 @@ void CGridCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 	info.flags = UINT_MAX;
 	int	item = SubItemHitTest(&info);
 	if (item >= 0 && info.iSubItem > 0) {	// if clicked on a subitem
-		EditSubitem(item, info.iSubItem);	// edit subitem
+		SetFocus();	// required because base class isn't called; avoids crash or exception
+		// SetFocus can fail, for example if window that's losing focus resets focus
+		if (::GetFocus() == m_hWnd)	// if we actually have focus
+			EditSubitem(item, info.iSubItem);	// edit subitem
 	} else	// not on a subitem
 		CDragVirtualListCtrl::OnLButtonDown(nFlags, point);	// delegate to base class
 }

@@ -9,6 +9,7 @@
 		rev		date	comments
         00		14jun18	initial version
 		01		01apr20	standardize context menu handling
+		02		19nov20	add update and show changed handlers
 		
 */
 
@@ -38,10 +39,54 @@ CPresetsBar::~CPresetsBar()
 {
 }
 
+void CPresetsBar::OnShowChanged(bool bShow)
+{
+	// we only receive document updates if we're visible; see CMainFrame::OnUpdate
+	if (bShow)	// if showing bar
+		Update();	// repopulate grid
+	else	// hiding bar
+		m_list.SetItemCountEx(0);	// empty grid
+}
+
+void CPresetsBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+{
+	UNREFERENCED_PARAMETER(pSender);
+//	printf("CPresetsBar::OnUpdate %x %d %x\n", pSender, lHint, pHint);
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL) {
+		switch (lHint) {
+		case CPolymeterDoc::HINT_NONE:
+			Update();
+			break;
+		case CPolymeterDoc::HINT_PRESET_NAME:
+			{
+				const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
+				int	iPreset = pPropHint->m_iItem;
+				RedrawItem(iPreset);
+				SelectOnly(iPreset);
+			}
+			break;
+		case CPolymeterDoc::HINT_PRESET_ARRAY:
+			{
+				const CPolymeterDoc::CSelectionHint *pSelHint = static_cast<CPolymeterDoc::CSelectionHint *>(pHint);
+				Update();
+				if (pSelHint->m_parrSelection != NULL)	// if selection array exists
+					SetSelection(*pSelHint->m_parrSelection);	// set selection
+				else if (pSelHint->m_nItems)	// if selection range exists
+					SelectRange(pSelHint->m_iFirstItem, pSelHint->m_nItems);	// select range
+				else	// no selection
+					Deselect();	// deselect
+			}
+			break;
+		}
+	} else {	// no document
+		m_list.SetItemCountEx(0);
+	}
+}
+
 void CPresetsBar::Update()
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	ASSERT(pDoc != NULL);
 	int	nItems;
 	if (pDoc != NULL)	// if active document
 		nItems = pDoc->m_arrPreset.GetSize();
@@ -53,7 +98,6 @@ void CPresetsBar::Update()
 LPCTSTR CPresetsBar::GetItemText(int iItem)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	ASSERT(pDoc != NULL);
 	if (pDoc == NULL)	// need run-time check when closing all windows
 		return _T("");
 	return pDoc->m_arrPreset[iItem].m_sName;
@@ -62,7 +106,6 @@ LPCTSTR CPresetsBar::GetItemText(int iItem)
 void CPresetsBar::SetItemText(int iItem, LPCTSTR pszText)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	ASSERT(pDoc != NULL);
 	if (pDoc != NULL)	// run-time check for safety
 		pDoc->SetPresetName(iItem, pszText);
 }

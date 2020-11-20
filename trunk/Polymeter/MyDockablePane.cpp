@@ -10,6 +10,8 @@
         00		08jan19	initial version
 		01		01apr20	add ShowDockingContextMenu
 		02		17jun20	in command help handler, try tracking help first
+		03		18nov20	add maximize/restore to docking context menu
+		04		19nov20	use visible style to determine pane visibility
 
 */
 
@@ -133,10 +135,52 @@ LRESULT CMyDockablePane::OnShowChanging(WPARAM wParam, LPARAM lParam)
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
 	m_bIsShowPending = false;	// reset pending flag
-	bool	bShow = IsVisible() != 0;
+	bool	bShow = (GetStyle() & WS_VISIBLE) != 0;	// simple window visibility
 	if (bShow != m_bFastIsVisible) {	// if show state actually changed
 		m_bFastIsVisible = bShow;	// update cached show state before notifying
 		OnShowChanged(bShow);	// notify derived class of debounced show change
 	}
 	return 0;
+}
+
+BOOL CMyDockablePane::OnBeforeShowPaneMenu(CMenu& menu)
+{
+	CPaneFrameWnd*	pParent = GetParentMiniFrame();
+	if (pParent != NULL) {	// if parent mini-frame is valid (implies floating)
+		int	nItemStrId;
+		if (pParent->IsZoomed())	// if parent window is maximized
+			nItemStrId = IDS_SC_RESTORE;
+		else	// parent window isn't maximized
+			nItemStrId = IDS_SC_MAXIMIZE;
+		menu.AppendMenu(MF_STRING, static_cast<UINT>(ID_TOGGLE_MAXIMIZE), LDS(nItemStrId));
+	}
+	return CDockablePane::OnBeforeShowPaneMenu(menu);
+}
+
+BOOL CMyDockablePane::OnAfterShowPaneMenu(int nMenuResult)
+{
+	if (nMenuResult == ID_TOGGLE_MAXIMIZE) {	// if toggling maximize
+		CPaneFrameWnd*	pParent = GetParentMiniFrame();
+		if (pParent != NULL) {	// if parent mini-frame is valid (implies floating)
+			int	nShowCmd;
+			if (pParent->IsZoomed())	// if parent window is maximized
+				nShowCmd = SW_RESTORE;
+			else	// parent window isn't maximized
+				nShowCmd = SW_MAXIMIZE;
+			pParent->ShowWindow(nShowCmd);	// maximize or restore parent window
+		}
+	}
+	return CDockablePane::OnAfterShowPaneMenu(nMenuResult);
+}
+
+BOOL CMyDockablePane::OnBeforeDock(CBasePane** ppDockBar, LPCRECT lpRect, AFX_DOCK_METHOD dockMethod)
+{
+	CPaneFrameWnd*	pParent = GetParentMiniFrame();
+	if (pParent != NULL) {	// if parent mini-frame is valid (implies floating)
+		if (pParent->IsZoomed()) {	// if parent window is maximized
+			pParent->ShowWindow(SW_RESTORE);	// restore default window size
+			StoreRecentDockSiteInfo();	// update dock site info with restored window size
+		}
+	}
+	return CDockablePane::OnBeforeDock(ppDockBar, lpRect, dockMethod);
 }

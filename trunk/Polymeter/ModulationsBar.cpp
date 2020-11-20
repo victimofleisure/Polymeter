@@ -18,6 +18,7 @@
 		08		18jun20	move insert group implementation to document
 		09		20jun20	limit insert position for paste and insert
 		10		22jun20	fix selection after paste, insert, and delete
+		11		19nov20	add show changed handler
 
 */
 
@@ -60,6 +61,15 @@ CModulationsBar::~CModulationsBar()
 {
 }
 
+void CModulationsBar::OnShowChanged(bool bShow)
+{
+	// we only receive document updates if we're visible; see CMainFrame::OnUpdate
+	if (bShow)	// if showing bar
+		UpdateAll();	// repopulate grid
+	else	// hiding bar
+		ResetModulatorCache();	// empty grid
+}
+
 inline void CModulationsBar::ResetModulatorCache()
 {
 	m_arrModulator.RemoveAll();	// reset modulator cache
@@ -77,6 +87,7 @@ inline void CModulationsBar::StartDeferredUpdate()
 void CModulationsBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
 	UNREFERENCED_PARAMETER(pSender);
+//	printf("CModulationsBar::OnUpdate %x %d %x\n", pSender, lHint, pHint);
 	switch (lHint) {
 	case CPolymeterDoc::HINT_NONE:
 		ResetModulatorCache();	// assume document change which invalidate cache

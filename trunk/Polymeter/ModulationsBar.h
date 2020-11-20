@@ -12,6 +12,7 @@
 		02		22jan19	remove document change handler
 		03		19mar20	move default track name to track base class
 		04		15apr20	add insert group command
+		05		19nov20	add show changed handler
 
 */
 
@@ -80,6 +81,7 @@ protected:
 	void	StartDeferredUpdate();
 
 // Overrides
+	virtual void OnShowChanged(bool bShow);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
 // Generated message map functions

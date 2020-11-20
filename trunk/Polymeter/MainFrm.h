@@ -29,6 +29,7 @@
 		19		09jul20	add pointer to active child frame
 		20		28jul20	add custom convergence size
 		21		07sep20	add apply preset and part messages
+		22		16nov20	refactor UpdateSongPosition
 
 */
 
@@ -111,6 +112,8 @@ public:
 	void	OnActivateView(CView *pView, CChildFrame *pChildFrame);
 	void	OnUpdate(CView* pSender, LPARAM lHint = 0, CObject* pHint = NULL);
 	void	UpdateSongPosition(const CPolymeterDoc *pDoc);
+	void	UpdateSongPositionStrings(const CPolymeterDoc *pDoc);
+	void	UpdateSongPositionDisplay();
 	void	FullScreen(bool bEnable);
 	static	int		FindMenuItem(const CMenu *pMenu, UINT nItemID);
 

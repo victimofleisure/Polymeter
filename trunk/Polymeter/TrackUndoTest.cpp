@@ -18,6 +18,8 @@
 		08		20mar20	add mapping
 		09		29mar20	add sort and learn mapping
 		10		07apr20	add move steps
+		11		19nov20	use set channel property methods
+		12		19nov20	add randomized docking bar visibility
 
 		automated undo test for patch editing
  
@@ -39,6 +41,7 @@
 #define MAX_TRACKS 100			// maximum number of tracks
 #define MAX_STEPS 256			// maximum number of steps
 #define MAX_ROTATION_STEPS 16	// maximum number of rotation steps
+#define	RANDOM_BAR_ODDS 0		// N:0 odds of showing or hiding a bar, or zero to disable
 
 static CTrackUndoTest gUndoTest(TRUE);	// one and only instance, initially running
 
@@ -284,6 +287,15 @@ CString	CTrackUndoTest::PrintSelection(CIntArrayEx& arrSelection) const
 	return(str);
 }
 
+void CTrackUndoTest::RandomizeBarVisibility()
+{
+	int	nBarID = ID_APP_DOCKING_BAR_FIRST + Random(CMainFrame::DOCKING_BARS);
+	CBasePane	*pBar = theApp.GetMainFrame()->GetPane(nBarID);
+	ASSERT(pBar != NULL);
+	bool	bIsVisible = pBar->IsWindowVisible() != 0;
+	theApp.GetMainFrame()->ShowPane(pBar, !bIsVisible, 0, true);	// activate
+}
+
 CString CTrackUndoTest::PrintSelection(CRect& rSelection) const
 {
 	CString	str;
@@ -485,10 +497,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			int	iChan = Random(MIDI_CHANNELS);
 			int	iProp = Random(CChannel::PROPERTIES);
 			int	nVal = Random(MIDI_NOTES + 1) - 1;
-			m_pDoc->NotifyUndoableEdit(MAKELONG(iChan, iProp), UCODE_CHANNEL_PROP);
-			m_pDoc->m_arrChannel[iChan].SetProperty(iProp, nVal);
-			CPolymeterDoc::CPropHint	hint(iChan, iProp);
-			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_CHANNEL_PROP, &hint);
+			m_pDoc->SetChannelProperty(iChan, iProp, nVal);
 			PRINTF(_T("%s %d %d\n"), sUndoTitle, iChan, iProp);
 		}
 		break;
@@ -497,17 +506,9 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			CIntArrayEx	arrSelection;
 			if (!MakeRandomSelection(MIDI_CHANNELS, arrSelection))
 				return(DISABLED);
-			theApp.GetMainFrame()->m_wndChannelsBar.SetSelection(arrSelection);
 			int	iProp = Random(CChannel::PROPERTIES);
 			int	nVal = Random(MIDI_NOTES + 1) - 1;
-			m_pDoc->NotifyUndoableEdit(iProp, UCODE_MULTI_CHANNEL_PROP);
-			int	nSels = arrSelection.GetSize();
-			for (int iSel = 0; iSel < nSels; iSel++) {
-				int	iChan = arrSelection[iSel];
-				m_pDoc->m_arrChannel[iChan].SetProperty(iProp, nVal);
-			}
-			CPolymeterDoc::CMultiItemPropHint	hint(arrSelection, iProp);
-			m_pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_CHANNEL_PROP, &hint);
+			m_pDoc->SetMultiChannelProperty(arrSelection, iProp, nVal);
 			PRINTF(_T("%s %d %s\n"), sUndoTitle, iProp, PrintSelection(arrSelection));
 		}
 		break;
@@ -932,6 +933,10 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 	default:
 		NODEFAULTCASE;
 		return(ABORT);
+	}
+	if (RANDOM_BAR_ODDS) {
+		if (!Random(RANDOM_BAR_ODDS))
+			RandomizeBarVisibility();
 	}
 	return(SUCCESS);
 }

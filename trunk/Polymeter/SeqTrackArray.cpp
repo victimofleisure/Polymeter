@@ -20,6 +20,8 @@
 		10		17apr20	add track color
 		11		30apr20	add step velocity accessors
         12      07oct20	add min quant, common unit, and unique period methods
+		13		26oct20	add ReplaceSteps
+		14		16nov20	add tick dependencies
 
 */
 
@@ -792,6 +794,23 @@ void CSeqTrackArray::ScaleSteps(int iTrack, int iStep, int nSteps, double fScale
 	}
 }
 
+int CSeqTrackArray::ReplaceSteps(int iTrack, int iStep, int nSteps, STEP nFind, STEP nReplace)
+{
+	CTrack&	trk = GetAt(iTrack);
+	nFind &= SB_VELOCITY;
+	nReplace &= SB_VELOCITY;
+	int	nMatches = 0;
+	for (int iPos = 0; iPos < nSteps; iPos++) {	// for each step in range
+		STEP&	step = trk.m_arrStep[iStep + iPos]; 
+		if ((step & SB_VELOCITY) == nFind) {	// if velocity matches
+			step &= ~SB_VELOCITY;	// zero velocity, preserving tie bit
+			step |= nReplace;	// set new velocity
+			nMatches++;
+		}
+	}
+	return nMatches;
+}
+
 int CSeqTrackArray::GetChannelUsage(int *parrFirstTrack, bool bExcludeMuted) const
 {
 	ASSERT(parrFirstTrack != NULL);
@@ -900,5 +919,30 @@ void CSeqTrackArray::GetMutedTracks(CIntArrayEx& arrTrackSel, bool bMuteState) c
 			arrTrackSel[iSel] = iTrack;
 			iSel++;
 		}
+	}
+}
+
+void CSeqTrackArray::ScaleTickDepends(double fScale)
+{
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		GetAt(iTrack).ScaleTickDepends(fScale);
+	}
+}
+
+void CSeqTrackArray::GetTickDepends(CTickDependsArray& arrTickDepends) const
+{
+	int	nTracks = GetSize();
+	arrTickDepends.SetSize(nTracks);	// size destination array
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		GetAt(iTrack).GetTickDepends(arrTickDepends[iTrack]);
+	}
+}
+
+void CSeqTrackArray::SetTickDepends(const CTickDependsArray& arrTickDepends)
+{
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		GetAt(iTrack).SetTickDepends(arrTickDepends[iTrack]);
 	}
 }

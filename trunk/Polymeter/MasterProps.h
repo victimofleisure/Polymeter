@@ -9,7 +9,8 @@
 		rev		date	comments
         00      25mar18	initial version
 		01		20feb19	add note overlap property
-	
+		02		16nov20	add find time division method
+
 */
 
 #pragma once
@@ -60,6 +61,7 @@ public:
 // Attributes
 	int		GetTimeDivisionTicks() const;
 	static	int		GetTimeDivisionTicks(int iTimeDiv);
+	static	int		FindTimeDivision(int nTicks);
 
 // Data members
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) type m_##name;
@@ -92,4 +94,9 @@ inline int CMasterProps::GetTimeDivisionTicks(int iTimeDiv)
 {
 	ASSERT(iTimeDiv >= 0 && iTimeDiv < TIME_DIVS);
 	return m_arrTimeDivTicks[iTimeDiv];
+}
+
+inline int CMasterProps::FindTimeDivision(int nTicks)
+{
+	return ARRAY_FIND(m_arrTimeDivTicks, nTicks);
 }

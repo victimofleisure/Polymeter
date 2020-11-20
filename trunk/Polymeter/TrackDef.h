@@ -15,6 +15,7 @@
 		05		16mar20	add scale, index and voicing modulation
 		06		04apr20	add chord modulation
 		07		08jun20	add offset modulation
+		08		16nov20	add tick dependencies
 
 */
 
@@ -90,3 +91,13 @@ RANGETYPEDEF(DUAL)
 
 #undef RANGETYPEDEF
 #endif	// RANGETYPEDEF
+
+#ifdef TICKDEPENDSDEF
+
+TICKDEPENDSDEF(m_nQuant)
+TICKDEPENDSDEF(m_nOffset)
+TICKDEPENDSDEF(m_nSwing)
+TICKDEPENDSDEF(m_nDuration)
+
+#undef TICKDEPENDSDEF
+#endif	// TICKDEPENDSDEF

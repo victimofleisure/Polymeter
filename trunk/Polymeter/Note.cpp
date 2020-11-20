@@ -9,6 +9,7 @@
 		rev		date	comments
 		00		23aug13	initial version
 		01		12jun15	in IntervalName, reverse difference
+		02		17nov20	in MidiName, fix negative note case
  
 		note object
 
@@ -87,8 +88,11 @@ LPCTSTR CNote::Name(CNote Key, int Tonality) const
 CString CNote::MidiName(CNote Key, int Tonality) const
 {
 	// per MIDI 1.0 specification, middle C == 60 == C4
+	int	nNote = m_Note;
+	if (nNote < 0)	// if negative note
+		nNote -= OCTAVE - 1;	// compensate for divide truncating up
 	CString	s;
-	s.Format(_T("%s%d"), Name(Key, Tonality), m_Note / OCTAVE - 1);
+	s.Format(_T("%s%d"), Name(Key, Tonality), nNote / OCTAVE - 1);
 	return(s);
 }
 

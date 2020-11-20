@@ -15,6 +15,7 @@
 		05		19mar20	move MIDI message enums to Midi header
 		06		01apr20	standardize context menu handling
 		07		07apr20	only output bar should enable output capture
+		08		18nov20	enable auto-hide and attach
 
 */
 
@@ -286,16 +287,6 @@ void CMidiEventBar::ExportEvents(LPCTSTR pszPath)
 			sStatus, MIDI_P1(evt.m_dwEvent), MIDI_P2(evt.m_dwEvent));
 		fOut.WriteString(sLine);
 	}
-}
-
-BOOL CMidiEventBar::CanAutoHide() const
-{ 
-	return FALSE;	// auto hide breaks event capture control
-}
-
-BOOL CMidiEventBar::CanBeAttached() const
-{ 
-	return FALSE;	// attaching breaks event capture control
 }
 
 void CMidiEventBar::OnShowChanged(bool bShow)

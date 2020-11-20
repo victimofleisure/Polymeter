@@ -9,6 +9,7 @@
 		rev		date	comments
         00		15apr18	initial version
 		01		01apr20	standardize context menu handling
+		02		19nov20	add update and show changed handlers
 		
 */
 
@@ -34,6 +35,7 @@ public:
 
 // Operations
 public:
+	void	OnUpdate(CView* pSender, LPARAM lHint = 0, CObject* pHint = NULL);
 	void	Update();
 	void	Update(int iChan);
 	void	Update(int iChan, int iProp);
@@ -67,6 +69,9 @@ protected:
 
 // Member data
 	CChannelsGridCtrl	m_grid;		// grid control
+
+// Overrides
+	virtual void OnShowChanged(bool bShow);
 
 // Helpers
 

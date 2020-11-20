@@ -19,6 +19,8 @@
 		09		17apr20	add track color
 		10		30apr20	add step velocity accessors
         11      07oct20	add min quant, common unit, and unique period methods
+		12		26oct20	add ReplaceSteps
+		13		16nov20	add tick dependencies
 
 */
 
@@ -129,6 +131,7 @@ public:
 	void	RotateSteps(int iTrack, int iStep, int nSteps, int nOffset);
 	void	OffsetSteps(int iTrack, int iStep, int nSteps, int nOffset);
 	void	ScaleSteps(int iTrack, int iStep, int nSteps, double fScale, bool bSigned);
+	int		ReplaceSteps(int iTrack, int iStep, int nSteps, STEP nFind, STEP nReplace);
 	void	OnRecordStart(int nStartTime);
 	void	OnRecordStop(int nEndTime);
 	void	AddDub(int iTrack, int nTime);
@@ -162,6 +165,9 @@ public:
 	void	GetUniquePeriods(const CIntArrayEx& arrTrackSel, CArrayEx<ULONGLONG, ULONGLONG>& arrPeriod, int nCommonUnit = 0) const;
 	int		CountMutedTracks(bool bMuteState = true) const;
 	void	GetMutedTracks(CIntArrayEx& arrTrackSel, bool bMuteState = true) const;
+	void	GetTickDepends(CTickDependsArray& arrTickDepends) const;
+	void	SetTickDepends(const CTickDependsArray& arrTickDepends);
+	void	ScaleTickDepends(double fScale);
 
 protected:
 // Member data

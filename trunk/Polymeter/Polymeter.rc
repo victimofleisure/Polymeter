@@ -623,7 +623,7 @@ BEGIN
     "V",            ID_EDIT_PASTE,          VIRTKEY, CONTROL, NOINVERT
     "Y",            ID_EDIT_REDO,           VIRTKEY, CONTROL, NOINVERT
     VK_F2,          ID_EDIT_RENAME,         VIRTKEY, NOINVERT
-    "F",            ID_EDIT_REPLACE,        VIRTKEY, CONTROL, ALT, NOINVERT
+    "H",            ID_EDIT_REPLACE,        VIRTKEY, CONTROL, NOINVERT
     "A",            ID_EDIT_SELECT_ALL,     VIRTKEY, CONTROL, NOINVERT
     "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL, NOINVERT
     "E",            ID_FILE_EXPORT,         VIRTKEY, CONTROL, NOINVERT
@@ -631,6 +631,7 @@ BEGIN
     "N",            ID_FILE_NEW,            VIRTKEY, CONTROL, NOINVERT
     "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
     "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL, NOINVERT
+    "S",            ID_FILE_SAVE_AS,        VIRTKEY, SHIFT, CONTROL, NOINVERT
     VK_F1,          ID_HELP_FINDER,         VIRTKEY, NOINVERT
     VK_F6,          ID_NEXT_PANE,           VIRTKEY, NOINVERT
     VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT, NOINVERT
@@ -647,10 +648,10 @@ BEGIN
     "3",            ID_TRACK_REVERSE,       VIRTKEY, CONTROL, NOINVERT
     "1",            ID_TRACK_ROTATE_LEFT,   VIRTKEY, SHIFT, CONTROL, NOINVERT
     "2",            ID_TRACK_ROTATE_RIGHT,  VIRTKEY, SHIFT, CONTROL, NOINVERT
-    "H",            ID_TRACK_ROTATE_STEPS,  VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "J",            ID_TRACK_ROTATE_STEPS,  VIRTKEY, SHIFT, CONTROL, NOINVERT
     "1",            ID_TRACK_SHIFT_LEFT,    VIRTKEY, CONTROL, NOINVERT
     "2",            ID_TRACK_SHIFT_RIGHT,   VIRTKEY, CONTROL, NOINVERT
-    "H",            ID_TRACK_SHIFT_STEPS,   VIRTKEY, CONTROL, NOINVERT
+    "J",            ID_TRACK_SHIFT_STEPS,   VIRTKEY, CONTROL, NOINVERT
     VK_OEM_5,       ID_TRACK_SOLO,          VIRTKEY, CONTROL, NOINVERT
     "S",            ID_TRACK_SORT,          VIRTKEY, CONTROL, ALT, NOINVERT
     "E",            ID_TRACK_STRETCH,       VIRTKEY, SHIFT, CONTROL, NOINVERT
@@ -678,7 +679,6 @@ BEGIN
     VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
     "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
     VK_F11,         ID_WINDOW_FULL_SCREEN,  VIRTKEY, NOINVERT
-    "S",            ID_FILE_SAVE_AS,        VIRTKEY, SHIFT, CONTROL, NOINVERT
 END
 
 
@@ -839,8 +839,8 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "&Multiplier:",IDC_STATIC,7,7,34,8
     EDITTEXT        IDC_VELOCITY_SCALE_EDIT,7,17,70,14,ES_AUTOHSCROLL
-    CONTROL         "&Unsigned",IDC_VELOCITY_SCALE_UNSIGNED,"Button",BS_AUTORADIOBUTTON | WS_GROUP,90,12,46,10
-    CONTROL         "&Signed",IDC_VELOCITY_SCALE_SIGNED,"Button",BS_AUTORADIOBUTTON,90,27,38,10
+    CONTROL         "&Unsigned",IDC_VELOCITY_SCALE_UNSIGNED,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,37,46,10
+    CONTROL         "&Signed",IDC_VELOCITY_SCALE_SIGNED,"Button",BS_AUTORADIOBUTTON,7,52,38,10
 END
 
 IDD_PROCESSING DIALOGEX 0, 0, 200, 45
@@ -895,6 +895,19 @@ BEGIN
     LISTBOX         IDC_MODULATION_TYPE_LIST,166,17,80,134,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     DEFPUSHBUTTON   "OK",IDOK,142,157,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,196,157,50,14
+END
+
+IDD_VELOCITY_REPLACE DIALOGEX 0, 0, 150, 70
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Replace"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "&Find what:",IDC_STATIC,7,7,36,8
+    EDITTEXT        IDC_VELOCITY_REPLACE_WHAT,7,17,40,14,ES_AUTOHSCROLL
+    LTEXT           "&Replace with:",IDC_STATIC,53,7,46,8
+    EDITTEXT        IDC_VELOCITY_REPLACE_WITH,53,17,40,14,ES_AUTOHSCROLL
+    CONTROL         "&Unsigned",IDC_VELOCITY_SCALE_UNSIGNED,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,37,46,10
+    CONTROL         "&Signed",IDC_VELOCITY_SCALE_SIGNED,"Button",BS_AUTORADIOBUTTON,7,52,38,10
 END
 
 
@@ -1020,6 +1033,14 @@ BEGIN
         RIGHTMARGIN, 246
         TOPMARGIN, 7
         BOTTOMMARGIN, 171
+    END
+
+    IDD_VELOCITY_REPLACE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 143
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 63
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -1192,6 +1213,8 @@ BEGIN
     IDS_EDIT_SHIFT          "Shift"
     IDS_EDIT_SOLO           "Solo"
     IDS_EDIT_SORT_MAPPINGS  "Sort Mappings"
+    IDS_EDIT_SORT_PARTS     "Sort Parts"
+    IDS_EDIT_TIME_DIVISION  "Time Division"
     IDS_EDIT_TRACK_SORT     "Track Sort"
     IDS_EDIT_TRANSPOSE      "Transpose"
     IDS_EDIT_UNDO_PREFIX    "&Undo"
@@ -1201,12 +1224,12 @@ BEGIN
     IDS_ERR_TRACK_LENGTH_CURSOR 
                             "Cursor must be over track step to indicate desired length."
     IDS_EXPORT              "Export"
-    IDS_EXPORT_BAD_DURATION "Invalid duration. Time format is HH:MM:SS and duration must be greater than zero."
-    IDS_EXPORT_EMPTY_FILE   "Nothing to export."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EXPORT_BAD_DURATION "Invalid duration. Time format is HH:MM:SS and duration must be greater than zero."
+    IDS_EXPORT_EMPTY_FILE   "Nothing to export."
     IDS_EXPORT_ERROR        "Error during export."
     IDS_EXPORT_FILE_FILTER  "MIDI Files (*.mid)|*.mid|All Files (*.*)|*.*||"
     IDS_FILTER_ALL          "All"
@@ -1225,12 +1248,12 @@ BEGIN
     IDS_GRAPH_ERROR         "Graph error."
     IDS_GRAPH_SCOPE_ALL     "All"
     IDS_GRAPH_SCOPE_BIDIRECTIONAL "Bidirectional"
-    IDS_GRAPH_SCOPE_RECURSIVE "Recursive"
-    IDS_GRAPH_SCOPE_SELECTED "Selected"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_GRAPH_SCOPE_RECURSIVE "Recursive"
+    IDS_GRAPH_SCOPE_SELECTED "Selected"
     IDS_GRID_ERR_BAD_TIME_FORMAT "Enter time in hh:mm:ss format."
     IDS_HINT_GRAPH_LAYOUT   "Use this layout engine"
     IDS_HINT_GRAPH_SCOPE_ALL 
@@ -1249,12 +1272,12 @@ BEGIN
     IDS_IMPORT_ERR_PROPERTY "Undefined property name."
     IDS_IMPORT_ERR_RANGE    "Range error."
     IDS_MAIN_DOCKING_BAR_HINT_FMT "Show or hide the %1 window"
-    IDS_MAIN_TRACK_COLORS   "Track Colors"
-    IDS_MAPPING_COL_IN_CHANNEL "In Channel"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MAIN_TRACK_COLORS   "Track Colors"
+    IDS_MAPPING_COL_IN_CHANNEL "In Channel"
     IDS_MAPPING_COL_IN_CONTROL "In Control"
     IDS_MAPPING_COL_IN_EVENT "In Event"
     IDS_MAPPING_COL_NUMBER  "#"
@@ -1269,13 +1292,13 @@ BEGIN
     IDS_MIDIEVT_COL_P1      "P1"
     IDS_MIDIEVT_COL_P2      "P2"
     IDS_MIDIEVT_COL_TIME    "Time"
-    IDS_MIDI_DEVICES_MISSING "MIDI devices are missing."
-    IDS_MIDI_INCOMPATIBLE_SONG_POSITION 
-                            "Song position is incompatible with MIDI clock sync.\nPlayback will start from the nearest sixteenth note."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDI_DEVICES_MISSING "MIDI devices are missing."
+    IDS_MIDI_INCOMPATIBLE_SONG_POSITION 
+                            "Song position is incompatible with MIDI clock sync.\nPlayback will start from the nearest sixteenth note."
     IDS_MIDI_INPUT          "Input"
     IDS_MIDI_MSG_NOTE_OFF   "Note Off"
     IDS_MIDI_MSG_NOTE_ON    "Note On"
@@ -1290,12 +1313,12 @@ BEGIN
     IDS_MIDI_SYS_STAT_SONG_SELECT "Song Select"
     IDS_MIDI_SYS_STAT_START "Start"
     IDS_MIDI_SYS_STAT_STOP  "Stop"
-    IDS_MIDI_SYS_STAT_SYSEX "System Exclusive"
-    IDS_MIDI_SYS_STAT_SYSTEM_RESET "System Reset"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDI_SYS_STAT_SYSEX "System Exclusive"
+    IDS_MIDI_SYS_STAT_SYSTEM_RESET "System Reset"
     IDS_MIDI_SYS_STAT_TUNE_REQUEST "Tune Request"
     IDS_MOD_DIFFERENCES     "<Differences>"
     IDS_MOD_SOURCE          "Source"
@@ -1314,13 +1337,13 @@ BEGIN
     IDS_OPT_DESC_Midi_bSendMidiClock 
                             "Transmit MIDI synchronization messages to slave device"
     IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
-    IDS_OPT_DESC_Midi_iInputDevice "Selected MIDI input device"
-    IDS_OPT_DESC_Midi_iInputQuant 
-                            "Quantization for converting MIDI input to steps"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_Midi_iInputDevice "Selected MIDI input device"
+    IDS_OPT_DESC_Midi_iInputQuant 
+                            "Quantization for converting MIDI input to steps"
     IDS_OPT_DESC_Midi_iOutputDevice "Selected MIDI output device"
     IDS_OPT_DESC_Midi_nBufferSize "Size of MIDI event buffer, in bytes"
     IDS_OPT_DESC_Midi_nDefaultVelocity 
@@ -1342,12 +1365,12 @@ BEGIN
     IDS_OPT_DESC_View_nLiveFontHeight "Height of live view font, in pixels"
     IDS_OPT_GROUP_General   "General"
     IDS_OPT_GROUP_Midi      "MIDI"
-    IDS_OPT_GROUP_View      "View"
-    IDS_OPT_NAME_General_bAlwaysRecord "Always Record"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_GROUP_View      "View"
+    IDS_OPT_NAME_General_bAlwaysRecord "Always Record"
     IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
     IDS_OPT_NAME_General_bPropertyDescrips "Show Property Descriptions"
     IDS_OPT_NAME_Midi_bSendMidiClock "Send MIDI Clock"
@@ -1362,12 +1385,12 @@ BEGIN
     IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
     IDS_OPT_NAME_View_bShowGMNames "Show General MIDI Names"
     IDS_OPT_NAME_View_bShowNoteNames "Show Note Names"
-    IDS_OPT_NAME_View_bShowTrackColors "Show Track Colors"
-    IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_View_bShowTrackColors "Show Track Colors"
+    IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
     IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
     IDS_OPT_NAME_View_nLiveFontHeight "Live View Font Height"
     IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
@@ -1384,12 +1407,12 @@ BEGIN
     IDS_PDR_NAME_fTempo     "Tempo"
     IDS_PDR_NAME_iNoteOverlap "Note Overlap"
     IDS_PDR_NAME_nKeySig    "Key Signature"
-    IDS_PDR_NAME_nMeter     "Meter"
-    IDS_PDR_NAME_nRecordOffset "Record Offset"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_NAME_nMeter     "Meter"
+    IDS_PDR_NAME_nRecordOffset "Record Offset"
     IDS_PDR_NAME_nSongLength "Song Length"
     IDS_PDR_NAME_nStartPos  "Start Position"
     IDS_PDR_NAME_nTimeDiv   "PPQ"
@@ -1402,15 +1425,17 @@ BEGIN
     IDS_RECORD_INPUT_OPT_DubsOnly "Dubs Only"
     IDS_RECORD_INPUT_OPT_MidiOnly "MIDI Only"
     IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
+    IDS_SC_MAXIMIZE         "&Maximize"
+    IDS_SC_RESTORE          "&Restore"
+END
+
+STRINGTABLE
+BEGIN
     IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format."
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
     IDS_SEQERR_CALLBACK_TOO_LONG "Sequencer callback took too long."
     IDS_SEQERR_TOO_MANY_RECURSIONS 
                             "Modulation exceeded the maximum number of recursions."
-END
-
-STRINGTABLE
-BEGIN
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
     IDS_SM_FILTER_CHANNEL_ALL "Show all channels"
     IDS_SM_FILTER_CHANNEL_SELECT "Show selected channel only"
@@ -1423,14 +1448,14 @@ BEGIN
     IDS_SORT_DIR_DESCENDING "Descending"
     IDS_STATUS_PANE1        "Pane 1"
     IDS_STATUS_PANE2        "Pane 2"
-    IDS_SVG_FILE_FILTER     "SVG Files (*.svg)|*.svg|All Files (*.*)|*.*||"
-    IDS_TIME_TO_REPEAT_BEATS "beats"
-    IDS_TIME_TO_REPEAT_DAYS "days"
-    IDS_TIME_TO_REPEAT_GPF  "Greatest prime factor is "
 END
 
 STRINGTABLE
 BEGIN
+    IDS_SVG_FILE_FILTER     "SVG Files (*.svg)|*.svg|All Files (*.*)|*.*||"
+    IDS_TIME_TO_REPEAT_BEATS "beats"
+    IDS_TIME_TO_REPEAT_DAYS "days"
+    IDS_TIME_TO_REPEAT_GPF  "Greatest prime factor is "
     IDS_TIME_TO_REPEAT_TICKS "ticks"
     IDS_TIME_TO_REPEAT_YEARS "years"
     IDS_TOOLBAR_CUSTOMIZE   "Customize..."
@@ -1443,14 +1468,14 @@ BEGIN
     IDS_TRACK_TYPE_PATCH    "Patch"
     IDS_TRACK_TYPE_TEMPO    "Tempo"
     IDS_TRACK_TYPE_WHEEL    "Wheel"
-    IDS_TRK_Channel         "Channel"
-    IDS_TRK_Chord           "Chord"
-    IDS_TRK_Duration        "Duration"
-    IDS_TRK_Index           "Index"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_Channel         "Channel"
+    IDS_TRK_Chord           "Chord"
+    IDS_TRK_Duration        "Duration"
+    IDS_TRK_Index           "Index"
     IDS_TRK_Length          "Length"
     IDS_TRK_Mute            "Mute"
     IDS_TRK_Name            "Name"
@@ -1463,14 +1488,14 @@ BEGIN
     IDS_TRK_RangeStart      "Range Start"
     IDS_TRK_RangeType       "Range Type"
     IDS_TRK_STEP            "Step"
-    IDS_TRK_Scale           "Scale"
-    IDS_TRK_Swing           "Swing"
-    IDS_TRK_Tempo           "Tempo"
-    IDS_TRK_Type            "Type"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_Scale           "Scale"
+    IDS_TRK_Swing           "Swing"
+    IDS_TRK_Tempo           "Tempo"
+    IDS_TRK_Type            "Type"
     IDS_TRK_Velocity        "Velocity"
     IDS_TRK_Voicing         "Voicing"
     IDS_TYPE_TRACK          "Track"
@@ -1479,7 +1504,11 @@ BEGIN
     IDS_WINDOW_RESET_LAYOUT_WARN 
                             "Reset all windows to their default layout? This action can't be undone, and the application will be restarted."
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
-    IDS_EDIT_SORT_PARTS     "Sort Parts"
+END
+
+STRINGTABLE
+BEGIN
+    DOC_VALUE_NOT_FOUND     "Value not found."
 END
 
 STRINGTABLE

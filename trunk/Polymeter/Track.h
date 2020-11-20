@@ -30,6 +30,7 @@
 		20		28sep20	add sort methods to track group array
 		21		30sep20	add get track selection to track group array
 		22		07oct20	in stretch, make interpolation optional
+		23		16nov20	add tick dependencies
 
 */
 
@@ -196,6 +197,13 @@ public:
 		int		nVelocity;	// event velocity, as MIDI value
 	};
 	typedef CArrayEx<STEP_EVENT, STEP_EVENT&> CStepEventArray;
+	class CTickDepends {
+	public:
+		#define TICKDEPENDSDEF(x) int x;
+		#include "TrackDef.h"	// generate declarations for tick-dependent member vars
+		CIntArrayEx	m_arrDubTime;	// array of song dub times in ticks
+	};
+	typedef CArrayEx<CTickDepends, CTickDepends&> CTickDependsArray;
 
 // Attributes
 	static	const PROPERTY_INFO&	GetPropertyInfo(int iProp);
@@ -475,6 +483,9 @@ public:
 	int		GetStepIndex(LONGLONG nPos) const;
 	int		GetStepVelocity(int iStep) const;
 	void	SetStepVelocity(int iStep, int nVelocity);
+	void	GetTickDepends(CTickDepends& tickDepends) const;
+	void	SetTickDepends(const CTickDepends& tickDepends);
+	void	ScaleTickDepends(double fScale);
 
 // Operations
 	int		CompareProperty(int iProp, const CTrack& track) const;

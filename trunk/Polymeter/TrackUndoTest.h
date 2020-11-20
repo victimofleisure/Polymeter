@@ -11,6 +11,7 @@
         01      07may14	move generic functionality to base class
 		02		09sep14	add CPatchObject
 		03		02dec19	remove sort function, array now provides it
+		04		19nov20	add randomized docking bar visibility
 
 		automated undo test for patch editing
  
@@ -53,6 +54,7 @@ protected:
 	bool	GetRandomStep(CPoint& ptStep) const;
 	bool	MakeRandomStepSelection(CRect& rSelection) const;
 	int		MakeRandomMappingProperty(int iProp);
+	void	RandomizeBarVisibility();
 	CString	PrintSelection(CIntArrayEx& arrSelection) const;
 	CString	PrintSelection(CRect& rSelection) const;
 };

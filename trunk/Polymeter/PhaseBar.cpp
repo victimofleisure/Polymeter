@@ -62,6 +62,7 @@ CPhaseBar::~CPhaseBar()
 void CPhaseBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
 	UNREFERENCED_PARAMETER(pSender);
+//	printf("CPhaseBar::OnUpdate %x %d %x\n", pSender, lHint, pHint);
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL) {	// if active document exists
 		switch (lHint) {

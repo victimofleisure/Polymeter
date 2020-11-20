@@ -12,6 +12,7 @@
 		02		01apr20	standardize context menu handling
 		03		05apr20	add track step mapping
 		04		07sep20	add preset and part mapping
+		05		19nov20	add sender argument to set mapping property
 		
 */
 
@@ -89,7 +90,7 @@ void CMappingBar::OnShowChanged(bool bShow)
 void CMappingBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
 	UNREFERENCED_PARAMETER(pSender);
-	UNREFERENCED_PARAMETER(pHint);
+//	printf("CMappingBar::OnUpdate %x %d %x\n", pSender, lHint, pHint);
 	switch (lHint) {
 	case CPolymeterDoc::HINT_NONE:
 		UpdateGrid();
@@ -132,7 +133,7 @@ void CMappingBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		}
 		break;
 	case CPolymeterDoc::HINT_MAPPING_PROP:
-		{
+		if (pSender != reinterpret_cast<CView*>(this)) {	// if update isn't from this window
 			CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
 			if (pPropHint->m_iProp >= 0)	// if property specified
 				m_grid.RedrawSubItem(pPropHint->m_iItem, pPropHint->m_iProp + 1);	// compensate for number column
@@ -144,15 +145,14 @@ void CMappingBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		}
 		break;
 	case CPolymeterDoc::HINT_MULTI_MAPPING_PROP:
-		{
+		if (pSender != reinterpret_cast<CView*>(this)) {	// if update isn't from this window
 			CPolymeterDoc::CMultiItemPropHint *pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
 			int	nSels = pPropHint->m_arrSelection.GetSize();
 			for (int iSel = 0; iSel < nSels; iSel++) {
 				int	iItem = pPropHint->m_arrSelection[iSel];
 				m_grid.RedrawSubItem(iItem, pPropHint->m_iProp + 1);	// compensate for number column
 			}
-			if (pSender != reinterpret_cast<CView*>(this))	// if update isn't from this window
-				m_grid.SetSelection(pPropHint->m_arrSelection);	// also restore selection
+			m_grid.SetSelection(pPropHint->m_arrSelection);	// also restore selection
 		}
 		break;
 	}
@@ -319,13 +319,13 @@ void CMappingBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 	if (nVal != nPrevVal) {	// if value actually changed
 		CIntArrayEx	arrSelection;
 		GetSelection(arrSelection);
+		// specify sender so our OnUpdate doesn't needlessly update grid
+		CView*	pSender = reinterpret_cast<CView*>(GetParent());
 		// if multiple mappings selected and edit is within selection
 		if (arrSelection.GetSize() > 1 && arrSelection.Find(m_iEditRow) >= 0) {
-			// specify sender so our OnUpdate doesn't needlessly set selection
-			CView*	pSender = reinterpret_cast<CView*>(GetParent());
 			pDoc->SetMultiMappingProperty(arrSelection, iProp, nVal, pSender);
 		} else {	// edit single mapping
-			pDoc->SetMappingProperty(m_iEditRow, iProp, nVal);
+			pDoc->SetMappingProperty(m_iEditRow, iProp, nVal, pSender);
 		}
 	}
 }

@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		14jun18	initial version
+		01		19nov20	add update and show changed handlers
 		
 */
 
@@ -27,6 +28,7 @@ public:
 
 // Operations
 public:
+	void	OnUpdate(CView* pSender, LPARAM lHint = 0, CObject* pHint = NULL);
 	void	Update();
 	void	UpdateMutes();
 
@@ -47,6 +49,9 @@ protected:
 // Constants
 
 // Member data
+
+// Overrides
+	virtual void OnShowChanged(bool bShow);
 
 // Helpers
 

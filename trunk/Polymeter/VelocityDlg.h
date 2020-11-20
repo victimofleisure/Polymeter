@@ -9,6 +9,7 @@
 		rev		date	comments
         00      21may18	initial version
 		01		15nov19	add option for signed velocity scaling
+		02		06nov20	add replace page; add load/store state
 
 */
 
@@ -57,32 +58,64 @@ protected:
 public:
 };
 
-class CVelocitySheet : public CPropertySheet
+class CVelocityReplacePage : public CPropertyPage
 {
-	DECLARE_DYNAMIC(CVelocitySheet)
+	DECLARE_DYNAMIC(CVelocityReplacePage)
 
 public:
-	CVelocitySheet(UINT nIDCaption, CWnd* pParentWnd = NULL, UINT iSelectPage = 0);
-	virtual ~CVelocitySheet();
+	CVelocityReplacePage();
+	virtual ~CVelocityReplacePage();
 
-	CVelocityOffsetPage	m_pageOffset;
-	CVelocityScalePage	m_pageScale;
+// Dialog Data
+	enum { IDD = IDD_VELOCITY_REPLACE };
+	CVelocitySheet	*m_pSheet;
 
-	enum {	// define pages
-		PAGE_OFFSET,
-		PAGE_SCALE,
-		PAGES
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+
+	DECLARE_MESSAGE_MAP()
+public:
+};
+
+class CVelocityTransform {
+public:
+	CVelocityTransform();
+	bool	IsIdentity() const;
+	enum {	// define types
+		TYPE_OFFSET,
+		TYPE_SCALE,
+		TYPE_REPLACE,
+		TYPES
 	};
 	enum {	// define targets
 		TARGET_TRACKS,
 		TARGET_STEPS,
 		TARGETS
 	};
-	int		m_nOffset;				// offset in MIDI steps
+	int		m_iType;				// transformation type; see enum above
+	int		m_nOffset;				// velocity offset; applicable to tracks or their steps
 	int		m_nTarget;				// target entities; see enum above
-	double	m_fScale;				// multiplier
-	int		m_nSigned;				// if non-zero, scaling treats velocities as signed values
+	double	m_fScale;				// velocity multiplier 
+	int		m_bSigned;				// if non-zero, treat velocities as signed values
+	int		m_nFindWhat;			// velocity value to find
+	int		m_nReplaceWith;			// replacement velocity value
+	int		m_nMatches;				// match count for find/replace
 	bool	m_bHaveStepSelection;	// if true, disable target selection
+};
+
+class CVelocitySheet : public CPropertySheet, public CVelocityTransform
+{
+	DECLARE_DYNAMIC(CVelocitySheet)
+
+public:
+	CVelocitySheet(UINT nIDCaption = IDS_VELOCITY, CWnd* pParentWnd = NULL, UINT iSelectPage = 0);
+	virtual ~CVelocitySheet();
+	void	LoadState();
+	void	StoreState();
+
+	CVelocityOffsetPage	m_pageOffset;
+	CVelocityScalePage	m_pageScale;
+	CVelocityReplacePage	m_pageReplace;
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnDestroy();

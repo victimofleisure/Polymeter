@@ -9,6 +9,7 @@
 		rev		date	comments
 		00		05aug06	initial version
 		01		20oct07	change GetEdit to detect non-MFC edit controls
+		02		17nov20	add check for property grid in-place edit
 
 		handlers for focused edit control
 
@@ -27,8 +28,15 @@ CEdit *CFocusEdit::GetEdit()
 	HWND	hWnd = GetFocus();
 	TCHAR	szClassName[6];
 	if (GetClassName(hWnd, szClassName, 6) 
-	&& _tcsicmp(szClassName, _T("Edit")) == 0)
-		return((CEdit *)CWnd::FromHandle(hWnd));
+	&& _tcsicmp(szClassName, _T("Edit")) == 0) {
+		// This check prevents MFC property grid control's in-place edit
+		// from disabling undo/redo when edit is read-only (drop list)
+		if (GetDlgCtrlID(hWnd) == AFX_PROPLIST_ID_INPLACE	// if control ID matches
+		&& GetWindowLong(hWnd, GWL_STYLE) & ES_READONLY) {	// and edit is read-only
+			return(NULL);	// not considered an edit
+		}
+		return static_cast<CEdit *>(CWnd::FromHandle(hWnd));
+	}
 	return(NULL);
 }
 

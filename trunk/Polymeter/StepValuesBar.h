@@ -12,6 +12,7 @@
 		02		07apr20	add standard editing commands
 		03		17apr20	add multi-step editing
 		04		30apr20	add step compare method
+		05		17nov20	add spin edit
 
 */
 
@@ -45,6 +46,9 @@ protected:
 	class CModGridCtrl : public CGridCtrl {
 	public:
 		virtual	void	OnItemChange(LPCTSTR pszText);
+		virtual	BOOL	CModGridCtrl::PreTranslateMessage(MSG* pMsg);
+		DECLARE_MESSAGE_MAP();
+		afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	};
 	typedef CMap<CTrackBase::CModulation, CTrackBase::CModulation&, int, int> CModRefMap;
 
@@ -86,6 +90,9 @@ protected:
 	bool	GetRectSelection(CRect& rSel, bool bIsDeleting = false) const;
 	bool	HasRectSelection(bool bIsDeleting = false) const;
 	bool	HasSelection() const;
+	void	FormatStep(LPTSTR pszText, int cchTextMax, int nStep, int nKeySig = 0) const;
+	bool	ScanStep(LPCTSTR pszText, int& nStep) const;
+	bool	SpinEdit(CEdit *pEdit, bool bUp);
 	static	int		GetSelectedTrackCount(CPolymeterDoc *pDoc);
 	static	void	GetSelectionRange(CIntArrayEx& arrSelection, int iItem, int& iFirstItem, int& nItems);
 	static	bool	StepCompare(STEP step1, STEP step2, bool bVelocityOnly);

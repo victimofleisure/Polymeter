@@ -15,6 +15,7 @@
 		05		17apr20	add multi-step editing
 		06		30apr20	fix multi-step editing change detection
 		07		09jul20	add update case for solo document hint
+		08		17nov20	add spin edit
 		
 */
 
@@ -74,8 +75,7 @@ void CStepValuesBar::OnShowChanged(bool bShow)
 void CStepValuesBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
 	UNREFERENCED_PARAMETER(pSender);
-	if (!FastIsVisible())
-		return;
+//	printf("CStepValuesBar::OnUpdate %x %d %x\n", pSender, lHint, pHint);
 	switch (lHint) {
 	case CPolymeterDoc::HINT_NONE:
 	case CPolymeterDoc::HINT_TRACK_ARRAY:
@@ -261,6 +261,86 @@ void CStepValuesBar::UpdateColumnNames()
 	}
 }
 
+void CStepValuesBar::FormatStep(LPTSTR pszText, int cchTextMax, int nStep, int nKeySig) const
+{
+	UINT	nFormat = m_nStepFormat;
+	if (!(nFormat & STF_TIES))	// if ignoring tie bits
+		nStep &= SB_VELOCITY;	// mask off all but velocity
+	if (nFormat & STF_SIGNED)	// if interpreting steps as signed values
+		nStep -= MIDI_NOTES / 2;
+	if (nFormat & STF_NOTES) {	// if showing steps as notes
+		CNote	note(nStep);
+		if (nFormat & STF_OCTAVES)	// if showing octave
+			_tcscpy_s(pszText, cchTextMax, note.MidiName(nKeySig));
+		else // hiding octave
+			_tcscpy_s(pszText, cchTextMax, note.Name(nKeySig));
+	} else {	// show steps as numeric values
+		LPCTSTR	pszFormat;
+		if (nFormat & STF_HEX) {	// if showing hexadecimal
+			nStep &= 0xff;	// limit to two digits
+			pszFormat = _T("%02X");	
+		} else	// showing decimal
+			pszFormat = _T("%d");
+		_stprintf_s(pszText, cchTextMax, pszFormat, nStep);
+	}
+}
+
+bool CStepValuesBar::ScanStep(LPCTSTR pszText, int& nStep) const
+{
+	UINT	nFormat = m_nStepFormat;
+	nStep = 0;
+	if (nFormat & STF_NOTES) {	// if showing steps as notes
+		CNote	note(nStep);
+		if (nFormat & STF_OCTAVES) {	// if showing octave
+			note.ParseMidi(pszText);
+		} else {	// hiding octave
+			note.Parse(pszText);
+		}
+		nStep = note;
+	} else {	// show steps as numeric values
+		LPCTSTR	pszFormat;
+		if (nFormat & STF_HEX)	// if showing hexadecimal
+			pszFormat = _T("%x");
+		else	// showing decimal
+			pszFormat = _T("%d");
+		if (_stscanf_s(pszText, pszFormat, &nStep) != 1)
+			return false;	// conversion failed
+		const int STF_SIGNED_HEX = STF_SIGNED | STF_HEX;
+		if ((nFormat & STF_SIGNED_HEX) == STF_SIGNED_HEX) {	// if showing signed hexadecimal
+			if (nStep >= 0xc0)	// if offset step value is negative
+				nStep |= ~0xff;	// sign extend byte to integer
+		}
+	}
+	if (nFormat & STF_SIGNED)	// if interpreting steps as signed values
+		nStep += MIDI_NOTES / 2;
+	return true;
+}
+
+bool CStepValuesBar::SpinEdit(CEdit *pEdit, bool bUp)
+{
+	ASSERT(pEdit != NULL);
+	CString	sText;
+	pEdit->GetWindowText(sText);
+	int	nStep;
+	if (!ScanStep(sText, nStep))
+		return false;
+	if (bUp)
+		nStep++;
+	else
+		nStep--;
+	int	nMaxVal;
+	if (m_nStepFormat & STF_TIES)
+		nMaxVal = BYTE_MAX;
+	else
+		nMaxVal = MIDI_NOTE_MAX;
+	nStep = CLAMP(nStep, 0, nMaxVal);
+	TCHAR	szText[10];
+	FormatStep(szText, _countof(szText), nStep);
+	pEdit->SetWindowText(szText);
+	pEdit->SetModify();
+	return true;
+}
+
 inline bool CStepValuesBar::StepCompare(STEP step1, STEP step2, bool bVelocityOnly)
 {
 	if (bVelocityOnly)
@@ -280,32 +360,14 @@ void CStepValuesBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 			int	iStep = m_iEditRow;
 			if (iStep < pDoc->m_Seq.GetLength(iTrack)) {	// if step in range
 				CStepValuesBar	*pBar = STATIC_DOWNCAST(CStepValuesBar, GetParent());
-				UINT	nFormat = pBar->m_nStepFormat;
 				int	nStepVal = 0;
-				if (nFormat & STF_NOTES) {	// if showing steps as notes
-					CNote	note(nStepVal);
-					if (nFormat & STF_OCTAVES) {	// if showing octave
-						note.ParseMidi(pszText);
-					} else {	// hiding octave
-						note.Parse(pszText);
-					}
-					nStepVal = note;
-				} else {	// show steps as numeric values
-					LPCTSTR	pszFormat;
-					if (nFormat & STF_HEX)	// if showing hexadecimal
-						pszFormat = _T("%x");
-					else	// showing decimal
-						pszFormat = _T("%d");
-					if (_stscanf_s(pszText, pszFormat, &nStepVal) != 1)
-						return;	// conversion failed
-				}
-				if (nFormat & STF_SIGNED)	// if interpreting steps as signed values
-					nStepVal += MIDI_NOTES / 2;
+				pBar->ScanStep(pszText, nStepVal);
 				STEP	nStep = static_cast<STEP>(nStepVal);
 				CIntArrayEx	arrSelection;
 				GetSelection(arrSelection);
 				int	iFirstItem, nItems;
 				GetSelectionRange(arrSelection, iStep, iFirstItem, nItems);
+				UINT	nFormat = pBar->m_nStepFormat;
 				bool	bVelocityOnly = !(nFormat & STF_TIES);	// if not showing ties, process velocity only
 				bool	bChanged;
 				if (nItems > 1) {	// if edit is within a selection range of at least two items
@@ -332,6 +394,36 @@ void CStepValuesBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 			}
 		}
 	}
+}
+
+BEGIN_MESSAGE_MAP(CStepValuesBar::CModGridCtrl, CGridCtrl)
+	ON_WM_MOUSEWHEEL()
+END_MESSAGE_MAP()
+
+BOOL CStepValuesBar::CModGridCtrl::PreTranslateMessage(MSG* pMsg)
+{
+	if (m_pEditCtrl != NULL) {	// if editing item
+		if (pMsg->message == WM_KEYDOWN && (pMsg->wParam == VK_UP || pMsg->wParam == VK_DOWN)) {
+			if (!(GetKeyState(VK_CONTROL) & GKS_DOWN)) {	// if control key isn't down
+				CStepValuesBar	*pBar = STATIC_DOWNCAST(CStepValuesBar, GetParent());
+				CEdit	*pEdit = STATIC_DOWNCAST(CEdit, m_pEditCtrl);
+				pBar->SpinEdit(pEdit, pMsg->wParam == VK_UP);
+				return true;	// message was handled
+			}
+		}
+	}
+	return CGridCtrl::PreTranslateMessage(pMsg);
+}
+
+BOOL CStepValuesBar::CModGridCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+{
+	if (m_pEditCtrl != NULL) {	// if editing item
+		CStepValuesBar	*pBar = STATIC_DOWNCAST(CStepValuesBar, GetParent());
+		CEdit	*pEdit = STATIC_DOWNCAST(CEdit, m_pEditCtrl);
+		pBar->SpinEdit(pEdit, zDelta > 0);
+		return true;	// message was handled
+	}
+	return CGridCtrl::OnMouseWheel(nFlags, zDelta, pt);
 }
 
 void CStepValuesBar::ToggleStepFormat(UINT nMask)
@@ -564,26 +656,7 @@ void CStepValuesBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 					int	iTrack = pDoc->m_arrTrackSel[iSel];
 					if (iItem < pDoc->m_Seq.GetLength(iTrack)) {	// if step in range
 						int	nStep = pDoc->m_Seq.GetStep(iTrack, iItem);
-						UINT	nFormat = m_nStepFormat;
-						if (!(nFormat & STF_TIES))	// if ignoring tie bits
-							nStep &= SB_VELOCITY;	// mask off all but velocity
-						if (nFormat & STF_SIGNED)	// if interpreting steps as signed values
-							nStep -= MIDI_NOTES / 2;
-						if (nFormat & STF_NOTES) {	// if showing steps as notes
-							CNote	note(nStep);
-							if (nFormat & STF_OCTAVES)	// if showing octave
-								_tcscpy_s(item.pszText, item.cchTextMax, note.MidiName(pDoc->m_nKeySig));
-							else // hiding octave
-								_tcscpy_s(item.pszText, item.cchTextMax, note.Name(pDoc->m_nKeySig));
-						} else {	// show steps as numeric values
-							LPCTSTR	pszFormat;
-							if (nFormat & STF_HEX) {	// if showing hexadecimal
-								nStep &= 0xff;	// limit to two digits
-								pszFormat = _T("%02X");	
-							} else	// showing decimal
-								pszFormat = _T("%d");
-							_stprintf_s(item.pszText, item.cchTextMax, pszFormat, nStep);
-						}
+						FormatStep(item.pszText, item.cchTextMax, nStep, pDoc->m_nKeySig);
 					}
 				}
 			}

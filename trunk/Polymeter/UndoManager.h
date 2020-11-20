@@ -19,6 +19,7 @@
 		09		01may14	widen nCtrlID and nCode to 32-bit
 		10		25apr18	standardize names
 		11		19apr20	return const string reference from title accessors
+		12		05nov20	overload cancel edit
 
         undoable edit interface
  
@@ -70,7 +71,8 @@ public:
 	void	Redo();
 	void	UndoNoRedo();
 	void	NotifyEdit(int nCtrlID, int nCode, UINT nFlags = 0);
-	void	CancelEdit(int nCtrlID, int nCode);
+	bool	CancelEdit(int nCtrlID, int nCode);
+	bool	CancelEdit();
 	void	DiscardAllEdits();
 
 protected:

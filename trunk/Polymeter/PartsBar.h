@@ -9,6 +9,7 @@
 		rev		date	comments
         00		19jun18	initial version
 		01		28sep20	add sort messages
+		02		19nov20	add update and show changed handlers
 		
 */
 
@@ -28,6 +29,7 @@ public:
 
 // Operations
 public:
+	void	OnUpdate(CView* pSender, LPARAM lHint = 0, CObject* pHint = NULL);
 	void	Update();
 	void	UpdateMembers();
 
@@ -48,6 +50,9 @@ protected:
 // Constants
 
 // Member data
+
+// Overrides
+	virtual void OnShowChanged(bool bShow);
 
 // Helpers
 

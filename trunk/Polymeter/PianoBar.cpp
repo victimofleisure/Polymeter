@@ -18,6 +18,7 @@
 		08		29feb20	add handler for MIDI event message
 		09		01apr20	standardize context menu handling
 		10		18jun20	add command help to handle channel filter string reuse
+		11		18nov20	enable auto-hide and attach
 
 */
 
@@ -227,16 +228,6 @@ void CPianoBar::InsertTrackFromPoint(CPoint pt)
 			pDoc->InsertTrack(track);
 		}
 	}
-}
-
-BOOL CPianoBar::CanAutoHide() const
-{ 
-	return FALSE;	// auto hide breaks output capture control
-}
-
-BOOL CPianoBar::CanBeAttached() const
-{ 
-	return FALSE;	// attaching breaks output capture control
 }
 
 void CPianoBar::OnShowChanged(bool bShow)

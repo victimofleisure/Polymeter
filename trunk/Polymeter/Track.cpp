@@ -32,6 +32,7 @@
 		22		30sep20	add get track selection to track group array
 		23		07oct20	in stretch, make interpolation optional
 		24		07oct20	fix fencepost error in resampling
+		25		16nov20	add tick dependencies
 
 */
 
@@ -1267,4 +1268,35 @@ int CTrackBase::CModulationArray::SortCompareBySource(const void *arg1, const vo
 	if (!retc)
 		retc = CTrack::Compare(p1->m_iType, p2->m_iType);
 	return retc;
+}
+
+void CTrack::GetTickDepends(CTickDepends& td) const
+{
+	#define TICKDEPENDSDEF(x) td.x = x;
+	#include "TrackDef.h"	// generate code to get tick-dependent members
+	int	nDubs = m_arrDub.GetSize();
+	td.m_arrDubTime.SetSize(nDubs);	// size destination dub array
+	for (int iDub = 0; iDub < nDubs; iDub++) {	// for each dub
+		td.m_arrDubTime[iDub] = m_arrDub[iDub].m_nTime;	// save time
+	}
+}
+
+void CTrack::SetTickDepends(const CTickDepends& td)
+{
+	#define TICKDEPENDSDEF(x) x = td.x;
+	#include "TrackDef.h"	// generate code to set tick-dependent members
+	int	nDubs = m_arrDub.GetSize();
+	for (int iDub = 0; iDub < nDubs; iDub++) {	// for each dub
+		m_arrDub[iDub].m_nTime = td.m_arrDubTime[iDub];	// restore time
+	}
+}
+
+void CTrack::ScaleTickDepends(double fScale)
+{
+	#define TICKDEPENDSDEF(x) x = round(x * fScale);
+	#include "TrackDef.h"	// generate code to scale tick-dependent members
+	int	nDubs = m_arrDub.GetSize();
+	for (int iDub = 0; iDub < nDubs; iDub++) {	// for each dub
+		m_arrDub[iDub].m_nTime = round(m_arrDub[iDub].m_nTime * fScale);
+	}
 }

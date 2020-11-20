@@ -15,6 +15,7 @@
 		05		17feb20	inherit MIDI event class from track base
 		06		29feb20	add handler for MIDI event message
 		07		18jun20	add command help to handle channel filter string reuse
+		08		18nov20	enable auto-hide and attach
 
 */
 
@@ -108,8 +109,6 @@ protected:
 	static	const PIANO_RANGE&	GetPianoRange(int iPianoSize);
 
 // Overrides
-	virtual BOOL CanAutoHide() const;
-	virtual BOOL CanBeAttached() const;
 	virtual	void OnShowChanged(bool bShow);
 
 // Generated message map functions

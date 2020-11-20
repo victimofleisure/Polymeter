@@ -28,6 +28,7 @@
 		18		23jun15	in SwapState, save to temporary in case restore throws
 		19		25apr18	standardize names
 		20		19apr20	remove unused resource header
+		21		05nov20	overload cancel edit
 
         undoable edit interface
  
@@ -187,7 +188,7 @@ void CUndoManager::NotifyEdit(int nCtrlID, int nCode, UINT nFlags)
 	}
 }
 
-void CUndoManager::CancelEdit(int nCtrlID, int nCode)
+bool CUndoManager::CancelEdit(int nCtrlID, int nCode)
 {
 #if UNDO_NATTER
 	_tprintf(_T("CancelEdit CtrlID=%d Code=%d\n"), nCtrlID, nCode);
@@ -208,6 +209,16 @@ void CUndoManager::CancelEdit(int nCtrlID, int nCode)
 	if (iState < 0)
 		_tprintf(_T("Can't cancel edit.\n"));
 #endif
+	return(iState >= 0);
+}
+
+bool CUndoManager::CancelEdit()
+{
+	if (m_iPos > 0 && m_iPos <= GetSize()) {
+		const CUndoState&	state = m_arrState[m_iPos - 1];
+		return(CancelEdit(state.m_nCtrlID, state.m_nCode));	// cancel last edit
+	}
+	return(false);
 }
 
 void CUndoManager::DiscardAllEdits()

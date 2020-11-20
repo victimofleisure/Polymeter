@@ -8,6 +8,8 @@
 		revision history:
 		rev		date	comments
         00      15oct18	initial version
+		01		26oct20	remove signed button handler
+		02		06nov20	add load/store state
 
 */
 
@@ -24,6 +26,8 @@ class CFillDlg : public CDialog
 public:
 	CFillDlg(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CFillDlg();
+	void	LoadState();
+	void	StoreState();
 
 // Dialog Data
 	enum { IDD = IDD_FILL };
@@ -41,5 +45,4 @@ public:
 	int m_iFunction;
 	int	m_nSteps;
 	int m_bSigned;
-	afx_msg void OnClickedSigned(UINT nID);
 };
