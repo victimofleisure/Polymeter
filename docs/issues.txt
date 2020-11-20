@@ -12,7 +12,6 @@ id	open	close	type	description	rev	user
 348	04/07/20		bug	stopping sequencer occasionally causes MIDI error 65 (still playing); happens every time in Mac Wine		
 349	04/07/20		bug	attempting to open MIDI device that's already open gives misleading out of memory error message		
 352	04/10/20		bug	sequencer is taking too long; probable cause is time-critical winmm thread preempting sequencer callback		
-356	04/15/20		bug	canceling Find / Replace dialog crashes debug version, but only when run without debugger		
 358	04/17/20		bug	Time To Repeat command can take too long, stalling UI; show progress bar or use worker thread		
 376	06/20/20		bug	undoing modulation edit doesn't restore modulation selection; can't without also restoring track selection and Show Differences state		
 392	07/10/20		bug	Alt key commands don't work mode while cursor is hovering over MDI tab; affects stock VS2012 app too		
@@ -268,7 +267,7 @@ id	open	close	type	description	rev	user
 327	03/28/20	03/28/20	done	undoing MIDI learn doesn't always restore control parameter	0.0.28.003	
 328	03/30/20	03/30/20	done	voicing should sort scale into ascending order, so that index zero corresponds to lowest scale tone	0.0.28.004	
 329	03/30/20	03/30/20	done	index modulation was being converted from unsigned to signed twice, causing incorrect results	0.0.28.004	
-330	03/30/20	03/31/20	done	step values bar should account for key signature when displaying notes	0.0.28.005	
+330	03/30/20	03/31/20	done	Step Values bar should account for key signature when displaying notes	0.0.28.005	
 332	03/31/20	04/01/20	done	export phase diagram to image sequence	0.0.29.000	
 333	04/01/20	04/01/20	done	refactor context menu handling	0.0.29.000	
 334	04/02/20	04/03/20	done	time shown in status bar should include milliseconds	0.0.29.000	
@@ -331,7 +330,19 @@ id	open	close	type	description	rev	user
 413	10/07/20	10/07/20	done	in Stretch command, make interpolation of non-note tracks optional	0.0.34.001	
 414	10/08/20	10/08/20	done	stretch interpolation is skewed, and should ignore tie bit	0.0.34.001	
 415	10/15/20	10/19/20	done	can't find GraphViz 2.44; layout executables are missing, specify layout via dot parameter, support x64	0.0.34.002	
-17	03/22/18		hold	PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view		
+417	10/26/20	10/26/20	done	fill dialog's signed/unsigned radio buttons can cause validation errors; don't compensate value range	0.0.35.000	
+401	08/05/20	11/05/20	done	find and replace for step values; add another page to Velocities property sheet	0.0.35.000	
+17	03/22/18	11/16/20	done	PPQ change should update tracks (Quant, Offset, Swing, Duration) instead of zooming step view	0.0.35.000	
+356	04/15/20	11/16/20	done	canceling Find / Replace dialog crashes debug version, but only when run without debugger; don't destroy window	0.0.35.000	
+419	11/16/20	11/16/20	done	live view shows incorrect song position and time after transport commands; values lag by one update	0.0.35.000	
+420	11/16/20	11/16/20	done	live view shows incorrect song position after editing meter, and incorrect song time after editing tempo	0.0.35.000	
+418	11/16/20	11/17/20	done	after clicking drop list in property bar, undo/redo is disabled; check for read-only edit control with in-place edit ID	0.0.35.000	
+421	11/17/20	11/17/20	done	left-clicking grid control item after pressing and releasing Alt key crashes or throws improper argument	0.0.35.000	
+422	11/17/20	11/17/20	done	Step Values bar should support spin edit; increment/decrement via mouse wheel or arrow up/down	0.0.35.000	
+423	11/17/20	11/17/20	done	left-clicking grid control item crashes if window that's losing focus uses its kill focus handler to reset focus	0.0.35.000	
+351	04/07/20	11/18/20	done	attach and auto-hide are disabled for Piano and MIDI Input/Output bars, due to output capture management	0.0.35.000	
+425	11/18/20	11/18/20	done	pinned (auto-hide) Phase bar doesn’t animate when unhidden; simplify visibility test in OnShowChanging	0.0.35.000	
+424	11/18/20	11/18/20	done	add maximize command to dockable pane's context menu; supports unattached floating panes only	0.0.35.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -377,11 +388,10 @@ id	open	close	type	description	rev	user
 289	03/25/19		hold	piano bar should be able to show channels separately via multiple keyboards; messy problem		
 296	06/12/19		hold	option for space bar to start/stop playback without needing to also press Ctrl key; causes many UI conflicts		
 318	03/02/20		hold	separate window for viewing/editing recorded MIDI input		
-331	03/30/20		hold	step values bar should provide a means of setting song position		
+331	03/30/20		hold	Step Values bar should provide a means of setting song position		
 340	04/04/20		hold	scale modulation often repeats same work for each track that uses the scale; but not always!		
 344	04/05/20		hold	Step Values bar doesn't allow arbitrary rectangular selection; grid control limitation, custom view?		
 347	04/06/20		hold	extend sequence lead-in to fix initial timing glitch; multiply m_nCBLen in GetPosition and Play		
-351	04/07/20		hold	attach and auto-hide are disabled for Piano and MIDI output bars, due to output capture management		
 353	04/10/20		hold	post-voicing sort could be replaced with insert sorted, but benchmarking shows little room for improvement		
 354	04/11/20		hold	channel modulation; but is it really necessary? Same effect is achievable with mute modulations		
 355	04/11/20		hold	window that shows current song time in huge font; excessive?		
@@ -392,7 +402,6 @@ id	open	close	type	description	rev	user
 393	07/17/20		hold	switching to song view should set all mutes to match song's current dub state (chase); must be synchronous		
 395	07/22/20		hold	optionally show Phase diagram or other visualization in Live view; menu bar is hidden in full screen mode		
 396	07/22/20		hold	transition from one document to another without stopping playback; conflicts with recording implementation		
-401	08/05/20		hold	find and replace for step values		
 402	08/05/20		hold	indicate step selection in Step view's velocities pane		
 403	08/22/20		hold	preset track type, interpreting step value as preset index; requires moving preset array into sequencer		
 405	08/22/20		hold	in mapping, add Note Number input event type: get data value from note's index, ignoring velocity and note off		

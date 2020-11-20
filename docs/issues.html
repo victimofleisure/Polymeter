@@ -156,15 +156,6 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>356</TD>
-<TD>04/15/20</TD>
-<TD>&nbsp;</TD>
-<TD>bug</TD>
-<TD>canceling Find / Replace dialog crashes debug version, but only when run without debugger</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>358</TD>
 <TD>04/17/20</TD>
 <TD>&nbsp;</TD>
@@ -2464,7 +2455,7 @@
 <TD>03/30/20</TD>
 <TD>03/31/20</TD>
 <TD>done</TD>
-<TD>step values bar should account for key signature when displaying notes</TD>
+<TD>Step Values bar should account for key signature when displaying notes</TD>
 <TD>0.0.28.005</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -3027,12 +3018,120 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>417</TD>
+<TD>10/26/20</TD>
+<TD>10/26/20</TD>
+<TD>done</TD>
+<TD>fill dialog's signed/unsigned radio buttons can cause validation errors; don't compensate value range</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>401</TD>
+<TD>08/05/20</TD>
+<TD>11/05/20</TD>
+<TD>done</TD>
+<TD>find and replace for step values; add another page to Velocities property sheet</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>17</TD>
 <TD>03/22/18</TD>
+<TD>11/16/20</TD>
+<TD>done</TD>
+<TD>PPQ change should update tracks (Quant, Offset, Swing, Duration) instead of zooming step view</TD>
+<TD>0.0.35.000</TD>
 <TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>PPQ change should optionally update Quant, Offset and Swing values, instead of zooming step view</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>356</TD>
+<TD>04/15/20</TD>
+<TD>11/16/20</TD>
+<TD>done</TD>
+<TD>canceling Find / Replace dialog crashes debug version, but only when run without debugger; don't destroy window</TD>
+<TD>0.0.35.000</TD>
 <TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>419</TD>
+<TD>11/16/20</TD>
+<TD>11/16/20</TD>
+<TD>done</TD>
+<TD>live view shows incorrect song position and time after transport commands; values lag by one update</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>420</TD>
+<TD>11/16/20</TD>
+<TD>11/16/20</TD>
+<TD>done</TD>
+<TD>live view shows incorrect song position after editing meter, and incorrect song time after editing tempo</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>418</TD>
+<TD>11/16/20</TD>
+<TD>11/17/20</TD>
+<TD>done</TD>
+<TD>after clicking drop list in property bar, undo/redo is disabled; check for read-only edit control with in-place edit ID</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>421</TD>
+<TD>11/17/20</TD>
+<TD>11/17/20</TD>
+<TD>done</TD>
+<TD>left-clicking grid control item after pressing and releasing Alt key crashes or throws improper argument</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>422</TD>
+<TD>11/17/20</TD>
+<TD>11/17/20</TD>
+<TD>done</TD>
+<TD>Step Values bar should support spin edit; increment/decrement via mouse wheel or arrow up/down</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>423</TD>
+<TD>11/17/20</TD>
+<TD>11/17/20</TD>
+<TD>done</TD>
+<TD>left-clicking grid control item crashes if window that's losing focus uses its kill focus handler to reset focus</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>351</TD>
+<TD>04/07/20</TD>
+<TD>11/18/20</TD>
+<TD>done</TD>
+<TD>attach and auto-hide are disabled for Piano and MIDI Input/Output bars, due to output capture management</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>425</TD>
+<TD>11/18/20</TD>
+<TD>11/18/20</TD>
+<TD>done</TD>
+<TD>pinned (auto-hide) Phase bar doesn’t animate when unhidden; simplify visibility test in OnShowChanging</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>424</TD>
+<TD>11/18/20</TD>
+<TD>11/18/20</TD>
+<TD>done</TD>
+<TD>add maximize command to dockable pane's context menu; supports unattached floating panes only</TD>
+<TD>0.0.35.000</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
@@ -3445,7 +3544,7 @@
 <TD>03/30/20</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>step values bar should provide a means of setting song position</TD>
+<TD>Step Values bar should provide a means of setting song position</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -3473,15 +3572,6 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>extend sequence lead-in to fix initial timing glitch; multiply m_nCBLen in GetPosition and Play</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>351</TD>
-<TD>04/07/20</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>attach and auto-hide are disabled for Piano and MIDI output bars, due to output capture management</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -3572,15 +3662,6 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>transition from one document to another without stopping playback; conflicts with recording implementation</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>401</TD>
-<TD>08/05/20</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>find and replace for step values</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>

@@ -2813,3 +2813,138 @@ Also 2.44 often bungles the graph size, causing the graph to be too small or cli
 
 Version 2.38 doesn't have either of these problems.
 
+10/25/20 converting BalaGray output to note track
+
+In Excel, use this formula: =IF(A1=B1,164,36)
+
+11/13/20 started new piano piece 
+
+The A section uses using new balanced gray code change ringing for arpeggiation. 
+The changes are 4-bell pattern 26, which is a rotation of [6,12,6]A.
+
+The B section (started 11/15) similarly uses 4-bell gray [9,6,9] for arpeggiation.
+It also uses the balanced gray code sequence [2222] for alterating the tetrachord,
+though the sequence is rotated five steps right, starting with [0010] instead of [0000].
+The scale is an octatonic (0235678a) which is potentially quite dissonant, due to
+having three semitones in a row; its prime form is 8-22 (0123568a), IV 465562.
+The unaltered tetrachord is [0246] which yields [0,3,6,8] which is a diminished
+triad plus a b6. The result is surprisingly consonant despite the three semitones,
+because the alteration scheme avoids sounding more than two semitones at once 
+and also keeps them from abutting each other.
+
+(0235678a) [0246] C
+
+0010	[0256]	(0378)	Abmaj7
+0011	[0257]	(037a)	C-7
+0111	[0357]	(057a)	C7sus4
+0101	[0347]	(056a)	Gbmaj7#4
+0001	[0247]	(036a)	C-7b5
+0000	[0246]	(0368)	Ab7
+1000	[1246]	(2368)	Ab7#4
+1100	[1346]	(2568)	Ab13#4
+0100	[0346]	(0568)	Ab13
+0110	[0356]	(0578)	F-9
+1110	[1356]	(2578)	F-6
+1111	[1357]	(257a)	G-7
+1101	[1347]	(256a)	Gbmaj7#5
+1001	[1247]	(246a)	Eb-maj7
+1011	[1257]	(247a)	Ebmaj7
+1010	[1256]	(2478)	Abmaj7#4
+
+This was a lucky accident. The intention was to use the symmetric diminished scale 
+(0235689b), but the last three notes were mistakenly entered sharp by a semitone. 
+The diminished scale would have been much more dissonant. Making and recognizing 
+"pleasant mistakes" is a crucial aspect of the artistic process. This example also
+suggests that even scary-looking pitch class sets with lots of semitones can
+produce relatively consonant tonalities if they're handled carefully.
+
+11/17/20 consistency test for CStepValuesBar ScanStep and FormatStep methods
+
+	static const int arrFormat[] = {	// array of formats to test
+		STF_SIGNED,
+		STF_NOTES | STF_OCTAVES,
+		STF_TIES,
+		STF_HEX,
+	};
+	int	nPrevStepFormat = m_nStepFormat;	// save format member
+	int	nPerms = 1 << _countof(arrFormat);	// all permutations of test formats
+	for (int iPerm = 0; iPerm < nPerms; iPerm++) {	// for each permutation
+		m_nStepFormat = 0;
+		for (int iFormat = 0; iFormat < _countof(arrFormat); iFormat++) {	// for each format
+			if (iPerm & (1 << iFormat))	// if current permutation includes this format
+				m_nStepFormat |= arrFormat[iFormat];	// add format to mask
+		}
+		int	nVals;
+		if (m_nStepFormat & STF_TIES)
+			nVals = 256;
+		else
+			nVals = 128;
+		int	iVal;
+		for (iVal = 0; iVal < nVals; iVal++) {
+			TCHAR	sz[10];
+			FormatStep(sz, _countof(sz), iVal);
+			int	nStep;
+			ScanStep(sz, nStep);
+			if (nStep != iVal) {
+				printf("ERROR: %d != %d\n", iVal, nStep);
+				break;
+			}
+		}
+		printf("0x%02x: %s\n", m_nStepFormat, iVal >= nVals ? "pass" : "FAIL");
+	}
+	m_nStepFormat = nPrevStepFormat;	// restore format member
+
+
+11/17/20 nasty focus issue in CGridControl
+
+The symptom that started the inquiry: Pressing and releasing the Alt key and then 
+left-clicking a grid control item crashes or throws an Improper Argument exception.
+It was fixed in CGridControl::OnLButtonDown by calling SetFocus before calling
+EditSubitem. But there's more. It turns out SetFocus can fail, for example if 
+the window that's losing focus resets focus. One scenario: You're editing tempo
+in the master properties, and you enter an invalid tempo, and then click a grid
+control item. The MFC property grid's kill focus handler is called and tries to
+validate the property using DDV. The property fails validation in this case, so
+_AfxFailMinMaxReal displays a modal error dialog and calls CDataExchange::Fail()
+which sets the focus to the offending control.
+
+Thus when SetFocus returns, the grid control doesn't actually have focus. Most
+likely the modal dialog has focus. If the grid control proceeds to create a popup
+edit control, that control will immediately receive a kill focus message after it
+tries and fails to wrest focus from the modal dialog. The popup edit's kill focus 
+handler will delete the edit control right out from under the rest of its creation
+code and we're primed for a crash.
+
+This can happen because modal dialogs create a message subloop, allowing messages
+to be processed, but also prevent other windows from receiving focus.
+
+The solution is to verify that SetFocus actually worked, and if didn't, don't
+create the popup edit control. The easiest way to do that is by checking that
+the result of ::GetDlgCtrlID() equals m_hWnd.
+
+11/18/20 more work on auto-hide and attach
+
+For the history, see the entry from 4/8/20. It's time for a drastically new approach 
+to visibility in CMyDockablePane. Instead of determining visibility via the base class
+Visible() method, we'll instead use the WS_VISIBLE style, i.e. the unadorned window
+visibility. This means CMyDockablePane::OnShowChanged will now be called:
+
+1. When a tabbed pane becomes active or inactive.
+2. When an auto-hide pane becomes active or inactive.
+
+Hence we can finally enable tabbing and auto-hide for the Piano and MIDI Input/Output
+panes. Note however that these panes will NOT receive MIDI data while inactive. In
+terms of output capture, making a tabbed or auto-hide pane active is the same as 
+showing the pane from the main menu. Any previous history is lost.
+
+In general performance should improve, because the app will no longer wastefully
+send document updates to invisible panes. This is particularly beneficial for the
+Step Values pane, which can use considerable CPU time.
+
+On the other hand, switching between tabbed panes may take longer than before
+in some cases, because pane's update is now deferred until the pane is shown.
+Again this is good overall, especially with tabbed panes, because only the 
+visible pane that needs updating is actually updated, as opposed to before,
+when panes were frequently updated even though they were invisible.
+
+This change also fixes the Phase pane not animating when it's in auto-hide mode.
