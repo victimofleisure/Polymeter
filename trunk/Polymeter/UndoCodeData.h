@@ -15,6 +15,7 @@
 		05		07apr20	add move steps
 		06		28sep20	add sort parts
 		07		16nov20	add time division
+		08		16dec20	add loop range
 
 		undo code data
  
@@ -77,5 +78,6 @@ UCODE_DEF(SORT_MAPPINGS)
 UCODE_DEF(LEARN_MAPPING)
 UCODE_DEF(LEARN_MULTI_MAPPING)
 UCODE_DEF(TIME_DIVISION)
+UCODE_DEF(LOOP_RANGE)
 
 #undef UCODE_DEF

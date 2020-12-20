@@ -42,6 +42,7 @@
 		32		23may20	negative voicing modulation raises instead of dropping
 		33		09jun20	add offset modulation
 		34		17jul20	set song mode now optionally chases dubs
+		35		16dec20	add looping of playback
 
 */
 
@@ -59,10 +60,10 @@ CSequencer::CSequencer()
 {
 	m_hStrm = 0;
 	ZeroMemory(&m_arrMsgHdr, sizeof(m_arrMsgHdr));
-	m_fTempo = 120;
+	m_fTempo = SEQ_INIT_TEMPO;
 	m_nAltTempo = 0;
 	m_iOutputDevice = 0;
-	m_nTimeDiv = 120;
+	m_nTimeDiv = SEQ_INIT_TIME_DIV;
 	m_nMeter = 1;
 	m_nCBTime = 0;
 	m_nCBLen = 0;
@@ -84,8 +85,10 @@ CSequencer::CSequencer()
 	m_bIsOutputCapture = false;
 	m_bPreventNoteOverlap = false;
 	m_bIsSendingMidiClock = false;
+	m_bIsLooping = false;
 	ZeroMemory(&m_stats, sizeof(m_stats));
 	m_fLatencySecs = 0;
+	m_rngLoop = CLoopRange(0, 0);
 }
 
 CSequencer::~CSequencer()
@@ -819,6 +822,8 @@ bool CSequencer::OutputMidiBuffer()
 	int	nCBStart, nCBEnd;
 	{
 		WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+		if (m_bIsLooping && m_nCBTime + m_nCBLen >= m_rngLoop.m_nTo)	// if looping and callback reaches end of loop
+			SetPosition(m_rngLoop.m_nFrom);	// set position to start of loop
 		m_arrEvent.FastRemoveAll();
 		m_arrTempoEvent.FastRemoveAll();
 		// handle tempo change first to improve responsiveness
@@ -1371,6 +1376,12 @@ void CSequencer::InsertRecordedEvents(int nInsertTime, int nDuration, CMidiEvent
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to record event buffer
 	m_arrRecordEvent.InsertEvents(nInsertTime, nDuration, arrEvent);
+}
+
+void CSequencer::SetLoopRange(CLoopRange rngTicks)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to loop range
+	m_rngLoop = rngTicks;
 }
 
 #if SEQ_DUMP_EVENTS

@@ -22,6 +22,8 @@
         12      07oct20	add min quant, common unit, and unique period methods
 		13		26oct20	add ReplaceSteps
 		14		16nov20	add tick dependencies
+		15		01dec20	in find next dub time, check for last duplicate
+		16		04dec20	refactor find next dub time to return track index
 
 */
 
@@ -532,39 +534,53 @@ void CSeqTrackArray::RemoveAllDubs()
 	}
 }
 
-bool CSeqTrackArray::FindNextDubTime(int nStartTime, int& nNextTime, bool bReverse) const
+int CSeqTrackArray::FindNextDubTime(int nStartTime, int& nNextTime, bool bReverse, int iTargetTrack) const
 {
 	CDub	dubStart(nStartTime, 0);
-	int	nResult;
+	int	nNearestTime;
 	if (bReverse) {	// if searching backward
-		nResult = INT_MIN;
+		nNearestTime = INT_MIN;
 		dubStart.m_nTime--;
 	} else {	// searching forward
-		nResult = INT_MAX;
+		nNearestTime = INT_MAX;
 	}
+	int	iNearestTrack = 0;
 	int	nTracks = GetTrackCount();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		const CTrack&	trk = GetAt(iTrack);
 		W64INT	iDub = trk.m_arrDub.BinarySearchAbove(dubStart);
+		bool	bIsNear = false;
+		int	nTime = 0;
 		if (bReverse) {	// if searching backward
 			if (iDub < 0)	// if dub not found
 				iDub = trk.m_arrDub.GetSize();	// move past last dub
 			iDub--;	// move to preceding dub
 			if (iDub >= 0) {	// if valid dub index
-				int	nTime = trk.m_arrDub[iDub].m_nTime;	// get dub time
-				if (nTime > nResult)	// if dub is nearer to start time
-					nResult = nTime;	// update result
+				nTime = trk.m_arrDub[iDub].m_nTime;	// get dub time
+				if (nTime >= nNearestTime)	// if dub is nearer or equal to start time
+					bIsNear = true;
 			}
 		} else {	// searching forward
 			if (iDub >= 0) {	// if valid dub index
-				int	nTime = trk.m_arrDub[iDub].m_nTime;	// get dub time
-				if (nTime < nResult)	// if dub is nearer to start time
-					nResult = nTime;	// update result
+				nTime = trk.m_arrDub[iDub].m_nTime;	// get dub time
+				if (nTime <= nNearestTime)	// if dub is nearer or equal to start time
+					bIsNear = true;
+			}
+		}
+		if (bIsNear && !trk.m_arrDub.IsLastDuplicate(iDub)) {	// if dub is a contender and isn't length marker
+			if (nTime != nNearestTime) {	// if dub is nearer to start time than frontrunner
+				nNearestTime = nTime;	// update nearest time
+				iNearestTrack = iTrack;	// update nearest track
+			} else {	// dub is equal to start time; tiebreaker is proximity to target track
+				if (abs(iTrack - iTargetTrack) < abs(iNearestTrack - iTargetTrack))	// if closer to target track
+					iNearestTrack = iTrack;	// update nearest track
 			}
 		}
 	}
-	nNextTime = nResult;
-	return nResult > INT_MIN && nResult < INT_MAX;
+	nNextTime = nNearestTime;
+	if (nNearestTime > INT_MIN && nNearestTime < INT_MAX)	// if result in valid range
+		return iNearestTrack;
+	return -1;
 }
 
 void CSeqTrackArray::SetModulations(int iTrack, const CModulationArray& arrMod)

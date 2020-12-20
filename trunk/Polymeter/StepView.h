@@ -9,6 +9,7 @@
 		rev		date	comments
         00      23mar18	initial version
 		01		09jul20	add pointer to parent frame
+		02		16dec20	add command to set loop from step selection
 
 */
 
@@ -185,6 +186,7 @@ protected:
 	void	DrawStep(CDC* pDC, int x, int y, int cx, int cy, STEP nStep, int iStepColor, int iTrackType);
 	void	DrawClippedStep(CDC *pDC, const CRect& rClip, const CSequencer& seq, int iTrack, int iStep);
 	static	double	InvPow(double fBase, double fVal);
+	void	DispatchToDocument();
 
 // Generated message map functionsq
 public:
@@ -207,6 +209,8 @@ protected:
 	afx_msg void OnTimer(W64UINT nIDEvent);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
+	afx_msg void OnTransportLoop();
+	afx_msg void OnUpdateTransportLoop(CCmdUI *pCmdUI);
 };
 
 inline CPolymeterDoc* CStepView::GetDocument() const

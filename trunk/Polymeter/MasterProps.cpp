@@ -9,6 +9,7 @@
 		rev		date	comments
         00      25mar18	initial version
 		01		20feb19	add note overlap property
+		02		16dec20	add track array header
 		
 */
 
@@ -16,6 +17,7 @@
 #include "Polymeter.h"
 #include "MasterProps.h"
 #include "VariantHelper.h"
+#include "SeqTrackArray.h"	// for initial tempo
 
 #define SUBGROUP_NONE	-1
 

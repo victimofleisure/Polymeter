@@ -20,6 +20,9 @@
 		10		18mar20	get song position from document instead of sequencer
 		11		09jul20	get view type from child frame instead of document
 		12		15jul20	handle solo hint for live view
+		13		04dec20	add get center track and ensure track visible
+		14		16dec20	add command to set loop from cell selection
+		15		16dec20	add focus edit checks for standard editing commands
 
 */
 
@@ -37,6 +40,7 @@
 #include "SongTrackView.h"
 #include "StepView.h"
 #include "ChildFrm.h"
+#include "FocusEdit.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -399,6 +403,36 @@ void CSongView::UpdateCells(const CRect& rSelection)
 	}
 }
 
+int CSongView::GetCenterTrack() const
+{
+	CRect	rClient;
+	GetClientRect(rClient);
+	int	nClientHeight = rClient.Height();
+	CPoint	ptScroll(GetScrollPosition());
+	int	iFirstTrack = ptScroll.y / m_nTrackHeight;
+	int	iLastTrack = (ptScroll.y + nClientHeight) / m_nTrackHeight;
+	int	iCenterTrack = (iFirstTrack + iLastTrack) / 2;
+	if (iCenterTrack >= GetDocument()->GetTrackCount())
+		return 0;
+	return iCenterTrack;
+}
+
+void CSongView::EnsureTrackVisible(int iTrack)
+{
+	CRect	rClient;
+	GetClientRect(rClient);
+	int	nClientHeight = rClient.Height();
+	CPoint	ptScroll(GetScrollPosition());
+	int	y = iTrack * m_nTrackHeight;
+	if (y < ptScroll.y || y + m_nTrackHeight > ptScroll.y + nClientHeight) {	// if track isn't completely visible
+		int	nNewScrollY = y - nClientHeight / 2;
+		CPoint	ptMaxScroll(GetMaxScrollPos());
+		nNewScrollY = CLAMP(nNewScrollY, 0, ptMaxScroll.y);
+		ScrollToPosition(CPoint(ptScroll.x, nNewScrollY));
+		m_pParent->OnSongScroll(CPoint(0, ptScroll.y - nNewScrollY));
+	}
+}
+
 void CSongView::UpdateSelection(CPoint point)
 {
 	ASSERT(m_nDragState == DS_DRAG);	// must be dragging selection, else logic error
@@ -622,6 +656,8 @@ BEGIN_MESSAGE_MAP(CSongView, CScrollView)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
+	ON_COMMAND(ID_TRANSPORT_LOOP, OnTransportLoop)
+	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_LOOP, OnUpdateTransportLoop)
 END_MESSAGE_MAP()
 
 // CSongView message handlers
@@ -652,7 +688,9 @@ BOOL CSongView::PreTranslateMessage(MSG* pMsg)
 			case VK_RIGHT:
 				if (GetKeyState(VK_SHIFT) & GKS_DOWN) {	// if Shift is down
 					bool	bReverse = pMsg->wParam == VK_LEFT;
-					GetDocument()->GotoNextDub(bReverse);
+					int	iDubTrack = GetDocument()->GotoNextDub(bReverse, GetCenterTrack());
+					if (iDubTrack >= 0)	// if dub was found
+						EnsureTrackVisible(iDubTrack);	
 					return TRUE;
 				}
 				break;
@@ -847,43 +885,55 @@ void CSongView::OnEditSelectAll()
 
 void CSongView::OnEditCut()
 {
-	if (HaveSelection()) {
-		GetDocument()->DeleteDubs(m_rCellSel, GetTicksPerCell(), true);	// copy to clipboard
-		ResetSelection();
-	} else
-		DispatchToDocument();
+	if (!CFocusEdit::Cut()) {
+		if (HaveSelection()) {
+			GetDocument()->DeleteDubs(m_rCellSel, GetTicksPerCell(), true);	// copy to clipboard
+			ResetSelection();
+		} else
+			DispatchToDocument();
+	}
 }
 
 void CSongView::OnUpdateEditCut(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(HaveSelection());
+	if (!CFocusEdit::UpdateCut(pCmdUI)) {
+		pCmdUI->Enable(HaveSelection());
+	}
 }
 
 void CSongView::OnEditCopy()
 {
-	if (HaveSelection()) {
-		GetDocument()->CopyDubsToClipboard(m_rCellSel, GetTicksPerCell());
-	} else
-		DispatchToDocument();
+	if (!CFocusEdit::Copy()) {
+		if (HaveSelection()) {
+			GetDocument()->CopyDubsToClipboard(m_rCellSel, GetTicksPerCell());
+		} else
+			DispatchToDocument();
+	}
 }
 
 void CSongView::OnUpdateEditCopy(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(HaveSelection());
+	if (!CFocusEdit::UpdateCopy(pCmdUI)) {
+		pCmdUI->Enable(HaveSelection());
+	}
 }
 
 void CSongView::OnEditPaste()
 {
-	if (HaveSelection()) {
-		GetDocument()->PasteDubs(m_rCellSel.TopLeft(), GetTicksPerCell(), m_rCellSel);
-		UpdateCells(m_rCellSel);
-	} else
-		DispatchToDocument();
+	if (!CFocusEdit::Paste()) {
+		if (HaveSelection()) {
+			GetDocument()->PasteDubs(m_rCellSel.TopLeft(), GetTicksPerCell(), m_rCellSel);
+			UpdateCells(m_rCellSel);
+		} else
+			DispatchToDocument();
+	}
 }
 
 void CSongView::OnUpdateEditPaste(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(HaveSelection() && theApp.m_arrSongClipboard.GetSize());
+	if (!CFocusEdit::UpdatePaste(pCmdUI)) {
+		pCmdUI->Enable(HaveSelection() && theApp.m_arrSongClipboard.GetSize());
+	}
 }
 
 void CSongView::OnEditInsert()
@@ -902,14 +952,38 @@ void CSongView::OnUpdateEditInsert(CCmdUI *pCmdUI)
 
 void CSongView::OnEditDelete()
 {
-	if (HaveSelection()) {
-		GetDocument()->DeleteDubs(m_rCellSel, GetTicksPerCell(), false);	// don't copy to clipboard
-		ResetSelection();
-	} else
-		DispatchToDocument();
+	if (!CFocusEdit::Delete()) {
+		if (HaveSelection()) {
+			GetDocument()->DeleteDubs(m_rCellSel, GetTicksPerCell(), false);	// don't copy to clipboard
+			ResetSelection();
+		} else
+			DispatchToDocument();
+	}
 }
 
 void CSongView::OnUpdateEditDelete(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(HaveSelection());
+	if (!CFocusEdit::UpdateDelete(pCmdUI)) {
+		pCmdUI->Enable(HaveSelection());
+	}
+}
+
+void CSongView::OnTransportLoop()
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	if (HaveSelection()) {	// if cell selection exists
+		double	fQuant = GetTicksPerCell();
+		CTrackBase::CLoopRange	rngLoop(round(m_rCellSel.left * fQuant), round(m_rCellSel.right * fQuant));
+		pDoc->SetLoopRange(rngLoop);
+		pDoc->m_Seq.SetLooping(true);
+		ResetSelection();
+	} else	// no cell selection
+		DispatchToDocument();
+}
+
+void CSongView::OnUpdateTransportLoop(CCmdUI *pCmdUI)
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	pCmdUI->Enable(pDoc->m_Seq.IsLooping() || pDoc->IsLoopRangeValid() || HaveSelection());
+	pCmdUI->SetCheck(pDoc->m_Seq.IsLooping());
 }

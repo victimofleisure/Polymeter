@@ -23,6 +23,7 @@
 		13		14apr20	add send MIDI clock option
 		14		19may20	refactor record dub methods to include conditional
 		15		17jul20	refactor set song mode
+		16		16dec20	add looping of playback
 
 */
 
@@ -101,6 +102,10 @@ public:
 	void	SetRecordOffset(int nTicks);
 	void	SetSendMidiClock(bool bEnable);
 	bool	IsValidMidiSongPosition(int nSongPos) const;
+	bool	IsLooping() const;
+	void	SetLooping(bool bEnable);
+	void	GetLoopRange(CLoopRange& rngTicks) const;
+	void	SetLoopRange(CLoopRange rngTicks);
 
 // Operations
 	bool	Play(bool bEnable, bool bRecord = false);
@@ -183,6 +188,7 @@ protected:
 	bool	m_bIsOutputCapture;		// true if capturing output events
 	bool	m_bPreventNoteOverlap;	// true if preventing note overlaps
 	bool	m_bIsSendingMidiClock;	// true if sending MIDI clock
+	bool	m_bIsLooping;			// true if looping
 	STATS	m_stats;				// timing statistics
 	double	m_fLatencySecs;			// desired playback latency in fractional seconds
 	CMidiEventStream	m_arrMidiEvent[BUFFERS];	// array of MIDI event stream buffers
@@ -198,6 +204,7 @@ protected:
 	CIntArrayEx	m_arrChord;			// array of tones to select from current scale, as scale indices
 	CIntArrayEx	m_arrVoicing;		// array of voices to drop an octave, as one-origin indices from top
 	CDWordArrayEx	m_arrMappedEvent;	// array of translated MIDI events from mapping
+	CLoopRange	m_rngLoop;			// loop range in ticks
 
 #if SEQ_DUMP_EVENTS
 	CArrayEx<CMidiEventStream, CMidiEventStream&>	m_arrDumpEvent;	// for debug only
@@ -414,4 +421,19 @@ inline void CSequencer::RecordDub()
 {
 	if (IsRecording())
 		AddDubNow();
+}
+
+inline bool CSequencer::IsLooping() const
+{
+	return m_bIsLooping;
+}
+
+inline void CSequencer::SetLooping(bool bEnable)
+{
+	m_bIsLooping = bEnable;
+}
+
+inline void CSequencer::GetLoopRange(CLoopRange& rngTicks) const
+{
+	rngTicks = m_rngLoop;
 }

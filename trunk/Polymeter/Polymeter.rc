@@ -108,6 +108,7 @@ BEGIN
     BUTTON      ID_TRANSPORT_PAUSE
     BUTTON      ID_TRANSPORT_RECORD
     BUTTON      ID_TRANSPORT_REWIND
+    BUTTON      ID_TRANSPORT_LOOP
     BUTTON      ID_TRANSPORT_RECORD_TRACKS
     SEPARATOR
     BUTTON      ID_VIEW_VELOCITIES
@@ -137,6 +138,7 @@ BEGIN
     BUTTON      ID_TRANSPORT_PAUSE
     BUTTON      ID_TRANSPORT_RECORD
     BUTTON      ID_TRANSPORT_REWIND
+    BUTTON      ID_TRANSPORT_LOOP
     BUTTON      ID_TRANSPORT_RECORD_TRACKS
     SEPARATOR
     BUTTON      ID_VIEW_VELOCITIES
@@ -333,6 +335,7 @@ BEGIN
         MENUITEM "&Record",                     ID_TRANSPORT_RECORD
         MENUITEM SEPARATOR
         MENUITEM "Re&wind",                     ID_TRANSPORT_REWIND
+        MENUITEM "&Loop",                       ID_TRANSPORT_LOOP
         MENUITEM "&Go To Position...",          ID_TRANSPORT_GO_TO_POSITION
         MENUITEM SEPARATOR
         MENUITEM "&Next Convergence",           ID_TRANSPORT_CONVERGENCE_NEXT
@@ -679,6 +682,7 @@ BEGIN
     VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
     "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
     VK_F11,         ID_WINDOW_FULL_SCREEN,  VIRTKEY, NOINVERT
+    "L",            ID_TRANSPORT_LOOP,      VIRTKEY, CONTROL, ALT, NOINVERT
 END
 
 
@@ -1160,13 +1164,14 @@ BEGIN
     IDS_DOC_GROUP_OVERLAP   "One or more of the selected tracks already belong to a group, and will be reassigned."
     IDS_DOC_NEWER_VERSION   "'%1' is from a newer document version. Some of its features may not be supported."
     IDS_DOC_TRACK_TOO_LONG  "Track too long."
+    IDS_DOC_VALUE_NOT_FOUND "Value not found."
     IDS_DOC_VELOCITY_RANGE  "Velocity range: %d, %d"
     IDS_EDIT_APPLY_PRESET   "Apply Preset"
-    IDS_EDIT_CREATE_PART    "Create Part"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_CREATE_PART    "Create Part"
     IDS_EDIT_CREATE_PRESET  "Create Preset"
     IDS_EDIT_CUT_MAPPINGS   "Cut Mapping"
     IDS_EDIT_CUT_STEPS      "Cut Steps"
@@ -1182,12 +1187,13 @@ BEGIN
     IDS_EDIT_INSERT_STEPS   "Insert Steps"
     IDS_EDIT_INSERT_TRACKS  "Insert Tracks"
     IDS_EDIT_INVERT         "Invert"
-    IDS_EDIT_LEARN_MAPPING  "Learn Mapping"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_LEARN_MAPPING  "Learn Mapping"
     IDS_EDIT_LEARN_MULTI_MAPPING "Learn Mappings"
+    IDS_EDIT_LOOP_RANGE     "Loop Range"
     IDS_EDIT_MENU           "Edit"
     IDS_EDIT_MODIFY_PARTS   "Modify Parts"
     IDS_EDIT_MODULATION     "Modulation"
@@ -1201,12 +1207,12 @@ BEGIN
     IDS_EDIT_PASTE_STEPS    "Paste Steps"
     IDS_EDIT_PASTE_TRACKS   "Paste Tracks"
     IDS_EDIT_RECORD         "Record"
-    IDS_EDIT_REDO_PREFIX    "&Redo"
-    IDS_EDIT_RENAME_PART    "Rename Part"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_REDO_PREFIX    "&Redo"
+    IDS_EDIT_RENAME_PART    "Rename Part"
     IDS_EDIT_RENAME_PRESET  "Rename Preset"
     IDS_EDIT_REVERSE        "Reverse"
     IDS_EDIT_ROTATE         "Rotate"
@@ -1221,13 +1227,13 @@ BEGIN
     IDS_EDIT_UPDATE_PART    "Update Part"
     IDS_EDIT_UPDATE_PRESET  "Update Preset"
     IDS_EDIT_VELOCITY       "Velocity"
-    IDS_ERR_TRACK_LENGTH_CURSOR 
-                            "Cursor must be over track step to indicate desired length."
-    IDS_EXPORT              "Export"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_ERR_TRACK_LENGTH_CURSOR 
+                            "Cursor must be over track step to indicate desired length."
+    IDS_EXPORT              "Export"
     IDS_EXPORT_BAD_DURATION "Invalid duration. Time format is HH:MM:SS and duration must be greater than zero."
     IDS_EXPORT_EMPTY_FILE   "Nothing to export."
     IDS_EXPORT_ERROR        "Error during export."
@@ -1246,12 +1252,12 @@ BEGIN
                             "OK to search your system for Graphviz? This could take a while."
     IDS_GRAPHVIZ_SEARCHING_DRIVE "Searching drive"
     IDS_GRAPH_ERROR         "Graph error."
-    IDS_GRAPH_SCOPE_ALL     "All"
-    IDS_GRAPH_SCOPE_BIDIRECTIONAL "Bidirectional"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_GRAPH_SCOPE_ALL     "All"
+    IDS_GRAPH_SCOPE_BIDIRECTIONAL "Bidirectional"
     IDS_GRAPH_SCOPE_RECURSIVE "Recursive"
     IDS_GRAPH_SCOPE_SELECTED "Selected"
     IDS_GRID_ERR_BAD_TIME_FORMAT "Enter time in hh:mm:ss format."
@@ -1270,12 +1276,12 @@ BEGIN
     IDS_IMPORT_ERR_FORMAT   "Format error."
     IDS_IMPORT_ERR_LOCATION "Row %d, Column %d"
     IDS_IMPORT_ERR_PROPERTY "Undefined property name."
-    IDS_IMPORT_ERR_RANGE    "Range error."
-    IDS_MAIN_DOCKING_BAR_HINT_FMT "Show or hide the %1 window"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_IMPORT_ERR_RANGE    "Range error."
+    IDS_MAIN_DOCKING_BAR_HINT_FMT "Show or hide the %1 window"
     IDS_MAIN_TRACK_COLORS   "Track Colors"
     IDS_MAPPING_COL_IN_CHANNEL "In Channel"
     IDS_MAPPING_COL_IN_CONTROL "In Control"
@@ -1290,12 +1296,12 @@ BEGIN
     IDS_MIDIEVT_COL_CHANNEL "Channel"
     IDS_MIDIEVT_COL_MESSAGE "Message"
     IDS_MIDIEVT_COL_P1      "P1"
-    IDS_MIDIEVT_COL_P2      "P2"
-    IDS_MIDIEVT_COL_TIME    "Time"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDIEVT_COL_P2      "P2"
+    IDS_MIDIEVT_COL_TIME    "Time"
     IDS_MIDI_DEVICES_MISSING "MIDI devices are missing."
     IDS_MIDI_INCOMPATIBLE_SONG_POSITION 
                             "Song position is incompatible with MIDI clock sync.\nPlayback will start from the nearest sixteenth note."
@@ -1311,12 +1317,12 @@ BEGIN
     IDS_MIDI_SYS_STAT_MTC_QTR_FRAME "MTC Qtr Frame"
     IDS_MIDI_SYS_STAT_SONG_POSITION "Song Position"
     IDS_MIDI_SYS_STAT_SONG_SELECT "Song Select"
-    IDS_MIDI_SYS_STAT_START "Start"
-    IDS_MIDI_SYS_STAT_STOP  "Stop"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDI_SYS_STAT_START "Start"
+    IDS_MIDI_SYS_STAT_STOP  "Stop"
     IDS_MIDI_SYS_STAT_SYSEX "System Exclusive"
     IDS_MIDI_SYS_STAT_SYSTEM_RESET "System Reset"
     IDS_MIDI_SYS_STAT_TUNE_REQUEST "Tune Request"
@@ -1334,13 +1340,13 @@ BEGIN
                             "Automatically check for newer version of app during startup"
     IDS_OPT_DESC_General_bPropertyDescrips 
                             "If true, show descriptions area in properties bar"
-    IDS_OPT_DESC_Midi_bSendMidiClock 
-                            "Transmit MIDI synchronization messages to slave device"
-    IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_Midi_bSendMidiClock 
+                            "Transmit MIDI synchronization messages to slave device"
+    IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
     IDS_OPT_DESC_Midi_iInputDevice "Selected MIDI input device"
     IDS_OPT_DESC_Midi_iInputQuant 
                             "Quantization for converting MIDI input to steps"
@@ -1363,12 +1369,12 @@ BEGIN
                             "Frequency at which view is updated, in Hertz"
     IDS_OPT_DESC_View_fZoomDelta "Zoom step size, as a percentage"
     IDS_OPT_DESC_View_nLiveFontHeight "Height of live view font, in pixels"
-    IDS_OPT_GROUP_General   "General"
-    IDS_OPT_GROUP_Midi      "MIDI"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_GROUP_General   "General"
+    IDS_OPT_GROUP_Midi      "MIDI"
     IDS_OPT_GROUP_View      "View"
     IDS_OPT_NAME_General_bAlwaysRecord "Always Record"
     IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
@@ -1383,12 +1389,12 @@ BEGIN
     IDS_OPT_NAME_Midi_nLatency "Latency"
     IDS_OPT_NAME_Midi_nRecordInput "Record Input"
     IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
-    IDS_OPT_NAME_View_bShowGMNames "Show General MIDI Names"
-    IDS_OPT_NAME_View_bShowNoteNames "Show Note Names"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_View_bShowGMNames "Show General MIDI Names"
+    IDS_OPT_NAME_View_bShowNoteNames "Show Note Names"
     IDS_OPT_NAME_View_bShowTrackColors "Show Track Colors"
     IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
     IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
@@ -1397,20 +1403,24 @@ BEGIN
     IDS_PDR_DESC_iNoteOverlap 
                             "How to handle overlapping instances of the same note on a channel"
     IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
+    IDS_PDR_DESC_nLoopFrom  "Starting position of loop, in beats and ticks"
+    IDS_PDR_DESC_nLoopTo    "Ending position of loop, in beats and ticks"
     IDS_PDR_DESC_nMeter     "Number of beats in a measure"
     IDS_PDR_DESC_nRecordOffset 
                             "Offset added to recorded MIDI event times during playback, in ticks"
     IDS_PDR_DESC_nSongLength "Song duration in HH:MM:SS format"
     IDS_PDR_DESC_nStartPos  "Starting position of song in beats and ticks"
     IDS_PDR_DESC_nTimeDiv   "Time division, in pulses per quarter note"
-    IDS_PDR_GROUP_Master    "Master"
-    IDS_PDR_NAME_fTempo     "Tempo"
-    IDS_PDR_NAME_iNoteOverlap "Note Overlap"
-    IDS_PDR_NAME_nKeySig    "Key Signature"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_GROUP_Master    "Master"
+    IDS_PDR_NAME_fTempo     "Tempo"
+    IDS_PDR_NAME_iNoteOverlap "Note Overlap"
+    IDS_PDR_NAME_nKeySig    "Key Signature"
+    IDS_PDR_NAME_nLoopFrom  "Loop From"
+    IDS_PDR_NAME_nLoopTo    "Loop To"
     IDS_PDR_NAME_nMeter     "Meter"
     IDS_PDR_NAME_nRecordOffset "Record Offset"
     IDS_PDR_NAME_nSongLength "Song Length"
@@ -1421,16 +1431,16 @@ BEGIN
     IDS_RANGE_TYPE_NONE     "None"
     IDS_RANGE_TYPE_OCTAVE   "Octave"
     IDS_RECDLG_CUSTOM       "Custom"
+END
+
+STRINGTABLE
+BEGIN
     IDS_RECORD_INPUT_OPT_DubsAndMidi "Dubs + MIDI"
     IDS_RECORD_INPUT_OPT_DubsOnly "Dubs Only"
     IDS_RECORD_INPUT_OPT_MidiOnly "MIDI Only"
     IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
     IDS_SC_MAXIMIZE         "&Maximize"
     IDS_SC_RESTORE          "&Restore"
-END
-
-STRINGTABLE
-BEGIN
     IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format."
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
     IDS_SEQERR_CALLBACK_TOO_LONG "Sequencer callback took too long."
@@ -1442,16 +1452,16 @@ BEGIN
     IDS_SM_FILTER_MESSAGE_ALL "Show all messages"
     IDS_SM_FILTER_MESSAGE_SELECT "Show selected message only"
     IDS_SM_OUTPUT_CHANNEL_NONE "Don't output notes"
+END
+
+STRINGTABLE
+BEGIN
     IDS_SM_OUTPUT_CHANNEL_SELECT "Output notes on this channel"
     IDS_SM_PIANO_SIZE       "Select piano size in keys"
     IDS_SORT_DIR_ASCENDING  "Ascending"
     IDS_SORT_DIR_DESCENDING "Descending"
     IDS_STATUS_PANE1        "Pane 1"
     IDS_STATUS_PANE2        "Pane 2"
-END
-
-STRINGTABLE
-BEGIN
     IDS_SVG_FILE_FILTER     "SVG Files (*.svg)|*.svg|All Files (*.*)|*.*||"
     IDS_TIME_TO_REPEAT_BEATS "beats"
     IDS_TIME_TO_REPEAT_DAYS "days"
@@ -1462,16 +1472,16 @@ BEGIN
     IDS_TOOLBAR_STANDARD    "Standard"
     IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
     IDS_TRACK_TYPE_CONTROL  "Control"
+END
+
+STRINGTABLE
+BEGIN
     IDS_TRACK_TYPE_KEY_AFT  "Key Aftertouch"
     IDS_TRACK_TYPE_MODULATOR "Modulator"
     IDS_TRACK_TYPE_NOTE     "Note"
     IDS_TRACK_TYPE_PATCH    "Patch"
     IDS_TRACK_TYPE_TEMPO    "Tempo"
     IDS_TRACK_TYPE_WHEEL    "Wheel"
-END
-
-STRINGTABLE
-BEGIN
     IDS_TRK_Channel         "Channel"
     IDS_TRK_Chord           "Chord"
     IDS_TRK_Duration        "Duration"
@@ -1482,16 +1492,16 @@ BEGIN
     IDS_TRK_Note            "Note"
     IDS_TRK_Number          "#"
     IDS_TRK_Offset          "Offset"
+END
+
+STRINGTABLE
+BEGIN
     IDS_TRK_Position        "Position"
     IDS_TRK_Quant           "Quant"
     IDS_TRK_Range           "Range"
     IDS_TRK_RangeStart      "Range Start"
     IDS_TRK_RangeType       "Range Type"
     IDS_TRK_STEP            "Step"
-END
-
-STRINGTABLE
-BEGIN
     IDS_TRK_Scale           "Scale"
     IDS_TRK_Swing           "Swing"
     IDS_TRK_Tempo           "Tempo"
@@ -1503,12 +1513,11 @@ BEGIN
     IDS_WINDOW_MANAGER      "&Windows..."
     IDS_WINDOW_RESET_LAYOUT_WARN 
                             "Reset all windows to their default layout? This action can't be undone, and the application will be restarted."
-    IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
 END
 
 STRINGTABLE
 BEGIN
-    DOC_VALUE_NOT_FOUND     "Value not found."
+    IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
 END
 
 STRINGTABLE
@@ -1653,6 +1662,7 @@ END
 
 STRINGTABLE
 BEGIN
+    ID_TRANSPORT_LOOP       "Loop playback\nLoop"
     ID_TRANSPORT_PAUSE      "Pause or continue playback\nPause"
     ID_TRANSPORT_PLAY       "Start or stop playback\nPlay"
     ID_TRANSPORT_RECORD     "Start or stop recording\nRecord"
@@ -1678,12 +1688,12 @@ BEGIN
     ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "Manage child windows\nWindows"
-    ID_WINDOW_NEW_HORZ_TAB_GROUP 
-                            "Create a new horizontal tab group\nNew Horizontal Tab Group"
 END
 
 STRINGTABLE
 BEGIN
+    ID_WINDOW_NEW_HORZ_TAB_GROUP 
+                            "Create a new horizontal tab group\nNew Horizontal Tab Group"
     ID_WINDOW_NEW_VERT_TAB_GROUP 
                             "Create a new horizontal tab group \nNew Vertical Tab Group"
     ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"

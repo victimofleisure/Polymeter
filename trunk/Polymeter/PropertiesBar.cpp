@@ -10,6 +10,7 @@
         00      25mar18	initial version
 		01		29jan19	remove set initial properties
 		02		17jun20	derive from customized dockable pane
+		03		16dec20	add loop range
 		
 */
 
@@ -69,6 +70,8 @@ void CPropertiesBar::CMyPropertiesGridCtrl::GetCustomValue(int iProp, CComVarian
 {
 	switch (iProp) {
 	case CMasterProps::PROP_nStartPos:
+	case CMasterProps::PROP_nLoopFrom:
+	case CMasterProps::PROP_nLoopTo:
 		{
 			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 			LONGLONG	nPos = 0;
@@ -88,6 +91,8 @@ void CPropertiesBar::CMyPropertiesGridCtrl::SetCustomValue(int iProp, const CCom
 {
 	switch (iProp) {
 	case CMasterProps::PROP_nStartPos:
+	case CMasterProps::PROP_nLoopFrom:
+	case CMasterProps::PROP_nLoopTo:
 		{
 			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 			CString	sPos;

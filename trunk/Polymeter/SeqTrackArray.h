@@ -21,6 +21,8 @@
         11      07oct20	add min quant, common unit, and unique period methods
 		12		26oct20	add ReplaceSteps
 		13		16nov20	add tick dependencies
+		14		04dec20	refactor find next dub time to return track index
+		15		16dec20	define initial tempo and time division
 
 */
 
@@ -29,6 +31,9 @@
 #include "Track.h"
 #include "CritSec.h"
 #include "Midi.h"
+
+#define SEQ_INIT_TEMPO 120
+#define SEQ_INIT_TIME_DIV 120
 
 class CSeqTrackArray : protected CTrackArray, public CTrackBase {
 public:
@@ -147,7 +152,7 @@ public:
 	void	DeleteDubs(int iTrack, int nStartTime, int nEndTime);
 	void	InsertDubs(int iTrack, int nTime, CDubArray& arrDub);
 	void	RemoveAllDubs();
-	bool	FindNextDubTime(int nStartTime, int& nNextTime, bool bReverse = false) const;
+	int		FindNextDubTime(int nStartTime, int& nNextTime, bool bReverse = false, int iTargetTrack = 0) const;
 	void	InsertModulation(int iTrack, int iMod, CModulation& mod);
 	void	InsertModulations(int iTrack, int iMod, CModulationArray& arrMod);
 	void	RemoveModulation(int iTrack, int iMod);

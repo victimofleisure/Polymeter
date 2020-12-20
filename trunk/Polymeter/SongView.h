@@ -12,6 +12,8 @@
 		02		10dec18	add song time shift to handle negative times
 		03		18mar20	make song position 64-bit
 		04		09jul20	add pointer to parent frame
+		05		04dec20	add get center track and ensure track visible
+		06		16dec20	add command to set loop from cell selection
 
 */
 
@@ -77,11 +79,13 @@ public:
 	CPoint	GetMaxScrollPos() const;
 	int		GetBeatWidth() const;
 	int		GetTrackHeight() const;
+	int		GetCenterTrack() const;
 
 // Operations
 	int		HitTest(CPoint point, int& iCell, UINT nFlags = 0) const;
 	int		ConvertXToSongPos(int x) const;
 	int		ConvertSongPosToX(LONGLONG nSongPos) const;
+	void	EnsureTrackVisible(int iTrack);
 
 protected:
 // Types
@@ -185,6 +189,8 @@ protected:
 	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
 	afx_msg void OnEditDelete();
 	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
+	afx_msg void OnTransportLoop();
+	afx_msg void OnUpdateTransportLoop(CCmdUI *pCmdUI);
 };
 
 inline CPolymeterDoc* CSongView::GetDocument() const

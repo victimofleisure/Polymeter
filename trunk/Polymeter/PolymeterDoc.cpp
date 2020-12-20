@@ -62,6 +62,8 @@
 		52		06nov20	refactor velocity transforms and add replace
 		53		16nov20	on time division change, update tick dependencies
 		54		19nov20	add set channel property methods
+		55		04dec20	in goto next dub, pass target track, return dub track
+		56		16dec20	add looping of playback
 
 */
 
@@ -379,6 +381,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 	m_Seq.SetNoteOverlapMode(m_iNoteOverlap != CMasterProps::NOTE_OVERLAP_Allow);
 	m_Seq.SetMeter(m_nMeter);
 	m_Seq.SetPosition(m_nStartPos);
+	m_Seq.SetLoopRange(CLoopRange(m_nLoopFrom, m_nLoopTo));
 	m_nSongPos = m_nStartPos;	// also set our cached song position
 	int	nTracks = 0;
 	RdReg(RK_TRACK_COUNT, nTracks);
@@ -1292,7 +1295,7 @@ bool CPolymeterDoc::PostTransformStepVelocity(const CVelocityTransform &trans, c
 	case CVelocityTransform::TYPE_REPLACE:
 		if (!trans.m_nMatches) {	// if no matches found
 			m_UndoMgr.CancelEdit();	// roll back undo state
-			AfxMessageBox(DOC_VALUE_NOT_FOUND);	// report error
+			AfxMessageBox(IDS_DOC_VALUE_NOT_FOUND);	// report error
 			return false;
 		}
 		if (!IsVelocityChangeSafe(trans, prStepSel)) {	// if transformed velocities could clip
@@ -1527,6 +1530,10 @@ void CPolymeterDoc::RestoreMasterProperty(const CUndoState& State)
 		break;
 	case CMasterProps::PROP_iNoteOverlap:
 		m_Seq.SetNoteOverlapMode(m_iNoteOverlap != CMasterProps::NOTE_OVERLAP_Allow);
+		break;
+	case CMasterProps::PROP_nLoopFrom:
+	case CMasterProps::PROP_nLoopTo:
+		OnLoopRangeChange();
 		break;
 	}
 	CPropHint	hint(0, iProp);
@@ -2418,6 +2425,7 @@ void CPolymeterDoc::SaveTimeDivision(CUndoState& State)
 	pInfo->m_nTimeDivTicks = m_Seq.GetTimeDivision();
 	pInfo->m_nStartPos = m_nStartPos;
 	pInfo->m_nSongPos = m_nSongPos;
+	pInfo->m_rngLoop = CLoopRange(m_nLoopFrom, m_nLoopTo);
 	State.SetObj(pInfo);
 }
 
@@ -2430,8 +2438,26 @@ void CPolymeterDoc::RestoreTimeDivision(const CUndoState& State)
 	ASSERT(m_nTimeDiv >= 0);
 	m_nStartPos = pInfo->m_nStartPos;
 	SetPosition(static_cast<int>(pInfo->m_nSongPos));
+	m_nLoopFrom = pInfo->m_rngLoop.m_nFrom;
+	m_nLoopTo = pInfo->m_rngLoop.m_nTo;
+	OnLoopRangeChange();
 	UpdateAllViews(NULL);
 	CPropHint	hint(0, CMasterProps::PROP_nTimeDiv);	// fixes some oversights in none case
+	UpdateAllViews(NULL, HINT_MASTER_PROP, &hint);
+}
+
+void CPolymeterDoc::SaveLoopRange(CUndoState& State)
+{
+	State.m_Val.p.x.i = m_nLoopFrom;
+	State.m_Val.p.y.i = m_nLoopTo;
+}
+
+void CPolymeterDoc::RestoreLoopRange(const CUndoState& State)
+{
+	m_nLoopFrom = State.m_Val.p.x.i;
+	m_nLoopTo = State.m_Val.p.y.i;
+	OnLoopRangeChange();
+	CPropHint	hint(0, PROP_nLoopFrom);	// assume both range members changed
 	UpdateAllViews(NULL, HINT_MASTER_PROP, &hint);
 }
 
@@ -2577,6 +2603,9 @@ void CPolymeterDoc::SaveUndoState(CUndoState& State)
 	case UCODE_TIME_DIVISION:
 		SaveTimeDivision(State);
 		break;
+	case UCODE_LOOP_RANGE:
+		SaveLoopRange(State);
+		break;
 	}
 }
 
@@ -2721,6 +2750,9 @@ void CPolymeterDoc::RestoreUndoState(const CUndoState& State)
 		break;
 	case UCODE_TIME_DIVISION:
 		RestoreTimeDivision(State);
+		break;
+	case UCODE_LOOP_RANGE:
+		RestoreLoopRange(State);
 		break;
 	}
 }
@@ -3188,13 +3220,13 @@ void CPolymeterDoc::PasteDubs(CPoint ptPaste, double fTicksPerCell, CRect& rSele
 	InsertDubs(theApp.m_arrSongClipboard, ptPaste, fTicksPerCell, rSelection);
 }
 
-bool CPolymeterDoc::GotoNextDub(bool bReverse)
+int CPolymeterDoc::GotoNextDub(bool bReverse, int iTargetTrack)
 {
 	int	nNextTime;
-	if (!m_Seq.FindNextDubTime(static_cast<int>(m_nSongPos), nNextTime, bReverse))
-		return false;
-	SetPosition(nNextTime, true);	// center song position
-	return true;
+	int	iDubTrack = m_Seq.FindNextDubTime(static_cast<int>(m_nSongPos), nNextTime, bReverse, iTargetTrack);
+	if (iDubTrack >= 0)	// if dub was found
+		SetPosition(nNextTime, true);	// center song position
+	return iDubTrack;
 }
 
 inline CPolymeterDoc::CTrackArrayEdit::CTrackArrayEdit(CPolymeterDoc *pDoc)
@@ -3840,8 +3872,29 @@ void CPolymeterDoc::ChangeTimeDivision(int nNewTimeDivTicks)
 	m_Seq.ScaleTickDepends(fScale);
 	m_Seq.SetTimeDivision(GetTimeDivisionTicks());
 	m_nStartPos = round(m_nStartPos * fScale);
+	m_nLoopFrom = round(m_nLoopFrom * fScale);
+	m_nLoopTo = round(m_nLoopTo * fScale);
+	OnLoopRangeChange();
 	SetPosition(static_cast<int>(round64(m_nSongPos * fScale)));
 	UpdateAllViews(NULL);	// scaling affects many properties
+}
+
+void CPolymeterDoc::SetLoopRange(CLoopRange rngTicks)
+{
+	NotifyUndoableEdit(0, UCODE_LOOP_RANGE);
+	m_nLoopFrom = rngTicks.m_nFrom;
+	m_nLoopTo = rngTicks.m_nTo;
+	OnLoopRangeChange();
+	SetModifiedFlag();
+	CPropHint	hint(0, PROP_nLoopFrom);	// assume both range members changed
+	UpdateAllViews(NULL, HINT_MASTER_PROP, &hint);
+}
+
+void CPolymeterDoc::OnLoopRangeChange()
+{
+	if (!IsLoopRangeValid())	// if loop range is invalid
+		m_Seq.SetLooping(false);	// stop looping before updating sequencer, to avoid race
+	m_Seq.SetLoopRange(CLoopRange(m_nLoopFrom, m_nLoopTo));	// update sequencer's loop range
 }
 
 // CPolymeterDoc diagnostics
@@ -3880,6 +3933,8 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_COMMAND(ID_TRANSPORT_RECORD_TRACKS, OnTransportRecordTracks)
 	ON_COMMAND(ID_TRANSPORT_CONVERGENCE_NEXT, OnTransportConvergenceNext)
 	ON_COMMAND(ID_TRANSPORT_CONVERGENCE_PREVIOUS, OnTransportConvergencePrevious)
+	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_LOOP, OnUpdateTransportLoop)
+	ON_COMMAND(ID_TRANSPORT_LOOP, OnTransportLoop)
 	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
 	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
@@ -4426,6 +4481,17 @@ void CPolymeterDoc::OnTransportConvergencePrevious()
 		AfxMessageBox(IDS_DOC_CONVERGENCE_OUT_OF_RANGE);
 	else
 		SetPosition(static_cast<int>(nPos), true);	// center song position
+}
+
+void CPolymeterDoc::OnTransportLoop()
+{
+	m_Seq.SetLooping(!m_Seq.IsLooping());
+}
+
+void CPolymeterDoc::OnUpdateTransportLoop(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_Seq.IsLooping() || IsLoopRangeValid());	// enable if looping or valid loop range
+	pCmdUI->SetCheck(m_Seq.IsLooping());
 }
 
 void CPolymeterDoc::OnTrackSort()

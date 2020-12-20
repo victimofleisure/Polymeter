@@ -35,6 +35,8 @@
 		25		06nov20	refactor velocity transforms and add replace
 		26		16nov20	add tick dependencies
 		27		19nov20	add set channel property methods
+		28		04dec20	in goto next dub, pass target track, return dub track
+		29		16dec20	add looping of playback
 
 */
 
@@ -190,6 +192,7 @@ public:
 	void	SetMultiChannelProperty(const CIntArrayEx& arrSelection, int iProp, int nVal, CView *pSender = NULL);
 	void	SetMappingProperty(int iMapping, int iProp, int nVal, CView *pSender = NULL);
 	void	SetMultiMappingProperty(const CIntArrayEx& arrSelection, int iProp, int nVal, CView* pSender = NULL);
+	bool	IsLoopRangeValid() const;
 
 // Operations
 public:
@@ -273,7 +276,7 @@ public:
 	void	StretchTracks(double fScale, bool bInterpolate = true);
 	bool	TrackFill(const CRect *prStepSel);
 	void	TrackFill(const CIntArrayEx& arrTrackSel, CRange<int> rngStep, CRange<int> rngVal, int iFunction, double fFrequency, double fPhase, double fPower);
-	bool	GotoNextDub(bool bReverse = false);
+	int		GotoNextDub(bool bReverse = false, int iTargetTrack = 0);
 	int		CalcSongTimeShift() const;
 	void	OnMidiOutputCaptureChange();
 	bool	ExportSongAsCSV(LPCTSTR pszDestPath, int nDuration, bool bSongMode);
@@ -286,6 +289,8 @@ public:
 	void	LearnMappings(const CIntArrayEx& arrSelection, DWORD nInMidiMsg, bool bCoalesceEdit = false);
 	void	CreateModulation(int iSelItem = -1);
 	void	ChangeTimeDivision(int nNewTimeDivTicks);
+	void	SetLoopRange(CLoopRange rngTicks);
+	void	OnLoopRangeChange();
 
 // Overrides
 public:
@@ -409,6 +414,7 @@ protected:
 		int		m_nTimeDivTicks;	// time division in ticks per quarter note
 		int		m_nStartPos;		// start position in ticks
 		LONGLONG	m_nSongPos;		// song position in ticks
+		CLoopRange	m_rngLoop;		// loop range in ticks
 	};
 	class CTrackArrayEdit {
 	public:
@@ -531,6 +537,8 @@ protected:
 	void	RestoreLearnMultiMapping(const CUndoState& State);
 	void	SaveTimeDivision(CUndoState& State);
 	void	RestoreTimeDivision(const CUndoState& State);
+	void	SaveLoopRange(CUndoState& State);
+	void	RestoreLoopRange(const CUndoState& State);
 	bool	UndoDependencies();
 	bool	RedoDependencies();
 
@@ -556,6 +564,8 @@ protected:
 	afx_msg void OnUpdateTransportRecordTracks(CCmdUI *pCmdUI);
 	afx_msg void OnTransportConvergenceNext();
 	afx_msg void OnTransportConvergencePrevious();
+	afx_msg void OnTransportLoop();
+	afx_msg void OnUpdateTransportLoop(CCmdUI *pCmdUI);
 	afx_msg void OnEditCopy();
 	afx_msg void OnEditCut();
 	afx_msg void OnEditDelete();
@@ -641,3 +651,7 @@ inline int CPolymeterDoc::CellToTime(int iCell, double fTicksPerCell, int nSongT
 	return round(iCell * fTicksPerCell) + nSongTimeShift;
 }
 
+inline bool CPolymeterDoc::IsLoopRangeValid() const
+{
+	return m_nLoopFrom < m_nLoopTo;
+}

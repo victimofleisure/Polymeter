@@ -11,6 +11,7 @@
 		01		17mar20	in OnUpdate, handle quant change same as length change
 		02		18mar20	get song position from document instead of sequencer
 		03		09jul20	get view type from child frame instead of document
+		04		16dec20	add command to set loop from step selection
 
 */
 
@@ -982,6 +983,13 @@ void CStepView::UpdateSelection()
 	UpdateSelection(point);
 }
 
+void CStepView::DispatchToDocument()
+{
+	const MSG	*pMsg = GetCurrentMessage();
+	ASSERT(pMsg != NULL);
+	GetDocument()->OnCmdMsg(LOWORD(pMsg->wParam), CN_COMMAND, NULL, NULL);	// low word is command ID
+}
+
 // CStepView message map
 
 BEGIN_MESSAGE_MAP(CStepView, CScrollView)
@@ -1002,6 +1010,8 @@ BEGIN_MESSAGE_MAP(CStepView, CScrollView)
 	ON_WM_TIMER()
 	ON_WM_CONTEXTMENU()
 	ON_WM_KILLFOCUS()
+	ON_COMMAND(ID_TRANSPORT_LOOP, OnTransportLoop)
+	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_LOOP, OnUpdateTransportLoop)
 END_MESSAGE_MAP()
 
 // CStepView message handlers
@@ -1254,4 +1264,24 @@ void CStepView::OnViewZoomReset()
 	SetZoom(0);
 	UpdateViewSize();
 	Invalidate();
+}
+
+void CStepView::OnTransportLoop()
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	if (HaveStepSelection()) {	// if step selection exists
+		int	nQuant = pDoc->m_Seq.GetQuant(m_rStepSel.top);
+		CLoopRange	rngLoop(m_rStepSel.left * nQuant, m_rStepSel.right * nQuant);
+		pDoc->SetLoopRange(rngLoop);
+		pDoc->m_Seq.SetLooping(true);
+		ResetStepSelection();
+	} else	// no step selection
+		DispatchToDocument();
+}
+
+void CStepView::OnUpdateTransportLoop(CCmdUI *pCmdUI)
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	pCmdUI->Enable(pDoc->m_Seq.IsLooping() || pDoc->IsLoopRangeValid() || HaveStepSelection());
+	pCmdUI->SetCheck(pDoc->m_Seq.IsLooping());
 }

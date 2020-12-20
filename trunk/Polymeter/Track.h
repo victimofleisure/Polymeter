@@ -31,6 +31,8 @@
 		21		30sep20	add get track selection to track group array
 		22		07oct20	in stretch, make interpolation optional
 		23		16nov20	add tick dependencies
+		24		01dec20	add dub array method to detect last duplicate
+		25		16dec20	add loop range class
 
 */
 
@@ -160,6 +162,7 @@ public:
 		void	InsertDubs(int nTime, CDubArray& arrDub); 
 		void	RemoveDuplicates();
 		void	Dump() const;
+		bool	IsLastDuplicate(W64INT iDub) const;
 	};
 	typedef CArrayEx<CDubArray, CDubArray&> CDubArrayArray;	// array of dub arrays
 	class CModulation {
@@ -204,6 +207,14 @@ public:
 		CIntArrayEx	m_arrDubTime;	// array of song dub times in ticks
 	};
 	typedef CArrayEx<CTickDepends, CTickDepends&> CTickDependsArray;
+	class CLoopRange {
+	public:
+		CLoopRange();
+		CLoopRange(int nFrom, int nTo);
+		bool	IsValid() const;
+		int		m_nFrom;	// start position of loop, in ticks
+		int		m_nTo;		// end position of loop, in ticks
+	};
 
 // Attributes
 	static	const PROPERTY_INFO&	GetPropertyInfo(int iProp);
@@ -434,6 +445,11 @@ inline void CTrackBase::CDubArray::InsertDub(int iDub, int nTime, bool bMute)
 	InsertAt(iDub, dub);
 }
 
+inline bool CTrackBase::CDubArray::IsLastDuplicate(W64INT iDub) const
+{
+	return iDub > 0 && iDub == GetSize() - 1 && GetAt(iDub - 1).m_bMute == GetAt(iDub).m_bMute;
+}
+
 inline CTrackBase::CModulation::CModulation()
 {
 }
@@ -452,6 +468,21 @@ inline bool CTrackBase::CModulation::operator==(const CModulation& mod) const
 inline bool CTrackBase::CModulation::operator!=(const CModulation& mod) const
 {
 	return !operator==(mod);
+}
+
+inline CTrackBase::CLoopRange::CLoopRange()
+{
+}
+
+inline CTrackBase::CLoopRange::CLoopRange(int nFrom, int nTo)
+{
+	m_nFrom = nFrom;
+	m_nTo = nTo;
+}
+
+inline bool CTrackBase::CLoopRange::IsValid() const
+{
+	return m_nFrom < m_nTo;
 }
 
 class CTrack : public CTrackBase {

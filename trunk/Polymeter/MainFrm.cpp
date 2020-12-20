@@ -41,6 +41,7 @@
 		31		16nov20	find/replace handler must not destroy window
 		32		16nov20	refactor UpdateSongPosition
 		33		19nov20	move bar updating to bar update handlers
+		34		16dec20	add loop range to property change handler
 
 */
 
@@ -958,6 +959,10 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 			break;
 		case CMasterProps::PROP_iNoteOverlap:
 			pDoc->m_Seq.SetNoteOverlapMode(pDoc->m_iNoteOverlap != CMasterProps::NOTE_OVERLAP_Allow);
+			break;
+		case CMasterProps::PROP_nLoopFrom:
+		case CMasterProps::PROP_nLoopTo:
+			pDoc->OnLoopRangeChange();
 			break;
 		}
 		CPolymeterDoc::CPropHint	hint(0, iProp);
