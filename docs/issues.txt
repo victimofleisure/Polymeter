@@ -343,6 +343,10 @@ id	open	close	type	description	rev	user
 351	04/07/20	11/18/20	done	attach and auto-hide are disabled for Piano and MIDI Input/Output bars, due to output capture management	0.0.35.000	
 425	11/18/20	11/18/20	done	pinned (auto-hide) Phase bar doesn’t animate when unhidden; simplify visibility test in OnShowChanging	0.0.35.000	
 424	11/18/20	11/18/20	done	add maximize command to dockable pane's context menu; supports unattached floating panes only	0.0.35.000	
+426	12/01/20	12/01/20	done	song view's go to next/previous dub finds invisible dubs; must exclude last duplicate dub from search	0.0.35.001	
+427	12/01/20	12/04/20	done	go to next/previous dub should scroll vertically as needed to ensure found dub is visible	0.0.35.001	
+184	08/02/18	12/16/20	done	should be able to loop playback within a specified time range, especially in song view, even approximately	0.0.36.000	
+428	12/16/20	12/16/20	done	if song view has focus, edit keys misbehave in popup edit control; add focus edit checks to song view	0.0.36.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -369,7 +373,6 @@ id	open	close	type	description	rev	user
 168	07/26/18		hold	replace steps, like paste but overwrite steps at insert position instead of shifting them; command or mode?		
 181	07/30/18		hold	optional tool tip in step view showing step's position and value; position in what format? Step index?		
 183	08/02/18		hold	mute tracks in song view; complicates sequencer and song view UI		
-184	08/02/18		hold	should be able to loop a given time range of sequence, especially in song view, even approximately		
 193	09/17/18		hold	step zoom via Ctrl + mouse wheel doesn't work unless step view has focus; default OS behavior		
 194	09/17/18		hold	in step view, add command to select all steps of selected tracks		
 200	09/23/18		hold	ReadEnum should report undefined strings as errors? More accurate, but less robust		

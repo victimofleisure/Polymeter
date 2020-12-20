@@ -2948,3 +2948,128 @@ visible pane that needs updating is actually updated, as opposed to before,
 when panes were frequently updated even though they were invisible.
 
 This change also fixes the Phase pane not animating when it's in auto-hide mode.
+
+11/22/20 looping playback
+
+in OutputMidiBuffer, inside the critical section but before the tempo event processing:
+
+		if (m_bIsLooping && m_nCBTime + m_nCBLen >= m_nLoopTo) {
+			SetPosition(m_nLoopFrom);
+		}
+
+It's that easy. The hard part is the UI. The loop enable can be a Transport
+command and a toolbar button. Ctrl+Alt+L is available. The loop range could
+be members of the Properties bar. It would be nice if there were a visual
+way of setting the range. You could get the range from the step selection
+in Track view, or the cell selection in Song view. This has the advantage
+of being inherently quantized. For example if looping is off and the loop
+command is given when a rectangular selection exists, in that case you
+could set the loop range from the width of the rectangular selection.
+
+The only problem with this idea is that in Track view, a multi-track
+rectangular selection doesn't necessarily have a uniform width in terms of
+time, for example if the tracks have different Quants. It's a degenerate
+case. You could exclude it, or take the range from the first track.
+
+It would also be nice if the ruler indicated the loop range while looping,
+for example using a colored rectangle. Extra credit if you can modify the 
+range by dragging either end. It's important to indicate the range somehow
+because the rectangular selection is emphemeral.
+
+The loop enable and range should be saved in the document.
+
+Note that the caller must ensure that m_nLoopFrom < m_nLoopTo, otherwise
+playback will get stuck due to setting m_nLoopFrom on every callback.
+
+11/29/20 resource ID usage in MFC UI customization methods
+
+All of these keys are contained in "Workspace".
+
+"Keyboard-0/Accelerators" contains a binary table of accelerator structs.
+The struct has a similar layout to the ACCEL struct except the command ID
+is a WORD instead of a DWORD, making the size six bytes instead of eight.
+
+struct REG_ACCEL {
+    WORD	flags;
+    WORD	key;
+    WORD	cmd;
+};
+
+"MFCToolBar-59392/Buttons" contains the current toolbar buttons.
+
+"MFCToolBar-593980/Buttons" contains the default menu items.
+
+"MFCToolBar-5939871/Buttons" contains the document menu items.
+
+In each case the "OriginalItems" subkey contains a backup.
+
+These button lists are binary CArchives from serialization.
+
+11/30/20 impact of command ID renumbering on UI customization
+
+It's pretty clear that if existing command IDs change or shift, any UI
+customizations will be badly scrambled. There doesn't seem to be any
+practical way to correct this, so we're left with only two options.
+1) reset customizations every time app starts (the current solution),
+or 2) name new commands in such a way that renumbering the command IDs
+never causes existing IDs to change or shift.
+
+Command ID ranges are especially problematic because they require a
+contiguous range of values, hence should a command need to be added
+to the range, the range must expand, unavoidably shifting up any
+command IDs above the range. The question is, how many such cases 
+currently exist? This is answered by searching the source files for
+"D_RANGE(" and the answer is that most of the cases use reserved ID
+ranges based on ID_APP_DYNAMIC_SUBMENU_BASE and aren't impacted by
+Resource.h. Graph Scope, Graph Layout, Filter Channel, Filter Message,
+Output Channel, Piano Size, and Convergence Size are in that category.
+That leaves two cases, both in the Step Values bar: Layout Columns 
+(Steps vs. Tracks), and Delimiter (Comma vs. Tab). These two cases
+could fairly easily be modified to use ID_APP_DYNAMIC_SUBMENU_BASE,
+after which all the remaining command IDs in Resource.h would be 
+independent of range. Thus there would be no remaining obstacle to
+adding new command IDs with a prefix such as "ID_z00" in order to 
+ensure that they sort to the end of the command ID list; see 6/23/20.
+
+These two cases are effectively booleans masquerading as multiple
+choice, so they could also effectively be ignored.
+
+Enabling persistence of customization is simple, just remove
+(or make conditional) these statements in MainFrm.cpp:
+
+	// ck: disable UI customization for now, it's too confusing during development
+#if _MFC_VER < 0xb00
+	m_wndMenuBar.RestoreOriginalstate();
+	m_wndToolBar.RestoreOriginalstate();
+#else	// MS fixed typo
+	m_wndMenuBar.RestoreOriginalState();
+	m_wndToolBar.RestoreOriginalState();
+#endif
+	theApp.GetKeyboardManager()->ResetAll();
+	theApp.GetContextMenuManager()->ResetState();
+
+This was tested, including the addition of several new commands,
+with their names prefixed by ID_z00_ prefix, and behavior seems as
+expected except that adding new commands to the main menu appears
+to remove any main menu customizations.
+
+12/1/20 spurious dubs
+
+The problem is caused by CTrackBase::CDubArray::RemoveDuplicates()
+skipping the last dub in the dub array, per this comment: 
+"exclude last dub from pruning because it indicates song length."
+This behavior can cause a blizzard of confusing spurious dubs,
+due to each track potentially having a different last dub time.
+One solution is to handle the last dub as a special case, and 
+if it's a duplicate, delete the earlier dub (its predecessor)
+instead of the later one (the last one in this case). This will
+remove the duplicate while preserving the song length.
+
+// after pruning loop!
+	int	iLastDub = GetSize() - 1;	// reload array size as it may have changed above
+	if (iLastDub > 0 && GetAt(iLastDub - 1).m_bMute == GetAt(iLastDub).m_bMute)	// if last dub is a duplicate
+		RemoveAt(iLastDub - 1);	// remove earlier duplicate, preserving song length
+
+Nope, this is a bad idea because it causes erroneous dub lengths.
+So only remaining solution is to fix the code that searches for
+the next/previous dub so that it ignores these degenerate cases.
