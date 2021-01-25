@@ -13,6 +13,7 @@
 		03		17apr20	add multi-step editing
 		04		30apr20	add step compare method
 		05		17nov20	add spin edit
+		06		24jan21	add left button handler to derived grid control
 
 */
 
@@ -49,6 +50,7 @@ protected:
 		virtual	BOOL	CModGridCtrl::PreTranslateMessage(MSG* pMsg);
 		DECLARE_MESSAGE_MAP();
 		afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+		afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	};
 	typedef CMap<CTrackBase::CModulation, CTrackBase::CModulation&, int, int> CModRefMap;
 

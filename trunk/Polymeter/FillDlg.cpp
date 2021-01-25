@@ -10,6 +10,7 @@
         00      15oct18	initial version
 		01		26oct20	remove signed button handler
 		02		06nov20	add load/store state
+		03		23jan21	make step range one-origin
 
 */
 
@@ -89,9 +90,13 @@ void CFillDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_FILL_VALUE_END, m_rngVal.End);
 	DDV_MinMaxInt(pDX, m_rngVal.End, rngValLimit.Start, rngValLimit.End);
 	DDX_Text(pDX, IDC_FILL_STEP_START, m_rngStep.Start);
-	DDV_MinMaxInt(pDX, m_rngStep.Start, 0, m_nSteps);
+	DDV_MinMaxInt(pDX, m_rngStep.Start, 1, m_nSteps);	// step range is one-origin
 	DDX_Text(pDX, IDC_FILL_STEP_END, m_rngStep.End);
-	DDV_MinMaxInt(pDX, m_rngStep.End, 0, m_nSteps);
+	DDV_MinMaxInt(pDX, m_rngStep.End, 1, m_nSteps);
+	if (pDX->m_bSaveAndValidate && !m_rngStep.IsNormalized()) {	// if step range is reversed
+		AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+		DDV_Fail(pDX, IDC_FILL_STEP_START);
+	}
 	DDX_CBIndex(pDX, IDC_FILL_FUNCTION, m_iFunction);
 	DDX_Text(pDX, IDC_FILL_FREQUENCY, m_fFrequency);
 	DDX_Text(pDX, IDC_FILL_PHASE, m_fPhase);

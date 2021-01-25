@@ -9,11 +9,13 @@
 		rev		date	comments
         00      14apr18	initial version
         01      03mar20	overload LCM for array
+		02		24jan21	add unique prime factors method
 
 */
 
 #include "stdafx.h"
 #include "NumberTheory.h"
+#include "math.h"
 
 ULONGLONG CNumberTheory::GreatestCommonDivisor(ULONGLONG u, ULONGLONG v)
 {
@@ -77,3 +79,24 @@ ULONGLONG CNumberTheory::GreatestPrimeFactor(ULONGLONG n)
 	}
 	return(nCur);
 }
+
+void CNumberTheory::UniquePrimeFactors(ULONGLONG n, CIntArrayEx& arrFactor)
+{
+	while (!(n % 2)) {
+		int	t = 2;
+		arrFactor.InsertSortedUnique(t);
+		n /= 2;
+	}
+	int	nLimit = round(sqrt(double(n)));
+	for (int i = 3; i <= nLimit; i = i + 2) {
+		while (!(n % i)) {
+			arrFactor.InsertSortedUnique(i);
+			n /= i;
+		}
+	}  
+	if (n > 2) {
+		int	t = static_cast<int>(n);
+		arrFactor.InsertSortedUnique(t);
+	}
+}
+

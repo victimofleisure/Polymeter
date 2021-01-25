@@ -16,6 +16,8 @@
 		06		30apr20	fix multi-step editing change detection
 		07		09jul20	add update case for solo document hint
 		08		17nov20	add spin edit
+		09		23jan21	make step index column one-origin
+		10		24jan21	shift left-click to set song position
 		
 */
 
@@ -398,6 +400,7 @@ void CStepValuesBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 
 BEGIN_MESSAGE_MAP(CStepValuesBar::CModGridCtrl, CGridCtrl)
 	ON_WM_MOUSEWHEEL()
+	ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
 BOOL CStepValuesBar::CModGridCtrl::PreTranslateMessage(MSG* pMsg)
@@ -424,6 +427,31 @@ BOOL CStepValuesBar::CModGridCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoin
 		return true;	// message was handled
 	}
 	return CGridCtrl::OnMouseWheel(nFlags, zDelta, pt);
+}
+
+void CStepValuesBar::CModGridCtrl::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	if (nFlags & MK_SHIFT) {	// if shift key down
+		LVHITTESTINFO	hti;
+		hti.pt = point;
+		int	iItem = SubItemHitTest(&hti);
+		if (iItem >= 0) {	// if valid item
+			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+			if (pDoc != NULL) {	// if valid document
+				int	iTrackSel = hti.iSubItem - 1;	// skip index column; remaining columns map to selected tracks
+				if (iTrackSel >= 0 && iTrackSel < pDoc->m_arrTrackSel.GetSize()) {	// if valid track selection
+					int	iTrack = pDoc->m_arrTrackSel[iTrackSel];	// get track index
+					const CTrack& trk = pDoc->m_Seq.GetTrack(iTrack);
+					if (iItem < trk.GetLength()) {	// if item index within track's step array
+						int	nPos = iItem * trk.m_nQuant + trk.m_nOffset;	// convert step index to ticks
+						pDoc->SetPosition(nPos);	// go to step position
+					}
+				}
+			}
+		}
+	} else {	// shift key up
+		CGridCtrl::OnLButtonDown(nFlags, point);
+	}
 }
 
 void CStepValuesBar::ToggleStepFormat(UINT nMask)
@@ -646,7 +674,7 @@ void CStepValuesBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 	int	iItem = item.iItem;
 	if (item.mask & LVIF_TEXT) {
 		if (!item.iSubItem) {	// if index column
-			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), iItem);
+			_stprintf_s(item.pszText, item.cchTextMax, _T("%d"), iItem + 1);	// make step index one-origin
 		} else {	// step column
 			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 			if (pDoc != NULL) {

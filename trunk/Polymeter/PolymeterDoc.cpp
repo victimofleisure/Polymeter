@@ -64,6 +64,8 @@
 		54		19nov20	add set channel property methods
 		55		04dec20	in goto next dub, pass target track, return dub track
 		56		16dec20	add looping of playback
+		57		23jan21	make fill dialog's step range one-origin
+		58		24jan21	add prime factors command
 
 */
 
@@ -3610,14 +3612,15 @@ bool CPolymeterDoc::TrackFill(const CRect *prStepSel)
 	dlg.LoadState();	// restore dialog state
 	dlg.m_nSteps = m_Seq.CalcMaxTrackLength(arrTrackSel);	// get maximum track length
 	if (bIsRectSel) {	// if rectangular selection exists
-		dlg.m_rngStep.Start = prStepSel->left;	// get initial step range from rectangular selection
+		dlg.m_rngStep.Start = prStepSel->left + 1;	// get initial step range from rectangular selection
 		dlg.m_rngStep.End = prStepSel->right;
 	} else {	// no rectangular selection
-		dlg.m_rngStep.Start = 0;	// initial step range is entire track
+		dlg.m_rngStep.Start = 1;	// initial step range is entire track; starting step is one-origin
 		dlg.m_rngStep.End = dlg.m_nSteps;
 	}
 	if (dlg.DoModal() != IDOK)	// if user canceled
 		return false;
+	dlg.m_rngStep.Start--;	// convert starting step from one-origin to zero-origin
 	dlg.StoreState();	// save dialog state
 	if (dlg.m_bSigned)	// if signed values
 		dlg.m_rngVal += MIDI_NOTES / 2;	// TrackFill expects unsigned value range
@@ -3970,6 +3973,8 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_SORT, OnUpdateEditSelectAll)
 	ON_COMMAND(ID_TOOLS_TIME_TO_REPEAT, OnToolsTimeToRepeat)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_TIME_TO_REPEAT, OnUpdateToolsTimeToRepeat)
+	ON_COMMAND(ID_TOOLS_PRIME_FACTORS, OnToolsPrimeFactors)
+	ON_UPDATE_COMMAND_UI(ID_TOOLS_PRIME_FACTORS, OnUpdateToolsTimeToRepeat)
 	ON_COMMAND(ID_TOOLS_VELOCITY_RANGE, OnToolsVelocityRange)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_VELOCITY_RANGE, OnUpdateTrackReverse)
 	ON_COMMAND(ID_TOOLS_IMPORT_STEPS, OnToolsImportSteps)
@@ -4621,16 +4626,35 @@ void CPolymeterDoc::OnToolsTimeToRepeat()
 		sVal.Format(_T("%g"), fYears);
 		sMsg += '\n' + sVal + ' ' + LDS(IDS_TIME_TO_REPEAT_YEARS);
 	}
-	ULONGLONG	nGPF = CNumberTheory::GreatestPrimeFactor(nLCM);
-	sVal.Format(_T("%llu"), nGPF);
-	FormatNumberCommas(sVal, sVal);
-	sMsg += '\n' + LDS(IDS_TIME_TO_REPEAT_GPF) + sVal;
 	AfxMessageBox(sMsg, MB_ICONINFORMATION);
 }
 
 void CPolymeterDoc::OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(GetSelectedCount());
+}
+
+void CPolymeterDoc::OnToolsPrimeFactors()
+{
+	int	nSels = GetSelectedCount();
+	if (!nSels)	// if empty selection
+		return;
+	CWaitCursor	wc;
+	CArrayEx<ULONGLONG, ULONGLONG>	arrPeriod;
+	int	nCommonUnit = m_Seq.FindCommonUnit(m_arrTrackSel);
+	m_Seq.GetUniquePeriods(m_arrTrackSel, arrPeriod, nCommonUnit);
+	CIntArrayEx	arrFactor;
+	for (int iPeriod = 0; iPeriod < arrPeriod.GetSize(); iPeriod++) {	// for each unique track period
+		CNumberTheory::UniquePrimeFactors(arrPeriod[iPeriod], arrFactor);
+	}
+	CString	sMsg, sVal;
+	for (int iFactor = 0; iFactor < arrFactor.GetSize(); iFactor++) {	// for each unique prime factor
+		if (iFactor)
+			sMsg += _T(", ");
+		sVal.Format(_T("%d"), arrFactor[iFactor]);
+		sMsg += sVal;
+	}
+	AfxMessageBox(sMsg, MB_ICONINFORMATION);
 }
 
 void CPolymeterDoc::OnToolsVelocityRange()

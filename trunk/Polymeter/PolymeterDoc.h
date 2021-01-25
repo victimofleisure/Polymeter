@@ -37,6 +37,7 @@
 		27		19nov20	add set channel property methods
 		28		04dec20	in goto next dub, pass target track, return dub track
 		29		16dec20	add looping of playback
+		30		24jan21	add prime factors command
 
 */
 
@@ -588,8 +589,9 @@ protected:
 	afx_msg void OnTrackVelocity();
 	afx_msg void OnTrackSort();
 	afx_msg void OnToolsTimeToRepeat();
-	afx_msg void OnToolsVelocityRange();
 	afx_msg void OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI);
+	afx_msg void OnToolsPrimeFactors();
+	afx_msg void OnToolsVelocityRange();
 	afx_msg void OnToolsImportSteps();
 	afx_msg void OnToolsExportSteps();
 	afx_msg void OnToolsImportModulations();

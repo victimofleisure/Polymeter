@@ -308,7 +308,7 @@ BEGIN
             MENUITEM "&Left",                       ID_TRACK_ROTATE_LEFT
             MENUITEM "&Right",                      ID_TRACK_ROTATE_RIGHT
             MENUITEM "&Steps...",                   ID_TRACK_ROTATE_STEPS
-            MENUITEM "Offset...",                   ID_TRACK_OFFSET
+            MENUITEM "&Offset...",                  ID_TRACK_OFFSET
         END
         MENUITEM "R&everse",                    ID_TRACK_REVERSE
         MENUITEM "&Invert",                     ID_TRACK_INVERT
@@ -352,6 +352,7 @@ BEGIN
     BEGIN
         MENUITEM "&Statistics",                 ID_TOOLS_STATISTICS
         MENUITEM "Time to &Repeat",             ID_TOOLS_TIME_TO_REPEAT
+        MENUITEM "&Prime Factors",              ID_TOOLS_PRIME_FACTORS
         MENUITEM "&Velocity Range",             ID_TOOLS_VELOCITY_RANGE
         MENUITEM SEPARATOR
         MENUITEM "&Devices",                    ID_TOOLS_DEVICES
@@ -1163,14 +1164,15 @@ BEGIN
     IDS_DOC_CONVERGENCE_OUT_OF_RANGE "Convergence is out of range."
     IDS_DOC_GROUP_OVERLAP   "One or more of the selected tracks already belong to a group, and will be reassigned."
     IDS_DOC_NEWER_VERSION   "'%1' is from a newer document version. Some of its features may not be supported."
+    IDS_DOC_SEARCH_TEXT_NOT_FOUND "Search text not found."
     IDS_DOC_TRACK_TOO_LONG  "Track too long."
     IDS_DOC_VALUE_NOT_FOUND "Value not found."
     IDS_DOC_VELOCITY_RANGE  "Velocity range: %d, %d"
-    IDS_EDIT_APPLY_PRESET   "Apply Preset"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_APPLY_PRESET   "Apply Preset"
     IDS_EDIT_CREATE_PART    "Create Part"
     IDS_EDIT_CREATE_PRESET  "Create Preset"
     IDS_EDIT_CUT_MAPPINGS   "Cut Mapping"
@@ -1186,11 +1188,11 @@ BEGIN
     IDS_EDIT_INSERT_MAPPING "Insert Mapping"
     IDS_EDIT_INSERT_STEPS   "Insert Steps"
     IDS_EDIT_INSERT_TRACKS  "Insert Tracks"
-    IDS_EDIT_INVERT         "Invert"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_INVERT         "Invert"
     IDS_EDIT_LEARN_MAPPING  "Learn Mapping"
     IDS_EDIT_LEARN_MULTI_MAPPING "Learn Mappings"
     IDS_EDIT_LOOP_RANGE     "Loop Range"
@@ -1206,11 +1208,11 @@ BEGIN
     IDS_EDIT_PASTE_MAPPINGS "Paste Mapping"
     IDS_EDIT_PASTE_STEPS    "Paste Steps"
     IDS_EDIT_PASTE_TRACKS   "Paste Tracks"
-    IDS_EDIT_RECORD         "Record"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_RECORD         "Record"
     IDS_EDIT_REDO_PREFIX    "&Redo"
     IDS_EDIT_RENAME_PART    "Rename Part"
     IDS_EDIT_RENAME_PRESET  "Rename Preset"
@@ -1226,11 +1228,11 @@ BEGIN
     IDS_EDIT_UNDO_PREFIX    "&Undo"
     IDS_EDIT_UPDATE_PART    "Update Part"
     IDS_EDIT_UPDATE_PRESET  "Update Preset"
-    IDS_EDIT_VELOCITY       "Velocity"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_VELOCITY       "Velocity"
     IDS_ERR_TRACK_LENGTH_CURSOR 
                             "Cursor must be over track step to indicate desired length."
     IDS_EXPORT              "Export"
@@ -1251,11 +1253,11 @@ BEGIN
     IDS_GRAPHVIZ_OK_TO_SEARCH 
                             "OK to search your system for Graphviz? This could take a while."
     IDS_GRAPHVIZ_SEARCHING_DRIVE "Searching drive"
-    IDS_GRAPH_ERROR         "Graph error."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_GRAPH_ERROR         "Graph error."
     IDS_GRAPH_SCOPE_ALL     "All"
     IDS_GRAPH_SCOPE_BIDIRECTIONAL "Bidirectional"
     IDS_GRAPH_SCOPE_RECURSIVE "Recursive"
@@ -1275,11 +1277,11 @@ BEGIN
     IDS_IMPORT              "Import"
     IDS_IMPORT_ERR_FORMAT   "Format error."
     IDS_IMPORT_ERR_LOCATION "Row %d, Column %d"
-    IDS_IMPORT_ERR_PROPERTY "Undefined property name."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_IMPORT_ERR_PROPERTY "Undefined property name."
     IDS_IMPORT_ERR_RANGE    "Range error."
     IDS_MAIN_DOCKING_BAR_HINT_FMT "Show or hide the %1 window"
     IDS_MAIN_TRACK_COLORS   "Track Colors"
@@ -1295,11 +1297,11 @@ BEGIN
     IDS_MAPPING_COL_TRACK   "Track"
     IDS_MIDIEVT_COL_CHANNEL "Channel"
     IDS_MIDIEVT_COL_MESSAGE "Message"
-    IDS_MIDIEVT_COL_P1      "P1"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDIEVT_COL_P1      "P1"
     IDS_MIDIEVT_COL_P2      "P2"
     IDS_MIDIEVT_COL_TIME    "Time"
     IDS_MIDI_DEVICES_MISSING "MIDI devices are missing."
@@ -1316,11 +1318,11 @@ BEGIN
     IDS_MIDI_SYS_STAT_EOX   "EOX"
     IDS_MIDI_SYS_STAT_MTC_QTR_FRAME "MTC Qtr Frame"
     IDS_MIDI_SYS_STAT_SONG_POSITION "Song Position"
-    IDS_MIDI_SYS_STAT_SONG_SELECT "Song Select"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDI_SYS_STAT_SONG_SELECT "Song Select"
     IDS_MIDI_SYS_STAT_START "Start"
     IDS_MIDI_SYS_STAT_STOP  "Stop"
     IDS_MIDI_SYS_STAT_SYSEX "System Exclusive"
@@ -1338,12 +1340,12 @@ BEGIN
                             "Always record dubs during playback and automatically save the recordings"
     IDS_OPT_DESC_General_bCheckForUpdates 
                             "Automatically check for newer version of app during startup"
-    IDS_OPT_DESC_General_bPropertyDescrips 
-                            "If true, show descriptions area in properties bar"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_General_bPropertyDescrips 
+                            "If true, show descriptions area in properties bar"
     IDS_OPT_DESC_Midi_bSendMidiClock 
                             "Transmit MIDI synchronization messages to slave device"
     IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
@@ -1368,11 +1370,11 @@ BEGIN
     IDS_OPT_DESC_View_fUpdateFreq 
                             "Frequency at which view is updated, in Hertz"
     IDS_OPT_DESC_View_fZoomDelta "Zoom step size, as a percentage"
-    IDS_OPT_DESC_View_nLiveFontHeight "Height of live view font, in pixels"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_View_nLiveFontHeight "Height of live view font, in pixels"
     IDS_OPT_GROUP_General   "General"
     IDS_OPT_GROUP_Midi      "MIDI"
     IDS_OPT_GROUP_View      "View"
@@ -1388,11 +1390,11 @@ BEGIN
     IDS_OPT_NAME_Midi_nDefaultVelocity "Default Velocity"
     IDS_OPT_NAME_Midi_nLatency "Latency"
     IDS_OPT_NAME_Midi_nRecordInput "Record Input"
-    IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
     IDS_OPT_NAME_View_bShowGMNames "Show General MIDI Names"
     IDS_OPT_NAME_View_bShowNoteNames "Show Note Names"
     IDS_OPT_NAME_View_bShowTrackColors "Show Track Colors"
@@ -1410,11 +1412,11 @@ BEGIN
                             "Offset added to recorded MIDI event times during playback, in ticks"
     IDS_PDR_DESC_nSongLength "Song duration in HH:MM:SS format"
     IDS_PDR_DESC_nStartPos  "Starting position of song in beats and ticks"
-    IDS_PDR_DESC_nTimeDiv   "Time division, in pulses per quarter note"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_DESC_nTimeDiv   "Time division, in pulses per quarter note"
     IDS_PDR_GROUP_Master    "Master"
     IDS_PDR_NAME_fTempo     "Tempo"
     IDS_PDR_NAME_iNoteOverlap "Note Overlap"
@@ -1430,11 +1432,11 @@ BEGIN
     IDS_RANGE_TYPE_DUAL     "Dual"
     IDS_RANGE_TYPE_NONE     "None"
     IDS_RANGE_TYPE_OCTAVE   "Octave"
-    IDS_RECDLG_CUSTOM       "Custom"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_RECDLG_CUSTOM       "Custom"
     IDS_RECORD_INPUT_OPT_DubsAndMidi "Dubs + MIDI"
     IDS_RECORD_INPUT_OPT_DubsOnly "Dubs Only"
     IDS_RECORD_INPUT_OPT_MidiOnly "MIDI Only"
@@ -1451,11 +1453,11 @@ BEGIN
     IDS_SM_FILTER_CHANNEL_SELECT "Show selected channel only"
     IDS_SM_FILTER_MESSAGE_ALL "Show all messages"
     IDS_SM_FILTER_MESSAGE_SELECT "Show selected message only"
-    IDS_SM_OUTPUT_CHANNEL_NONE "Don't output notes"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_SM_OUTPUT_CHANNEL_NONE "Don't output notes"
     IDS_SM_OUTPUT_CHANNEL_SELECT "Output notes on this channel"
     IDS_SM_PIANO_SIZE       "Select piano size in keys"
     IDS_SORT_DIR_ASCENDING  "Ascending"
@@ -1465,17 +1467,16 @@ BEGIN
     IDS_SVG_FILE_FILTER     "SVG Files (*.svg)|*.svg|All Files (*.*)|*.*||"
     IDS_TIME_TO_REPEAT_BEATS "beats"
     IDS_TIME_TO_REPEAT_DAYS "days"
-    IDS_TIME_TO_REPEAT_GPF  "Greatest prime factor is "
     IDS_TIME_TO_REPEAT_TICKS "ticks"
     IDS_TIME_TO_REPEAT_YEARS "years"
     IDS_TOOLBAR_CUSTOMIZE   "Customize..."
     IDS_TOOLBAR_STANDARD    "Standard"
     IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
-    IDS_TRACK_TYPE_CONTROL  "Control"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRACK_TYPE_CONTROL  "Control"
     IDS_TRACK_TYPE_KEY_AFT  "Key Aftertouch"
     IDS_TRACK_TYPE_MODULATOR "Modulator"
     IDS_TRACK_TYPE_NOTE     "Note"
@@ -1491,11 +1492,11 @@ BEGIN
     IDS_TRK_Name            "Name"
     IDS_TRK_Note            "Note"
     IDS_TRK_Number          "#"
-    IDS_TRK_Offset          "Offset"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_Offset          "Offset"
     IDS_TRK_Position        "Position"
     IDS_TRK_Quant           "Quant"
     IDS_TRK_Range           "Range"
@@ -1511,12 +1512,12 @@ BEGIN
     IDS_TYPE_TRACK          "Track"
     IDS_VELOCITY            "Velocity"
     IDS_WINDOW_MANAGER      "&Windows..."
-    IDS_WINDOW_RESET_LAYOUT_WARN 
-                            "Reset all windows to their default layout? This action can't be undone, and the application will be restarted."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_WINDOW_RESET_LAYOUT_WARN 
+                            "Reset all windows to their default layout? This action can't be undone, and the application will be restarted."
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
 END
 
@@ -1612,12 +1613,13 @@ BEGIN
     ID_TOOLS_IMPORT_TRACKS  "Import tracks from a CSV file\nImport Tracks"
     ID_TOOLS_MIDI_LEARN     "Learn mappings from MIDI input\nMIDI Learn"
     ID_TOOLS_OPTIONS        "Edit the options\nOptions"
+    ID_TOOLS_PRIME_FACTORS  "Compute the prime factors of the selected tracks' durations\nPrime Factors"
     ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
-    ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for the selected tracks to repeat\nTime to Repeat"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for the selected tracks to repeat\nTime to Repeat"
     ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks or steps\nVelocity Range "
     ID_TRACK_COLOR          "Assign color to selected tracks\nTrack Color"
     ID_TRACK_FILL           "Fill selected tracks or steps with a range of values\nFill"
@@ -1633,11 +1635,11 @@ BEGIN
     ID_TRACK_PRESET_CREATE  "Create a new preset from the track mutes\nCreate Preset"
     ID_TRACK_PRESET_UPDATE  "Update the selected preset from the track mutes\nUpdate Preset"
     ID_TRACK_REVERSE        "Reverse the selected tracks or steps\nReverse"
-    ID_TRACK_ROTATE_LEFT    "Rotate the selected tracks or steps left\nRotate Left"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_ROTATE_LEFT    "Rotate the selected tracks or steps left\nRotate Left"
     ID_TRACK_ROTATE_RIGHT   "Rotate the selected tracks or steps right\nRotate Right"
     ID_TRACK_ROTATE_STEPS   "Rotate the selection left or right a given number of steps\nRotate Steps"
     ID_TRACK_SHIFT_LEFT     "Shift the selected tracks or steps left\nShift Left"
@@ -1656,12 +1658,12 @@ BEGIN
                             "Require all modulos to coincide\nFull Convergence"
     ID_TRANSPORT_CONVERGENCE_SIZE_CUSTOM 
                             "Customize number of modulos to coincide\nCustom Convergence"
-    ID_TRANSPORT_GO_TO_POSITION 
-                            "Go to specified position within song\nGo To Position"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRANSPORT_GO_TO_POSITION 
+                            "Go to specified position within song\nGo To Position"
     ID_TRANSPORT_LOOP       "Loop playback\nLoop"
     ID_TRANSPORT_PAUSE      "Pause or continue playback\nPause"
     ID_TRANSPORT_PLAY       "Start or stop playback\nPlay"
@@ -1687,11 +1689,11 @@ BEGIN
     ID_VIEW_ZOOM_OUT        "Zoom out\nZoom Out"
     ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
-    ID_WINDOW_MANAGER       "Manage child windows\nWindows"
 END
 
 STRINGTABLE
 BEGIN
+    ID_WINDOW_MANAGER       "Manage child windows\nWindows"
     ID_WINDOW_NEW_HORZ_TAB_GROUP 
                             "Create a new horizontal tab group\nNew Horizontal Tab Group"
     ID_WINDOW_NEW_VERT_TAB_GROUP 

@@ -23,6 +23,7 @@
 		13		04dec20	add get center track and ensure track visible
 		14		16dec20	add command to set loop from cell selection
 		15		16dec20	add focus edit checks for standard editing commands
+		16		19jan21	add focus edit check for select all
 
 */
 
@@ -879,8 +880,10 @@ void CSongView::OnViewZoomReset()
 
 void CSongView::OnEditSelectAll()
 {
-	m_rCellSel = CRect(0, 0, INT_MAX, GetDocument()->GetTrackCount());	// all cells in all tracks
-	Invalidate();
+	if (!CFocusEdit::SelectAll()) {
+		m_rCellSel = CRect(0, 0, INT_MAX, GetDocument()->GetTrackCount());	// all cells in all tracks
+		Invalidate();
+	}
 }
 
 void CSongView::OnEditCut()
@@ -938,16 +941,20 @@ void CSongView::OnUpdateEditPaste(CCmdUI *pCmdUI)
 
 void CSongView::OnEditInsert()
 {
-	if (HaveSelection()) {
-		GetDocument()->InsertDubs(m_rCellSel, GetTicksPerCell());
-		UpdateCells(m_rCellSel);
-	} else
-		DispatchToDocument();
+	if (!CFocusEdit::Insert()) {
+		if (HaveSelection()) {
+			GetDocument()->InsertDubs(m_rCellSel, GetTicksPerCell());
+			UpdateCells(m_rCellSel);
+		} else
+			DispatchToDocument();
+	}
 }
 
 void CSongView::OnUpdateEditInsert(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(HaveSelection());
+	if (!CFocusEdit::UpdateInsert(pCmdUI)) {
+		pCmdUI->Enable(HaveSelection());
+	}
 }
 
 void CSongView::OnEditDelete()

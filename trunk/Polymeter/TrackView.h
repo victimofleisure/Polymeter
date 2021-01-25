@@ -12,6 +12,7 @@
 		02		06mar20	add selection change handler and pending flag
 		03		17apr20	add track color
 		04		09jul20	add pointer to parent frame
+		05		20jan21	add ensure visible method
 
 */
 
@@ -58,6 +59,7 @@ public:
 	static	void	LoadPersistentState();
 	static	void	SavePersistentState();
 	void	UpdatePersistentState(bool bNoRedraw = false);
+	void	EnsureVisible(int iTrack);
 
 // Public data
 	CChildFrame	*m_pParentFrame;	// pointer to parent frame
@@ -161,4 +163,9 @@ inline int CTrackView::GetItemHeight() const
 inline int CTrackView::GetSelectionMark()
 {
 	return m_grid.GetSelectionMark();
+}
+
+inline void CTrackView::EnsureVisible(int iTrack)
+{
+	m_grid.EnsureVisible(iTrack, false);
 }

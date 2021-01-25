@@ -33,6 +33,7 @@
 		23		07oct20	in stretch, make interpolation optional
 		24		07oct20	fix fencepost error in resampling
 		25		16nov20	add tick dependencies
+		26		19jan21	fix track length check in import tracks
 
 */
 
@@ -174,7 +175,7 @@ bool CTrack::StringToProperty(int iProp, const CString& str)
 			int	nLength;
 			if (!CParseCSV::StrToVal(str, nLength))
 				return false;
-			if (nLength <= 1)	// sequencer requires at least one step
+			if (nLength <= 0)	// sequencer requires at least one step
 				return false;
 			m_arrStep.SetSize(nLength);
 		}

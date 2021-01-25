@@ -42,6 +42,8 @@
 		32		16nov20	refactor UpdateSongPosition
 		33		19nov20	move bar updating to bar update handlers
 		34		16dec20	add loop range to property change handler
+		35		20jan21	fix replace skipping over first match
+		36		23jan21	fix empty search text not found message box
 
 */
 
@@ -656,7 +658,9 @@ bool CMainFrame::DoFindReplace()
 		pDoc->SetModifiedFlag();
 	} else if (nFindDlgFlags & (FR_FINDNEXT | FR_REPLACE)) {	// if finding or replacing
 		CTrackView	*pTrackView = STATIC_DOWNCAST(CTrackView, pView);
-		int	iTrack = pTrackView->GetSelectionMark() + 1;	// start searching at track after selection mark
+		int	iTrack = pTrackView->GetSelectionMark();	// start searching at selection mark
+		if (!(nFindDlgFlags & FR_REPLACE))	// if finding
+			iTrack++;	// start searching at track after selection mark
 		iTrack = pDoc->m_Seq.GetTracks().FindName(	// search for matching track name
 			m_pFindDlg->GetFindString(), iTrack, nTrackFindFlags);
 		if (iTrack >= 0) {	// if matching track name was found
@@ -673,6 +677,7 @@ bool CMainFrame::DoFindReplace()
 				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_PROP, &hint);	// update views
 				pDoc->SetModifiedFlag();
 			}
+			pTrackView->EnsureVisible(iTrack);	// ensure matching track is visible
 		} else {	// matching track name not found
 			return false;	// failure: string not found
 		}
@@ -1133,7 +1138,7 @@ LRESULT CMainFrame::OnFindReplace(WPARAM wParam, LPARAM lParam)
 			m_pFindDlg = NULL;	// mark dialog destroyed
 		} else {	// not terminating
 			if (!DoFindReplace())	// do find/replace
-				AfxMessageBox(AFX_IDP_E_SEARCHTEXTNOTFOUND);
+				AfxMessageBox(IDS_DOC_SEARCH_TEXT_NOT_FOUND);
 		}
 	}
 	return 0;

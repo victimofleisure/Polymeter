@@ -9,10 +9,13 @@
 		rev		date	comments
         00      14apr18	initial version
         01      03mar20	overload LCM for array
+		02		24jan21	add unique prime factors method
 
 */
 
 #pragma once
+
+#include "ArrayEx.h"
 
 class CNumberTheory {
 public:
@@ -20,6 +23,7 @@ public:
 	static	ULONGLONG	LeastCommonMultiple(ULONGLONG u, ULONGLONG v);
 	static	ULONGLONG	LeastCommonMultiple(const ULONGLONG *parr, INT_PTR nVals);
 	static	ULONGLONG	GreatestPrimeFactor(ULONGLONG n);
+	static	void	UniquePrimeFactors(ULONGLONG n, CIntArrayEx& arrFactor);
 };
 
 
