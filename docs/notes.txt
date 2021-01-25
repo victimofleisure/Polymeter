@@ -3073,3 +3073,20 @@ remove the duplicate while preserving the song length.
 Nope, this is a bad idea because it causes erroneous dub lengths.
 So only remaining solution is to fix the code that searches for
 the next/previous dub so that it ignores these degenerate cases.
+
+1/20/21 device change notification should retry missing MIDI device and close message box if successful
+
+This cheap trick seems to work, but it feels risky for such a minor case.
+
+} else {	// message box already displayed
+	// assume missing devices message box has sufficiently unique caption
+	HWND	hWnd = FindWindow(NULL, CMidiDevices::GetErrorDlgCaption());
+	if (hWnd) {	// if missing devices message box found
+		INPUT	inp = {0};	// init struct to zero
+		inp.type = INPUT_KEYBOARD;	// send return key to message box
+		inp.ki.wVk = VK_RETURN;	// assume default button is Retry
+		SendInput(1, &inp, sizeof(inp));	// retry missing device
+	}
+}
+
+

@@ -347,13 +347,22 @@ id	open	close	type	description	rev	user
 427	12/01/20	12/04/20	done	go to next/previous dub should scroll vertically as needed to ensure found dub is visible	0.0.35.001	
 184	08/02/18	12/16/20	done	should be able to loop playback within a specified time range, especially in song view, even approximately	0.0.36.000	
 428	12/16/20	12/16/20	done	if song view has focus, edit keys misbehave in popup edit control; add focus edit checks to song view	0.0.36.000	
+432	01/15/21	01/19/21	done	import tracks from CSV file gives error if track's length is one	0.0.37.000	
+435	01/19/21	01/19/21	done	editing keys don't work within popup edit control when Live view has focus	0.0.37.000	
+436	01/19/21	01/19/21	done	select all shortcut doesn't work within popup edit control when Song view has focus	0.0.37.000	
+438	01/20/21	01/20/21	done	replace skips first matching track if selection mark is already on that track	0.0.37.000	
+439	01/20/21	01/20/21	done	find and replace should scroll view as needed to ensure matching track is visible	0.0.37.000	
+429	01/12/21	01/23/21	done	in Step Values bar, Step column should be one-origin; same for track fill dialog's step range	0.0.37.000	
+440	01/21/21	01/23/21	done	replace string not found shows empty message box	0.0.37.000	
+331	03/30/20	01/24/21	done	Step Values bar should provide a means of setting song position; Shift + left-click on step value	0.0.37.000	
+441	01/23/21	01/24/21	done	display unique prime factors of selected track durations	0.0.37.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
 50	03/25/18		hold	animated visualization; Phase bar is a good start, but others?		
 51	03/25/18		hold	playback can be slow to start, due to device open delay; keep output device open all the time?		
 52	03/25/18		hold	output timing is unreliable at start of playback; likely only fixable by keeping output device open all the time		
-53	04/09/18		hold	undoing track value or step edit should ensure track is visible		
+53	04/09/18		hold	undoing/redoing track or step edit should ensure affected track is visible		
 72	05/10/18		hold	right-click in step view background with no selection should show context menu?		
 73	05/10/18		hold	left-click anywhere in step view should toggle selected steps or mutes, as in original app; too confusing?		
 82	05/17/18		hold	installed app's shortcut icon has poor resolution; VS2008 installer bug, use WiX toolset instead?		
@@ -391,7 +400,6 @@ id	open	close	type	description	rev	user
 289	03/25/19		hold	piano bar should be able to show channels separately via multiple keyboards; messy problem		
 296	06/12/19		hold	option for space bar to start/stop playback without needing to also press Ctrl key; causes many UI conflicts		
 318	03/02/20		hold	separate window for viewing/editing recorded MIDI input		
-331	03/30/20		hold	Step Values bar should provide a means of setting song position		
 340	04/04/20		hold	scale modulation often repeats same work for each track that uses the scale; but not always!		
 344	04/05/20		hold	Step Values bar doesn't allow arbitrary rectangular selection; grid control limitation, custom view?		
 347	04/06/20		hold	extend sequence lead-in to fix initial timing glitch; multiply m_nCBLen in GetPosition and Play		
@@ -411,6 +419,11 @@ id	open	close	type	description	rev	user
 407	09/17/20		hold	select all unmuted tracks; hardly worth cluttering up the Edit menu?		
 410	09/28/20		hold	live view position bars for track groups should reflect LCM of periods instead of maximum period; could be slow		
 416	10/20/20		hold	GraphViz PDF output looks better than SVG (if Adobe is installed) but it overrides our context menu		
+430	01/12/21		hold	renaming multiple tracks should optionally append sequence numbers to avoid duplicate names		
+431	01/13/21		hold	device change notification should retry missing MIDI device and close message box if successful		
+434	01/19/21		hold	graph should optionally indicate track type		
+433	01/19/21		hold	track should be a potential mapping source, so tracks can automate parameters; inject MIDI event?		
+437	01/20/21		hold	add harmonizer and harmonic anticipation, adapted from ChordEase		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
