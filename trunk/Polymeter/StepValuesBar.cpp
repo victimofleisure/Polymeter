@@ -18,6 +18,7 @@
 		08		17nov20	add spin edit
 		09		23jan21	make step index column one-origin
 		10		24jan21	shift left-click to set song position
+		11		25jan21	fix shift left-click in index column
 		
 */
 
@@ -435,19 +436,23 @@ void CStepValuesBar::CModGridCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 		LVHITTESTINFO	hti;
 		hti.pt = point;
 		int	iItem = SubItemHitTest(&hti);
-		if (iItem >= 0) {	// if valid item
-			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-			if (pDoc != NULL) {	// if valid document
-				int	iTrackSel = hti.iSubItem - 1;	// skip index column; remaining columns map to selected tracks
-				if (iTrackSel >= 0 && iTrackSel < pDoc->m_arrTrackSel.GetSize()) {	// if valid track selection
-					int	iTrack = pDoc->m_arrTrackSel[iTrackSel];	// get track index
-					const CTrack& trk = pDoc->m_Seq.GetTrack(iTrack);
-					if (iItem < trk.GetLength()) {	// if item index within track's step array
-						int	nPos = iItem * trk.m_nQuant + trk.m_nOffset;	// convert step index to ticks
-						pDoc->SetPosition(nPos);	// go to step position
+		if (hti.iSubItem > 0) {	// if track column
+			if (iItem >= 0) {	// if valid item
+				CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+				if (pDoc != NULL) {	// if valid document
+					int	iTrackSel = hti.iSubItem - 1;	// skip index column; remaining columns map to selected tracks
+					if (iTrackSel >= 0 && iTrackSel < pDoc->m_arrTrackSel.GetSize()) {	// if valid track selection
+						int	iTrack = pDoc->m_arrTrackSel[iTrackSel];	// get track index
+						const CTrack& trk = pDoc->m_Seq.GetTrack(iTrack);
+						if (iItem < trk.GetLength()) {	// if item index within track's step array
+							int	nPos = iItem * trk.m_nQuant + trk.m_nOffset;	// convert step index to ticks
+							pDoc->SetPosition(nPos);	// go to step position
+						}
 					}
 				}
 			}
+		} else {	// index column
+			CGridCtrl::OnLButtonDown(nFlags, point);
 		}
 	} else {	// shift key up
 		CGridCtrl::OnLButtonDown(nFlags, point);
