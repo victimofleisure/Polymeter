@@ -347,15 +347,15 @@ id	open	close	type	description	rev	user
 427	12/01/20	12/04/20	done	go to next/previous dub should scroll vertically as needed to ensure found dub is visible	0.0.35.001	
 184	08/02/18	12/16/20	done	should be able to loop playback within a specified time range, especially in song view, even approximately	0.0.36.000	
 428	12/16/20	12/16/20	done	if song view has focus, edit keys misbehave in popup edit control; add focus edit checks to song view	0.0.36.000	
-432	01/15/21	01/19/21	done	import tracks from CSV file gives error if track's length is one	0.0.37.002	
-435	01/19/21	01/19/21	done	editing keys don't work within popup edit control when Live view has focus	0.0.37.002	
-436	01/19/21	01/19/21	done	select all shortcut doesn't work within popup edit control when Song view has focus	0.0.37.002	
-438	01/20/21	01/20/21	done	replace skips first matching track if selection mark is already on that track	0.0.37.002	
-439	01/20/21	01/20/21	done	find and replace should scroll view as needed to ensure matching track is visible	0.0.37.002	
-429	01/12/21	01/23/21	done	in Step Values bar, Step column should be one-origin; same for track fill dialog's step range	0.0.37.002	
-440	01/21/21	01/23/21	done	replace string not found shows empty message box	0.0.37.002	
-331	03/30/20	01/24/21	done	Step Values bar should provide a means of setting song position, via Ctrl+left-click on step value	0.0.37.002	
-441	01/23/21	01/24/21	done	display unique prime factors of selected track durations	0.0.37.002	
+432	01/15/21	01/19/21	done	import tracks from CSV file gives error if track's length is one	0.0.37.003	
+435	01/19/21	01/19/21	done	editing keys don't work within popup edit control when Live view has focus	0.0.37.003	
+436	01/19/21	01/19/21	done	select all shortcut doesn't work within popup edit control when Song view has focus	0.0.37.003	
+438	01/20/21	01/20/21	done	replace skips first matching track if selection mark is already on that track	0.0.37.003	
+439	01/20/21	01/20/21	done	find and replace should scroll view as needed to ensure matching track is visible	0.0.37.003	
+429	01/12/21	01/23/21	done	in Step Values bar, Step column should be one-origin; same for track fill dialog's step range	0.0.37.003	
+440	01/21/21	01/23/21	done	replace string not found shows empty message box	0.0.37.003	
+331	03/30/20	01/24/21	done	Step Values bar should provide a means of setting song position, via Ctrl+left-click on step value	0.0.37.003	
+441	01/23/21	01/24/21	done	display unique prime factors of selected track durations	0.0.37.003	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
