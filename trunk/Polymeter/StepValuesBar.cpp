@@ -19,6 +19,7 @@
 		09		23jan21	make step index column one-origin
 		10		24jan21	shift left-click to set song position
 		11		25jan21	fix shift left-click in index column
+		12		27jan21	use control key instead of shift
 		
 */
 
@@ -432,7 +433,7 @@ BOOL CStepValuesBar::CModGridCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoin
 
 void CStepValuesBar::CModGridCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	if (nFlags & MK_SHIFT) {	// if shift key down
+	if (nFlags & MK_CONTROL) {	// if control key down
 		LVHITTESTINFO	hti;
 		hti.pt = point;
 		int	iItem = SubItemHitTest(&hti);
