@@ -44,6 +44,7 @@
 		34		16dec20	add loop range to property change handler
 		35		20jan21	fix replace skipping over first match
 		36		23jan21	fix empty search text not found message box
+		37		27jan21	more replace fixes
 
 */
 
@@ -658,25 +659,27 @@ bool CMainFrame::DoFindReplace()
 		pDoc->SetModifiedFlag();
 	} else if (nFindDlgFlags & (FR_FINDNEXT | FR_REPLACE)) {	// if finding or replacing
 		CTrackView	*pTrackView = STATIC_DOWNCAST(CTrackView, pView);
-		int	iTrack = pTrackView->GetSelectionMark();	// start searching at selection mark
-		if (!(nFindDlgFlags & FR_REPLACE))	// if finding
-			iTrack++;	// start searching at track after selection mark
-		iTrack = pDoc->m_Seq.GetTracks().FindName(	// search for matching track name
-			m_pFindDlg->GetFindString(), iTrack, nTrackFindFlags);
-		if (iTrack >= 0) {	// if matching track name was found
-			pDoc->SelectOnly(iTrack);	// select matching track
-			if (nFindDlgFlags & FR_REPLACE) {	// if replacing
+		int	iTrack = pTrackView->GetSelectionMark();	// start at selection mark
+		if (iTrack >= 0 && (nFindDlgFlags & FR_REPLACE)) {	// if valid selection mark and replacing
+			CString	sName(pDoc->m_Seq.GetName(iTrack));	// get track name
+			int	nSubs;
+			if (nFindDlgFlags & FR_MATCHCASE)	// if matching case
+				nSubs = sName.Replace(m_pFindDlg->GetFindString(), m_pFindDlg->GetReplaceString());
+			else	// ignoring case
+				nSubs = StringReplaceNoCase(sName, m_pFindDlg->GetFindString(), m_pFindDlg->GetReplaceString());
+			if (nSubs) {	// if text was replaced
 				pDoc->NotifyUndoableEdit(iTrack, MAKELONG(UCODE_TRACK_PROP, CTrack::PROP_Name));
-				CString	sName(pDoc->m_Seq.GetName(iTrack));	// get track name
-				if (nFindDlgFlags & FR_MATCHCASE)	// if matching case
-					sName.Replace(m_pFindDlg->GetFindString(), m_pFindDlg->GetReplaceString());
-				else	// ignoring case
-					StringReplaceNoCase(sName, m_pFindDlg->GetFindString(), m_pFindDlg->GetReplaceString());
 				pDoc->m_Seq.SetName(iTrack, sName);	// update track name
 				CPolymeterDoc::CPropHint	hint(iTrack, CTrack::PROP_Name);
 				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_PROP, &hint);	// update views
 				pDoc->SetModifiedFlag();
 			}
+		}
+		iTrack++;	// start searching at track after selection mark
+		iTrack = pDoc->m_Seq.GetTracks().FindName(	// search for matching track name
+			m_pFindDlg->GetFindString(), iTrack, nTrackFindFlags);
+		if (iTrack >= 0) {	// if matching track name was found
+			pDoc->SelectOnly(iTrack);	// select matching track
 			pTrackView->EnsureVisible(iTrack);	// ensure matching track is visible
 		} else {	// matching track name not found
 			return false;	// failure: string not found
