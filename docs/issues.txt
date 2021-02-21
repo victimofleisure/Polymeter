@@ -356,6 +356,9 @@ id	open	close	type	description	rev	user
 440	01/21/21	01/23/21	done	replace string not found shows empty message box	0.0.37.003	
 331	03/30/20	01/24/21	done	Step Values bar should provide a means of setting song position, via Ctrl+left-click on step value	0.0.37.003	
 441	01/23/21	01/24/21	done	display unique prime factors of selected track durations	0.0.37.003	
+430	01/12/21	02/10/21	done	renaming multiple tracks should optionally append sequence numbers to keep names unique	0.0.37.004	
+442	02/10/21	02/13/21	done	in Step and Song views, Shift + right click should expand existing rectangular selection	0.0.37.004	
+443	02/13/21	02/15/21	done	add mapping targets for transport commands	0.0.37.004	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -419,7 +422,6 @@ id	open	close	type	description	rev	user
 407	09/17/20		hold	select all unmuted tracks; hardly worth cluttering up the Edit menu?		
 410	09/28/20		hold	live view position bars for track groups should reflect LCM of periods instead of maximum period; could be slow		
 416	10/20/20		hold	GraphViz PDF output looks better than SVG (if Adobe is installed) but it overrides our context menu		
-430	01/12/21		hold	renaming multiple tracks should optionally append sequence numbers to avoid duplicate names		
 431	01/13/21		hold	device change notification should retry missing MIDI device and close message box if successful		
 434	01/19/21		hold	graph should optionally indicate track type		
 433	01/19/21		hold	track should be a potential mapping source, so tracks can automate parameters; inject MIDI event?		
