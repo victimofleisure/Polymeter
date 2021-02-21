@@ -30,6 +30,7 @@
 		20		28jul20	add custom convergence size
 		21		07sep20	add apply preset and part messages
 		22		16nov20	refactor UpdateSongPosition
+		23		15feb21	add mapped command handler
 
 */
 
@@ -198,6 +199,7 @@ protected:
 	afx_msg LRESULT OnTrackStepChange(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPresetApply(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPartApply(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnMappedCommand(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnToolsDevices();
 	afx_msg void OnToolsConvergences();
 	afx_msg void OnToolsMidiLearn();

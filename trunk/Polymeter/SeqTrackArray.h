@@ -23,6 +23,7 @@
 		13		16nov20	add tick dependencies
 		14		04dec20	refactor find next dub time to return track index
 		15		16dec20	define initial tempo and time division
+		16		10feb21	overload set track property, add set unique names
 
 */
 
@@ -98,6 +99,9 @@ public:
 	const CDub&	GetDub(int iTrack, int iDub) const;
 	void	GetTrackProperty(int iTrack, int iProp, CComVariant& var) const;
 	void	SetTrackProperty(int iTrack, int iProp, const CComVariant& var);
+	void	SetTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& var);
+	void	SetTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CVariantArray& arrVar);
+	void	SetUniqueNames(const CIntArrayEx& arrSelection, CString sName);
 	void	GetUsedTracks(CIntArrayEx& arrUsedTrack, UINT nFlags = 0) const;
 	int		GetUsedTrackCount(UINT nFlags = 0) const;
 	bool	GetNoteVelocity(int iTrack, int iStep, STEP& nStep) const;

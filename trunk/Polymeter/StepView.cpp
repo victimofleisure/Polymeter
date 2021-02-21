@@ -12,6 +12,7 @@
 		02		18mar20	get song position from document instead of sequencer
 		03		09jul20	get view type from child frame instead of document
 		04		16dec20	add command to set loop from step selection
+		05		12feb21	add Shift + right click to extend existing selection
 
 */
 
@@ -1129,14 +1130,19 @@ void CStepView::OnRButtonDown(UINT nFlags, CPoint point)
 	if (iTrack >= 0 && iStep >= 0) {	// if hit on step
 		SetCapture();
 		m_nDragState = DS_TRACK;
-		m_ptDragOrigin = point + GetScrollPosition();	// include scrolling
-		// if step selection exists and hit within selection
-		if (HaveStepSelection() && m_rStepSel.PtInRect(CPoint(iStep, iTrack))) {
-			m_bDoContextMenu = true;	// enable context menu on button up
-		} else {	// no selection, or hit outside selection
-			ResetStepSelection();	// reset selection
-			m_rStepSel = CRect(CPoint(iStep, iTrack), CSize(1, 1));
-			UpdateStep(iTrack, iStep);	// select hit step
+		if ((nFlags & MK_SHIFT) && HaveStepSelection()) {	// if shift key down and step selection exists
+			m_rStepSel.UnionRect(m_rStepSel, CRect(CPoint(iStep, iTrack), CSize(1, 1)));
+			UpdateSteps(m_rStepSel);	// set selection to union of existing selection and step at cursor
+		} else {	// shift key up
+			m_ptDragOrigin = point + GetScrollPosition();	// include scrolling
+			// if step selection exists and hit within selection
+			if (HaveStepSelection() && m_rStepSel.PtInRect(CPoint(iStep, iTrack))) {
+				m_bDoContextMenu = true;	// enable context menu on button up
+			} else {	// no selection, or hit outside selection
+				ResetStepSelection();	// reset selection
+				m_rStepSel = CRect(CPoint(iStep, iTrack), CSize(1, 1));
+				UpdateStep(iTrack, iStep);	// select hit step
+			}
 		}
 	} else {	// out of bounds
 		ResetStepSelection();

@@ -18,6 +18,7 @@
 		08		17apr20	add track color
 		09		17jun20	in command help handler, try tracking help first
 		10		09jul20	add pointer to parent frame
+		11		10feb21	add option to keep track names unique
 
 */
 
@@ -398,9 +399,10 @@ void CTrackView::CTrackGridCtrl::OnItemChange(LPCTSTR pszText)
 		if (iSel < nSels) {	// if at least one track's property changed
 			if (pDoc->ValidateTrackProperty(arrSelection, iProp, valNew)) {	// if valid track property
 				pDoc->NotifyUndoableEdit(iProp, UCODE_MULTI_TRACK_PROP);
-				for (iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-					int	iSelTrack = arrSelection[iSel];
-					pDoc->m_Seq.SetTrackProperty(iSelTrack, iProp, valNew);	// set property
+				if (iProp == PROP_Name && theApp.m_Options.m_View_bUniqueTrackNames) {	// if property is name and unique names desired
+					pDoc->m_Seq.SetUniqueNames(arrSelection, pszText);	// append sequence number to keep names unique
+				} else {
+					pDoc->m_Seq.SetTrackProperty(arrSelection, iProp, valNew);	// set property
 				}
 				CPolymeterDoc::CMultiItemPropHint	hint(arrSelection, iProp);
 				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_TRACK_PROP, &hint);

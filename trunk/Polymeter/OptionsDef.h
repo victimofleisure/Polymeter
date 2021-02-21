@@ -14,6 +14,7 @@
 		04		14apr20	add send MIDI clock option
 		05		17apr20	add track color option
 		06		03jun20	add record input options
+		07		10feb21	add unique track names option
 
 */
 
@@ -45,6 +46,7 @@ PROPDEF(	View,		NONE,		VAR,		bool,		bShowCurPos,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowNoteNames,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowGMNames,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowTrackColors,	0,			0,			0,			NULL,		0)
+PROPDEF(	View,		NONE,		VAR,		bool,		bUniqueTrackNames,	1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		float,		fZoomDelta,			100.0f,		1.0f,		100.0f,		NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		int,		nLiveFontHeight,	30,			10,			100,		NULL,		0)
 PROPDEF(	General,	NONE,		VAR,		bool,		bPropertyDescrips,	1,			0,			0,			NULL,		0)

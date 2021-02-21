@@ -12,6 +12,7 @@
 		02		29mar20	add get/set input message for selected mappings
 		03		05apr20	add track step mapping
 		04		07sep20	add preset and part mapping
+		05		15feb21	add mapping targets for transport commands
 
 */
 
@@ -28,7 +29,7 @@
 #define RK_MAPPING_OUT_EVENT _T("OutEvent")
 
 const LPCTSTR CMapping::m_arrSpecialTarget[SPECIAL_TARGETS] = {
-	#define MAPPINGDEF_SPECIAL_TARGET(name) _T(#name),
+	#define MAPPINGDEF_SPECIAL_TARGET(name, strid) _T(#name),
 	#include "MappingDef.h"	// generate names of special output events
 };
 
@@ -222,6 +223,18 @@ bool CMappingArray::MapMidiEvent(DWORD dwInEvent, CDWordArrayEx& arrOutEvent) co
 						break;
 					case CMapping::OUT_Part:
 						theApp.GetMainFrame()->PostMessage(UWM_PART_APPLY, map.m_nOutControl, nDataVal);
+						break;
+					case CMapping::OUT_Play:
+						theApp.GetMainFrame()->PostMessage(UWM_MAPPED_COMMAND, ID_TRANSPORT_PLAY, nDataVal);
+						break;
+					case CMapping::OUT_Pause:
+						theApp.GetMainFrame()->PostMessage(UWM_MAPPED_COMMAND, ID_TRANSPORT_PAUSE, nDataVal);
+						break;
+					case CMapping::OUT_Record:
+						theApp.GetMainFrame()->PostMessage(UWM_MAPPED_COMMAND, ID_TRANSPORT_RECORD, nDataVal);
+						break;
+					case CMapping::OUT_Loop:
+						theApp.GetMainFrame()->PostMessage(UWM_MAPPED_COMMAND, ID_TRANSPORT_LOOP, nDataVal);
 						break;
 					default:
 						int	iTrack = map.m_nTrack;

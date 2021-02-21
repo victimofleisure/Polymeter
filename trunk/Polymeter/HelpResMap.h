@@ -219,6 +219,7 @@
 {IDS_OPT_NAME_View_bShowGMNames,		IDH_Options_View_Show_General_MIDI_Names},
 {IDS_OPT_NAME_View_bShowNoteNames,		IDH_Options_View_Show_Note_Names},
 {IDS_OPT_NAME_View_bShowTrackColors,	IDH_Options_View_Show_Track_Colors},
+{IDS_OPT_NAME_View_bUniqueTrackNames,	IDH_Options_View_Unique_Track_Names},
 {IDS_OPT_NAME_View_fUpdateFreq,			IDH_Options_View_Update_Frequency},
 {IDS_OPT_NAME_View_fZoomDelta,			IDH_Options_View_Zoom_Step},
 {IDS_OPT_NAME_View_nLiveFontHeight,		IDH_Options_View_Live_View_Font_Height},

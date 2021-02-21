@@ -13,6 +13,7 @@
 		03		01apr20	add generic context menu method
 		04		05apr20	add track step change message
 		05		07sep20	add apply preset and part messages
+		06		15feb21	add mapped command message
 
 		global definitions and inlines
 
@@ -110,6 +111,7 @@ enum {	// application-wide user window messages, based on WP_APP
 	UWM_TRACK_STEP_CHANGE,		// wParam: track index, lParam: step index
 	UWM_PRESET_APPLY,			// wParam: preset index, lParam: none
 	UWM_PART_APPLY,				// wParam: part index, lParam: bool mute state
+	UWM_MAPPED_COMMAND,			// wParam: command ID, lParam: varies
 };
 
 // undo natter should always be zero in a shipping version

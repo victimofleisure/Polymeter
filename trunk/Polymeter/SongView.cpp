@@ -24,6 +24,7 @@
 		14		16dec20	add command to set loop from cell selection
 		15		16dec20	add focus edit checks for standard editing commands
 		16		19jan21	add focus edit check for select all
+		17		12feb21	add Shift + right click to extend existing selection
 
 */
 
@@ -755,10 +756,15 @@ void CSongView::OnRButtonDown(UINT nFlags, CPoint point)
 	if (iTrack >= 0 && iCell >= 0) {	// if hit on cell
 		SetCapture();
 		m_nDragState = DS_TRACK;
-		m_ptDragOrigin = point + GetScrollPosition();	// include scrolling
-		ResetSelection();	// reset selection
-		m_rCellSel = CRect(CPoint(iCell, iTrack), CSize(1, 1));
-		UpdateCell(iTrack, iCell);	// select hit cell
+		if ((nFlags & MK_SHIFT) && HaveSelection()) {	// if shift key down and cell selection exists
+			m_rCellSel.UnionRect(m_rCellSel, CRect(CPoint(iCell, iTrack), CSize(1, 1)));
+			UpdateCells(m_rCellSel);	// set selection to union of existing selection and cell at cursor
+		} else {
+			m_ptDragOrigin = point + GetScrollPosition();	// include scrolling
+			ResetSelection();	// reset selection
+			m_rCellSel = CRect(CPoint(iCell, iTrack), CSize(1, 1));
+			UpdateCell(iTrack, iCell);	// select hit cell
+		}
 	} else {	// out of bounds
 		ResetSelection();
 		pDoc->Deselect();

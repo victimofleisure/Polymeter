@@ -66,6 +66,7 @@
 		56		16dec20	add looping of playback
 		57		23jan21	make fill dialog's step range one-origin
 		58		24jan21	add prime factors command
+		59		10feb21	use set track property overload for selected tracks
 
 */
 
@@ -1431,11 +1432,7 @@ void CPolymeterDoc::RestoreMultiTrackProperty(const CUndoState& State)
 {
 	int	iProp = State.GetCtrlID();
 	const CUndoMultiItemProp	*pInfo = static_cast<CUndoMultiItemProp*>(State.GetObj());
-	int	nSels = pInfo->m_arrSelection.GetSize();
-	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
-		int	iTrack = pInfo->m_arrSelection[iSel];
-		m_Seq.SetTrackProperty(iTrack, iProp, pInfo->m_arrVal[iSel]);
-	}
+	m_Seq.SetTrackProperty(pInfo->m_arrSelection, iProp, pInfo->m_arrVal);
 	if (iProp == PROP_Mute)	// if property is mute
 		m_Seq.RecordDub(pInfo->m_arrSelection);
 	CMultiItemPropHint	hint(pInfo->m_arrSelection, iProp);

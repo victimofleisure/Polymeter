@@ -45,6 +45,7 @@
 		35		20jan21	fix replace skipping over first match
 		36		23jan21	fix empty search text not found message box
 		37		27jan21	more replace fixes
+		38		15feb21	add mapped command handler
 
 */
 
@@ -740,6 +741,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_MESSAGE(UWM_TRACK_STEP_CHANGE, OnTrackStepChange)
 	ON_MESSAGE(UWM_PRESET_APPLY, OnPresetApply)
 	ON_MESSAGE(UWM_PART_APPLY, OnPartApply)
+	ON_MESSAGE(UWM_MAPPED_COMMAND, OnMappedCommand)
 	ON_COMMAND(ID_EDIT_FIND, OnEditFind)
 	ON_COMMAND(ID_EDIT_REPLACE, OnEditReplace)
 	ON_REGISTERED_MESSAGE(WM_FINDREPLACE, OnFindReplace)
@@ -1105,7 +1107,6 @@ LRESULT CMainFrame::OnPresetApply(WPARAM wParam, LPARAM lParam)
 
 LRESULT CMainFrame::OnPartApply(WPARAM wParam, LPARAM lParam)
 {
-	UNREFERENCED_PARAMETER(lParam);
 	// this message can be posted by worker threads, so proceed cautiously
 	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
 	if (pDoc != NULL) {	// if valid document
@@ -1114,6 +1115,31 @@ LRESULT CMainFrame::OnPartApply(WPARAM wParam, LPARAM lParam)
 			pDoc->m_Seq.SetSelectedMutes(pDoc->m_arrPart[iPart].m_arrTrackIdx, lParam != 0);
 			pDoc->m_Seq.RecordDub();
 			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_SOLO);
+		}
+	}
+	return 0;
+}
+
+LRESULT CMainFrame::OnMappedCommand(WPARAM wParam, LPARAM lParam)
+{
+	// this message can be posted by worker threads, so proceed cautiously
+	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
+	if (pDoc != NULL) {	// if valid document
+		switch (wParam) {
+		case ID_TRANSPORT_PLAY:
+			pDoc->Play(lParam != 0);
+			break;
+		case ID_TRANSPORT_PAUSE:
+			pDoc->m_Seq.Pause(lParam != 0);
+			break;
+		case ID_TRANSPORT_RECORD:
+			pDoc->Play(lParam != 0, true);
+			break;
+		case ID_TRANSPORT_LOOP:
+			pDoc->m_Seq.SetLooping(lParam != 0);
+			break;
+		default:
+			NODEFAULTCASE;
 		}
 	}
 	return 0;

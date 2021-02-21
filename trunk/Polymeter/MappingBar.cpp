@@ -13,6 +13,7 @@
 		03		05apr20	add track step mapping
 		04		07sep20	add preset and part mapping
 		05		19nov20	add sender argument to set mapping property
+		06		15feb21	add mapping targets for transport commands
 		
 */
 
@@ -75,9 +76,8 @@ void CMappingBar::InitEventNames()
 	for (int iProp = 0; iProp < CTrackBase::PROPERTIES; iProp++) {	// for each track property
 		m_arrOutputEventName[MIDI_CHANNEL_VOICE_MESSAGES + iProp] = LDS(CTrackBase::GetPropertyNameID(iProp));
 	}
-	m_arrOutputEventName[CMapping::OUT_Step] = LDS(IDS_TRK_STEP);
-	m_arrOutputEventName[CMapping::OUT_Preset] = LDS(IDS_BAR_Presets);
-	m_arrOutputEventName[CMapping::OUT_Part] = LDS(IDS_BAR_Parts);
+	#define MAPPINGDEF_SPECIAL_TARGET(name, strid) m_arrOutputEventName[CMapping::OUT_##name] = LDS(strid);
+	#include "MappingDef.h"	// generate display names of special output events
 }
 
 void CMappingBar::OnShowChanged(bool bShow)

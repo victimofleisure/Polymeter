@@ -11,6 +11,7 @@
 		01		29mar20	add get/set input message for selected mappings
 		02		05apr20	add track step mapping
 		03		07sep20	add preset and part mapping
+		04		13feb21	add string ID to special target macro
 
 */
 
@@ -47,12 +48,12 @@ public:
 		#include "MidiCtrlrDef.h"	// enumerate MIDI channel voice messages
 		#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) OUT_##name,
 		#include "TrackDef.h"	// enumerate track properties
-		#define MAPPINGDEF_SPECIAL_TARGET(name) OUT_##name,
+		#define MAPPINGDEF_SPECIAL_TARGET(name, strid) OUT_##name,
 		#include "MappingDef.h"	// enumerate special targets
 		OUTPUT_EVENTS
 	};
 	enum {	// special targets
-		#define MAPPINGDEF_SPECIAL_TARGET(name) SPOUTEVT_##name,
+		#define MAPPINGDEF_SPECIAL_TARGET(name, strid) SPOUTEVT_##name,
 		#include "MappingDef.h"	// enumerate special targets
 		SPECIAL_TARGETS
 	};

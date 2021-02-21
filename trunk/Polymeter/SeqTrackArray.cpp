@@ -24,6 +24,7 @@
 		14		16nov20	add tick dependencies
 		15		01dec20	in find next dub time, check for last duplicate
 		16		04dec20	refactor find next dub time to return track index
+		17		10feb21	overload set track property, add set unique names
 
 */
 
@@ -219,6 +220,41 @@ void CSeqTrackArray::SetTrackProperty(int iTrack, int iProp, const CComVariant& 
 		}
 	default:
 		NODEFAULTCASE;
+	}
+}
+
+void CSeqTrackArray::SetTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& var)
+{
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iSelTrack = arrSelection[iSel];
+		SetTrackProperty(iSelTrack, iProp, var);	// set property
+	}
+}
+
+void CSeqTrackArray::SetTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CVariantArray& arrVar)
+{
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iSelTrack = arrSelection[iSel];
+		SetTrackProperty(iSelTrack, iProp, arrVar[iSel]);	// set property
+	}
+}
+
+void CSeqTrackArray::SetUniqueNames(const CIntArrayEx& arrSelection, CString sName)
+{
+	if (sName.IsEmpty()) {	// if empty name
+		SetTrackProperty(arrSelection, PROP_Name, _T(""));
+	} else {	// name isn't empty
+		CString	sSeq;
+		CComVariant	varName;
+		int	nSels = arrSelection.GetSize();
+		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+			int	iSelTrack = arrSelection[iSel];
+			sSeq.Format(_T("%d"), iSel + 1);	// create sequence number string
+			varName = sName + ' ' + sSeq;	// append sequence number string
+			SetTrackProperty(iSelTrack, PROP_Name, varName);	// set property
+		}
 	}
 }
 
