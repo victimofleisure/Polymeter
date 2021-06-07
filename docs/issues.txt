@@ -361,6 +361,8 @@ id	open	close	type	description	rev	user
 443	02/13/21	02/15/21	done	add mapping targets for transport commands	0.0.37.004	
 444	03/14/21	03/16/21	done	Song view doesn't enable edit commands for track selection only	0.0.37.005	
 445	03/14/21	03/16/21	done	in Song view, left-clicking track name tooltip should hide tooltip	0.0.37.005	
+446	04/07/21	05/30/21	done	Step Values bar doesn't set empty items for multiple selection of tracks having differing lengths	0.0.37.005	
+447	05/01/21	06/07/21	done	rename rounding and truncations functions to avoid conflicts with C++ 11	0.0.37.005	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -444,4 +446,3 @@ id	open	close	type	description	rev	user
 301	11/12/19		punt	popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful		
 22	03/22/18		todo	context-sensitive help		
 23	03/22/18		todo	enable UI customization; new command IDs must be prefixed so renumbering doesn't change existing IDs		
-446	04/07/21		bug	Step Values bar doesn't set empty items for multiple selection of tracks having differing lengths		
