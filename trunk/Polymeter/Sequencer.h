@@ -24,6 +24,7 @@
 		14		19may20	refactor record dub methods to include conditional
 		15		17jul20	refactor set song mode
 		16		16dec20	add looping of playback
+		17		07jun21	rename rounding functions
 
 */
 
@@ -387,22 +388,22 @@ inline void CSequencer::SetSendMidiClock(bool bEnable)
 
 inline LONGLONG CSequencer::ConvertPositionToSeconds(LONGLONG nPos) const
 {
-	return round64(static_cast<double>(nPos) / m_nTimeDiv / m_fTempo * 60);
+	return Round64(static_cast<double>(nPos) / m_nTimeDiv / m_fTempo * 60);
 }
 
 inline LONGLONG CSequencer::ConvertSecondsToPosition(LONGLONG nSecs) const
 {
-	return round64(static_cast<double>(nSecs) / 60 * m_fTempo * m_nTimeDiv);
+	return Round64(static_cast<double>(nSecs) / 60 * m_fTempo * m_nTimeDiv);
 }
 
 inline LONGLONG CSequencer::ConvertPositionToMilliseconds(LONGLONG nPos) const
 {
-	return round64(static_cast<double>(nPos) / m_nTimeDiv / m_fTempo * 60000);
+	return Round64(static_cast<double>(nPos) / m_nTimeDiv / m_fTempo * 60000);
 }
 
 inline LONGLONG CSequencer::ConvertMillisecondsToPosition(LONGLONG nMillis) const
 {
-	return round64(static_cast<double>(nMillis) / 60000 * m_fTempo * m_nTimeDiv);
+	return Round64(static_cast<double>(nMillis) / 60000 * m_fTempo * m_nTimeDiv);
 }
 
 inline void CSequencer::RecordDub(int iTrack)

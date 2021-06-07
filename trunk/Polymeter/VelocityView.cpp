@@ -9,6 +9,7 @@
 		rev		date	comments
         00      11may18	initial version
 		01		09may19	align origin line with velocity bar midpoint
+		02		07jun21	rename rounding functions
 
 */
 
@@ -149,7 +150,7 @@ int CVelocityView::HitTest(CPoint point, int& iStep) const
 		int	iTrack = pDoc->m_arrTrackSel[iSel];
 		int	nSteps = pDoc->m_Seq.GetLength(iTrack);
 		double	fStepWidth = m_pStepView->GetStepWidthEx(iTrack);
-		int	iHitStep = trunc(x / fStepWidth);
+		int	iHitStep = Trunc(x / fStepWidth);
 		if (iHitStep >= 0 && iHitStep < nSteps) {
 			STEP	nStep;
 			if (pDoc->m_Seq.GetNoteVelocity(iTrack, iHitStep, nStep)) {
@@ -172,7 +173,7 @@ bool CVelocityView::GetStepVal(CPoint point, int& nMinVal, int& nMaxVal) const
 		int	iTrack = pDoc->m_arrTrackSel[iSel];
 		int	nSteps = pDoc->m_Seq.GetLength(iTrack);
 		double	fStepWidth = m_pStepView->GetStepWidthEx(iTrack);
-		int	iHitStep = trunc(x / fStepWidth);
+		int	iHitStep = Trunc(x / fStepWidth);
 		if (iHitStep >= 0 && iHitStep < nSteps) {
 			STEP	nStep;
 			if (pDoc->m_Seq.GetNoteVelocity(iTrack, iHitStep, nStep)) {
@@ -215,7 +216,7 @@ void CVelocityView::UpdateDragDataTip(int y)
 		CRect	rClient;
 		GetClientRect(rClient);
 		double	ry = y;
-		int	nVel = round((1 - ry / rClient.Height()) * MIDI_NOTE_MAX);	// y-axis is reversed
+		int	nVel = Round((1 - ry / rClient.Height()) * MIDI_NOTE_MAX);	// y-axis is reversed
 		if (m_pStepView->m_pParent->IsVelocitySigned())	// if showing signed velocities
 			nVel -= MIDI_NOTES / 2;	// convert to signed
 		CString	sTip;
@@ -274,8 +275,8 @@ void CVelocityView::UpdateVelocities(const CRect& rSpan, int iWaveform)
 		int	iTrack = pDoc->m_arrTrackSel[iSel];
 		int	nSteps = pDoc->m_Seq.GetLength(iTrack);
 		double	fStepWidth = m_pStepView->GetStepWidthEx(iTrack);
-		int	iFirstStep = trunc(x1 / fStepWidth);
-		int	iLastStep = trunc(x2 / fStepWidth);
+		int	iFirstStep = Trunc(x1 / fStepWidth);
+		int	iLastStep = Trunc(x2 / fStepWidth);
 		if (iLastStep >= 0 && iFirstStep < nSteps) {	// if track's steps intersect span
 			iFirstStep = max(iFirstStep, 0);
 			iLastStep = min(iLastStep, nSteps - 1);
@@ -291,7 +292,7 @@ void CVelocityView::UpdateVelocities(const CRect& rSpan, int iWaveform)
 					if (abs(nDeltaX) < fStepWidth) {	// if span is narrower than bar
 						y = rSpan.bottom;	// get y directly from cursor position; improves stability
 					} else {	// span is wider than bar; must compute intercept to avoid missing bars
-						double	x = round((iStep + 0.5) * fStepWidth) - x1;	// compute x at center of bar
+						double	x = Round((iStep + 0.5) * fStepWidth) - x1;	// compute x at center of bar
 						if (iWaveform < 0) {
 							y = x * fSlope + y1;	// compute y-intercept with span at center of bar
 						} else {
@@ -301,7 +302,7 @@ void CVelocityView::UpdateVelocities(const CRect& rSpan, int iWaveform)
 							y = y1 + (GetWave(iWaveform, fPhase) + 1) * nDeltaY / 2;
 						}
 					}
-					int	nVel = round((1 - y / nHeight) * MIDI_NOTE_MAX);	// y-axis is reversed
+					int	nVel = Round((1 - y / nHeight) * MIDI_NOTE_MAX);	// y-axis is reversed
 					nVel = CLAMP(nVel, nMinVel, MIDI_NOTE_MAX);
 					nStep = static_cast<STEP>((nStep & SB_TIE) | nVel);
 					if (!m_bIsModified) {	// if first modification, notify undo
@@ -344,7 +345,7 @@ void CVelocityView::OnDraw(CDC* pDC)
 	CSize	szClient(rClient.Size());
 	const COLORREF	clrBeatLine = m_pStepView->GetBeatLineColor();
 	const COLORREF	clrBar = RGB(0, 0, 0);
-	int	oy = szClient.cy - round(double(MIDI_NOTES / 2) / MIDI_NOTE_MAX * szClient.cy);
+	int	oy = szClient.cy - Round(double(MIDI_NOTES / 2) / MIDI_NOTE_MAX * szClient.cy);
 	pDC->FillSolidRect(rClip.left, oy, szClient.cx, 1, clrBeatLine);
 	int	nScrollPos = m_pStepView->GetScrollPosition().x;
 	int	x1 = rClip.left + nScrollPos;
@@ -352,12 +353,12 @@ void CVelocityView::OnDraw(CDC* pDC)
 	int	nBeatWidth = m_pStepView->GetBeatWidth();
 	double	fBeatWidth = nBeatWidth * m_pStepView->GetZoom();
 	if (fBeatWidth >= CStepView::MIN_BEAT_LINE_SPACING) {
-		int	iFirstBeat = trunc(x1 / fBeatWidth);
+		int	iFirstBeat = Trunc(x1 / fBeatWidth);
 		iFirstBeat = max(iFirstBeat, 0);
-		int	iLastBeat = trunc(x2 / fBeatWidth);
+		int	iLastBeat = Trunc(x2 / fBeatWidth);
 		iLastBeat = max(iLastBeat, 0);
 		for (int iBeat = iFirstBeat; iBeat <= iLastBeat; iBeat++) {	// for each beat
-			int	x = round(iBeat * fBeatWidth - nScrollPos);
+			int	x = Round(iBeat * fBeatWidth - nScrollPos);
 			pDC->FillSolidRect(x, rClip.top, 1, szClient.cy, clrBeatLine);
 		}
 	}
@@ -367,17 +368,17 @@ void CVelocityView::OnDraw(CDC* pDC)
 		int	iTrack = pDoc->m_arrTrackSel[iSel];
 		int	nTrackSteps = pDoc->m_Seq.GetLength(iTrack);
 		double	fStepWidth = m_pStepView->GetStepWidthEx(iTrack);
-		int	nStepWidth = max(round(fStepWidth), 1);
-		int	iFirstStep = trunc(x1 / fStepWidth);
+		int	nStepWidth = max(Round(fStepWidth), 1);
+		int	iFirstStep = Trunc(x1 / fStepWidth);
 		iFirstStep = CLAMP(iFirstStep, 0, nTrackSteps - 1);
-		int	iLastStep = trunc(x2 / fStepWidth);
+		int	iLastStep = Trunc(x2 / fStepWidth);
 		iLastStep = CLAMP(iLastStep, 0, nTrackSteps - 1);
 		for (int iStep = iFirstStep; iStep <= iLastStep; iStep++) {	// for each step
 			STEP	nStep;
 			if (pDoc->m_Seq.GetNoteVelocity(iTrack, iStep, nStep)) {
-				int	x = m_nBarBorder - nScrollPos + round(iStep * fStepWidth);
+				int	x = m_nBarBorder - nScrollPos + Round(iStep * fStepWidth);
 				int	nVal = nStep & SB_VELOCITY;
-				int	nHeight = round(static_cast<double>(nVal) / MIDI_NOTE_MAX * szClient.cy);
+				int	nHeight = Round(static_cast<double>(nVal) / MIDI_NOTE_MAX * szClient.cy);
 				int	y = szClient.cy - nHeight;
 				int	nBarWidth = max(nStepWidth - m_nBarBorder * 2, 1);
 				CRect	rBar(CPoint(x, y), CSize(nBarWidth, nHeight)); 

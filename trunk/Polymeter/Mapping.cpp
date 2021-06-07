@@ -13,6 +13,7 @@
 		03		05apr20	add track step mapping
 		04		07sep20	add preset and part mapping
 		05		15feb21	add mapping targets for transport commands
+		06		07jun21	rename rounding functions
 
 */
 
@@ -183,7 +184,7 @@ bool CMappingArray::MapMidiEvent(DWORD dwInEvent, CDWordArrayEx& arrOutEvent) co
 			else	// input message lacks a control parameter
 				nDataVal = MIDI_P1(dwInEvent);	// get data value from input message P1
 			int	nDeltaRange = map.m_nRangeEnd - map.m_nRangeStart;	// can be negative if start > end
-			nDataVal = round(nDataVal / 127.0 * nDeltaRange) + map.m_nRangeStart;	// apply range
+			nDataVal = Round(nDataVal / 127.0 * nDeltaRange) + map.m_nRangeStart;	// apply range
 			if (map.m_nOutEvent < MIDI_CHANNEL_VOICE_MESSAGES) {	// if output event is a channel voice message
 				nDataVal = CLAMP(nDataVal, 0, MIDI_NOTE_MAX);	// clamp result to valid MIDI data range
 				int	nP1, nP2;

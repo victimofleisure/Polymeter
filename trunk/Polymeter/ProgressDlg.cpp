@@ -10,6 +10,7 @@
         00      30aug05	initial version
 		01		10aug07	add template resource ID to ctor
 		02		27dec09	add ShowPercent
+		03		07jun21	rename rounding functions
 
         progress dialog
  
@@ -85,7 +86,7 @@ void CProgressDlg::SetPos(int Pos)
 		m_Progress.GetRange(Lower, Upper);
 		int	Range = abs(Upper - Lower);
 		if (Range) {	// avoid potential divide by zero
-			int	percent = round((Pos - Lower) * 100.0 / Range);
+			int	percent = Round((Pos - Lower) * 100.0 / Range);
 			if (percent != m_PrevPercent) {	// if percentage changed
 				m_PrevPercent = percent;
 				CString	s;

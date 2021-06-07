@@ -9,6 +9,7 @@
 		rev		date	comments
 		00		14apr17	initial version
 		01		02apr20	remove project-specific items
+		02		07jun21	rename rounding functions
 
 */
 
@@ -56,7 +57,7 @@ CRecordDlg::~CRecordDlg()
 void CRecordDlg::FrameToTime(int iFrame, double fFrameRate, CString& sTime)
 {
 	if (fFrameRate > 0) {
-		int	Secs = round(iFrame / fFrameRate);
+		int	Secs = Round(iFrame / fFrameRate);
 		sTime.Format(_T("%d:%02d:%02d"), Secs / 3600, Secs % 3600 / 60, Secs % 60);
 	} else
 		sTime.Empty();
@@ -70,7 +71,7 @@ int CRecordDlg::TimeToFrame(LPCTSTR pszTime, double fFrameRate)
 	int	ps = _stscanf_s(pszTime, _T("%d%*[: ]%d%*[: ]%d"), &ip[0], &ip[1], &ip[2]);
 	if (ps >= 0)
 		CopyMemory(&op[PLACES - ps], ip, ps * sizeof(int));
-	return(round(op[0] * fFrameRate * 3600 + op[1] * fFrameRate * 60 + op[2] * fFrameRate));
+	return(Round(op[0] * fFrameRate * 3600 + op[1] * fFrameRate * 60 + op[2] * fFrameRate));
 }
 
 void CRecordDlg::SecsToTime(int nSecs, CString& sTime)
@@ -128,12 +129,12 @@ int CRecordDlg::GetCurDurationUnit() const
 
 int CRecordDlg::SecsToFrames(int Secs) const
 {
-	return(round(Secs * GetCurFrameRate()));
+	return(Round(Secs * GetCurFrameRate()));
 }
 
 int CRecordDlg::FramesToSecs(int Frames) const
 {
-	return(round(Frames / GetCurFrameRate()));
+	return(Round(Frames / GetCurFrameRate()));
 }
 
 void CRecordDlg::DoDataExchange(CDataExchange* pDX)

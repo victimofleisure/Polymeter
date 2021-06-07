@@ -10,6 +10,7 @@
         00      08oct13	initial version
         01      07may14	refactor into abstract base class
 		02		09sep14	in TimerProc, change idEvent type to fix compiler error
+		03		07jun21	rename rounding functions
 
 		automated undo test
  
@@ -103,7 +104,7 @@ W64INT CUndoTest::RandW64INT(W64INT Vals)
 {
 	if (Vals <= 0)
 		return(-1);
-	W64INT	i = truncW64INT(rand() / double(RAND_MAX) * Vals);
+	W64INT	i = TruncW64INT(rand() / double(RAND_MAX) * Vals);
 	return(min(i, Vals - 1));
 }
 
@@ -234,7 +235,7 @@ bool CUndoTest::Run(bool Enable)
 		// build array of undo codes
 		for (int i = 0; i < m_EditInfo.GetSize(); i++) {
 			// set probability of edits by duplicating them
-			int	dups = round(m_EditInfo[i].Probability * 10);
+			int	dups = Round(m_EditInfo[i].Probability * 10);
 			for (int j = 0; j < dups; j++)
 				m_UndoCode.Add(m_EditInfo[i].UndoCode);
 		}

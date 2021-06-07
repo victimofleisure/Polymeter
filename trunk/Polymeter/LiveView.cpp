@@ -21,6 +21,7 @@
 		11		24sep20	order parts by lowest track index
 		12		16nov20	meter and tempo change must update song position
 		13		19jan21	add edit command handlers
+		14		07jun21	rename rounding functions
 
 */
 
@@ -1051,7 +1052,7 @@ void CLiveView::CPosBarCtrl::UpdateBars(LONGLONG nSongPos)
 		int	nPos = nSongPos % nLength;
 		if (nPos < 0)
 			nPos += nLength;
-		nPos = round(double(nPos) / nLength * szBar.cx);
+		nPos = Round(double(nPos) / nLength * szBar.cx);
 		int	nPrevPos = info.nCurPos;
 		if (nPos != nPrevPos) {	// if position changed
 			info.nCurPos = nPos;

@@ -15,6 +15,7 @@
 		05		19apr18	move spin control creation to helper
 		06		24apr18	standardize names
 		07		28apr18	make AddSpin virtual
+		08		07jun21	rename rounding functions
 
         numeric edit control
  
@@ -120,7 +121,7 @@ inline double CNumEdit::GetVal() const
 
 inline int CNumEdit::GetIntVal() const
 {
-	return(round(m_fVal));
+	return(Round(m_fVal));
 }
 
 inline void CNumEdit::SetScale(double fScale)

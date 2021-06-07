@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		04oct12	initial version
+		01		07jun21	use title case to avoid conflicts with C++ 11
 
 		optimized rounding and truncation
 
@@ -19,7 +20,7 @@
 #include "intrin.h"		// for SSE intrinsics
 #endif
 
-inline int round(double x)	// round to 32-bit integer
+inline int Round(double x)	// round to 32-bit integer
 {
 #ifdef _WIN64
     return(_mm_cvtsd_si32(_mm_set_sd(x)));
@@ -33,7 +34,7 @@ inline int round(double x)	// round to 32-bit integer
 #endif
 }
 
-inline int trunc(double x)	// truncate to 32-bit integer
+inline int Trunc(double x)	// truncate to 32-bit integer
 {
 #ifdef _WIN64
     return(_mm_cvttsd_si32(_mm_set_sd(x)));
@@ -54,7 +55,7 @@ inline int trunc(double x)	// truncate to 32-bit integer
 #endif
 }
 
-inline LONGLONG round64(double x)	// round to 64-bit integer
+inline LONGLONG Round64(double x)	// round to 64-bit integer
 {
 #ifdef _WIN64
     return(_mm_cvtsd_si64x(_mm_set_sd(x)));
@@ -68,7 +69,7 @@ inline LONGLONG round64(double x)	// round to 64-bit integer
 #endif
 }
 
-inline LONGLONG trunc64(double x)	// truncate to 64-bit integer
+inline LONGLONG Trunc64(double x)	// truncate to 64-bit integer
 {
 #ifdef _WIN64
     return(_mm_cvttsd_si64x(_mm_set_sd(x)));
@@ -89,20 +90,20 @@ inline LONGLONG trunc64(double x)	// truncate to 64-bit integer
 #endif
 }
 
-inline W64INT roundW64INT(double x)	// round to W64INT
+inline W64INT RoundW64INT(double x)	// round to W64INT
 {
 #ifdef _WIN64
-	return(round64(x));
+	return(Round64(x));
 #else
-	return(round(x));
+	return(Round(x));
 #endif
 }
 
-inline W64INT truncW64INT(double x)	// truncate to W64INT
+inline W64INT TruncW64INT(double x)	// truncate to W64INT
 {
 #ifdef _WIN64
-	return(trunc64(x));
+	return(Trunc64(x));
 #else
-	return(trunc(x));
+	return(Trunc(x));
 #endif
 }

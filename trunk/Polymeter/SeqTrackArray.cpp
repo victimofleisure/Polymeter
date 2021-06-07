@@ -25,6 +25,7 @@
 		15		01dec20	in find next dub time, check for last duplicate
 		16		04dec20	refactor find next dub time to return track index
 		17		10feb21	overload set track property, add set unique names
+		18		07jun21	rename rounding functions
 
 */
 
@@ -837,7 +838,7 @@ void CSeqTrackArray::ScaleSteps(int iTrack, int iStep, int nSteps, double fScale
 			int	nVel = step & SB_VELOCITY;	// mask off velocity
 			if (bSigned)	// if signed scaling
 				nVel -= 64;		// deduct origin
-			nVel = round(nVel * fScale);	// scale velocity
+			nVel = Round(nVel * fScale);	// scale velocity
 			if (bSigned)	// if signed scaling
 				nVel += 64;		// restore origin
 			step &= ~SB_VELOCITY;	// zero velocity, preserving tie bit

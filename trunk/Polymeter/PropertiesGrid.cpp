@@ -22,6 +22,7 @@
 		12		05jun18	in TrackToolTip, fix cast to derived property
 		13		26sep18	in enum property, overload PushChar and OnDblClk
 		14		26sep18	in PreTranslateMessage, add Alt+Down to drop list
+		15		07jun21	rename rounding functions
 
 */
 
@@ -449,12 +450,12 @@ void CValidPropertyGridProperty::GetValueRange(int& nMinVal, int& nMaxVal) const
 		nMaxVal = m_vMaxVal.iVal;
 		break;
 	case VT_R4:
-		nMinVal = round(m_vMinVal.fltVal);
-		nMaxVal = round(m_vMaxVal.fltVal);
+		nMinVal = Round(m_vMinVal.fltVal);
+		nMaxVal = Round(m_vMaxVal.fltVal);
 		break;
 	case VT_R8:
-		nMinVal = round(m_vMinVal.dblVal);
-		nMaxVal = round(m_vMaxVal.dblVal);
+		nMinVal = Round(m_vMinVal.dblVal);
+		nMaxVal = Round(m_vMaxVal.dblVal);
 		break;
 	default:
 		nMinVal = 0;

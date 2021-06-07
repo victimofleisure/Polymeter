@@ -11,6 +11,7 @@
 		01		05apr20	draw bottom gridline
 		02		06apr20	change background color to window color
 		03		29jul20	add tool tip for truncated names
+		04		16mar21	in left button down handler, hide tool tip if needed
 
 */
 
@@ -213,6 +214,24 @@ BOOL CSongTrackView::PreTranslateMessage(MSG* pMsg)
 		//  give main frame a try
 		if (theApp.GetMainFrame()->SendMessage(UWM_HANDLE_DLG_KEY, reinterpret_cast<WPARAM>(pMsg)))
 			return TRUE;	// key was handled so don't process further
+		if (pMsg->message == WM_KEYDOWN) {
+			switch (pMsg->wParam) {
+			case VK_UP:
+				printf("up ");
+				break;
+			case VK_DOWN:
+				if (m_iSelMark < 0)
+					m_iSelMark = 0;
+				if (m_iSelMark < GetDocument()->GetTrackCount() - 1) {
+					m_iSelMark++;
+					GetDocument()->SelectOnly(m_iSelMark);
+					m_pSongView->EnsureTrackVisible(m_iSelMark);
+					return TRUE;
+				}
+				
+				break;
+			}
+		}
 		if (CPolymeterApp::HandleScrollViewKeys(pMsg, m_pSongView))
 			return TRUE;
 	} else if (pMsg->message >= WM_MOUSEFIRST && pMsg->message < WM_MOUSELAST) {
@@ -236,6 +255,8 @@ void CSongTrackView::OnLButtonDown(UINT nFlags, CPoint point)
 	CPolymeterDoc	*pDoc = GetDocument();
 	int	nTracks = pDoc->GetTrackCount();
 	if (iTrack >= 0 && iTrack < nTracks) {	// if hit track
+		if (m_bTipShown)	// if showing tooltip
+			m_wndTip.ShowWindow(SW_HIDE);	// hide tip so it doesn't interfere with selection
 		if (nFlags & MK_CONTROL) {	// if control key down
 			pDoc->ToggleSelection(iTrack);
 		} else {	// control key up

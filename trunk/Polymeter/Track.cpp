@@ -34,6 +34,7 @@
 		24		07oct20	fix fencepost error in resampling
 		25		16nov20	add tick dependencies
 		26		19jan21	fix track length check in import tracks
+		27		07jun21	rename rounding functions
 
 */
 
@@ -541,7 +542,7 @@ void CTrack::Resample(const double *pInSamp, W64INT nInSamps, double *pOutSamp, 
 			for (W64INT iOutSamp = 0; iOutSamp < nOutSamps; iOutSamp++) {	// for each output sample
 				double	fFrac, fInt;
 				fFrac = modf(iOutSamp * fScale, &fInt);
-				W64INT	iInSamp1 = roundW64INT(fInt);
+				W64INT	iInSamp1 = RoundW64INT(fInt);
 				W64INT	iInSamp2 = min(iInSamp1 + 1, nInSamps - 1);
 				double	y1 = pInSamp[iInSamp1];
 				double	y2 = pInSamp[iInSamp2];
@@ -550,7 +551,7 @@ void CTrack::Resample(const double *pInSamp, W64INT nInSamps, double *pOutSamp, 
 			}
 		} else {	// not interpolating
 			for (W64INT iOutSamp = 0; iOutSamp < nOutSamps; iOutSamp++) {	// for each output sample
-				W64INT	iInSamp = truncW64INT(iOutSamp * fScale);
+				W64INT	iInSamp = TruncW64INT(iOutSamp * fScale);
 				pOutSamp[iOutSamp] = pInSamp[iInSamp];	// nearest neighbor
 			}
 		}
@@ -566,7 +567,7 @@ bool CTrack::Stretch(double fScale, CStepArray& arrStep, bool bInterpolate) cons
 	ASSERT(!arrStep.GetSize());	// destination array must be empty
 	if (fScale <= 0)
 		return false;
-	int	nSteps = round(m_arrStep.GetSize() * fScale);
+	int	nSteps = Round(m_arrStep.GetSize() * fScale);
 	nSteps = max(nSteps, 1);	// step array can't be empty
 	arrStep.SetSize(nSteps);
 	if (IsNote()) {	// if track type is note
@@ -576,9 +577,9 @@ bool CTrack::Stretch(double fScale, CStepArray& arrStep, bool bInterpolate) cons
 		int	iEnd = -1;
 		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
 			const STEP_EVENT&	evt = arrEvent[iEvent];
-			int	nDur = round(evt.nDuration * fScale);
+			int	nDur = Round(evt.nDuration * fScale);
 			if (nDur > 0) {	// duration can't be zero
-				int	iStart = round(evt.nStart * fScale);
+				int	iStart = Round(evt.nStart * fScale);
 				if (iStart == iEnd) {	// if note abuts previous note
 					int	iPrev = iEnd ? iEnd - 1 : nSteps - 1;	// access previous note's last step
 					arrStep[iPrev] &= ~SB_TIE;	// clear last step's tie bit
@@ -607,7 +608,7 @@ bool CTrack::Stretch(double fScale, CStepArray& arrStep, bool bInterpolate) cons
 		fOutSamp.SetSize(nSteps);
 		Resample(fInSamp.GetData(), nInSamps, fOutSamp.GetData(), nSteps, bInterpolate);
 		for (int iSamp = 0; iSamp < nSteps; iSamp++)	// retrieve resampled data into steps array
-			arrStep[iSamp] = static_cast<STEP>(round(fOutSamp[iSamp]));
+			arrStep[iSamp] = static_cast<STEP>(Round(fOutSamp[iSamp]));
 	}
 	return true;
 }
@@ -637,8 +638,8 @@ bool CImportTrackArray::ImportMidiFile(LPCTSTR szPath, int nOutTimeDiv, double f
 
 bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTrack, const CStringArrayEx& arrInTrackName, int nInTimeDiv, int nOutTimeDiv, double fQuantization)
 {
-	int	nInQuant = max(round(nInTimeDiv * fQuantization), 1);	// convert quantization to input ticks
-	int	nOutQuant = max(round(nOutTimeDiv * fQuantization), 1);	// convert quantization to output ticks
+	int	nInQuant = max(Round(nInTimeDiv * fQuantization), 1);	// convert quantization to input ticks
+	int	nOutQuant = max(Round(nOutTimeDiv * fQuantization), 1);	// convert quantization to output ticks
 	int	nMaxTime = 0;
 	CTrackArray	arrOutTrack;
 	CMap<int, int, TRACK_INFO, TRACK_INFO&>	mapTrack;
@@ -676,8 +677,8 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 					info.nVelocity = nVelocity;
 				} else {	// note off
 					if (info.nStartTime >= 0) {	// if note in progress
-						int	nStart = round(double(info.nStartTime) / nInQuant);
-						int	nEnd = round(double(nTime) / nInQuant);
+						int	nStart = Round(double(info.nStartTime) / nInQuant);
+						int	nEnd = Round(double(nTime) / nInQuant);
 						int	nDur = nEnd - nStart;
 						CTrack&	trk = arrOutTrack[info.iTrack];
 						trk.m_arrStep.SetSize(nEnd);
@@ -716,7 +717,7 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 					trk.m_sName = arrInTrackName[iTrack];
 					arrOutTrack.Add(trk);	// add new track to output array
 				}			
-				int	iEvtStep = round(double(nTime) / nInQuant);
+				int	iEvtStep = Round(double(nTime) / nInQuant);
 				CTrack&	trk = arrOutTrack[info.iTrack];
 				trk.m_arrStep.SetSize(iEvtStep + 1);
 				CTrack::STEP	stepCur;
@@ -737,7 +738,7 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 			mapTrack.SetAt(nKey, info);	// update track info map
 		}
 	}
-	int	nMaxSteps = round(double(nMaxTime) / nInQuant);	// compute maximum track length
+	int	nMaxSteps = Round(double(nMaxTime) / nInQuant);	// compute maximum track length
 	if (nMaxSteps <= 0)	// step count must be greater than zero
 		return false;
 	CArrayEx<CTrack *, CTrack *>	arrTrackPtr;
@@ -1294,10 +1295,10 @@ void CTrack::SetTickDepends(const CTickDepends& td)
 
 void CTrack::ScaleTickDepends(double fScale)
 {
-	#define TICKDEPENDSDEF(x) x = round(x * fScale);
+	#define TICKDEPENDSDEF(x) x = Round(x * fScale);
 	#include "TrackDef.h"	// generate code to scale tick-dependent members
 	int	nDubs = m_arrDub.GetSize();
 	for (int iDub = 0; iDub < nDubs; iDub++) {	// for each dub
-		m_arrDub[iDub].m_nTime = round(m_arrDub[iDub].m_nTime * fScale);
+		m_arrDub[iDub].m_nTime = Round(m_arrDub[iDub].m_nTime * fScale);
 	}
 }

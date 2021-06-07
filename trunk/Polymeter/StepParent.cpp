@@ -12,6 +12,7 @@
 		02		17jun20	in command help handler, try tracking help first
 		03		09jul20	add pointer to parent frame
 		04		14jul20	add mute view vertical scrolling
+		05		07jun21	rename rounding functions
 
 */
 
@@ -191,9 +192,9 @@ void CStepParent::RecalcLayout(int cx, int cy)
 		CRect	rOrgBtn;
 		m_btnVeloOrigin.GetWindowRect(rOrgBtn);
 		CSize	szOrgBtn = rOrgBtn.Size();
-		double	fOrgBtnY = round(double(MIDI_NOTES / 2) / MIDI_NOTE_MAX * m_nVeloHeight);
+		double	fOrgBtnY = Round(double(MIDI_NOTES / 2) / MIDI_NOTE_MAX * m_nVeloHeight);
 		CPoint	ptOrgBtn(m_nMuteWidth - szOrgBtn.cx - VELO_CLOSE_BTN_MARGIN, 
-			cy - min(round(fOrgBtnY + szOrgBtn.cy / 2.0), m_nVeloHeight));
+			cy - min(Round(fOrgBtnY + szOrgBtn.cy / 2.0), m_nVeloHeight));
 		DeferWindowPos(hDWP, m_btnVeloOrigin.m_hWnd, NULL, ptOrgBtn.x, ptOrgBtn.y, 0, 0, dwFlags | SWP_NOSIZE);
 	}
 	EndDeferWindowPos(hDWP);

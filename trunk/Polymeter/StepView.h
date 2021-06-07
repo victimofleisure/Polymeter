@@ -10,6 +10,7 @@
         00      23mar18	initial version
 		01		09jul20	add pointer to parent frame
 		02		16dec20	add command to set loop from step selection
+		03		07jun21	rename rounding functions
 
 */
 
@@ -280,5 +281,5 @@ inline const CRect& CStepView::GetStepSelection()
 
 inline int CStepView::ConvertXToSongPos(int x) const
 {
-	return round(double(x) / GetBeatWidth() / GetZoom() * GetDocument()->m_Seq.GetTimeDivision());
+	return Round(double(x) / GetBeatWidth() / GetZoom() * GetDocument()->m_Seq.GetTimeDivision());
 }

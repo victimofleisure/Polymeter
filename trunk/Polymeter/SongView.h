@@ -14,6 +14,8 @@
 		04		09jul20	add pointer to parent frame
 		05		04dec20	add get center track and ensure track visible
 		06		16dec20	add command to set loop from cell selection
+		07		16mar21	add accessor for track or cell selection
+		08		07jun21	rename rounding functions
 
 */
 
@@ -53,6 +55,7 @@ public:
 	double	GetTicksPerCell() const;
 	int		GetCellWidth() const;
 	int		GetOriginShift() const;
+	bool	HaveTrackOrCellSelection() const;
 
 // Operations
 public:
@@ -230,7 +233,7 @@ inline int CSongView::GetCellWidth() const
 
 inline int CSongView::GetOriginShift() const
 {
-	return round(m_nSongTimeShift / GetTicksPerCell() * m_nCellWidth);
+	return Round(m_nSongTimeShift / GetTicksPerCell() * m_nCellWidth);
 }
 
 __forceinline double CSongView::GetTicksPerCellImpl() const
@@ -240,10 +243,16 @@ __forceinline double CSongView::GetTicksPerCellImpl() const
 
 __forceinline int CSongView::ConvertXToSongPos(int x) const
 {
-	return round(x * GetTicksPerCellImpl() / m_nCellWidth) + m_nSongTimeShift;
+	return Round(x * GetTicksPerCellImpl() / m_nCellWidth) + m_nSongTimeShift;
 }
 
 __forceinline int CSongView::ConvertSongPosToX(LONGLONG nSongPos) const
 {
-	return round((nSongPos - m_nSongTimeShift) / GetTicksPerCellImpl() * m_nCellWidth);
+	return Round((nSongPos - m_nSongTimeShift) / GetTicksPerCellImpl() * m_nCellWidth);
 }
+
+inline bool CSongView::HaveTrackOrCellSelection() const
+{
+	return GetDocument()->GetSelectedCount() || HaveSelection();
+}
+

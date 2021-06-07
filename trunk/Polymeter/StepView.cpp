@@ -13,6 +13,7 @@
 		03		09jul20	get view type from child frame instead of document
 		04		16dec20	add command to set loop from step selection
 		05		12feb21	add Shift + right click to extend existing selection
+		06		07jun21	rename rounding functions
 
 */
 
@@ -109,8 +110,8 @@ void CStepView::OnInitialUpdate()
 {
 	double	fDocZoom = GetDocument()->m_fStepZoom;
 	double	fZoomDelta = theApp.m_Options.GetZoomDeltaFrac();
-	m_nMaxZoomSteps = round(InvPow(fZoomDelta, MAX_ZOOM_SCALE));
-	m_nZoom = round(InvPow(fZoomDelta, fDocZoom));
+	m_nMaxZoomSteps = Round(InvPow(fZoomDelta, MAX_ZOOM_SCALE));
+	m_nZoom = Round(InvPow(fZoomDelta, fDocZoom));
 	m_fZoom = fDocZoom;
 	m_fZoomDelta = fZoomDelta;
 	CScrollView::OnInitialUpdate();
@@ -299,7 +300,7 @@ int CStepView::GetMaxTrackWidth() const
 	int	nMaxTrackWidth = 0;
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		double	fStepWidth = GetStepWidth(iTrack);
-		int	nTrackWidth = round(fStepWidth * seq.GetLength(iTrack));
+		int	nTrackWidth = Round(fStepWidth * seq.GetLength(iTrack));
 		if (nTrackWidth > nMaxTrackWidth)
 			nMaxTrackWidth = nTrackWidth;
 	}
@@ -381,7 +382,7 @@ void CStepView::GetTrackRect(int iTrack, CRect& rTrack) const
 void CStepView::GetGridRect(int iTrack, CRect& rStep) const
 {
 	double	fStepWidth = GetStepWidth(iTrack);
-	int	nTrackWidth = round(fStepWidth * GetDocument()->m_Seq.GetLength(iTrack));
+	int	nTrackWidth = Round(fStepWidth * GetDocument()->m_Seq.GetLength(iTrack));
 	CPoint	ptStep(CPoint(0, GetTrackY(iTrack)) - GetScrollPosition());
 	rStep = CRect(ptStep, CSize(nTrackWidth, m_nTrackHeight));
 }
@@ -389,8 +390,8 @@ void CStepView::GetGridRect(int iTrack, CRect& rStep) const
 void CStepView::GetStepRect(int iTrack, int iStep, CRect& rStep) const
 {
 	double	fStepWidth = GetStepWidth(iTrack);
-	int	x1 = round(iStep * fStepWidth);
-	int	x2 = round((iStep + 1) * fStepWidth);
+	int	x1 = Round(iStep * fStepWidth);
+	int	x2 = Round((iStep + 1) * fStepWidth);
 	int	nStepWidth = x2 - x1;
 	CPoint	ptStep(CPoint(x1, GetTrackY(iTrack)) - GetScrollPosition());
 	rStep = CRect(ptStep, CSize(nStepWidth, m_nTrackHeight));
@@ -650,8 +651,8 @@ void CStepView::SetZoomDelta(double fDelta)
 {
 	double	fPrevZoomFrac = double(m_nZoom) / m_nMaxZoomSteps;
 	m_fZoomDelta = fDelta;
-	m_nMaxZoomSteps = round(InvPow(fDelta, MAX_ZOOM_SCALE));
-	int	nZoom = round(fPrevZoomFrac * m_nMaxZoomSteps);
+	m_nMaxZoomSteps = Round(InvPow(fDelta, MAX_ZOOM_SCALE));
+	int	nZoom = Round(fPrevZoomFrac * m_nMaxZoomSteps);
 	SetZoom(nZoom, false);	// compensate zoom index, no redraw
 }
 
@@ -691,7 +692,7 @@ void CStepView::Zoom(int nZoom, int nOriginX)
 	UpdateViewSize();
 	int	nOffset = nOriginX + ptScroll.x;
 	double	fDeltaZoom = m_fZoom / fPrevZoom;
-	ptScroll.x += round(nOffset * (fDeltaZoom - 1));
+	ptScroll.x += Round(nOffset * (fDeltaZoom - 1));
 	CPoint	ptScrollMax = GetMaxScrollPos();
 	ptScroll.x = CLAMP(ptScroll.x, 0, ptScrollMax.x);
 	ScrollToPosition(ptScroll);
@@ -715,9 +716,9 @@ int CStepView::HitTest(CPoint point, int& iStep, UINT nFlags) const
 	}
 	int	x = point.x;
 	double	fStepWidth = GetStepWidth(iTrack);
-	int	nTrackWidth = round(fStepWidth * seq.GetLength(iTrack));
+	int	nTrackWidth = Round(fStepWidth * seq.GetLength(iTrack));
 	if ((x >= 0 && x < nTrackWidth) || (nFlags & HTF_NO_STEP_RANGE)) {	// x in range or not enforcing step range
-		iStep = max(trunc(static_cast<double>(x) / fStepWidth), 0);	// compute step index and pass to caller
+		iStep = max(Trunc(static_cast<double>(x) / fStepWidth), 0);	// compute step index and pass to caller
 		return iTrack;	// return track index
 	}
 	iStep = -1;	// pass step range error to caller
@@ -759,7 +760,7 @@ __forceinline int CStepView::GetStepColorIdx(int iTrack, int iStep, STEP nStep, 
 
 __forceinline USHORT CStepView::Make16BitColor(BYTE nIntensity)
 {
-	return static_cast<USHORT>(round(static_cast<double>(nIntensity) / BYTE_MAX * USHRT_MAX));
+	return static_cast<USHORT>(Round(static_cast<double>(nIntensity) / BYTE_MAX * USHRT_MAX));
 }
 
 __forceinline void CStepView::InitTriangleVertex(TRIVERTEX& tv, int x, int y, COLORREF clr)
@@ -825,14 +826,14 @@ void CStepView::OnDraw(CDC* pDC)
 			for (int iTrack = iFirstTrack; iTrack <= iLastTrack; iTrack++) {	// for each invalid track
 				double	fStepWidth = GetStepWidth(iTrack);
 				int	nTrackSteps = seq.GetLength(iTrack);
-				CRect	rSteps(CPoint(0, y1), CSize(round(fStepWidth * nTrackSteps) + 1, m_nTrackHeight + 1));
+				CRect	rSteps(CPoint(0, y1), CSize(Round(fStepWidth * nTrackSteps) + 1, m_nTrackHeight + 1));
 				CRect	rClipSteps;
 				if (rClipSteps.IntersectRect(rClip, rSteps)) {	// if clip box intersects one or more steps
-					int	iFirstStep = trunc(rClipSteps.left / fStepWidth);
+					int	iFirstStep = Trunc(rClipSteps.left / fStepWidth);
 					iFirstStep = CLAMP(iFirstStep, 0, nTrackSteps - 1);
-					int	iLastStep = trunc(rClipSteps.right / fStepWidth);
+					int	iLastStep = Trunc(rClipSteps.right / fStepWidth);
 					iLastStep = CLAMP(iLastStep, 0, nTrackSteps - 1);
-					int	x1 = round(iFirstStep * fStepWidth);
+					int	x1 = Round(iFirstStep * fStepWidth);
 					int	y2 = y1 + m_nTrackHeight;
 					int	iTrackType = seq.GetType(iTrack);
 					bool	bMute = seq.GetMute(iTrack);
@@ -840,7 +841,7 @@ void CStepView::OnDraw(CDC* pDC)
 					COLORREF	clrGridLine = m_clrGridLine[bIsSelected];
 					int	x2 = x1;
 					for (int iStep = iFirstStep; iStep <= iLastStep; iStep++) {	// for each invalid step
-						int	x = round((iStep + 1) * fStepWidth);
+						int	x = Round((iStep + 1) * fStepWidth);
 						STEP	nStep = seq.GetStep(iTrack, iStep);
 						int	iStepColor = GetStepColorIdx(iTrack, iStep, nStep, bMute);
 						DrawStep(pDC, x2 + 1, y1 + 1, x - x2 - 1, y2 - y1 - 1, nStep, iStepColor, iTrackType);
@@ -852,7 +853,7 @@ void CStepView::OnDraw(CDC* pDC)
 					bool	bIsSplitBottom = false;
 					// if this track isn't selected but next one is, may need to split bottom outline
 					if (!bIsSelected && iTrack < nTracks - 1 && IsSelected(iTrack + 1)) {
-						int	nNextX2 = round(GetStepWidth(iTrack + 1) * seq.GetLength(iTrack + 1));
+						int	nNextX2 = Round(GetStepWidth(iTrack + 1) * seq.GetLength(iTrack + 1));
 						if (nNextX2 < x2) {	// if next track is also shorter, must split bottom outline
 							pDC->FillSolidRect(x1, y2, nNextX2 + 1, 1, m_clrGridLine[GRID_SELECTED]);
 							pDC->FillSolidRect(nNextX2 + 1, y2, x2 - nNextX2, 1, m_clrGridLine[GRID_NORMAL]);
@@ -870,13 +871,13 @@ void CStepView::OnDraw(CDC* pDC)
 	}
 	double	fBeatWidth = m_nBeatWidth * m_fZoom;
 	if (fBeatWidth >= MIN_BEAT_LINE_SPACING) {
-		int	iFirstBeat = trunc(rClip.left / fBeatWidth);
+		int	iFirstBeat = Trunc(rClip.left / fBeatWidth);
 		iFirstBeat = max(iFirstBeat, 0);
-		int	iLastBeat = trunc(rClip.right / fBeatWidth);
+		int	iLastBeat = Trunc(rClip.right / fBeatWidth);
 		iLastBeat = max(iLastBeat, 0);
-		int	x1 = round(iFirstBeat * fBeatWidth);
+		int	x1 = Round(iFirstBeat * fBeatWidth);
 		for (int iBeat = iFirstBeat; iBeat <= iLastBeat; iBeat++) {
-			int	x2 = round((iBeat + 1) * fBeatWidth);
+			int	x2 = Round((iBeat + 1) * fBeatWidth);
 			CRect	rBar(CPoint(x1, rClip.top), CSize(1, rClip.Height()));
 			pDC->FillSolidRect(rBar, m_clrBeatLine);
 			pDC->ExcludeClipRect(rBar);

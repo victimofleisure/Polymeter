@@ -20,6 +20,7 @@
 		10		24jan21	shift left-click to set song position
 		11		25jan21	fix shift left-click in index column
 		12		27jan21	use control key instead of shift
+		13		30may21	in GetDispInfo handler, set empty string if needed
 		
 */
 
@@ -691,7 +692,11 @@ void CStepValuesBar::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 					if (iItem < pDoc->m_Seq.GetLength(iTrack)) {	// if step in range
 						int	nStep = pDoc->m_Seq.GetStep(iTrack, iItem);
 						FormatStep(item.pszText, item.cchTextMax, nStep, pDoc->m_nKeySig);
+					} else {
+						item.pszText = _T("");
 					}
+				} else {
+					item.pszText = _T("");
 				}
 			}
 		}

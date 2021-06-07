@@ -15,6 +15,7 @@
 		05		09jan19	lighten pressed black key color
 		06		10jan19	add no internal style and refactor names
 		07		01feb19	add key press notification
+		08		07jun21	rename rounding functions
 
 		piano control
 
@@ -187,9 +188,9 @@ void CPianoCtrl::Update(CSize szClient)
 	double	fHScale = fWhiteWidth / WHITE_WIDTH;
 	double	fBlackWidth = BLACK_WIDTH * fHScale;
 	if (bIsVertical)	// if vertical orientation
-		szBlack = CSize(round(m_fBlackHeightRatio * szClient.cx), round(fBlackWidth));
+		szBlack = CSize(Round(m_fBlackHeightRatio * szClient.cx), Round(fBlackWidth));
 	else	// horizontal orientation
-		szBlack = CSize(round(fBlackWidth), round(m_fBlackHeightRatio * szClient.cy));
+		szBlack = CSize(Round(fBlackWidth), Round(m_fBlackHeightRatio * szClient.cy));
 	int	iStartWhite = m_arrKeyInfo[m_nStartNote % NOTES].nWhiteIndex;
 	double	fStartOffset = iStartWhite * fWhiteWidth;
 	int	iWhite = iStartWhite;
@@ -201,7 +202,7 @@ void CPianoCtrl::Update(CSize szClient)
 		int	nBlackOffset = m_arrKeyInfo[iKeyInfo].nBlackOffset;
 		if (nBlackOffset) {	// if black key
 			double	fOctaveOffset = (iWhite / WHITES) * fWhiteWidth * WHITES;
-			int	x = round(nBlackOffset * fHScale - fStartOffset + fOctaveOffset);
+			int	x = Round(nBlackOffset * fHScale - fStartOffset + fOctaveOffset);
 			CRect	rKey;
 			if (bIsVertical)	// if vertical orientation
 				rKey = CRect(CPoint(0, szClient.cy - x - szBlack.cy), szBlack);
@@ -214,7 +215,7 @@ void CPianoCtrl::Update(CSize szClient)
 				rgnPrev.CombineRgn(&rgnPrev, &key.m_rgn, RGN_DIFF);
 			}
 		} else {	// white key
-			int	x = round((iWhite + 1) * fWhiteWidth - fStartOffset);
+			int	x = Round((iWhite + 1) * fWhiteWidth - fStartOffset);
 			CRect	rKey;
 			if (bIsVertical)	// if vertical orientation
 				rKey = CRect(0, szClient.cy - nPrevWhiteX, szClient.cx, szClient.cy - x);
@@ -294,19 +295,19 @@ void CPianoCtrl::UpdateKeyLabelFont(CSize szClient, DWORD dwStyle)
 	// compute font height; truncate instead of rounding to err on side of caution
 	int	nFontHeight;	
 	if (dwStyle & PS_VERTICAL) {	// if vertical orientation
-		int	nWhiteMaxWidth = trunc((szClient.cx - m_szBlackKey.cx) * fWhiteAvail);
-		nFontHeight = trunc(min(szMaxLabel.cx, nWhiteMaxWidth) * fFontAspect);
+		int	nWhiteMaxWidth = Trunc((szClient.cx - m_szBlackKey.cx) * fWhiteAvail);
+		nFontHeight = Trunc(min(szMaxLabel.cx, nWhiteMaxWidth) * fFontAspect);
 		nFontHeight = min(nFontHeight, m_szBlackKey.cy);
 	} else {	// horizontal orientation
 		if (dwStyle & PS_ROTATE_LABELS) {	// if rotated labels
-			int	nWhiteMaxHeight = trunc((szClient.cy - m_szBlackKey.cy) * fWhiteAvail);
-			nFontHeight = trunc(min(szMaxLabel.cx, nWhiteMaxHeight) * fFontAspect);
+			int	nWhiteMaxHeight = Trunc((szClient.cy - m_szBlackKey.cy) * fWhiteAvail);
+			nFontHeight = Trunc(min(szMaxLabel.cx, nWhiteMaxHeight) * fFontAspect);
 			nFontHeight = min(nFontHeight, m_szBlackKey.cx);
 			lf.lfOrientation = 900;	// rotate font 90 degrees counter-clockwise
 			lf.lfEscapement = 900;
 		} else {	// normal labels
-			nFontHeight = trunc((m_szBlackKey.cx - OUTLINE_WIDTH * 2) * fFontAspect);
-			int	nWhiteMaxHeight = trunc((szClient.cy - m_szBlackKey.cy) * fWhiteAvail);
+			nFontHeight = Trunc((m_szBlackKey.cx - OUTLINE_WIDTH * 2) * fFontAspect);
+			int	nWhiteMaxHeight = Trunc((szClient.cy - m_szBlackKey.cy) * fWhiteAvail);
 			nFontHeight = min(nFontHeight, nWhiteMaxHeight);
 		}
 	}

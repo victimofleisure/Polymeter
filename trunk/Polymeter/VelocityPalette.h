@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      24aug15	initial version
+		01		07jun21	rename rounding functions
 
         palette for mapping note velocities to colors
  
@@ -21,7 +22,7 @@
 		double	h, r, g, b;
 		h = (1 - double(i) / MIDI_NOTE_MAX) * 240;
 		hls2rgb(h, 0.5, 1.0, r, g, b);
-		fprintf(fp, "RGB(0x%02X,0x%02X,0x%02X), // 0x%02X\n", round(r * 255), round(g * 255), round(b * 255), i);
+		fprintf(fp, "RGB(0x%02X,0x%02X,0x%02X), // 0x%02X\n", Round(r * 255), Round(g * 255), Round(b * 255), i);
 	}
 	fclose(fp);
 */

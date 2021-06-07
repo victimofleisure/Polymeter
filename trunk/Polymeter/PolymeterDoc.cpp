@@ -67,6 +67,7 @@
 		57		23jan21	make fill dialog's step range one-origin
 		58		24jan21	add prime factors command
 		59		10feb21	use set track property overload for selected tracks
+		60		07jun21	rename rounding functions
 
 */
 
@@ -1187,8 +1188,8 @@ bool CPolymeterDoc::IsVelocityChangeSafe(const CVelocityTransform& trans, const 
 				nMinVel -= MIDI_NOTES / 2;	// deduct origin
 				nMaxVel -= MIDI_NOTES / 2;
 			}
-			nMinVel = round(nMinVel * trans.m_fScale);
-			nMaxVel = round(nMaxVel * trans.m_fScale);
+			nMinVel = Round(nMinVel * trans.m_fScale);
+			nMaxVel = Round(nMaxVel * trans.m_fScale);
 			if (trans.m_bSigned) {	// if signed scaling
 				nMinVel += MIDI_NOTES / 2;	// restore origin
 				nMaxVel += MIDI_NOTES / 2;
@@ -3182,7 +3183,7 @@ void CPolymeterDoc::InsertDubs(CDubArrayArray& arrDub, CPoint ptInsert, double f
 	if (nInsTracks) {
 		int	nDubs = arrDub[0].GetSize();
 		if (nDubs)
-			nInsCells = round(arrDub[0][nDubs - 1].m_nTime / fTicksPerCell);
+			nInsCells = Round(arrDub[0][nDubs - 1].m_nTime / fTicksPerCell);
 	}
 	CRect	rInsert(ptInsert, CSize(nInsCells, nInsTracks));
 	rSelection = rInsert;
@@ -3204,7 +3205,7 @@ void CPolymeterDoc::InsertDubs(const CRect& rSelection, double fTicksPerCell)
 	CDubArrayArray	arrDub;
 	int	nRows = rSelection.Height();
 	arrDub.SetSize(nRows);
-	int	nTicksPerCell = round(fTicksPerCell);
+	int	nTicksPerCell = Round(fTicksPerCell);
 	for (int iDub = 0; iDub < nRows; iDub++) {
 		arrDub[iDub].SetSize(2);
 		arrDub[iDub][0] = CTrack::CDub(0, true);
@@ -3575,14 +3576,14 @@ void CPolymeterDoc::TrackFill(const CIntArrayEx& arrTrackSel, CRange<int> rngSte
 		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step in range
 			int	iVal;
 			if (iFunction < 0) {	// if function is linear
-				iVal = round(iStep * double(nDeltaVal) / (nSteps - 1)) + rngVal.Start;
+				iVal = Round(iStep * double(nDeltaVal) / (nSteps - 1)) + rngVal.Start;
 			} else {	// periodic function
 				double	fStepPhase = iStep / fDeltaT + fPhase;	// compute step's phase
 				double	r = CVelocityView::GetWave(iFunction, fStepPhase);	// compute periodic function
 				r = (r + 1) / 2;	// convert function result from bipolar to unipolar
 				if (fPower > 0)	// if power was specified
 					r = (pow(fPower, r) - 1) / fScale;	// apply power in normalized space
-				iVal = round(r * nDeltaVal) + rngVal.Start;	// scale, offset, and round
+				iVal = Round(r * nDeltaVal) + rngVal.Start;	// scale, offset, and round
 			}
 			iVal = CLAMP(iVal, 0, MIDI_NOTE_MAX);	// clamp to step range just in case
 			if (iStep + rngStep.Start >= trk.GetLength())	// if step index out of range
@@ -3871,11 +3872,11 @@ void CPolymeterDoc::ChangeTimeDivision(int nNewTimeDivTicks)
 	NotifyUndoableEdit(0, UCODE_TIME_DIVISION);	// specialized undo state
 	m_Seq.ScaleTickDepends(fScale);
 	m_Seq.SetTimeDivision(GetTimeDivisionTicks());
-	m_nStartPos = round(m_nStartPos * fScale);
-	m_nLoopFrom = round(m_nLoopFrom * fScale);
-	m_nLoopTo = round(m_nLoopTo * fScale);
+	m_nStartPos = Round(m_nStartPos * fScale);
+	m_nLoopFrom = Round(m_nLoopFrom * fScale);
+	m_nLoopTo = Round(m_nLoopTo * fScale);
 	OnLoopRangeChange();
-	SetPosition(static_cast<int>(round64(m_nSongPos * fScale)));
+	SetPosition(static_cast<int>(Round64(m_nSongPos * fScale)));
 	UpdateAllViews(NULL);	// scaling affects many properties
 }
 
@@ -4608,7 +4609,7 @@ void CPolymeterDoc::OnToolsTimeToRepeat()
 		sMsg += _T(" + ") + sVal + ' ' + LDS(IDS_TIME_TO_REPEAT_TICKS);
 	}
 	double	fSeconds = double(nLCMTicks) / nTimeDiv / (m_Seq.GetTempo() / 60);
-	CTimeSpan	ts = round64(fSeconds);	// convert beats to time in seconds
+	CTimeSpan	ts = Round64(fSeconds);	// convert beats to time in seconds
 	CString	sTime(ts.Format(_T("%H:%M:%S")));	// convert time in seconds to string
 	LONGLONG	nDays = ts.GetDays();
 	if (nDays) {	// if one or more days

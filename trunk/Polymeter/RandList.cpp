@@ -10,6 +10,7 @@
         00      02jun05	initial version
         01      01jul12	fix Rand to avoid possible overrun
         02      06jan13	add cast to GetSize for x64
+		03		07jun21	rename rounding functions
 
 		random sequence without duplicates
  
@@ -40,7 +41,7 @@ int CRandList::Rand(int Vals)
 {
 	if (Vals <= 0)
 		return(-1);
-	int	i = trunc(rand() / double(RAND_MAX) * Vals);
+	int	i = Trunc(rand() / double(RAND_MAX) * Vals);
 	return(min(i, Vals - 1));
 }
 

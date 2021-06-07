@@ -10,6 +10,7 @@
         00      14apr18	initial version
         01      03mar20	overload LCM for array
 		02		24jan21	add unique prime factors method
+		03		07jun21	rename rounding functions
 
 */
 
@@ -87,7 +88,7 @@ void CNumberTheory::UniquePrimeFactors(ULONGLONG n, CIntArrayEx& arrFactor)
 		arrFactor.InsertSortedUnique(t);
 		n /= 2;
 	}
-	int	nLimit = round(sqrt(double(n)));
+	int	nLimit = Round(sqrt(double(n)));
 	for (int i = 3; i <= nLimit; i = i + 2) {
 		while (!(n % i)) {
 			arrFactor.InsertSortedUnique(i);

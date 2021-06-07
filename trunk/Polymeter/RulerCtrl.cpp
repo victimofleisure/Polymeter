@@ -17,6 +17,7 @@
 		07		09may18	standardize names
 		08		05jun18	in Create, set window name
 		09		20sep18	add MIDI unit
+		10		07jun21	rename rounding functions
 
 		ruler control
 
@@ -160,7 +161,7 @@ void CRulerCtrl::ScrollToPosition(double fScrollPos)
 		GetClientRect(rc);
 		CSize	sz;
 		int	nLen;
-		int	iScrollDelta = round(fScrollDelta);
+		int	iScrollDelta = Round(fScrollDelta);
 		if (dwStyle & CBRS_ORIENT_HORZ) {	// if horizontal ruler
 			sz = CSize(iScrollDelta, 0);
 			nLen = rc.Width();
@@ -190,7 +191,7 @@ void CRulerCtrl::UpdateSpacing()
 	const UNIT_INFO&	UnitInfo = m_arrUnitInfo[iUnit];
 	double	fBase = UnitInfo.nBase;
 	double	fNearestExp = log(fAbsZoom * m_nMinMajorTickGap) / log(fBase);
-	int	nNearestIntExp = trunc(fNearestExp);
+	int	nNearestIntExp = Trunc(fNearestExp);
 	if (fNearestExp >= 0)	// if nearest exponent is positive
 		nNearestIntExp++;	// chop it up; otherwise chop it down
 	double	fNearestPow = pow(fBase, nNearestIntExp);
@@ -235,7 +236,7 @@ void CRulerCtrl::UpdateSpacing()
 
 double CRulerCtrl::PositionToValue(double fPos) const
 {
-	return(round64((m_fScrollPos + fPos) * m_fZoom / m_fMajorTickStep) * m_fMajorTickStep + m_fValOffset);
+	return(Round64((m_fScrollPos + fPos) * m_fZoom / m_fMajorTickStep) * m_fMajorTickStep + m_fValOffset);
 }
 
 inline double CRulerCtrl::Wrap(double fVal, double fLimit)
@@ -261,7 +262,7 @@ int CRulerCtrl::TrimTrailingZeros(CString& Str)
 CString CRulerCtrl::FormatTime(double fTimeSecs)
 {
 	const int TICKS_PER_SEC = 1000000;	// maximum tick precision
-	LONGLONG	nTimeTicks = round64(fTimeSecs * TICKS_PER_SEC);
+	LONGLONG	nTimeTicks = Round64(fTimeSecs * TICKS_PER_SEC);
 	bool	bIsNeg;
 	if (nTimeTicks < 0) {
 		bIsNeg = TRUE;
@@ -291,7 +292,7 @@ __forceinline void CRulerCtrl::FormatMidi(double fPos, CString& sResult) const
 {
 	int	nTimeDiv = m_nMidiTimeDiv;
 	int	nMeter = m_nMidiMeter;
-	LONGLONG	nPos = round64(fPos * nTimeDiv);
+	LONGLONG	nPos = Round64(fPos * nTimeDiv);
 	LONGLONG	nBeat = nPos / nTimeDiv;
 	LONGLONG	nTick = nPos % nTimeDiv;
 	if (nTick < 0) {	// if negative tick
@@ -430,7 +431,7 @@ CSize CRulerCtrl::Draw(CDC& dc, const CRect& cb, const CRect& rc, bool bMeasureT
 			else
 				fScrollPos = m_fScrollPos;
 			double	fZoom = fabs(m_fZoom) / LOG_UNIT_SCALE;
-			int iExp = round(floor(fScrollPos * fZoom));
+			int iExp = Round(floor(fScrollPos * fZoom));
 //printf("iExp=%d\n", iExp);
 			while (1) {
 				double	fCurPow = pow(LOG_UNIT_BASE, double(iExp));
@@ -438,14 +439,14 @@ CSize CRulerCtrl::Draw(CDC& dc, const CRect& cb, const CRect& rc, bool bMeasureT
 				double	fNextPowX = log10(fNextPow) / fZoom - fScrollPos;
 				sTickVal = FormatValue(fNextPow);
 				CSize	szExt(dc.GetTextExtent(sTickVal));
-				int	nNextPowTextX1 = round(fNextPowX) - (szExt.cx >> 1);
+				int	nNextPowTextX1 = Round(fNextPowX) - (szExt.cx >> 1);
 				for (int iDiv = 0; iDiv < LOG_UNIT_BASE - 1; iDiv++) {
 					double	n = fCurPow + iDiv * fCurPow;
 					double	rx = log10(n) / fZoom - fScrollPos;
 					sTickVal = FormatValue(n);
 					CSize	szExt(dc.GetTextExtent(sTickVal));
 					int	nHalfTextWidth = szExt.cx >> 1;
-					int	x = round(rx);
+					int	x = Round(rx);
 					int	x1 = x - nHalfTextWidth;
 					int	x2 = x + nHalfTextWidth;
 					if (x1 >= rc.right)
@@ -490,7 +491,7 @@ HorzLogDone:
 			ASSERT(dx);	// else infinite loop ensues
 			for (double rx = x1; rx < x2; rx += dx) {
 				bool	bIsMinor = iTick++ % nMinorTicks != 0;
-				int	x = round(rx);
+				int	x = Round(rx);
 				if (dwStyle & ENFORCE_MARGINS) {	// if enforcing margins
 					if (x < span.Start || x >= span.End) {	// if tick outside margins
 						if (!bIsMinor)	// if major tick
@@ -554,7 +555,7 @@ HorzLogDone:
 			else
 				fScrollPos = m_fScrollPos;
 			double	fZoom = fabs(m_fZoom) / LOG_UNIT_SCALE;
-			int iExp = round(floor(fScrollPos * fZoom));
+			int iExp = Round(floor(fScrollPos * fZoom));
 //printf("iExp=%d\n", iExp);
 			while (1) {
 				double	fCurPow = pow(LOG_UNIT_BASE, double(iExp));
@@ -562,14 +563,14 @@ HorzLogDone:
 				double	fNextPowY = log10(fNextPow) / fZoom - fScrollPos;
 				sTickVal = FormatValue(fNextPow);
 				CSize	szExt(dc.GetTextExtent(sTickVal));
-				int	nNextPowTextY1 = round(fNextPowY) - (szExt.cy >> 1);
+				int	nNextPowTextY1 = Round(fNextPowY) - (szExt.cy >> 1);
 				for (int iDiv = 0; iDiv < LOG_UNIT_BASE - 1; iDiv++) {
 					double	n = fCurPow + iDiv * fCurPow;
 					double	ry = log10(n) / fZoom - fScrollPos;
 					sTickVal = FormatValue(n);
 					CSize	szExt(dc.GetTextExtent(sTickVal));
 					int	nHalfTextHeight = szExt.cy >> 1;
-					int	y = round(ry);
+					int	y = Round(ry);
 					int	y1 = y - nHalfTextHeight;
 					int	y2 = y + nHalfTextHeight;
 					if (y1 >= rc.bottom)
@@ -614,7 +615,7 @@ VertLogDone:
 			ASSERT(dy);	// else infinite loop ensues
 			for (double ry = y1; ry < y2; ry += dy) {
 				bool	bIsMinor = iTick++ % nMinorTicks != 0;
-				int	y = round(ry);
+				int	y = Round(ry);
 				if (dwStyle & ENFORCE_MARGINS) {	// if enforcing margins
 					if (y < span.Start || y >= span.End) {	// if tick outside margins
 						if (!bIsMinor)	// if major tick

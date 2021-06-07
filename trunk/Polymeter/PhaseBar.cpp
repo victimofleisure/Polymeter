@@ -13,6 +13,7 @@
 		03		13jun20	add find convergence
 		04		09jul20	get view type from child frame instead of document
 		05		31jul20	fix multi-track length or quant change
+		06		07jun21	rename rounding functions
 		
 */
 
@@ -273,7 +274,7 @@ bool CPhaseBar::ExportVideo(LPCTSTR pszFolderPath, CSize szFrame, double fFrameR
 		dlg.SetPos(iFrame);
 		if (dlg.Canceled())	// if user canceled
 			return false;
-		m_nSongPos = pDoc->m_nStartPos + round(iFrame * fFrameDelta);
+		m_nSongPos = pDoc->m_nStartPos + Round(iFrame * fFrameDelta);
 		pDoc->SetPosition(static_cast<int>(m_nSongPos));
 		imgWriter.m_rt.BeginDraw();
 		OnDrawD2D(0, reinterpret_cast<LPARAM>(&imgWriter.m_rt));
@@ -570,7 +571,7 @@ int CPhaseBar::OrbitHitTest(CPoint point) const
 		double	fTotalSize = min(rc.Width() * fDPIScaleX, rc.Height() * fDPIScaleY);
 		double	fOrbitWidth = fTotalSize / (nOrbits * 2);
 		fOrbitWidth = min(fOrbitWidth, MAX_PLANET_WIDTH);
-		int	iOrbit = trunc(fC / fOrbitWidth);	// convert radius to orbit index
+		int	iOrbit = Trunc(fC / fOrbitWidth);	// convert radius to orbit index
 		if (iOrbit >= 0 && iOrbit < nOrbits)	// if orbit index in range
 			return iOrbit;
 	}
@@ -670,7 +671,7 @@ void CPhaseBar::OnExportVideo()
 	if (CFolderDialog::BrowseFolder(sTitle, sFolderPath, NULL, nFlags, sFolderPath)) {
 		CRecordDlg	dlg;
 		dlg.m_nDurationSeconds = pDoc->m_nSongLength;
-		dlg.m_nDurationFrames = round(dlg.m_fFrameRate * pDoc->m_nSongLength);
+		dlg.m_nDurationFrames = Round(dlg.m_fFrameRate * pDoc->m_nSongLength);
 		if (dlg.DoModal() == IDOK) {	// get video options
 			theApp.WriteProfileString(RK_PhaseBar, RK_EXPORT_FOLDER, sFolderPath);
 			CSize	szFrame(dlg.m_nFrameWidth, dlg.m_nFrameHeight);

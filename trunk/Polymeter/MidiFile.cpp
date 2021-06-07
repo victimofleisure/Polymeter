@@ -14,6 +14,7 @@
         04      10oct18 add read
 		05		11feb19	add tempo and key and time signatures to read
 		06		09sep19	add duration and tempo map to write
+		07		07jun21	rename rounding functions
 
 		MIDI file I/O
  
@@ -164,7 +165,7 @@ void CMidiFile::WriteHeader(USHORT nTracks, USHORT nPPQ, double fTempo, UINT nDu
 	FILE_POS	StartPos = BeginTrack();	// write track header
 	int	uspqn = 0;
 	if (fTempo > 0) {	// if tempo specified
-		uspqn = round(MICROS_PER_MINUTE / fTempo);	 // microseconds per quarter note
+		uspqn = Round(MICROS_PER_MINUTE / fTempo);	 // microseconds per quarter note
 		WriteTempo(0, uspqn);	// write tempo
 	}
 	if (pTimeSig != NULL) {	// if time signature specified

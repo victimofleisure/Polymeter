@@ -43,6 +43,7 @@
 		33		09jun20	add offset modulation
 		34		17jul20	set song mode now optionally chases dubs
 		35		16dec20	add looping of playback
+		36		07jun21	rename rounding functions
 
 */
 
@@ -121,7 +122,7 @@ bool CSequencer::WriteTimeDivision(int nTimeDiv)
 
 bool CSequencer::WriteTempo(double fTempo)
 {
-	MIDIPROPTEMPO	mpTempo = {sizeof(mpTempo), round(CMidiFile::MICROS_PER_MINUTE / fTempo)};
+	MIDIPROPTEMPO	mpTempo = {sizeof(mpTempo), Round(CMidiFile::MICROS_PER_MINUTE / fTempo)};
 	CHECK(midiStreamProperty(m_hStrm, (BYTE *)&mpTempo, MIDIPROP_SET | MIDIPROP_TEMPO));
 	return true;
 }
@@ -200,7 +201,7 @@ void CSequencer::SetBufferSize(int nEvents)
 int CSequencer::GetCallbackLength(int nLatency) const
 {
 	const int MIN_CALLBACK_LENGTH = 2;	// in ticks
-	int	nTicks = trunc(nLatency / 1000.0 * m_fTempo / 60.0 * m_nTimeDiv) + 1;	// round up
+	int	nTicks = Trunc(nLatency / 1000.0 * m_fTempo / 60.0 * m_nTimeDiv) + 1;	// round up
 	return max(nTicks, MIN_CALLBACK_LENGTH);	// helps to avoid glitches
 }
 
@@ -745,7 +746,7 @@ lblNoteScheduled:;
 					int	nVal = trk.m_arrStep[iModStep] & SB_VELOCITY;
 					double	fValNorm = double(nVal - MIDI_NOTES / 2) / (MIDI_NOTES / 2);
 					double	fTempoOut = m_fTempo * pow(2, fValNorm * trk.m_nDuration / 100.0) * fTempoMod;
-					int	iTempo = round(CMidiFile::MICROS_PER_MINUTE / fTempoOut);
+					int	iTempo = Round(CMidiFile::MICROS_PER_MINUTE / fTempoOut);
 					if (iTempo != m_nAltTempo) {	// if altered tempo actually changed
 						m_nAltTempo = iTempo;	// update shadow
 						CMidiEvent	evtTempo(nEvtTime, (MEVT_TEMPO << 24) | iTempo);
@@ -829,7 +830,7 @@ bool CSequencer::OutputMidiBuffer()
 		// handle tempo change first to improve responsiveness
 		if (m_bIsTempoChange) {	// if tempo changed
 			m_bIsTempoChange = false;	// reset signal
-			int	iTempo = round(CMidiFile::MICROS_PER_MINUTE / m_fTempo);
+			int	iTempo = Round(CMidiFile::MICROS_PER_MINUTE / m_fTempo);
 			CMidiEvent	evtTempo(0, (MEVT_TEMPO << 24) | iTempo);	// at callback start time
 			m_arrEvent.FastAdd(evtTempo);	// add tempo event
 		}

@@ -46,6 +46,7 @@
 		36		23jan21	fix empty search text not found message box
 		37		27jan21	more replace fixes
 		38		15feb21	add mapped command handler
+		39		07jun21	rename rounding functions
 
 */
 
@@ -370,7 +371,7 @@ void CMainFrame::SetViewTimer(bool bEnable)
 		return;	// nothing to do
 	if (bEnable) {	// if starting timer
 		ASSERT(theApp.m_Options.m_View_fUpdateFreq);	// else divide by zero
-		int	nPeriod = round(1000.0 / theApp.m_Options.m_View_fUpdateFreq);
+		int	nPeriod = Round(1000.0 / theApp.m_Options.m_View_fUpdateFreq);
 		SetTimer(VIEW_TIMER_ID, nPeriod, NULL);
 	} else	// stopping timer
 		KillTimer(VIEW_TIMER_ID);

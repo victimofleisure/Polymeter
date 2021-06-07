@@ -38,6 +38,7 @@
 		28		04dec20	in goto next dub, pass target track, return dub track
 		29		16dec20	add looping of playback
 		30		24jan21	add prime factors command
+		31		07jun21	rename rounding functions
 
 */
 
@@ -650,7 +651,7 @@ inline bool CPolymeterDoc::HaveTrackOrStepSelection() const
 
 inline int CPolymeterDoc::CellToTime(int iCell, double fTicksPerCell, int nSongTimeShift) const
 {
-	return round(iCell * fTicksPerCell) + nSongTimeShift;
+	return Round(iCell * fTicksPerCell) + nSongTimeShift;
 }
 
 inline bool CPolymeterDoc::IsLoopRangeValid() const

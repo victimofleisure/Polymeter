@@ -25,6 +25,8 @@
 		15		16dec20	add focus edit checks for standard editing commands
 		16		19jan21	add focus edit check for select all
 		17		12feb21	add Shift + right click to extend existing selection
+		18		16mar21	add track selection to edit command update handlers
+		19		07jun21	rename rounding functions
 
 */
 
@@ -115,8 +117,8 @@ void CSongView::OnInitialUpdate()
 	m_nSongTimeShift = pDoc->CalcSongTimeShift();
 	double	fDocZoom = pDoc->m_fSongZoom;
 	double	fZoomDelta = theApp.m_Options.GetZoomDeltaFrac();
-	m_nMaxZoomSteps = round(InvPow(fZoomDelta, MAX_ZOOM_SCALE));
-	m_nZoom = round(InvPow(fZoomDelta, fDocZoom));
+	m_nMaxZoomSteps = Round(InvPow(fZoomDelta, MAX_ZOOM_SCALE));
+	m_nZoom = Round(InvPow(fZoomDelta, fDocZoom));
 	m_fZoom = fDocZoom;
 	m_fZoomDelta = fZoomDelta;
 	m_nSongPosX = ConvertSongPosToX(pDoc->m_nSongPos);
@@ -197,7 +199,7 @@ void CSongView::UpdateViewSize()
 	CPolymeterDoc	*pDoc = GetDocument();
 	LONGLONG	nSongTicks = pDoc->m_Seq.ConvertSecondsToPosition(pDoc->m_nSongLength);
 	int	nTicksPerBeat = pDoc->m_Seq.GetTimeDivision() / 4;
-	int	nMaxTrackWidth = round(m_nCellWidth * m_fZoom * nSongTicks / nTicksPerBeat);
+	int	nMaxTrackWidth = Round(m_nCellWidth * m_fZoom * nSongTicks / nTicksPerBeat);
 	int	nTracks = pDoc->m_Seq.GetTrackCount();
 	CSize	szView(nMaxTrackWidth + 1, m_nTrackHeight * nTracks + 1);
 	SetScrollSizes(MM_TEXT, szView);
@@ -222,8 +224,8 @@ void CSongView::SetZoom(int nZoom, bool bRedraw)
 	if (HaveSelection()) {	// if selection exists
 		// compensate selection for zoom change; lossy, especially when zooming out
 		double	fZoomChange = fZoom / m_fZoom;
-		m_rCellSel.left = round(m_rCellSel.left * fZoomChange);
-		m_rCellSel.right = round(m_rCellSel.right * fZoomChange);
+		m_rCellSel.left = Round(m_rCellSel.left * fZoomChange);
+		m_rCellSel.right = Round(m_rCellSel.right * fZoomChange);
 	}
 	m_fZoom = fZoom;
 	CPolymeterDoc	*pDoc = GetDocument();
@@ -253,7 +255,7 @@ void CSongView::Zoom(int nZoom, int nOriginX)
 	UpdateViewSize();
 	int	nOffset = nOriginX + ptScroll.x;
 	double	fDeltaZoom = m_fZoom / fPrevZoom;
-	ptScroll.x += round(nOffset * (fDeltaZoom - 1));
+	ptScroll.x += Round(nOffset * (fDeltaZoom - 1));
 	CPoint	ptScrollMax = GetMaxScrollPos();
 	ptScroll.x = CLAMP(ptScroll.x, 0, ptScrollMax.x);
 	ScrollToPosition(ptScroll);
@@ -264,8 +266,8 @@ void CSongView::SetZoomDelta(double fDelta)
 {
 	double	fPrevZoomFrac = double(m_nZoom) / m_nMaxZoomSteps;
 	m_fZoomDelta = fDelta;
-	m_nMaxZoomSteps = round(InvPow(fDelta, MAX_ZOOM_SCALE));
-	int	nZoom = round(fPrevZoomFrac * m_nMaxZoomSteps);
+	m_nMaxZoomSteps = Round(InvPow(fDelta, MAX_ZOOM_SCALE));
+	int	nZoom = Round(fPrevZoomFrac * m_nMaxZoomSteps);
 	SetZoom(nZoom, false);	// compensate zoom index, no redraw
 }
 
@@ -477,7 +479,7 @@ void CSongView::CenterCurrentPosition(double fMarginWidth)
 	CRect	rClient;
 	GetClientRect(rClient);
 	int	nClientWidth = rClient.Width();
-	int	nMarginWidth = round(nClientWidth * fMarginWidth);	// convert margin to client coords
+	int	nMarginWidth = Round(nClientWidth * fMarginWidth);	// convert margin to client coords
 	CRange<int>	rngCenter(nMarginWidth, nClientWidth - nMarginWidth);
 	CPoint	ptScroll(GetScrollPosition());
 	// if current position is within margin on either side, center it by scrolling view
@@ -534,8 +536,8 @@ void CSongView::OnDraw(CDC* pDC)
 		double	fStepsPerCell = fTicksPerCell / nQuant;
 		bool	bIsOverSamp = fStepsPerCell < 1;
 		if (bIsOverSamp) {	// if oversampling steps (multiple cells per step)
-			int	iFirstStep = trunc((iFirstCell * fTicksPerCell - nOffset) / nQuant) - 1;
-			int	iLastStep = trunc(((iLastCell + 1) * fTicksPerCell - nOffset) / nQuant) + 1;
+			int	iFirstStep = Trunc((iFirstCell * fTicksPerCell - nOffset) / nQuant) - 1;
+			int	iLastStep = Trunc(((iLastCell + 1) * fTicksPerCell - nOffset) / nQuant) + 1;
 			int	nCells = iLastCell - iFirstCell + 1;
 			m_arrCell.SetSize(nCells);
 			ZeroMemory(m_arrCell.GetData(), nCells);
@@ -543,7 +545,7 @@ void CSongView::OnDraw(CDC* pDC)
 				int	nTime = iStep * nQuant + nOffset;
 				if (iStep & 1)
 					nTime += nSwing;
-				int	iCell = round(nTime / fTicksPerCell) - iFirstCell;
+				int	iCell = Round(nTime / fTicksPerCell) - iFirstCell;
 				if (iCell >= 0 && iCell < nCells) {	// if within cell range
 					int	iModStep = Mod(iStep, nLength);
 					m_arrCell[iCell] = trk.m_arrStep[iModStep];
@@ -551,7 +553,7 @@ void CSongView::OnDraw(CDC* pDC)
 			}
 		}
 		int	nDubs = trk.m_arrDub.GetSize();
-		int	nCellTime = round(iFirstCell * fTicksPerCell) + m_nSongTimeShift;
+		int	nCellTime = Round(iFirstCell * fTicksPerCell) + m_nSongTimeShift;
 		int	iDub = trk.m_arrDub.FindDub(nCellTime);
 		bool	bMute;
 		if (iDub >= 0)
@@ -575,8 +577,8 @@ void CSongView::OnDraw(CDC* pDC)
 			if (bIsOverSamp) {	// if oversampling steps
 				bIsFull = m_arrCell[iCell - iFirstCell] != 0;
 			} else {	// undersampling steps (multiple steps per cell)
-				int	iFirstStep = trunc((iCell * fTicksPerCell - nOffset) / nQuant);
-				int	iLastStep = trunc(((iCell + 1) * fTicksPerCell - nOffset) / nQuant);
+				int	iFirstStep = Trunc((iCell * fTicksPerCell - nOffset) / nQuant);
+				int	iLastStep = Trunc(((iCell + 1) * fTicksPerCell - nOffset) / nQuant);
 				int	iStep;
 				for (iStep = iFirstStep; iStep < iLastStep; iStep++) {	// for each step within cell
 					int	iModStep = Mod(iStep, nLength);
@@ -590,7 +592,7 @@ void CSongView::OnDraw(CDC* pDC)
 			pDC->FillSolidRect(x, y, m_nCellWidth, 1, clrGridHorz);
 			pDC->FillSolidRect(x, y, 1, m_nTrackHeight, clrGridVert);
 			CRect	rCell(CPoint(x + 1, y + 1), CSize(m_nCellWidth, m_nTrackHeight));
-			nCellTime = round(iCell * fTicksPerCell) + m_nSongTimeShift;
+			nCellTime = Round(iCell * fTicksPerCell) + m_nSongTimeShift;
 			if (iDub >= 0) {
 				while (iDub < nDubs && nCellTime >= trk.m_arrDub[iDub].m_nTime) {
 					bMute = trk.m_arrDub[iDub].m_bMute;
@@ -906,7 +908,7 @@ void CSongView::OnEditCut()
 void CSongView::OnUpdateEditCut(CCmdUI *pCmdUI)
 {
 	if (!CFocusEdit::UpdateCut(pCmdUI)) {
-		pCmdUI->Enable(HaveSelection());
+		pCmdUI->Enable(HaveTrackOrCellSelection());
 	}
 }
 
@@ -923,7 +925,7 @@ void CSongView::OnEditCopy()
 void CSongView::OnUpdateEditCopy(CCmdUI *pCmdUI)
 {
 	if (!CFocusEdit::UpdateCopy(pCmdUI)) {
-		pCmdUI->Enable(HaveSelection());
+		pCmdUI->Enable(HaveTrackOrCellSelection());
 	}
 }
 
@@ -941,7 +943,8 @@ void CSongView::OnEditPaste()
 void CSongView::OnUpdateEditPaste(CCmdUI *pCmdUI)
 {
 	if (!CFocusEdit::UpdatePaste(pCmdUI)) {
-		pCmdUI->Enable(HaveSelection() && theApp.m_arrSongClipboard.GetSize());
+		pCmdUI->Enable((HaveSelection() && theApp.m_arrSongClipboard.GetSize())
+			|| theApp.m_arrTrackClipboard.GetSize());	// so tracks can also be pasted
 	}
 }
 
@@ -959,7 +962,7 @@ void CSongView::OnEditInsert()
 void CSongView::OnUpdateEditInsert(CCmdUI *pCmdUI)
 {
 	if (!CFocusEdit::UpdateInsert(pCmdUI)) {
-		pCmdUI->Enable(HaveSelection());
+		pCmdUI->Enable(HaveTrackOrCellSelection());
 	}
 }
 
@@ -977,7 +980,7 @@ void CSongView::OnEditDelete()
 void CSongView::OnUpdateEditDelete(CCmdUI *pCmdUI)
 {
 	if (!CFocusEdit::UpdateDelete(pCmdUI)) {
-		pCmdUI->Enable(HaveSelection());
+		pCmdUI->Enable(HaveTrackOrCellSelection());
 	}
 }
 
@@ -986,7 +989,7 @@ void CSongView::OnTransportLoop()
 	CPolymeterDoc	*pDoc = GetDocument();
 	if (HaveSelection()) {	// if cell selection exists
 		double	fQuant = GetTicksPerCell();
-		CTrackBase::CLoopRange	rngLoop(round(m_rCellSel.left * fQuant), round(m_rCellSel.right * fQuant));
+		CTrackBase::CLoopRange	rngLoop(Round(m_rCellSel.left * fQuant), Round(m_rCellSel.right * fQuant));
 		pDoc->SetLoopRange(rngLoop);
 		pDoc->m_Seq.SetLooping(true);
 		ResetSelection();

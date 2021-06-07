@@ -21,6 +21,7 @@
 		11		16oct20	specify layout via command line parameter
 		12		18oct20	search both 32-bit and 64-bit program folders
 		13		19oct20	after calling dot, verify that output file exists
+		14		07jun21	rename rounding functions
 
 */
 
@@ -163,7 +164,7 @@ bool CGraphBar::Navigate(LPCTSTR pszURL)
 void CGraphBar::SetZoomLevel(int iZoom)
 {
 	double	fZoom = pow(m_fZoomStep, iZoom);
-	int	nZoomPct = round(fZoom * BROWSER_ZOOM_PCT_INIT);
+	int	nZoomPct = Round(fZoom * BROWSER_ZOOM_PCT_INIT);
 	if (nZoomPct >= BROWSER_ZOOM_PCT_MIN && nZoomPct <= BROWSER_ZOOM_PCT_MAX) {
 		m_iZoomLevel = iZoom;
 		VERIFY(SetBrowserZoom(nZoomPct));
