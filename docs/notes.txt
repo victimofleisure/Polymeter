@@ -3090,3 +3090,50 @@ This cheap trick seems to work, but it feels risky for such a minor case.
 }
 
 
+6/7/21 installing Visual Studio 2019 on Windows 7 SP 1 (without automatic updates)
+
+vc_community.exe tries to install the same package five times and then fails with
+"Unable to download installation files. Check your internet connection and try again."
+The issue is stale certificates. Two need to be obtained from the Microsoft PKI 
+(Public Key Infrastructure) page, and properly installed in trusted root.
+
+The URL is: https://www.microsoft.com/pkiops/docs/repository.htm
+And the two certificates needed are:
+Microsoft Root Certificate Authority 2010
+Microsoft Root Certificate Authority 2011
+
+Download the .crt files, and for each, right click and install using Wizard,
+but do NOT take the default, select "Place all certificates in the following store"
+and then press the Browse button and select: Trusted Root Certification Authorities.
+If you install them anywhere else it won't work.
+
+When you install VS2019, you need to include the Windows 10 SDK and MFC.
+
+6/7/21 compilation errors and warnings in Visual Studio 2019
+
+optional: set warning level to 3, or suppress these warnings:
+4838;4840;4456;4457;4477;4302;4311;4312
+
+These are new warnings:
+4838	conversion from 'type_1' to 'type_2' requires a narrowing conversion
+4840	non-portable use of class 'type' as an argument to a variadic function
+4456	declaration of 'identifier' hides previous local declaration
+4457	declaration of 'identifier' hides function parameter
+4477	function' : format string 'string' requires an argument of type 'type', but variadic argument number has type 'type'
+
+These warnings were off prior to VS2015:
+4302	'conversion' : truncation from 'type 1' to 'type 2'
+4311	'variable' : pointer truncation from 'type' to 'type'
+4312	'operation' : conversion from 'type1' to 'type2' of greater size
+
+
+whitespace between concatenated string literals is now mandatory!
+requires three fixes in Options.cpp:
+		{_T(#group)_T("_")_T(#name), IDS_OPT_NAME_##group##_##name, IDS_OPT_DESC_##group##_##name, \
+
+S.B.
+		{_T(#group) _T("_") _T(#name), IDS_OPT_NAME_##group##_##name, IDS_OPT_DESC_##group##_##name, \
+and similar for these:
+		RdReg(_T("Options\\") _T(#group), _T(#name), m_##group##_##name);
+
+		WrReg(_T("Options\\") _T(#group), _T(#name), m_##group##_##name);
