@@ -33,6 +33,7 @@
 		23		16nov20	add tick dependencies
 		24		01dec20	add dub array method to detect last duplicate
 		25		16dec20	add loop range class
+		26		08jun21	add cast in MIDI stream event operator to fix warning
 
 */
 
@@ -401,7 +402,7 @@ inline bool CTrackBase::CMidiEvent::operator>=(const CMidiEvent &evt) const
 
 inline CTrackBase::CMidiEvent::operator CTrackBase::MIDI_STREAM_EVENT() const
 {
-	MIDI_STREAM_EVENT	evt = {m_nTime, 0, m_dwEvent};
+	MIDI_STREAM_EVENT	evt = {static_cast<DWORD>(m_nTime), 0, m_dwEvent};
 	return evt;
 }
 

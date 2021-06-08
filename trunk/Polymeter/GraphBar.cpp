@@ -22,6 +22,7 @@
 		12		18oct20	search both 32-bit and 64-bit program folders
 		13		19oct20	after calling dot, verify that output file exists
 		14		07jun21	rename rounding functions
+		15		08jun21	fix warning for CString as variadic argument
 
 */
 
@@ -269,7 +270,8 @@ UINT CGraphBar::GraphThread(LPVOID pParam)
 	LPCTSTR	pszLayout = m_arrGraphLayout[params.m_iGraphLayout];
 	CPathStr	sExePath(m_sGraphvizPath);
 	sExePath.Append(m_arrGraphExeName);
-	sCmdLine.Format(_T("%s -K%s -Tsvg -o\"%s\" \"%s\""), sExePath, pszLayout, sGraphPath, sDataPath);
+	sCmdLine.Format(_T("%s -K%s -Tsvg -o\"%s\" \"%s\""), 
+		sExePath.GetString(), pszLayout, sGraphPath.GetString(), sDataPath.GetString());
 	TCHAR	*pCmdLine = sCmdLine.GetBuffer(0);
 	STARTUPINFO	si;
 	GetStartupInfo(&si);
@@ -367,7 +369,7 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes) const
 				if (m_bEdgeLabels) {	// if showing edge labels
 					_ftprintf(fout.m_pStream, _T("%d->%d[color=%s,label=\"%s\",fontcolor=%s];\n"), 
 						mod.m_iSource + 1, iTrack + 1, m_arrModTypeColor[mod.m_iType], 
-						CTrack::GetModulationTypeName(mod.m_iType), m_arrModTypeColor[mod.m_iType]);
+						CTrack::GetModulationTypeName(mod.m_iType).GetString(), m_arrModTypeColor[mod.m_iType]);
 				} else {	// no edge labels
 					_ftprintf(fout.m_pStream, _T("%d->%d[color=%s];\n"), 
 						mod.m_iSource + 1, iTrack + 1, m_arrModTypeColor[mod.m_iType]);
@@ -391,7 +393,7 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes) const
 					sName.Insert(iSplit, '\\');
 				}
 			}
-			_ftprintf(fout.m_pStream, _T("%d[label=\"%s\"];\n"), iTrack + 1, sName);
+			_ftprintf(fout.m_pStream, _T("%d[label=\"%s\"];\n"), iTrack + 1, sName.GetString());
 			nNodes++;
 		}
 	}

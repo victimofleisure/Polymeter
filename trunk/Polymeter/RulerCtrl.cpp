@@ -18,6 +18,7 @@
 		08		05jun18	in Create, set window name
 		09		20sep18	add MIDI unit
 		10		07jun21	rename rounding functions
+		11		08jun21	fix local name reuse warning
 
 		ruler control
 
@@ -438,8 +439,8 @@ CSize CRulerCtrl::Draw(CDC& dc, const CRect& cb, const CRect& rc, bool bMeasureT
 				double	fNextPow = fCurPow * LOG_UNIT_BASE;
 				double	fNextPowX = log10(fNextPow) / fZoom - fScrollPos;
 				sTickVal = FormatValue(fNextPow);
-				CSize	szExt(dc.GetTextExtent(sTickVal));
-				int	nNextPowTextX1 = Round(fNextPowX) - (szExt.cx >> 1);
+				CSize	szExt1(dc.GetTextExtent(sTickVal));
+				int	nNextPowTextX1 = Round(fNextPowX) - (szExt1.cx >> 1);
 				for (int iDiv = 0; iDiv < LOG_UNIT_BASE - 1; iDiv++) {
 					double	n = fCurPow + iDiv * fCurPow;
 					double	rx = log10(n) / fZoom - fScrollPos;
@@ -562,8 +563,8 @@ HorzLogDone:
 				double	fNextPow = fCurPow * LOG_UNIT_BASE;
 				double	fNextPowY = log10(fNextPow) / fZoom - fScrollPos;
 				sTickVal = FormatValue(fNextPow);
-				CSize	szExt(dc.GetTextExtent(sTickVal));
-				int	nNextPowTextY1 = Round(fNextPowY) - (szExt.cy >> 1);
+				CSize	szExt1(dc.GetTextExtent(sTickVal));
+				int	nNextPowTextY1 = Round(fNextPowY) - (szExt1.cy >> 1);
 				for (int iDiv = 0; iDiv < LOG_UNIT_BASE - 1; iDiv++) {
 					double	n = fCurPow + iDiv * fCurPow;
 					double	ry = log10(n) / fZoom - fScrollPos;

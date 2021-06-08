@@ -29,6 +29,7 @@
 		19		25apr18	standardize names
 		20		19apr20	remove unused resource header
 		21		05nov20	overload cancel edit
+		22		08jun21	fix warning for CString as variadic argument
 
         undoable edit interface
  
@@ -238,8 +239,8 @@ void CUndoManager::DiscardAllEdits()
 
 void CUndoManager::DumpState(LPCTSTR pszTag, int iPos)
 {
-	_tprintf(_T("%s '%s' Pos=%d %s Obj=%p\n"), pszTag, GetTitle(iPos), iPos, 
-		m_arrState[iPos].DumpState(), m_arrState[iPos].GetObj());
+	_tprintf(_T("%s '%s' Pos=%d %s Obj=%p\n"), pszTag, GetTitle(iPos).GetString(), iPos, 
+		m_arrState[iPos].DumpState().GetString(), m_arrState[iPos].GetObj());
 }
 
 void CUndoManager::UpdateTitles()

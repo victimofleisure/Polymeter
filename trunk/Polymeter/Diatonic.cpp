@@ -12,7 +12,8 @@
 		02		12may15	refactor MakeAccidentalsTable to specify flattest key
 		03		25apr18	use safe file open methods
 		04		10jul19	in ScanNoteName, normalize note after applying accidentals
- 
+		05		08jun21	fix warning for CString as variadic argument
+
 		diatonic framework
 
 */
@@ -186,7 +187,7 @@ bool CDiatonic::DumpAccidentalsTable(LPCTSTR Path)
 		return(FALSE);
 	for (int iScale = 0; iScale < SCALES; iScale++) {	// for each scale
 		// write starting parentheses with scale name comment
-		_ftprintf(fp, _T("\t{\t// %s\n\t\t//"), PrettyScaleName(iScale));
+		_ftprintf(fp, _T("\t{\t// %s\n\t\t//"), PrettyScaleName(iScale).GetString());
 		// write natural note names in column header comment
 		for (int iDegree = 0; iDegree < DEGREES; iDegree++)	// for each degree
 			_ftprintf(fp, _T("\t%s"), CNote(m_NaturalScale.Note[iDegree]).Name());
@@ -243,7 +244,7 @@ void CDiatonic::AlterTest(FILE *fp)
 {
 	for (int iScale = 0; iScale < SCALES; iScale++) {	// for each scale
 		int	tonality = m_ScaleTonality[iScale];
-		_ftprintf(fp, _T("%s\n"), PrettyScaleName(iScale));
+		_ftprintf(fp, _T("%s\n"), PrettyScaleName(iScale).GetString());
 		for (int iKey = 0; iKey < KEYS; iKey++) {			// for each key
 			CNote	key(iKey * 7);	// cycle of fifths
 			_ftprintf(fp, _T("%-3s: "), key.Name(key, tonality));
@@ -264,7 +265,7 @@ void CDiatonic::ModeTest(FILE *fp)
 		int	tonality = m_ScaleTonality[iScale];
 		for (int iKey = 0; iKey < KEYS; iKey++) {	// for each key
 			_ftprintf(fp, _T("%s %s\n"), 
-				CNote(iKey).Name(iKey, tonality), PrettyScaleName(iScale));
+				CNote(iKey).Name(iKey, tonality), PrettyScaleName(iScale).GetString());
 			for (int iMode = 0; iMode < MODES; iMode++) {		// for each mode
 				_ftprintf(fp, _T("%d:"), iMode + 1);
 				CScale	Tones;

@@ -47,6 +47,7 @@
 		37		27jan21	more replace fixes
 		38		15feb21	add mapped command handler
 		39		07jun21	rename rounding functions
+		40		08jun21	fix local name reuse warning
 
 */
 
@@ -648,13 +649,13 @@ bool CMainFrame::DoFindReplace()
 		pDoc->m_arrTrackSel = arrTrackSel;	// restore document's track selection
 		int	nHits = arrHit.GetSize();
 		for (int iHit = 0; iHit < nHits; iHit++) {	// for each hit
-			int	iTrack = arrHit[iHit];
-			CString	sName(pDoc->m_Seq.GetName(iTrack));	// get track name
+			int	iHitTrack = arrHit[iHit];
+			CString	sName(pDoc->m_Seq.GetName(iHitTrack));	// get track name
 			if (nFindDlgFlags & FR_MATCHCASE)	// if matching case
 				sName.Replace(m_pFindDlg->GetFindString(), m_pFindDlg->GetReplaceString());
 			else	// ignoring case
 				StringReplaceNoCase(sName, m_pFindDlg->GetFindString(), m_pFindDlg->GetReplaceString());
-			pDoc->m_Seq.SetName(iTrack, sName);	// update track name
+			pDoc->m_Seq.SetName(iHitTrack, sName);	// update track name
 		}
 		CPolymeterDoc::CMultiItemPropHint	hint(arrHit, CTrack::PROP_Name);
 		pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_TRACK_PROP, &hint);	// update views

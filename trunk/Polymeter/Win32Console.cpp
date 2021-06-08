@@ -9,6 +9,7 @@
 		00		31jul04		initial version
 		01		30nov07		handle close signal by closing main window
 		02		29jan08		change SetScreenBufferSize arg type to fix warning
+		03		08jun21		fix handle cast warning in redirect method
 
 		Create a Win32 console and redirect standard I/O to it
 
@@ -62,7 +63,7 @@ bool Win32Console::SetScreenBufferSize(WORD Cols, WORD Rows)
 bool Win32Console::Redirect(HANDLE Handle, FILE *File, LPCSTR Mode)
 {
 	if (Handle != INVALID_HANDLE_VALUE) {
-		int hCrt = _open_osfhandle((long)Handle, _O_TEXT);
+		int hCrt = _open_osfhandle((INT_PTR)Handle, _O_TEXT);
 		if (hCrt >= 0) {
 			FILE	*fp = _fdopen(hCrt, Mode);
 			if (fp != NULL) {

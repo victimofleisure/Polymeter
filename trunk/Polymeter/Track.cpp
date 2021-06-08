@@ -35,6 +35,7 @@
 		25		16nov20	add tick dependencies
 		26		19jan21	fix track length check in import tracks
 		27		07jun21	rename rounding functions
+		28		08jun21	fix warning for CString as variadic argument
 
 */
 
@@ -1161,7 +1162,7 @@ void CTrackGroupArray::Dump() const
 	printf("nGroups=%d\n", nGroups);
 	for (int iGroup = 0; iGroup < nGroups; iGroup++) {
 		const CTrackGroup&	group = GetAt(iGroup);
-		_tprintf(_T("%d '%s':"), iGroup, group.m_sName);
+		_tprintf(_T("%d '%s':"), iGroup, group.m_sName.GetString());
 		int	nLinks = group.m_arrTrackIdx.GetSize();
 		printf(" %d [", nLinks);
 		for (int iLink = 0; iLink < nLinks; iLink++) {

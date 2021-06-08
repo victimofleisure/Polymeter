@@ -10,8 +10,7 @@
         00		23mar18	initial version
 		01		01apr20	add generic context menu method
 		02		06apr20	in FormatNumberCommas, emulate GetNumberFormatEx
-		03		06apr20	in FormatNumberCommas, emulate GetNumberFormatEx
-
+		03		08jun21	add cast to fix narrowing conversion warning
 */
 
 // stdafx.cpp : source file that includes just the standard includes
@@ -184,7 +183,7 @@ bool FormatNumberCommas(LPCTSTR pszSrc, CString& sDst, int nPrecision)
 		return false;
 	if (0) {	// GetNumberFormatEx crashes or fails in OSX via WineBottler
 		USES_CONVERSION;
-		NUMBERFMTW	fmt = {nPrecision, 0, 3, szDecimal, szThousand};
+		NUMBERFMTW	fmt = {static_cast<DWORD>(nPrecision), 0, 3, szDecimal, szThousand};
 		int	nLen = GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, T2CW(pszSrc), &fmt, NULL, 0);
 		CStringW	sBuf;
 		LPWSTR	pBuf = sBuf.GetBuffer(nLen);

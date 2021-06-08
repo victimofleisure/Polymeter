@@ -16,6 +16,7 @@
 		06		01apr20	standardize context menu handling
 		07		07apr20	only output bar should enable output capture
 		08		18nov20	enable auto-hide and attach
+		09		08jun21	fix warning for CString as variadic argument
 
 */
 
@@ -284,7 +285,7 @@ void CMidiEventBar::ExportEvents(LPCTSTR pszPath)
 			iChan = 0;
 		}
 		sLine.Format(_T("%d,%d,%s,%d,%d\n"), evt.m_nTime, iChan, 
-			sStatus, MIDI_P1(evt.m_dwEvent), MIDI_P2(evt.m_dwEvent));
+			sStatus.GetString(), MIDI_P1(evt.m_dwEvent), MIDI_P2(evt.m_dwEvent));
 		fOut.WriteString(sLine);
 	}
 }

@@ -44,6 +44,7 @@
 		34		17jul20	set song mode now optionally chases dubs
 		35		16dec20	add looping of playback
 		36		07jun21	rename rounding functions
+		37		08jun21	fix local name reuse warning
 
 */
 
@@ -115,14 +116,15 @@ bool CSequencer::GetPosition(MMTIME& time, UINT wType)
 
 bool CSequencer::WriteTimeDivision(int nTimeDiv)
 {
-	MIDIPROPTIMEDIV	mpTimeDiv = {sizeof(mpTimeDiv), nTimeDiv};
+	MIDIPROPTIMEDIV	mpTimeDiv = {sizeof(mpTimeDiv), static_cast<DWORD>(nTimeDiv)};
 	CHECK(midiStreamProperty(m_hStrm, (BYTE *)&mpTimeDiv, MIDIPROP_SET | MIDIPROP_TIMEDIV));
 	return true;
 }
 
 bool CSequencer::WriteTempo(double fTempo)
 {
-	MIDIPROPTEMPO	mpTempo = {sizeof(mpTempo), Round(CMidiFile::MICROS_PER_MINUTE / fTempo)};
+	int	nMicrosPerQtrNote = Round(CMidiFile::MICROS_PER_MINUTE / fTempo);
+	MIDIPROPTEMPO	mpTempo = {sizeof(mpTempo), static_cast<DWORD>(nMicrosPerQtrNote)};
 	CHECK(midiStreamProperty(m_hStrm, (BYTE *)&mpTempo, MIDIPROP_SET | MIDIPROP_TEMPO));
 	return true;
 }
@@ -586,7 +588,6 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 		if (nEvtTime >= 0) {	// discard already played events
 			int	nAbsEvtTime = nCBStart + nEvtTime;	// convert event time from callback-relative to absolute
 			if (m_bIsSongMode) {	// if applying track dubs
-				CTrack&	trk = GetAt(iTrack);
 				int	nDubs = trk.m_arrDub.GetSize();
 				while (trk.m_iDub < nDubs && nAbsEvtTime >= trk.m_arrDub[trk.m_iDub].m_nTime) {
 					trk.m_bMute = trk.m_arrDub[trk.m_iDub].m_bMute;
@@ -886,8 +887,8 @@ bool CSequencer::OutputMidiBuffer()
 		for (int iTempoEvt = 0; iTempoEvt < nTempoEvts; iTempoEvt++) {	// for each tempo event
 			m_arrEvent.FastInsertSorted(m_arrTempoEvent[iTempoEvt]);	// insert into event array
 		}
-		CMidiEvent	evt(m_nCBLen, MEVT_NOP << 24);
-		m_arrEvent.FastAdd(evt);	// pad time to start of next callback
+		CMidiEvent	evtNOP(m_nCBLen, MEVT_NOP << 24);
+		m_arrEvent.FastAdd(evtNOP);	// pad time to start of next callback
 		nEvents++;
 		if (nEvents >= arrEvt.GetSize()) {	// if events exceed output buffer size
 			OnMidiError(SEQERR_BUFFER_OVERRUN);
@@ -1009,7 +1010,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 	int	nInitEvents = m_arrInitMidiEvent.GetSize();
 	for (int iEvt = 0; iEvt < nInitEvents; iEvt++) {	// for each initial event
 		int	iChan = MIDI_CHAN(m_arrInitMidiEvent[iEvt]);
-		CMidiFile::MIDI_EVENT	evt = {m_nStartPos, m_arrInitMidiEvent[iEvt]};
+		CMidiFile::MIDI_EVENT	evt = { static_cast<DWORD>(m_nStartPos), m_arrInitMidiEvent[iEvt]};
 		arrMidiEvent[iChan].FastAdd(evt);	// add initial event to per-channel array
 	}
 	CMidiEventArray arrSongTempoEvent;
@@ -1052,7 +1053,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 			const CMidiEvent&	evt = arrSongTempoEvent[iTempoEvt];
 			int	nTime = evt.m_nTime - nPrevTime;
 			nPrevTime = evt.m_nTime;
-			CMidiFile::MIDI_EVENT	midiEvt = {nTime, MEVT_EVENTPARM(evt.m_dwEvent)};
+			CMidiFile::MIDI_EVENT	midiEvt = {static_cast<DWORD>(nTime), MEVT_EVENTPARM(evt.m_dwEvent)};
 			arrTempoMap[iTempoEvt] = midiEvt;
 		}
 		parrTempoMap = &arrTempoMap;

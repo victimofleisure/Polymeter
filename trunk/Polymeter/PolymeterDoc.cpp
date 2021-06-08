@@ -68,6 +68,8 @@
 		58		24jan21	add prime factors command
 		59		10feb21	use set track property overload for selected tracks
 		60		07jun21	rename rounding functions
+		61		08jun21	fix local name reuse warning
+		62		08jun21	fix warning for CString as variadic argument
 
 */
 
@@ -1888,9 +1890,9 @@ void CPolymeterDoc::SaveDubs(CUndoState& State, CUndoDub *pInfo) const
 		iStartTrack = rngTrack.Start;
 		nTracks = rngTrack.Length();
 	} else {	// undoing or redoing; selection may have changed, so don't rely on it
-		const CUndoDub	*pInfo = static_cast<CUndoDub*>(State.GetObj());
-		iStartTrack = pInfo->m_iTrack;
-		nTracks = pInfo->m_arrDub.GetSize();
+		const CUndoDub	*pSavedInfo = static_cast<CUndoDub*>(State.GetObj());
+		iStartTrack = pSavedInfo->m_iTrack;
+		nTracks = pSavedInfo->m_arrDub.GetSize();
 	}
 	pInfo->m_iTrack = iStartTrack;
 	pInfo->m_arrDub.SetSize(nTracks);
@@ -3368,7 +3370,7 @@ bool CPolymeterDoc::CheckForPartOverlap(int iTargetPart)
 		// should automatically undo or redo this edit, allowing its existence to be hidden from the user
 		m_parrSelection = &arrConflictedPartIdx;
 		NotifyUndoableEdit(INT_MIN, UCODE_MODIFY_PARTS);	// see UndoDependencies and RedoDependencies
-		int	nSels = GetSelectedCount();
+		nSels = GetSelectedCount();
 		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 			int	iTrack = m_arrTrackSel[iSel];
 			int	iPart = arrTrackIdx[iTrack];
@@ -3685,13 +3687,13 @@ bool CPolymeterDoc::ExportSongAsCSV(LPCTSTR pszDestPath, int nDuration, bool bSo
 		const CMidiFile::CMidiEventArray&	arrEvent = arrTrack[iTrack];
 		arrTrackName[iTrack].Replace(_T("\""), _T("\"\""));	// escape double quotes
 		int	nEvents = arrEvent.GetSize();
-		_ftprintf(fOut.m_pStream, _T("Track,%d,%d,\"%s\"\n"), iTrack, nEvents, arrTrackName[iTrack]);
+		_ftprintf(fOut.m_pStream, _T("Track,%d,%d,\"%s\"\n"), iTrack, nEvents, arrTrackName[iTrack].GetString());
 		UINT	nEvtTime = 0;
 		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each of track's events
 			nEvtTime += arrEvent[iEvent].DeltaT;	// add event's delta time to cumulative time
 			DWORD	dwMsg = arrEvent[iEvent].Msg;	// dereference MIDI message
 			int	iStat = MIDI_CMD_IDX(dwMsg);	// assume channel voice messages only
-			_ftprintf(fOut.m_pStream, _T("%u,%s,%u,%u,%u\n"), nEvtTime, arrChanStatNick[iStat], 
+			_ftprintf(fOut.m_pStream, _T("%u,%s,%u,%u,%u\n"), nEvtTime, arrChanStatNick[iStat].GetString(), 
 				MIDI_CHAN(dwMsg), MIDI_P1(dwMsg), MIDI_P2(dwMsg));	// output event line
 		}
 	}

@@ -11,6 +11,7 @@
 		01		23nov07	support Unicode
 		02		26nov08	use windows hand cursor if available
 		03		02apr18	fix unreferenced parameter warnings
+		04		08jun21 fix handle cast warning in goto URL
 
         simple hyperlink control
  
@@ -102,7 +103,7 @@ void CHyperlink::SetColors(COLORREF Link, COLORREF Visited, COLORREF Hover)
 
 bool CHyperlink::GotoUrl(LPCTSTR Url)
 {
-	int	retc = (int)ShellExecute(NULL, NULL, Url, NULL, NULL, SW_SHOWNORMAL);
+	INT_PTR	retc = (INT_PTR)ShellExecute(NULL, NULL, Url, NULL, NULL, SW_SHOWNORMAL);
 	return(retc > HINSTANCE_ERROR);
 }
 

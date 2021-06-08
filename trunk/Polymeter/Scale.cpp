@@ -15,6 +15,7 @@
 		05		31aug15	overload HarmonizeNote to constrain to chord tones
 		06		03dec15	in HarmonizeNote, for harmony below, reverse cycle
 		07		17dec15	in HarmonizeNote, if interval is octave, allow octaves
+		08		08jun21	fix warning for CString as variadic argument
 
 		scale container
 
@@ -73,7 +74,7 @@ void CScale::PrintMidi(CNote Key, int Tonality) const
 {
 	int	notes = m_Size;
 	for (int iNote = 0; iNote < notes; iNote++)
-		_tprintf(_T("%s "), GetAt(iNote).MidiName(Key, Tonality));
+		_tprintf(_T("%s "), GetAt(iNote).MidiName(Key, Tonality).GetString());
 	fputc('\n', stdout);
 }
 

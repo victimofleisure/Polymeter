@@ -14,6 +14,7 @@
 		04		05apr20	add track step change message
 		05		07sep20	add apply preset and part messages
 		06		15feb21	add mapped command message
+		07		08jun21	fix LDS macro warning
 
 		global definitions and inlines
 
@@ -41,7 +42,7 @@
 #define NODEFAULTCASE	ASSERT(0)
 
 // load string from resource via temporary object
-#define LDS(x) CString((LPCTSTR)x)
+#define LDS(x) CString(MAKEINTRESOURCE(x))
 
 // ck: define containers for some useful built-in types
 typedef CArrayEx<float, float> CFloatArray;

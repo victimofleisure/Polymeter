@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		14jun18	initial version
+		01		08jun21	fix warning for CString as variadic argument
 		
 */
 
@@ -23,7 +24,7 @@
 void CPreset::Dump() const
 {
 	int	nMutes = m_arrMute.GetSize();
-	_tprintf(_T("'%s' %d:"), m_sName, nMutes);
+	_tprintf(_T("'%s' %d:"), m_sName.GetString(), nMutes);
 	for (int iMute = 0; iMute < nMutes; iMute++)
 		printf(" %d", m_arrMute[iMute]);
 	printf("\n");

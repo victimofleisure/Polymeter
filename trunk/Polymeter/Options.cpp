@@ -10,6 +10,7 @@
         00      27mar18	initial version
 		01		20feb19	rename option info vars
 		02		03jun20	add record input options
+		03		08jun21	add space between concatenated string literals
 		
 */
 
@@ -32,7 +33,7 @@ const COptions::OPTION_INFO COptions::m_oiRecordInput[RECORD_INPUT_OPTS] = {
 
 const COptions::PROPERTY_INFO COptions::m_Info[PROPERTIES] = {
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
-		{_T(#group)_T("_")_T(#name), IDS_OPT_NAME_##group##_##name, IDS_OPT_DESC_##group##_##name, \
+		{_T(#group) _T("_") _T(#name), IDS_OPT_NAME_##group##_##name, IDS_OPT_DESC_##group##_##name, \
 		offsetof(COptions, m_##group##_##name), sizeof(type), &typeid(type), GROUP_##group, -1, \
 		PT_##proptype, items, itemname, minval, maxval},
 	#include "OptionsDef.h"
@@ -154,7 +155,7 @@ void COptions::SetProperty(int iProp, const CComVariant& var)
 void COptions::ReadProperties()
 {
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
-		RdReg(_T("Options\\")_T(#group), _T(#name), m_##group##_##name);
+		RdReg(_T("Options\\") _T(#group), _T(#name), m_##group##_##name);
 	#define OPTS_EXCLUDE_MIDI_DEVICES	// MIDI devices are handled in app
 	#include "OptionsDef.h"	// generate code to read properties
 }
@@ -162,7 +163,7 @@ void COptions::ReadProperties()
 void COptions::WriteProperties() const
 {
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
-		WrReg(_T("Options\\")_T(#group), _T(#name), m_##group##_##name);
+		WrReg(_T("Options\\") _T(#group), _T(#name), m_##group##_##name);
 	#define OPTS_EXCLUDE_MIDI_DEVICES	//  MIDI devices are handled in app
 	#include "OptionsDef.h"	// generate code to read properties
 }

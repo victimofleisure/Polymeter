@@ -15,6 +15,7 @@
 		05		11feb19	add tempo and key and time signatures to read
 		06		09sep19	add duration and tempo map to write
 		07		07jun21	rename rounding functions
+		08		08jun21	fix local name reuse warning
 
 		MIDI file I/O
  
@@ -250,7 +251,6 @@ void CMidiFile::ReadTracks(CMidiTrackArray& arrTrack, CStringArrayEx& arrTrackNa
 	arrTrackName.SetSize(nTracks);
 	int	iTrack = 0;
 	while (Read(&nChunkID, sizeof(nChunkID)) == sizeof(nChunkID)) {	// read chunk ID
-		UINT	nChunkSize;
 		ReadInt(nChunkSize);	// read chunk size
 		if (nChunkID == m_nTrackChunkID) {	// if track chunk
 			BYTE	nRunningStatus = 0;	// init running status

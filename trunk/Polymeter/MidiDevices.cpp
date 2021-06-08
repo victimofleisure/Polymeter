@@ -9,6 +9,7 @@
 		rev		date	comments
         00      17apr18	initial version
 		01		27mar20	refresh cache after displaying message box
+		02		08jun21	fix warning for CString as variadic argument
 
 */
 
@@ -199,10 +200,10 @@ void CMidiDevices::Write()
 void CMidiDevices::Dump() const
 {
 	for (int iType = 0; iType < DEVICE_TYPES; iType++) {	// for each device type
-		_tprintf(_T("%s:\n"), GetTypeCaption(iType));
+		_tprintf(_T("%s:\n"), GetTypeCaption(iType).GetString());
 		int	nDevs = GetCount(iType);
 		for (int iDev = 0; iDev < nDevs; iDev++) {	// for each device
-			_tprintf(_T("%d: '%s' '%s'\n"), iDev, GetName(iType, iDev), GetID(iType, iDev));
+			_tprintf(_T("%d: '%s' '%s'\n"), iDev, GetName(iType, iDev).GetString(), GetID(iType, iDev).GetString());
 		}
 	}
 }
@@ -213,13 +214,13 @@ void CMidiDevices::Dump(CString& str, bool bShowIDs) const
 	CString	s;
 	for (int iType = 0; iType < DEVICE_TYPES; iType++) {	// for each device type
 		int	nDevs = GetCount(iType);
-		s.Format(_T("%s\t%d\n"), GetTypeCaption(iType), nDevs);
+		s.Format(_T("%s\t%d\n"), GetTypeCaption(iType).GetString(), nDevs);
 		str += s;
 		for (int iDev = 0; iDev < nDevs; iDev++) {	// for each device
 			if (bShowIDs)
-				s.Format(_T("%d\t%s\t%s\n"), iDev, GetName(iType, iDev), GetID(iType, iDev));
+				s.Format(_T("%d\t%s\t%s\n"), iDev, GetName(iType, iDev).GetString(), GetID(iType, iDev).GetString());
 			else
-				s.Format(_T("%d\t%s\n"), iDev, GetName(iType, iDev));
+				s.Format(_T("%d\t%s\n"), iDev, GetName(iType, iDev).GetString());
 			str += s;
 		}
 	}
@@ -232,18 +233,18 @@ void CMidiDevices::DumpSystemState(CString& str) const
 	CStringArray	arrDevName;
 	CMidiIn::GetDeviceNames(arrDevName);
 	int	nIns = INT64TO32(arrDevName.GetSize());
-	s.Format(_T("%s\t%d\n"), GetTypeCaption(INPUT), nIns);
+	s.Format(_T("%s\t%d\n"), GetTypeCaption(INPUT).GetString(), nIns);
 	str += s;
 	for (int iIn = 0; iIn < nIns; iIn++) {	// for each input device
-		s.Format(_T("%d\t%s\n"), iIn, arrDevName[iIn]);
+		s.Format(_T("%d\t%s\n"), iIn, arrDevName[iIn].GetString());
 		str += s;
 	}
 	CMidiOut::GetDeviceNames(arrDevName);
 	int	nOuts = INT64TO32(arrDevName.GetSize());
-	s.Format(_T("%s\t%d\n"), GetTypeCaption(OUTPUT), nOuts);
+	s.Format(_T("%s\t%d\n"), GetTypeCaption(OUTPUT).GetString(), nOuts);
 	str += s;
 	for (int iOut = 0; iOut < nOuts; iOut++) {	// for each output device
-		s.Format(_T("%d\t%s\n"), iOut, arrDevName[iOut]);
+		s.Format(_T("%d\t%s\n"), iOut, arrDevName[iOut].GetString());
 		str += s;
 	}
 }

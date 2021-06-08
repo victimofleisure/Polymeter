@@ -14,6 +14,7 @@
 		04		26aug13	GetInt return value was inverted
 		05		26aug13	in GetString, fix unquoted case
 		06		18dec18	refactor to handle quotes properly
+		07		08jun21	in StrToVal for double, fix format string
  
         parse comma-separated values
  
@@ -98,7 +99,7 @@ bool CParseCSV::StrToVal(const CString& str, int& nVal)
 
 bool CParseCSV::StrToVal(const CString& str, double& fVal)
 {
-	return _stscanf_s(str, _T("%f"), &fVal) == 1;
+	return _stscanf_s(str, _T("%lf"), &fVal) == 1;
 }
 
 bool CParseCSV::StrToVal(const CString& str, bool& bVal)

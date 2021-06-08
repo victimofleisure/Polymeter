@@ -11,7 +11,8 @@
 		01		07may14	in CMMTimer::Create, fix dwUser type
 		02		27mar18	in GetErrorString, release buffer
 		03		17may18	output GetDeviceNames was using input struct size
- 
+		04		08jun21	fix get device interface name warnings
+
 		wrap system MIDI and multimedia timer APIs
  
 */
@@ -68,7 +69,7 @@ MMRESULT CMidiIn::GetDeviceNames(CStringArray& DevList)
 
 MMRESULT CMidiIn::GetDeviceInterfaceName(int DevID, CString& Name)
 {
-	HMIDIIN	hDev = reinterpret_cast<HMIDIIN>(DevID);
+	HMIDIIN	hDev = reinterpret_cast<HMIDIIN>(static_cast<W64UINT>(DevID));
 	W64ULONG	size = 0;	// receives needed buffer size in bytes
 	W64ULONG	pSize = reinterpret_cast<W64ULONG>(&size);
 	MMRESULT	mr = midiInMessage(hDev, DRV_QUERYDEVICEINTERFACESIZE, pSize, 0);
@@ -129,7 +130,7 @@ MMRESULT CMidiOut::GetDeviceNames(CStringArray& DevList)
 
 MMRESULT CMidiOut::GetDeviceInterfaceName(int DevID, CString& Name)
 {
-	HMIDIOUT	hDev = reinterpret_cast<HMIDIOUT>(DevID);
+	HMIDIOUT	hDev = reinterpret_cast<HMIDIOUT>(static_cast<W64UINT>(DevID));
 	W64ULONG	size = 0;	// receives needed buffer size in bytes
 	W64ULONG	pSize = reinterpret_cast<W64ULONG>(&size);
 	MMRESULT	mr = midiOutMessage(hDev, DRV_QUERYDEVICEINTERFACESIZE, pSize, 0);

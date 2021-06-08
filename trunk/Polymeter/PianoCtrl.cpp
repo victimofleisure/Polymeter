@@ -16,6 +16,7 @@
 		06		10jan19	add no internal style and refactor names
 		07		01feb19	add key press notification
 		08		07jun21	rename rounding functions
+		09		08jun21	fix local name reuse warning
 
 		piano control
 
@@ -155,9 +156,8 @@ void CPianoCtrl::Update(CSize szClient)
 {
 	// compute number of white keys
 	int	nWhites = 0;
-	int	iKey;
 	int	nKeys = m_arrKey.GetSize();	// get existing key count
-	for (iKey = 0; iKey < nKeys; iKey++)	// for each key array element
+	for (int iKey = 0; iKey < nKeys; iKey++)	// for each key array element
 		m_arrKey[iKey].m_rgn.DeleteObject();	// delete key's polygonal area
 	int	nStartDelta = m_nStartNote - m_nPrevStartNote;
 	if (nStartDelta) {	// if start note changed
@@ -171,7 +171,7 @@ void CPianoCtrl::Update(CSize szClient)
 	}
 	nKeys = GetKeyCount();	// get new key count
 	m_arrKey.SetSize(nKeys);	// resize key array, possibly reallocating it
-	for (iKey = 0; iKey < nKeys; iKey++) {	// for each key
+	for (int iKey = 0; iKey < nKeys; iKey++) {	// for each key
 		int	iKeyInfo = (m_nStartNote + iKey) % NOTES;	// account for start note
 		if (!m_arrKeyInfo[iKeyInfo].nBlackOffset)	// if key is black
 			nWhites++;
@@ -196,7 +196,7 @@ void CPianoCtrl::Update(CSize szClient)
 	int	iWhite = iStartWhite;
 	int	nPrevWhiteX = 0;
 	int	nPrevBlackOffset = 0;
-	for (iKey = 0; iKey < nKeys; iKey++) {	// for each key
+	for (int iKey = 0; iKey < nKeys; iKey++) {	// for each key
 		CKey&	key = m_arrKey[iKey];
 		int	iKeyInfo = (m_nStartNote + iKey) % NOTES;	// account for start note
 		int	nBlackOffset = m_arrKeyInfo[iKeyInfo].nBlackOffset;
