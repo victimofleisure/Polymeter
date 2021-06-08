@@ -31,6 +31,7 @@
 		21		07sep20	add apply preset and part messages
 		22		16nov20	refactor UpdateSongPosition
 		23		15feb21	add mapped command handler
+		24		08jun21	define tracking ID accessor if earlier than VS2012
 
 */
 
@@ -73,6 +74,10 @@ class CMainFrame : public CMDIFrameWndEx
 	DECLARE_DYNAMIC(CMainFrame)
 public:
 	CMainFrame();
+
+#if _MSC_VER < 1700	// if earlier than Visual Studio 2012
+	int		GetTrackingID() { return m_nIDTracking; }	// missing accessor
+#endif
 
 // Constants
 	enum {

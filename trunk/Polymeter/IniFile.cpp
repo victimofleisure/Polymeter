@@ -9,6 +9,7 @@
 		rev		date	comments
 		00		12sep13	initial version
 		01		24feb20	implement read/write
+		02		08jun21	define ATL string length methods if earlier than VS2012
  
 		INI file wrapper
 
@@ -49,6 +50,21 @@ inline CIniFile::CState::~CState()
 	AfxGetApp()->m_pszRegistryKey = m_pszRegistryKey;	// restore app registry key
 	CIniFile::m_pThis = NULL;	// reset INI file instance pointer
 }
+
+#if _MSC_VER < 1700	// if earlier than Visual Studio 2012
+inline int AtlStrLen(_In_opt_z_ const wchar_t *str)
+{
+	if (str == NULL)
+		return 0;
+	return static_cast<int>(::wcslen(str));
+}
+inline int AtlStrLen(_In_opt_z_ const char *str)
+{
+	if (str == NULL)
+		return 0;
+	return static_cast<int>(::strlen(str));
+}
+#endif
 
 BOOL CIniFile::CFastStdioFile::ReadString(CString& rString)
 {

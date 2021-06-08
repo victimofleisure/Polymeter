@@ -48,6 +48,7 @@
 		38		15feb21	add mapped command handler
 		39		07jun21	rename rounding functions
 		40		08jun21	fix local name reuse warning
+		41		08jun21	handle taskbar activate only in VS2012 or later
 
 */
 
@@ -727,7 +728,9 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_VIEW_APPLOOK_FIRST, ID_VIEW_APPLOOK_LAST, OnUpdateApplicationLook)
 	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SONG_POS, OnUpdateIndicatorSongPos)
 	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SONG_TIME, OnUpdateIndicatorSongPos)
+#if _MSC_VER >= 1700	// if Visual Studio 2012 or later
 	ON_REGISTERED_MESSAGE(AFX_WM_AFTER_TASKBAR_ACTIVATE, OnAfterTaskbarActivate)
+#endif
 	ON_MESSAGE(UWM_HANDLE_DLG_KEY, OnHandleDlgKey)
 	ON_MESSAGE(UWM_PROPERTY_CHANGE, OnPropertyChange)
 	ON_MESSAGE(UWM_PROPERTY_SELECT, OnPropertySelect)
@@ -892,6 +895,7 @@ void CMainFrame::OnUpdateApplicationLook(CCmdUI* pCmdUI)
 	pCmdUI->SetRadio(theApp.m_nAppLook == nAppLook);
 }
 
+#if _MSC_VER >= 1700	// if Visual Studio 2012 or later
 LRESULT CMainFrame::OnAfterTaskbarActivate(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(wParam);
@@ -922,6 +926,7 @@ LRESULT CMainFrame::OnAfterTaskbarActivate(WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 }
+#endif
 
 void CMainFrame::OnDestroy()
 {
