@@ -365,6 +365,8 @@ id	open	close	type	description	rev	user
 447	05/01/21	06/07/21	done	rename rounding and truncation functions to avoid conflicts with C++ 11	0.0.37.005	
 448	05/01/21	06/08/21	done	fix compilation errors and warnings in Visual Studio 2019	0.0.37.006	
 449	05/01/21	06/08/21	done	fix compilation errors in Visual Studio 2010	0.0.37.007	
+450	06/15/21	06/15/21	done	main frame should delete track color toolbar button in OnDestroy to avoid memory leak	0.0.37.008	
+451	06/20/21	06/20/21	done	dockable bars handle editing commands inconsistently; customize routing in child frame	0.0.37.008	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
