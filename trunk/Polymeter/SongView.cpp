@@ -27,6 +27,7 @@
 		17		12feb21	add Shift + right click to extend existing selection
 		18		16mar21	add track selection to edit command update handlers
 		19		07jun21	rename rounding functions
+		20		20jun21	move focus edit handling to child frame
 
 */
 
@@ -44,7 +45,6 @@
 #include "SongTrackView.h"
 #include "StepView.h"
 #include "ChildFrm.h"
-#include "FocusEdit.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -888,100 +888,78 @@ void CSongView::OnViewZoomReset()
 
 void CSongView::OnEditSelectAll()
 {
-	if (!CFocusEdit::SelectAll()) {
-		m_rCellSel = CRect(0, 0, INT_MAX, GetDocument()->GetTrackCount());	// all cells in all tracks
-		Invalidate();
-	}
+	m_rCellSel = CRect(0, 0, INT_MAX, GetDocument()->GetTrackCount());	// all cells in all tracks
+	Invalidate();
 }
 
 void CSongView::OnEditCut()
 {
-	if (!CFocusEdit::Cut()) {
-		if (HaveSelection()) {
-			GetDocument()->DeleteDubs(m_rCellSel, GetTicksPerCell(), true);	// copy to clipboard
-			ResetSelection();
-		} else
-			DispatchToDocument();
-	}
+	if (HaveSelection()) {
+		GetDocument()->DeleteDubs(m_rCellSel, GetTicksPerCell(), true);	// copy to clipboard
+		ResetSelection();
+	} else
+		DispatchToDocument();
 }
 
 void CSongView::OnUpdateEditCut(CCmdUI *pCmdUI)
 {
-	if (!CFocusEdit::UpdateCut(pCmdUI)) {
-		pCmdUI->Enable(HaveTrackOrCellSelection());
-	}
+	pCmdUI->Enable(HaveTrackOrCellSelection());
 }
 
 void CSongView::OnEditCopy()
 {
-	if (!CFocusEdit::Copy()) {
-		if (HaveSelection()) {
-			GetDocument()->CopyDubsToClipboard(m_rCellSel, GetTicksPerCell());
-		} else
-			DispatchToDocument();
-	}
+	if (HaveSelection()) {
+		GetDocument()->CopyDubsToClipboard(m_rCellSel, GetTicksPerCell());
+	} else
+		DispatchToDocument();
 }
 
 void CSongView::OnUpdateEditCopy(CCmdUI *pCmdUI)
 {
-	if (!CFocusEdit::UpdateCopy(pCmdUI)) {
-		pCmdUI->Enable(HaveTrackOrCellSelection());
-	}
+	pCmdUI->Enable(HaveTrackOrCellSelection());
 }
 
 void CSongView::OnEditPaste()
 {
-	if (!CFocusEdit::Paste()) {
-		if (HaveSelection()) {
-			GetDocument()->PasteDubs(m_rCellSel.TopLeft(), GetTicksPerCell(), m_rCellSel);
-			UpdateCells(m_rCellSel);
-		} else
-			DispatchToDocument();
-	}
+	if (HaveSelection()) {
+		GetDocument()->PasteDubs(m_rCellSel.TopLeft(), GetTicksPerCell(), m_rCellSel);
+		UpdateCells(m_rCellSel);
+	} else
+		DispatchToDocument();
 }
 
 void CSongView::OnUpdateEditPaste(CCmdUI *pCmdUI)
 {
-	if (!CFocusEdit::UpdatePaste(pCmdUI)) {
-		pCmdUI->Enable((HaveSelection() && theApp.m_arrSongClipboard.GetSize())
-			|| theApp.m_arrTrackClipboard.GetSize());	// so tracks can also be pasted
-	}
+	pCmdUI->Enable((HaveSelection() && theApp.m_arrSongClipboard.GetSize())
+		|| theApp.m_arrTrackClipboard.GetSize());	// so tracks can also be pasted
 }
 
 void CSongView::OnEditInsert()
 {
-	if (!CFocusEdit::Insert()) {
-		if (HaveSelection()) {
-			GetDocument()->InsertDubs(m_rCellSel, GetTicksPerCell());
-			UpdateCells(m_rCellSel);
-		} else
-			DispatchToDocument();
-	}
+	if (HaveSelection()) {
+		GetDocument()->InsertDubs(m_rCellSel, GetTicksPerCell());
+		UpdateCells(m_rCellSel);
+	} else
+		DispatchToDocument();
 }
 
 void CSongView::OnUpdateEditInsert(CCmdUI *pCmdUI)
 {
-	if (!CFocusEdit::UpdateInsert(pCmdUI)) {
-		pCmdUI->Enable(HaveTrackOrCellSelection());
-	}
+	pCmdUI->Enable(HaveTrackOrCellSelection());
 }
 
 void CSongView::OnEditDelete()
 {
-	if (!CFocusEdit::Delete()) {
-		if (HaveSelection()) {
-			GetDocument()->DeleteDubs(m_rCellSel, GetTicksPerCell(), false);	// don't copy to clipboard
-			ResetSelection();
-		} else
-			DispatchToDocument();
-	}
+	if (HaveSelection()) {
+		GetDocument()->DeleteDubs(m_rCellSel, GetTicksPerCell(), false);	// don't copy to clipboard
+		ResetSelection();
+	} else
+		DispatchToDocument();
 }
 
 void CSongView::OnUpdateEditDelete(CCmdUI *pCmdUI)
 {
-	if (!CFocusEdit::UpdateDelete(pCmdUI)) {
-		pCmdUI->Enable(HaveTrackOrCellSelection());
-	}
+	pCmdUI->Enable(HaveTrackOrCellSelection());
 }
 
 void CSongView::OnTransportLoop()

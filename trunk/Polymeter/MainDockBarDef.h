@@ -15,6 +15,7 @@
 		05		12dec19	add phase bar
 		06		17mar20	add step values bar
 		07		20mar20	add mapping
+		08		20jun21	add list of bars that want edit commands 
 		
 */
 
@@ -47,3 +48,13 @@ MAINDOCKBARDEF(Mapping,		200,	300,	dwBaseStyle | CBRS_LEFT)
 
 #endif	// MAINDOCKBARDEF
 #undef MAINDOCKBARDEF
+
+// list of dockable bars that handle standard editing commands
+#ifdef MAINDOCKBARDEF_WANTEDITCMDS
+MAINDOCKBARDEF_WANTEDITCMDS(Presets)
+MAINDOCKBARDEF_WANTEDITCMDS(Parts)
+MAINDOCKBARDEF_WANTEDITCMDS(Modulations)
+MAINDOCKBARDEF_WANTEDITCMDS(StepValues)
+MAINDOCKBARDEF_WANTEDITCMDS(Mapping)
+#endif
+#undef MAINDOCKBARDEF_WANTEDITCMDS

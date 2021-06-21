@@ -9,6 +9,7 @@
 		rev		date	comments
         00		20mar20	initial version
 		01		29mar20	add property name accessors; add previous selection
+		02		20jun21	add list accessor
 
 */
 
@@ -30,6 +31,7 @@ public:
 	CString GetOutputEventName(int iEvent) const;
 	static const int	GetPropertyNameID(int iProp);
 	static const CString	GetPropertyName(int iProp);
+	CGridCtrl&	GetListCtrl();
 
 // Operations
 public:
@@ -82,7 +84,6 @@ protected:
 	void	OnTrackNameChange(int iTrack);
 
 // Overrides
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual	void OnShowChanged(bool bShow);
 
 // Generated message map functions
@@ -99,6 +100,7 @@ protected:
 	afx_msg void OnListCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg LRESULT OnMidiEvent(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnEditSelectAll();
+	afx_msg void OnUpdateEditSelectAll(CCmdUI *pCmdUI);
 	afx_msg void OnEditCopy();
 	afx_msg void OnEditCut();
 	afx_msg void OnEditPaste();
@@ -132,4 +134,9 @@ inline const int CMappingBar::GetPropertyNameID(int iProp)
 inline const CString CMappingBar::GetPropertyName(int iProp)
 {
 	return LDS(GetPropertyNameID(iProp));
+}
+
+inline CGridCtrl& CMappingBar::GetListCtrl()
+{
+	return m_grid;
 }

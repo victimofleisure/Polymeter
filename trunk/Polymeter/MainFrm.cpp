@@ -49,6 +49,7 @@
 		39		07jun21	rename rounding functions
 		40		08jun21	fix local name reuse warning
 		41		08jun21	handle taskbar activate only in VS2012 or later
+		42		15jun21	use auto pointer for tool bar track color button
 
 */
 
@@ -139,7 +140,6 @@ CMainFrame::CMainFrame() : m_wndMidiInputBar(false), m_wndMidiOutputBar(true)
 	m_pFindDlg = NULL;
 	m_bFindMatchCase = false;
 	m_bIsViewTimerSet = false;
-	m_pbtnTrackColor = NULL;
 	m_nConvergenceSize = theApp.GetProfileInt(REG_SETTINGS, RK_CONVERGENCE_SIZE, CONVERGENCE_SIZE_DEFAULT);
 }
 
@@ -1296,7 +1296,7 @@ LRESULT CMainFrame::OnResetToolBar(WPARAM wParam, LPARAM lParam)
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
 	if (m_pbtnTrackColor == NULL) {
-		m_pbtnTrackColor = new CMFCColorMenuButton(ID_TRACK_COLOR, LDS(IDS_MAIN_TRACK_COLORS));
+		m_pbtnTrackColor.Attach(new CMFCColorMenuButton(ID_TRACK_COLOR, LDS(IDS_MAIN_TRACK_COLORS)));
 		m_pbtnTrackColor->EnableAutomaticButton(LDS(IDS_COLOR_MENU_AUTOMATIC), COLORREF(-1));
 		m_pbtnTrackColor->EnableOtherButton(LDS(IDS_COLOR_MENU_MORE_COLORS));
 		m_pbtnTrackColor->EnableDocumentColors(LDS(IDS_MAIN_TRACK_COLORS));

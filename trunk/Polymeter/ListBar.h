@@ -8,6 +8,8 @@
 		revision history:
 		rev		date	comments
         00		18jun18	initial version
+		01		20jun21	add list accessor
+		02		21jun21	add select all
 		
 */
 
@@ -30,6 +32,7 @@ public:
 	void	SetSelection(const CIntArrayEx& arrSelection);
 	void	SelectRange(int iFirstItem, int nItems);
 	void	SelectOnly(int iItem);
+	CListCtrl&	GetListCtrl();
 
 // Operations
 public:
@@ -80,6 +83,8 @@ protected:
 	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
 	afx_msg void OnEditRename();
 	afx_msg void OnUpdateEditRename(CCmdUI *pCmdUI);
+	afx_msg void OnEditSelectAll();
+	afx_msg void OnUpdateEditSelectAll(CCmdUI *pCmdUI);
 };
 
 inline void CListBar::SetSelection(const CIntArrayEx& arrSelection)
@@ -105,4 +110,9 @@ inline void CListBar::Deselect()
 inline void CListBar::RedrawItem(int iItem)
 {
 	m_list.RedrawItem(iItem);
+}
+
+inline CListCtrl&	CListBar::GetListCtrl()
+{
+	return m_list;
 }

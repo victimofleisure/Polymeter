@@ -10,6 +10,7 @@
         00      23mar18	initial version
 		01		09jul20	move view type handling from document to child frame
 		02		03aug20	fix next/previous pane handling
+		03		20jun21	move focus edit handling here
 
 */
 
@@ -30,6 +31,7 @@
 #include "SongParent.h"
 #include "LiveView.h"
 #include "DocIter.h"
+#include "FocusEdit.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -271,6 +273,32 @@ BOOL CChildFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO
 			}
 		} else if (nCode == CN_UPDATE_COMMAND_UI) {
 			return TRUE;	// handled
+		}
+		break;
+	case ID_EDIT_UNDO:
+	case ID_EDIT_COPY:
+	case ID_EDIT_CUT:
+	case ID_EDIT_PASTE:
+	case ID_EDIT_INSERT:
+	case ID_EDIT_DELETE:
+	case ID_EDIT_SELECT_ALL:
+	case ID_EDIT_RENAME:
+		if (nCode == CN_COMMAND || nCode == CN_UPDATE_COMMAND_UI) {
+			HWND	hFocusWnd = ::GetFocus();
+			CEdit	*pEdit = CFocusEdit::GetEdit(hFocusWnd);
+			if (pEdit != NULL) {	// if edit control has focus, it has top priority
+				CFocusEdit::OnCmdMsg(nID, nCode, pExtra, pEdit);	// let edit control handle editing commands
+				return TRUE;
+			}
+			if (nID != ID_EDIT_UNDO) {
+				CMainFrame	*pFrame = theApp.GetMainFrame();
+				// if dockable bar that wants editing commands has focus and is visible, it has priority over framework
+				#define MAINDOCKBARDEF_WANTEDITCMDS(name) \
+					if (hFocusWnd == pFrame->m_wnd##name##Bar.GetListCtrl().m_hWnd && pFrame->m_wnd##name##Bar.FastIsVisible()) { \
+						return pFrame->m_wnd##name##Bar.OnCmdMsg(nID, nCode, pExtra, pHandlerInfo); \
+					}
+				#include "MainDockBarDef.h"	// generate hooks for dockable bars that want editing commands
+			}
 		}
 		break;
 	}

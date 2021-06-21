@@ -20,6 +20,7 @@
 		10		07apr20	add move steps
 		11		19nov20	use set channel property methods
 		12		19nov20	add randomized docking bar visibility
+		13		21jun21	route track editing commands directly to document
 
 		automated undo test for patch editing
  
@@ -441,7 +442,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 				return(DISABLED);
 			m_pDoc->m_arrTrackSel = arrSelection;
 			m_pDoc->m_rStepSel.SetRectEmpty();	// clear step selection if any
-			theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_EDIT_CUT);
+			m_pDoc->OnCmdMsg(ID_EDIT_CUT, CN_COMMAND, NULL, NULL);
 			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
 		}
 		break;
@@ -452,7 +453,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (m_pDoc->GetTrackCount() >= MAX_TRACKS)
 				return(DISABLED);
 			m_pDoc->m_rStepSel.SetRectEmpty();	// clear step selection if any
-			theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_EDIT_PASTE);
+			m_pDoc->OnCmdMsg(ID_EDIT_PASTE, CN_COMMAND, NULL, NULL);
 			PRINTF(_T("%s\n"), sUndoTitle);
 		}
 		break;
@@ -463,7 +464,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			int iInsPos = max(GetRandomItem(), 0);
 			m_pDoc->SelectOnly(iInsPos, false);	// don't update views
 			m_pDoc->m_rStepSel.SetRectEmpty();	// clear step selection if any
-			theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_EDIT_INSERT);
+			m_pDoc->OnCmdMsg(ID_EDIT_INSERT, CN_COMMAND, NULL, NULL);
 			PRINTF(_T("%s %d\n"), sUndoTitle, iInsPos);
 		}
 		break;
@@ -474,7 +475,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 				return(DISABLED);
 			m_pDoc->m_arrTrackSel = arrSelection;
 			m_pDoc->m_rStepSel.SetRectEmpty();	// clear step selection if any
-			theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_EDIT_DELETE);
+			m_pDoc->OnCmdMsg(ID_EDIT_DELETE, CN_COMMAND, NULL, NULL);
 			PRINTF(_T("%s %s\n"), sUndoTitle, PrintSelection(arrSelection));
 		}
 		break;
@@ -957,7 +958,7 @@ bool CTrackUndoTest::Create()
 	}
 	m_pDoc->UpdateAllViews(NULL);
 	if (TEST_PLAYING)	// if playback during test
-		theApp.GetMainFrame()->SendMessage(WM_COMMAND, ID_TRANSPORT_PLAY);
+		m_pDoc->OnCmdMsg(ID_TRANSPORT_PLAY, CN_COMMAND, NULL, NULL);
 	if (!CUndoTest::Create())
 		return(FALSE);
 	return(TRUE);

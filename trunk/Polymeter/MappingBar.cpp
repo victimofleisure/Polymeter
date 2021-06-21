@@ -14,6 +14,7 @@
 		04		07sep20	add preset and part mapping
 		05		19nov20	add sender argument to set mapping property
 		06		15feb21	add mapping targets for transport commands
+		07		20jun21	remove dispatch edit keys
 		
 */
 
@@ -352,7 +353,7 @@ BEGIN_MESSAGE_MAP(CMappingBar, CMyDockablePane)
 	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
 	ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditInsert)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditSelectAll)
 	ON_COMMAND(ID_EDIT_INSERT, OnEditInsert)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
@@ -456,13 +457,6 @@ void CMappingBar::OnContextMenu(CWnd* pWnd, CPoint point)
 	if (FixListContextMenuPoint(pWnd, m_grid, point))
 		return;
 	DoGenericContextMenu(IDR_MAPPING_CTX, point, this);
-}
-
-BOOL CMappingBar::PreTranslateMessage(MSG* pMsg)
-{
-	if (theApp.DispatchEditKeys(pMsg, *this))
-		return true;
-	return CMyDockablePane::PreTranslateMessage(pMsg);
 }
 
 void CMappingBar::OnListColHdrReset()
@@ -626,6 +620,12 @@ void CMappingBar::OnUpdateEditDelete(CCmdUI *pCmdUI)
 void CMappingBar::OnEditSelectAll()
 {
 	m_grid.SelectAll();
+}
+
+void CMappingBar::OnUpdateEditSelectAll(CCmdUI *pCmdUI)
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	pCmdUI->Enable(pDoc != NULL && pDoc->m_Seq.m_mapping.GetCount());
 }
 
 void CMappingBar::OnToolsMidiLearn()

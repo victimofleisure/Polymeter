@@ -19,6 +19,7 @@
 		09		20jun20	limit insert position for paste and insert
 		10		22jun20	fix selection after paste, insert, and delete
 		11		19nov20	add show changed handler
+		12		20jun21	remove dispatch edit keys
 
 */
 
@@ -396,7 +397,7 @@ BEGIN_MESSAGE_MAP(CModulationsBar, CMyDockablePane)
 	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
 	ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditInsert)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditSelectAll)
 	ON_COMMAND(ID_EDIT_INSERT, OnEditInsert)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
@@ -533,13 +534,6 @@ void CModulationsBar::OnContextMenu(CWnd* pWnd, CPoint point)
 	if (FixListContextMenuPoint(pWnd, m_grid, point))
 		return;
 	DoGenericContextMenu(IDR_MODULATION_CTX, point, this);
-}
-
-BOOL CModulationsBar::PreTranslateMessage(MSG* pMsg)
-{
-	if (theApp.DispatchEditKeys(pMsg, *this))
-		return true;
-	return CMyDockablePane::PreTranslateMessage(pMsg);
 }
 
 void CModulationsBar::OnListColHdrReset()
@@ -705,6 +699,11 @@ void CModulationsBar::OnUpdateEditDelete(CCmdUI *pCmdUI)
 void CModulationsBar::OnEditSelectAll()
 {
 	m_grid.SelectAll();
+}
+
+void CModulationsBar::OnUpdateEditSelectAll(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_grid.GetItemCount());
 }
 
 void CModulationsBar::OnListReorder(NMHDR* pNMHDR, LRESULT* pResult)

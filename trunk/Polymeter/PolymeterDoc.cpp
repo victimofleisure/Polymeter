@@ -70,6 +70,7 @@
 		60		07jun21	rename rounding functions
 		61		08jun21	fix local name reuse warning
 		62		08jun21	fix warning for CString as variadic argument
+		63		20jun21	move focus edit handling to child frame
 
 */
 
@@ -84,7 +85,6 @@
 #include "IniFile.h"
 #include "RegTempl.h"
 #include "UndoCodes.h"
-#include "FocusEdit.h"
 #include "MidiWrap.h"
 #include "PathStr.h"
 #include "ExportDlg.h"
@@ -4094,19 +4094,15 @@ void CPolymeterDoc::OnFileImport()
 
 void CPolymeterDoc::OnEditUndo()
 {
-	if (!CFocusEdit::Undo()) {
-		GetUndoManager()->Undo();
-		UndoDependencies();	// order matters; must be after parent undo
-		SetModifiedFlag();	// undo counts as modification
-	}
+	GetUndoManager()->Undo();
+	UndoDependencies();	// order matters; must be after parent undo
+	SetModifiedFlag();	// undo counts as modification
 }
 
 void CPolymeterDoc::OnUpdateEditUndo(CCmdUI *pCmdUI)
 {
-	if (!CFocusEdit::UpdateUndo(pCmdUI)) {
-		pCmdUI->SetText(m_UndoMgr.m_sUndoMenuItem);
-		pCmdUI->Enable(m_UndoMgr.CanUndo());
-	}
+	pCmdUI->SetText(m_UndoMgr.m_sUndoMenuItem);
+	pCmdUI->Enable(m_UndoMgr.CanUndo());
 }
 
 void CPolymeterDoc::OnEditRedo()
@@ -4124,75 +4120,59 @@ void CPolymeterDoc::OnUpdateEditRedo(CCmdUI *pCmdUI)
 
 void CPolymeterDoc::OnEditCopy()
 {
-	if (!CFocusEdit::Copy()) {
-		if (HaveStepSelection()) {	// if step selection
-			if (!GetTrackSteps(m_rStepSel, theApp.m_arrStepClipboard))
-				AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-		} else	// track selection
-			CopyTracksToClipboard();
-	}
+	if (HaveStepSelection()) {	// if step selection
+		if (!GetTrackSteps(m_rStepSel, theApp.m_arrStepClipboard))
+			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+	} else	// track selection
+		CopyTracksToClipboard();
 }
 
 void CPolymeterDoc::OnUpdateEditCopy(CCmdUI *pCmdUI)
 {
-	if (!CFocusEdit::UpdateCopy(pCmdUI)) {
-		pCmdUI->Enable(HaveTrackOrStepSelection());
-	}
+	pCmdUI->Enable(HaveTrackOrStepSelection());
 }
 
 void CPolymeterDoc::OnEditCut()
 {
-	if (!CFocusEdit::Cut()) {
-		if (HaveStepSelection()) {	// if step selection
-			if (!DeleteSteps(m_rStepSel, true))	// copy to clipboard
-				AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-		} else	// track selection
-			DeleteTracks(true);	// copy tracks to clipboard
-	}
+	if (HaveStepSelection()) {	// if step selection
+		if (!DeleteSteps(m_rStepSel, true))	// copy to clipboard
+			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+	} else	// track selection
+		DeleteTracks(true);	// copy tracks to clipboard
 }
 
 void CPolymeterDoc::OnUpdateEditCut(CCmdUI *pCmdUI)
 {
-	if (!CFocusEdit::UpdateCut(pCmdUI)) {
-		pCmdUI->Enable(HaveTrackOrStepSelection());
-	}
+	pCmdUI->Enable(HaveTrackOrStepSelection());
 }
 
 void CPolymeterDoc::OnEditPaste()
 {
-	if (!CFocusEdit::Paste()) {
-		if (HaveStepSelection()) {	// if step selection
-			if (!PasteSteps(m_rStepSel))
-				AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-		} else	// track selection
-			PasteTracks(theApp.m_arrTrackClipboard);
-	}
+	if (HaveStepSelection()) {	// if step selection
+		if (!PasteSteps(m_rStepSel))
+			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+	} else	// track selection
+		PasteTracks(theApp.m_arrTrackClipboard);
 }
 
 void CPolymeterDoc::OnUpdateEditPaste(CCmdUI *pCmdUI)
 {
-	if (!CFocusEdit::UpdatePaste(pCmdUI)) {
-		pCmdUI->Enable(theApp.m_arrTrackClipboard.GetSize()
-			|| (HaveStepSelection() && theApp.m_arrStepClipboard.GetSize()));
-	}
+	pCmdUI->Enable(theApp.m_arrTrackClipboard.GetSize()
+		|| (HaveStepSelection() && theApp.m_arrStepClipboard.GetSize()));
 }
 
 void CPolymeterDoc::OnEditDelete()
 {
-	if (!CFocusEdit::Delete()) {
-		if (HaveStepSelection()) {	// if step selection
-			if (!DeleteSteps(m_rStepSel, false))	// don't copy to clipboard
-				AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
-		} else	// track selection
-			DeleteTracks(false);	// don't copy to clipboard
-	}
+	if (HaveStepSelection()) {	// if step selection
+		if (!DeleteSteps(m_rStepSel, false))	// don't copy to clipboard
+			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
+	} else	// track selection
+		DeleteTracks(false);	// don't copy to clipboard
 }
 
 void CPolymeterDoc::OnUpdateEditDelete(CCmdUI *pCmdUI)
 {
-	if (!CFocusEdit::UpdateDelete(pCmdUI)) {
-		pCmdUI->Enable(HaveTrackOrStepSelection());
-	}
+	pCmdUI->Enable(HaveTrackOrStepSelection());
 }
 
 void CPolymeterDoc::OnEditInsert()
@@ -4211,16 +4191,12 @@ void CPolymeterDoc::OnUpdateEditInsert(CCmdUI *pCmdUI)
 
 void CPolymeterDoc::OnEditSelectAll()
 {
-	if (!CFocusEdit::SelectAll()) {
-		SelectAll();
-	}
+	SelectAll();
 }
 
 void CPolymeterDoc::OnUpdateEditSelectAll(CCmdUI *pCmdUI)
 {
-	if (!CFocusEdit::UpdateSelectAll(pCmdUI)) {
-		pCmdUI->Enable(GetTrackCount());
-	}
+	pCmdUI->Enable(GetTrackCount());
 }
 
 void CPolymeterDoc::OnEditDeselect()

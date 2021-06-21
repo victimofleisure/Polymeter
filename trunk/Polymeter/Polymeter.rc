@@ -1636,7 +1636,7 @@ BEGIN
     ID_TRACK_MODULATION     "Create a modulation that targets the selected tracks\nCreate Modulation"
     ID_TRACK_MUTE           "Mute or unmute the selected tracks\nMute"
     ID_TRACK_OFFSET         "Offset the selected tracks by a given number of ticks\nOffset Tracks"
-    ID_TRACK_PART_CREATE    "Create new part from the selected tracks\nCreate Part"
+    ID_TRACK_PART_CREATE    "Create a new part from the selected tracks\nCreate Part"
     ID_TRACK_PART_UPDATE    "Update the selected part from the selected tracks\nUpdate Part"
     ID_TRACK_PRESET_APPLY   "Apply the selected preset to the track mutes\nApply Preset"
     ID_TRACK_PRESET_CREATE  "Create a new preset from the track mutes\nCreate Preset"

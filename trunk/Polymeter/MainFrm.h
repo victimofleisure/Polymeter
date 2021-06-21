@@ -32,6 +32,7 @@
 		22		16nov20	refactor UpdateSongPosition
 		23		15feb21	add mapped command handler
 		24		08jun21	define tracking ID accessor if earlier than VS2012
+		25		15jun21	use auto pointer for tool bar track color button
 
 */
 
@@ -163,7 +164,7 @@ protected:  // control bar embedded members
 	bool	m_bFindMatchCase;			// true if find should match case
 	bool	m_bIsViewTimerSet;			// true if view timer is set
 	CSequencer::CMidiEventArray m_arrMIDIOutputEvent;	// array of MIDI output events
-	CMFCColorMenuButton	*m_pbtnTrackColor;	// pointer to track color menu button
+	CAutoPtr<CMFCColorMenuButton>	m_pbtnTrackColor;	// pointer to track color menu button
 	int		m_nConvergenceSize;			// minimum number of modulos in a convergence
 	CString	m_sStatusHint;				// status bar hint string
 

@@ -21,6 +21,7 @@
 		11		25jan21	fix shift left-click in index column
 		12		27jan21	use control key instead of shift
 		13		30may21	in GetDispInfo handler, set empty string if needed
+		14		20jun21	remove dispatch edit keys
 		
 */
 
@@ -760,13 +761,6 @@ void CStepValuesBar::OnListReorder(NMHDR* pNMHDR, LRESULT* pResult)
 		} else
 			AfxMessageBox(IDS_DOC_BAD_STEP_SELECTION);
 	}
-}
-
-BOOL CStepValuesBar::PreTranslateMessage(MSG* pMsg)
-{
-	if (theApp.DispatchEditKeys(pMsg, *this))
-		return true;
-	return CMyDockablePane::PreTranslateMessage(pMsg);
 }
 
 void CStepValuesBar::OnFormatSigned()

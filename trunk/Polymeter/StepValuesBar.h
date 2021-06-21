@@ -14,6 +14,7 @@
 		04		30apr20	add step compare method
 		05		17nov20	add spin edit
 		06		24jan21	add left button handler to derived grid control
+		07		20jun21	add list accessor
 
 */
 
@@ -31,6 +32,7 @@ public:
 
 // Attributes
 public:
+	CGridCtrl&	GetListCtrl();
 
 // Operations
 public:
@@ -101,7 +103,6 @@ protected:
 
 // Overrides
 	virtual	void OnShowChanged(bool bShow);
-	virtual	BOOL PreTranslateMessage(MSG* pMsg);
 
 // Generated message map functions
 	DECLARE_MESSAGE_MAP()
@@ -140,3 +141,8 @@ protected:
 	afx_msg void OnFormat(UINT nID);
 	afx_msg void OnUpdateFormat(CCmdUI *pCmdUI);
 };
+
+inline CGridCtrl& CStepValuesBar::GetListCtrl()
+{
+	return m_grid;
+}

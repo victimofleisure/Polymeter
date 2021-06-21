@@ -10,22 +10,21 @@
 		00		05aug06	initial version
 		01		20oct07	change GetEdit to detect non-MFC edit controls
 		02		17nov20	add check for property grid in-place edit
+		03		20jun21	refactor for centralized use
 
 		handlers for focused edit control
 
 */
 
 #include "stdafx.h"
+#include "resource.h"
 #include "FocusEdit.h"
-
-#define VERIFY_FOCUS_EDIT CEdit *ep = GetEdit(); if (ep == NULL) return(FALSE);
 
 // We use the SDK GetClassName function because MFC IsKindOf fails if no CEdit
 // variable has been created for the control we're trying to test. An example
 // of this is the edit control created by a list control for label editing.
-CEdit *CFocusEdit::GetEdit()
+CEdit *CFocusEdit::GetEdit(HWND hWnd)
 {
-	HWND	hWnd = GetFocus();
 	TCHAR	szClassName[6];
 	if (GetClassName(hWnd, szClassName, 6) 
 	&& _tcsicmp(szClassName, _T("Edit")) == 0) {
@@ -40,109 +39,73 @@ CEdit *CFocusEdit::GetEdit()
 	return(NULL);
 }
 
-bool CFocusEdit::Undo()
+void CFocusEdit::OnCmdMsg(int nID, int nCode, void *pExtra, CEdit *pEdit)
 {
-	VERIFY_FOCUS_EDIT;
-	ep->Undo();
-	return(TRUE);
-}
-
-bool CFocusEdit::Cut()
-{
-	VERIFY_FOCUS_EDIT;
-	ep->Cut();
-	return(TRUE);
-}
-
-bool CFocusEdit::Copy()
-{
-	VERIFY_FOCUS_EDIT;
-	ep->Copy();
-	return(TRUE);
-}
-
-bool CFocusEdit::Paste()
-{
-	VERIFY_FOCUS_EDIT;
-	ep->Paste();
-	return(TRUE);
-}
-
-bool CFocusEdit::Insert()
-{
-	VERIFY_FOCUS_EDIT;
-	return(TRUE);
-}
-
-bool CFocusEdit::Delete()
-{
-	VERIFY_FOCUS_EDIT;
-	if (HasSelection(ep))
-		ep->Clear();
-	else
-		ep->SendMessage(WM_KEYDOWN, VK_DELETE);	// delete character at cursor
-	return(TRUE);
-}
-
-bool CFocusEdit::SelectAll()
-{
-	VERIFY_FOCUS_EDIT;
-	ep->SetSel(0, -1);
-	return(TRUE);
-}
-
-bool CFocusEdit::UpdateUndo(CCmdUI* pCmdUI)
-{
-	VERIFY_FOCUS_EDIT;
-	pCmdUI->Enable(ep->CanUndo());
-	return(TRUE);
-}
-
-bool CFocusEdit::UpdateCut(CCmdUI* pCmdUI)
-{
-	VERIFY_FOCUS_EDIT;
-	pCmdUI->Enable(HasSelection(ep) && !IsReadOnly(ep));
-	return(TRUE);
-}
-
-bool CFocusEdit::UpdateCopy(CCmdUI* pCmdUI)
-{
-	VERIFY_FOCUS_EDIT;
-	pCmdUI->Enable(HasSelection(ep));
-	return(TRUE);
-}
-
-bool CFocusEdit::UpdatePaste(CCmdUI* pCmdUI)
-{
-	VERIFY_FOCUS_EDIT;
-	pCmdUI->Enable(!IsReadOnly(ep) && IsClipboardFormatAvailable(CF_TEXT));
-	return(TRUE);
-}
-
-bool CFocusEdit::UpdateInsert(CCmdUI* pCmdUI)
-{
-	VERIFY_FOCUS_EDIT;
-	pCmdUI->Enable(FALSE);
-	return(TRUE);
-}
-
-bool CFocusEdit::UpdateDelete(CCmdUI* pCmdUI)
-{
-	VERIFY_FOCUS_EDIT;
-	bool	Enab = FALSE;
-	if (!IsReadOnly(ep)) {
-		int	nBeg, nEnd;
-		ep->GetSel(nBeg, nEnd);
-		if (nBeg != nEnd || nBeg < ep->LineLength())
-			Enab = TRUE;	// has selection, or cursor is on a character
+	switch (nCode) {
+	case CN_COMMAND:
+		switch (nID) {
+		case ID_EDIT_UNDO:
+			pEdit->Undo();
+			break;
+		case ID_EDIT_COPY:
+			pEdit->Copy();
+			break;
+		case ID_EDIT_CUT:
+			pEdit->Cut();
+			break;
+		case ID_EDIT_PASTE:
+			pEdit->Paste();
+			break;
+		case ID_EDIT_INSERT:
+			break;
+		case ID_EDIT_DELETE:
+			if (HasSelection(pEdit))
+				pEdit->Clear();
+			else
+				pEdit->SendMessage(WM_KEYDOWN, VK_DELETE);	// delete character at cursor
+			break;
+		case ID_EDIT_SELECT_ALL:
+			pEdit->SetSel(0, -1);
+			break;
+		}
+		break;
+	case CN_UPDATE_COMMAND_UI:
+		{
+			ASSERT(pExtra != NULL);
+			CCmdUI	*pCmdUI = static_cast<CCmdUI *>(pExtra);
+			switch (nID) {
+			case ID_EDIT_UNDO:
+				pCmdUI->Enable(pEdit->CanUndo());
+				break;
+			case ID_EDIT_COPY:
+				pCmdUI->Enable(HasSelection(pEdit));
+				break;
+			case ID_EDIT_CUT:
+				pCmdUI->Enable(HasSelection(pEdit) && !IsReadOnly(pEdit));
+				break;
+			case ID_EDIT_PASTE:
+				pCmdUI->Enable(!IsReadOnly(pEdit) && IsClipboardFormatAvailable(CF_TEXT));
+				break;
+			case ID_EDIT_INSERT:
+				pCmdUI->Enable(FALSE);
+				break;
+			case ID_EDIT_DELETE:
+				{
+					bool	Enab = FALSE;
+					if (!IsReadOnly(pEdit)) {
+						int	nBeg, nEnd;
+						pEdit->GetSel(nBeg, nEnd);
+						if (nBeg != nEnd || nBeg < pEdit->LineLength())
+							Enab = TRUE;	// has selection, or cursor is on a character
+					}
+					pCmdUI->Enable(Enab);
+				}
+				break;
+			case ID_EDIT_SELECT_ALL:
+				pCmdUI->Enable(pEdit->LineLength());
+				break;
+			}
+			break;
+		}
 	}
-	pCmdUI->Enable(Enab);
-	return(TRUE);
-}
-
-bool CFocusEdit::UpdateSelectAll(CCmdUI* pCmdUI)
-{
-	VERIFY_FOCUS_EDIT;
-	pCmdUI->Enable(ep->LineLength());
-	return(TRUE);
 }

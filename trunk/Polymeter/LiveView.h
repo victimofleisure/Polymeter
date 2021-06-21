@@ -13,6 +13,7 @@
 		03		05jul20	add track property change handler
 		04		09jul20	add pointer to parent frame
 		05		19jan21	add edit command handlers
+		06		20jun21	remove edit command handlers
 
 */
 
@@ -203,17 +204,6 @@ protected:
 	afx_msg void OnSoloBtnClicked();
 	afx_msg void OnListColHdrReset();
 	afx_msg void OnPartsListEndScroll(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnEditSelectAll();
-	afx_msg void OnEditCut();
-	afx_msg void OnUpdateEditCut(CCmdUI *pCmdUI);
-	afx_msg void OnEditCopy();
-	afx_msg void OnUpdateEditCopy(CCmdUI *pCmdUI);
-	afx_msg void OnEditPaste();
-	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
-	afx_msg void OnEditInsert();
-	afx_msg void OnUpdateEditInsert(CCmdUI *pCmdUI);
-	afx_msg void OnEditDelete();
-	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
 };
 
 inline CPolymeterDoc* CLiveView::GetDocument() const

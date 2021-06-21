@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		18jun18	initial version
+		01		21jun21	add select all
 		
 */
 
@@ -57,9 +58,7 @@ BOOL CListBar::CMyListCtrl::PreTranslateMessage(MSG* pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN) {
 		switch (pMsg->wParam) {
-		case VK_DELETE:
 		case VK_RETURN:
-		case VK_F2:
 			if (GetEditControl() == NULL) {	// if not editing label
 				NMLVKEYDOWN	nmkd;
 				ZeroMemory(&nmkd, sizeof(nmkd));
@@ -93,6 +92,8 @@ BEGIN_MESSAGE_MAP(CListBar, CMyDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
 	ON_COMMAND(ID_EDIT_RENAME, OnEditRename)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_RENAME, OnUpdateEditRename)
+	ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditSelectAll)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -162,12 +163,6 @@ void CListBar::OnListKeyDown(NMHDR* pNMHDR, LRESULT* pResult)
 	UNREFERENCED_PARAMETER(pResult);
 	NMLVKEYDOWN*	pKeyDown = reinterpret_cast<NMLVKEYDOWN*>(pNMHDR);
 	switch (pKeyDown->wVKey) {
-	case VK_F2:
-		Rename();
-		break;
-	case VK_DELETE:
-		Delete();
-		break;
 	case VK_RETURN:
 		Apply();
 		break;
@@ -201,4 +196,14 @@ void CListBar::OnEditRename()
 void CListBar::OnUpdateEditRename(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(m_list.GetSelectedCount() == 1);
+}
+
+void CListBar::OnEditSelectAll()
+{
+	m_list.SelectAll();
+}
+
+void CListBar::OnUpdateEditSelectAll(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_list.GetItemCount());
 }

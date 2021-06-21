@@ -13,6 +13,7 @@
 		03		19mar20	move default track name to track base class
 		04		15apr20	add insert group command
 		05		19nov20	add show changed handler
+		06		20jun21	add list accessor
 
 */
 
@@ -30,6 +31,7 @@ public:
 
 // Attributes
 public:
+	CGridCtrl&	GetListCtrl();
 
 // Operations
 public:
@@ -82,7 +84,6 @@ protected:
 
 // Overrides
 	virtual void OnShowChanged(bool bShow);
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
 // Generated message map functions
 	DECLARE_MESSAGE_MAP()
@@ -100,6 +101,7 @@ protected:
 	afx_msg void OnEditPaste();
 	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
 	afx_msg void OnEditSelectAll();
+	afx_msg void OnUpdateEditSelectAll(CCmdUI *pCmdUI);
 	afx_msg void OnEditDelete();
 	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
 	afx_msg void OnEditInsert();
@@ -112,3 +114,8 @@ protected:
 	afx_msg void OnUpdateSort(CCmdUI *pCmdUI);
 	afx_msg void OnInsertGroup();
 };
+
+inline CGridCtrl& CModulationsBar::GetListCtrl()
+{
+	return m_grid;
+}

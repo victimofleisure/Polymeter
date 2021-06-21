@@ -22,6 +22,7 @@
 		12		16nov20	meter and tempo change must update song position
 		13		19jan21	add edit command handlers
 		14		07jun21	rename rounding functions
+		15		20jun21	move focus edit handling to child frame
 
 */
 
@@ -34,7 +35,6 @@
 #include "MainFrm.h"
 #include "LiveView.h"
 #include "ChildFrm.h"
-#include "FocusEdit.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -713,17 +713,6 @@ BEGIN_MESSAGE_MAP(CLiveView, CView)
 	ON_STN_DBLCLK(IDC_SOLO_BTN, OnSoloBtnClicked)
 	ON_COMMAND(ID_LIST_COL_HDR_RESET, OnListColHdrReset)
 	ON_NOTIFY(LVN_ENDSCROLL, IDC_LIST_FIRST + 1, OnPartsListEndScroll)
-	ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
-	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditCut)
-	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditCopy)
-	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
-	ON_COMMAND(ID_EDIT_INSERT, OnEditInsert)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_INSERT, OnUpdateEditInsert)
-	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
 END_MESSAGE_MAP()
 
 // CLiveView message handlers
@@ -1151,70 +1140,4 @@ LRESULT CLiveView::CSimpleButton::OnMouseLeave(WPARAM wParam, LPARAM lParam)
 	m_bMouseTracking = false;
 	Invalidate();
 	return 0;
-}
-
-void CLiveView::OnEditSelectAll()
-{
-	if (!CFocusEdit::SelectAll()) {
-	}
-}
-
-void CLiveView::OnEditCut()
-{
-	if (!CFocusEdit::Cut()) {
-	}
-}
-
-void CLiveView::OnUpdateEditCut(CCmdUI *pCmdUI)
-{
-	if (!CFocusEdit::UpdateCut(pCmdUI)) {
-	}
-}
-
-void CLiveView::OnEditCopy()
-{
-	if (!CFocusEdit::Copy()) {
-	}
-}
-
-void CLiveView::OnUpdateEditCopy(CCmdUI *pCmdUI)
-{
-	if (!CFocusEdit::UpdateCopy(pCmdUI)) {
-	}
-}
-
-void CLiveView::OnEditPaste()
-{
-	if (!CFocusEdit::Paste()) {
-	}
-}
-
-void CLiveView::OnUpdateEditPaste(CCmdUI *pCmdUI)
-{
-	if (!CFocusEdit::UpdatePaste(pCmdUI)) {
-	}
-}
-
-void CLiveView::OnEditInsert()
-{
-	if (!CFocusEdit::Insert()) {
-	}
-}
-
-void CLiveView::OnUpdateEditInsert(CCmdUI *pCmdUI)
-{
-	if (!CFocusEdit::UpdateInsert(pCmdUI)) {
-	}
-}
-
-void CLiveView::OnEditDelete()
-{
-	if (!CFocusEdit::Delete()) {
-	}
-}
-
-void CLiveView::OnUpdateEditDelete(CCmdUI *pCmdUI)
-{
-	if (!CFocusEdit::UpdateDelete(pCmdUI)) {
-	}
 }
