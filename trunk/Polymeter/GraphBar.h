@@ -10,6 +10,7 @@
         00		25jan19	initial version
 		01		10feb19	move temp file path wrapper to app
 		02		16oct20	add array of executable names to find
+		03		26jun21	add filtering by modulation type
 		
 */
 
@@ -100,6 +101,9 @@ protected:
 		#include "GraphTypeDef.h"
 		GRAPH_LAYOUTS
 	};
+	enum {	// graph filters
+		GRAPH_FILTERS = CTrack::MODULATION_TYPES + 1,	// one extra for all
+	};
 	enum {	// user-defined window messages
 		UWM_GRAPH_DONE = WM_APP + 1689,
 		UWM_GRAPH_ERROR,
@@ -109,6 +113,7 @@ protected:
 	enum {	// context submenus
 		SM_GRAPH_SCOPE,
 		SM_GRAPH_LAYOUT,
+		SM_GRAPH_FILTER,
 		CONTEXT_SUBMENUS
 	};
 	enum {	// submenu command ID ranges
@@ -116,6 +121,8 @@ protected:
 		SMID_GRAPH_SCOPE_LAST = SMID_GRAPH_SCOPE_FIRST + GRAPH_SCOPES,
 		SMID_GRAPH_LAYOUT_FIRST = SMID_GRAPH_SCOPE_LAST + 1,
 		SMID_GRAPH_LAYOUT_LAST = SMID_GRAPH_LAYOUT_FIRST + GRAPH_LAYOUTS,
+		SMID_GRAPH_FILTER_FIRST = SMID_GRAPH_LAYOUT_LAST + 1,
+		SMID_GRAPH_FILTER_LAST = SMID_GRAPH_FILTER_FIRST + GRAPH_FILTERS,
 	};
 	enum {
 		BROWSER_ZOOM_PCT_MIN	= 10,
@@ -136,6 +143,7 @@ protected:
 	int		m_iGraphState;		// graph worker thread state; see enum above
 	int		m_iGraphScope;		// graph data scope; see GraphTypeDef.h
 	int		m_iGraphLayout;		// graph layout engine; see GraphTypeDef.h
+	int		m_iGraphFilter;		// graph filter; -1 for all, else modulation type index
 	int		m_iZoomLevel;		// zoom level in signed steps; zero is 100%
 	double	m_fZoomStep;		// zoom step size as fraction
 	bool	m_bUpdatePending;	// true if deferred update is pending
@@ -178,6 +186,7 @@ protected:
 	afx_msg LRESULT OnDeferredUpdate(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnGraphScope(UINT nID);
 	afx_msg void OnGraphLayout(UINT nID);
+	afx_msg void OnGraphFilter(UINT nID);
 	afx_msg void OnGraphSaveAs();
 	afx_msg void OnUpdateGraphSaveAs(CCmdUI *pCmdUI);
 	afx_msg void OnGraphZoomIn();

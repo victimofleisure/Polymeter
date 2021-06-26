@@ -23,6 +23,7 @@
 		13		19oct20	after calling dot, verify that output file exists
 		14		07jun21	rename rounding functions
 		15		08jun21	fix warning for CString as variadic argument
+		16		26jun21	add filtering by modulation type
 
 */
 
@@ -108,6 +109,7 @@ CGraphBar::CGraphBar()
 	m_iGraphState = GTS_IDLE;
 	m_iGraphScope = GS_SELECTED;
 	m_iGraphLayout = GL_neato;
+	m_iGraphFilter = -1;
 	m_iZoomLevel = 0;
 	m_fZoomStep = 1.25;
 	m_bUpdatePending = false;
@@ -280,7 +282,7 @@ UINT CGraphBar::GraphThread(LPVOID pParam)
 	DWORD	dwExitMsg = UWM_GRAPH_ERROR;	// assume failure
 	DWORD	dwExitParam = 0;
 	if (CreateProcess(NULL, pCmdLine, NULL, NULL, FALSE, dwFlags, NULL, NULL, &si, &pi)) {
-		static const int GRAPH_TIMEOUT = 30000;	// generous timeout
+		static const int GRAPH_TIMEOUT = 60000;	// generous timeout in milliseconds
 		int	nStatus = WaitForSingleObject(pi.hThread, GRAPH_TIMEOUT);
 		switch (nStatus) {
 		case WAIT_OBJECT_0:
@@ -366,6 +368,8 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes) const
 		for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
 			const CTrack::CModulation&	mod = trk.m_arrModulator[iMod];
 			if (mod.m_iSource >= 0) {	// if valid modulation source track index
+				if (m_iGraphFilter >= 0 && mod.m_iType != m_iGraphFilter)	// if modulation type doesn't pass filter
+					continue;	// skip this modulation
 				if (m_bEdgeLabels) {	// if showing edge labels
 					_ftprintf(fout.m_pStream, _T("%d->%d[color=%s,label=\"%s\",fontcolor=%s];\n"), 
 						mod.m_iSource + 1, iTrack + 1, m_arrModTypeColor[mod.m_iType], 
@@ -514,6 +518,16 @@ void CGraphBar::DoContextMenu(CWnd* pWnd, CPoint point)
 		arrItemStr[iItem] = m_arrGraphLayout[iItem];
 	}
 	theApp.MakePopup(*pSubMenu, SMID_GRAPH_LAYOUT_FIRST, arrItemStr, m_iGraphLayout);
+	// create graph filter submenu
+	pSubMenu = pPopup->GetSubMenu(SM_GRAPH_FILTER);
+	ASSERT(pSubMenu != NULL);
+	arrItemStr.SetSize(GRAPH_FILTERS);
+	arrItemStr[0] = LDS(IDS_FILTER_ALL);	// wildcard comes first
+	for (int iItem = 0; iItem < CTrack::MODULATION_TYPES; iItem++) {	// for each modulation type
+		arrItemStr[iItem + 1] = CTrack::GetModulationTypeName(iItem);	// skip wildcard
+	}
+	theApp.MakePopup(*pSubMenu, SMID_GRAPH_FILTER_FIRST, arrItemStr, m_iGraphFilter + 1);
+	// display the context menu
 	pPopup->TrackPopupMenu(0, point.x, point.y, this);
 }
 
@@ -845,6 +859,7 @@ BEGIN_MESSAGE_MAP(CGraphBar, CMyDockablePane)
 	ON_MESSAGE(UWM_DEFERRED_UPDATE, OnDeferredUpdate)
 	ON_COMMAND_RANGE(SMID_GRAPH_SCOPE_FIRST, SMID_GRAPH_SCOPE_LAST, OnGraphScope)
 	ON_COMMAND_RANGE(SMID_GRAPH_LAYOUT_FIRST, SMID_GRAPH_LAYOUT_LAST, OnGraphLayout)
+	ON_COMMAND_RANGE(SMID_GRAPH_FILTER_FIRST, SMID_GRAPH_FILTER_LAST, OnGraphFilter)
 	ON_COMMAND(ID_GRAPH_SAVEAS, OnGraphSaveAs)
 	ON_UPDATE_COMMAND_UI(ID_GRAPH_SAVEAS, OnUpdateGraphSaveAs)
 	ON_COMMAND(ID_GRAPH_ZOOM_IN, OnGraphZoomIn)
@@ -900,6 +915,11 @@ void CGraphBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
 				nItemID = m_arrHintGraphScopeID[nItemID - SMID_GRAPH_SCOPE_FIRST];
 			} else if (nItemID <= SMID_GRAPH_LAYOUT_LAST) {
 				nItemID = IDS_HINT_GRAPH_LAYOUT;
+			} else if (nItemID <= SMID_GRAPH_FILTER_LAST) {
+				if (nItemID == SMID_GRAPH_FILTER_FIRST)
+					nItemID = IDS_HINT_GRAPH_FILTER_MOD_TYPE_ALL;
+				else
+					nItemID = IDS_HINT_GRAPH_FILTER_MOD_TYPE;
 			}
 		}
 	}
@@ -957,6 +977,14 @@ void CGraphBar::OnGraphLayout(UINT nID)
 	int	iGraphLayout = nID - SMID_GRAPH_LAYOUT_FIRST;
 	ASSERT(iGraphLayout >= 0 && iGraphLayout < GRAPH_LAYOUTS);
 	m_iGraphLayout = iGraphLayout;
+	UpdateGraph();
+}
+
+void CGraphBar::OnGraphFilter(UINT nID)
+{
+	int	iGraphFilter = nID - SMID_GRAPH_FILTER_FIRST;
+	ASSERT(iGraphFilter >= 0 && iGraphFilter < GRAPH_FILTERS);
+	m_iGraphFilter = iGraphFilter - 1;	// account for wildcard
 	UpdateGraph();
 }
 
