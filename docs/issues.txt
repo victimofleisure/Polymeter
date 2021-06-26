@@ -367,6 +367,7 @@ id	open	close	type	description	rev	user
 449	05/01/21	06/08/21	done	fix compilation errors in Visual Studio 2010	0.0.37.007	
 450	06/15/21	06/15/21	done	main frame should delete track color toolbar button in OnDestroy to avoid memory leak	0.0.37.008	
 451	06/20/21	06/20/21	done	dockable bars handle editing commands inconsistently; customize routing in child frame	0.0.37.008	
+453	06/26/21	06/26/21	done	graph should allow filtering by modulation type, via context menu	0.0.37.009	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -434,6 +435,7 @@ id	open	close	type	description	rev	user
 434	01/19/21		hold	graph should optionally indicate track type		
 433	01/19/21		hold	track should be a potential mapping source, so tracks can automate parameters; inject MIDI event?		
 437	01/20/21		hold	add harmonizer and harmonic anticipation, adapted from ChordEase		
+452	06/24/21		hold	optional file information; author, comments		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
