@@ -1,0 +1,59 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Steps</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Steps</h3>
+
+<p>At the most abstract level, a step is simply a number. Each <a href="../Concepts/Tracks.htm">track</a> contains an array of one or more steps. A step array is a sequence of integer values, evenly spaced in time. The count of steps in the array is the track's <a href="../Views/Track_View/Track_Grid.htm#Track_Length">Length</a>, and the duration of each step is the track's <a href="../Views/Track_View/Track_Grid.htm#Track_Quant">Quant</a>. A track's steps are played sequentially in a loop.
+
+<p>A track's step array resembles a time signature or <a href="../Properties/Meter.htm">meter</a>, with Length as the numerator and Quant as the denominator, except that the Quant is specified in <a href="../Concepts/Steps.htm#Ticks">ticks</a>. For example, assuming the default <a href="../Properties/Timebase.htm">timebase</a> of 120 ticks per quarter note, a five-step track with a Quant of 120 is equivalent to five quarter notes, or 5/4 time.
+
+<p>Specifically, a step is a 7-bit integer that can be <a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">unsigned or signed</a> depending on the context. Steps can be interpreted as note velocities, controller values, or modulator values. A step's interpretation depends on what <a href="../Concepts/Tracks.htm#Track_types">type</a> of track the step belongs to, except for <a href="../Tracks/Modulator_tracks.htm">modulator tracks</a>, in which case the interpretation depends on the <a href="../Concepts/Modulations.htm#Modulation_types">modulation type</a>.
+
+<p>Steps can be edited in the following ways:
+
+<ul>
+<li>The <a href="../Views/Track_View/Track_Steps.htm">track steps</a> pane lets you set and clear steps. For <a href="../Tracks/Note_tracks.htm">note tracks</a>, you can also <a href="../Tracks/Note_tracks.htm#Tied_notes">tie</a> adjacent steps together to form longer notes.
+<li>The <a href="../Views/Track_View/Velocities_Pane.htm">velocities pane</a> displays the step values of the <a href="../Views/Track_View/Track_Selection.htm">selected tracks</a> as vertical bars. The step values can be changed by dragging the bars. Various drawing functions can be accessed by pressing modifier keys while dragging.
+<li>The <a href="../Docking_Windows/Step_Values_bar.htm">Step Values bar</a> displays the step values of the selected tracks on a <a href="../Concepts/Grid_controls.htm">grid</a> so that they can be edited numerically.
+<li>The <a href="../Menus/Track/Fill.htm">Fill</a> command lets you fill selected tracks or steps with a series of values. The series can be linear, or a periodic function.
+<li>Steps can be copied, cut, pasted, inserted, and deleted using the <a href="../Menus/Edit/Standard_editing_commands.htm">standard editing commands</a>.
+<li>Steps can be transformed using Track menu commands such as <a href="../Menus/Track/Shift.htm">Shift</a>, <a href="../Menus/Track/Rotate.htm">Rotate</a>, <a href="../Menus/Track/Reverse.htm">Reverse</a>, <a href="../Menus/Track/Invert.htm">Invert</a>, <a href="../Menus/Track/Velocity.htm">Velocity</a>, and <a href="../Menus/Track/Stretch.htm">Stretch</a>.
+</ul>
+
+<p>Step values can also be <a href="../Menus/Tools/Import_Table.htm#Import_Steps">imported</a> from a text file containing comma-separated values (CSV format), which is useful if you want to generate step arrays with an external application.
+
+<p>Because a track's steps are evenly spaced in time, undesirably stiff rhythms may result. Rhythmic stiffness can be mitigated by adjusting the track's <a href="../Views/Track_View/Track_Grid.htm#Track_Swing">swing</a>, or by applying <a href="../Modulation/Offset_modulation.htm">offset modulation</a> to the track.
+
+<a name="Unsigned_versus_signed_steps"><p><b>Unsigned versus signed steps</b></a>
+<p>Steps are stored in seven binary bits, and therefore have 2<sup>7</sup> or 128 possible values. The values range either from 0 to 127, or from &minus;64 to +63, depending on whether the step is interpreted as an unsigned or signed number. This convention derives from the MIDI standard, which commonly uses 7-bit data for message parameters and data. For example the data of a MIDI control change message is considered unsigned for volume controls, but signed for pan controls. To convert a value from unsigned to signed, subtract 64 from it; to do the reverse, add 64. The following table shows some correspondences between unsigned and signed values.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Unsigned</th><th>Signed</th></tr>
+<tr><td>127</td><td>+63</td></tr>
+<tr><td>96</td><td>+32</td></tr>
+<tr><td>64</td><td>0</td></tr>
+<tr><td>32</td><td>&minus;32</td></tr>
+<tr><td>0</td><td>&minus;64</td></tr>
+</table>
+
+<p>Whether a step is interpreted as unsigned or signed depends on the context in which the step is used. The context is determined by the <a href="../Concepts/Tracks.htm#Track_types">track type</a>, except for <a href="../Tracks/Modulator_tracks.htm">modulator tracks</a>, in which case it's determined by the <a href="../Concepts/Modulations.htm#Modulation_types">modulation type</a>.
+
+<a name="Ticks"><p><b>Ticks</b></a>
+<p>A tick is the smallest unit of relative time that can be used within a given MIDI composition. Ticks are related to beats (quarter notes) by the <a href="../Properties/Timebase.htm">timebase</a>, which specifies the number of ticks per beat. Various properties of a <a href="../Concepts/Tracks.htm">track</a>, including the duration of its <a href="../Concepts/Steps.htm">steps</a> (also known as its <a href="../Views/Track_View/Track_Grid.htm#Track_Quant">Quant</a>) are specified in ticks. The length of a tick in absolute time depends on the <a href="../Properties/Tempo.htm">tempo</a>, as shown below:
+
+<p>tick_length = 60 / tempo / timebase
+
+<p>At the default tempo (120 BPM) and timebase (120 TPQN), a tick is approximately four milliseconds long.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

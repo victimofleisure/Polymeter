@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Note Overlap</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Note Overlap</h3>
+
+<p>This property specifies how to handle overlapping instances of the same note on the same MIDI channel. If overlapping instances are allowed, the output device may release the later note prematurely, or the overlapped portion may exhibit acoustic artifacts such as flanging. To prevent overlapping instances, set this property to "Prevent". Preventing note overlaps is strongly recommended if <a href="../Modulation/Position_modulation.htm">position modulation</a> or <a href="../Modulation/Offset_modulation.htm">offset modulation</a> are used.
+
+<p>For example, suppose overlapping instances of the same note on the same channel occur as follows:
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Time</th><th>Event</th></tr>
+<tr><td>1:000</td><td>first instance on</td></tr>
+<tr><td>2:000</td><td>second instance on</td></tr>
+<tr><td>3:000</td><td>first instance off</td></tr>
+<tr><td>4:000</td><td>second instance off</td></tr>
+</table>
+
+<p>In this case, the note will likely be cut off at 3:000, in other words the second instance is aborted. Preventing note overlaps results in the following output:
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Time</th><th>Event</th></tr>
+<tr><td>1:000</td><td>note on</td></tr>
+<tr><td>2:000</td><td>note off, note on again</td></tr>
+<tr><td>4:000</td><td>note off</td></tr>
+</table>
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="author" content="Chris Korda">
+<meta name="description" content="Free polymeter MIDI sequencer software for music that's in multiple prime meters simultaneously.">
+<link href="./style.css" rel=stylesheet title=default type=text/css>
+</head>
+<body>
+<div class=menu>
+<a href="./index.html"><img src="./images/polymeter-32.png" width="32" height="32" alt="Polymeter MIDI sequencer icon"></a>
+<div class=title>Polymeter</div><p>
+<div class=menuitem0 title="Overview"><a href="./index.html">Home</a></div>
+<div class=menuitem0 title="Screenshots"><a href="./screenshots.html">Screenshots</a></div>
+<div class=menuitem0 title="Features"><a href="./features.html">Features</a></div>
+<div class=menuitem0 title="Download"><a href="./download.html">Download</a></div>
+<div class=menuitem0 title="Documentation"><a href="./helpframe.html">Documentation</a></div>
+<div class=menuitem0 title="Development"><a href="./development.html">Development</a></div>
+<div class=menuitem0 title="FAQ"><a href="./faq.html">FAQ</a></div>
+<div class=menuitem0 title="Gallery"><a href="./gallery/bongo.html">Gallery</a></div>
+<div class=menuitem0 title="Videos"><a href="./videos.html">Videos</a></div>
+<div class=menuitem0 title="Forums"><a href="./forums.html">Forums</a></div>
+<div class=menuitem0 title="Links"><a href="./links.html">Links</a></div>
+<div class=menuitem0 title="Contact"><a href="./contact.html">Contact</a></div><br>
+<div class=images><br><a href="https://translate.google.com/translate?sl=auto&tl=es&js=y&prev=_t&hl=en&ie=UTF-8&u=https%3A%2F%2Fvictimofleisure.github.io%2FPolymeter%2F&edit-text="><img src="./images/translate.png" width="100" height="33" alt="Translate button"></a></div>
+</div>
+<div id=body>
+<!--  content goes HERE  -->
+
+<p><h1>Running Polymeter on a Mac</h1>
+
+<p>There are various options, including <a href="https://winebottler.kronenberg.org/">WineBottler</a>, <a href="https://www.codeweavers.com/products/crossover-mac">Crossover</a>, <a href="http://www.apple.com/support/bootcamp/">Boot Camp</a>, <a href="https://www.parallels.com/">Parallels</a>, and possibly other <a href="https://en.wikipedia.org/wiki/Comparison_of_platform_virtualization_software">virtualizers</a>. This guide focuses on WineBottler because like Polymeter it's free and open-source software, and doesn't require you to buy or install Windows.
+
+<p><h2>Polymeter and WineBottler</h2>
+
+<ol>
+
+<li>Download WineBottler <a href="https://winebottler.kronenberg.org">here</a>. It's recommended to take the Stable version, currently 1.8.6. 
+
+<li>Download Polymeter, from either <a href="https://polymeter.sourceforge.io/download.html">SourceForge</a> or <a href="https://victimofleisure.github.io/Polymeter/download.html">GitHub</a>.
+<b>Important:</b> Take the <b>Portable</b> Application (no installer), for 32-bit Windows; it's the fourth option.
+
+<li>Run WineBottler, by double-clicking the WineBottler DMG file.
+
+<li>In WineBottler's caption bar, click "Advanced." You should see a yellow screen, the second option of which is "Program to install." To the right of that option, click "Select File." In the resulting file dialog, navigate to the Polymeter download, presumably in Downloads. Select the file <b>Polymeter.exe</b> and press OK.
+
+<li><b>Important:</b> Select the option "This is the actual program, copy it to the App Bundle." It's the middle radio button, below "Program to install." This is critical!
+
+<li>Click "Install" and select where you want the App Bundle to go. The Desktop is a safe choice. Press OK to start building the App Bundle. Wait for it to finish.
+
+<li>To run Polymeter, double-click the Polymeter App Bundle. It loads some Wine stuff and then Polymeter's screen should appear. And that's it.
+
+</ol>
+
+Limitations and known bugs:
+
+<ol>
+
+<li>In the Mapping bar, MIDI learn works but isn't indicated properly. The selected mapping(s) being learned should display with a green background, but instead all of the mappings display with a white background. You can still learn mappings as usual, just ignore the background color. You'll know when a mapping is learned because its input values change to match the control you moved. Remember to turn off MIDI learn when you're done!
+
+<li>In the Live view, selection isn't indicated correctly. This is another case of the first bug, related to custom draw.
+
+<li>If you add a MIDI device while Polymeter is running, the new device won't be available until you exit and restart Polymeter.
+
+<li>The Phase bar doesn't work at all. This is probably because it uses Direct2D.
+
+</ol>
+
+<p>It would nice to be able to use the 64-bit version of Polymeter, because it can access more memory and runs faster. Supposedly the development version of WineBottler supports 64-bit apps but your mileage may vary.
+
+
+<!--  content stops HERE  -->
+</div>
+</body>
+</html>

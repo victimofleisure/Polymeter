@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Note tracks</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Note tracks</h3>
+
+<p>Note tracks output MIDI notes, and have special capabilities compared to other <a href="../Concepts/Tracks.htm#Track_types">track types</a>. One difference is that note tracks allow adjacent steps to be <a href="../Tracks/Note_tracks.htm#Tied_notes">tied</a> together in order to form notes longer than one step. Another difference is that many <a href="../Concepts/Modulations.htm#Modulation_types">modulation types</a> can only target note tracks. By default, a note track outputs a constant note, selected by its <a href="../Views/Track_View/Track_Grid.htm#Track_Note">note</a> property. The simplest way to make a melody is to create multiple note tracks and assign them different notes. However it's also possible to make a melody with only a single note track, by using another track to alter the note, in a process called <a href="../Modulation/Note_modulation.htm">note modulation</a>. Another more advanced method is to modulate the note track with a combination of <a href="../Modulation/Scale_modulation.htm">scale modulation</a> and <a href="../Modulation/Index_modulation.htm">index modulation</a>, and possibly also <a href="../Modulation/Chord_modulation.htm">chord modulation</a>. A note track can only output one note at a time. To make chords, create multiple note tracks, each playing a different note.
+
+<p>The placement of notes, their durations, and their velocities are all determined by a note track's steps. If a note is tied, meaning it occupies multiple adjacent steps, the first of its steps determines its velocity. Note placement and duration are edited using the <a href="../Views/Track_View/Track_Steps.htm">track steps</a> pane. To edit note velocities, use the <a href="../Views/Track_View/Velocities_Pane.htm">velocities pane</a> or the <a href="../Docking_Windows/Step_Values_bar.htm">step values bar</a>; for other methods, see <a href="../Concepts/Steps.htm">steps</a>. To offset all of a track's note velocities by a constant, enter a non-zero value for the <a href="../Views/Track_View/Track_Grid.htm#Track_Velocity">track velocity</a> property. Note tracks can be limited to a specified range of notes via the <a href="../Views/Track_View/Track_Grid.htm#Track_Range_Type">range</a> properties.
+
+<a name="Tied_notes"><p><b>Tied notes</b></a>
+<p>Notes longer than one <a href="../Concepts/Steps.htm">step</a> are created by joining two or more adjacent steps. Steps joined in this way are said to be <em>tied</em>. Each step has an attribute called a <em>tie bit</em>, and if a step's tie bit is set, that step joins itself with the next step. If the next step is occupied, it extends the duration of the existing note by a step, instead of triggering a new note. If the next step isn't occupied, the tie bit has no effect.
+
+<ul>
+<li>To toggle a step's tie bit from tied to untied or vice versa, press the <span class="key">Shift</span> key, and while holding it down, left-click the step in question.
+<li>To toggle the tie bits of multiple steps at once, first <a href="../Views/Track_View/Step_Selection.htm">select</a> the steps by right-clicking and dragging; then press the <span class="key">Shift</span> key, and while holding it down, left-click anywhere within the steps.
+</ul>
+
+<p><a href="../Tracks/Note_tracks.htm">Note tracks</a> display tied and untied steps differently: a tied step fills the entire rectangle allocated for it, whereas an untied step only fills the left half of its rectangle. The following example shows four adjacent steps, all of which are occupied (not empty) and untied. Assuming the track's <a href="../Views/Track_View/Track_Grid.htm#Track_Quant">quant</a> is a sixteenth note, these steps output four consecutive sixteenth notes.
+
+<p><table border=1 cellpadding=0 cellspacing=0 style="border-color: lightgray">
+<tr><td>&#9612;</td><td>&#9612;</td><td>&#9612;</td><td>&#9612;</td></tr>
+</table>
+
+<p>In this example, the same four steps are shown, except that the first three have their tie bit set. This joins the four steps together so that they output a single quarter note.
+
+<p><table border=1 cellpadding=0 cellspacing=0 style="border-color: lightgray">
+<tr><td>&#9608;</td><td>&#9608;</td><td>&#9608;</td><td>&#9612;</td></tr>
+</table>
+
+<p>A note may be extended past the end of the track, in which case the track's last step must be tied. Assuming the track is four steps long, this example shows a quarter note triggered by the third step.
+
+<p><table border=1 cellpadding=0 cellspacing=0 style="border-color: lightgray">
+<tr><td>&#9608;</td><td>&#9612;</td><td>&#9608;</td><td>&#9608;</td></tr>
+</table>
+
+<p>At least one of a note track's steps must be either empty or untied, otherwise the track will be silent. Tying only applies to note tracks; for all other <a href="../Concepts/Tracks.htm#Track_types">track types</a>, the tie bit is irrelevant and isn't shown. You can specify whether steps are initially tied or untied, using the <a href="../Menus/Track/Tie_Notes.htm">Tie Notes</a> command.
+
+<a name="Triggering_samples"><p><b>Triggering samples</b></a>
+<p><a href="../Tracks/Note_tracks.htm#Tied_notes">Tied notes</a> are more likely to be useful with melodic or chordal parts, because the instruments associated with such parts are typically sensitive to note duration. Tied notes may be irrelevant when triggering drums, because drum sounds commonly play their entire sample, regardless of the triggering note's duration. Many hardware and software drum machines ignore note duration, including the drum channel (channel ten) of a General MIDI synth, such as the GS Wavetable Synth that ships with Windows. If you're writing drum parts for a device that ignores note duration, you may find it convenient to use only untied steps, so that setting consecutive steps always retriggers the sample.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

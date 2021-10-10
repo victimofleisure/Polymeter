@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Scale modulation</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Scale modulation</h3>
+
+<p>A scale is broadly defined as a set of notes. A scale can contain any notes in any order, with or without duplicates, spanning any number of octaves. Only <a href="../Views/Track_View/Track_Grid.htm#Track_Type">note tracks</a> support scale modulation.
+
+<p>When a note track has one or more unmuted scale <a href="../Concepts/Modulations.htm">modulators</a>, it doesn't compute its output note in the usual way. Instead, it builds a temporary scale, consisting of the current step values of each of the scale modulators. Each step value is a signed offset in semitones from the target track's <a href="../Views/Track_View/Track_Grid.htm#Track_Note">base note</a>. The order of the scale modulators within the track's modulation list matters, because the step values are appended to the scale in that order. Muted scale modulators are excluded.
+
+<p>After the scale is built, one its tones is picked via <a href="../Modulation/Index_modulation.htm">index modulation</a>. A track that uses a scale should also have at least one index modulator. The index modulator's current step value is interpreted as a zero-based index into the scale. If the index exceeds the range of the scale in either direction, it's wrapped around as needed. If a track has multiple index modulators, they're summed.
+
+<p>For example, suppose the target track has seven unmuted scale modulators, and their current steps contain 0, 2, 4, 5, 7, 9, and 11 respectively. Assuming the target track's base note is C, this constitutes a C major scale. If the target track's index modulator is zero, the first scale tone (C in this case) is picked; if the index modulator is one, the second scale tone (D in this case) is picked, and so on.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<caption>Scale Modulation</caption>
+<tr><th>Index</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
+<tr><th>Scale Tone</th><td>0</td><td>2</td><td>4</td><td>5</td><td>7</td><td>9</td><td>11</td></tr>
+<tr><th>Note</th><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td><td>A</td><td>B</td></tr>
+</table>
+
+<p>The <a href="../Views/Track_View/Track_Grid.htm#Track_Range_Type">track range</a> also works differently in this case. The range if any is applied to the entire scale <em>before</em> the indexing operation, i.e. before a scale tone is picked.
+
+<p>The target track can still be <a href="../Modulation/Note_modulation.htm">note modulated</a>. In this case the note shift is added to all of the scale tones, before range modulation and indexing. This is useful for transposition.
+
+<p>Scale modulators can also have note modulators. These are applied first as the current scale is being built. Scales can also be affected by <a href="../Modulation/Chord_modulation.htm">chords</a> and <a href="../Modulation/Voicing_modulation.htm">voicings</a>.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

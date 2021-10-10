@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Convergences</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Convergences</h3>
+
+<p>In <a href="../Concepts/Polymeter.htm">polymeter</a>, loops of different lengths gradually drift apart (diverge) and back together (converge). Alternatively we can say that the loops drift out of phase, and back into phase. Two loops are exactly in phase when they reach their respective starting points at exactly the same time, and this moment is called a <em>convergence</em>.
+
+<p>When the number of loop lengths being considered is three or more, we can distinguish between full and partial convergence. Full convergence is when <em>all</em> of the loops are in phase, whereas partial convergence is when only a subset of them are in phase. No matter how many different lengths are used, they will all fully converge at some point, after which the overall pattern repeats.
+
+<p>For <a href="../Loose_Ends/Primes.htm">relatively prime</a> lengths, determining when full convergence will occur is straightforward: it's the product of the lengths. So for 3, 5, and 7, it's 3 &times; 5 &times; 7 = 105. Each pair of relatively prime lengths also converges separately. In this case, partial convergences occur at multiples of 15 (3 &times; 5), 21 (3 &times; 7), and 35 (5 &times; 7). For details, see the <a href="../Concepts/Convergences.htm#Convergence_example">example</a> below. As more relatively prime lengths are combined, the number of partial convergences increases, and the time required for the overall pattern to repeat (full convergence) also increases.
+
+<p>The application provides various tools for working with convergences:
+
+<ul>
+<li>The <a href="../Menus/Tools/Time_To_Repeat.htm">Time to Repeat</a> command calculates how long it will take for the <a href="../Views/Track_View/Track_Selection.htm">selected tracks</a> to repeat, in beats and time.
+<li>The <a href="../Menus/Tools/Prime_Factors.htm">Prime Factors</a> command calculates the prime factors of the lengths of the selected tracks.
+<li>The <a href="../Menus/Tools/Convergences_Calculator.htm">Convergences Calculator</a> computes all of the convergences between the lengths of the selected tracks, or if no tracks are selected, between a list of comma-separated values.
+<li>The <a href="../Menus/Transport/Next_Convergence.htm">Next Convergence</a> and <a href="../Menus/Transport/Previous_Convergence.htm">Previous Convergence</a> commands move the current position to the next or previous convergence between the lengths of the selected tracks, or all tracks if none are selected. The minimum convergence size is selectable via the <a href="../Menus/Transport/Convergence_Size.htm">Convergence Size</a> submenu of the Transport menu.
+</ul>
+
+<p>It's more interesting if something happens at these convergences. In 4/4 music, significant changes often occur at powers of four, e.g. 16, 32, 64, etc. In polymeter, significant changes should naturally occur at the convergences between the different lengths.
+
+<a name="Convergence_example"><p><b>Convergence example</b></a>
+<p>This table shows the partial convergences of 3, 5, and 7 up to their first full convergence at 105. Subsequent full convergences would occur at 210, 315, 420, and so on. The table could be extended infinitely far into the future or past, and would continue to repeat this same pattern of convergences.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Convergence</th><th>Factors</th></tr>
+<tr><td>15</td><td>3,5</td></tr>
+<tr><td>21</td><td>3,7</td></tr>
+<tr><td>30</td><td>3,5</td></tr>
+<tr><td>35</td><td>5,7</td></tr>
+<tr><td>42</td><td>3,7</td></tr>
+<tr><td>45</td><td>3,5</td></tr>
+<tr><td>60</td><td>3,5</td></tr>
+<tr><td>63</td><td>3,7</td></tr>
+<tr><td>70</td><td>5,7</td></tr>
+<tr><td>75</td><td>3,5</td></tr>
+<tr><td>84</td><td>3,7</td></tr>
+<tr><td>90</td><td>3,5</td></tr>
+<tr><td>105</td><td>3,5,7</td></tr>
+</table>
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

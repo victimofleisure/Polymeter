@@ -1,0 +1,23 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Export</title>
+<link rel=stylesheet href="../../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Export</h3>
+
+<p>This command exports the current document as a type 1 MIDI file, containing at most 17 tracks. The first track is reserved for the tempo map, and it's followed by one track for each MIDI channel that's utilized in the document. If the document contains song dubs, they're applied, otherwise the unmuted tracks are repeated out to the <a href="../../Properties/Song_Length.htm">song length</a>.
+
+<p>For each MIDI channel, all Polymeter tracks that output to that channel are merged into a single MIDI file track. The resulting MIDI file track gets its name from the first Polymeter track that contributed to it. If no Polymeter tracks output to the channel, the corresponding track is omitted from the MIDI file to save space.
+
+<p>The document can also be <a href="../../Menus/Tools/Export_Table.htm#Export_Song">exported as a table</a>, which can be useful for debugging.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

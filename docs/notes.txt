@@ -1,0 +1,3205 @@
+3/22/18 timer queue
+
+	HANDLE	m_hTimerQueue;
+	HANDLE	m_hTimer;
+
+	static	VOID CALLBACK TimerCallback(PVOID lpParameter, BOOLEAN bTimerFired);
+
+	m_hTimerQueue = CreateTimerQueue();
+	CreateTimerQueueTimer(&m_hTimer, m_hTimerQueue, TimerCallback, this, 0, 50, 0);
+
+VOID CALLBACK CPolymeterDlgTestDlg::TimerCallback(PVOID lpParameter, BOOLEAN bTimerFired)
+{
+	CWnd	*pWnd = reinterpret_cast<CWnd*>(lpParameter);
+	pWnd->PostMessage(WM_TIMER, 100);
+}
+
+
+Seems to interfere with MIDI stream thread, causing unacceptable delays queueing output.
+
+4/5/18 short duration related glitching and dropouts
+
+"duration 1 bug organ offset -1 is worse"
+
+Seems to be OK on SD-20 with latency of 20 or 16 but not 10ms; what are the corresponding callback lengths?
+Looks the issue is that 10ms at 24 PPQ gets you a callback length of 1 tick, which mmsystem doesn't like
+latency >= 16ms gets you at least 2 ticks
+with duration = -9 and PPQ = 24, dropouts and glitches are still occurring even at latency = 35 ms (3 ticks), on both Win GS and SD-20
+sequencer dump doesn't seem to show anything suspicious
+need a hypothesis! sure acts like some type of fencepost error, or issue with event sorting
+
+4/9/18 attempted piano masking for testdoc2b edirol; still too busy?
+
+In more recent versions, you'll need this: int nEvtStart = iPairQuant;
+
+if (iTrack == 12 || iTrack == 14 || iTrack == 17) {
+	int	a = (nEvtStart * 2) % (4 * 12);
+	if (iTrack == 12 && a >= (4 * 8 - 1) && a < (4 * 12 - 2))
+		goto yack;
+	if (iTrack == 14 && a >= (4 * 9 - 1) && a < (4 * 11))
+		goto yack;
+	if (iTrack == 17 && a >= (4 * 9 - 1) && a < (4 * 11))
+		goto yack;
+}
+...
+						m_arrNoteOff.InsertSorted(evt);
+					}
+yack:;//@@@ NOTE position!
+				}
+				iEvt++;
+
+
+the mask on the C# disappoints... even resuming at 4 * 10 feels weak in places... perhaps it's too sparse to mask effectively!
+
+4/10 WAY BETTER mask the middle F# instead (and maybe octave up the C# and the high F# every now and then)
+
+if (iTrack == 12 || iTrack == 13 || iTrack == 14) {
+	int	a = (nEvtStart * 2) % (4 * 12);
+	if (iTrack == 12 && a >= (4 * 8 - 1) && a < (4 * 12 - 2))
+		goto yack;
+	if (iTrack == 13 && a >= (4 * 0) && a < (4 * 4 - 2))
+		goto yack;
+	if (iTrack == 14 && a >= (4 * 9 - 1) && a < (4 * 11))
+		goto yack;
+}
+
+4/11 switch low piano note between F#2 and D2 is nice; also octave up G#
+
+int n = trk.m_nNote;
+if (iTrack == 12) {
+	int	a = (nEvtStart * 2) % (4 * 12);
+	if (a >= (4 * 8 - 1) && a < (4 * 12 - 2))
+		goto yack;
+	if (a >= (4 * 6) && a < (4 * 8 - 1))
+		n -= 4;
+} else if (iTrack == 13) {
+	int	a = (nEvtStart * 2) % (4 * 12);
+	if (a >= (4 * 0) && a < (4 * 4 - 2))
+		goto yack;
+} else if (iTrack == 14) {
+	int	a = (nEvtStart * 2) % (4 * 12);
+	if (a >= (4 * 9 - 1) && a < (4 * 11))
+		goto yack;
+} else if (iTrack == 16) {
+	int	a = (nEvtStart * 2) % (4 * 12);
+	if (a >= (4 * 10 - 2) && a < (4 * 10 - 1))
+		n += 12;
+}
+
+***NOTE*** The shortest piano loop's duration (30) causes overlapped notes which glitch on the GS synth but not the Edirol.
+This problem should go away when you implement legato tracks; the piano durations won't be needed anymore and will be zero.
+
+Works OK with tied notes! Transpose down a step, "testdoc2b test ties F- fixed agogo.plm"
+Also add a mask to change Ab to Bb when the low note drops from F to Db.
+
+int n = trk.m_nNote;
+if (iTrack == 12) {
+	int	a = (nEvtStart * 2) % (4 * 12);
+	if (a >= (4 * 8 - 1) && a < (4 * 12 - 2))
+		goto yack;
+	if (a >= (4 * 6) && a < (4 * 8 - 1))
+		n -= 4;
+} else if (iTrack == 13) {
+	int	a = (nEvtStart * 2) % (4 * 12);
+	if (a >= (4 * 0) && a < (4 * 4 - 2))
+		goto yack;
+} else if (iTrack == 14) {
+	int	a = (nEvtStart * 2) % (4 * 12);
+	if (a >= (4 * 9 - 1) && a < (4 * 11))
+		goto yack;
+} else if (iTrack == 15) {
+	int	a = (nEvtStart * 2) % (4 * 12);
+	if (a >= (4 * 6) && a < (4 * 10 - 1))
+		n += 2;
+} else if (iTrack == 16) {
+	int	a = (nEvtStart * 2) % (4 * 12);
+	if (a >= (4 * 9) && a < (4 * 10 - 1))
+		n += 12;
+}
+
+4/9/18 super nasty undo CString bug
+
+_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF | _CRTDBG_CHECK_CRT_DF);//@@@ DEBUG 
+
+32-bit version doesn't seem to have this bug; alignment related?
+
+Good guess! The CRefObj struct's 32-bit reference count was causing confusion over the 
+string's address. CRefObj claimed to have a size of 20 bytes, with m_Str at offset 12,
+but the CStringT constructor wrote the 8-byte string pointer at offset 16, munging memory
+and causing m_Str (at offset 12) to contain a bogus address consisting of four bytes of 
+trash in the low DWORD and the low half of the string address in the high DWORD.
+
+Why this is only being discovered now is unclear. Do similar reference counted objects
+in other x64 apps also suffer from this bug, but we're somehow getting away with it?
+Better check PotterDraw at least. The bug was not always reliably repeatable.
+
+class CRefString : public CRefObj {
+public:
+	CString m_str; 
+};
+
+previous x64 layout:
+offset	size	var
+0	8 	vtable pointer
+8	4 	ref count
+12	8 	CString pointer
+total size: 20
+
+new x64 layout:
+offset	size	var
+0	8 	vtable pointer
+8	8 	ref count
+16	8 	CString pointer
+total size: 24
+
+x32 layout:
+offset	size	var
+0	4 	vtable pointer
+4	4 	ref count
+8	4 	CString pointer
+total size: 12
+
+HAH. It's the #pragma pack(push, 1) at the top of UndoState.h. This explains
+why there's no issue in PotterDraw. The failure only occurs when the string 
+undo class is defined within CUndoState. The pragma is a legacy from when the
+undo code and ID were 16-bit. Removing it fixes the bug. Moral: avoid using
+non-default packing.
+
+4/11/18 thread-safe trigger class; don't need it but it could come in handy
+
+class CTrigger {
+public:
+	CTrigger();
+	void	Reset();
+	void	Set();
+	bool	Get();
+
+protected:
+	int		m_nWrites;		// number of writes
+	int		m_nReads;		// number of reads
+};
+
+inline CTrigger::CTrigger()
+{
+	Reset();
+}
+
+inline void CTrigger::Reset()
+{
+	m_nWrites = 0;
+	m_nReads = 0;
+}
+
+inline void CTrigger::Set()
+{
+	m_nWrites++;
+}
+
+inline bool CTrigger::Get()
+{
+	if (m_nWrites == m_nReads)
+		return false;
+	m_nReads = m_nWrites;
+	return true;
+}
+
+
+4/11/18 test sequencer position conversion methods
+
+for (int i = 0; i < 10000000; i++) {
+	LONGLONG	nPos = rand() - RAND_MAX / 2;
+	LONGLONG	nTick, nBeat, nPos2;
+	m_Seq.PositionToBeat(nPos, nBeat, nTick);
+	m_Seq.BeatToPosition(nBeat, nTick, nPos2);
+	if (nPos2 != nPos) {
+		printf("%lld != %lld \n", nPos2, nPos);
+		printf("%lld:%03lld\n", nTick, nBeat);
+	}
+}
+
+4/12/18 improved sequencer track event loop also fixes positive offset & swing bug
+
+The old event loop handled positive offset with positive swing incorrectly, swinging even beats instead of odd ones.
+The bug went undected for a while because positive offset is rare, but it's obvious when sequencer dumps are compared.
+It helps to use a big latency (e.g. one second) because this increases the number of events per callback.
+The new method fixes this bug, and also handles negative song position. This was a total bear!
+
+NOTE that prior to version 33c, the sequencer dump had a SEVERE bug which caused it to output the entire MIDI
+output buffer every time, regardless of how many events the buffer actually contained, resulting in enormous 
+sequencer dump files consisting of mostly garbage. Bug in the debug code, boo!
+
+4/14/18 naming confusion
+
+Stop confusing beats with steps! Beats are QUARTER NOTES. It's a STEP SEQUENCER, not a beat sequencer.
+
+4/15/18 can't open a MIDI output device for live playback while it's open for streaming, duh!
+
+4/17/18	keeping output device open all the time
+
+The main justification is that MIDI thru currently only works during playback, which is unexpected and annoying.
+A secondary justification is it might significantly reduce the lag between pressing play and playback starting.
+
+The output callback would move from the sequencer to the app. Instead of passing the sequencer's
+"this" to midiStreamOpen, the callback would get the sequencer pointer some other way, presumably
+a sequencer pointer in the app. The app would also need a dummy CSequencer containing no tracks,
+which the sequencer pointer would point as a last resort if no documents exist. Everything would
+stay the same in CSequencer except the MIDI device handle would move to the app, and the sequencer
+would no longer open or close the device, though it would still start and stop it.
+
+benchmarks (Release version, running standalone, not from VS2012 IDE)
+all time in milliseconds
+
+device		device open	other open	device close	other close
+MS GS WT Synth	130 to 150	0.15 to 0.2 	20 to 50	1.5 to 2
+Edirol SD-20	0.2 to 3	6		22		22
+
+Drastic differences! For the Edirol, stopping takes 10x longer than starting, the opposite of the
+MS Synth. This means there would be no gain in terms of playback startup lag. Also, stopping the 
+device takes just as long as closing it. Bizarre. This is why we benchmark things.
+
+This result considerably weakens the secondary justification. Now the argument comes down to how
+inconvenient it actually is that MIDI thru doesn't work all the time. But keep in mind that we
+would still need to restart the device on play/stop, which means there would still be a glitch
+in the MIDI thru coverage. However device state (such as patches, volumes, etc.) probably won't
+be lost, though this theory should definitely be tested before proceeding.
+
+4/20/18 popup edit controls and editing command accelerators (Ctrl+X etc.)
+
+Currently, using an editing key (such as Ctrl+X) in a popup edit control (e.g. in the channels
+bar) unexpectedly operates on the track array. This is a bug but it must be tolerated for now.
+The view handlers (and update UI handlers) for the editing commands (cut, copy, paste, etc.) 
+need to call the corresponding CFocusEdit members, but that's currently not possible because
+CTrackDlg displays edit controls all the time. If CFocusEdit handling were added now, the track
+editing accelerators wouldn't work when the focus was on a track edit control (nearly always).
+However when the CTrackDlg row dialog scheme gets replaced with a grid control, it will become
+possible to call CFocusEdit and the problem will go away. This accelerator routing confusion is
+another reason (besides slow performance) why row dialogs suck and grid controls are always
+preferable to them.
+
+4/21/18 installer GUIDs
+
+ProductName: Polymeter (x86)
+ProductCode: {0C9FC2D8-0E07-4DEA-A384-A9BF1E267258}
+UpgradeCode: {5B628FFB-0D67-4F8C-AC44-626C4AE61209}
+
+ProductName: Polymeter
+ProductCode: {B18FD079-013F-41D1-95D8-FEE34A4BEC8A}
+UpgradeCode: {4A526D06-C4C2-4208-B716-C687C92A7A71}
+
+4/24/18 test for time to repeat method
+
+Note that this is impractically slow for large sets of big numbers, even in Release
+
+void TestTimeToRepeat()
+{
+	srand(GetTickCount());	// seed random
+	int	nPasses = 1000;
+	int	nTimeDiv = 120;
+	int	nSels = 3;
+	for (int iPass = 0; iPass < nPasses; iPass++) {
+		CArrayEx<ULONGLONG, ULONGLONG>	arrDuration;
+		arrDuration.Add(nTimeDiv);	// avoids fractions when LCM result is converted from ticks back to beats
+		for (int iSel = 0; iSel < nSels; iSel++) {
+			ULONGLONG	nDuration = (rand() & 0x1ff) + 1;
+			if (arrDuration.BinarySearch(nDuration) < 0)	// eliminate duplicates to avoid needless LCM
+				arrDuration.InsertSorted(nDuration);	// ascending sort may improve LCM performance
+		}
+		int	nDurs = arrDuration.GetSize();
+		ULONGLONG	nLCM = arrDuration[0];
+		printf("%d: %llu", iPass, arrDuration[0]);
+		for (int iDur = 1; iDur < nDurs; iDur++) {	// for each track duration
+			printf(", %llu", arrDuration[iDur]);
+			nLCM = CNumberTheory::LeastCommonMultiple(nLCM, arrDuration[iDur]);
+		}
+		printf(" = %llu\n", nLCM);
+		ULONGLONG	nCnt = 1;
+		while (1) {
+			int	iDur;
+			for (iDur = 0; iDur < nDurs; iDur++) {	// for each track duration
+				if (nCnt % arrDuration[iDur])	// if count isn't evenly divisible by duration
+					break;	// eliminate this count
+			}
+			if (iDur >= nDurs)	// if count is evenly divisible by all durations
+				break;	// we're done
+			nCnt++;
+		}
+		if (nCnt != nLCM) {
+			printf("FAIL! %llu\n", nCnt);
+			break;
+		}
+	}
+}
+
+4/25/18 MIDI note
+
+in CTrackView.cpp:
+
+#include "Note.h"
+
+		case COL_Note:
+			{
+				CNote	note(pDoc->m_Seq.GetNote(iTrack));
+				_tcscpy_s(item.pszText, item.cchTextMax, note.MidiName());
+			}
+			break;
+
+		#define TRACKDEF_EXCLUDE_NOTE	// exclude note
+		#include "TrackDef.h"	// generate column definitions
+
+		case COL_Note:
+			pEdit->SetRange(0, 127);
+			pEdit->SetNoteEntry(true);
+			break;
+
+4/27/18 reordering grid control columns
+
+Setting LVS_EX_HEADERDRAGDROP works, but if column order is changed from default, tabbing is out of order.
+
+4/30/18	MFC CArray array resizing algorithm
+
+Instead of wading through the code every time, here it is:
+
+if (nGrowBy == 0)
+{
+	// heuristically determine growth when nGrowBy == 0
+	//  (this avoids heap fragmentation in many situations)
+	nGrowBy = m_nSize / 8;
+	nGrowBy = (nGrowBy < 4) ? 4 : ((nGrowBy > 1024) ? 1024 : nGrowBy);
+}
+
+In other words, grow by an eighth of current size (12.5%), but never less than four or more than 1K elements.
+
+5/1/18 convert binary notes to default velocities
+
+in CPolymeterDoc::ReadProperties:
+		CPersist::GetBinary(sTrkID, RK_TRACK_EVENT, trk.m_arrEvent.GetData(), &nUsed);
+
+		if (m_nFileVersion == 0) {//@@@
+			int	nEvents = trk.m_arrEvent.GetSize();
+			for (int iEvt = 0; iEvt < nEvents; iEvt++) {
+				if (trk.m_arrEvent[iEvt] == 1)
+					trk.m_arrEvent[iEvt] = DEFAULT_VELOCITY;
+			}
+		}
+
+5/1/18 gradient fill looks awesome but it's around 20x to 50x slower than FillSolidRect (no surprise)
+
+	struct TRICOLOR {//@@@
+		COLOR16	r;
+		COLOR16	g;
+		COLOR16	b;
+	};
+	TRICOLOR arrTriColor[_countof(clrStep)];
+	for (int i = 0; i < _countof(clrStep); i++) {
+		arrTriColor[i].r = COLOR16(round(GetRValue(clrStep[i]) / 255.0 * 0xffff));
+		arrTriColor[i].g = COLOR16(round(GetGValue(clrStep[i]) / 255.0 * 0xffff));
+		arrTriColor[i].b = COLOR16(round(GetBValue(clrStep[i]) / 255.0 * 0xffff));
+	}
+	static GRADIENT_RECT	rGrad = {0, 1};//@@@
+
+
+CBenchmark b;//@@@
+#if 0
+						const TRICOLOR& clr1 = arrTriColor[iStepColor];
+						const TRICOLOR& clr2 = arrTriColor[iCurPosColor];
+						TRIVERTEX	tv[2] = {
+							{rStep.left, rStep.top, clr1.r, clr1.g, clr1.b}, 
+							{rStep.right, rStep.bottom, clr2.r, clr2.g, clr2.b},
+						};
+						pDC->GradientFill(tv, 2, &rGrad, 1, GRADIENT_FILL_RECT_H);
+#else
+						rStep.right = x1 + nStepWidth / 2;
+						pDC->FillSolidRect(rStep, clrStep[iStepColor]);
+						rStep.left = rStep.right;
+						rStep.right = x2;
+						pDC->FillSolidRect(rStep, clrStep[iCurPosColor]);
+#endif
+printf("%f\n", b.Elapsed());
+
+Tried doing gradient fill to off-screen bitmap and then blitting it into place but that's actually SLOWER!
+Wonder if triangle fill would be faster? NOPE, pair of triangles is SLOWER esp. for large steps.
+HOWEVER benchmarking shows that using gradient fill only slows OnDraw by around 3x. Why? Why isn't it 20x or 50x?
+Hypothesis: something else in OnDraw is taking more time than you'd expect.
+file: heavy graphics.plm
+The FIRST step takes 2x to 4x longer to draw than the others. WTF?
+That's because of delayed painting and accumulation of the invalid rectangle.
+If you move the current position from the first step to the last step, ALL the steps in between are repainted.
+Only two steps actually needed to be painted. There's no easy solution to this.
+
+USHORT MakeColor16(BYTE nColor)//@@@
+{
+	return static_cast<USHORT>(round(static_cast<double>(nColor) / BYTE_MAX * SHRT_MAX));
+}
+
+		static GRADIENT_RECT	rGrad = {0, 1};//@@@
+		COLORREF	clr1 = m_arrStepColor[iStepColor];
+		COLORREF	clr2 = m_arrStepColor[iCurPosColor];
+		TRIVERTEX	tv[2] = {
+			{rStep.left, rStep.top, MakeColor16(GetRValue(clr1)), MakeColor16(GetGValue(clr1)), MakeColor16(GetBValue(clr1))}, 
+			{rStep.right, rStep.bottom, MakeColor16(GetRValue(clr2)), MakeColor16(GetGValue(clr2)), MakeColor16(GetBValue(clr2))},
+		};
+		pDC->GradientFill(tv, 2, &rGrad, 1, GRADIENT_FILL_RECT_H);
+
+5/2/18 tied swing collision
+
+simple demo track: tempo = 60, length = 3, quant = 60, offset = 0, swing = 10, all 3 steps set and 1st step tied
+set m_nCBLen = 4000 in UpdateCallbackLength to make problem easier to see in sequencer dump file
+
+sacred ground:
+if (nDurSteps & 1) {	// if odd duration
+	if (bIsOdd)	// if odd step
+		nDuration -= nSwing;	// subtract swing from duration
+	else	// even step
+		nDuration += nSwing;	// add swing to duration
+}
+
+
+5/14/18 tooltips suck
+
+in PreTranslateMessage
+	m_ToolTip.RelayEvent(pMsg);//@@@
+
+in OnSize
+	m_ToolTip.DelTool(this, 1);//@@@
+	m_ToolTip.AddTool(this, LPSTR_TEXTCALLBACK, CRect(0, 0, cx, cy), 1);
+
+but there are too many crap cases
+
+void CVelocityView::UpdateToolTip(CPoint point)
+{
+	CRect	rc;
+	GetClientRect(rc);
+	int	nVal = round((1 - static_cast<double>(point.y) / rc.Height()) * MIDI_NOTE_MAX);
+	if (nVal != m_nToolTipVal) {
+		CString	s;
+		s.Format(_T("%d"), nVal);
+		m_ToolTip.UpdateTipText(s, this, 1);
+//		m_ToolTip.Update();
+		m_nToolTipVal = nVal;
+	}
+}
+
+5/15/18 next/prev pane mystery
+
+Default handling works but only when track view has focus; why doesn't it work for step parent view and its children?
+The commands are definitely being dispatched, per the following test in CChildFrm::OnCmdMsg:
+
+	case ID_NEXT_PANE:
+		if (nCode == CN_COMMAND)
+			printf("OnCmdMsg next pane\n");//@@@
+		break;
+	case ID_PREV_PANE:
+		if (nCode == CN_COMMAND)
+			printf("OnCmdMsg prev pane\n");//@@@
+		break;
+
+5/17/18 serious bug in CMidiOut::GetDeviceNames
+
+MMRESULT mr = midiOutGetDevCaps(iDev, &caps, sizeof(MIDIINCAPS)); <-- WRONG!
+
+MMRESULT mr = midiOutGetDevCaps(iDev, &caps, sizeof(MIDIOUTCAPS)); <-- CORRECT!
+
+sizeof(MIDIINCAPS) = 76
+sizeof(MIDIOUTCAPS) = 84
+
+So you were passing a struct eight bytes too small. This might explain Ben's issue, VirtualMIDISynth showing blank device names.
+Amazing it didn't get discovered sooner.
+
+5/17/18 sine wave velocity function
+
+double	x = round((iStep + 0.5) * fStepWidth) - x1;	// compute x at center of bar
+
+double	fPhase = x / nDeltaX;
+y = y1 + (sin(fPhase * M_PI * 2) + 1) * nDeltaY / 2;
+
+Input gesture determines amplitude, frequency, and direction (phase is either 0 or 0.5).
+Easily adapted for other waveforms.
+
+5/19/18 how to record Windows GS Synth
+
+In Control Panel / Sound:
+In Playback tab, select "CABLE Input" and Set Default.
+In Recording tab, select "CABLE Output" and Set Default;
+then click Properties, and in Listen tab, check "Listen to this device",
+and if you're using the USB dongle, set "Playback through this device" to "USB audio codec".
+In WaveShop, in Options / Audio, record from "Cable Output".
+
+5/22/18 track unique identifier (UID)
+
+Seems to work and passes undo test.
+
+dump:
+	int nTracks = GetTrackCount();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++)
+		printf("%d:%d ", iTrack, m_Seq.GetID(iTrack));
+	printf("\n");
+
+5/23/18 dub test
+
+#if 1 //@@@
+		CTrack&	trk = GetAt(0);
+		trk.m_arrDub.SetSize(4);
+		CDub	dub;
+		dub.m_nTime = 0;
+		dub.m_bMute = 0;
+		trk.m_arrDub[0] = dub;
+		dub.m_nTime = 240;
+		dub.m_bMute = 1;
+		trk.m_arrDub[1] = dub;
+		dub.m_nTime = 480;
+		dub.m_bMute = 0;
+		trk.m_arrDub[2] = dub;
+		dub.m_nTime = 960;
+		dub.m_bMute = 1;
+		trk.m_arrDub[3] = dub;
+		trk.m_iDub = 0;//@@@ depends on start pos!
+		m_bIsSongPlayback = true;//@@@ test ONLY
+#endif//@@@
+
+5/25/18 song position hint; mind keeps changing on this
+
+	class CSongPosHint : public CObject {
+	public:
+		CSongPosHint(LONGLONG nPos) : m_nPos(nPos) {}
+		LONGLONG	m_nPos;		// song position in absolute ticks
+	};
+
+			CSongPosHint	hint(nPos);
+			UpdateAllViews(NULL, HINT_SONG_POS, &hint);
+
+			const CPolymeterDoc::CSongPosHint *pPosHint = static_cast<CPolymeterDoc::CSongPosHint *>(pHint);
+
+5/31/18 critical path OnTimer benchmarks
+
+sequencer's GetPosition only: 4us
+UpdateAllViews, with recipients disabled: 27us, with spikes to 120us or so
+add status bar updates: 600us to 1ms
+only one status bar update: 580us
+step view song pos update enabled, but no status bar update: 150 to 300us (full screen, Ala Aye)
+so status bar takes more time than step view!
+song view song pos update enabled, but no status bar update: 650us with a spike to 2ms when view scrolls
+
+Conclusions:
+
+Status bar overhead is excessive, and it's probably due to strdup and free in CMFCStatusBar::SetPaneText.
+You could override it, and just copy directly to _GetPanePtr(nIndex)->lpszText is the buffer is big enough.
+This only helps if most of the overhead is the malloc/free and not the window update. It also only helps
+if the position and time strings typically stay the same size in characters during playback (and they do).
+
+Song view is MUCH slower than step view, probably because moving the song position cursor is so inefficient
+(it erases the old cursor by repainting all the cells underneath it).
+
+6/1/18 CTrack::FindDub unit test
+
+	CTrack trk;
+	CTrack::CDub	a(0, 1);
+	trk.m_arrDub.Add(a);
+	CTrack::CDub	b(5, 0);
+	trk.m_arrDub.Add(b);
+	CTrack::CDub	c(10, 1);
+	trk.m_arrDub.Add(c);
+	for (int i = 0; i < 10; i++) {
+		printf("%d %d\n", i, trk.FindDub(i));
+	}
+
+0	0
+1	0
+2	0
+3	0
+4	0
+5	1
+6	1
+7	1
+8	1
+9	1
+10	2
+
+
+6/4/18 GM patch names
+
+already added to MidiCtrlDef.h
+
+const LPCTSTR CChannelsBar::m_arrGMPatchName[MIDI_NOTES + 1] = {	// one extra for none
+	_T("<None>"),
+	#define MIDI_PATCH_DEF(name) _T(name),
+	#include "MidiCtrlrDef.h"
+};
+
+		case COL_GMPatch:
+			{
+				int	nPatch = pChan->GetProperty(CChannel::PROP_Patch) + 1;
+				ASSERT(nPatch >= 0 && nPatch <= MIDI_NOTES);
+				_tcscpy_s(item.pszText, item.cchTextMax, m_arrGMPatchName[nPatch]);
+			}
+			break;
+
+Watch out for update trouble! Editing patch number must update drop list and vice versa. PITA!
+
+6/10/18	23,000 lines of code and counting! (Cloc1.76)
+
+6/15/18 pack and unpack bool array to bit array: unit test
+
+	CByteArrayEx	src, dst, src2;
+	for (int i = 0; i < 100000; i++) {
+		int	nBits = (rand() & 0xfff) + 1;
+		src.SetSize(nBits);
+		for (int j = 0; j < nBits; j++) {
+			src[j] = rand() & 1;
+		}
+		CPreset::PackBools(src, dst);
+		CPreset::UnpackBools(dst, nBits, src2);
+		if (src != src2)
+			printf("bad!\n");
+	}
+
+6/19/18 full screen
+
+	EnableMDITabs(false); // this has to be undone on exit
+	EnableFullScreenMode(0);
+	EnableFullScreenMainMenu(FALSE);
+	ShowFullScreen();
+	
+also must hide popup exit dialog
+
+6/21/18	keep view type consistent across all documents? not sure
+
+	if (0) {
+		// propagate view type to other documents
+		CAllDocIter	iter;	// iterate all documents
+		CPolymeterDoc	*pDoc;
+		while ((pDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {
+			POSITION	pos = pDoc->GetFirstViewPosition();
+			if (pos != NULL) {
+				CView	*pView = pDoc->GetNextView(pos);
+				CChildFrame	*pFrame = DYNAMIC_DOWNCAST(CChildFrame, pView->GetParentFrame());
+				if (pFrame != NULL && pFrame != this) {	// if child frame and not us
+					pFrame->SetViewType(nViewType);	// propagate view type
+				}
+			}
+		}
+	}
+
+6/22/18 bar graph showing position of each "part" in live view
+
+It's fun to watch but more distracting than helpful. Note that grouped parts aren't 
+handled properly; should be computing the time to repeat for all the part's members
+(computationally expensive, would have to be done beforehand, not per song position).
+
+		case CPolymeterDoc::HINT_SONG_POS:
+			{
+				CPolymeterDoc::CSongPosHint	*pSongPosHint = static_cast<CPolymeterDoc::CSongPosHint*>(pHint);
+				CClientDC	dc(this);
+				int	nItems = m_arrPart.GetSize();
+				int	cy = 32;
+				for (int iItem = 0; iItem < nItems; iItem++) {
+					int	iPart = m_arrPart[iItem];
+					int	nLength;
+					if (iPart & PART_GROUP_MASK) {
+						const CTrackGroup&	part = pDoc->m_arrPart[iPart & ~PART_GROUP_MASK];
+						int	iTrack = part.m_arrTrackIdx[0];
+						nLength = pDoc->m_Seq.GetLength(iTrack) * pDoc->m_Seq.GetQuant(iTrack);
+					} else {
+						nLength = pDoc->m_Seq.GetLength(iPart) * pDoc->m_Seq.GetQuant(iPart);
+					}
+					int	nPos = static_cast<int>(pSongPosHint->m_nSongPos);
+					nPos = nPos % nLength;
+					nPos = round(double(nPos) / nLength * LIST_WIDTH);
+					int	x1 = (LIST_WIDTH + LIST_GUTTER) * LISTS;
+					int	y1 = iItem * cy + 35;
+					dc.FillSolidRect(x1, y1, nPos, cy, RGB(255, 0, 255)); 
+					dc.FillSolidRect(x1 + nPos, y1, LIST_WIDTH - nPos, cy, RGB(0, 255, 255)); 
+				}
+			}
+			break;
+
+It's just too much dynamic and mostly irrelevant information. Probably a simple beat
+counter with adjustable meter will give much better results. [Not true! Fix groups and see if it helps?].
+
+7/2/18 modulation cut/paste bug
+
+Flunks undo test & it's easy to see why. To replicate: 
+1) open modulation move test doc (two tracks, 2nd modulated by 1st)
+2) select all
+3) copy
+4) paste
+5) undo
+6) redo
+and sure enough the redone paste loses its modulations.
+Hopefully solution is: clipboard stores modulations as UIDs rather than track indices.
+
+7/23/18 CDiatonic::ParseMidiNoteName doesn't handle Cb correctly in key of Gb
+
+	for (int iKey = 0; iKey < 12; iKey++) {
+		for (int iNote = 0; iNote < 128; iNote++) {
+			CString	s(CNote(iNote).MidiName(iKey));
+			CNote	n(0);
+			n.ParseMidi(s);
+			if (n != iNote)	// if round trip error
+				_tprintf(_T("%d %d %s\n"), iKey, iNote, s);
+		}
+	}
+
+above test fails for Cb in key of Gb (parsed Cb is an octave too low); all other keys/notes are fine
+
+9/5/18 Windows GS Synth's channel volume behavior
+
+For a single sustained organ note (Drawbar Organ, E4, velocity 64), doubling its volume in the channel bar 
+increases the output by 12 dB, as measured using WaveShop's meter. This holds over a wide range of volumes.
+For example 50 -> 100, 30 -> 60, 25 -> 50, 64 -> 127, and so on.
+This means that the volume control is linear, not log (log velocity changes give linear change in dB).
+Hence adding a constant to all the 
+channel volumes is INCORRECT unless they all have the same initial values.
+Instead you should SCALE the channel volumes by a PERCENTAGE.
+Tests also show that the same principle applies to VELOCITY!
+
+dB	scale
+12	2	(2**1)
+9	1.6818	(2**0.75)
+6	1.4142 	(2**0.5)
+3	1.1892	(2**0.25)
+1.5	1.0905	(2**0.125)
+2	1.1225	(2**0.1666)
+
+So for example if a track has a velocity of 64 and you want it 3dB quieter, 64 / 1.1892 = 54.
+Also note panning uses 3dB compensation, i.e. if centered signal is -12dB on both channels, hard left will be -9dB.
+This means for hard left or right you may need to add an extra 3dB to get same perceived loudness (see 6dB pan law).
+
+actual relationship is: y = 20 * LOG10(x / 127)
+where x is the MIDI velocity and y is the voltage amplitude in decibels. 
+Note this is voltage not power (20 not 10) hence each doubling of x adds 6 to y.
+
+9/18/18 song MIDI export is broken
+
+Part of the problem is that dubs must be reset prior to processing each track.
+Adding the following to ExportImpl helps, but doesn't solve entire problem:
+
+		int	nPadTime = 0;	// after this line
+		if (m_bIsSongMode)
+			ChaseDubs(m_nStartPos, true);
+
+Fixed by processing tracks within chunk loop and using same chunk size as when running live, in order to exactly match live output.
+
+10/17/18 For velocity offset to give smooth change in dB, must use exponential waveform
+
+For example if velocity should quadruple from 16 to 64, use ramp with Curviness of 4.
+
+11/9/18 do any existing documents have modulated modulations?
+
+According to the test code below, no, they don't, provided recursive modulation is limited only
+to source tracks having a track type of Modulator. This is likely a reasonable limitation anyway.
+
+	CWaitCursor	wc;	// can take a while
+	CFileFind	ff;
+//	LPCTSTR	szPath = _T("C:\\Chris\\MyProjects\\Polymeter\\docs");
+	LPCTSTR	szPath = _T("C:\\Chris\\MyProjects\\Polymeter\\docs\\test");
+	BOOL bWorking = ff.FindFile(CString(szPath) + _T("\\*.*"));
+	int	nDocs = 0;
+	int	nHits = 0;
+	while (bWorking) {
+		bWorking = ff.FindNextFile();
+		CString	sExt(PathFindExtension(ff.GetFileName()));
+		if (!sExt.CompareNoCase(_T(".plm"))) {
+			CPolymeterDoc	doc;
+			doc.ReadProperties(ff.GetFilePath());
+			nDocs++;
+			int	nModMods = 0;
+			int	nTracks = doc.GetTrackCount();
+			for (int iTrack = 0; iTrack < nTracks; iTrack++) {
+				const CTrack&	trk = doc.m_Seq.GetTrack(iTrack);
+				int	nMods = trk.m_arrModulator.GetSize();
+				for (int iMod = 0; iMod < nMods; iMod++) {
+					const CModulation&	mod = trk.m_arrModulator[iMod];
+					if (mod.m_iSource >= 0) {	// if valid modulation source
+						const CTrack&	trkMod = doc.m_Seq.GetTrack(mod.m_iSource);
+						// if modulation source has track type of modulator and is also modulated
+						if (trkMod.m_iType == TT_MODULATOR && trkMod.m_arrModulator.GetSize())
+							nModMods++;
+					}
+				}
+			}
+			if (nModMods) {
+				_tprintf(_T("%d, %s\n"), nModMods, ff.GetFileName());
+				nHits++;
+			}
+		}
+	}
+	printf("%d docs, %d hits\n", nDocs, nHits);
+
+11/10/18 goto next/previous dub
+
+FindDub could be probably use a binary search (though it's unclear whether duplicate times 
+would have be accounted for) but it's doubtful any significant performance gain would result.
+ChaseDubs averages about 5 microseconds with a typical song, so not much room for improvement,
+considering that it calls FindDub for every track in the song.
+
+test code for CArrayEx_BinarySearchAbove:
+
+	int	data[] = {0, 10, 20, 30, 40};
+	CIntArrayEx	arr;
+	arr.SetSize(_countof(data));
+	for (int i = 0; i < _countof(data); i++)
+		arr[i] = data[i];
+	while (1) {
+		int	nIn;
+		scanf_s("%d", &nIn);
+		W64INT	iIns = arr.BinarySearchAbove(nIn);
+		printf("pos=%d\n", iIns);
+		if (iIns < 0)
+			iIns = arr.GetSize();
+		arr.InsertAt(iIns, nIn);
+		for (int i = 0; i < arr.GetSize(); i++)
+			printf("%d ", arr[i]);
+		printf("\n");
+	}
+
+11/14/18 recursion overflow
+
+Infinite recusion overflows after roughly 9,180 calls (in Debug mode).
+
+11/22/18 autoscroll in velocity view; too confusing
+
+but in case you change your mind
+
+in ctor:
+	m_nScrollDelta = 0;
+	m_nScrollTimer = 0;
+
+in EndDrag:
+		KillTimer(m_nScrollTimer);
+		m_nScrollTimer = 0;
+
+in OnMouseMove:
+		m_ptPrev = point;	// update cached cursor position
+		CRect	rClient;
+		GetClientRect(rClient);
+		CSize	szClient(rClient.Size());
+		if (point.x < 0)
+			m_nScrollDelta = point.x;
+		else if (point.x > szClient.cx)
+			m_nScrollDelta = point.x - szClient.cx;
+		else
+			m_nScrollDelta = 0;
+		// if auto-scroll needed and scroll timer not set
+		if (m_nScrollDelta && !m_nScrollTimer)
+			m_nScrollTimer = SetTimer(SCROLL_TIMER_ID, SCROLL_DELAY, NULL);
+
+void CVelocityView::OnTimer(W64UINT nIDEvent)
+{
+	if (nIDEvent == SCROLL_TIMER_ID) {	// if scroll timer
+		if (m_nScrollDelta) {	// if auto-scrolling
+			CPoint	ptScroll(m_pStepView->GetScrollPosition());
+			int	nPrevScrollX = ptScroll.x; 
+			ptScroll.x += m_nScrollDelta;
+			CPoint	ptMaxScroll(m_pStepView->GetMaxScrollPos());
+			ptScroll.x = CLAMP(ptScroll.x, 0, ptMaxScroll.x);
+			int	nScrollDelta = ptScroll.x - nPrevScrollX; 
+			m_pStepView->ScrollToPosition(ptScroll);
+			m_pStepView->m_pParent->OnStepScroll(CPoint(m_nScrollDelta, 0));
+			CPoint	ptCursor;
+			if (GetCursorPos(&ptCursor)) {
+				UINT	nFlags = 0;
+				if (GetKeyState(VK_CONTROL) & GKS_DOWN)	// if control key down
+					nFlags |= MK_CONTROL;
+				if (GetKeyState(VK_SHIFT) & GKS_DOWN)	// if shift key down
+					nFlags |= MK_SHIFT;
+				m_ptPrev.x -= nScrollDelta;
+				m_ptAnchor.x -= nScrollDelta;
+				ScreenToClient(&ptCursor);
+				OnMouseMove(nFlags, ptCursor);
+			}
+		}
+	} else
+		CView::OnTimer(nIDEvent);
+}
+
+11/27/18 modulation graph via GraphViz; neato looks the best but complex patches are still a rat's nest
+
+	CStdioFile	fout(_T("C:\\temp\\PolymeterModGraph.dot"), CFile::modeCreate | CFile::modeWrite);
+	fout.WriteString(_T("digraph G {\n"));
+	CSize	szLogPix(72, 72);
+	double	fDPI = max(szLogPix.cx, szLogPix.cy);
+	CSize	sz(1920, 1080);
+	double	fWidth = sz.cx / fDPI;
+	double	fHeight = sz.cy / fDPI;
+	CString	sGraph;
+//	sGraph.Format(_T("graph[rankdir=TB,size=\"%f,%f\",ratio=fill,dpi=%f];\n"), fWidth, fHeight, fDPI), 
+//	sGraph.Format(_T("graph[ratio=fill,size=\"17.77,10\",dpi=100];\n")); 
+	sGraph.Format(_T("graph[ratio=1.77];\n")); 
+	sGraph = _T("overlap=false;\nsplines=true;\n");
+//	sGraph = _T("overlap=false;\n");
+	fout.WriteString(sGraph);
+	int	nTracks = GetTrackCount();
+	CMap<CString, LPCTSTR, int, int>	map;
+	CStringArrayEx	arrName;
+	arrName.SetSize(nTracks);
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		const CTrack& trk = m_Seq.GetTrack(iTrack);
+		CString	sName(trk.m_sName);
+		if (sName.IsEmpty())
+			sName.Format(_T("%d"), iTrack + 1);
+		int	nRefs = 1;
+		if (map.Lookup(sName, nRefs)) {
+			nRefs++;
+			CString	sNum;
+			sNum.Format(_T("%d"), nRefs);
+			arrName[iTrack] = sName + sNum;
+		} else {
+			arrName[iTrack] = sName;
+		}
+		map.SetAt(sName, nRefs);
+	}
+	LPCTSTR	sModTypeColor[] = {
+		_T("black"),
+		_T("red"),
+		_T("green"),
+		_T("blue"),
+	};
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		const CTrack& trk = m_Seq.GetTrack(iTrack);
+		int	nMods = trk.m_arrModulator.GetSize();
+		for (int iMod = 0; iMod < nMods; iMod++) {
+			const CModulation&	mod = trk.m_arrModulator[iMod];
+			if (mod.m_iSource >= 0) {
+				CString	sLine;
+				sLine.Format(_T("\"%s\"->\"%s\"[color=%s]\n"), arrName[mod.m_iSource], arrName[iTrack], sModTypeColor[mod.m_iType]);
+				fout.WriteString(sLine); 
+			}
+		}
+	}
+	fout.WriteString(_T("}\n"));
+
+12/2/18 test code for recording MIDI input that found round error bugs in ImportMidiFile
+
+#if 0
+		static const MIDI_EVENT testevt[8] = {	// test data
+			{0,		0x404090},
+			{200,	0x4090},
+			{240,	0x404190}, // this is generating a WRONG RESULT
+			{500,	0x4190},
+			{500,	0x404290},
+			{750,	0x4290},
+			{750,	0x404390},
+			{1000,	0x4390},
+		};
+		theApp.m_arrMidiInEvent.SetSize(_countof(testevt));
+		for (int i = 0; i < _countof(testevt); i++)
+			theApp.m_arrMidiInEvent[i] = testevt[i];
+#endif
+
+in Track.cpp, the bug was integer division where floating point division was intended;
+fixed by casting int to double in these three lines:
+
+int	nStart = round(double(info.nStartTime) / nInQuant);
+int	nEnd = round(double(nTime) / nInQuant);
+int	nMaxSteps = round(double(nMaxTime) / nInQuant);	// compute maximum track length
+
+
+12/4/18 Algo Rag
+
+12/5/18 Interago
+2nd A is at 290:000, ends at 579
+
+12/7/18 showing negative time in song view
+
+		int	nOffset = trk.m_nOffset + m_nTimeShift;
+
+		int	nCellTime = round(iFirstCell * fTicksPerCell) + m_nTimeShift;
+
+			nCellTime = round(iCell * fTicksPerCell) + m_nTimeShift;
+
+	return round(x * GetTicksPerCellImpl() / m_nCellWidth) + m_nTimeShift;
+
+	return round((nSongPos - m_nTimeShift) / GetTicksPerCellImpl() * m_nCellWidth);
+
+But this only fixes the display! For editing to work, the time calculations in the document's 
+dub functions have to change too. Generally they're in this form:
+
+	int	nStartTime = round(rSelection.left * fTicksPerCell) + m_nTimeShift;
+
+But the problem is, m_nTimeShift isn't a member of the doc and probably shouldn't be because
+multiple song views could (in theory) have different shifts. It would have to be passed in,
+as ticks per cell already is. What a gnarly mess!
+
+12/7/18 subtle difference between song MIDI export between Release and Debug
+
+Ala Aye rec A B A B fine tune spread.plm
+
+difference appears at 0x2C26 right after this string: Organ B Hi
+Debug has nine bytes, Release has only five
+
+12/10/18 note windowing: a more efficient implementation (than CNote's)
+	
+nNote = ((nNote - nWindowBase) % OCTAVE) + nWindowBase;
+if (nNote < 0)
+	nNote += OCTAVE;
+
+argument for windowing: window base is 52
+varying it separately for each voice will be awesome
+
+OOPS above implementation is WRONG, but generates awesome results for guitar stuff.
+correct (but relatively boring) implementation adds base AFTER correcting for wraparound:
+(guitar stuff sounds good if base varies from E3 to G3 to A3 to B3 and back or similar; C4 is good too)
+
+nNote = ((nNote - nWindowBase) % OCTAVE);
+if (nNote < 0)
+	nNote += OCTAVE;
+nNote += nWindowBase;
+
+alternate DropBox, new WAV files:
+
+Algo Rag
+https://www.dropbox.com/s/kdehpmolbv2oei0/Algo%20Rag%20panned%20TRIM%20NORM.wav?dl=0
+
+Interago
+https://www.dropbox.com/s/m18s3jt7zs4dc0p/interago2%20TRIM%20NORM.wav?dl=0
+
+Ilopo Ferese
+https://www.dropbox.com/s/ihlkzam68iiofl3/Ilopo%20Ferese%20NORM.wav?dl=0
+
+piano range
+https://www.dropbox.com/s/v2pjowkmbpzbbcd/piano%20range.wav?dl=0
+
+12/12/18 position modulation and change ringing
+
+For the change 2,4,1,3 (AKA 1,3,0,2 in zero origin) the correct position offsets are 2,0,3,1 (in high to low order). Why?
+The format typically used to describe change ringing tells you, for each position in the sequence, which bell should ring.
+But to do position modulation, we need to know the opposite: for each bell, which position it should have in the sequence!
+One can be translated to the other via an array lookup:
+
+for (iPos = 0; iPos < Bells; iPos++) {	// for each bell
+	int iBell = arrBell[iPos];	// arrBell contains a bell index for each position
+	arrPos[iBell] = iPos;	// arrPos will contain a position index for each bell
+}
+
+a[1] = 0
+a[3] = 1
+a[0] = 2
+a[2] = 3
+
+a = 2,0,3,1
+
+12/21/18 combinations of additive modulations
+
+Assume each modulator contains two or more unique values, one of which is zero, the others ranging from [1..6].
+
+(0 a) (0 b)
+4 outcomes (2**2): 0, a, b, a + b
+
+(0 a) (0 b) (0 c)
+8 outcomes (2**3): 0, a, b, c, a + b, a + c, b + c, a + b + c 
+
+(0 a) (0 b c)
+6 outcomes: 0, a, b, c, a + b, a + c
+
+(0 a b) (0 c d)
+9 outcomes (3**2): 0, a, b, c, d, a + c, b + c, a + d, b + d
+
+(0 a) (0 b c) (0 d e)
+18 outcomes:
+0, a, b, c, d, e, b + d, b + e, c + d, c + e, 
+a + b, a + c, a + d, a + e,
+a + b + d, a + b + e, a + c + d, a + c + e
+
+(0 a b) (0 c d) (0 e f)
+27 outcomes (3**3):
+0, a, b, c, d, e, f
+a + c, a + d, b + c, b + d,
+a + e, a + f, b + e, b + f
+c + e, c + f, d + e, d + f,
+a + c + e, a + c + f, a + d + e, a + d + f,
+b + c + e, b + c + f, b + d + e, b + d + f,
+
+The first four cases above should be sufficient for generating scales.
+
+1/2/19 restarting application
+
+bool CMyApp::RestartApp()
+{
+	if (SaveAllModified())	// save any unsaved documents
+		return false;	// save failed or user canceled
+	CloseAllDocuments(TRUE);	// end session
+	TCHAR	szAppPath[MAX_PATH] = {0};
+	::GetModuleFileName(NULL, szAppPath, MAX_PATH);
+	STARTUPINFO	si = {0};
+	PROCESS_INFORMATION	pi;
+	GetStartupInfo(&si);
+	if (!CreateProcess(NULL, szAppPath, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+		AfxMessageBox(_T("Can't create process.")); // report the error
+		return false;
+	}
+	m_pMainWnd->PostMessage(WM_CLOSE);	// close the app
+	return true;
+}
+
+1/6/19 output validation for changes since mastering
+
+Compared sequencer dumps between version 0.0.21.000 and version 0.0.16.005: no differences.
+Test document was "Manmade\Ala Aye rec A B A B fine tune spread.plm"
+
+1/12/19 export test
+
+void ExportTest()
+{
+	static const LPCTSTR arrFilename[] = {
+		_T("Ala Aye rec A B A B fine tune spread"),
+		_T("Asiri rec1e lead B dub spread lead string"),
+		_T("Bones rec fine tune cvt for PM 0.0.15 Mike"),
+		_T("Buy Me ending Mike double finger"),
+		_T("Buy Now double bass finger Mike"),
+		_T("Dek Sep Bluso jam breaks Mike closed and pedal hat +10"),
+		_T("Fazo Kanto B mix kick +15 Mike 3dB less ride"),
+		_T("Iyika rec A B take1 scale up volumes spread"),
+		_T("Stencil lower bass spread strings mike"),
+		_T("Vizyon rec02 edit etc scale up volumes Mike"),
+	};
+	LPCTSTR	pszDocFolder = _T("C:\\Chris\\MyProjects\\Polymeter\\docs\\Manmade\\");
+	LPCTSTR	pszOutFolder = _T("C:\\Chris\\MyProjects\\Polymeter\\experimental\\export\\");
+	for (int iFile = 0; iFile < _countof(arrFilename); iFile++) {
+		CString	sFilename(arrFilename[iFile]);
+		CString	sDocPath(pszDocFolder + sFilename + _T(".plm"));
+		CString	sOutPath(pszOutFolder + sFilename + _T(".mid"));
+		CPolymeterDoc *pDoc = DYNAMIC_DOWNCAST(CPolymeterDoc, theApp.OpenDocumentFile(sDocPath, FALSE));
+		if (pDoc == NULL) {
+			AfxMessageBox(_T("Can't open file."));
+			return;
+		}
+		int	nDur = pDoc->m_Seq.GetSongDurationSeconds();
+		pDoc->UpdateChannelEvents();	// queue channel events to be output at start of playback
+		if (!pDoc->m_Seq.Export(sOutPath, nDur, true, pDoc->m_nStartPos)) {
+			AfxMessageBox(_T("Export failed."));
+			return;
+		}
+		pDoc->OnCloseDocument();
+	}
+}
+
+at end of InitInstance:
+ExportTest();
+
+The version used at ManMade Mastering was 0.0.16.005.
+Note that versions before 0.0.19.001 didn't support negative dub times, and this breaks 
+export comparison for documents that have a negative start time, including Asiri and Ikiya.
+The export not resetting cached parameters bug (fixed in 0.0.18.001) could also cause compare failure, though it doesn't seem to matter.
+
+1/13/19 showing SVG graph via HTML view
+
+Fully functional CHtmlView that displays an SVG file adds 21KB to the app. (5113 vs 5092)
+Note that wheel zoom is broken for SVG only: both wheel up and wheel down zoom in, so there's no way to zoom out.
+
+1/19/19 Unicode not working
+
+Adding this to CIniFile::Open fixes the track names in the document:
+
+	if (OpenFlags & CFile::modeWrite) {
+		BYTE	bom[2] = {0xFF, 0xFE};
+		fp.Write(bom, 2);
+	}
+
+BUT this doesn't address track names in exported MIDI files (not doable as MIDI doesn't support Unicode)
+or in exported CSV files, or in graphs if that gets implemented. It also doubles the size of the document,
+which is dumb considering that only track names, preset names, and part names actually need to be Unicode.
+One possible solution would be to store these names in an encoded ASCII format such as Base64.
+
+1/25/19 IWebBrowser2 wheel zoom troubles
+
+Ctrl+wheel only zooms in, never out on Dell M4800 Win7 IE 10
+on Aspire E15, Win8 IE 11, in/out is normal but zoom is painfully slow, steps are too small
+seems to be no setting for zoom step size in IE
+also IE 10 gets confused after zoom is set via ExecWB and makes page too small by 0.2
+possible related to ZoomFactor registry key HKCU/Software/Microsoft/Internet Explorer/Zoom/ZoomFactor
+it's 100000 on M4800 but 157000 on Aspire E15
+
+1/30/19 Graphviz and IE: graph too small when system text size above 100%
+
+Graphviz expects you to tell it the size of the graph in inches. Now of course the window size is in pixels. 
+So I was dividing the window size by the system DPI (in floating point) to get the graph size. This works ONLY
+if the system text size is 100%. Why? Because Graphviz has its own internal DPI and it defaults to 96. 96 just
+happens to be the DPI you get on a Windows machine when text scaling is 100% (for historical reasons). So, you
+might think you could just pass the system DPI to Graphviz, and indeed Graphviz has a DPI parameter. BUT it's 
+apparently broken for SVG (and has been for years). What seems to work is using 96 when computing the graph 
+size, regardless of the system size. This works because IE is scaling up the entire graph anyway to compensate
+for the system text size. The only down side I can see to this is that the font size is sometimes bigger or 
+smaller than you might expect. But I think this is minor compared to having the entire graph be the wrong size.
+
+2/6/19 Oily Rock notes
+
+Mostly got done during an all-nighter 2/4 but also all day 2/5
+Could use just a bit more excitement in the high end and percussion in places
+Don't overdo it though, the minimalism is part of what makes it so spooky
+Low end is super fat, but possibly a bit floppy
+Stereolab style vocal is the bomb
+Vocals are nearly perfect but maybe try adjusting offset of "They'll spit on the ground"
+wrong note in female vocal at start of 2nd chorus; D over A? why isn't note mod working? wrong offset? fixed
+
+much adjusting of vox offsets later, they sound funky and sometimes fit the bass line
+add more drums: rimshot, tom, cymbal (and don't forget to pan them)
+maybe some reverb on the cymbal too, or even on the snare / rimshot, try it
+
+nightmarish hassle to open MIDI file in Reason, so stupid! No easy way to map tracks to existing devices
+only way seems to be to copy the MIDI data from one track to another by hand, very error-prone, it sucks
+
+2/6/19 overlapping notes
+
+Overlapping notes means two or more overlapping instances of the same MIDI note on the same MIDI channel. 
+This situation often causes problems with synths. The typical behavior is, when one the overlapped notes ends, 
+it cuts off the other instances, even though they still have more duration to go. Some synths (e.g.Yamaha) do 
+the right thing, i.e. they keep a reference count for each note on each channel, and only cut off the note when 
+the count reaches zero. But many synths (including Reason) don't do this so it's not possible to count on it.
+But I have this case a LOT. Many techniques I use including position modulation create this case constantly. 
+So I propose to handle it in Polymeter. There are two approaches and I might support them both. One is, when a 
+note ends and would otherwise cut off another instance of the note, don't send Note Off, instead defer it until 
+the other instance ends, and when it does, send BOTH Note Offs at the same time. Obviously this requires reference 
+counting and is very likely what my Yamaha does internally.
+The second solution is, when a note is about to start and would overlap another instance of the same note, send 
+a Note Off for the first instance before sending the Note On for the new one. This effectively prevents overlap 
+before it happens. This method very likely won't sound the same as the first one, because the Note Off will 
+trigger the release stage of the sound's envelope. But in some cases it may be preferable.
+
+2/6/19 Importing MIDI file into Reason SNAFU
+
+To create a new empty automation lane for a track, select the track and then in the sequencer pane, near the
+upper left corner, look on for a little drop list with an icon that resembles a polyline, with markers on the 
+vertices, just right of a little white plus sign in a gray circle; the tooltip says Track Parameter Automation.
+Select the desired parameter and an automation lane is created. You need to do this before trying to drag 
+automation data from imported tracks to device tracks, otherwise you get the dreaded alien automation warning.
+
+2/8/19 more on overlapping notes
+
+The immediate problem is overlapping notes, because the unwanted rests make position modulation much less useful.
+I think the proposal is clear: two modes, "poly" and "mono". Poly defers note offs for notes that overlap until 
+the reference count (for the given note and channel) transitions to zero, at which point a SINGLE note off is sent.
+Mono prevents overlap from occurring, by sending a note off whenever the reference would otherwise transition from
+one to two. Using "poly"' with a synth that already does reference counting will likely cause notes to be "stuck" 
+on and increasing loss of polyphony, but the solution is, don't use this feature with such synths.
+
+To implement the first method requires a significant change. For reference counts to be meaningful, note offs must
+be processed BEFORE note ons, which is the opposite of how it currently works. The only down side of this is that
+the note off processing must be moved inside the critical section, becayse note on and note off processing must use
+the same current time. As a result the callback holds the critical section longer, but only by a few microseconds.
+This change was tested on the Manmade files via ExportTest and generated identical files to 0.0.19.
+
+2/9/19 Oily Rock arrangement notes
+
+Starting point is "oily rock more drums" which is pretty good
+Shortened choruses to 2/3 of their previous length (64 measures instead of 96)
+
+Tried adjusting some vocal timing in the 1st verse:
+Galaxies spin: -110 to -140
+Ignoring our prayers: -105 to -155
+Waves and particles: -50 to -60
+But decided against it for now, too rushed
+
+changed kick turn length from 5 to 3, makes simpler and more traditional variations
+shorted chorus is definitely more snappy
+tried putting room reverb on drums: sounds great on snare, maybe on hats too
+
+2/14/19 overlapping notes: this is probably pretty expensive but it works
+
+	if (nEvents) {	// if any events to output
+		if (m_bPreventNoteOverlap) {
+			FixNoteOverlaps();
+			nEvents = m_arrEvent.GetSize();
+		}
+		CEvent	evt(m_nCBLen, MEVT_NOP << 24);
+
+void CSequencer::FixNoteOverlaps()
+{
+	int	nEvents = m_arrEvent.GetSize();
+	int	iEvent = 0;
+	while (iEvent < nEvents) {	// for each event
+		DWORD	dwEvent = m_arrEvent[iEvent].m_dwEvent;
+		if (MIDI_STAT(dwEvent) == NOTE_ON) {
+			int	iChan = MIDI_CHAN(dwEvent);
+			int	iNote = MIDI_P1(dwEvent);
+			if (MIDI_P2(dwEvent)) {
+				if (m_arrNoteRef[iChan][iNote]) {
+					if (iEvent && m_arrEvent[iEvent - 1] == m_arrEvent[iEvent]) {
+						m_arrEvent.RemoveAt(iEvent);
+						nEvents--;
+					} else {
+						CEvent	evt(m_arrEvent[iEvent]);
+						evt.m_dwEvent &= ~0xff0000;
+						m_arrEvent.InsertAt(iEvent, evt);
+						iEvent++;
+						nEvents++;
+					}
+				}
+				m_arrNoteRef[iChan][iNote]++;
+			} else {
+				if (m_arrNoteRef[iChan][iNote] > 0) {
+					m_arrNoteRef[iChan][iNote]--;
+					if (m_arrNoteRef[iChan][iNote]) {
+						m_arrEvent.RemoveAt(iEvent);
+						nEvents--;
+					}
+				}
+			}
+		}
+		iEvent++;
+	}
+}
+
+2/20/19 note overlap flunking test app
+
+guitar overlap.plm
+first problem is note 66 turned on at 575 and again at 1020 without being shut off
+
+2/25/19 note overlap less but still flunking
+
+range test Reason
+first problem is zero-duration note, note 65 velocity 88 and then 0 during same callback time 15603
+
+n=6
+0 3a90
+0 3f90
+0 3f90
+0 584190 <-- note 65 vel 88
+0 623890
+0 624190 <-- note 65 vel 98
+
+problem is overoptimization: must iterate all events with same time
+can't stop on finding an event with zero velocity, because we're potentially 
+inserting such events as we iterate; now passes all tests fine for up to one hour of events
+
+Enabling note overlap prevention doesn't seem to significantly increase callback times (for Ala Aye)
+(maximum time can vary considerably, typical range for Ala Aye is 9.5% to 13%)
+0.0.23.5: 12.6%, 0.3%
+0.0.24.0: 12.0%, 0.3%
+
+2/25/19 fast move for CArrayEx Fast* methods (FastInsertAt, FastRemoveAt)
+
+probably a bad idea because memmove is so heavily optimized with SSE and other assembler tricks
+
+__forceinline static void FastMove(CArrayEx_TYPE *pDst, const CArrayEx_TYPE *pSrc, size_t nCount)
+{
+	// if destination below source, or above but non-overlapping
+    if (pDst <= pSrc || pDst >= pSrc + nCount) {
+		// copy from lower addresses to higher addresses
+		while (nCount--) {
+			*pDst++ = *pSrc++;
+		}
+	} else {	// destination above source and overlapping
+		// copy from higher addresses to lower addresses
+		pDst = pDst + nCount - 1;
+        pSrc = pSrc + nCount - 1;
+        while (nCount--) {
+            *pDst-- = *pSrc--;
+        }
+	}
+}
+
+2/28/19 Reason MIDI import doesn't change tempo
+
+This will be a major potential dumb error in the future. This explains why Oily Rock seemed slow,
+and also why the imported version's vocal start modulation didn't seem to match the live version.
+Changing from 126 to 120 BPM will do that. WATCH OUT FOR THIS!!!
+
+
+3/1/19 song playback doesn't always match live output when modulator tracks have big quants
+
+"song big quant bug.plm" demos the issue. Synopsis: During song playback, a track's mute state can
+only change on a step boundary, because the sequencer only evaluates track states on step boundaries.
+If a track has a large quant, the step boundaries are relatively few and far between. So during song
+playback, when a track's mute state can change due to prerecorded dubbing is limited. In other words,
+the bigger a track's quant, the less dub timing granularity that track has. During live playback, 
+granularity isn't an issue because the user directly updates the track mute flags and hence track
+mute state changes are completely asynchronous with respect to the sequencer callback thread.
+
+Dub timing granularity affects all track types, not only modulators, and all modulation types.
+Large track offsets make the problem more obvious but the root cause is coarse quants.
+The easiest solution is to avoid using big quants, especially for modulator tracks, and especially
+with large offsets. Such tracks can be converted to sixteenth notes easily and this will make the
+problem go away by increasing the dub timing granularity.
+
+The deeper issue is fundamental to the sequencer design. It might be possible to solve the problem
+by changing how dubs are recorded. Arguably when a user unmutes a modulator track with a large quant,
+they intend for that track to have immediate effect, regardless of whether they're near the track's
+step boundary. So instead of recording the current time, the program could record the time of the 
+track's nearest step boundary at or before the current time. But this could easily have unintended
+side effects. It also wouldn't make sense for non-modulator tracks. Basically there just isn't any
+satisfactory solution, because song view playback and live view use the track mutes differently.
+
+3/28/19 Kahelo
+
+A section string hit is too long; try trimming 4 beats from its start (down to 11 steps of duration); more space [done]
+in B section, make string hit one step longer? [done]
+erroneous unmute of low guitar part at 22:090 but does NOT affect exported file (tested!)
+guitar / piano mix seems dubious
+high hat seems excessively biting
+possible issues with clipping
+organ key click may be cluttering mix
+
+Norah 3/29 on C section: bring shaker in halfway through first pass of C section
+also C shaker part is lame, use original shaker part instead (look at 5 hat too) [done]
+
+4/20/19 tristate ("Ona Lile")
+
+Attacks are a bit too sharp sometimes. Lowering velocity loop to 5, -5, -15 seems to help. Lower fader 3 dB to avoid clipping.
+Biased about 3 dB to right, not sure why or what to do about it
+
+5/9/19 velocity pane origin discrepency
+
+64 is NOT the exact middle of the pane, because the upper rail is 127.
+
+	int	oy = szClient.cy - round(double(MIDI_NOTES / 2) / MIDI_NOTE_MAX * szClient.cy);
+	pDC->FillSolidRect(rClip.left, oy, szClient.cx, 1, clrBeatLine);
+
+
+5/15/19 Manmade Mastering with Mike
+
+interago2.wav (12/8/18)
+Interago rec2.plm
+
+kasita mondo rec take2.wav (1/2/19)
+kasita mondo rec take2.plm
+
+5/25/19 Ilopo Farese glitch
+
+Experimentation shows it's definitely caused by insufficient polyphony. The NN-XT sampler's default 
+polyphony is only 16 voices. That's cutting it fine considering all the legato overlapping notes. 
+Increasing it to 30 makes the problem go away. Made it 64 out of an abundance of caution.
+
+6/7/19 Reason velocity woes
+
+Reason doesn't seem to have any velocity curves that approximate the behavior of Windows GS synth.
+GS synth generally is linear in decibels, for example with C4 and the piano sound:
+100	-18.5
+50	-30.5
+25	-42.5
+i.e. each doubling of velocity adds 12 dB of amplitude.
+Atunwi uses a limited set of velocities: 60, 70, 80, 90, 100. Approximate dB values for these:
+vel	abs	delta	rel
+100	-18.5	0	0
+90	-20.2	-1.7	-1.7
+80	-22.3	-2.1	-3.8
+70	-24.7	-2.4	-6.2
+60	-27.3	-2.6	-8.8
+
+based on the observed values for the NN-19 sampler using a test sine wave 
+(velocity sensitivity = 64, output volume = 127):
+rel	abs	vel	v.offs
+0	-8.9	100	0
+-1.7	-10.6	94	-6
+-3.8	-12.7	86	-12
+-6.2	-15.1	78	-22
+-8.8	-17.7	70	-30
+So subsituting the above velocities should help match the GS synth behavior.
+
+actual using NN-19, C4
+abs	velo	offs
+-17.7	100	0
+-19.4	92	-8
+-21.5	84	-16
+-23.9	75	-25
+-26.5	65	-35
+
+actual using NN-19, C5
+abs	velo	offs
+-20.3	100	0
+-22.0	93	-7
+-24.1	85	-15
+-26.5	79	-21
+-29.1	70	-30
+
+Still sounds too dynamic with velocity amp = +64, +55 is a bit better but still not right.
+Try picking a piano sound and then hand tuning the five velocities until it sounds reasonable.
+Get the lowest one right and roughly evenly distribute the others.
+
+NOTE: at end of B section, cut bass one note early so it ends on Db. (rec1b2)
+
+6/9/19 Apologize
+aah overlaps start of verse a bit: if necessary, try cutting sampler's amp release from 60 to 55
+
+Singularity
+WaveNet-C with speed = 1.2 seems to work pretty well for hardest lines; others need to be slower
+wobbilator bass
+rubstep
+quaver
+anodyne
+bubstep up
+talky
+
+Changing Climate
+original untrimmed sample has a 25.04ms delay at the start
+25 ms is exactly 7 ticks at 140 BMP (PPQ 120)
+25 / (60 / 140 / 120) = 7
+coincidence? you be the judge
+
+6/25/19 new hip hop track (Exit Game?) low Kong level
+
+looping Hhp 70 Soufland at velocity 100
+Kong output level:
+100: -14.77
+127:  -8.54
+
+result is a boost of 6.23 dB, still low but it helps
+
+6/30/19 Changing Climate samples
+Kevin thinks there are too many at the start. He's probably right, 17 is one too many and that first one is spurious.
+
+7/4/19 break hip hop 2 (Lodidi)
+
+| D-9	F-maj7 	| Bb-9 	Db-maj7 | F#-9 	A-maj7 	| F-9 	Ab-maj7 | 
+| Bb-9	Db-maj7 | F#-9 	A-maj7 	| D-9 	F-maj7 	| Db-9 	E-maj7 	| 
+| F#-9	A-maj7 	| D-9 	F-maj7 	| Bb-9 	Db-maj7 | A-9 	C-maj7 	|
+
+The B section snare seems a hair too loud, and sounds slightly phased.
+
+8/25/19 Kahelo add open hat length 74 turnaround? Kong Oh_LongHatBSQ volume 95 or so
+move extra hat to ch 4, load Open Hat in ch 9, and enable exclusive 8/9 for gating
+
+9/24/19 more hip hop combos
+31, 33, 22
+
+10/20/19 interesting SetPerm params:
+3 3 3 3, delta 2 (Atunwi)
+4 4 4, delta 3 (Atunwi break)
+3 4 3 2, delta 2 (Ero Ayo)
+5 4 3, delta 2 (Ero Ayo B)
+3 3 3, delta 2 (Planet Broke)
+
+10/25/19 Irubo Radical Piano velocity vs Total RMS
+vel	L	R
+100	-15.30	-13.61
+99	-15.51	-13.82
+98	-15.89	-14.22
+97	-16.15	-14.46
+96	-16.51	-14.77
+95	-16.75	-15.10
+94	-17.12	-15.39
+93	-17.11	-15.40
+92	-17.41	-15.72
+91	-18.12	-16.37
+90	-18.30	-16.63
+
+10/30/19 waltz
+
+return to A at around 410, why?
+
+Ero Ayo	5:32
+Mo Bulu	4:51
+Irubo	4:15
+Waltz	4:21
+
+11/20/19 switching from track view to song view sometimes leaves one cell upainted
+
+Using "two triads ... rec1" doc as a test, the unpainted cell's location varies,
+but it's usually cell [30,20]. It's intermittent, and apparently not related to 
+drawing the song position marker. The window style doesn't seem to affect it either.
+It occurs in both Debug and Release. Adding even very sparse printf lines to OnDraw
+makes it go away. Adding a Sleep(1) after the FillSolidRect also makes it go away.
+
+This bug is very hard to explain and seems possibly timing-dependent. The oddest 
+thing is that the bug never affects more than one cell, and it's usually the same
+cell, though not always.
+
+Drawing all cells as solid also hides the bug. Perhaps we're overwhelming the GDI, 
+or whatever component of Windows is emulating GDI? Maybe the drawing of occupied
+cells (which currently takes five calls to FillSolidRect) is just too inefficient 
+and breaks some assumption in GDI.
+
+Occupied cells can alternatively be drawn by just overwriting the cell background. 
+This appears to solve the sporadic unpainted cells, possibly because it gets the 
+GDI cost of an occupied cell down to two FillSolidRect calls, which is certainly
+better than five. It risks flicker, but I don't see any. Maybe the flicker is too
+fast to see, or maybe the two fills get coalesced somehow. Let's try it.
+
+11/28/19 I'm unable to reproduce the one cell unpainted bug described above.
+
+11/28/19 Watergate chords
+
+G-7	Bb7	G7	Fo7
+Eo7	Bb-7b5	C#-7b5	C#-7
+E-7b5	E+7	E-7	E7
+G-7b5	Bb-7	G+7	C#7
+
+Eb	Bbsus7	G+7	F-7b5
+E-7b5	E+7	E-7	E7
+EoM7	Bb-7b5	E-maj7	Emaj7
+G-7	Bb7	G7	Fo7
+
+12/5/19 PhaseBar: Direct2D vs GDI
+
+Direct2D is consistently 10x faster, antialiasing and all, surprise surprise (not really).
+Less than 100 us on average, vs. more than a millisecond for GDI.
+
+To draw vertical line:
+	D2D1_POINT_2F	ptZeroDeg = {ptOrigin.x, float(ptOrigin.y - fOrbitWidth * nOrbits)};
+	pRenderTarget->DrawLine(ptOrigin, ptZeroDeg, &brOrbit);
+But sadly it doesn't improve perception of convergence all that much.
+Changing planet's color when it's near zero degrees just made it more confusing.
+
+
+for a slightly cleaner appearance:
+	float	fZeroY1 = float(ptOrigin.y - fOrbitWidth * 0.5);
+	float	fZeroY2 = float(ptOrigin.y - fOrbitWidth * (nOrbits - 0.5));
+	pRenderTarget->DrawLine(CD2DPointF(ptOrigin.x, fZeroY1), 
+		CD2DPointF(ptOrigin.x, fZeroY2), &brOrbitNormal);
+
+1/2/20 track view row colors
+
+	ON_NOTIFY(NM_CUSTOMDRAW, IDC_TRACK_GRID, OnCustomDraw)
+
+void CTrackView::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	NMLVCUSTOMDRAW* pLVCD = reinterpret_cast<NMLVCUSTOMDRAW*>(pNMHDR);
+	switch(pLVCD->nmcd.dwDrawStage) {
+	case CDDS_PREPAINT:
+		// could be conditional (only if any tracks need custom color)
+		*pResult = CDRF_NOTIFYITEMDRAW;
+		break;
+	case CDDS_ITEMPREPAINT:
+		{
+			int	iItem = static_cast<int>(pLVCD->nmcd.dwItemSpec);
+			CPolymeterDoc	*pDoc = GetDocument();
+			ASSERT(pDoc != NULL);
+			int	clrCustom = pDoc->m_Seq.GetColor(iItem);
+			if (clrCustom >= 0)
+				pLVCD->clrTextBk = clrCustom;
+		}
+		*pResult = CDRF_DODEFAULT;
+		break;
+	default:
+		*pResult = CDRF_DODEFAULT;
+	}
+}
+
+Performance impact seems negligible but it flickers a bit, presumably due to the
+background being erased in the default color. There's probably no way to solve
+that, other than double-buffering the grid control, which creates other issues.
+
+The item notifications are a significant amount of message traffic, and it would
+preferable to avoid this traffic unless it's really necessary (the user shouldn't
+have to pay for unused features). The initial custom draw notification is always
+sent, but the item notifications could be requested only if any of the items to 
+be painted have custom colors. Iterating all the tracks would work but it seems 
+excessive. In order to know what range of tracks should be checked for custom 
+coloring, the following lines are needed:
+
+int	iPageTop = m_grid.GetTopIndex();
+int	nPageItems = m_grid.GetCountPerPage();
+
+These lines take about 20us, except once in a long while they take between
+500us and 1ms for no obvious reason.
+
+But probably the biggest objection to the coloring idea is that it makes the
+UI look inconsistent. Why aren't the steps colored too? Maybe coloring just
+the non-empty steps is better?
+
+1/27/20 convergences
+
+input: [2 3 5 7 11]
+convergences: 26
+6       [2 3]
+10      [2 5]
+14      [2 7]
+15      [3 5]
+21      [3 7]
+22      [2 11]
+30      [2 3 5]
+33      [3 11]
+35      [5 7]
+42      [2 3 7]
+55      [5 11]
+66      [2 3 11]
+70      [2 5 7]
+77      [7 11]
+105     [3 5 7]
+110     [2 5 11]
+154     [2 7 11]
+165     [3 5 11]
+210     [2 3 5 7]
+231     [3 7 11]
+330     [2 3 5 11]
+385     [5 7 11]
+462     [2 3 7 11]
+770     [2 5 7 11]
+1155    [3 5 7 11]
+2310    [2 3 5 7 11]
+
+2/18/20 song CSV export omits tempo map
+
+In "two triads combine 2222 rec2b" (AKA "Ibaramu") the reason there's 
+an spurious empty track at the end of the export is because the song's
+tempo track uses channel 10, which is otherwise only used by modulators.
+GetChannelUsage excludes modulator tracks, but not tempo tracks. That's
+a minor bug, but the more serious bug is that the export omits the tempo
+map altogether. The export uses CMidiFile::ReadTracks which currently
+doesn't support reading the tempo map, though it should.
+
+2/19/20 binary objects limited to 2K bytes
+
+GetBinary uses CWinApp::GetProfileString, which calls GetPrivateProfileString
+when writing to an INI file, with a buffer size of 4K characters. Each byte of
+a binary object occupies two characters in the corresponding INI file string,
+hence we're limited to 2K bytes, minus one. This limits tracks to 2047 steps 
+and 255 dubs. Disaster strikes!
+
+Overloading CWinApp::GetProfileString allows us to increase the buffer size,
+but only up to 64K, due to limitations within GetPrivateProfileString, which
+we don't have source code for. Hence binary objects are at best limited to 32K
+bytes.
+
+WriteBinary seems to be unlimited, because WritePrivateProfileString can write
+strings longer than 64K characters to a profile, though it's slow. It's only 
+*reading* the strings that's the problem.
+
+With a 64K buffer, tracks are limited to 32767 steps (verified) and 4095 dubs.
+This is a big improvement over 2047 steps and 255 dubs, but still unacceptable,
+especially since the limit isn't enforced anywhere and exceeding it results in
+silent truncations. But at least it should be issued as a patch.
+
+A survey of alternatives to GetPrivateProfileString suggests that the only 
+workable approach in terms of performance is to rewrite it from scratch, using
+a caching strategy to avoid reading the file over and over. This is apparently
+what Wine did, but their code is way too messy to use directly.
+
+Probably the thing to do is override GetProfileInt and GetProfileBinary also,
+and handle the entire mess with a CIniFileReader class. It might make sense to
+handle writing too, since much of the code would be shared and doing so might
+improve performance for writing very long strings.
+
+2/24/20 new CIniFile that handles I/O
+
+Works fine, no length limitations, and huge performance improvement:
+reading is 20x faster, writing is 34x faster
+
+Slight performance gain (< 1ms) from pre-allocating 100 sections.
+
+The performance sucks for large strings! But it's fixable by overloading
+CStdioFile::ReadString to increase the buffer size exponentially.
+
+// the following line works because CString::GetBuffer increases the
+// buffer size exponentially; see PrepareWrite2 in atlsimpstr.h
+int	nBufAvail = rString.GetAllocLength() - nLen;	// performance gain
+lpszResult = _fgetts(lpsz, nBufAvail + 1, m_pStream);
+
+2/25/20 short out to stream handle
+
+Amazingly, despite the need for a cast, it works. This changes a lot!
+
+"This parameter can also be the handle of a MIDI stream cast to HMIDIOUT."
+"This function might not return until the message has been sent to the output
+device. You can send short messages while streams are playing on the same 
+device (although you cannot use a running status in this case)."
+
+in CSequencer::OutputLiveEvent(DWORD dwEvent)
+
+return MIDI_SUCCEEDED(midiOutShortMsg(HMIDIOUT(m_hStrm), dwEvent));
+
+The entire MIDI thru and recording implementation needs to be rethought.
+The message seems to be output immediately and is completely unaffected
+by the sequencer callback latency. But it's not so obvious how to play 
+back the recording. The times are relative to when the input device was
+opened, which isn't synchronized to the stream callback. Also the input
+times must be converted to ticks, but how would that work if the tempo 
+changes during recording, changing the duration of a tick? Maybe don't 
+support that case?
+
+2/26/20 recording MIDI input: timestamps aren't useful
+
+There doesn't seem to be any reliable way to synchronize MIDI input
+timestamps with the sequencer timing. If so, this means the strategy
+of recording MIDI event timestamps (in milliseconds since the input
+device was opened) and converting them to ticks later is unworkable.
+But that strategy would be required if we output live input events
+directly to the stream handle instead of queing them to the callback.
+
+Instead, the input recording strategy would have to be built around
+the current method of outputting the live input events: queuing them
+to the sequencer's callback thread and inserting them into the output
+stream. The disadvantage of this method is that the live events are
+delayed by a variable amount up to the callback latency (jitter), and
+even if they weren't, timing accuracy is relatively poor at PPQ 120.
+This is because at tempo 120 e.g. it's 4.16 ms per tick, which means
+converting milliseconds to ticks wastes a lot of precision.
+
+The weirdest thing is that if I record the input, while tapping along
+to a beat at tempo 120, the input events are all separated by around
+487 ms +/- 1. They should be separated by 500 ms! This could happen
+if the sequencer isn't actually producing 120 BPM, but I checked its
+output in WaveShop and it's precise to within 0.1 ms. So something is
+really wrong here. Oddly, the error 500 - 487 = 13 ms corresponds to
+about three ticks. No idea why!
+
+2/27/20 Reason tests show time stamps are actually fine
+
+Key is to use Reason for all such tests, because it has only 1ms of
+latency. Using GS Synth is dumb because it has tons of latency which
+corrupts the tests. Test setup requires two loopMIDI ports and two
+instances of Polymeter.
+
+Polymeter_2 -> loopMIDI_2 -> Polymeter_1 -> loopMIDI_1 -> Reason
+
+Both instances of Polymeter have only a simple 1 beat loop.
+You start instance 2 playing, and then try to start recording
+in instance 1 such that the two loops synchronize perfectly.
+When they do synchronize, slight phasing is audible.
+Then you stop recording and check the timestamps, and they
+should be very close to 3,30,123,153 etc. And they are!
+(offset of 3 is because of sequencer's initial buffer)
+So it looks like the new scheme will actually work.
+
+2/27/20 closing more safely
+
+These two changes will help prevent crashes regardless of which MIDI
+input strategy prevails!
+
+in sequencer:
+	HMIDISTRM	hStrm = m_hStrm;
+	m_hStrm = NULL;	// so IsOpen fails in callback
+	CHECK(midiStreamClose(hStrm));	// close stream
+
+in mainframe:
+void CMainFrame::OnDestroy()
+{
+	theApp.OpenMidiInputDevice(false);
+	CMDIFrameWndEx::OnDestroy();
+}
+
+3/27/20 mapping property edit undo title
+
+If you specify which property was edited, be sure to delete these two resource strings:
+IDS_EDIT_MAPPING_PROPERTY
+IDS_EDIT_MULTI_MAPPING_PROPERTY
+and replace them with defines to zero, because they will be replaced by cases
+in CPolymeterDoc::GetUndoTitle.
+
+Also learning multiple mappings at once requires a second undo code:
+UCODE_LEARN_MULTI_MAPPING
+with different handling, presumably using CUndoMultiIntegerProp.
+Both of the learn edit methods should move into the document.
+void MappingLearn(int iMapping, DWORD nInMidiMsg);
+void MappingLearn(const CIntArrayEx& arrSelection, DWORD nInMidiMsg);
+
+4/2/20 new way
+
+Tempo started at 110 but I like 107 better; it's more swinging and 
+less overwhelming. Position -5:000 makes a song start, and there's
+a possible ending around 4:17 of 5:02. And a reentry point around 3:05.
+
+It's mostly C harmonic minor; the turnaround drops B to Bb, D to Db, 
+C to Cb and back to the top, which is key of Eb (D-7b5), key of Ab,
+key of Ab melodic minor (G altered or Db7#4).
+
+A break could be interesting, with different changes. Try going
+to the IV (F harmonic minor) but not every time or for same length.
+
+Maybe first jump to a break around 1:12?
+
+4/3/20 Unreleased tracks
+
+Solo piano, done:
+Ero Ayo 	120	5:31 	Happy Thoughts, Joy of Thinking, Device of Joy
+Mo Bulu 	125	4:51 	I'm Blue
+Irubo 		123	4:15 	Ritual
+Ninu Meta 	90	4:21 	In Three
+Ibaramu 	140	5:29 	Harmonious
+Yipo 		107	4:44 	Rolls, Twist
+Fun Ife		100	5:01 	For Love
+Roro		120	5:00	Gently
+(around 39:10)
+
+filenames (double-check this! [checked])
+Ero ABC2	10/20/19 4:13 pm
+Mo Bulu		10/21/19 7:24 pm
+Irubo 3 cresc	10/25/19 5:58 pm
+Ninu Meta B2 run	11/7/19 6:35 pm
+Ibaramu		11/21/19 4:09 am
+Yipo		4/8/20 8:00 pm
+Fun Ife2  	4/28/20 2:01 am
+Roro		5/17/20 6:13 pm
+
+(DO NOT USE Roro bass boost)
+(CORRECTION Roro Reason file is Roro shorter ritards 8/6/20) 
+
+Misc:
+Stella By Starlight 3:34
+
+Full band, but needs porting to Reason:
+Watergate 	2:44
+Tritone 	4:43
+Alternation 	6:10
+(around 25:20)
+
+LCM 3/17/20: live set 004 rec1c merge B3 no intro pad
+Boogie Woogie 2/1/20: range modulation merged rec1
+Boogie Woogie 2/17/20: range modulation merged rec1 ac bass
+Watergate 11/30/19: watergate1 pos 2c rec1
+
+Full band, done:
+Kahelo			120	5:59
+Lodidi 			130	6:14
+Charlie's Big Break 	130	5:10
+Interago 		125	5:11 (mastered)
+Kasita Mondo 		130	6:00 (mastered)
+More Than Four		120	4:46
+Shelter In Bass		120	4:23
+Moonchego		123	8:20
+Pleasant Mistake	125	5:35
+LCM (drums only)	123	5:53	
+Heard a Moon 		120	6:08 (was Boogie Woogie)
+
+LCM			123	5:34	
+
+files:
+Kahelo fast intro mix	9/14/19 1:48 pm
+Lodidi 2b mix		7/9/19 6:56 am
+Charlie's Big Break mix	6/30/19 11:39 pm
+more than four mix	4/11/20 2:31 am
+Shelter in Bass mix	4/16/20 6:59 pm
+Moonchego 04 mix	5/7/20 9:44 pm
+Pleasant Mistake vox less chorus	5/29/20 3:24 am
+LCM Kika		5/23/20 11:59 am
+Heard a Moon		5/29/20 9:32 pm
+
+4/4/20 OSX
+
+For Time To Repeat command, GetNumberFormatEx is the problem, see test app.
+
+4/4/20 Scale and chord modulation
+
+Chord modulation works fine, and permits Bergonzi's "numbers" system like
+ChordEase. But there's a subtle issue with indexing. Consider just scale
+and index. If the index is outside the scale, it currently wraps around.
+But this limits the scale to one octave! Arguably it would be more useful
+if indexing out of range octaved the scale note up or down as needed.
+
+Why should scales be limited to an octave, unless you explicitly request
+that behavior by setting Range Type to octave? You can work around it by 
+adding more scale modulators so that the scale covers multiple octaves, 
+but that might not be intuitive. It also uses a lot of tracks.
+
+The same issue applies to the Chord indexing; why should chords be limited
+to an octave?
+
+Changing this is complicated and could affect preexisting songs, so it's
+probably better to just use multi-octave scales and chords in cases where
+the difference matters. See the file "chord modulation test.plm" for a
+demonstration of multi-octave scales and chords and why they're needed.
+
+Most of time I'm using Range modulation in which case it's a non-issue.
+
+4/8/20 docking bars to tabbed panes: visible but inactive
+
+Re the issue with not being able to dock Piano and MIDI bars to a tabbed pane: 
+I looked into that some more. It's a non-trivial issue with pros and cons that 
+need consideration. But the short form is this: Currently, keeping many of the 
+bars in tabbed panes may make the UI sluggish. This is especially true of the 
+Step Values bar!
+
+When a bar is docked to a tabbed pane, Windows considers it "visible" even if 
+it's not the active tab, in which case it's not actually visible to the user. 
+In my current implementation, such "visible but inactive" bars receive document 
+updates (affecting performance), though they don't get "painted".
+
+It seems reasonable that hidden bars shouldn't consume any CPU cycles. When a 
+bar gets "shown" my code assumes it's "dirty" (meaning it wasn't being updated 
+while it was "hidden"), and updates it. But there's a catch to that work-saving 
+strategy: bars that show real-time events (e.g. the Piano and MIDI event bars) 
+will miss events that occur while they're hidden. This is why when you show 
+the Piano bar, it doesn't display notes that were already in progress by the 
+time you showed the bar; it missed those events.
+
+It's also why I had to disable tabbed docking for Piano and MIDI event bars. 
+Those bars have big impact, because they oblige the sequencer to send a 
+"monitoring" copy of the entire output MIDI sequence to the main thread. If 
+those bars were allowed to tab-dock (or auto-hide), they would drag 
+performance even though they might not be visible to the user. This seemed 
+wrong to me, so I disallowed it.
+
+It's a messy situation with competing design goals. On the one hand, it's 
+nice if bars don't consume resources while they're "hidden". On the other 
+hand, it's annoying that when you show the Piano or MIDI event bars, events 
+that occurred while they were hidden are missing.
+
+4/8/20 Yipo
+
+It's in 33. The feel is 17 + 16, typically 5 + 4 * 7.
+
+4/9/20 Sound design: what Reason drum sounds did I like back in the day?
+
+When It Rains:
+Bd_Xtc1 (pitch 27, tone 39)
+Clp_Xtc6 (pitch -10, tone 23)
+Sd3_Kru (pitch 26)
+Tom2_Dubfire (pitch 59)
+Hh3_Vintage (pitch 12)
+Ride2_Xtc6 (pitch 26 or -17)
+Sh_Xfile1 (pitch 22)
+Oh_FatBoy (pitch 2)
+Tmb_Chemical (pitch 4)
+
+This Is Cheese:
+Bd_Xtc1 (pitch 27, tone 11)
+Clp_Abstract (pitch -10, tone 23)
+Sd2_HardKnox
+Sd2_Sexy (pitch 18)
+Tom_Xtc1  (pitch 49)
+CYM3 1JAZZ (pitch -22)
+Sh_Xfile1 (pitch -16)
+Hh_Xfile2
+Oh2_Xfile2
+Clp_Xtc7 (pitch 6)
+Sh_Jeepkeys (pitch 4, tone 22)
+Bongo_Hardknox (pitch -20 or -36)
+Bd2_One2 (pitch -7 or -30)
+
+Save the Planet:
+Bd_Xtc1 (pitch 27, tone 39)
+Clp_RawDirt (pitch 14, tone 23)
+Sd_Numbers (pitch 20)
+Sd2_Sexy (pitch 8)
+Hh3_Vintage (pitch 12)
+Crash_Xtc
+Cb_Brassic
+Sh_XFile1 (pitch 16)
+Oh_FatBoy (pitch 10)
+Hh2_Sexy
+
+4/10/20 More Than Four 
+
+Europa master volume is 12.1 dB
+
+Try replacing "Played with eleven" with "Combined with eleven".
+It would make the meaning clearer and might sound better too.
+
+The vocal has a lot of big transients. Adding 2.5x compression
+helped a lot, but it probably needs de-essing too.
+
+The kick is solid but not sure if there's enough bass. Maybe 
+try boosting the lows on the synth line.
+
+4/11/20 Sequencer Callback taking too long
+
+It happend quite a few times while working on "More Than Four."
+Callback times as long as nearly 20ms were observed. Today I'm
+not seeing it. I looped the track's peak section, and after ten
+I see callback times of 31% max and 0.1% average. It's unclear 
+what if anything the trouble was. Could the laptop have been 
+thermally throttling the CPU? The fan was on pretty high. I 
+did have Firefox running in the background without realizing 
+it, and that's a big CPU-burner, so maybe that's all it was.
+
+Just to be sure, I benchmarked the scale re-sort after voices
+are dropped, to make sure the sort isn't taking too long. Over
+500 samples it used 1 microsecond maximum. Not much hope of 
+optimizing that!
+
+I did find a few spots where the "fast" versions of CArrayEx
+methods could be subsituted. Here's the benchmark code. It 
+really ought to be easier to do this.
+
+static STATS stat = {0, 0, DBL_MAX};
+CBenchmark b2;///@@@
+{
+	if (bDropped)	// if any voices were dropped
+		m_arrScale.Sort();	// re-sort scale tones
+}
+double t = b2.Elapsed();///@@@
+stat.nCallbacks++;
+stat.fCBTimeSum += t;
+if (t < stat.fCBTimeMin) stat.fCBTimeMin = t;
+if (t > stat.fCBTimeMax) stat.fCBTimeMax = t;
+if (stat.nCallbacks == 500) printf("min=%f max=%f avg=%f\n", stat.fCBTimeMin, stat.fCBTimeMax, stat.fCBTimeSum / stat.nCallbacks);
+
+4/16/20 process chord before transposing and applying range
+
+The previous code did the transpose and range window loop
+BEFORE the chord processing, but this is dumb. Why waste
+time transposing notes that won't be used? Only notes that
+get picked by the chord should be processed further. This
+this potentially saves quite a bit of work, e.g. with a 
+hepatonic scale and tetrachords (the usual case) nearly 
+half the scale tones were transposed and range windowed 
+needlessly. It's an easy fix, and testing shows no impact
+on the output data.
+
+4/16/20 Sequencer Callback taking too long: profile results
+
+AddTrackEvents is consuming 99.9% of the CPU time, no surprise
+there. But what IS a surprise is that the new scale / chord 
+code doesn't seem to be the problem; it's consuming less than 
+1% of the time. So what's taking so long in AddTrackEvents? 
+
+Using the main section of "Shelter in Bass" as a test file.
+
+Let's try SumModulations next. Sure looks like SumModulations
+related to the problem.
+
+RecurseModulations is also seems to be part of the problem.
+Interesting! In a typical run, the callback max time was 16.5ms,
+and the RecurseModulations max time was 6.7ms, or about 40% 
+of the total max time.
+
+Next let's try profiling around AddTrackEvents's calls to 
+RecurseModulations and SumModulations.
+
+Weird! In this case callback max time is 6.9ms but the 
+profiled calls are only 75 microseconds. Something isn't 
+adding up here. Could it be a thread issue? Could the 
+callback be getting preempted? Better check the callback
+thread's priority. Nope, the callback thread priority is 
+running at priority 2 (Highest), as expected.
+
+Aha! Examining the threads window reveals that the callback
+thread has competition, from an unidentified worker thread in 
+winmm.dll running at Time Critical priority. So obviously if
+that thread blocks for any significant length of time, the
+sequencer callback will take too long. This suggests a test.
+Let's try disabling the output, i.e. do all the usual work
+but send an empty buffer to the MIDI stream handle. If the
+Time Critical thread is consuming CPU time in proportion to
+the density of the output MIDI stream, this test should 
+eliminate that thread as a source of preemption or blocking.
+
+We still need to output the NOP to get callbacks. Just to be
+sure the optimizer doesn't outwit the test somehow, we'll 
+output the real buffer to the app's queue for the Piano bar, 
+then set the buffer to contain only NOP and output it to 
+the MIDI stream.
+
+OK. Sure looks like the Time Critical thread is the culprit!
+After five minutes, callback max time is 2.6ms, and profile
+around AddTrackEvents (but inside critical section) is 2.1ms.
+
+Let's wait and see if the callback ever takes too long. So,
+after 15 minutes, the numbers are 3.9ms (callback) and 3.3ms
+(AddTrackEvents), and the "callback took too long" error
+hasn't occurred. If these numbers are to be believed, the 
+only solution is to increase the latency. For very dense 
+sequences, the mysterious Time Critical winmm thread is 
+taking long enough to disrupt callback scheduling.
+
+If the profile were to include entering the critical section, 
+would the callback and AddTrackEvents benchmarks match even 
+more closely? Answer: Yes, now they're consistently within 
+a few microseconds of each other. So AddTrackEvents is most
+of the app's work, but we already knew that.
+
+Contention for the track critical section can't be the issue,
+because the only other contenders are the editing functions 
+in CSeqTrackArray, and no editing occurs during this test.
+
+Could it have something to do with the output capture and its 
+associated double buffering strategy? We could try hiding the
+Piano bar. Doubtful but it's an easy test. Answer: No.
+
+Could it be related to loopMIDI or Reason? Not that it would 
+matter since they're both indispensible.
+
+It's probably not preemption or blocking, because we're running
+on a quad-core CPU and the multimedia thread doesn't share any
+critical sections with our callback. It's more likely that the
+start of our callback is somehow delayed, perhaps because the 
+multimedia driver is overworked by excessive sequence density.
+
+4/16/20 RecurseModulations optimization
+
+Since we've established it does a lot of the work, further
+optimizing this method might be helpful. calling GetStepIndex
+before the recursion is wasteful because the recursion
+result might do a continue, in which the iModStep returned
+by GetStepIndex isn't used.
+
+Seems like we could just move nPosMod2 outside the recursion
+scope, init it zero, and then the GetStepIndex can move after
+the recursion. Same idea in SumModulations.
+
+Better check the output of this change carefully! [seems ok]
+
+4/17/20 mix notes
+
+Shelter In Bass: string part is a bit too loud according to 
+Kim and I tend to agree, maybe -2 dB? Or EQ it differently?
+This is a question for Mike. But it's masking the piano 
+and percussion too much.
+
+4/18/20 more on callback taking too long: memory usage?
+
+Investigate whether the callback thread is allocating memory. 
+It shouldn't be. Once all the various dynamic arrays are big 
+enough they should stay put provided the sequence density
+doesn't increase.
+
+int MyAllocHook(int nAllocType, void *pvData, size_t nSize, int nBlockUse, 
+				long lRequest, const unsigned char * szFileName, int nLine)
+{
+	// need this to call printf else infinite loop since printf allocates
+	if ( nBlockUse == _CRT_BLOCK )
+		return( TRUE );
+	if (GetThreadPriority(GetCurrentThread()) == THREAD_PRIORITY_HIGHEST) { // only sequencer callback thread
+		printf("%lld %s %d\n", nSize, szFileName, nLine);
+	}
+	return true;
+}
+
+// in InitInstance
+_CrtSetAllocHook(MyAllocHook);
+
+Result of this test is negative: the sequencer callback thread 
+doesn't do any unexpected memory allocations.
+
+To write to console without using printf, can do some variant of this:
+
+		static COORD coord;
+		DWORD	out;
+		TCHAR	buf[16];
+		_i64tot_s(nSize, buf, _countof(buf), 10); // for 64-bit vals
+  		WriteConsoleOutputCharacter(GetStdHandle(STD_OUTPUT_HANDLE), buf, _tcslen(buf), coord, &out);
+		coord.Y++; // need to handle scrolling or at least wrap around!
+
+
+4/18/20 epic time wasting in AddTrackEvents
+
+1. Muted tracks process all of their modulators, pointlessly.
+2. Modulator tracks process all their modulators, pointlessly.
+3. When a mute modulator returns true, processing continues, pointlessly.
+
+No wonder the sequencer callback is taking so long!
+All of these are easily fixable with a slight refactoring.
+
+One unexpected result of the enhancements: if a track has many 
+modulators, and some of them are mute modulators, performance will 
+likely be improved if the mute modulators come first in the modulator
+list. This is because when a mute modulator mutes the track, the 
+"goto next_step" aborts any further processing for the current step, 
+including the (possibly recursive) evaluation of other modulators. 
+That's potentially a significant savings. It could be a reason to 
+sort modulators by modulation type instead of by source track.
+
+4/18/20 high-frequency memory reallocation
+
+OnUpdateEditUndo and OnUpdateEditRedo reallocate memory whenever
+the mouse moves, due to loading the undo or redo prefix from a string 
+resource and then appending the edit-specific title to it. This work
+can be avoided by overloading CUndoManager::OnUpdateTitles and doing
+the prefixing there instead. But that's not all: CToolCmdUI::SetText
+also creates a CString, in order to remove the trailing label, and
+CToolCmdUI is a private class buried in afxtoolbar.cpp. And it's
+renamed to CMFCToolBarCmdUI via #define, nice.
+
+Then there's all the stuff that gets updated during play:
+
+CClientDC in CStepView::UpdateSongPosition: how to avoid this?
+Can be avoided by using GetDC and ReleaseDC instead of CClientDC,
+but it makes a mess of the drawing code; HDC must be passed around.
+CClientDC appears to allocate a large buffer, on the order of 14K.
+
+CClientDC in in CSongView::UpdateSongPos: how to avoid this?
+GetDC/ReleaseDC isn't enough because UpdateWindow is called and that
+sends a paint message to CView::OnPaint which instantiates a CPaintDC.
+Still it might save time to construct only one DC wrapper instead of two.
+Also CClientDC is constructed long before it's used, not that it matters.
+
+Updating the song position and time also reallocates memory, due to 
+CString. The Format statement alone is between 5 and 10 microseconds.
+The sequencer methods could write to fixed-size buffers instead, but
+this makes a mess of various things and will attract bugs.
+
+And then there's the mysterious message loop that occurs when the
+mouse hovers over a list control, or over a property sheet item that
+isn't abbreviated. It allocates at high frequency, no doubt due to
+calling FromHandle. It's somehow related to tool tips. There's also
+some connection to a mysterious timer message with event ID 3. That's
+not an official AFX timer ID, and according to the message hooks it
+appears to be posted rather than sent, making the source impossible to
+determine. But it's probably sent by a tool tip control, possibly one
+associated with the list control. There are dozens of unidentified tool
+tip controls associated with the app, but having no parent window.
+
+This timer ID 3 issue or whatever it is also occurs in a stock 2012
+app if you hover the mouse over one of the tree controls. The tree
+controls also have item tooltips. Another sign it's tooltip related.
+
+4/21/20 Offset modulation
+
+MODTYPEDEF(Offset)
+
+case MT_Offset:
+	arrMod[iModType] += nStepVal;	// offset is unsigned
+	break;
+
+// declare evt much later! REMOVE these two lines:
+
+if (nDurSteps) {	// if at start of note
+	CMidiEvent	evt;
+	evt.m_nTime = nEvtTime;
+
+// need this instead:
+
+	nNote = CLAMP(nNote, 0, MIDI_NOTE_MAX);
+	CMidiEvent	evt;
+	evt.m_nTime = nEvtTime + arrMod[MT_Offset];
+	evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, nNote, nVel);
+	if (evt.m_nTime < m_nCBLen)	// if note starts during this callback
+		m_arrEvent.FastInsertSorted(evt);	// add note to sorted array for output
+	else {	// note starts during a subsequent callback
+		evt.m_nTime += nCBStart;	// convert to absolute time
+		m_arrNoteOff.FastInsertSorted(evt);	// schedule delayed note
+	}
+	int	nDuration = nDurSteps * nQuant + trk.m_nDuration + arrMod[MT_Duration];	// add duration offset
+	if (nDurSteps & 1) {	// if odd duration
+		if (bIsOdd)	// if odd step
+			nDuration -= nSwing;	// subtract swing from duration
+		else	// even step
+			nDuration += nSwing;	// add swing to duration
+	}
+	nDuration = max(nDuration, 1);	// keep duration above zero
+	evt.m_nTime = nAbsEvtTime + arrMod[MT_Offset] + nDuration;	// absolute time
+	evt.m_dwEvent &= ~0xff0000;	// zero note's velocity
+	m_arrNoteOff.FastInsertSorted(evt);	// add pending note off to array
+}
+
+5/6/20 Moonchego
+
+Watch out for parameters getting reset by mapping, especially in Reason.
+The inital synth levels should be:
+drums: 100
+pad: 0.0 dB
+lead: 93
+bass: 100
+vox: 100
+
+5/17/20 converting tetrachords from a flat list to a four-row table via Excel
+
+assuming the list of note values is in column A, set cell B1 to this:
+=INDEX($A:$A,(COLUMN(B1) - 2) * 4 + MOD(ROW(B1) - 1, 4) + 1,1)
+and then copy/paste as needed
+To convert cells from note numbers to MIDI note names, use this:
+=CONCATENATE(CHOOSE(MOD(A1, 12)+1,"C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"),QUOTIENT(A1,12)-1)
+
+5/21/20 Roro vs. Roro bass boost
+
+In Roro bass boost, the bottom note has the same velocity as the upper three notes, instead of -10.
+Kim complained about wanting the lower notes to be a bit louder, but I don't hear it that way.
+I like the softness of the original. The bass boost version feels too heavy-handed on the low notes.
+The title means "gently" so it should be gentle. But perhaps this choice should be revisited during mastering.
+
+5/21/20 LCM mix
+
+Claps weren't correctly assigned to individual mixer channel in the exported wav file; could affect pan / level.
+Pad seems overly loud and attack seems too slow?
+
+6/9/20 override MIDI input channel
+
+Option indices are zero origin, so must reserve zero for none.
+
+if (theApp.m_Options.m_Midi_nInputChannel > 0)
+	dwEvent = (dwEvent & ~0xf) | (theApp.m_Options.m_Midi_nInputChannel - 1)
+
+Overriding dwEvent post-mapping seems easy at first.
+But it introduces inconsistencies, because dwParam1 is also used:
+1. The MIDI input bar will show the original channel. Maybe OK?
+2. Recorded MIDI input will have the original channel. Confusing.
+The latter is hard to fix because changing the channel for an input message
+that was mapped will break the mapping when the recording is played back.
+Overriding the channel pre-mapping always breaks the mappings, not only 
+during playback of a recording, and breaks learn mode too, so it's a mess either way.
+
+6/11/20 go to convergence
+
+This method has questionable utility and is no substitute for a phase map.
+It can lock up the program if nConvSize is big and the song uses a lot of 
+different prime lengths. This could be demonstrated with "Ala Aye". If the 
+phase bar is hidden, the orbit array must be explicitly updated first.
+
+void CPhaseBar::GotoNextConvergence(int nConvSize, bool bReverse) const
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL) {
+		int	nSelected = 0;
+		int	nOrbits = m_arrOrbit.GetSize();
+		for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {
+			if (m_arrOrbit[iOrbit].m_bSelected)
+				nSelected++;
+		}
+		int	nPos = static_cast<int>(m_nSongPos);
+		int	nDelta = bReverse ? -1 : 1;
+		if (nSelected)
+			nConvSize = min(nConvSize, nSelected);
+		else
+			nConvSize = min(nConvSize, nOrbits);
+		while (1) {
+			nPos += nDelta;
+			int	nHits = 0;
+			for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {
+				const COrbit& orbit = m_arrOrbit[iOrbit];
+				if (!nSelected || orbit.m_bSelected) {
+					if (!(nPos % orbit.m_nPeriod)) {
+						nHits++;
+						if (nHits >= nConvSize) {
+							pDoc->SetPosition(nPos);
+							pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_CENTER_SONG_POS);
+							return;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+
+6/13/20 negative input to modulo function, handled correctly
+
+int	m = 5;
+for (int i = 10; i >= -10; i--) {
+	int	x;
+	if (i >= 0)
+		x = i - i % m;
+	else
+		x = i - (i + 1) % m - m + 1;
+	printf("%d\t%d\n", i, x);
+}
+
+10      10
+9       5
+8       5
+7       5
+6       5
+5       5
+4       0
+3       0
+2       0
+1       0
+0       0
+-1      -5
+-2      -5
+-3      -5
+-4      -5
+-5      -5
+-6      -10
+-7      -10
+-8      -10
+-9      -10
+-10     -10
+
+
+6/16/20 Passion for Numbers ( <34#s )
+
+Front cover: 
+		double	fMidX = szCanvas.cx / 2 - 30;
+
+		for (int iCol = 0; iCol <= nCols + 1; iCol++) {
+
+	CSize	szBitmap(3780, 3685);
+
+Back cover:
+		double	fWidth = arrLen[iRow] * (fXScale * 0.969);
+
+
+	CSize	szBitmap(3839, 2693);
+
+Text:
+
+CHRIS KORDA
+
+PASSION FOR NUMBERS
+
+A1. Ero Ayo   A2. Mo Bulu   A3. Irubo   A4. Ninu Meta
+B1. Ibaramu   B2. Yipo   B3. Fun Ife   B4. Roro
+
+Big text is 48 pt Helvetica Black
+
+Label:
+
+1087 x 1087 (safe area)
+then expand to 1229 to reach edge of bleed
+
+
+6/20/20 Modulation bar selection issues
+
+Delete / Cut: removing selection is no problem, just add Deselect call:
+
+pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
+m_grid.Deselect();
+
+Paste / Insert: easy if Show Differences is OFF, but harder if it's on
+
+// this ONLY works if Show Differences is OFF
+int	nPrevMods = m_arrModulator.GetSize();
+pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
+if (iSelItem < 0)	// if no selection
+	iSelItem = nPrevMods;	// appended
+if (iSelItem >= 0)
+	m_grid.SelectRange(iSelItem, nMods);
+else
+	m_grid.Deselect();
+
+What to do if Show Differences is on? Search m_arrModulator for the first pasted element?
+
+Restoring selection after undo is not currently possible because the track selection 
+might be different when the undo occurs. This is yet another reason why track 
+selection should be an insignificant edit that's saved systematically instead 
+of in an adhoc way. Also the Show Differences flag would need to be saved and 
+restored because like track selection it also affects which modulators are shown.
+
+
+6/23/20 MFC Customize subsystem is incompatible with renumbering resource IDs
+
+The easy experiment: 
+1. Add some commands to the standard toolbar. Create some new keyboard shortcuts too.
+Now exit the app and edit the project as follows.
+2. Create a new menu command called ID_APP_ALPHA (guaranteed to be the first command) 
+and renumber the resource IDs. This shifts every app-defined command ID up by one.
+3. Rerun the app. The custom toolbar commands still have the same names, but they no
+longer trigger the intended commands. They may also move around on the toolbar. The 
+keyboard shortcuts are also shifted.
+All of this is predictable because the Customize system stores command IDs. So that's
+an epic fail. When the app is next upgraded, if the upgrade adds new commands (or 
+removes or renames existing commands), any customizations the user made will likely 
+be partially or completely scrambled. That sounds like a good reason not to allow it, 
+but maybe it could be OK to allow it and put a warning in the manual?
+
+The only other solution I can think of is to strictly adhere to this procedure:
+1. Avoid renaming or deleting existing commands, or if it's unavoidable, retain the 
+command's original ID by preserving the corresponding hint resource string (though
+the string can be empty or just contain a single space, or "X" or whatever).
+2. New commands must have a special prefix that provides versioning and forces newly
+added commands to the end of the renumbered command ID range. For example, the
+prefix ID_a??_ could work. The first upgrade would use this prefix:
+ID_a00_A_NEW_COMMAND
+ID_a00_NEW_COMMAND_IN_THE_SAME_RELEASE
+The next upgrade would use an incremented prefix:
+ID_a01_A_NEW_COMMAND_IN_A_SUBSEQUENT_RELEASE
+This works so long as command names don't start with a lowercase letter. Since the
+version number can use not only 0-9 but also A-Z and a-z, the prefix allows around
+100,000 upgrades (26 * 62 * 62) which seems adequate for a production app. If you 
+exceed 3,844 upgrades (after ID_azz_) you roll over to ID_b00_ and so on. This
+scheme doesn't require any changes to the venerable resource renumbering app.
+
+Another issue: menus and especially context menus often have groups of options (with 
+checkboxes or radio buttons) that depend on having a contiguous range of command IDs.
+Adding a command to such a group also potentially shifts the app's command IDs. To 
+maintain the above procedure in such cases will be significant work: the entire group
+has to be copied to a new range of command IDs, leaving the old range reserved. This
+will result in a lot of "dead wood" i.e. legacy command hint resource strings. In
+practice there seem to be relatively few such cases (search for "ON_COMMAND_RANGE").
+
+One way to check for compatibility is to file compare the old and new Resource.h.
+If you see any changes other than appends, it's incompatible. Clearly this approach
+would be unworkable during development, but once the app is in production it might 
+be reasonable if Customize is important enough to warrant it.
+
+7/5/20 Multiple windows of a document
+
+There are two related issues:
+if document has multiple windows, changing view type affects first window instead of active one
+if document has multiple windows with different view types, properties may be inconsistent between windows
+
+The first issue might not be solvable with the current architecture. It's unclear.
+
+The second issue isn't too bad with song view and track view. Here the only obvious
+symptom is that the Track/Length command doesn't work (it's disabled).
+But with live view and track view, there are more problens.
+Muting/unmuting tracks in live view doesn't update track view (but the reverse works).
+Same for selecting a preset or soloing in live view.
+
+7/10/20 Menu key stops working after switching documents via Ctrl+Tab
+
+To replicate it:
+1. run app
+2. create a 2nd document
+3. select the 1st document via left-clicking its tab
+4. select the 2nd document via Ctrl+Tab
+5. Press Alt+F4 to exit the app; nothing happens
+
+7/20/20 Undo test with changing view type
+
+	if (!Random(10)) {
+		POSITION pos = m_pDoc->GetFirstViewPosition();
+		CView	*pView = m_pDoc->GetNextView(pos);
+		CChildFrame	*pFrame = DYNAMIC_DOWNCAST(CChildFrame, pView->GetParentFrame());
+		pFrame->SetViewType(Random(2)); // track or song view only
+	}
+
+Note that including Live view will cause checksum errors, because Live view 
+potentially changes track mutes without creating an undoable event, in order 
+to keep parts and presets consistent.
+
+7/22/20 Showing dockable bars menu
+
+The work is done by this apparently public method:
+CDockingManager::BuildPanesMenu(CMenu& menu, BOOL bToolbarsOnly)
+
+8/1/20 mysterious MIDI error 65
+
+#define MIDIERR_STILLPLAYING  (MIDIERR_BASE + 1)   /* still something playing */
+
+It occurs when stopping the sequencer. It almost never happens under Windows,
+but it appears to happen every time on a Mac with Wine Bottler. The error's
+definition is "Cannot perform this operation while media data is still playing. 
+Reset the device, or wait until the data is finished playing." That should tell
+us something. The problem is we don't know which MIDI streams function is
+causing it. We stop the stream, unprepare the buffers, and finally close the
+device. Hypothesis: we're attempting to unprepare a buffer before the driver
+has finished with it.
+
+Does midiStreamStop return before the buffers are returned, or wait? The Windows
+documentation is a bit vague on this point. "When you call this function, any 
+pending system-exclusive or stream output buffers are returned to the callback
+mechanism and the MHDR_DONE bit is set in the dwFlags member of the MIDIHDR 
+structure." Notice it doesn't say exactly WHEN the output buffers are returned.
+It that's the issue, you'd think making the callback time much longer would 
+provoke the error, but I tried that and it didn't make any difference.
+
+If this really is the issue, it's an easy fix. In the MIDI callback's MOM_DONE
+case, if the stopping flag is set, increment a count of done buffers. In the Play
+function, after stopping the stream, wait for this count to reach the number of
+buffers, while sleeping periodically. Or more properly, in the callback, when the
+done buffer count reaches the desired number, set an event, and in the Play
+function, wait on the event with a timeout.
+
+If the unprepare is doing it, another possible solution would be to loop on
+unprepare as long as it returns MIDIERR_STILLPLAYING, with a Sleep to avoid
+burning CPU. This is more or less shooting the messenger.
+
+Without a Mac to test against, there's no way to reproduce the issue, so no way
+to prove the above solution would help. I would tend to think it's a Mac / Wine
+MIDI implementation issue except I have very rarely seen it under Windows. It's
+possible it's driver-dependent.
+
+The easiest test is to just put a Sleep(1000) after midiStreamStop and see if
+that fixes the problem in MacOS. I give it even odds.
+
+Another hypothesis is that calling midiStreamOut from within the callback is 
+actually a terrible idea, even though it seems to work. MSDN discourages any
+calls to MIDI functions, but examples in the wild vary. Some examples only set
+an event in the callback, others call midiStreamOut as we do. The event is a
+royal pain in the ass because it means creating a whole other worker thread
+and incurring all the overhead and complexity associated with that.
+
+8/7/20 show step selection in velocity view
+
+	int	iStepSelRight;
+	int	iStepSelLeft = 0;	// avoids uninitialized variable warning
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+...
+		if (iTrack < rStepSel.bottom && iTrack >= rStepSel.top) {	// if track within step selection
+			iStepSelLeft = rStepSel.left;
+			iStepSelRight = rStepSel.right;
+		} else
+			iStepSelRight = 0;	// left doesn't matter if right is zero
+		for (int iStep = iFirstStep; iStep <= iLastStep; iStep++) {	// for each step
+...
+				COLORREF clrBar;
+				if (iStep < iStepSelRight && iStep >= iStepSelLeft)	// if step within step selection
+					clrBar = clrBarSelected;
+				else
+					clrBar = clrBarNormal;
+				pDC->FillSolidRect(rBar, clrBar);
+
+It works, but it makes the step view responsible for invalidating the velocity view. 
+Depending on how that's done it adds significant overhead especially when dragging
+the step selection. It's easy to just invalidate the entire velocity view in all
+cases, but it's inefficient.
+
+8/12/20 subtitles
+
+Easiest for YouTube is .sbv format:
+hh:mm:ss.000,hh:mm:ss.000
+blah blah
+
+hh:mm:ss.000,hh:mm:ss.000
+more blah blah
+
+[and so on]
+
+Export the song from Polymeter, using Tools/Export/Song
+Isolate the vocals note on events and load them into Excel
+Excel funtion to convert MIDI MBT to time in days:
+=(a1/120*(60/T)+0.1)/86400
+where T is tempo (assuming 120 PPQ)
+and 0.1 is time offset in seconds
+for Overshoot subtitles were too early, +1/10 of a second was about right
+86400 is seconds in a day
+
+Format the times with this Custom format:
+[h]:mm:ss.000
+
+Now the hard part: getting the on/off times in pairs, and matching them 
+with the lyrics. Couldn't figure out how to do it with Excel, by hand is a PITA.
+
+
+8/12/20 Apologize chorus lyrics order confusion:
+
+The audio goes like this:
+
+Apologize
+For the dying seas
+Apologize
+For the clear-cut trees
+Apologize
+For needless birth
+Apologize
+To what’s left of earth
+Apologize
+For overpopulation
+Apologize
+For mass migration
+Apologize
+To the United Nations
+Apologize
+To future generations
+
+9/5/20 Note Number input mapping type
+
+It might be helpful to have a note mapping that gets the data byte from the
+note number rather than the velocity. To be useful it should also ignore note
+off messages. This would permit a keyboard to be used for Preset changes, for 
+example. However by default it would utilize the entire range of MIDI notes 
+on the given channel, which would be very wasteful in most cases. This could
+be addressed by re-purposing the Range Start / End parameters to be the range
+of notes included in the mapping, but that's a confusing kludge.
+
+This still doesn't solve the problem of how to use a keyboard for toggling
+binary switches, for example Mute states. Here the problem is who owns the
+toggle state. For Mute states specifically the Mute state itself could be
+be its own toggle state, and this is advantageous because it will remain
+consistent with the UI. But for a general solution that won't work. The
+same applies to Part mute states.
+
+The toggle problem exists because many common controllers don't support 
+reprogramming what their keys or buttons send, or make it very difficult.
+
+Another approach to these problems is instead of trying to make a general 
+solution, create a custom implementation of Part and Preset mappings for 
+ranges of MIDI notes. This would be more work to develop, because it would
+need custom UI, file storage, etc. but would allow the most specificity.
+
+Still another approach would be to add a new Switching attribute to the 
+mapping parameters, consisting of Normal or Toggle. In Toggle mode, the
+target parameter would toggle between 0 and 127. This would solve control
+of Parts via MIDI keyboard, and would also be useful in other cases for
+example toggling the steps in a track.
+
+9/9/20 Gray Code
+
+Try using gray code in SetPerm for generating permutational harmony.
+It might generate smoother transitions.
+
+uint BinaryToGray(uint num)
+{	
+	return num ^ (num >> 1);
+}
+
+9/23/20 ordering of tracks within a preset
+
+A preset's track indices aren't necessarily in ascending order. This is 
+easily demonstrated by making a preset and then reordering its tracks.
+In order to interdisperse presets with tracks in track order, it's
+essential to know the minimum track index for each preset, and this
+will need to be determined by iterating. The only other way around it
+would be to keep presets always sorted but this would be much more
+costly and there's no need.
+
+Arguably the array class should include methods to find the minimum
+or maximum element.
+
+Also, CPart::GetTrackRefs should return the number of tracks that
+belong to parts. This would make it possible to preallocate the
+part array CLiveView::Update(), instead of using Add.
+
+10/18/20 GraphViz 2.44.1 not working
+
+Tried with both 32-bit and 64-bit installers. In both cases dot.exe fails with this error:
+There is no layout engine support for "dot"
+Perhaps "dot -c" needs to be run (with installer's privileges) to register the plugins?
+
+Their installer should take care of this but it doesn't.
+
+Also 2.44 often bungles the graph size, causing the graph to be too small or clipped.
+
+Version 2.38 doesn't have either of these problems.
+
+10/25/20 converting BalaGray output to note track
+
+In Excel, use this formula: =IF(A1=B1,164,36)
+
+11/13/20 started new piano piece 
+
+The A section uses using new balanced gray code change ringing for arpeggiation. 
+The changes are 4-bell pattern 26, which is a rotation of [6,12,6]A.
+
+The B section (started 11/15) similarly uses 4-bell gray [9,6,9] for arpeggiation.
+It also uses the balanced gray code sequence [2222] for alterating the tetrachord,
+though the sequence is rotated five steps right, starting with [0010] instead of [0000].
+The scale is an octatonic (0235678a) which is potentially quite dissonant, due to
+having three semitones in a row; its prime form is 8-22 (0123568a), IV 465562.
+The unaltered tetrachord is [0246] which yields [0,3,6,8] which is a diminished
+triad plus a b6. The result is surprisingly consonant despite the three semitones,
+because the alteration scheme avoids sounding more than two semitones at once 
+and also keeps them from abutting each other.
+
+(0235678a) [0246] C
+
+0010	[0256]	(0378)	Abmaj7
+0011	[0257]	(037a)	C-7
+0111	[0357]	(057a)	C7sus4
+0101	[0347]	(056a)	Gbmaj7#4
+0001	[0247]	(036a)	C-7b5
+0000	[0246]	(0368)	Ab7
+1000	[1246]	(2368)	Ab7#4
+1100	[1346]	(2568)	Ab13#4
+0100	[0346]	(0568)	Ab13
+0110	[0356]	(0578)	F-9
+1110	[1356]	(2578)	F-6
+1111	[1357]	(257a)	G-7
+1101	[1347]	(256a)	Gbmaj7#5
+1001	[1247]	(246a)	Eb-maj7
+1011	[1257]	(247a)	Ebmaj7
+1010	[1256]	(2478)	Abmaj7#4
+
+This was a lucky accident. The intention was to use the symmetric diminished scale 
+(0235689b), but the last three notes were mistakenly entered sharp by a semitone. 
+The diminished scale would have been much more dissonant. Making and recognizing 
+"pleasant mistakes" is a crucial aspect of the artistic process. This example also
+suggests that even scary-looking pitch class sets with lots of semitones can
+produce relatively consonant tonalities if they're handled carefully.
+
+11/17/20 consistency test for CStepValuesBar ScanStep and FormatStep methods
+
+	static const int arrFormat[] = {	// array of formats to test
+		STF_SIGNED,
+		STF_NOTES | STF_OCTAVES,
+		STF_TIES,
+		STF_HEX,
+	};
+	int	nPrevStepFormat = m_nStepFormat;	// save format member
+	int	nPerms = 1 << _countof(arrFormat);	// all permutations of test formats
+	for (int iPerm = 0; iPerm < nPerms; iPerm++) {	// for each permutation
+		m_nStepFormat = 0;
+		for (int iFormat = 0; iFormat < _countof(arrFormat); iFormat++) {	// for each format
+			if (iPerm & (1 << iFormat))	// if current permutation includes this format
+				m_nStepFormat |= arrFormat[iFormat];	// add format to mask
+		}
+		int	nVals;
+		if (m_nStepFormat & STF_TIES)
+			nVals = 256;
+		else
+			nVals = 128;
+		int	iVal;
+		for (iVal = 0; iVal < nVals; iVal++) {
+			TCHAR	sz[10];
+			FormatStep(sz, _countof(sz), iVal);
+			int	nStep;
+			ScanStep(sz, nStep);
+			if (nStep != iVal) {
+				printf("ERROR: %d != %d\n", iVal, nStep);
+				break;
+			}
+		}
+		printf("0x%02x: %s\n", m_nStepFormat, iVal >= nVals ? "pass" : "FAIL");
+	}
+	m_nStepFormat = nPrevStepFormat;	// restore format member
+
+
+11/17/20 nasty focus issue in CGridControl
+
+The symptom that started the inquiry: Pressing and releasing the Alt key and then 
+left-clicking a grid control item crashes or throws an Improper Argument exception.
+It was fixed in CGridControl::OnLButtonDown by calling SetFocus before calling
+EditSubitem. But there's more. It turns out SetFocus can fail, for example if 
+the window that's losing focus resets focus. One scenario: You're editing tempo
+in the master properties, and you enter an invalid tempo, and then click a grid
+control item. The MFC property grid's kill focus handler is called and tries to
+validate the property using DDV. The property fails validation in this case, so
+_AfxFailMinMaxReal displays a modal error dialog and calls CDataExchange::Fail()
+which sets the focus to the offending control.
+
+Thus when SetFocus returns, the grid control doesn't actually have focus. Most
+likely the modal dialog has focus. If the grid control proceeds to create a popup
+edit control, that control will immediately receive a kill focus message after it
+tries and fails to wrest focus from the modal dialog. The popup edit's kill focus 
+handler will delete the edit control right out from under the rest of its creation
+code and we're primed for a crash.
+
+This can happen because modal dialogs create a message subloop, allowing messages
+to be processed, but also prevent other windows from receiving focus.
+
+The solution is to verify that SetFocus actually worked, and if didn't, don't
+create the popup edit control. The easiest way to do that is by checking that
+the result of ::GetDlgCtrlID() equals m_hWnd.
+
+11/18/20 more work on auto-hide and attach
+
+For the history, see the entry from 4/8/20. It's time for a drastically new approach 
+to visibility in CMyDockablePane. Instead of determining visibility via the base class
+Visible() method, we'll instead use the WS_VISIBLE style, i.e. the unadorned window
+visibility. This means CMyDockablePane::OnShowChanged will now be called:
+
+1. When a tabbed pane becomes active or inactive.
+2. When an auto-hide pane becomes active or inactive.
+
+Hence we can finally enable tabbing and auto-hide for the Piano and MIDI Input/Output
+panes. Note however that these panes will NOT receive MIDI data while inactive. In
+terms of output capture, making a tabbed or auto-hide pane active is the same as 
+showing the pane from the main menu. Any previous history is lost.
+
+In general performance should improve, because the app will no longer wastefully
+send document updates to invisible panes. This is particularly beneficial for the
+Step Values pane, which can use considerable CPU time.
+
+On the other hand, switching between tabbed panes may take longer than before
+in some cases, because pane's update is now deferred until the pane is shown.
+Again this is good overall, especially with tabbed panes, because only the 
+visible pane that needs updating is actually updated, as opposed to before,
+when panes were frequently updated even though they were invisible.
+
+This change also fixes the Phase pane not animating when it's in auto-hide mode.
+
+11/22/20 looping playback
+
+in OutputMidiBuffer, inside the critical section but before the tempo event processing:
+
+		if (m_bIsLooping && m_nCBTime + m_nCBLen >= m_nLoopTo) {
+			SetPosition(m_nLoopFrom);
+		}
+
+It's that easy. The hard part is the UI. The loop enable can be a Transport
+command and a toolbar button. Ctrl+Alt+L is available. The loop range could
+be members of the Properties bar. It would be nice if there were a visual
+way of setting the range. You could get the range from the step selection
+in Track view, or the cell selection in Song view. This has the advantage
+of being inherently quantized. For example if looping is off and the loop
+command is given when a rectangular selection exists, in that case you
+could set the loop range from the width of the rectangular selection.
+
+The only problem with this idea is that in Track view, a multi-track
+rectangular selection doesn't necessarily have a uniform width in terms of
+time, for example if the tracks have different Quants. It's a degenerate
+case. You could exclude it, or take the range from the first track.
+
+It would also be nice if the ruler indicated the loop range while looping,
+for example using a colored rectangle. Extra credit if you can modify the 
+range by dragging either end. It's important to indicate the range somehow
+because the rectangular selection is emphemeral.
+
+The loop enable and range should be saved in the document.
+
+Note that the caller must ensure that m_nLoopFrom < m_nLoopTo, otherwise
+playback will get stuck due to setting m_nLoopFrom on every callback.
+
+11/29/20 resource ID usage in MFC UI customization methods
+
+All of these keys are contained in "Workspace".
+
+"Keyboard-0/Accelerators" contains a binary table of accelerator structs.
+The struct has a similar layout to the ACCEL struct except the command ID
+is a WORD instead of a DWORD, making the size six bytes instead of eight.
+
+struct REG_ACCEL {
+    WORD	flags;
+    WORD	key;
+    WORD	cmd;
+};
+
+"MFCToolBar-59392/Buttons" contains the current toolbar buttons.
+
+"MFCToolBar-593980/Buttons" contains the default menu items.
+
+"MFCToolBar-5939871/Buttons" contains the document menu items.
+
+In each case the "OriginalItems" subkey contains a backup.
+
+These button lists are binary CArchives from serialization.
+
+11/30/20 impact of command ID renumbering on UI customization
+
+It's pretty clear that if existing command IDs change or shift, any UI
+customizations will be badly scrambled. There doesn't seem to be any
+practical way to correct this, so we're left with only two options.
+1) reset customizations every time app starts (the current solution),
+or 2) name new commands in such a way that renumbering the command IDs
+never causes existing IDs to change or shift.
+
+Command ID ranges are especially problematic because they require a
+contiguous range of values, hence should a command need to be added
+to the range, the range must expand, unavoidably shifting up any
+command IDs above the range. The question is, how many such cases 
+currently exist? This is answered by searching the source files for
+"D_RANGE(" and the answer is that most of the cases use reserved ID
+ranges based on ID_APP_DYNAMIC_SUBMENU_BASE and aren't impacted by
+Resource.h. Graph Scope, Graph Layout, Filter Channel, Filter Message,
+Output Channel, Piano Size, and Convergence Size are in that category.
+That leaves two cases, both in the Step Values bar: Layout Columns 
+(Steps vs. Tracks), and Delimiter (Comma vs. Tab). These two cases
+could fairly easily be modified to use ID_APP_DYNAMIC_SUBMENU_BASE,
+after which all the remaining command IDs in Resource.h would be 
+independent of range. Thus there would be no remaining obstacle to
+adding new command IDs with a prefix such as "ID_z00" in order to 
+ensure that they sort to the end of the command ID list; see 6/23/20.
+
+These two cases are effectively booleans masquerading as multiple
+choice, so they could also effectively be ignored.
+
+Enabling persistence of customization is simple, just remove
+(or make conditional) these statements in MainFrm.cpp:
+
+	// ck: disable UI customization for now, it's too confusing during development
+#if _MFC_VER < 0xb00
+	m_wndMenuBar.RestoreOriginalstate();
+	m_wndToolBar.RestoreOriginalstate();
+#else	// MS fixed typo
+	m_wndMenuBar.RestoreOriginalState();
+	m_wndToolBar.RestoreOriginalState();
+#endif
+	theApp.GetKeyboardManager()->ResetAll();
+	theApp.GetContextMenuManager()->ResetState();
+
+This was tested, including the addition of several new commands,
+with their names prefixed by ID_z00_ prefix, and behavior seems as
+expected except that adding new commands to the main menu appears
+to remove any main menu customizations.
+
+12/1/20 spurious dubs
+
+The problem is caused by CTrackBase::CDubArray::RemoveDuplicates()
+skipping the last dub in the dub array, per this comment: 
+"exclude last dub from pruning because it indicates song length."
+This behavior can cause a blizzard of confusing spurious dubs,
+due to each track potentially having a different last dub time.
+One solution is to handle the last dub as a special case, and 
+if it's a duplicate, delete the earlier dub (its predecessor)
+instead of the later one (the last one in this case). This will
+remove the duplicate while preserving the song length.
+
+// after pruning loop!
+	int	iLastDub = GetSize() - 1;	// reload array size as it may have changed above
+	if (iLastDub > 0 && GetAt(iLastDub - 1).m_bMute == GetAt(iLastDub).m_bMute)	// if last dub is a duplicate
+		RemoveAt(iLastDub - 1);	// remove earlier duplicate, preserving song length
+
+Nope, this is a bad idea because it causes erroneous dub lengths.
+So only remaining solution is to fix the code that searches for
+the next/previous dub so that it ignores these degenerate cases.
+
+1/20/21 device change notification should retry missing MIDI device and close message box if successful
+
+This cheap trick seems to work, but it feels risky for such a minor case.
+
+} else {	// message box already displayed
+	// assume missing devices message box has sufficiently unique caption
+	HWND	hWnd = FindWindow(NULL, CMidiDevices::GetErrorDlgCaption());
+	if (hWnd) {	// if missing devices message box found
+		INPUT	inp = {0};	// init struct to zero
+		inp.type = INPUT_KEYBOARD;	// send return key to message box
+		inp.ki.wVk = VK_RETURN;	// assume default button is Retry
+		SendInput(1, &inp, sizeof(inp));	// retry missing device
+	}
+}
+
+
+6/7/21 installing Visual Studio 2019 on Windows 7 SP 1 (without automatic updates)
+
+vc_community.exe tries to install the same package five times and then fails with
+"Unable to download installation files. Check your internet connection and try again."
+The issue is stale certificates. Two need to be obtained from the Microsoft PKI 
+(Public Key Infrastructure) page, and properly installed in trusted root.
+
+The URL is: https://www.microsoft.com/pkiops/docs/repository.htm
+And the two certificates needed are:
+Microsoft Root Certificate Authority 2010
+Microsoft Root Certificate Authority 2011
+
+Download the .crt files, and for each, right click and install using Wizard,
+but do NOT take the default, select "Place all certificates in the following store"
+and then press the Browse button and select: Trusted Root Certification Authorities.
+If you install them anywhere else it won't work.
+
+When you install VS2019, you need to include the Windows 10 SDK and MFC.
+
+6/7/21 compilation errors and warnings in Visual Studio 2019
+
+optional: set warning level to 3, or suppress these warnings:
+4838;4840;4456;4457;4477;4302;4311;4312
+
+These are new warnings:
+4838	conversion from 'type_1' to 'type_2' requires a narrowing conversion
+4840	non-portable use of class 'type' as an argument to a variadic function
+4456	declaration of 'identifier' hides previous local declaration
+4457	declaration of 'identifier' hides function parameter
+4477	function' : format string 'string' requires an argument of type 'type', but variadic argument number has type 'type'
+
+These warnings were off prior to VS2015:
+4302	'conversion' : truncation from 'type 1' to 'type 2'
+4311	'variable' : pointer truncation from 'type' to 'type'
+4312	'operation' : conversion from 'type1' to 'type2' of greater size
+
+
+whitespace between concatenated string literals is now mandatory!
+requires three fixes in Options.cpp:
+		{_T(#group)_T("_")_T(#name), IDS_OPT_NAME_##group##_##name, IDS_OPT_DESC_##group##_##name, \
+
+S.B.
+		{_T(#group) _T("_") _T(#name), IDS_OPT_NAME_##group##_##name, IDS_OPT_DESC_##group##_##name, \
+and similar for these:
+		RdReg(_T("Options\\") _T(#group), _T(#name), m_##group##_##name);
+
+		WrReg(_T("Options\\") _T(#group), _T(#name), m_##group##_##name);
+
+7/21/21 Allow conversion of a dockable pane to an MDI child
+
+in CMainFrame ctor:
+m_bCanConvertControlBarToMDIChild = true;
+It's a bad idea because the bar isn't restored properly next time you run the app.
+It can lead to the app reporting the bar as visible when it's not in fact visible.
+
+7/21/21 Customizing tabbed pane's context menu
+
+A group of tabbed panes doesn't call CMyDockablePane::OnBeforeShowPaneMenu,
+as an individual pane does. That's because the group is a CTabbedPane that's
+created dynamically by CreateTabbedPane. To fix this, derive a class from 
+CTabbedPane and ensure that every dockable pane calls SetTabbedPaneRTC 
+with the derived class. It's not all that useful, but here's how do it.
+
+class CMyTabbedPane : public CTabbedPane
+{
+	DECLARE_SERIAL(CMyTabbedPane)
+protected:
+	enum {
+		ID_TOGGLE_MAXIMIZE = -1110	// don't conflict with IDs in CPane::OnShowControlBarMenu
+	};
+	virtual BOOL OnBeforeShowPaneMenu(CMenu& menu);
+	virtual BOOL OnAfterShowPaneMenu(int nMenuResult);
+};
+
+IMPLEMENT_SERIAL(CMyTabbedPane, CTabbedPane, 1)
+
+BOOL CMyTabbedPane::OnBeforeShowPaneMenu(CMenu& menu)
+{
+	CPaneFrameWnd*	pParent = GetParentMiniFrame();
+	if (pParent != NULL) {	// if parent mini-frame is valid (implies floating)
+		int	nItemStrId;
+		if (pParent->IsZoomed())	// if parent window is maximized
+			nItemStrId = IDS_SC_RESTORE;
+		else	// parent window isn't maximized
+			nItemStrId = IDS_SC_MAXIMIZE;
+		menu.AppendMenu(MF_STRING, static_cast<UINT>(ID_TOGGLE_MAXIMIZE), LDS(nItemStrId));
+	}
+	return CTabbedPane::OnBeforeShowPaneMenu(menu);
+}
+
+BOOL CMyTabbedPane::OnAfterShowPaneMenu(int nMenuResult)
+{
+	if (nMenuResult == ID_TOGGLE_MAXIMIZE) {	// if toggling maximize
+		CPaneFrameWnd*	pParent = GetParentMiniFrame();
+		if (pParent != NULL) {	// if parent mini-frame is valid (implies floating)
+			int	nShowCmd;
+			if (pParent->IsZoomed())	// if parent window is maximized
+				nShowCmd = SW_RESTORE;
+			else	// parent window isn't maximized
+				nShowCmd = SW_MAXIMIZE;
+			pParent->ShowWindow(nShowCmd);	// maximize or restore parent window
+		}
+	}
+	return CTabbedPane::OnAfterShowPaneMenu(nMenuResult);
+}
+
+int CMyDockablePane::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+	if (CDockablePane::OnCreate(lpCreateStruct) == -1)
+		return -1;
+	SetTabbedPaneRTC(RUNTIME_CLASS(CMyTabbedPane));	// so CreateTabbedPane uses derived class
+	return 0;
+}

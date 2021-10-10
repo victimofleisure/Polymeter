@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Maximum track length</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Maximum track length</h3>
+
+<p>A track can have up to millions of steps, depending on its <a href="../Views/Track_View/Track_Grid.htm#Track_Quant">Quant</a>. Track length is limited by several factors. The hard limit is that the product of the track's <a href="../Views/Track_View/Track_Grid.htm#Track_Length">Length</a> (in steps) and Quant (in ticks) can't exceed 2 billion. Attempting to exceed this limit causes the error message "Track too long." But well before reaching this upper limit, you'll experience problems with the track's steps displaying incorrectly or not at all. This occurs because the width of the Steps view is similarly limited, to around 100 million pixels.
+
+<p>For example, a Length of 1 million and a Quant of 30 gives a product of 30 million ticks, which seems doable. But how wide are the steps in pixels? At the default zoom, they're 20 pixels wide, necessitating a view width of 20 million pixels, which is already quite large. Zooming in a few times makes the track too wide, causing incorrect display. This may be addressed in a future release, but meanwhile it's recommended to keep tracks under a million steps, or even less if unusually large Quant values are used.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

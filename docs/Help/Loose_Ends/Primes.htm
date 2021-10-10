@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Primes</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Primes</h3>
+
+<p>A prime number is an integer that has no factors other than itself and one, in other words an integer that's evenly divisible only by itself and one. The first ten prime numbers are 1, 2, 3, 5, 7, 11, 13, 17, 19, and 23, after which the series continues infinitely.
+
+<p>Each prime has an extended "family" of integer multiples, for example the 5 family contains 5, 10, 15, 20, 25, and so on. An integer can be the product of two or more primes, e.g. 35 is a multiple of both 7 and 5. In such cases, by convention, the largest factor wins, so 35 belongs to the 7 family.
+
+<p>Two integers are <em>relatively prime</em> if they have no common prime factors. Consider 6 and 35: neither is prime, but they have no common factors other than one (6 = 2 &times 3, 35 = 5 &times 7), thus they are relatively prime.
+
+<p>Juxtaposing prime or relatively prime loop lengths results in a "slipping" effect that's characteristic of <a href="../Concepts/Polymeter.htm">polymeter</a>. The loops shift phase relative to each other, hence the effect is known as <em>phasing</em>. Shown below is the juxtaposition of two loops, having lengths of 3 and 5 respectively. Notice that each time the 3 loop restarts, the 5 loop is in a different position, and vice versa; this behavior is typical of phasing.
+
+<p style="font-family:monospace"><u>1</u>23<u>1</u>23<u>1</u>23<u>1</u>23<u>1</u>23<u>1</u>
+<br><u>1</u>2345<u>1</u>2345<u>1</u>2345<u>1</u></p>
+
+<p>After 15 steps, the two loops restart at the same time, and their combined cycle begins again. The point at which the loops are back in phase is called their <a href="../Concepts/Convergences.htm">convergence</a>. If both lengths are prime, as in this case, the distance to the convergence is easy to calculate: it's simply the product of the lengths (3 &times; 5 = 15). For harder cases, use the <a href="../Menus/Tools/Convergences_Calculator.htm">Convergences Calculator</a>.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

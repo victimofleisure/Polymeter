@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Shift</title>
+<link rel=stylesheet href="../../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Shift</h3>
+
+<p>These commands shift tracks left or right by some number of steps. Empty steps are shifted in as needed. Shifting is a lossy, destructive operation. Lossless shifting, also known as rotation, is also supported, via the <a href="../../Menus/Track/Rotate.htm">rotate</a> commands.
+
+<p>If a <a href="../../Views/Track_View/Step_Selection.htm">step selection</a> exists, it takes priority. In this case only the selected steps are shifted. Otherwise the command operates on the <a href="../../Views/Track_View/Track_Selection.htm">selected tracks</a> in their entirety.
+
+<a name="Shift_Left"><p><b>Shift Left</b></a>
+<p>This command shifts tracks one step to the left. The leftmost step is lost, and an empty step is shifted in on the right to replace it.
+
+<a name="Shift_Right"><p><b>Shift Right</b></a>
+<p>This command shifts tracks one step to the right. The rightmost step is lost, and an empty step is shifted in on the left to replace it.
+
+<a name="Shift_Steps"><p><b>Shift Steps</b></a>
+<p>This command shifts tracks by any amount. A dialog is displayed, prompting you for the desired shift in steps. The shift can be positive (right) or negative (left). After you press OK, the tracks are then shifted by the specified number of steps. Empty steps are shifted in as needed.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

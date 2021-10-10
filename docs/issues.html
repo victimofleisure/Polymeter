@@ -1,0 +1,4121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Polymeter Issues</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="author" content="Chris Korda">
+<meta name="description" content="Free polymeter MIDI sequencer software for music that's in multiple prime meters simultaneously.">
+<link href="./style.css" rel=stylesheet title=default type=text/css>
+</head>
+<body>
+<div class=menu>
+<a href="./index.html"><img src="./images/polymeter-32.png" width="32" height="32" alt="Polymeter MIDI sequencer icon"></a>
+<div class=title>Polymeter</div><p>
+<div class=menuitem0 title="Overview"><a href="./index.html">Home</a></div>
+<div class=menuitem0 title="Screenshots"><a href="./screenshots.html">Screenshots</a></div>
+<div class=menuitem0 title="Features"><a href="./features.html">Features</a></div>
+<div class=menuitem0 title="Download"><a href="./download.html">Download</a></div>
+<div class=menuitem0 title="Documentation"><a href="./helpframe.html">Documentation</a></div>
+<div class=menuitem0 title="Development"><a href="./development.html">Development</a></div>
+<div class=menuitem0 title="FAQ"><a href="./faq.html">FAQ</a></div>
+<div class=menuitem0 title="Gallery"><a href="./gallery/bongo.html">Gallery</a></div>
+<div class=menuitem0 title="Videos"><a href="./videos.html">Videos</a></div>
+<div class=menuitem0 title="Forums"><a href="./forums.html">Forums</a></div>
+<div class=menuitem0 title="Links"><a href="./links.html">Links</a></div>
+<div class=menuitem0 title="Contact"><a href="./contact.html">Contact</a></div><br>
+<div class=images><br><a href="https://translate.google.com/translate?sl=auto&tl=es&js=y&prev=_t&hl=en&ie=UTF-8&u=https%3A%2F%2Fvictimofleisure.github.io%2FPolymeter%2F&edit-text="><img src="./images/translate.png" width="100" height="33" alt="Translate button"></a></div>
+</div>
+<div id=widebody>
+<!--  content goes HERE  -->
+<TABLE BORDER=1 CELLPADDING=2 CELLSPACING=0>
+<TR VALIGN=TOP>
+<TD>id</TD>
+<TD>open</TD>
+<TD>close</TD>
+<TD>type</TD>
+<TD>description</TD>
+<TD>rev</TD>
+<TD>user</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>189</TD>
+<TD>09/07/18</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>song edits sometimes leave fragments, especially if zoom is changed while editing</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>272</TD>
+<TD>01/26/19</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>resizing docked pane via mouse drag leaves artifacts in Windows 10; affects stock VS2012 app too</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>273</TD>
+<TD>01/26/19</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>resizing docked pane via mouse drag leaves gap between scroll bar and pane, when two or more documents exist; affects stock VS2012 app too</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>290</TD>
+<TD>03/31/19</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>in piano bar, notes that are active when velocity color is enabled have incorrect key colors</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>297</TD>
+<TD>11/04/19</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>GraphViz times out if modulation is too complicated; introduce variable timeout option?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>298</TD>
+<TD>11/12/19</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>MDI tab control sometimes disappears after opening or closing document; hard to reproduce</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>303</TD>
+<TD>12/03/19</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>playback lags behind UI by one tick (0.5 seconds) at tempo of 1 with GS Synth (see phase test)</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>304</TD>
+<TD>12/10/19</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>steps aren't drawn when track's quant is very large (e.g. 30720) and step view is zoomed in</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>312</TD>
+<TD>02/18/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>song CSV export omits tempo map, because CMidiFile::ReadTracks doesn't support tempo map</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>319</TD>
+<TD>03/04/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>in step view, very long tracks aren't displayed when zoomed in; caused by scroll view's 32-bit limitations</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>348</TD>
+<TD>04/07/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>stopping sequencer occasionally causes MIDI error 65 (still playing); happens every time in Mac Wine</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>349</TD>
+<TD>04/07/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>attempting to open MIDI device that's already open gives misleading out of memory error message</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>352</TD>
+<TD>04/10/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>sequencer is taking too long; probable cause is time-critical winmm thread preempting sequencer callback</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>358</TD>
+<TD>04/17/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>Time To Repeat command can take too long, stalling UI; show progress bar or use worker thread</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>376</TD>
+<TD>06/20/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>undoing modulation edit doesn't restore modulation selection; can't without also restoring track selection and Show Differences state</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>392</TD>
+<TD>07/10/20</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>Alt key commands don't work mode while cursor is hovering over MDI tab; affects stock VS2012 app too</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>1</TD>
+<TD>03/22/18</TD>
+<TD>03/25/18</TD>
+<TD>done</TD>
+<TD>tempo change while playing</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>2</TD>
+<TD>03/22/18</TD>
+<TD>03/25/18</TD>
+<TD>done</TD>
+<TD>PPQ change; only while stopped for now</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>3</TD>
+<TD>03/22/18</TD>
+<TD>03/25/18</TD>
+<TD>done</TD>
+<TD>add velocity to test app</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>4</TD>
+<TD>03/22/18</TD>
+<TD>03/26/18</TD>
+<TD>done</TD>
+<TD>add document read/write</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>5</TD>
+<TD>03/22/18</TD>
+<TD>03/26/18</TD>
+<TD>done</TD>
+<TD>add undo</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>24</TD>
+<TD>03/25/18</TD>
+<TD>03/26/18</TD>
+<TD>done</TD>
+<TD>prevent PPQ change while playing</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>6</TD>
+<TD>03/22/18</TD>
+<TD>03/27/18</TD>
+<TD>done</TD>
+<TD>test critical section in callback; no discernable impact</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>25</TD>
+<TD>03/25/18</TD>
+<TD>03/27/18</TD>
+<TD>done</TD>
+<TD>select MIDI device; options dialog</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>26</TD>
+<TD>03/25/18</TD>
+<TD>03/27/18</TD>
+<TD>done</TD>
+<TD>specify latency; options dialog</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>27</TD>
+<TD>03/25/18</TD>
+<TD>03/27/18</TD>
+<TD>done</TD>
+<TD>track names</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>28</TD>
+<TD>03/25/18</TD>
+<TD>03/30/18</TD>
+<TD>done</TD>
+<TD>drag reorder tracks</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>29</TD>
+<TD>03/25/18</TD>
+<TD>03/30/18</TD>
+<TD>done</TD>
+<TD>insert or delete tracks</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>30</TD>
+<TD>03/25/18</TD>
+<TD>03/30/18</TD>
+<TD>done</TD>
+<TD>undo test</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>31</TD>
+<TD>03/25/18</TD>
+<TD>04/01/18</TD>
+<TD>done</TD>
+<TD>icon</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>32</TD>
+<TD>03/25/18</TD>
+<TD>04/02/18</TD>
+<TD>done</TD>
+<TD>check for updates</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>33</TD>
+<TD>03/25/18</TD>
+<TD>04/09/18</TD>
+<TD>done</TD>
+<TD>duration offset</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>34</TD>
+<TD>03/25/18</TD>
+<TD>04/10/18</TD>
+<TD>done</TD>
+<TD>optionally show current position within each track</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>35</TD>
+<TD>03/25/18</TD>
+<TD>04/11/18</TD>
+<TD>done</TD>
+<TD>multi-track property editing</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>36</TD>
+<TD>03/25/18</TD>
+<TD>04/12/18</TD>
+<TD>done</TD>
+<TD>go to position, both while stopped and while playing</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>37</TD>
+<TD>03/25/18</TD>
+<TD>04/12/18</TD>
+<TD>done</TD>
+<TD>negative song position</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>38</TD>
+<TD>03/25/18</TD>
+<TD>04/13/18</TD>
+<TD>done</TD>
+<TD>export MIDI file</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>55</TD>
+<TD>04/13/18</TD>
+<TD>04/14/18</TD>
+<TD>done</TD>
+<TD>time to repeat; compute how long it takes for selected tracks to repeat, in beats and time</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>39</TD>
+<TD>03/25/18</TD>
+<TD>04/16/18</TD>
+<TD>done</TD>
+<TD>channels bar; one row per channel with columns for bank, patch, volume, and pan</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>57</TD>
+<TD>04/15/18</TD>
+<TD>04/16/18</TD>
+<TD>done</TD>
+<TD>input MIDI device; optionally pass input events through to output device via sequencer</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>60</TD>
+<TD>04/17/18</TD>
+<TD>04/17/18</TD>
+<TD>done</TD>
+<TD>handle MIDI device changes</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>61</TD>
+<TD>04/17/18</TD>
+<TD>04/18/18</TD>
+<TD>done</TD>
+<TD>if MIDI device change occurs while options dialog is active, dialog's device drop lists should update</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>58</TD>
+<TD>04/16/18</TD>
+<TD>04/19/18</TD>
+<TD>done</TD>
+<TD>grid control must support numeric edit with spin control</TD>
+<TD>0.0.00.043</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>40</TD>
+<TD>03/25/18</TD>
+<TD>04/24/18</TD>
+<TD>done</TD>
+<TD>unlimited track length</TD>
+<TD>0.0.01.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>41</TD>
+<TD>03/25/18</TD>
+<TD>04/26/18</TD>
+<TD>done</TD>
+<TD>make step width proportional to track's quantization</TD>
+<TD>0.0.01.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>64</TD>
+<TD>04/25/18</TD>
+<TD>04/26/18</TD>
+<TD>done</TD>
+<TD>multi-channel edit in channels bar</TD>
+<TD>0.0.01.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>62</TD>
+<TD>04/24/18</TD>
+<TD>04/27/18</TD>
+<TD>done</TD>
+<TD>add ruler numbered in beats to step view</TD>
+<TD>0.0.01.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>66</TD>
+<TD>04/26/18</TD>
+<TD>04/28/18</TD>
+<TD>done</TD>
+<TD>sort tracks; multi-level sorting</TD>
+<TD>0.0.01.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>42</TD>
+<TD>03/25/18</TD>
+<TD>04/30/18</TD>
+<TD>done</TD>
+<TD>add support for tied notes</TD>
+<TD>0.0.02.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>63</TD>
+<TD>04/24/18</TD>
+<TD>04/30/18</TD>
+<TD>done</TD>
+<TD>indicate beats in step view, via vertical grid lines</TD>
+<TD>0.0.02.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>43</TD>
+<TD>03/25/18</TD>
+<TD>05/02/18</TD>
+<TD>done</TD>
+<TD>in step view, add rectangular selection of steps via right-click and drag</TD>
+<TD>0.0.02.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>44</TD>
+<TD>03/25/18</TD>
+<TD>05/02/18</TD>
+<TD>done</TD>
+<TD>in step view, add track selection via right-click and vertical drag over mute buttons</TD>
+<TD>0.0.02.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>68</TD>
+<TD>05/03/18</TD>
+<TD>05/04/18</TD>
+<TD>done</TD>
+<TD>tied notes with swing overlapping due to incorrect durations; fixed</TD>
+<TD>0.0.03.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>45</TD>
+<TD>03/25/18</TD>
+<TD>05/06/18</TD>
+<TD>done</TD>
+<TD>step editing commands; cut, copy, paste, insert, delete</TD>
+<TD>0.0.04.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>69</TD>
+<TD>05/03/18</TD>
+<TD>05/08/18</TD>
+<TD>done</TD>
+<TD>add error check for product of track's length and quant exceeding range of 32-bit integer</TD>
+<TD>0.0.04.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>54</TD>
+<TD>04/12/18</TD>
+<TD>05/10/18</TD>
+<TD>done</TD>
+<TD>synchronize vertical scrolling between track and step views</TD>
+<TD>0.0.04.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>67</TD>
+<TD>04/27/18</TD>
+<TD>05/10/18</TD>
+<TD>done</TD>
+<TD>step view's ruler shouldn't scroll vertically off screen</TD>
+<TD>0.0.04.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>7</TD>
+<TD>03/22/18</TD>
+<TD>05/12/18</TD>
+<TD>done</TD>
+<TD>velocity editing</TD>
+<TD>0.0.05.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>75</TD>
+<TD>05/13/18</TD>
+<TD>05/13/18</TD>
+<TD>done</TD>
+<TD>contracting step selection over narrow steps leaves one pixel wide vertical strips of unerased selection</TD>
+<TD>0.0.05.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>8</TD>
+<TD>03/22/18</TD>
+<TD>05/15/18</TD>
+<TD>done</TD>
+<TD>controller tracks</TD>
+<TD>0.0.05.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>70</TD>
+<TD>05/10/18</TD>
+<TD>05/15/18</TD>
+<TD>done</TD>
+<TD>implement next/previous pane (F6)</TD>
+<TD>0.0.05.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>76</TD>
+<TD>05/15/18</TD>
+<TD>05/15/18</TD>
+<TD>done</TD>
+<TD>mute buttons shouldn't scroll horizontally off screen</TD>
+<TD>0.0.05.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>77</TD>
+<TD>05/15/18</TD>
+<TD>05/15/18</TD>
+<TD>done</TD>
+<TD>step selection is invisible if show current position option is false</TD>
+<TD>0.0.05.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>78</TD>
+<TD>05/15/18</TD>
+<TD>05/16/18</TD>
+<TD>done</TD>
+<TD>reverse selected tracks or steps</TD>
+<TD>0.0.05.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>46</TD>
+<TD>03/25/18</TD>
+<TD>05/17/18</TD>
+<TD>done</TD>
+<TD>rotate selected tracks or steps left or right</TD>
+<TD>0.0.05.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>71</TD>
+<TD>05/10/18</TD>
+<TD>05/17/18</TD>
+<TD>done</TD>
+<TD>tempo nudge; implement spin button control for floating-point properties</TD>
+<TD>0.0.05.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>79</TD>
+<TD>05/15/18</TD>
+<TD>05/18/18</TD>
+<TD>done</TD>
+<TD>other functions besides line for controller fill: sine, triangle</TD>
+<TD>0.0.05.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>80</TD>
+<TD>05/15/18</TD>
+<TD>05/19/18</TD>
+<TD>done</TD>
+<TD>Ben reports missing MIDI devices, VirtualMIDISynth has blank name; wrong struct size in GetDeviceNames</TD>
+<TD>0.0.05.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>85</TD>
+<TD>05/19/18</TD>
+<TD>05/19/18</TD>
+<TD>done</TD>
+<TD>muting track doesn't update current position color</TD>
+<TD>0.0.05.004</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>86</TD>
+<TD>05/19/18</TD>
+<TD>05/20/18</TD>
+<TD>done</TD>
+<TD>make zoom step size adjustable</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>87</TD>
+<TD>05/19/18</TD>
+<TD>05/20/18</TD>
+<TD>done</TD>
+<TD>add tie notes mode; instead of always defaulting to untied note, let user specify the default</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>59</TD>
+<TD>04/16/18</TD>
+<TD>05/21/18</TD>
+<TD>done</TD>
+<TD>optionally show note names instead of numbers in note edit controls</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>84</TD>
+<TD>05/18/18</TD>
+<TD>05/21/18</TD>
+<TD>done</TD>
+<TD>track view occasionally paints incorrectly when scrolled via step view; clamp scroll range</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>88</TD>
+<TD>05/19/18</TD>
+<TD>05/21/18</TD>
+<TD>done</TD>
+<TD>key signature</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>89</TD>
+<TD>05/19/18</TD>
+<TD>05/21/18</TD>
+<TD>done</TD>
+<TD>transpose command</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>90</TD>
+<TD>05/19/18</TD>
+<TD>05/21/18</TD>
+<TD>done</TD>
+<TD>zoom should persist in document</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>47</TD>
+<TD>03/25/18</TD>
+<TD>05/22/18</TD>
+<TD>done</TD>
+<TD>record live arrangement of song, consisting of dubs (track mute/unmute)</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>91</TD>
+<TD>05/19/18</TD>
+<TD>05/22/18</TD>
+<TD>done</TD>
+<TD>show current position in time as well as beats and ticks</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>101</TD>
+<TD>05/22/18</TD>
+<TD>05/22/18</TD>
+<TD>done</TD>
+<TD>auto-repeated arrow key in tempo edit property sets tempo to one instead of incrementing</TD>
+<TD>0.0.06.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>104</TD>
+<TD>05/24/18</TD>
+<TD>05/24/18</TD>
+<TD>done</TD>
+<TD>deleting current step crashes app</TD>
+<TD>0.0.06.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>107</TD>
+<TD>06/02/18</TD>
+<TD>06/02/18</TD>
+<TD>done</TD>
+<TD>in a popup edit control, left-clicking up/down spin button or pressing up/down arrow key crashes in x64; bad cast</TD>
+<TD>0.0.06.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>108</TD>
+<TD>06/02/18</TD>
+<TD>06/02/18</TD>
+<TD>done</TD>
+<TD>mute buttons aren't same height as steps and tracks</TD>
+<TD>0.0.06.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>48</TD>
+<TD>03/25/18</TD>
+<TD>06/04/18</TD>
+<TD>done</TD>
+<TD>song view: edit arrangement on timeline</TD>
+<TD>0.0.07.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>65</TD>
+<TD>04/25/18</TD>
+<TD>06/04/18</TD>
+<TD>done</TD>
+<TD>popup numeric edit's spin control should affect sequencer output immediately</TD>
+<TD>0.0.07.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>81</TD>
+<TD>05/15/18</TD>
+<TD>06/04/18</TD>
+<TD>done</TD>
+<TD>shift selected tracks or steps left or right</TD>
+<TD>0.0.07.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>105</TD>
+<TD>05/30/18</TD>
+<TD>06/04/18</TD>
+<TD>done</TD>
+<TD>add Track and Transport menus</TD>
+<TD>0.0.07.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>94</TD>
+<TD>05/20/18</TD>
+<TD>06/05/18</TD>
+<TD>done</TD>
+<TD>track view's column widths and order should persist</TD>
+<TD>0.0.07.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>95</TD>
+<TD>05/20/18</TD>
+<TD>06/05/18</TD>
+<TD>done</TD>
+<TD>channels bar's column widths and order should persist</TD>
+<TD>0.0.07.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>96</TD>
+<TD>05/20/18</TD>
+<TD>06/05/18</TD>
+<TD>done</TD>
+<TD>splitter bar positions should be same for all documents and should persist</TD>
+<TD>0.0.07.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>109</TD>
+<TD>06/02/18</TD>
+<TD>06/05/18</TD>
+<TD>done</TD>
+<TD>optionally show General MIDI patch and drum names instead of numbers (in Channels and Track views)</TD>
+<TD>0.0.07.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>115</TD>
+<TD>06/05/18</TD>
+<TD>06/05/18</TD>
+<TD>done</TD>
+<TD>property lists weren't showing tooltips for partially visible property names, for all non-numeric property types</TD>
+<TD>0.0.07.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>118</TD>
+<TD>06/07/18</TD>
+<TD>06/07/18</TD>
+<TD>done</TD>
+<TD>after recording, playback prompts to replace recording</TD>
+<TD>0.0.07.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>92</TD>
+<TD>05/19/18</TD>
+<TD>06/09/18</TD>
+<TD>done</TD>
+<TD>toggling should behave consistently in step, mute, and song views</TD>
+<TD>0.0.08.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>102</TD>
+<TD>05/23/18</TD>
+<TD>06/09/18</TD>
+<TD>done</TD>
+<TD>track solo</TD>
+<TD>0.0.08.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>116</TD>
+<TD>06/05/18</TD>
+<TD>06/12/18</TD>
+<TD>done</TD>
+<TD>cut, copy, paste, delete and insert in song view</TD>
+<TD>0.0.08.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>9</TD>
+<TD>03/22/18</TD>
+<TD>06/18/18</TD>
+<TD>done</TD>
+<TD>presets bar</TD>
+<TD>0.0.08.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>120</TD>
+<TD>06/13/18</TD>
+<TD>06/18/18</TD>
+<TD>done</TD>
+<TD>page up / down and home / end keys should behave as usual in step and song views</TD>
+<TD>0.0.08.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>121</TD>
+<TD>06/18/18</TD>
+<TD>06/18/18</TD>
+<TD>done</TD>
+<TD>track view columns disappear due to zero column widths</TD>
+<TD>0.0.08.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>10</TD>
+<TD>03/22/18</TD>
+<TD>06/20/18</TD>
+<TD>done</TD>
+<TD>parts bar for grouping tracks; part members display as a single entity in live view and mute/unmute together</TD>
+<TD>0.0.09.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>122</TD>
+<TD>06/20/18</TD>
+<TD>06/20/18</TD>
+<TD>done</TD>
+<TD>on opening doc, step or song view size is initially incorrect if doc was saved with any zoom other than one</TD>
+<TD>0.0.09.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>123</TD>
+<TD>06/20/18</TD>
+<TD>06/20/18</TD>
+<TD>done</TD>
+<TD>full screen mode</TD>
+<TD>0.0.09.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>11</TD>
+<TD>03/22/18</TD>
+<TD>06/21/18</TD>
+<TD>done</TD>
+<TD>live performance view (similar to Jock) with presets and grouped parts</TD>
+<TD>0.0.09.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>97</TD>
+<TD>05/21/18</TD>
+<TD>06/23/18</TD>
+<TD>done</TD>
+<TD>song meter</TD>
+<TD>0.0.09.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>12</TD>
+<TD>03/22/18</TD>
+<TD>07/03/18</TD>
+<TD>done</TD>
+<TD>inter-track modulation; modulation types are mute, note, velocity, and duration</TD>
+<TD>0.0.09.004</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>125</TD>
+<TD>07/04/18</TD>
+<TD>07/04/18</TD>
+<TD>done</TD>
+<TD>in step view, fix inconsistent tie notes behavior</TD>
+<TD>0.0.10.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>126</TD>
+<TD>07/05/18</TD>
+<TD>07/05/18</TD>
+<TD>done</TD>
+<TD>fix negative song position displaying incorrectly</TD>
+<TD>0.0.10.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>127</TD>
+<TD>07/05/18</TD>
+<TD>07/05/18</TD>
+<TD>done</TD>
+<TD>add song start position to master properties</TD>
+<TD>0.0.10.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>128</TD>
+<TD>07/05/18</TD>
+<TD>07/05/18</TD>
+<TD>done</TD>
+<TD>optionally show descriptions in properties bar</TD>
+<TD>0.0.10.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>103</TD>
+<TD>05/23/18</TD>
+<TD>07/06/18</TD>
+<TD>done</TD>
+<TD>default note velocity should be configurable</TD>
+<TD>0.0.10.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>110</TD>
+<TD>06/04/18</TD>
+<TD>07/06/18</TD>
+<TD>done</TD>
+<TD>optionally always record dubs and automatically save recording to new file name</TD>
+<TD>0.0.10.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>129</TD>
+<TD>07/05/18</TD>
+<TD>07/06/18</TD>
+<TD>done</TD>
+<TD>in live view, add solo button</TD>
+<TD>0.0.10.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>130</TD>
+<TD>07/05/18</TD>
+<TD>07/06/18</TD>
+<TD>done</TD>
+<TD>in live view, show elapsed time</TD>
+<TD>0.0.10.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>131</TD>
+<TD>07/05/18</TD>
+<TD>07/06/18</TD>
+<TD>done</TD>
+<TD>add command to update a part from current track selection</TD>
+<TD>0.0.10.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>136</TD>
+<TD>07/06/18</TD>
+<TD>07/06/18</TD>
+<TD>done</TD>
+<TD>undo update preset deletes preset instead of restoring its state</TD>
+<TD>0.0.10.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>137</TD>
+<TD>07/06/18</TD>
+<TD>07/07/18</TD>
+<TD>done</TD>
+<TD>in track view, for non-note track types, using note edit control's spin buttons unexpectedly shows note names</TD>
+<TD>0.0.10.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>132</TD>
+<TD>07/05/18</TD>
+<TD>07/09/18</TD>
+<TD>done</TD>
+<TD>in live view, indicate current position within each part</TD>
+<TD>0.0.11.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>138</TD>
+<TD>07/06/18</TD>
+<TD>07/09/18</TD>
+<TD>done</TD>
+<TD>in live view, make font height configurable</TD>
+<TD>0.0.11.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>140</TD>
+<TD>07/08/18</TD>
+<TD>07/09/18</TD>
+<TD>done</TD>
+<TD>view type should persist in document</TD>
+<TD>0.0.11.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>141</TD>
+<TD>07/08/18</TD>
+<TD>07/09/18</TD>
+<TD>done</TD>
+<TD>on showing live view, select current preset if applicable</TD>
+<TD>0.0.11.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>143</TD>
+<TD>07/09/18</TD>
+<TD>07/10/18</TD>
+<TD>done</TD>
+<TD>in live view, make list widths adjustable via dragging their headers; also make widths persistent</TD>
+<TD>0.0.11.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>142</TD>
+<TD>07/08/18</TD>
+<TD>07/11/18</TD>
+<TD>done</TD>
+<TD>in live view, solo button should indicate mouse hover</TD>
+<TD>0.0.11.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>144</TD>
+<TD>07/09/18</TD>
+<TD>07/11/18</TD>
+<TD>done</TD>
+<TD>in live view, part progress bars should scroll with parts list</TD>
+<TD>0.0.11.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>145</TD>
+<TD>07/13/18</TD>
+<TD>07/13/18</TD>
+<TD>done</TD>
+<TD>right-click in step view ruler causes spurious step selection</TD>
+<TD>0.0.12.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>146</TD>
+<TD>07/13/18</TD>
+<TD>07/16/18</TD>
+<TD>done</TD>
+<TD>right-click in live view's progress bars should clear selection</TD>
+<TD>0.0.12.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>150</TD>
+<TD>07/16/18</TD>
+<TD>07/16/18</TD>
+<TD>done</TD>
+<TD>in live view, apply preset was setting document modified flag</TD>
+<TD>0.0.12.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>13</TD>
+<TD>03/22/18</TD>
+<TD>07/17/18</TD>
+<TD>done</TD>
+<TD>overdubbing; add dubs to an existing recording</TD>
+<TD>0.0.12.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>151</TD>
+<TD>07/17/18</TD>
+<TD>07/17/18</TD>
+<TD>done</TD>
+<TD>prevent self-modulation by excluding selected tracks from drop list of potential modulators; avoids error message</TD>
+<TD>0.0.12.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>152</TD>
+<TD>07/17/18</TD>
+<TD>07/17/18</TD>
+<TD>done</TD>
+<TD>in modulation bar, don't notify undoable edit unless modulator has actually changed</TD>
+<TD>0.0.12.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>153</TD>
+<TD>07/17/18</TD>
+<TD>07/17/18</TD>
+<TD>done</TD>
+<TD>in song view, undoing dubs past end of song doesn't update view correctly; affects recording too</TD>
+<TD>0.0.12.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>154</TD>
+<TD>07/17/18</TD>
+<TD>07/18/18</TD>
+<TD>done</TD>
+<TD>add shift and rotate by specified number of steps</TD>
+<TD>0.0.12.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>155</TD>
+<TD>07/17/18</TD>
+<TD>07/19/18</TD>
+<TD>done</TD>
+<TD>select all should work in song view</TD>
+<TD>0.0.12.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>159</TD>
+<TD>07/21/18</TD>
+<TD>07/21/18</TD>
+<TD>done</TD>
+<TD>mouse wheel occasionally overflows stack; delegate by calling handler directly instead of sending message</TD>
+<TD>0.0.12.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>160</TD>
+<TD>07/21/18</TD>
+<TD>07/21/18</TD>
+<TD>done</TD>
+<TD>add sort by track ID; useful for putting tracks back in their original order after sorting by something else</TD>
+<TD>0.0.12.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>139</TD>
+<TD>07/07/18</TD>
+<TD>07/27/18</TD>
+<TD>done</TD>
+<TD>record indicator in live view</TD>
+<TD>0.0.12.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>161</TD>
+<TD>07/23/18</TD>
+<TD>07/27/18</TD>
+<TD>done</TD>
+<TD>live view should include tempo, key signature and meter</TD>
+<TD>0.0.12.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>169</TD>
+<TD>07/27/18</TD>
+<TD>07/27/18</TD>
+<TD>done</TD>
+<TD>in live view, if parts are selected, clicking in presets list should toggle parts instead of applying preset</TD>
+<TD>0.0.12.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>170</TD>
+<TD>07/27/18</TD>
+<TD>07/27/18</TD>
+<TD>done</TD>
+<TD>pitch bend gets stuck when switching between presets; cache MIDI parameter values instead of part values</TD>
+<TD>0.0.12.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>175</TD>
+<TD>07/28/18</TD>
+<TD>07/28/18</TD>
+<TD>done</TD>
+<TD>closing all open documents at once (via Windows dialog, select all, Close Window(s) button) crashes app</TD>
+<TD>0.0.12.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>163</TD>
+<TD>07/26/18</TD>
+<TD>07/31/18</TD>
+<TD>done</TD>
+<TD>step view should indicate track selection</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>171</TD>
+<TD>07/27/18</TD>
+<TD>07/31/18</TD>
+<TD>done</TD>
+<TD>velocity tooltip disappears if cursor leaves window while dragging velocity bar; must call Popup</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>172</TD>
+<TD>07/27/18</TD>
+<TD>07/31/18</TD>
+<TD>done</TD>
+<TD>velocity tooltip occasionally disappears when velocity bar is left-clicked; calling Popup seems to fix it</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>178</TD>
+<TD>07/30/18</TD>
+<TD>07/31/18</TD>
+<TD>done</TD>
+<TD>in CLiveView::OnUpdate view type case, no need to test view type, it's already filtered outside switch</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>179</TD>
+<TD>07/30/18</TD>
+<TD>07/31/18</TD>
+<TD>done</TD>
+<TD>step view grid should draw each row's top grid line all at once instead of step by step</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>173</TD>
+<TD>07/27/18</TD>
+<TD>08/01/18</TD>
+<TD>done</TD>
+<TD>velocity pane close button, in slack area left of velocities</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>176</TD>
+<TD>07/28/18</TD>
+<TD>08/02/18</TD>
+<TD>done</TD>
+<TD>on entering live view, parts must have consistent mute states, otherwise part toggling behaves unexpectedly</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>177</TD>
+<TD>07/29/18</TD>
+<TD>08/05/18</TD>
+<TD>done</TD>
+<TD>after adding tracks to a part, presets can give unexpected results; make preset mutes consistent in live view</TD>
+<TD>0.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>147</TD>
+<TD>07/14/18</TD>
+<TD>09/14/18</TD>
+<TD>done</TD>
+<TD>allow up to four mute modulators; temporary workaround until unlimited modulation is implemented</TD>
+<TD>0.0.14.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>195</TD>
+<TD>09/18/18</TD>
+<TD>09/18/18</TD>
+<TD>done</TD>
+<TD>empty parts cause assertion in CTrackGroupArray::Read, due to null buffer pointer passed to GetBinary</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>196</TD>
+<TD>09/18/18</TD>
+<TD>09/18/18</TD>
+<TD>done</TD>
+<TD>song MIDI export that includes dubbing and merges tracks by channel</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>197</TD>
+<TD>09/18/18</TD>
+<TD>09/18/18</TD>
+<TD>done</TD>
+<TD>modulation dubbing in export differs from playback, due to different latency; use playback latency in export</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>191</TD>
+<TD>09/14/18</TD>
+<TD>09/19/18</TD>
+<TD>done</TD>
+<TD>left-clicking in step view's ruler should move current position, just as with song view</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>98</TD>
+<TD>05/21/18</TD>
+<TD>09/20/18</TD>
+<TD>done</TD>
+<TD>step and song view rulers should show beat:tick, or measure:beat:tick if meter is specified</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>199</TD>
+<TD>09/19/18</TD>
+<TD>09/21/18</TD>
+<TD>done</TD>
+<TD>in step and song views, arrows should scroll similarly to list control; Ctrl for by page, else by line</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>187</TD>
+<TD>09/06/18</TD>
+<TD>09/24/18</TD>
+<TD>done</TD>
+<TD>in live view, if list is too long to fit, auto-resizing unexpectedly creates horizontal scroll bar</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>188</TD>
+<TD>09/06/18</TD>
+<TD>09/24/18</TD>
+<TD>done</TD>
+<TD>in live view, left-click in list must set focus, else mouse wheel doesn't scroll list</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>174</TD>
+<TD>07/27/18</TD>
+<TD>09/25/18</TD>
+<TD>done</TD>
+<TD>velocity pane's tooltips should optionally show signed values; left-clicking origin label toggles signed mode</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>202</TD>
+<TD>09/26/18</TD>
+<TD>09/26/18</TD>
+<TD>done</TD>
+<TD>in properties grid enum fields, typing a value doesn't updated target property; override PushChar</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>203</TD>
+<TD>09/26/18</TD>
+<TD>09/26/18</TD>
+<TD>done</TD>
+<TD>in properties grid, for properties with options, Alt+Down should drop options list</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>148</TD>
+<TD>07/14/18</TD>
+<TD>10/01/18</TD>
+<TD>done</TD>
+<TD>unlimited modulation, allowing track to have any number of modulators of each type</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>204</TD>
+<TD>10/01/18</TD>
+<TD>10/01/18</TD>
+<TD>done</TD>
+<TD>double-click in parts or presets lists but not on an item crashes</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>192</TD>
+<TD>09/17/18</TD>
+<TD>10/02/18</TD>
+<TD>done</TD>
+<TD>add deselect command</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>185</TD>
+<TD>08/29/18</TD>
+<TD>10/03/18</TD>
+<TD>done</TD>
+<TD>status bar hints for Parts and Presets context menus</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>186</TD>
+<TD>08/29/18</TD>
+<TD>10/03/18</TD>
+<TD>done</TD>
+<TD>add Tracks command to Parts bar context menu; select tracks belonging to selected parts</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>157</TD>
+<TD>07/19/18</TD>
+<TD>10/08/18</TD>
+<TD>done</TD>
+<TD>stretch command; scale track length by percentage, stretching or squashing contents as needed</TD>
+<TD>0.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>206</TD>
+<TD>10/09/18</TD>
+<TD>10/10/18</TD>
+<TD>done</TD>
+<TD>Apply Preset command doesn't update live view</TD>
+<TD>0.0.15.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>207</TD>
+<TD>10/10/18</TD>
+<TD>10/10/18</TD>
+<TD>done</TD>
+<TD>song MIDI export shouldn't contain empty tracks; only output tracks for channels that are actually used</TD>
+<TD>0.0.15.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>208</TD>
+<TD>10/10/18</TD>
+<TD>10/10/18</TD>
+<TD>done</TD>
+<TD>arrow keys don't navigate main menus if scroll view has focus</TD>
+<TD>0.0.15.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>133</TD>
+<TD>07/05/18</TD>
+<TD>10/15/18</TD>
+<TD>done</TD>
+<TD>step fill command</TD>
+<TD>0.0.16.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>210</TD>
+<TD>10/17/18</TD>
+<TD>10/17/18</TD>
+<TD>done</TD>
+<TD>velocity command has no effect if offset is negative</TD>
+<TD>0.0.16.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>205</TD>
+<TD>10/03/18</TD>
+<TD>10/18/18</TD>
+<TD>done</TD>
+<TD>import MIDI file, converting notes to tracks</TD>
+<TD>0.0.16.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>211</TD>
+<TD>10/17/18</TD>
+<TD>10/20/18</TD>
+<TD>done</TD>
+<TD>in track, mute, and song views, dragging selection beyond window boundaries should scroll view</TD>
+<TD>0.0.16.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>134</TD>
+<TD>07/05/18</TD>
+<TD>10/25/18</TD>
+<TD>done</TD>
+<TD>pasting modulated tracks often behaves unexpectedly; in clipboard, modulators must be unique IDs not indices</TD>
+<TD>0.0.16.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>216</TD>
+<TD>10/25/18</TD>
+<TD>10/25/18</TD>
+<TD>done</TD>
+<TD>pasting tracks doesn't update song view size</TD>
+<TD>0.0.16.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>214</TD>
+<TD>10/22/18</TD>
+<TD>10/27/18</TD>
+<TD>done</TD>
+<TD>refactor so that document's rectangular step selection is always current; step view shouldn't handle commands</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>213</TD>
+<TD>10/21/18</TD>
+<TD>10/29/18</TD>
+<TD>done</TD>
+<TD>change modulation type or source for multiple modulations at once</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>215</TD>
+<TD>10/23/18</TD>
+<TD>10/29/18</TD>
+<TD>done</TD>
+<TD>velocity origin state should be the same in all open documents and should persist</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>218</TD>
+<TD>10/28/18</TD>
+<TD>10/29/18</TD>
+<TD>done</TD>
+<TD>song view's grid should indicate track selection, as in step view</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>182</TD>
+<TD>07/31/18</TD>
+<TD>11/01/18</TD>
+<TD>done</TD>
+<TD>invalid step selection error occurs unexpectedly if drag overshoots to the right of track's last step</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>219</TD>
+<TD>11/01/18</TD>
+<TD>11/01/18</TD>
+<TD>done</TD>
+<TD>capture isn't released if window loses focus during drag</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>158</TD>
+<TD>07/20/18</TD>
+<TD>11/05/18</TD>
+<TD>done</TD>
+<TD>add command to offset note/step velocities; should work for controller and modulator tracks too</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>180</TD>
+<TD>07/30/18</TD>
+<TD>11/05/18</TD>
+<TD>done</TD>
+<TD>add command to scale step values by a multiplier; boosts track velocity without altering dynamics</TD>
+<TD>0.0.16.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>220</TD>
+<TD>11/05/18</TD>
+<TD>11/06/18</TD>
+<TD>done</TD>
+<TD>velocity command's clipping check gives false positives for step selection</TD>
+<TD>0.0.16.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>221</TD>
+<TD>11/06/18</TD>
+<TD>11/06/18</TD>
+<TD>done</TD>
+<TD>velocity range can be incorrect for non-note tracks, due to not masking off step's tie bit</TD>
+<TD>0.0.16.004</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>222</TD>
+<TD>11/07/18</TD>
+<TD>11/07/18</TD>
+<TD>done</TD>
+<TD>crash when opening existing document via command line or explorer; song view has null step view pointer</TD>
+<TD>0.0.16.005</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>223</TD>
+<TD>11/08/18</TD>
+<TD>11/08/18</TD>
+<TD>done</TD>
+<TD>zooming song view all the way out causes current position marker to slip</TD>
+<TD>0.0.17.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>190</TD>
+<TD>09/08/18</TD>
+<TD>11/12/18</TD>
+<TD>done</TD>
+<TD>add song view command to move current position to next or previous dub; Shift + left/right arrows</TD>
+<TD>0.0.17.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>224</TD>
+<TD>11/11/18</TD>
+<TD>11/12/18</TD>
+<TD>done</TD>
+<TD>add song view command to center current position within view by scrolling as needed; Shift + Home</TD>
+<TD>0.0.17.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>225</TD>
+<TD>11/11/18</TD>
+<TD>11/12/18</TD>
+<TD>done</TD>
+<TD>go to position command should automatically center current position if it's too close to either side</TD>
+<TD>0.0.17.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>14</TD>
+<TD>03/22/18</TD>
+<TD>11/20/18</TD>
+<TD>done</TD>
+<TD>recursive mute modulation (modulation of modulation); only for tracks of modulator type, to avoid incompatibility</TD>
+<TD>0.0.17.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>226</TD>
+<TD>11/19/18</TD>
+<TD>11/20/18</TD>
+<TD>done</TD>
+<TD>fill command doesn't handle non-rectangular selection properly; compute max track length</TD>
+<TD>0.0.17.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>243</TD>
+<TD>11/28/18</TD>
+<TD>11/28/18</TD>
+<TD>done</TD>
+<TD>group overlap warning should include option to resolve conflict by reassigning conflicted tracks</TD>
+<TD>0.0.18.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>111</TD>
+<TD>06/04/18</TD>
+<TD>12/02/18</TD>
+<TD>done</TD>
+<TD>record live MIDI input to tracks; useful for inputting melodies and chords, uses import quantization option</TD>
+<TD>0.0.18.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>245</TD>
+<TD>12/02/18</TD>
+<TD>12/02/18</TD>
+<TD>done</TD>
+<TD>MIDI import mangles event times, due to integer division where floating point division was intended</TD>
+<TD>0.0.18.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>209</TD>
+<TD>10/11/18</TD>
+<TD>12/07/18</TD>
+<TD>done</TD>
+<TD>dubs made while song position is negative aren't recorded, because minimum dub time is zero</TD>
+<TD>0.0.18.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>244</TD>
+<TD>11/28/18</TD>
+<TD>12/07/18</TD>
+<TD>done</TD>
+<TD>presets bar's Apply command should add a dub when recording</TD>
+<TD>0.0.18.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>247</TD>
+<TD>12/06/18</TD>
+<TD>12/07/18</TD>
+<TD>done</TD>
+<TD>song view was restoring step view's zoom; typo in song view's OnInitialUpdate</TD>
+<TD>0.0.18.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>248</TD>
+<TD>12/06/18</TD>
+<TD>12/07/18</TD>
+<TD>done</TD>
+<TD>track MIDI export outputs empty modulator tracks</TD>
+<TD>0.0.18.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>250</TD>
+<TD>12/07/18</TD>
+<TD>12/07/18</TD>
+<TD>done</TD>
+<TD>MIDI export has subtle differences between debug and release versions; export must reset cached parameters</TD>
+<TD>0.0.18.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>251</TD>
+<TD>12/07/18</TD>
+<TD>12/10/18</TD>
+<TD>done</TD>
+<TD>song view should show negative time when start position is less than zero</TD>
+<TD>0.0.19.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>258</TD>
+<TD>12/10/18</TD>
+<TD>12/10/18</TD>
+<TD>done</TD>
+<TD>adding or removing tracks or changing PPQ doesn't update song view</TD>
+<TD>0.0.19.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>241</TD>
+<TD>11/27/18</TD>
+<TD>12/11/18</TD>
+<TD>done</TD>
+<TD>note window that limits modulated note to an octave; make start note a modulation target</TD>
+<TD>0.0.19.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>252</TD>
+<TD>12/08/18</TD>
+<TD>12/12/18</TD>
+<TD>done</TD>
+<TD>position modulation; rotates target track by one or more steps</TD>
+<TD>0.0.19.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>253</TD>
+<TD>12/08/18</TD>
+<TD>12/13/18</TD>
+<TD>done</TD>
+<TD>import steps from CSV file; export steps from selected tracks to CSV file</TD>
+<TD>0.0.19.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>227</TD>
+<TD>11/19/18</TD>
+<TD>12/14/18</TD>
+<TD>done</TD>
+<TD>add clipboard support to modulation bar, so modulations can be copied from one track to another</TD>
+<TD>0.0.19.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>228</TD>
+<TD>11/19/18</TD>
+<TD>12/14/18</TD>
+<TD>done</TD>
+<TD>sort modulations by type or source, via context menu</TD>
+<TD>0.0.19.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>117</TD>
+<TD>06/05/18</TD>
+<TD>12/15/18</TD>
+<TD>done</TD>
+<TD>show tooltips for truncated items in all grid controls, via label tip extended style</TD>
+<TD>0.0.19.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>246</TD>
+<TD>12/05/18</TD>
+<TD>12/15/18</TD>
+<TD>done</TD>
+<TD>find and replace for track names</TD>
+<TD>0.0.19.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>254</TD>
+<TD>12/08/18</TD>
+<TD>12/15/18</TD>
+<TD>done</TD>
+<TD>import modulations from CSV file, replacing existing modulations; export modulations to CSV file</TD>
+<TD>0.0.19.001</TD>
+<TD>Benoit</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>260</TD>
+<TD>12/14/18</TD>
+<TD>12/15/18</TD>
+<TD>done</TD>
+<TD>Ctrl + Tab should switch between documents; grid control must check for control key</TD>
+<TD>0.0.19.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>261</TD>
+<TD>12/15/18</TD>
+<TD>12/15/18</TD>
+<TD>done</TD>
+<TD>show unnamed tracks in live view to avoid confusion</TD>
+<TD>0.0.19.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>255</TD>
+<TD>12/08/18</TD>
+<TD>12/19/18</TD>
+<TD>done</TD>
+<TD>import tracks from CSV file; require column header, handle quotes, validate ranges; also export tracks</TD>
+<TD>0.0.20.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>262</TD>
+<TD>12/18/18</TD>
+<TD>12/19/18</TD>
+<TD>done</TD>
+<TD>refactor track property info to centralize it and support property ranges and validation</TD>
+<TD>0.0.20.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>229</TD>
+<TD>11/19/18</TD>
+<TD>01/03/19</TD>
+<TD>done</TD>
+<TD>MIDI output bar that displays sequencer output, with filtering options</TD>
+<TD>0.0.21.000</TD>
+<TD>Benoit</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>230</TD>
+<TD>11/19/18</TD>
+<TD>01/09/19</TD>
+<TD>done</TD>
+<TD>command that resets window layout to defaults; useful for dual monitor setups</TD>
+<TD>0.0.21.001</TD>
+<TD>Benoit</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>231</TD>
+<TD>11/19/18</TD>
+<TD>01/09/19</TD>
+<TD>done</TD>
+<TD>piano bar that displays sequencer output notes on a piano keyboard, with filtering</TD>
+<TD>0.0.21.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>263</TD>
+<TD>01/11/19</TD>
+<TD>01/12/19</TD>
+<TD>done</TD>
+<TD>recursive position modulation; essential for position modulation of mute masks</TD>
+<TD>0.0.22.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>265</TD>
+<TD>01/13/19</TD>
+<TD>01/14/19</TD>
+<TD>done</TD>
+<TD>piano bar's note names should match key signature</TD>
+<TD>0.0.22.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>266</TD>
+<TD>01/14/19</TD>
+<TD>01/15/19</TD>
+<TD>done</TD>
+<TD>insert track from piano bar, via context menu or Ctrl + left-click</TD>
+<TD>0.0.22.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>267</TD>
+<TD>01/15/19</TD>
+<TD>01/16/19</TD>
+<TD>done</TD>
+<TD>import MIDI file, import steps, and record to tracks corrupt track indices due to lack of track array transaction</TD>
+<TD>0.0.22.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>268</TD>
+<TD>01/16/19</TD>
+<TD>01/17/19</TD>
+<TD>done</TD>
+<TD>in recursive modulation, handle mute by continuing instead of aborting</TD>
+<TD>0.0.22.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>270</TD>
+<TD>01/20/19</TD>
+<TD>01/21/19</TD>
+<TD>done</TD>
+<TD>modulation bar paste doesn't set document modified flag</TD>
+<TD>0.0.23.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>271</TD>
+<TD>01/20/19</TD>
+<TD>01/21/19</TD>
+<TD>done</TD>
+<TD>modulation bar doesn't update all views consistently</TD>
+<TD>0.0.23.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>242</TD>
+<TD>11/27/18</TD>
+<TD>01/28/19</TD>
+<TD>done</TD>
+<TD>modulation graph, via GraphViz; output SVG and display in IWebBrowser control</TD>
+<TD>0.0.23.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>256</TD>
+<TD>12/09/18</TD>
+<TD>01/28/19</TD>
+<TD>done</TD>
+<TD>right click on track list header divider unexpectedly shows view context menu</TD>
+<TD>0.0.23.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>275</TD>
+<TD>01/28/19</TD>
+<TD>01/29/19</TD>
+<TD>done</TD>
+<TD>add MIDI input bar</TD>
+<TD>0.0.23.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>276</TD>
+<TD>01/29/19</TD>
+<TD>01/29/19</TD>
+<TD>done</TD>
+<TD>MIDI through from input device to sequencer should exclude system status messages</TD>
+<TD>0.0.23.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>277</TD>
+<TD>01/30/19</TD>
+<TD>01/30/19</TD>
+<TD>done</TD>
+<TD>graph doesn't fill window if system text size is greater than 100%</TD>
+<TD>0.0.23.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>278</TD>
+<TD>01/31/19</TD>
+<TD>01/31/19</TD>
+<TD>done</TD>
+<TD>if no active document, graph should be empty</TD>
+<TD>0.0.23.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>279</TD>
+<TD>02/01/19</TD>
+<TD>02/01/19</TD>
+<TD>done</TD>
+<TD>piano bar keys get stuck on if MIDI input device sends note off instead of note on with zero velocity</TD>
+<TD>0.0.23.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>280</TD>
+<TD>02/01/19</TD>
+<TD>02/01/19</TD>
+<TD>done</TD>
+<TD>left-clicking piano key should optionally output note if sequencer is playing; add output channel to context menu</TD>
+<TD>0.0.23.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>249</TD>
+<TD>12/06/18</TD>
+<TD>02/04/19</TD>
+<TD>done</TD>
+<TD>offset command that shifts selected tracks in time by adding a value to their offsets</TD>
+<TD>0.0.23.004</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>282</TD>
+<TD>02/06/19</TD>
+<TD>02/07/19</TD>
+<TD>done</TD>
+<TD>exported MIDI file may have incorrect initial track mute state; chase to start position, not minimum dub time</TD>
+<TD>0.0.23.004</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>283</TD>
+<TD>02/10/19</TD>
+<TD>02/12/19</TD>
+<TD>done</TD>
+<TD>add tools export of song MIDI data to CSV file; useful for debugging and comparing mixes</TD>
+<TD>0.0.23.005</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>284</TD>
+<TD>02/14/19</TD>
+<TD>02/14/19</TD>
+<TD>done</TD>
+<TD>refactor export to avoid track mode special cases; export one MIDI file track per channel in all cases</TD>
+<TD>0.0.23.006</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>281</TD>
+<TD>02/04/19</TD>
+<TD>02/26/19</TD>
+<TD>done</TD>
+<TD>optionally prevent overlapping instances of the same note on the same channel</TD>
+<TD>0.0.24.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>287</TD>
+<TD>03/19/19</TD>
+<TD>03/22/19</TD>
+<TD>done</TD>
+<TD>add invert command to track menu</TD>
+<TD>0.0.25.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>288</TD>
+<TD>03/21/19</TD>
+<TD>03/22/19</TD>
+<TD>done</TD>
+<TD>left-clicking within mute pane but not on mute button should toggle selected mutes</TD>
+<TD>0.0.25.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>291</TD>
+<TD>05/09/19</TD>
+<TD>05/09/19</TD>
+<TD>done</TD>
+<TD>in velocity pane, bars with value of 64 don't quite line up with origin; rounding issue</TD>
+<TD>0.0.25.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>293</TD>
+<TD>05/22/19</TD>
+<TD>05/30/19</TD>
+<TD>done</TD>
+<TD>piano bar shows tempo changes; ignore events with non-zero MSB</TD>
+<TD>0.0.25.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>162</TD>
+<TD>07/23/18</TD>
+<TD>07/10/19</TD>
+<TD>done</TD>
+<TD>if key is Gb, note edit spin control drops an octave when Cb is incremented or decremented; error in ScanNoteName</TD>
+<TD>0.0.25.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>292</TD>
+<TD>05/12/19</TD>
+<TD>09/11/19</TD>
+<TD>done</TD>
+<TD>support programmed tempo change and tempo map via tempo track type and tempo modulation</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>295</TD>
+<TD>06/10/19</TD>
+<TD>11/15/19</TD>
+<TD>done</TD>
+<TD>add unsigned / signed option to velocity scaling</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>302</TD>
+<TD>11/20/19</TD>
+<TD>11/20/19</TD>
+<TD>done</TD>
+<TD>switching from track view to song view sometimes leaves one cell upainted; simplifying OnDraw seems to fix it</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>305</TD>
+<TD>12/12/19</TD>
+<TD>12/14/19</TD>
+<TD>done</TD>
+<TD>add phase bar</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>306</TD>
+<TD>12/26/19</TD>
+<TD>12/26/19</TD>
+<TD>done</TD>
+<TD>zooming, scrolling or resizing song view erases portion of current position marker below last track</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>307</TD>
+<TD>12/26/19</TD>
+<TD>12/26/19</TD>
+<TD>done</TD>
+<TD>Time to Repeat function should report fractional ticks instead of extending cycle to beat boundary</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>308</TD>
+<TD>12/26/19</TD>
+<TD>12/26/19</TD>
+<TD>done</TD>
+<TD>Time to Repeat function should report years if needed</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>309</TD>
+<TD>12/26/19</TD>
+<TD>12/28/19</TD>
+<TD>done</TD>
+<TD>in song view, last track's bottom outline isn't drawn</TD>
+<TD>0.0.26.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>314</TD>
+<TD>02/19/20</TD>
+<TD>02/19/20</TD>
+<TD>done</TD>
+<TD>tracks longer than 2047 steps are truncated; overload GetProfileString and increase buffer from 4K to 64K</TD>
+<TD>0.0.26.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>315</TD>
+<TD>02/19/20</TD>
+<TD>02/25/20</TD>
+<TD>done</TD>
+<TD>GetPrivateProfileString limits tracks to 32767 steps and 255 dubs; avoid it by implementing INI file read/write</TD>
+<TD>0.0.27.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>112</TD>
+<TD>06/04/18</TD>
+<TD>02/29/20</TD>
+<TD>done</TD>
+<TD>optionally record live MIDI input</TD>
+<TD>0.0.27.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>316</TD>
+<TD>02/27/20</TD>
+<TD>02/29/20</TD>
+<TD>done</TD>
+<TD>crash can occur if MIDI input is received while closing app; main frame OnDestroy must close input device</TD>
+<TD>0.0.27.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>317</TD>
+<TD>02/27/20</TD>
+<TD>02/29/20</TD>
+<TD>done</TD>
+<TD>exporting MIDI file modifies track mutes (without updating UI); save and restore track mutes</TD>
+<TD>0.0.27.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>313</TD>
+<TD>02/18/20</TD>
+<TD>03/02/20</TD>
+<TD>done</TD>
+<TD>GetChannelUsage should exclude tempo tracks</TD>
+<TD>0.0.27.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>311</TD>
+<TD>01/27/20</TD>
+<TD>03/04/20</TD>
+<TD>done</TD>
+<TD>add convergence calculator</TD>
+<TD>0.0.27.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>320</TD>
+<TD>03/04/20</TD>
+<TD>03/04/20</TD>
+<TD>done</TD>
+<TD>editing of recorded input is half-baked so remove it for now</TD>
+<TD>0.0.27.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>321</TD>
+<TD>03/06/20</TD>
+<TD>03/06/20</TD>
+<TD>done</TD>
+<TD>in track view, shift-selecting via keyboard fails at bottom and top of list; delay item changed notification</TD>
+<TD>0.0.27.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>299</TD>
+<TD>11/12/19</TD>
+<TD>03/16/20</TD>
+<TD>done</TD>
+<TD>add scale, index and voicing modulation</TD>
+<TD>0.0.28.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>300</TD>
+<TD>11/12/19</TD>
+<TD>03/17/20</TD>
+<TD>done</TD>
+<TD>step values grid view, to allow numeric editing of step values for selected tracks</TD>
+<TD>0.0.28.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>322</TD>
+<TD>03/17/20</TD>
+<TD>03/17/20</TD>
+<TD>done</TD>
+<TD>changing track's Quant doesn't update its current position in Step view</TD>
+<TD>0.0.28.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>49</TD>
+<TD>03/25/18</TD>
+<TD>03/20/20</TD>
+<TD>done</TD>
+<TD>MIDI mapping; both translation and mapping to track parameters, with manual assignment and learn mode</TD>
+<TD>0.0.28.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>323</TD>
+<TD>03/26/20</TD>
+<TD>03/27/20</TD>
+<TD>done</TD>
+<TD>after disconnecting an input device and connecting a different input device, no MIDI input is received</TD>
+<TD>0.0.28.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>324</TD>
+<TD>03/27/20</TD>
+<TD>03/27/20</TD>
+<TD>done</TD>
+<TD>mapping for input event that don't have a control parameter (wheel etc.) only works if control parameter is zero</TD>
+<TD>0.0.28.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>325</TD>
+<TD>03/27/20</TD>
+<TD>03/28/20</TD>
+<TD>done</TD>
+<TD>MIDI learn should support multiple selection; learn multiple mappings all at once</TD>
+<TD>0.0.28.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>326</TD>
+<TD>03/27/20</TD>
+<TD>03/28/20</TD>
+<TD>done</TD>
+<TD>add mapping command Map Tracks that creates mappings for all selected tracks</TD>
+<TD>0.0.28.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>327</TD>
+<TD>03/28/20</TD>
+<TD>03/28/20</TD>
+<TD>done</TD>
+<TD>undoing MIDI learn doesn't always restore control parameter</TD>
+<TD>0.0.28.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>328</TD>
+<TD>03/30/20</TD>
+<TD>03/30/20</TD>
+<TD>done</TD>
+<TD>voicing should sort scale into ascending order, so that index zero corresponds to lowest scale tone</TD>
+<TD>0.0.28.004</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>329</TD>
+<TD>03/30/20</TD>
+<TD>03/30/20</TD>
+<TD>done</TD>
+<TD>index modulation was being converted from unsigned to signed twice, causing incorrect results</TD>
+<TD>0.0.28.004</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>330</TD>
+<TD>03/30/20</TD>
+<TD>03/31/20</TD>
+<TD>done</TD>
+<TD>Step Values bar should account for key signature when displaying notes</TD>
+<TD>0.0.28.005</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>332</TD>
+<TD>03/31/20</TD>
+<TD>04/01/20</TD>
+<TD>done</TD>
+<TD>export phase diagram to image sequence</TD>
+<TD>0.0.29.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>333</TD>
+<TD>04/01/20</TD>
+<TD>04/01/20</TD>
+<TD>done</TD>
+<TD>refactor context menu handling</TD>
+<TD>0.0.29.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>334</TD>
+<TD>04/02/20</TD>
+<TD>04/03/20</TD>
+<TD>done</TD>
+<TD>time shown in status bar should include milliseconds</TD>
+<TD>0.0.29.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>335</TD>
+<TD>04/02/20</TD>
+<TD>04/03/20</TD>
+<TD>done</TD>
+<TD>go to position command should have option to specify time in h:mm:ss.millis</TD>
+<TD>0.0.29.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>336</TD>
+<TD>04/03/20</TD>
+<TD>04/04/20</TD>
+<TD>done</TD>
+<TD>add chord modulation type; dynamic subset of indices into current scale</TD>
+<TD>0.0.29.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>310</TD>
+<TD>12/26/19</TD>
+<TD>04/05/20</TD>
+<TD>done</TD>
+<TD>in song track name view, draw bottom gridline</TD>
+<TD>0.0.29.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>338</TD>
+<TD>04/04/20</TD>
+<TD>04/05/20</TD>
+<TD>done</TD>
+<TD>allow mapping to target track steps, with output control parameter selecting which step</TD>
+<TD>0.0.29.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>337</TD>
+<TD>04/03/20</TD>
+<TD>04/06/20</TD>
+<TD>done</TD>
+<TD>Time to Repeat command crashes or fails in OSX via WineBottler; culprit is GetNumberFormatEx, emulate it</TD>
+<TD>0.0.29.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>339</TD>
+<TD>04/04/20</TD>
+<TD>04/06/20</TD>
+<TD>done</TD>
+<TD>show error message if sequencer callback takes too long</TD>
+<TD>0.0.29.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>341</TD>
+<TD>04/05/20</TD>
+<TD>04/06/20</TD>
+<TD>done</TD>
+<TD>import steps should handle note names, with or without octaves</TD>
+<TD>0.0.29.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>342</TD>
+<TD>04/05/20</TD>
+<TD>04/06/20</TD>
+<TD>done</TD>
+<TD>Step Values bar should support copying text to clipboard</TD>
+<TD>0.0.29.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>345</TD>
+<TD>04/06/20</TD>
+<TD>04/06/20</TD>
+<TD>done</TD>
+<TD>editing tempo should update current time in status bar</TD>
+<TD>0.0.29.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>343</TD>
+<TD>04/05/20</TD>
+<TD>04/07/20</TD>
+<TD>done</TD>
+<TD>Step Values bar should support standard editing commands, provided step selection is rectangular</TD>
+<TD>0.0.29.002</TD>
+<TD>Benoit</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>346</TD>
+<TD>04/06/20</TD>
+<TD>04/14/20</TD>
+<TD>done</TD>
+<TD>optionally output MIDI clock and start / stop / song position</TD>
+<TD>0.0.30.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>56</TD>
+<TD>04/14/18</TD>
+<TD>04/15/20</TD>
+<TD>done</TD>
+<TD>Insert Group command in modulation dialog; list boxes instead of drop lists, select multiple sources at once</TD>
+<TD>0.0.30.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>357</TD>
+<TD>04/16/20</TD>
+<TD>04/17/20</TD>
+<TD>done</TD>
+<TD>Step Values bar should support editing multiple steps at once, within a contiguous range of selected items</TD>
+<TD>0.0.30.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>368</TD>
+<TD>05/13/20</TD>
+<TD>04/17/20</TD>
+<TD>done</TD>
+<TD>assign custom colors to tracks</TD>
+<TD>0.0.30.000</TD>
+<TD>Benoit</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>359</TD>
+<TD>04/17/20</TD>
+<TD>04/18/20</TD>
+<TD>done</TD>
+<TD>optimize add track events; don't iterate modulators for tracks that are muted or are modulators</TD>
+<TD>0.0.30.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>361</TD>
+<TD>04/22/20</TD>
+<TD>04/22/20</TD>
+<TD>done</TD>
+<TD>if Modulations bar's grid is empty, modulation sort is disabled; only disable if there's no track selection</TD>
+<TD>0.0.30.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>362</TD>
+<TD>04/22/20</TD>
+<TD>04/30/20</TD>
+<TD>done</TD>
+<TD>in Step Values bar, multi-step edit doesn't work if value is unchanged but differs from other steps in the range</TD>
+<TD>0.0.30.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>363</TD>
+<TD>04/30/20</TD>
+<TD>04/30/20</TD>
+<TD>done</TD>
+<TD>list scrolling gets stuck if app loses focus during item drag; list's CancelDrag must kill scroll timer</TD>
+<TD>0.0.30.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>364</TD>
+<TD>04/30/20</TD>
+<TD>04/30/20</TD>
+<TD>done</TD>
+<TD>Window menu's Windows command displays incorrect status bar hint; fix EnableWindowsDialog params</TD>
+<TD>0.0.30.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>365</TD>
+<TD>05/05/20</TD>
+<TD>05/06/20</TD>
+<TD>done</TD>
+<TD>receiving MIDI input that's mapped to track properties stalls UI during playback; main frame's OnUpdate was resetting view timer for every update</TD>
+<TD>0.0.30.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>369</TD>
+<TD>05/22/20</TD>
+<TD>05/23/20</TD>
+<TD>done</TD>
+<TD>negative voicing value should raise voice an octave up instead of lowering it an octave down</TD>
+<TD>0.0.31.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>366</TD>
+<TD>05/06/20</TD>
+<TD>06/03/20</TD>
+<TD>done</TD>
+<TD>undo record doesn't restore input events</TD>
+<TD>0.0.31.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>367</TD>
+<TD>05/06/20</TD>
+<TD>06/03/20</TD>
+<TD>done</TD>
+<TD>add option to record live input only, preserving dubs</TD>
+<TD>0.0.31.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>15</TD>
+<TD>03/22/18</TD>
+<TD>06/08/20</TD>
+<TD>done</TD>
+<TD>offset modulation; feasible by delaying notes until subsequent callbacks</TD>
+<TD>0.0.31.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>360</TD>
+<TD>04/17/20</TD>
+<TD>06/10/20</TD>
+<TD>done</TD>
+<TD>Convergences commands can take too long, stalling UI; show progress bar</TD>
+<TD>0.0.31.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>371</TD>
+<TD>06/08/20</TD>
+<TD>06/13/20</TD>
+<TD>done</TD>
+<TD>add Transport menu commands that find next or previous convergence</TD>
+<TD>0.0.31.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>350</TD>
+<TD>04/07/20</TD>
+<TD>06/17/20</TD>
+<TD>done</TD>
+<TD>properties bar should derive from custom dockable pane</TD>
+<TD>0.0.31.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>16</TD>
+<TD>03/22/18</TD>
+<TD>06/18/20</TD>
+<TD>done</TD>
+<TD>add help IDs and resolve help ID conflicts</TD>
+<TD>0.0.31.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>374</TD>
+<TD>06/17/20</TD>
+<TD>06/18/20</TD>
+<TD>done</TD>
+<TD>Graph bar's context menu doesn't show status hints for layout types; missing case in OnMenuSelect</TD>
+<TD>0.0.31.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>375</TD>
+<TD>06/18/20</TD>
+<TD>06/18/20</TD>
+<TD>done</TD>
+<TD>if floating dock bar has focus when help is invoked, help browser ducks behind app's main window; specify topmost extended style in help project file</TD>
+<TD>0.0.31.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>377</TD>
+<TD>06/20/20</TD>
+<TD>06/22/20</TD>
+<TD>done</TD>
+<TD>deleting modulation(s) doesn't deselect corresponding list items</TD>
+<TD>0.0.31.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>378</TD>
+<TD>06/20/20</TD>
+<TD>06/22/20</TD>
+<TD>done</TD>
+<TD>inserting or pasting modulations doesn't select corresponding list items</TD>
+<TD>0.0.31.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>379</TD>
+<TD>06/20/20</TD>
+<TD>06/22/20</TD>
+<TD>done</TD>
+<TD>pasting or inserting modulations while Show Differences is enabled can insert spurious all-zero mute modulations</TD>
+<TD>0.0.31.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>380</TD>
+<TD>06/24/20</TD>
+<TD>06/24/20</TD>
+<TD>done</TD>
+<TD>non-client portion of floating dock bar isn't painted when restoring app from minimize; need RedrawAllMiniFrames</TD>
+<TD>0.0.31.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>274</TD>
+<TD>01/26/19</TD>
+<TD>06/27/20</TD>
+<TD>done</TD>
+<TD>Docking Windows submenu doesn't show hints in status bar; handle in OnSetMessageString</TD>
+<TD>0.0.32.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>381</TD>
+<TD>06/24/20</TD>
+<TD>06/28/20</TD>
+<TD>done</TD>
+<TD>track parameter mappings should work even when sequencer is stopped or there's no output device</TD>
+<TD>0.0.32.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>382</TD>
+<TD>06/24/20</TD>
+<TD>06/30/20</TD>
+<TD>done</TD>
+<TD>MIDI import and Record Tracks commands should handle other channel messages instead of only notes</TD>
+<TD>0.0.32.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>385</TD>
+<TD>07/04/20</TD>
+<TD>07/04/20</TD>
+<TD>done</TD>
+<TD>add Windows menu commands for new horizontal / vertical tab group</TD>
+<TD>0.0.32.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>386</TD>
+<TD>07/04/20</TD>
+<TD>07/05/20</TD>
+<TD>done</TD>
+<TD>undoing/redoing track name, length, quant or mute while showing live view doesn't update live view</TD>
+<TD>0.0.32.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>387</TD>
+<TD>07/04/20</TD>
+<TD>07/05/20</TD>
+<TD>done</TD>
+<TD>if multiple documents are shown via tab groups, playing but inactive document doesn't update its views</TD>
+<TD>0.0.32.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>388</TD>
+<TD>07/04/20</TD>
+<TD>07/05/20</TD>
+<TD>done</TD>
+<TD>undoing/redoing tempo edit doesn't update song time in status bar</TD>
+<TD>0.0.32.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>389</TD>
+<TD>07/04/20</TD>
+<TD>07/09/20</TD>
+<TD>done</TD>
+<TD>if document has multiple windows, changing view type affects first window instead of active one</TD>
+<TD>0.0.32.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>390</TD>
+<TD>07/09/20</TD>
+<TD>07/09/20</TD>
+<TD>done</TD>
+<TD>live view actions don't update Phase bar's mute states when playback is stopped</TD>
+<TD>0.0.32.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>391</TD>
+<TD>07/09/20</TD>
+<TD>07/09/20</TD>
+<TD>done</TD>
+<TD>solo command doesn't update Step Values bar's mute states when playback is stopped</TD>
+<TD>0.0.32.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>384</TD>
+<TD>07/04/20</TD>
+<TD>07/17/20</TD>
+<TD>done</TD>
+<TD>if document has multiple windows with different view types, song mode causes mute state inconsistencies</TD>
+<TD>0.0.32.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>397</TD>
+<TD>07/28/20</TD>
+<TD>07/28/20</TD>
+<TD>done</TD>
+<TD>add custom option to transport convergence size submenu</TD>
+<TD>0.0.33.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>394</TD>
+<TD>07/21/20</TD>
+<TD>07/29/20</TD>
+<TD>done</TD>
+<TD>standardize status hints, e.g. View/Velocities</TD>
+<TD>0.0.33.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>398</TD>
+<TD>07/28/20</TD>
+<TD>07/29/20</TD>
+<TD>done</TD>
+<TD>song view should show tool tips for truncated track names</TD>
+<TD>0.0.33.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>399</TD>
+<TD>07/31/20</TD>
+<TD>07/31/20</TD>
+<TD>done</TD>
+<TD>changing length or quant of multiple tracks at once doesn't update Phase bar</TD>
+<TD>0.0.33.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>400</TD>
+<TD>08/03/20</TD>
+<TD>08/04/20</TD>
+<TD>done</TD>
+<TD>next/previous pane command is unreliable; child frame doesn't always receive the command</TD>
+<TD>0.0.33.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>404</TD>
+<TD>08/22/20</TD>
+<TD>09/07/20</TD>
+<TD>done</TD>
+<TD>add preset and part mapping, so presets can be selected and parts can be muted/unmuted via MIDI message</TD>
+<TD>0.0.34.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>406</TD>
+<TD>09/07/20</TD>
+<TD>09/07/20</TD>
+<TD>done</TD>
+<TD>step mapping saved in document crashes app when document is reopened</TD>
+<TD>0.0.34.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>408</TD>
+<TD>09/20/20</TD>
+<TD>09/24/20</TD>
+<TD>done</TD>
+<TD>in live view, order parts by their lowest track index and merge them with ungrouped tracks instead of appending</TD>
+<TD>0.0.34.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>409</TD>
+<TD>09/24/20</TD>
+<TD>09/28/20</TD>
+<TD>done</TD>
+<TD>add commands to sort parts by name or lowest track index</TD>
+<TD>0.0.34.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>411</TD>
+<TD>09/30/20</TD>
+<TD>09/30/20</TD>
+<TD>done</TD>
+<TD>selecting a part's tracks via parts bar followed by cut or delete crashes if part's tracks aren't in ascending order</TD>
+<TD>0.0.34.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>412</TD>
+<TD>10/07/20</TD>
+<TD>10/07/20</TD>
+<TD>done</TD>
+<TD>Time to Repeat should compute greatest prime factor in common unit if possible</TD>
+<TD>0.0.34.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>413</TD>
+<TD>10/07/20</TD>
+<TD>10/07/20</TD>
+<TD>done</TD>
+<TD>in Stretch command, make interpolation of non-note tracks optional</TD>
+<TD>0.0.34.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>414</TD>
+<TD>10/08/20</TD>
+<TD>10/08/20</TD>
+<TD>done</TD>
+<TD>stretch interpolation is skewed, and should ignore tie bit</TD>
+<TD>0.0.34.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>415</TD>
+<TD>10/15/20</TD>
+<TD>10/19/20</TD>
+<TD>done</TD>
+<TD>can't find GraphViz 2.44; layout executables are missing, specify layout via dot parameter, support x64</TD>
+<TD>0.0.34.002</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>417</TD>
+<TD>10/26/20</TD>
+<TD>10/26/20</TD>
+<TD>done</TD>
+<TD>fill dialog's signed/unsigned radio buttons can cause validation errors; don't compensate value range</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>401</TD>
+<TD>08/05/20</TD>
+<TD>11/05/20</TD>
+<TD>done</TD>
+<TD>find and replace for step values; add another page to Velocities property sheet</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>17</TD>
+<TD>03/22/18</TD>
+<TD>11/16/20</TD>
+<TD>done</TD>
+<TD>PPQ change should update tracks (Quant, Offset, Swing, Duration) instead of zooming step view</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>356</TD>
+<TD>04/15/20</TD>
+<TD>11/16/20</TD>
+<TD>done</TD>
+<TD>canceling Find / Replace dialog crashes debug version, but only when run without debugger; don't destroy window</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>419</TD>
+<TD>11/16/20</TD>
+<TD>11/16/20</TD>
+<TD>done</TD>
+<TD>live view shows incorrect song position and time after transport commands; values lag by one update</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>420</TD>
+<TD>11/16/20</TD>
+<TD>11/16/20</TD>
+<TD>done</TD>
+<TD>live view shows incorrect song position after editing meter, and incorrect song time after editing tempo</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>418</TD>
+<TD>11/16/20</TD>
+<TD>11/17/20</TD>
+<TD>done</TD>
+<TD>after clicking drop list in property bar, undo/redo is disabled; check for read-only edit control with in-place edit ID</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>421</TD>
+<TD>11/17/20</TD>
+<TD>11/17/20</TD>
+<TD>done</TD>
+<TD>left-clicking grid control item after pressing and releasing Alt key crashes or throws improper argument</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>422</TD>
+<TD>11/17/20</TD>
+<TD>11/17/20</TD>
+<TD>done</TD>
+<TD>Step Values bar should support spin edit; increment/decrement via mouse wheel or arrow up/down</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>423</TD>
+<TD>11/17/20</TD>
+<TD>11/17/20</TD>
+<TD>done</TD>
+<TD>left-clicking grid control item crashes if window that's losing focus uses its kill focus handler to reset focus</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>351</TD>
+<TD>04/07/20</TD>
+<TD>11/18/20</TD>
+<TD>done</TD>
+<TD>attach and auto-hide are disabled for Piano and MIDI Input/Output bars, due to output capture management</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>425</TD>
+<TD>11/18/20</TD>
+<TD>11/18/20</TD>
+<TD>done</TD>
+<TD>pinned (auto-hide) Phase bar doesn't animate when unhidden; simplify visibility test in OnShowChanging</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>424</TD>
+<TD>11/18/20</TD>
+<TD>11/18/20</TD>
+<TD>done</TD>
+<TD>add maximize command to dockable pane's context menu; supports unattached floating panes only</TD>
+<TD>0.0.35.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>426</TD>
+<TD>12/01/20</TD>
+<TD>12/01/20</TD>
+<TD>done</TD>
+<TD>song view's go to next/previous dub finds invisible dubs; must exclude last duplicate dub from search</TD>
+<TD>0.0.35.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>427</TD>
+<TD>12/01/20</TD>
+<TD>12/04/20</TD>
+<TD>done</TD>
+<TD>go to next/previous dub should scroll vertically as needed to ensure found dub is visible</TD>
+<TD>0.0.35.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>184</TD>
+<TD>08/02/18</TD>
+<TD>12/16/20</TD>
+<TD>done</TD>
+<TD>should be able to loop playback within a specified time range, especially in song view, even approximately</TD>
+<TD>0.0.36.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>428</TD>
+<TD>12/16/20</TD>
+<TD>12/16/20</TD>
+<TD>done</TD>
+<TD>if song view has focus, edit keys misbehave in popup edit control; add focus edit checks to song view</TD>
+<TD>0.0.36.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>432</TD>
+<TD>01/15/21</TD>
+<TD>01/19/21</TD>
+<TD>done</TD>
+<TD>import tracks from CSV file gives error if track's length is one</TD>
+<TD>0.0.37.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>435</TD>
+<TD>01/19/21</TD>
+<TD>01/19/21</TD>
+<TD>done</TD>
+<TD>editing keys don't work within popup edit control when Live view has focus</TD>
+<TD>0.0.37.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>436</TD>
+<TD>01/19/21</TD>
+<TD>01/19/21</TD>
+<TD>done</TD>
+<TD>select all shortcut doesn't work within popup edit control when Song view has focus</TD>
+<TD>0.0.37.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>438</TD>
+<TD>01/20/21</TD>
+<TD>01/20/21</TD>
+<TD>done</TD>
+<TD>replace skips first matching track if selection mark is already on that track</TD>
+<TD>0.0.37.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>439</TD>
+<TD>01/20/21</TD>
+<TD>01/20/21</TD>
+<TD>done</TD>
+<TD>find and replace should scroll view as needed to ensure matching track is visible</TD>
+<TD>0.0.37.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>429</TD>
+<TD>01/12/21</TD>
+<TD>01/23/21</TD>
+<TD>done</TD>
+<TD>in Step Values bar, Step column should be one-origin; same for track fill dialog's step range</TD>
+<TD>0.0.37.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>440</TD>
+<TD>01/21/21</TD>
+<TD>01/23/21</TD>
+<TD>done</TD>
+<TD>replace string not found shows empty message box</TD>
+<TD>0.0.37.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>331</TD>
+<TD>03/30/20</TD>
+<TD>01/24/21</TD>
+<TD>done</TD>
+<TD>Step Values bar should provide a means of setting song position, via Ctrl+left-click on step value</TD>
+<TD>0.0.37.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>441</TD>
+<TD>01/23/21</TD>
+<TD>01/24/21</TD>
+<TD>done</TD>
+<TD>display unique prime factors of selected track durations</TD>
+<TD>0.0.37.003</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>430</TD>
+<TD>01/12/21</TD>
+<TD>02/10/21</TD>
+<TD>done</TD>
+<TD>renaming multiple tracks should optionally append sequence numbers to keep names unique</TD>
+<TD>0.0.37.004</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>442</TD>
+<TD>02/10/21</TD>
+<TD>02/13/21</TD>
+<TD>done</TD>
+<TD>in Step and Song views, Shift + right click should expand existing rectangular selection</TD>
+<TD>0.0.37.004</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>443</TD>
+<TD>02/13/21</TD>
+<TD>02/15/21</TD>
+<TD>done</TD>
+<TD>add mapping targets for transport commands</TD>
+<TD>0.0.37.004</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>444</TD>
+<TD>03/14/21</TD>
+<TD>03/16/21</TD>
+<TD>done</TD>
+<TD>Song view doesn't enable edit commands for track selection only</TD>
+<TD>0.0.37.005</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>445</TD>
+<TD>03/14/21</TD>
+<TD>03/16/21</TD>
+<TD>done</TD>
+<TD>in Song view, left-clicking track name tooltip should hide tooltip</TD>
+<TD>0.0.37.005</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>446</TD>
+<TD>04/07/21</TD>
+<TD>05/30/21</TD>
+<TD>done</TD>
+<TD>Step Values bar doesn't set empty items for multiple selection of tracks having differing lengths</TD>
+<TD>0.0.37.005</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>447</TD>
+<TD>05/01/21</TD>
+<TD>06/07/21</TD>
+<TD>done</TD>
+<TD>rename rounding and truncation functions to avoid conflicts with C++ 11</TD>
+<TD>0.0.37.005</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>448</TD>
+<TD>05/01/21</TD>
+<TD>06/08/21</TD>
+<TD>done</TD>
+<TD>fix compilation errors and warnings in Visual Studio 2019</TD>
+<TD>0.0.37.006</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>449</TD>
+<TD>05/01/21</TD>
+<TD>06/08/21</TD>
+<TD>done</TD>
+<TD>fix compilation errors in Visual Studio 2010</TD>
+<TD>0.0.37.007</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>450</TD>
+<TD>06/15/21</TD>
+<TD>06/15/21</TD>
+<TD>done</TD>
+<TD>main frame should delete track color toolbar button in OnDestroy to avoid memory leak</TD>
+<TD>0.0.37.008</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>451</TD>
+<TD>06/20/21</TD>
+<TD>06/20/21</TD>
+<TD>done</TD>
+<TD>dockable bars handle editing commands inconsistently; customize routing in child frame</TD>
+<TD>0.0.37.008</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>453</TD>
+<TD>06/26/21</TD>
+<TD>06/26/21</TD>
+<TD>done</TD>
+<TD>graph should allow filtering by modulation type, via context menu</TD>
+<TD>0.0.37.009</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>18</TD>
+<TD>03/22/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>optional linear interpolation for controller tracks, with adjustable output density</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>19</TD>
+<TD>03/22/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>20</TD>
+<TD>03/22/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>50</TD>
+<TD>03/25/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>animated visualization; Phase bar is a good start, but others?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>51</TD>
+<TD>03/25/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>playback can be slow to start, due to device open delay; keep output device open all the time?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>52</TD>
+<TD>03/25/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>output timing is unreliable at start of playback; likely only fixable by keeping output device open all the time</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>53</TD>
+<TD>04/09/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>undoing/redoing track or step edit should ensure affected track is visible</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>72</TD>
+<TD>05/10/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>right-click in step view background with no selection should show context menu?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>73</TD>
+<TD>05/10/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>left-click anywhere in step view should toggle selected steps or mutes, as in original app; too confusing?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>82</TD>
+<TD>05/17/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>installed app's shortcut icon has poor resolution; VS2008 installer bug, use WiX toolset instead?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>93</TD>
+<TD>05/19/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>note correction to chord changes, from ChordEase; poorly defined, pitch class sets would be more general</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>99</TD>
+<TD>05/21/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>velocity pane visibility should be same for all documents?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>106</TD>
+<TD>05/30/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>song view needs different menus?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>113</TD>
+<TD>06/04/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>option to change track name font and thereby change track height</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>114</TD>
+<TD>06/04/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>song view should indicate undersampling (multiple dubs per cell at current zoom)</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>124</TD>
+<TD>06/21/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>track merge command; combine tracks that have identical settings and non-overlapping steps</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>135</TD>
+<TD>07/05/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>command to change track, part and preset names to title case</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>149</TD>
+<TD>07/14/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>channel volume sliders in live view; solving wrong problem?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>156</TD>
+<TD>07/17/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>live view list controls should have grid lines but default color is too bright; draw gridlines in custom draw?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>164</TD>
+<TD>07/26/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>live view should show approaching intersections between different loop lengths</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>165</TD>
+<TD>07/26/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>transpose within selected key; only doable if selected tracks are all in that key?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>166</TD>
+<TD>07/26/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>in step view, steps should indicate whether track is muted; could be overdoing it, pink gives me a headache</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>167</TD>
+<TD>07/26/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>command to shift selected steps up or down one or more tracks</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>168</TD>
+<TD>07/26/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>replace steps, like paste but overwrite steps at insert position instead of shifting them; command or mode?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>181</TD>
+<TD>07/30/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>optional tool tip in step view showing step's position and value; position in what format? Step index?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>183</TD>
+<TD>08/02/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>mute tracks in song view; complicates sequencer and song view UI</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>193</TD>
+<TD>09/17/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>step zoom via Ctrl + mouse wheel doesn't work unless step view has focus; default OS behavior</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>194</TD>
+<TD>09/17/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>in step view, add command to select all steps of selected tracks</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>200</TD>
+<TD>09/23/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>ReadEnum should report undefined strings as errors? More accurate, but less robust</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>201</TD>
+<TD>09/25/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>pan column in channels bar should show signed values; conflicts with use of -1 as unspecified value</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>212</TD>
+<TD>10/17/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>in live view, dragging list selection beyond window boundaries should scroll list</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>217</TD>
+<TD>10/27/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>switching from song view to live view doesn't always update parts list to reflect dub state? Hard to replicate</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>232</TD>
+<TD>11/19/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>not/invert operator for modulations; would allow a single modulator track to control a crossfade</TD>
+<TD>&nbsp;</TD>
+<TD>Benoit</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>233</TD>
+<TD>11/19/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>highlight modulated parameters; complicates UI and doesn't fully capture modulation state</TD>
+<TD>&nbsp;</TD>
+<TD>Benoit</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>234</TD>
+<TD>11/19/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>detail view of modulations that shows target as well as source and type; editable, sortable, clipboard</TD>
+<TD>&nbsp;</TD>
+<TD>Benoit</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>235</TD>
+<TD>11/19/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>vertically fill the note column with values from a scale or chord</TD>
+<TD>&nbsp;</TD>
+<TD>Benoit</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>236</TD>
+<TD>11/19/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>length modulation; cool idea but hard to implement</TD>
+<TD>&nbsp;</TD>
+<TD>Benoit</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>257</TD>
+<TD>12/09/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>add hide/unhide column commands to track list header's context menu; where to store previous width?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>259</TD>
+<TD>12/12/18</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>grid control's header should display tooltip for truncated column names; must subclass header control?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>269</TD>
+<TD>01/19/19</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>document I/O doesn't support Unicode track names; initialize INI file with UTF-16 LE BOM (doubles file size)</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>285</TD>
+<TD>02/28/19</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>song export length doesn't account for negative start position; why is this so difficult?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>289</TD>
+<TD>03/25/19</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>piano bar should be able to show channels separately via multiple keyboards; messy problem</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>296</TD>
+<TD>06/12/19</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>option for space bar to start/stop playback without needing to also press Ctrl key; causes many UI conflicts</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>318</TD>
+<TD>03/02/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>separate window for viewing/editing recorded MIDI input</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>340</TD>
+<TD>04/04/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>scale modulation often repeats same work for each track that uses the scale; but not always!</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>344</TD>
+<TD>04/05/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>Step Values bar doesn't allow arbitrary rectangular selection; grid control limitation, custom view?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>347</TD>
+<TD>04/06/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>extend sequence lead-in to fix initial timing glitch; multiply m_nCBLen in GetPosition and Play</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>353</TD>
+<TD>04/10/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>post-voicing sort could be replaced with insert sorted, but benchmarking shows little room for improvement</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>354</TD>
+<TD>04/11/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>channel modulation; but is it really necessary? Same effect is achievable with mute modulations</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>355</TD>
+<TD>04/11/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>window that shows current song time in huge font; excessive?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>370</TD>
+<TD>05/27/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>force MIDI thru to a specified channel; useful for controllers that lack channel setting, but complicates MidiInProc</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>372</TD>
+<TD>06/08/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>song view should show loop lengths and their covergences graphically, possibly in a separate timeline pane</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>373</TD>
+<TD>06/13/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>in phase bar, optionally hide muted tracks; affects find convergence due to orbit array reuse</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>383</TD>
+<TD>07/01/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>add more input quants; possible useful with larger time divisions</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>393</TD>
+<TD>07/17/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>switching to song view should set all mutes to match song's current dub state (chase); must be synchronous</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>395</TD>
+<TD>07/22/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>optionally show Phase diagram or other visualization in Live view; menu bar is hidden in full screen mode</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>396</TD>
+<TD>07/22/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>transition from one document to another without stopping playback; conflicts with recording implementation</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>402</TD>
+<TD>08/05/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>indicate step selection in Step view's velocities pane</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>403</TD>
+<TD>08/22/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>preset track type, interpreting step value as preset index; requires moving preset array into sequencer</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>405</TD>
+<TD>08/22/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>in mapping, add Note Number input event type: get data value from note's index, ignoring velocity and note off</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>407</TD>
+<TD>09/17/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>select all unmuted tracks; hardly worth cluttering up the Edit menu?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>410</TD>
+<TD>09/28/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>live view position bars for track groups should reflect LCM of periods instead of maximum period; could be slow</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>416</TD>
+<TD>10/20/20</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>GraphViz PDF output looks better than SVG (if Adobe is installed) but it overrides our context menu</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>431</TD>
+<TD>01/13/21</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>device change notification should retry missing MIDI device and close message box if successful</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>434</TD>
+<TD>01/19/21</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>graph should optionally indicate track type</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>433</TD>
+<TD>01/19/21</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>track should be a potential mapping source, so tracks can automate parameters; inject MIDI event?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>437</TD>
+<TD>01/20/21</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>add harmonizer and harmonic anticipation, adapted from ChordEase</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>452</TD>
+<TD>06/24/21</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>optional file information; author, comments</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>21</TD>
+<TD>03/22/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>swing modulation; achievable with offset modulation so no need</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>74</TD>
+<TD>05/10/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>83</TD>
+<TD>05/17/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>100</TD>
+<TD>05/21/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>scroll positions should persist in document; more trouble than it's worth</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>119</TD>
+<TD>06/08/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>untying note should set all steps to velocity of original tied note; better to preserve velocity</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>198</TD>
+<TD>09/18/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>modulation dubbing is sensitive to track order at longer latencies; also affects export</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>237</TD>
+<TD>11/19/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>step copy/cut/paste should support non-rectangular step selection; incompatible with step view design</TD>
+<TD>&nbsp;</TD>
+<TD>Benoit</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>238</TD>
+<TD>11/19/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>list view selection is hard to see when list doesn't have focus; curse at Microsoft or change theme</TD>
+<TD>&nbsp;</TD>
+<TD>Benoit</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>239</TD>
+<TD>11/19/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>sort on note name without octave; not sure why this is useful</TD>
+<TD>&nbsp;</TD>
+<TD>Benoit</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>240</TD>
+<TD>11/21/18</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>while drawing velocities in velocity pane, dragging left/right of window should scroll view; tried it, too confusing</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>264</TD>
+<TD>01/11/19</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>in Piano view, if multiple instances of a note overlap, velocity color may be inaccurate; unavoidable</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>286</TD>
+<TD>02/28/19</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>song playback doesn't always match live output when modulator tracks have big quants; dub granularity issue</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>294</TD>
+<TD>05/30/19</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>modulation list is empty regardless of track selection; can't reproduce it, brain fire?</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>301</TD>
+<TD>11/12/19</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>22</TD>
+<TD>03/22/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>context-sensitive help</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>23</TD>
+<TD>03/22/18</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>enable UI customization; new command IDs must be prefixed so renumbering doesn't change existing IDs</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+</TABLE><!--  content stops HERE  -->
+</div>
+</body>
+</html>

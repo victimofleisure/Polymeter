@@ -1,0 +1,40 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Track View</title>
+<link rel=stylesheet href="../../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Track View</h3>
+
+<p>The track view is the main interface for editing <a href="../../Concepts/Tracks.htm">tracks</a>, and contains one row for each track. The view is split vertically into two <a href="../../Views/Track_View/Track_View.htm#Panes">panes</a>. The left pane contains the <a href="../../Views/Track_View/Track_Grid.htm">track grid</a>, and the right pane contains the <a href="../../Views/Track_View/Track_Mutes.htm">track mutes</a> and <a href="../../Views/Track_View/Track_Steps.htm">track steps</a>. The right pane can also be split horizontally to show the optional <a href="../../Views/Track_View/Velocities_Pane.htm">velocities pane</a>, which lets you edit the step values graphically by dragging bars.
+
+<a name="Track_view_quick_help"><p><b>Quick help</b></a>
+<ul>
+<li>To alter the pattern of a track, left-click in its <a href="../../Concepts/Steps.htm">steps</a>, which are shown as outlined rectangles. The steps area is to the right of the vertical splitter bar and <a href="../../Views/Track_View/Track_Mutes.htm">track mutes</a>, and looks similar to graph paper.
+<li>To mute or unmute a track, left-click its mute button, which is the green or red rectangle immediately to the right of the vertical splitter bar. Red means the track is muted.
+<li>To change the track's loop length, edit its <a href="../../Views/Track_View/Track_Grid.htm#Track_Length">Length</a>.
+<li>To change what MIDI channel the track outputs, edit its <a href="../../Views/Track_View/Track_Grid.htm#Track_Channel">Channel</a>.
+<li>To change what MIDI note the track outputs, edit its <a href="../../Views/Track_View/Track_Grid.htm#Track_Note">Note</a>.
+<li>To change the track's time unit, edit its <a href="../../Views/Track_View/Track_Grid.htm#Track_Quant">Quant</a>. The default is 30 ticks, which is a sixteenth note at the default <a href="../../Properties/Timebase.htm">timebase</a> of 120 ticks per quarter note.
+<li>The track's <a href="../../Views/Track_View/Track_Grid.htm#Track_Offset">Offset</a> and <a href="../../Views/Track_View/Track_Grid.htm#Track_Swing">Swing</a> are in ticks; they can be positive or negative.
+<li><a href="../../Views/Track_View/Track_Grid.htm#Track_Velocity">Velocity</a> is an offset that's added to the velocities of the track's notes; it can be positive or negative. It's also applied to <a href="../../Tracks/Controller_tracks.htm">controller tracks</a>.
+<li><a href="../../Views/Track_View/Track_Grid.htm#Track_Duration">Duration</a> is also an offset. Negative values make the notes more staccato. Positive values make them more legato, in which case they may <a href="../../Properties/Note_Overlap.htm">overlap</a>.
+<li>To <a href="../../Views/Track_View/Track_Selection.htm">select</a> a track, left-click on its track number. Ctrl+left-click and Shift+left-click both do what you'd expect (select multiple tracks and select a range of tracks).
+<li>You can copy/cut/paste/delete/insert tracks, using the <a href="../../Menus/Edit/Standard_editing_commands.htm">standard editing commands</a>, or reorder tracks via dragging.
+<li>To edit a field, left-click it. When you're finished editing, press Enter or Tab, or left-click anywhere outside of the field. Pressing Tab or Shift-Tab iterates through the fields. You can also end an edit by pressing Ctrl+Up or Ctrl+Down, in which case the edit focus moves up or down a track. For details, see <a href="../../Concepts/Grid_controls.htm">grid controls</a>.
+<li>To set the same value for multiple tracks, first select the tracks, and then edit the desired field in any one of the tracks; when you end the edit, the new value is applied to all the selected tracks.
+<li>Columns can be resized or reordered via the column header. To reset the columns to their default width and order, right-click in the column header and select <span class="cmd">Reset</span> in the context menu.
+</ul>
+
+<a name="Panes"><p><b>Panes</b></a>
+<p>Certain windows may be horizontally or vertically split into panes, separated by a moveable border called a <em>splitter bar</em>. To resize a pane, drag the splitter bar that separates it from its neighbor, in other words left-click on the splitter bar, and while keeping the left mouse button pressed, move the split until the pane is the desired size. While the pointer is positioned over a splitter bar, the cursor changes to indicate that resizing is possible. The borders that separate <a href="../../Docking_Windows/Docking_windows.htm">docking windows</a> from each other, and from the document area, behave similarly to splitter bars.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

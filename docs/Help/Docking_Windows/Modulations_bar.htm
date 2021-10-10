@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Modulations</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Modulations</h3>
+
+<p>This <a href="../Docking_Windows/Docking_windows.htm">docking window</a> lets you edit your <a href="../Concepts/Modulations.htm">modulations</a>. The modulations are edited using a <a href="../Concepts/Grid_controls.htm">grid control</a>. Only modulators for the <a href="../Views/Track_View/Track_Selection.htm">selected tracks</a> are shown. If no tracks are selected, or if the selected tracks don't have any modulators, the window is empty.
+
+<a name="Creating_a_modulation"><p><b>Creating a modulation</b></a>
+<p>To create a modulation, do the following:
+
+<ol>
+<li><a href="../Views/Track_View/Track_Selection.htm">Select</a> one or more tracks; each of these tracks will be a target of the new modulation.
+<li>Ensure the Modulations bar is visible, and also ensure it has focus, by left-clicking or right-clicking within it.
+<li>Insert a new modulation, using either <a href="../Menus/Edit/Insert.htm">Edit/Insert</a> or its keyboard <a href="../Reference/Shortcuts.htm">shortcut</a>, or <span class="cmd">Insert</span> on the <a href="../Docking_Windows/Modulations_bar.htm#Modulations_context_menu">context menu</a>.
+<li>Select the desired <a href="../Concepts/Modulations.htm#Modulation_types">modulation type</a> if needed. The type defaults to <a href="../Modulation/Mute_modulation.htm">mute modulation</a>.
+<li>Select the desired modulation source, in other words the track that will do the modulating. If the source is "&lt;None&gt;" the modulation has no effect.
+</ol>
+
+<p>The new modulation is inserted at the current position in the modulation list. To append, first left-click or right-click below the last list item, so that no item is selected. If your modulation gets inserted in the wrong place, you can move it afterwards by left-clicking and dragging it.
+
+<a name="Creating_a_modulation_group"><p><b>Creating a modulation group</b></a>
+<p>Sometimes it's desirable to create a group of modulations, all targeting the same tracks and having the same <a href="../Concepts/Modulations.htm#Modulation_types">modulation type</a>, but with different source tracks. Instead of <a href="../Docking_Windows/Modulations_bar.htm#Creating_a_modulation">creating</a> the modulations one by one, it's easier to create them all at once, as follows:
+
+<ol>
+<li><a href="../Views/Track_View/Track_Selection.htm">Select</a> one or more tracks; each of these tracks will be a target of the new modulations.
+<li>Ensure the Modulations bar is visible.
+<li>Insert a new modulation group, using either <a href="../Menus/Track/Create_Modulation.htm">Track/Modulation</a> or its keyboard <a href="../Reference/Shortcuts.htm">shortcut</a>, or <span class="cmd">Insert Group</span> on the <a href="../Docking_Windows/Modulations_bar.htm#Modulations_context_menu">context menu</a>. The Modulation dialog is displayed.
+<li>In the Modulation dialog, select one or more source tracks and a modulation type, and then press OK to create the modulations.
+</ol>
+
+<a name="Show_Differences"><p><b>Show Differences</b></a>
+<p>The Modulations bar normally shows all modulations that the <a href="../Views/Track_View/Track_Selection.htm">selected tracks</a> have in common. If the selected tracks don't all have exactly the same modulations, the message "&lt;Differences&gt;" is displayed at the bottom of the list. This message indicates that at least one of the selected tracks has a modulation that's hidden, because it's not shared by the other tracks.
+
+<p>In some cases you may prefer to show all modulations that target any of the selected tracks, regardless of whether all the selected tracks share them. To do this, enable <span class="cmd">Show Differences</span> mode via the <a href="../Docking_Windows/Modulations_bar.htm#Modulations_context_menu">context menu</a>. In Show Differences mode, the modulations list is a summary report. Each row of the report corresponds to a unique combination of modulation type and source track, and the number of instances of that combination is displayed in the index column. The report is sorted into descending order by number of instances. Reordering the modulations via drag and drop isn't supported in Show Differences mode.
+
+<a name="Modulations_context_menu"><p><b>Context menu</b></a>
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Item</th><th>Description</th></tr>
+<tr><td>Insert</td><td>Inserts a new modulator at the current position.</td></tr>
+<tr><td>Insert Group</td><td>Inserts a <a href="../Menus/Track/Create_Modulation.htm">group</a> of modulators at the current position.</td>
+<tr><td>Delete</td><td>Deletes the selected modulators.</td></tr>
+<tr><td>Cut</td><td>Deletes the selected modulators after copying them to the clipboard.</td></tr>
+<tr><td>Copy</td><td>Copies the selected modulators to the clipboard.</td></tr>
+<tr><td>Paste</td><td>Inserts the contents of the modulations clipboard at the current position.</td></tr>
+<tr><td>Select All</td><td>Selects all items in the modulations list.</td></tr>
+<tr><td>Show Differences</td><td>Toggles <a href="../Docking_Windows/Modulations_bar.htm#Show_Differences">Show Differences</a> mode.</td></tr>
+<tr><td>Sort</td><td>Sorts the modulators by modulation type or by source track index.</td></tr>
+</table>
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

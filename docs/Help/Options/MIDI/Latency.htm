@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Latency</title>
+<link rel=stylesheet href="../../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Latency</h3>
+
+<p>This is the desired MIDI latency during <a href="../../Menus/Transport/Play.htm">playback</a>, in milliseconds. The shorter the latency is, the less the user interface lags behind playback, and the closer the application is to being in real time. On the other hand, the shorter the latency is, the more often the application runs, and the less time it has to do its work. For example if the latency is 10, the application has at most 10 milliseconds to prepare each chunk of the sequence for output. If the latency is too short, <a href="../../Options/MIDI/Latency.htm#Underruns">underruns</a> may occur. Underruns can't occur in exported MIDI files because the <a href="../../Menus/File/Export.htm">export</a> can take as long as it needs.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Issue</th><th>Symptoms</th></tr>
+<tr><td>Latency too short</td><td>Underrun errors; erratic timing of output MIDI messages; audible gaps in sequence</td></tr>
+<tr><td>Latency too long</td><td>User interface lags behind playback; delay between your actions and their effects</td></tr>
+</table>
+
+<a name="Underruns"><p><b>Underruns</b></a>
+<p>During <a href="../../Menus/Transport/Play.htm">playback</a>, the MIDI sequence is prepared ahead of time in chunks. The length of the chunks is determined by the <a href="../../Options/MIDI/Latency.htm">Latency</a> setting. Ideally the application prepares the next chunk while the previous chunk is being played, and thus stays ahead of demand. However if a chunk takes too long to prepare, the previous chunk may run out before the next chunk can be delivered. This situation is called an <em>underrun</em>.
+
+<p>An underrun means that the sequencer took too long and failed to keep up. It can occur because the sequence is too dense, or the latency is too short, or CPU power is lacking, or the output device is too slow, or any combination of these. An underrun can affect the timing of the output MIDI messages, and in extreme cases may cause an audible gap in the sequence. If it's the first underrun since playback started, an error message is displayed. Subsequent underruns are <a href="../../Menus/Tools/Statistics.htm">counted</a>, but the error message is suppressed. To solve underrun errors, do one or more of the following:
+<ul>
+<li>Make your sequence less dense. For example you may be sending continuous controller messages more often than necessary.
+<li>Increase the latency. This has the downside of making the user interface lag further behind the playback.
+<li>Eliminate competing applications so that more CPU power is available, or use a more powerful computer.
+<li>Use faster output devices, or faster connections to them.
+</ul>
+
+<p>If you're using MIDI hardware, be advised that a serial MIDI interface is limited to roughly a thousand MIDI messages per second, and approaching this limit may cause underrun errors. This is less likely to be a problem if the hardware is connected to the computer via USB, or if the output device is a software synth or virtual MIDI port.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

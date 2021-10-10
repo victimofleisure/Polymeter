@@ -1,0 +1,37 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Convergences</title>
+<link rel=stylesheet href="../../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Convergences</h3>
+
+<p>This calculator shows the <a href="../../Concepts/Convergences.htm">convergences</a> between a given set of numbers. If a <a href="../../Views/Track_View/Track_Selection.htm">track selection</a> exists, the calculator uses the loop lengths of the selected tracks as its input, otherwise you can enter a set numerically in the dialog.
+
+<p>If the input is from selected tracks, the results are shown in either <a href="../../Concepts/Steps.htm">steps</a> or <a href="../../Concepts/Steps.htm#Ticks">ticks</a>, depending on the <a href="../../Views/Track_View/Track_Grid.htm#Track_Quant">Quants</a> of the selected tracks. There are three distinct cases:
+
+<ol>
+<li>The selected tracks all have the same Quant. In this case, the results are shown in steps.
+<li>The selected tracks have different Quants, but all the Quants are integer multiples of the smallest Quant. In this case, the results are shown in steps of the smallest Quant. For example, if the selected tracks have Quants of 30, 60, and 120, the results are shown in steps of 30 ticks.
+<li>Neither of the preceding cases apply. In this case, the results are shown in ticks. This can make the numbers much bigger, and may cause the calculation to take noticeably longer.
+</ol>
+
+<p>If you compare the results to the <a href="../../Menus/Tools/Time_To_Repeat.htm">Time to Repeat</a> function, bear in mind that Time to Repeat is shown in beats, which must be converted to either steps or ticks depending on the cases explained above.
+
+<p>If you prefer to enter a set numerically, make sure no tracks are selected when you show the calculator dialog. The set must consist of at least two comma-separated positive integers. Note that zero is not considered a positive integer. The set needn't be ordered, and duplicate values are ignored. A valid input set could look like this:
+
+<p>2,3,5,7
+
+<p>Simply type the set in the input edit control and press <span class="key">Enter</span> or <span class="key">Tab</span> to calculate the convergences. To export the results, use the Windows clipboard: copy the output edit control's text, using <span class="key">Ctrl+A</span> and <span class="key">Ctrl+C</span> or the context menu, and paste it into the desired application.
+
+<p>The calculator only shows the <em>first</em> convergence for each unique subset of the input numbers. The subsequent convergences can be determined via multiplication. To step through convergences one by one, use the <a href="../../Menus/Transport/Next_Convergence.htm">Next Convergence</a> and <a href="../../Menus/Transport/Previous_Convergence.htm">Previous Convergence</a> commands.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

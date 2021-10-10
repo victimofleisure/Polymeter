@@ -1,0 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Mute modulation</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Mute modulation</h3>
+
+<p>In mute <a href="../Concepts/Modulations.htm">modulation</a>, one track mutes (or "gates") another. The effect is similar to manually muting and unmuting a track, except that it's automated. As the target track loops, each step is processed sequentially. If that step contains the start of a note, the current step in the modulator track is examined, and if it's zero, the note is played, otherwise the note isn't played. In other words, the modulator track's step is interpreted as a mute switch for the target track. In the example below, a note track with a length of 3 steps is muted by a modulator track with a length of 5 steps. Since the pattern repeats after 15 steps (3 &times; 5), only 15 steps are shown.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><td style="background-color:black">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td style="background-color:black">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td style="background-color:black">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td style="background-color:black">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td style="background-color:black">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>Note track</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td style="background-color:black">&nbsp;</td><td style="background-color:black">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td style="background-color:black">&nbsp;</td><td style="background-color:black">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td style="background-color:black">&nbsp;</td><td style="background-color:black">&nbsp;</td><td>Mute modulator</td></tr>
+<tr><td style="background-color:black">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td style="background-color:black">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td style="background-color:black">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>Output notes</td></tr>
+</table>
+
+<p>A modulator can mute multiple targets, all potentially having different lengths. The reverse is also true: a target can be muted by multiple modulators, all potentially having different lengths. In the latter case, the target is muted if any of its mute modulators are non-zero.
+
+<p>Juxtaposed <a href="../Concepts/Polymeter.htm">polymeter</a> tracks can produce overly dense sequences, particularly if the tracks contain little empty space. Mute modulation directly addresses this problem. Periodically muting the juxtaposed tracks adds more space to the composition. Mute modulation is analogous to viewing a pattern through the gaps in a stencil.
+
+<p>Mute modulation creates repeating "windows" of time. The target tracks play only within their time window, leaving periodic unoccupied space or "holes" in the composition. The holes can be left empty, or occupied by something else, e.g. a different group of target tracks, mute modulated by the opposite pattern. This leads to "call and answer" effects. This method isn't limited to alternating between two groups, for example one could alternate between three or more groups, or partially overlap the groups instead of strictly alternating between them.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

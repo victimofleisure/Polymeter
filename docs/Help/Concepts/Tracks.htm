@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Tracks</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Tracks</h3>
+
+<p>A track consists of an array of <a href="../Concepts/Steps.htm">steps</a> and some <a href="../Concepts/Tracks.htm#Track_properties">properties</a> that affect the track's behavior. A <a href="../Concepts/Polymeter.htm">polymeter</a> composition is a collection of tracks, each of which <a href="../Loose_Ends/Period.htm">cycles</a> through its steps independently. The tracks are organized similarly to a table; each track corresponds to a row in the <a href="../Views/Track_View/Track_View.htm">track view</a>. There are various <a href="../Concepts/Tracks.htm#Track_types">track types</a>, and the type determines what the track outputs, and how it interprets its steps. A track can output only one MIDI note or control message at a time. To make chords, create multiple tracks, one for each of the chord's tones.
+
+<ul>
+<li><a href="../Tracks/Note_tracks.htm">Note tracks</a> output a MIDI note, and have special capabilities.
+<li><a href="../Tracks/Controller_tracks.htm">Controller tracks</a> output a MIDI controller, pitch bend, aftertouch, or program change.
+<li><a href="../Tracks/Tempo_tracks.htm">Tempo tracks</a> output a tempo change.
+<li><a href="../Tracks/Modulator_tracks.htm">Modulator tracks</a> output nothing, and are used to alter the behavior of other tracks.
+</ul>
+
+<p>A track can be edited via the track view, which is vertically split into two <a href="../Views/Track_View/Track_View.htm#Panes">panes</a>. The <a href="../Views/Track_View/Track_Grid.htm">left pane</a> lets you edit the track's properties, while the <a href="../Views/Track_View/Track_Steps.htm">right pane</a> lets you mute or unmute tracks and edit the track's steps.
+
+<p>The list of tracks can be edited via the <a href="../Menus/Edit/Standard_editing_commands.htm">standard editing commands</a>. Tracks can be <a href="../Views/Track_View/Track_Selection.htm">selected</a>, and many commands operate on selected tracks. Selected tracks can also be reordered by dragging, or <a href="../Menus/Track/Sort.htm">sorted</a>. Tracks can be <a href="../Views/Track_View/Track_Grid.htm#Track_Name">named</a>, and giving them unique, meaningful names is highly recommended.
+
+<p>The simplest way to create polymeter is by juxtaposing tracks of different lengths, assuming the lengths are <a href="../Loose_Ends/Primes.htm">relatively prime</a>. More complex methods include using tracks to alter the behavior of other tracks, in a process called <a href="../Concepts/Modulations.htm">modulation</a>.
+
+<a name="Track_properties"><p><b>Track properties</b></a>
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Name">Name</a></td><td>The track's name</td></tr>
+<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Type">Type</a></td><td>The track's <a href="../Concepts/Tracks.htm#Track_types">type</a></td></tr>
+<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Channel">Channel</a></td><td>Which MIDI channel the track outputs on</td></tr>
+<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Note">Note</a></td><td>Which MIDI note or controller the track outputs</td></tr>
+<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Length">Length</a></td><td>Length of the track, in steps</td></tr>
+<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Quant">Quant</a></td><td>Duration of each of the track's steps, in ticks</td></tr>
+<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Offset">Offset</a></td><td>Time offset applied to the track's steps, in ticks; positive = later, negative = earlier</td></tr>
+<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Swing">Swing</a></td><td>Time offset applied to the track's even-numbered steps, in ticks; positive = later, negative = earlier</td></tr>
+<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Velocity">Velocity</a></td><td>Offset added to the track's step velocities</td></tr>
+<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Duration">Duration</a></td><td>Offset added to the track's note durations</td></tr>
+<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Range_Type">Range Type</a></td><td>Selects a method for limiting the range of the track's notes</td></tr>
+<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Range_Start">Range Start</a></td><td>Lowest note of the track's range</td></tr>
+<tr><td><a href="../Views/Track_View/Track_Mutes.htm">Mute</a></td><td>True if the track is muted</td></tr></table>
+
+<a name="Track_types"><p><b>Track types</b></a>
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Type</th><th>Outputs</th><th>Step</th></tr>
+<tr><td><a href="../Tracks/Note_tracks.htm">Note</a></td><td>Note message</td><td>Unsigned note velocity; steps can also be <a href="../Tracks/Note_tracks.htm#Tied_notes">tied</a> together to form longer notes</td></tr>
+<tr><td><a href="../Tracks/Controller_tracks.htm">Key Aftertouch</a></td><td>Key aftertouch message</td><td>Unsigned key aftertouch pressure</td></tr>
+<tr><td><a href="../Tracks/Controller_tracks.htm">Control</a></td><td>Continuous controller message</td><td>Controller value; signed or unsigned depending on context</td></tr>
+<tr><td><a href="../Tracks/Controller_tracks.htm">Patch</a></td><td>Program change message</td><td>Unsigned program number</td></tr>
+<tr><td><a href="../Tracks/Controller_tracks.htm">Channel Aftertouch</a></td><td>Channel aftertouch message</td><td>Unsigned channel aftertouch pressure</td></tr>
+<tr><td><a href="../Tracks/Controller_tracks.htm">Wheel</a></td><td>Pitch bend message</td><td>Signed pitch bend value (most significant byte only)</td></tr>
+<tr><td><a href="../Tracks/Tempo_tracks.htm">Tempo</a></td><td>Tempo change message</td><td>Signed fractional tempo change</td></tr>
+<tr><td><a href="../Tracks/Modulator_tracks.htm">Modulator</a></td><td>Nothing</td><td>Depends on the <a href="../Concepts/Modulations.htm">modulation</a> type</td></tr>
+</table>
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

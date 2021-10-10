@@ -1,0 +1,32 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Controller tracks</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Controller tracks</h3>
+
+<p>Controller tracks are a group of <a href="../Concepts/Tracks.htm#Track_types">track types</a> that output a control value instead of a note. The group includes the following track types:
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Type</th><th>MIDI message</th><th>P1</th><th>P2</th></tr>
+<tr><td>Key Aftertouch</td><td>Polyphonic Key Pressure</td><td>track note</td><td>step value</td></tr>
+<tr><td>Control</td><td>Control Change</td><td>track note</td><td>step value</td></tr>
+<tr><td>Patch</td><td>Program Change</td><td>step value</td><td>N/A</td></tr>
+<tr><td>Channel Aftertouch</td><td>Channel Pressure</td><td>step value</td><td>N/A</td></tr>
+<tr><td>Wheel</td><td>Pitch Bend Change</td><td>step value</td><td>N/A</td></tr>
+</table>
+
+<p>A controller track's <a href="../Concepts/Steps.htm">steps</a> are interpreted as data values for the corresponding MIDI message. Each step causes a MIDI message to be sent to the <a href="../Options/MIDI/Output_Device.htm">output device</a>, except when a step has the same value as the preceding step, in which case no message is sent for the later step, thereby avoiding what would otherwise be a duplicate message. The steps are interpreted as <a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">unsigned or signed</a> data depending on the context. To achieve smooth control changes, it may be necessary to use a relatively small <a href="../Views/Track_View/Track_Grid.htm#Track_Quant">Quant</a>, but don't make it smaller than necessary, otherwise you risk exceeding the bandwidth limitations of the output device.
+
+<p>The <a href="../Views/Track_View/Track_Grid.htm#Track_Velocity">track velocity</a> property has a different meaning for controller tracks than it does for <a href="../Tracks/Note_tracks.htm">note tracks</a>: instead of offsetting the note velocities, it offsets the control values. In other words, the track's velocity offset (if any) is added to the track's step values to compute the output data values.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

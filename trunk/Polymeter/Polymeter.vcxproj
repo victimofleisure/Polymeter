@@ -1,0 +1,463 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D151CBDF-CF0B-42E5-AA56-68451C6FDCCA}</ProjectGuid>
+    <RootNamespace>Polymeter</RootNamespace>
+    <Keyword>MFCProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Dynamic</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Dynamic</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>winmm.lib;version.lib;htmlhelp.lib</AdditionalDependencies>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>winmm.lib;version.lib;htmlhelp.lib</AdditionalDependencies>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions);_WIN64</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>winmm.lib;version.lib;htmlhelp.lib</AdditionalDependencies>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>winmm.lib;version.lib;htmlhelp.lib</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);_WIN64</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AboutDlg.h" />
+    <ClInclude Include="AppRegKey.h" />
+    <ClInclude Include="ArrayEx.h" />
+    <ClInclude Include="ArrayExAlgoDef.h" />
+    <ClInclude Include="Benchmark.h" />
+    <ClInclude Include="BlockArray.h" />
+    <ClInclude Include="BoundArray.h" />
+    <ClInclude Include="Channel.h" />
+    <ClInclude Include="ChannelsBar.h" />
+    <ClInclude Include="ChannelDef.h" />
+    <ClInclude Include="ChildFrm.h" />
+    <ClInclude Include="ColoredButton.h" />
+    <ClInclude Include="ConvergencesDlg.h" />
+    <ClInclude Include="CritSec.h" />
+    <ClInclude Include="CtrlResize.h" />
+    <ClInclude Include="D2DImageWriter.h" />
+    <ClInclude Include="FolderDialog.h" />
+    <ClInclude Include="FrameSizeDef.h" />
+    <ClInclude Include="GraphBar.h" />
+    <ClInclude Include="GraphTypeDef.h" />
+    <ClInclude Include="Mapping.h" />
+    <ClInclude Include="MidiEventColDef.h" />
+    <ClInclude Include="MidiEventBar.h" />
+    <ClInclude Include="MappingBar.h" />
+    <ClInclude Include="MappingDef.h" />
+    <ClInclude Include="ModulationDlg.h" />
+    <ClInclude Include="MyDockablePane.h" />
+    <ClInclude Include="PhaseBar.h" />
+    <ClInclude Include="PianoBar.h" />
+    <ClInclude Include="ParseCSV.h" />
+    <ClInclude Include="Diatonic.h" />
+    <ClInclude Include="DLLWrap.h" />
+    <ClInclude Include="DocIter.h" />
+    <ClInclude Include="DragVirtualListCtrl.h" />
+    <ClInclude Include="ExportDlg.h" />
+    <ClInclude Include="FillDlg.h" />
+    <ClInclude Include="FixedArray.h" />
+    <ClInclude Include="FocusEdit.h" />
+    <ClInclude Include="GDIUtils.h" />
+    <ClInclude Include="Globals.h" />
+    <ClInclude Include="GoToPositionDlg.h" />
+    <ClInclude Include="GridCtrl.h" />
+    <ClInclude Include="HelpIDs.h" />
+    <ClInclude Include="HelpResMap.h" />
+    <ClInclude Include="ListBar.h" />
+    <ClInclude Include="LiveListCtrl.h" />
+    <ClInclude Include="LiveView.h" />
+    <ClInclude Include="MainDockBarDef.h" />
+    <ClInclude Include="ModulationsBar.h" />
+    <ClInclude Include="PartsBar.h" />
+    <ClInclude Include="HeptatonicDef.h" />
+    <ClInclude Include="Hyperlink.h" />
+    <ClInclude Include="ILockRingBuf.h" />
+    <ClInclude Include="IniFile.h" />
+    <ClInclude Include="ListCtrlExSel.h" />
+    <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="MasterProps.h" />
+    <ClInclude Include="MasterPropsDef.h" />
+    <ClInclude Include="Midi.h" />
+    <ClInclude Include="MidiCtrlrDef.h" />
+    <ClInclude Include="MidiDevices.h" />
+    <ClInclude Include="MidiFile.h" />
+    <ClInclude Include="MidiWrap.h" />
+    <ClInclude Include="ModeDef.h" />
+    <ClInclude Include="MuteView.h" />
+    <ClInclude Include="Note.h" />
+    <ClInclude Include="NoteDef.h" />
+    <ClInclude Include="NoteEdit.h" />
+    <ClInclude Include="NumberTheory.h" />
+    <ClInclude Include="NumEdit.h" />
+    <ClInclude Include="NumSpin.h" />
+    <ClInclude Include="Options.h" />
+    <ClInclude Include="OptionsDef.h" />
+    <ClInclude Include="OptionsDlg.h" />
+    <ClInclude Include="PathStr.h" />
+    <ClInclude Include="Persist.h" />
+    <ClInclude Include="PianoCtrl.h" />
+    <ClInclude Include="PianoSizeDef.h" />
+    <ClInclude Include="Polymeter.h" />
+    <ClInclude Include="PolymeterDoc.h" />
+    <ClInclude Include="Preset.h" />
+    <ClInclude Include="PresetsBar.h" />
+    <ClInclude Include="PreviewGridCtrl.h" />
+    <ClInclude Include="RecordDlg.h" />
+    <ClInclude Include="RecursiveFileFind.h" />
+    <ClInclude Include="RulerCtrl.h" />
+    <ClInclude Include="Scale.h" />
+    <ClInclude Include="SeqTrackArray.h" />
+    <ClInclude Include="SongParent.h" />
+    <ClInclude Include="SongTrackView.h" />
+    <ClInclude Include="SongView.h" />
+    <ClInclude Include="SplitView.h" />
+    <ClInclude Include="SteadyStatic.h" />
+    <ClInclude Include="StepParent.h" />
+    <ClInclude Include="StepValuesBar.h" />
+    <ClInclude Include="StepView.h" />
+    <ClInclude Include="PopupCombo.h" />
+    <ClInclude Include="PopupEdit.h" />
+    <ClInclude Include="PopupNumEdit.h" />
+    <ClInclude Include="ProgressDlg.h" />
+    <ClInclude Include="Properties.h" />
+    <ClInclude Include="PropertiesBar.h" />
+    <ClInclude Include="PropertiesGrid.h" />
+    <ClInclude Include="RandList.h" />
+    <ClInclude Include="Range.h" />
+    <ClInclude Include="RefPtr.h" />
+    <ClInclude Include="RegTempl.h" />
+    <ClInclude Include="RegTemplTypes.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="RingBuf.h" />
+    <ClInclude Include="Round.h" />
+    <ClInclude Include="SaveObj.h" />
+    <ClInclude Include="Sequencer.h" />
+    <ClInclude Include="SequencerErrors.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="StretchDlg.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="Track.h" />
+    <ClInclude Include="TrackDef.h" />
+    <ClInclude Include="TrackSortDlg.h" />
+    <ClInclude Include="TrackUndoTest.h" />
+    <ClInclude Include="TrackView.h" />
+    <ClInclude Include="OffsetDlg.h" />
+    <ClInclude Include="Undoable.h" />
+    <ClInclude Include="UndoCodeData.h" />
+    <ClInclude Include="UndoCodes.h" />
+    <ClInclude Include="UndoManager.h" />
+    <ClInclude Include="UndoState.h" />
+    <ClInclude Include="UndoTest.h" />
+    <ClInclude Include="UndoTypes.h" />
+    <ClInclude Include="VariantHelper.h" />
+    <ClInclude Include="VelocityDlg.h" />
+    <ClInclude Include="VelocityPalette.h" />
+    <ClInclude Include="VelocityView.h" />
+    <ClInclude Include="Version.h" />
+    <ClInclude Include="VersionInfo.h" />
+    <ClInclude Include="ViewTypeDef.h" />
+    <ClInclude Include="Win32Console.h" />
+    <ClInclude Include="WinAppCK.h" />
+    <ClInclude Include="WObject.h" />
+    <ClInclude Include="Wrapx64.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AboutDlg.cpp" />
+    <ClCompile Include="ArrayEx.cpp" />
+    <ClCompile Include="Benchmark.cpp" />
+    <ClCompile Include="Channel.cpp" />
+    <ClCompile Include="ChannelsBar.cpp" />
+    <ClCompile Include="ChildFrm.cpp" />
+    <ClCompile Include="ColoredButton.cpp" />
+    <ClCompile Include="ConvergencesDlg.cpp" />
+    <ClCompile Include="CtrlResize.cpp" />
+    <ClCompile Include="D2DImageWriter.cpp" />
+    <ClCompile Include="FolderDialog.cpp" />
+    <ClCompile Include="GraphBar.cpp" />
+    <ClCompile Include="Mapping.cpp" />
+    <ClCompile Include="MidiEventBar.cpp" />
+    <ClCompile Include="MappingBar.cpp" />
+    <ClCompile Include="ModulationDlg.cpp" />
+    <ClCompile Include="MyDockablePane.cpp" />
+    <ClCompile Include="PhaseBar.cpp" />
+    <ClCompile Include="PianoBar.cpp" />
+    <ClCompile Include="ParseCSV.cpp" />
+    <ClCompile Include="Diatonic.cpp" />
+    <ClCompile Include="DLLWrap.cpp" />
+    <ClCompile Include="DocIter.cpp" />
+    <ClCompile Include="DragVirtualListCtrl.cpp" />
+    <ClCompile Include="ExportDlg.cpp" />
+    <ClCompile Include="FillDlg.cpp" />
+    <ClCompile Include="FocusEdit.cpp" />
+    <ClCompile Include="GDIUtils.cpp" />
+    <ClCompile Include="GoToPositionDlg.cpp" />
+    <ClCompile Include="GridCtrl.cpp" />
+    <ClCompile Include="ListBar.cpp" />
+    <ClCompile Include="LiveListCtrl.cpp" />
+    <ClCompile Include="LiveView.cpp" />
+    <ClCompile Include="ModulationsBar.cpp" />
+    <ClCompile Include="PartsBar.cpp" />
+    <ClCompile Include="Hyperlink.cpp" />
+    <ClCompile Include="IniFile.cpp" />
+    <ClCompile Include="ListCtrlExSel.cpp" />
+    <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="MasterProps.cpp" />
+    <ClCompile Include="MidiDevices.cpp" />
+    <ClCompile Include="MidiFile.cpp" />
+    <ClCompile Include="MidiWrap.cpp" />
+    <ClCompile Include="MuteView.cpp" />
+    <ClCompile Include="Note.cpp" />
+    <ClCompile Include="NoteEdit.cpp" />
+    <ClCompile Include="NumberTheory.cpp" />
+    <ClCompile Include="NumEdit.cpp" />
+    <ClCompile Include="NumSpin.cpp" />
+    <ClCompile Include="Options.cpp" />
+    <ClCompile Include="OptionsDlg.cpp" />
+    <ClCompile Include="PathStr.cpp" />
+    <ClCompile Include="Persist.cpp" />
+    <ClCompile Include="PianoCtrl.cpp" />
+    <ClCompile Include="Polymeter.cpp" />
+    <ClCompile Include="PolymeterDoc.cpp" />
+    <ClCompile Include="Preset.cpp" />
+    <ClCompile Include="PresetsBar.cpp" />
+    <ClCompile Include="PreviewGridCtrl.cpp" />
+    <ClCompile Include="RecordDlg.cpp" />
+    <ClCompile Include="RecursiveFileFind.cpp" />
+    <ClCompile Include="RulerCtrl.cpp" />
+    <ClCompile Include="Scale.cpp" />
+    <ClCompile Include="SeqTrackArray.cpp" />
+    <ClCompile Include="SongParent.cpp" />
+    <ClCompile Include="SongTrackView.cpp" />
+    <ClCompile Include="SongView.cpp" />
+    <ClCompile Include="SplitView.cpp" />
+    <ClCompile Include="SteadyStatic.cpp" />
+    <ClCompile Include="StepParent.cpp" />
+    <ClCompile Include="StepValuesBar.cpp" />
+    <ClCompile Include="StepView.cpp" />
+    <ClCompile Include="PopupCombo.cpp" />
+    <ClCompile Include="PopupEdit.cpp" />
+    <ClCompile Include="PopupNumEdit.cpp" />
+    <ClCompile Include="ProgressDlg.cpp" />
+    <ClCompile Include="Properties.cpp" />
+    <ClCompile Include="PropertiesBar.cpp" />
+    <ClCompile Include="PropertiesGrid.cpp" />
+    <ClCompile Include="RandList.cpp" />
+    <ClCompile Include="Sequencer.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="StretchDlg.cpp" />
+    <ClCompile Include="Track.cpp" />
+    <ClCompile Include="TrackSortDlg.cpp" />
+    <ClCompile Include="TrackUndoTest.cpp" />
+    <ClCompile Include="TrackView.cpp" />
+    <ClCompile Include="OffsetDlg.cpp" />
+    <ClCompile Include="Undoable.cpp" />
+    <ClCompile Include="UndoManager.cpp" />
+    <ClCompile Include="UndoState.cpp" />
+    <ClCompile Include="UndoTest.cpp" />
+    <ClCompile Include="VelocityDlg.cpp" />
+    <ClCompile Include="VelocityView.cpp" />
+    <ClCompile Include="VersionInfo.cpp" />
+    <ClCompile Include="Win32Console.cpp" />
+    <ClCompile Include="WinAppCK.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Polymeter.reg" />
+    <None Include="res\dragmulti.cur" />
+    <None Include="res\dragsingle.cur" />
+    <None Include="res\Polymeter.rc2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Polymeter.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\filter.bmp" />
+    <Image Include="res\Polymeter.ico" />
+    <Image Include="res\PolymeterDoc.ico" />
+    <Image Include="res\Toolbar.bmp" />
+    <Image Include="res\Toolbar256.bmp" />
+    <Image Include="UserImages.bmp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="Polymeter.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

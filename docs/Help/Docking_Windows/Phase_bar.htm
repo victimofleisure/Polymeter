@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Phase</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Phase</h3>
+
+<p>This <a href="../Docking_Windows/Docking_windows.htm">docking window</a> shows an animated diagram that helps you visualize the phase relationships between your <a href="../Concepts/Tracks.htm">tracks</a>. The diagram consists of a series of concentric circles, each of which corresponds to a unique loop <a href="../Loose_Ends/Period.htm">period</a> in <a href="../Concepts/Steps.htm#Ticks">ticks</a>. Loop period is the product of a track's <a href="../Views/Track_View/Track_Grid.htm#Track_Length">Length</a> and <a href="../Views/Track_View/Track_Grid.htm#Track_Quant">Quant</a>. The periods are sorted so that innermost circle corresponds to the shortest period, and the outermost circle to the longest period. An animated dot moves along each circular path, representing the phase, in other words the current position within the corresponding period. The representation is analogous to a planetary system, with the dots as planets and circles indicating their orbits.
+
+<p>Multiple tracks having the same period are coalesced into a single orbit because they all share the same phase. If all of the selected tracks have the same period, only one orbit is shown. The diagram makes it easier to visualize <a href="../Concepts/Convergences.htm">convergences</a>.  When two or more planets are shown at zero degrees (noon), the corresponding periods converge. All periods converge at the start of the first beat of the first measure. Subsequent convergences may be located using <a href="../Menus/Tools/Time_To_Repeat.htm">Time to Repeat</a>, the <a href="../Menus/Tools/Convergences_Calculator.htm">Convergences calculator</a>, or the <a href="../Menus/Transport/Next_Convergence.htm">Next Convergence</a> and <a href="../Menus/Transport/Previous_Convergence.htm">Previous Convergence</a> commands.
+
+<p>The diagram also indicates <a href="../Views/Track_View/Track_Selection.htm">track selection</a> if any. Since each orbit can represent multiple tracks, the orbit is highlighted if any of the tracks it represents is selected. It's also possible to select tracks by left-clicking within the diagram, as explained below:
+
+<ul>
+<li>To select a single orbit, left-click it. This selects only loops having the corresponding period.
+<li>To select a range of adjacent orbits, left-click the first orbit, and then left-click the last orbit while pressing the <span class="key">Shift</span> key.
+<li>To toggle the selection of an orbit, left-click it while pressing the <span class="key">Ctrl</span> key.
+<li>To deselect all orbits, left-click on the diagram's background, outside the outermost orbit.
+</ul>
+
+<p>If you hover the pointer over an orbit, after a short delay, a tooltip is shown containing the corresponding Length and Quant.
+
+<a name="Exporting_phase_video"><p><b>Exporting video</b></a>
+<p>The phase visualization can be exported as series of frames in sequentially numbered PNG files. The resulting image sequence can then be converted to a video using <a href="http://ffmpeg.org">ffmpeg</a> or an equivalent program. To start exporting, select <span class="cmd">Export Video</span> from the phase bar's context menu. This command is only available while playback of the document is <a href="../Menus/Transport/Play.htm">stopped</a>.
+
+<p>The command first displays a folder dialog, prompting you to select a destination folder for the image sequence. The export typically creates many files, so it's advisable to store them in their own folder. The dialog permits you to create a new folder if needed. Press OK to continue.
+
+<p>The command then displays a record dialog that lets you specify the duration of the recording, the frame rate and the frame size. The duration can be specified in either hh:mm:ss time or in frames. Press OK to start exporting frames. During the export, a progress bar is displayed.
+
+<p>This command can potentially use a large amount of disk space. You're responsible for ensuring that sufficient space exists. If the destination folder already contains an image sequence from a previous run of this export, you'll be warned. If you proceed anyway, the previous image sequence is overwritten.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

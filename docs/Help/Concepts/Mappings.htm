@@ -1,0 +1,27 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Mappings</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Mappings</h3>
+
+<p>Mapping is the process of assigning input MIDI messages to properties, so that those properties can be remotely controlled, typically via a MIDI control surface. Each mapping consists of a description of the input message, and a description of the target property. The mapping feature also supports translation. An input MIDI message can be translated to any other MIDI message, and/or mapped to any <a href="../Concepts/Tracks.htm#Track_properties">track property</a> except track name. Other possible mapping targets include <a href="../Concepts/Parts.htm">parts</a>, <a href="../Concepts/Presets.htm">presets</a>, and transport commands. Mappings are edited via the <a href="../Docking_Windows/Mapping_bar.htm">Mapping</a> docking window.
+
+<p>An input message can have multiple mappings, i.e. it can be translated to multiple messages, or mapped to multiple properties, or to the same property in multiple tracks, or any combination of these. The reverse is also true: different input messages can be translated to the same output message, or mapped to the same track property.
+
+<p>Translation facilitates tweaking synthesizer settings with a control surface. It's likely that different songs will use different synthesizers and different control schemes. By setting up appropriate translations in Polymeter, the user can avoid reprogramming the control surface for each song. The control surface can always output the same messages; only the mappings need to change, and the mapping details are conveniently stored in the song's Polymeter document. More importantly, since Polymeter can record the MIDI input as well as the dubs, a performance can be recorded as events and then completely reconstructed afterwards.
+
+<p>Mapping is particularly interesting for track properties that affect the rhythmic feel, such as <a href="../Views/Track_View/Track_Grid.htm#Track_Offset">Offset</a> and <a href="../Views/Track_View/Track_Grid.htm#Track_Swing">Swing</a>. The <a href="../Views/Track_View/Track_Grid.htm#Track_Range_Start">Range Start</a> property is another fruitful target.
+
+<p>For some target properties, the mapping's output range may need to be adjusted for optimal results. For example, suppose a knob that outputs 0 to 127 as usual is mapped to a target property that has only three states. The knob's first three values step through the states, while its remaining range of motion does nothing, making the knob awkward to use. This is solved by giving the mapping an output range of 0 to 2, and thereby spreading out the target's states over the knob's entire range of motion.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Tempo tracks</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Tempo tracks</h3>
+
+<p>A tempo track <em>scales</em> the base <a href="../Properties/Tempo.htm">tempo</a> by a variable amount. The amount of scaling can vary over time, and its effect on the tempo is multiplicative, not additive. To create a tempo <a href="../Concepts/Tracks.htm">track</a>, change a track's <a href="../Views/Track_View/Track_Grid.htm#Track_Type">Type</a> to Tempo, and also set the track's <a href="../Views/Track_View/Track_Grid.htm#Track_Duration">Duration</a> to a non-zero value, e.g. 100. Then set the track's steps to whatever shape you want the tempo change to have. For tempo tracks, Duration is reused as the tempo range, expressed as a percentage. If you set it to 100, the tempo ranges from half-time to double time. If you set Duration to 50 instead, the tempo range is half as wide. Tempo is an exponential function, much like frequency. The actual formula is:
+
+<p>scaled_tempo = base_tempo * 2<sup>n</sup>
+
+<p>with the value of the exponent n given by:
+
+<p>n = signed_step_value / 64 * tempo_range / 100
+
+<p>Tempo scaling is mapped to a linear parameter (the range of a step), so that you can manipulate tempo as if it were linear, even though it isn't. The following table lists the tempo percentages that result from a range of step values, assuming a Duration of 100. Notice that +32 doesn't give 150%, because tempo isn't linear.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Step Value</th><th>Scaling Factor</th><th>Tempo %</th></tr>
+<tr><td>+64</td><td>2<sup>1</sup> = 2</td><td>200</td></tr>
+<tr><td>+32</td><td>2<sup>0.5</sup> = 1.414</td><td>141.4</td></tr>
+<tr><td>0</td><td>2<sup>0</sup> = 1</td><td>100</td></tr>
+<tr><td>&minus;32</td><td>2<sup>&minus;0.5</sup> = 0.707</td><td>70.7</td></tr>
+<tr><td>&minus;64</td><td>2<sup>&minus;1</sup> = 0.5</td><td>50</td></tr>
+</table>
+
+<p>In actuality the tempo can't quite reach double time, because the maximum <a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">signed</a> step value is +63, not +64. The table below shows the actual tempo ranges that result from a series of Duration values. Notice that the maximum values are slightly less than ideal (198% instead of 200%, 391% instead of 400%). If this asymmetry is problematic, you can avoid it by only using the lower half of the step value range, from &minus;64 to 0.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th rowspan=2>Duration</th><th colspan=3>Tempo Range</th></tr>
+<tr><th>&minus;64</th><th>0</th><th>+63</th></tr>
+<tr><td>25</td><td>84%</td><td>100%</td><td>119%</td></tr>
+<tr><td>50</td><td>71%</td><td>100%</td><td>141%</td></tr>
+<tr><td>100</td><td>50%</td><td>100%</td><td>198%</td></tr>
+<tr><td>200</td><td>25%</td><td>100%</td><td>391%</td></tr>
+</table>
+
+<p>Only one tempo track can be active (unmuted) at a time. If you have multiple tempo tracks unmuted at once, they will compete, which probably isn't what you want. To get second-order change (tempo changing in multiple ways at once), use <a href="../Modulation/Tempo_modulation.htm">tempo modulation</a>.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

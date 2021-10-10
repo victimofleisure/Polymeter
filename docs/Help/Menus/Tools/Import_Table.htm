@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Import Table</title>
+<link rel=stylesheet href="../../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Import Table</h3>
+
+<p>Each of these commands imports data from a Comma-Separated Values (CSV) file. In all cases, a file dialog is displayed, prompting you to select the input CSV file. The imports have different targets, and expect differently formatted data, as explained below. Each import has a corresponding <a href="../../Menus/Tools/Export_Table.htm#Export_Tracks">export</a>, and in order to better understand a format, it may be helpful to examine the results of its export.
+
+<a name="Import_Tracks"><p><b>Import Tracks</b></a>
+<p>This command imports <a href="../../Concepts/Tracks.htm">track</a> data from a CSV file. The first row must be a column header specifying which track properties are to be imported. Each column header item must be a valid track property name. It's not necessary to specify all the track properties, as any omitted properties will be initialized to default values. Track properties may be specified in any order, so long as the subsequent data rows use that same order. For a list of the track property names, examine the file resulting from the corresponding <a href="../../Menus/Tools/Export_Table.htm#Export_Tracks">export tracks</a> command.
+
+<p>Each subsequent row corresponds to a track to be inserted, and must contain properly formatted data values for the properties specified by the column header. Values containing commas must be enclosed in double quotes.
+
+<a name="Import_Steps"><p><b>Import Steps</b></a>
+<p>This command imports <a href="../../Concepts/Steps.htm">step</a> data from a CSV file, containing one row per track, with no initial header row. Each row consists of a list of integers ranging from 0 to 255, corresponding to the step values for that track. The tracks needn't all be the same length. Each track's length is inferred from the number of step values found on its row. For note tracks, step values may exceed 127, due to the most significant bit being used for <a href="../../Tracks/Note_tracks.htm#Tied_notes">tying</a> steps together into longer notes. You can also <a href="../../Menus/Tools/Export_Table.htm#Export_Steps">export steps</a>.
+
+<a name="Import_Modulations"><p><b>Import Modulations</b></a>
+<p>This command imports <a href="../../Concepts/Modulations.htm">modulation</a> data from a CSV file containing one row per modulation, with no initial header row. Each row consists of three integers, corresponding to the modulation's enumerated type, source track index, and sink track index. The <a href="../../Concepts/Modulations.htm#Modulation_types">modulation types</a> are zero-based. The track indices are also zero-based and must be within the range of the current tracks. You can also <a href="../../Menus/Tools/Export_Table.htm#Export_Modulations">export modulations</a>.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

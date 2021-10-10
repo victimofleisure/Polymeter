@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Velocities Pane</title>
+<link rel=stylesheet href="../../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Velocities Pane</h3>
+
+<p>The velocities pane displays the velocities of notes within the <a href="../../Views/Track_View/Track_Selection.htm">selected tracks</a>, and also lets you edit the velocities. The velocities pane isn't restricted only to <a href="../../Tracks/Note_tracks.htm">note tracks</a>; it can also be used to view and edit the <a href="../../Concepts/Steps.htm">step values</a> of other <a href="../../Concepts/Tracks.htm#Track_types">track types</a> including <a href="../../Tracks/Controller_tracks.htm">controller</a>, <a href="../../Tracks/Tempo_tracks.htm">tempo</a>, and <a href="../../Tracks/Modulator_tracks.htm">modulator</a> tracks. The velocities or step values are represented by vertical bars that can be clicked and dragged. The velocities pane is primarily intended for gestural drawing. If you want to specify exact values, it may be easier to enter them numerically in the <a href="../../Docking_Windows/Step_Values_bar.htm">Step Values bar</a>.
+
+<p>The velocities pane is optional, and when visible, it appears at the bottom of the <a href="../../Views/Track_View/Track_Steps.htm">track steps</a> area within the <a href="../../Views/Track_View/Track_View.htm">track view</a>. To show or hide the velocities pane, use the <a href="../../Menus/View/Show_Velocities.htm">View/Velocities</a> command. To change the height of the pane, drag the <a href="../../Views/Track_View/Track_View.htm#Panes">splitter bar</a> that separates the pane from the track steps.
+
+<ul>
+<li>At least one track must be selected, otherwise the pane is empty. Multiple tracks can be selected, in which case their events are combined.
+<li>To edit a velocity, left-click on its bar at the point where you want it to be, or left-click and drag the bar up or down until it's where you want it.
+<li>To edit multiple velocities, left-click and drag the cursor over the bars you want to change.
+</ul>
+
+<p>The pane supports a variety of drawing functions, which are accessed by pressing modifier keys while dragging. For more precise control, you may prefer to use the <a href="../../Menus/Track/Fill.htm">Track/Fill</a> command which offers similar functions but in parameterized form.
+
+<ul>
+<li>To make all the velocities the same, hold down the <span class="key">Shift</span> key while dragging.
+<li>To make the velocities fit a straight line, hold down the <span class="key">Ctrl</span> key while dragging.
+<li>To make the velocities fit a triangle wave, hold down the <span class="key">Ctrl</span> and <span class="key">Alt</span> key while dragging diagonally.
+<li>To make the velocities fit a sine wave, hold down the <span class="key">Shift</span> keys and <span class="key">Alt</span> keys while dragging diagonally.
+</ul>
+
+<p>When using the triangle or sine functions, visualize a rectangle that contains the desired wave, and draw one of the diagonals of that rectangle. The triangle and sine functions are both sensitive to the drawing direction. Drawing from top to bottom inverts the wave vertically. Drawing from right to left shifts the wave's phase by 90&deg;.
+
+<p>The pane also features tool tips that show step values. To learn a bar's exact value, hover the cursor (hold it stationary) over the bar for at least half a second, and its value will appear in a tool tip. The tool tip is also shown continuously while dragging is in progress.
+
+<p>The tool tip can show either <a href="../../Concepts/Steps.htm#Unsigned_versus_signed_steps">signed or unsigned</a> step values. To switch between the two, left-click the small button on the left border of the velocities pane. The button indicates the step value at the vertical center of the pane. If it shows 64, unsigned tooltips are selected, whereas if it shows 0, signed tooltips are selected.
+
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

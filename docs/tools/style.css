@@ -1,0 +1,37 @@
+a:link {
+	text-decoration: none;
+}
+
+a:visited {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:active {
+	text-decoration: underline;
+}
+body {
+	background-color: #e8e8ff;
+	font-family: Arial, Helvetica, sans-serif;
+}
+table {
+	background-color: white;	
+	border-collapse: collapse;
+}
+th, td {
+	text-align: left;
+	padding: 3px;
+}
+th {
+	background-color: #e0ffe0;
+}
+tr:nth-child(odd) {
+	background-color: #f1f1f1;
+}
+#navigation th {
+	padding: 8px;
+	background-color: #e8e8ff;
+}

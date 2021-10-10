@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Fill</title>
+<link rel=stylesheet href="../../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Fill</h3>
+
+<p>This command fills a range of steps with a series of values. The series can be linear, or one of the supported periodic functions. Filling may be more convenient than editing the velocity bars in the <a href="../../Views/Track_View/Velocities_Pane.htm">velocities pane</a>, particularly for periodic functions.
+
+<p>If a <a href="../../Views/Track_View/Step_Selection.htm">step selection</a> exists, it takes priority. In this case only the selected steps are filled. Otherwise the command fills all of the steps in the <a href="../../Views/Track_View/Track_Selection.htm">selected tracks</a>.
+
+<a name="Fill_value_range"><p><b>Value Range</b></a>
+<p>This is the range of values to be filled. For linear fills, these are the starting and ending values. For periodic functions, the difference between these two values is the amplitude of the resulting waveform. The range may be <a href="../../Concepts/Steps.htm#Unsigned_versus_signed_steps">signed or unsigned</a>. To fill steps with a constant, set Start and End to the same value.
+
+<a name="Fill_step_range"><p><b>Step Range</b></a>
+<p>This is the range of steps to be filled. It's taken from the step selection if one exists, otherwise it's the maximum of the lengths of the selected tracks.
+
+<a name="Fill_function"><p><b>Function</b></a>
+<p>This is the type of function to fill with. The options are Linear, Sine, Triangle, Ramp Up, Ramp Down, and Square. All but the first are periodic functions.
+
+<a name="Fill_Frequency"><p><b>Frequency</b></a>
+<p>This is the frequency of the periodic waveform, in Hertz. Frequency applies to all functions except Linear. To fill with one complete cycle of the waveform, set the frequency to one. Frequency is a real number and may be fractional.
+
+<a name="Fill_Phase"><p><b>Phase</b></a>
+<p>This is the phase of the periodic waveform, in <a href="../../Loose_Ends/Normalized_angles.htm">normalized degrees</a>, ranging from zero to one. Phase applies to all functions except Linear. To start the waveform in its usual position, set the phase to one.
+
+<a name="Fill_Curviness"><p><b>Curviness</b></a>
+<p>This makes a periodic waveform curvier. If it's zero, curviness is disabled. Otherwise, the curvature becomes more extreme as curviness diverges from one. This lets you make a wider variety of shapes by distorting the underlying waveform. Phase applies to all functions except Linear. For a typical exponential curve, select the following: Step Range = 0 to 127 (or &minus;64 to +63), Function = Ramp Up, Frequency = 1, Phase = 0, Curviness = 100. For standard waveforms, leave Curviness zero.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Value</th><th>Description</th></tr>
+<tr><td><&nbsp;0</td><td>Not allowed.</td></tr>
+<tr><td>0</td><td>Linear (disabled).</td></tr>
+<tr><td>0&nbsp;<&nbsp;x&nbsp;<&nbsp;1</td><td>Starts out curving more steeply and then levels off; the smaller the value, the more extreme the curvature.</td></tr>
+<tr><td>1</td><td>Linear. Use zero instead to avoid needless computations.</td></tr>
+<tr><td>>&nbsp;1</td><td>Starts out curving more gradually and then gets steeper; the larger the value, the more extreme the curvature.</td></tr>
+</table>
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

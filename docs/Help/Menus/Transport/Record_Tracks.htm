@@ -1,0 +1,23 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Record Tracks</title>
+<link rel=stylesheet href="../../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Record Tracks</h3>
+
+<p>This command records input MIDI messages and converts them to <a href="../../Concepts/Tracks.htm">tracks</a>. Only MIDI channel messages (notes, control changes, pitch bends, and so on) are recorded; other message types are ignored. The timing of the input messages is quantized in accordance with the <a href="../../Options/MIDI/Input_Quantization.htm">Input Quantization</a> option. Each unique note number or control number used during the recording results in one track. Before they're inserted, the recorded tracks are sorted into descending order by note or control number within message type.
+
+<p>This command is only available if an <a href="../../Options/MIDI/Input_Device.htm">Input Device</a> is selected. If you start recording tracks while <a href="../../Menus/Transport/Play.htm">playback</a> is stopped, playback is started automatically. You can also start recording tracks during playback, but in this case the recorded tracks will include a chunk of empty steps at the beginning, which corresponds to the period between when playback started and when you started recording. Depending on the <a href="../../Options/MIDI/Latency.htm">latency</a> setting and <a href="../../Menus/Tools/Devices.htm">devices</a> in use, the recording can be significantly delayed, though this may be correctable afterwards.
+
+
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

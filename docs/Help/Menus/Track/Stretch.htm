@@ -1,0 +1,23 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Stretch</title>
+<link rel=stylesheet href="../../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Stretch</h3>
+
+<p>This command either stretches or shrinks the <a href="../../Views/Track_View/Track_Selection.htm">selected tracks</a>. Unlike simply changing the <a href="../../Views/Track_View/Track_Grid.htm#Track_Length">track length</a>, this command resizes the contents of the <a href="../../Views/Track_View/Track_Steps.htm">track steps</a> as needed to fit the new length. A dialog is displayed, prompting you to enter the desired scaling as a percentage. For example, entering 200 doubles the size of the track, and entering 50 halves it. For integer multiples of 100, the stretching is lossless, but for all other scaling factors, the process is approximate. The percentage can be fractional, for example entering 66.666 shrinks the track to two-thirds of its size.
+
+<p>To estimate the new steps via linear interpolation, check the Interpolate option. Otherwise step values are repeated or removed as needed, but never changed. Disabling interpolation is useful when stretching or shrinking <a href="../../Tracks/Modulator_tracks.htm">modulator tracks</a> that contain notes, to avoid altering the tonality.
+
+<p>For <a href="../../Tracks/Note_tracks.htm">note tracks</a>, the note durations are increased or decreased as needed, and the interpolation option is ignored. The Stretch command can be useful when changing the <a href="../../Views/Track_View/Track_Grid.htm#Track_Quant">quant</a> of a note track. For example, suppose you have a track in eighth notes, and you want to convert it to sixteenth notes, without changing how it sounds. You divide its quant in half, but this causes the track to play twice as fast. Stretching the track by 200% fixes this.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

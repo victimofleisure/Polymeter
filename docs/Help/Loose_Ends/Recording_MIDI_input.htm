@@ -1,0 +1,37 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Recording MIDI input</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Recording MIDI input</h3>
+
+<p>The MIDI input recording feature is primarily intended for the case where a MIDI controller device is being routed through Polymeter to the output device. For example you might be using a MIDI controller to tweak the settings of a software synth. If you record a live performance in Polymeter, it's not enough to record only your dubs. In order to entirely capture the performance, the controller moves must also be recorded.
+
+<p>Recording of MIDI input is optional, and it's off by default, for backwards compatibility. To enable it, open the Options dialog and set the <a href="../Options/MIDI/Record_Input.htm">Record Input</a> option to "Dubs + MIDI." Now when you do the <a href="../Menus/Transport/Record.htm">Record</a> command (Transport/Record), in addition to your dubs, any MIDI events received from the input device will also be recorded. Note that playback of the recorded events occurs ONLY in Song view. There's currently no way to directly view or edit the recorded events, though this may change in future versions.
+
+<p>The timing resolution is pretty good, but there can be problems with recording latency. If the recorded events play back out of synch with the sequencer tracks, you can offset their timing via a Master property, <a href="../Properties/Record_Offset.htm">Record Offset</a>. This offset is in <a href="../Concepts/Steps.htm#Ticks">ticks</a>. To make the recorded events earlier relative to the sequencer tracks (the usual case), enter a negative value.
+
+<p>It's unusual for a record offset to be specified in ticks as opposed to milliseconds, but it has one big advantage: once the record offset is correctly set for a given recording, you can subsequently change the song's tempo and the record offset remains correct.
+
+<p>There's no exact method for determining the amount of recording latency. The usual approach is to record yourself playing along with a click track and then adjust the recording by ear until it sounds in sync. You can also inspect the timing differences in the MIDI output view. On a typical system, the record latency is about 40ms, but your results will depend on your hardware configuration. Once you know your recording latency, you can compute the appropriate record offset for a given song via the following function:
+
+<p>offset = (tempo / 60) &times; timebase &times; (latency / &minus;1000)
+
+<p>This assumes the latency is specified in milliseconds. For example if latency is 40ms, tempo is 90 BPM, and timebase is 120, the function is:
+
+<p>offset = (90 / 60) &times; 120 &times; (40 / &minus;1000)
+<br>offset = 1.5 &times; 120 &times; &minus;0.040
+<br>offset = &minus;7.2
+
+<p>So in this case the record offset should be &minus;7 ticks.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

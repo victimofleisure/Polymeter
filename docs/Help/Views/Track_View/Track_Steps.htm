@@ -1,0 +1,40 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Track Steps</title>
+<link rel=stylesheet href="../../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Track Steps</h3>
+
+<p>The track steps area constitutes most of the <a href="../../Views/Track_View/Track_View.htm">track view</a>'s right pane. For each track, a row of one or more equally sized rectangles is displayed, to the right of the track's <a href="../../Views/Track_View/Track_Mutes.htm">mute button</a>. These rectangles correspond to the track's <a href="../../Concepts/Steps.htm">steps</a>, and their sizes represent the step duration, also known as the track's <a href="../../Views/Track_View/Track_Grid.htm#Track_Quant">Quant</a>.
+
+<p>Left-clicking on a rectangle sets or clears the corresponding step: the step value toggles between zero and the <a href="../../Options/MIDI/Default_Velocity.htm">default velocity</a>. For more nuanced control of step values, use the <a href="../../Views/Track_View/Velocities_Pane.htm">velocities pane</a> or the <a href="../../Docking_Windows/Step_Values_bar.htm">Step Values bar</a>. For <a href="../../Tracks/Note_tracks.htm">note tracks</a> only, steps can be <a href="../../Tracks/Note_tracks.htm#Tied_notes">tied</a> together to form notes longer than one step.
+
+<p>Right-clicking on a rectangle selects the corresponding step. A contiguous range of steps can be selected by right-clicking the range's first step, and then while keeping the right button pressed, moving the pointer over the range's last step; for details, see <a href="../../Views/Track_View/Step_Selection.htm">step selection</a>.
+
+<p>Empty (zero) steps are white, whereas occupied (non-zero) steps are black, with the following exceptions: selected steps are blueish, and the current position is greenish if the track is unmuted, or reddish if the track is muted. Each track indicates its current position by highlighting one of its steps, unless the <a href="../../Options/View/Show_Current_Position.htm">Show Current Position</a> option is false. For note tracks only, a tied step fills its entire rectangle, whereas an untied step only fills the left half of its rectangle.
+
+<p>The steps area can be zoomed horizontally, using the <a href="../../Menus/View/Zoom_In.htm">Zoom In</a> and <a href="../../Menus/View/Zoom_Out.htm">Zoom Out</a> commands. The width of the steps area is determined by the track with the longest <a href="../../Loose_Ends/Period.htm">period</a>. The ruler at the top of the steps area is marked in beats and ticks; see <a href="../../Properties/Meter.htm">meter</a> for details. Left-clicking in the ruler jumps to the corresponding <a href="../../Properties/Meter.htm#Song_position">song position</a>. Right-clicking in the ruler clears the current step selection if any.
+
+<a name="Track_steps_quick_help"><p><b>Quick help</b></a>
+<ul>
+<li>Left-click a step to create a note or event. Left-click the step again to empty it.
+<li>For <a href="../../Tracks/Note_tracks.htm">note tracks</a> only, to create a <a href="../../Tracks/Note_tracks.htm#Tied_notes">tied note</a>, use Shift+left-click. Multiple adjacent steps can be tied together to create long notes, but the track must contain at least one empty or untied step, otherwise it will be silent.
+<li>You can specify whether tied or untied notes are created by default, using the <a href="../../Menus/Track/Tie_Notes.htm">Track/Tie Notes</a> command, which is also available from the <a href="../../Docking_Windows/Toolbar.htm">toolbar</a>.
+<li>To edit step values visually as bars, use the <a href="../../Views/Track_View/Velocities_Pane.htm">velocities pane</a>; to edit them numerically, use the <a href="../../Docking_Windows/Step_Values_bar.htm">Step Values bar</a>.
+<li>The right mouse button behaves differently than usual. In the steps area, right-clicking and dragging creates a <a href="../../Views/Track_View/Step_Selection.htm">step selection</a>.
+<li>Rectangular step selections can be cut, copied, pasted, deleted, and inserted, using the <a href="../../Menus/Edit/Standard_editing_commands.htm">standard editing commands</a>.
+<li>Right-clicking and dragging vertically over the mute buttons selects the corresponding tracks. While tracks are selected, left-clicking within the mute area toggles the selected track mutes, and Ctrl+left-click within the mute area unconditionally mutes the selected tracks, regardless of their current state.
+<li>To change the zoom in the time axis, use the <a href="../../Menus/View/Zoom_In.htm">Zoom In</a> and <a href="../../Menus/View/Zoom_Out.htm">Zoom Out</a> commands, or spin the mouse wheel while pressing the <span class="key">Ctrl</span> key.
+<li>Left-clicking in the ruler at the top of the track steps area jumps to the corresponding <a href="../../Properties/Meter.htm#Song_position">song position</a>.
+</ul>
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

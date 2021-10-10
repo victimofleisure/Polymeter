@@ -1,0 +1,40 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Standard editing commands</title>
+<link rel=stylesheet href="../../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Standard editing commands</h3>
+
+<p>The commands for inserting, deleting, and moving data via the <a href="../../Menus/Edit/Standard_editing_commands.htm#Clipboards">clipboard</a> are common to most applications. They're available from the Edit menu and certain context menus, and in some cases also from the <a href="../../Docking_Windows/Toolbar.htm">toolbar</a>.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Command</th><th>Shortcut</th><th>Effect</th></tr>
+<tr><td><a href="../../Menus/Edit/Cut.htm">Cut</a></td><td>Ctrl+X or Shift+Delete</td><td>Copies the selection to the clipboard and then deletes it</td></tr>
+<tr><td><a href="../../Menus/Edit/Copy.htm">Copy</a></td><td>Ctrl+C or Ctrl+Insert</td><td>Copies the selection to the clipboard</td></tr>
+<tr><td><a href="../../Menus/Edit/Paste.htm">Paste</a></td><td>Ctrl+V or Shift+Insert</td><td>Inserts the contents of the clipboard</td></tr>
+<tr><td><a href="../../Menus/Edit/Insert.htm">Insert</a></td><td>Insert</td><td>Inserts a new item </td></tr>
+<tr><td><a href="../../Menus/Edit/Delete.htm">Delete</a></td><td>Delete</td><td>Deletes the selection</td></tr>
+<tr><td><a href="../../Menus/Edit/Select_All.htm">Select All</a></td><td>Ctrl+A</td><td>Selects all items</td></tr>
+</table>
+
+<p>These commands are supported by the <a href="../../Views/Track_View/Track_View.htm">Track view</a>, <a href="../../Views/Song_View.htm">Song view</a>, <a href="../../Docking_Windows/Modulations_bar.htm">Modulations bar</a>, <a href="../../Docking_Windows/Mapping_bar.htm">Mapping bar</a>, and <a href="../../Docking_Windows/Step_Values_bar.htm">Step Values bar</a>. They're also supported within any text edit control, excepting the Insert command. If more than one of these targets is visible, the standard editing commands affect whichever one currently has the input focus.
+
+<p>Within the track view, if a <a href="../../Views/Track_View/Step_Selection.htm">step selection</a> exists, it takes priority over the <a href="../../Views/Track_View/Track_Selection.htm">track selection</a>. In other words, if both tracks and steps are selected, the editing commands operate on the selected steps. The song view works similarly.
+
+<a name="Clipboards"><p><b>Clipboards</b></a>
+<p>The Polymeter application doesn't use the Windows clipboard, except for text. Instead, Polymeter has internal clipboards for each of the following types of data: <a href="../../Concepts/Tracks.htm">tracks</a>, <a href="../../Concepts/Steps.htm">steps</a>, <a href="../../Concepts/Dubs.htm">dubs</a>, <a href="../../Concepts/Modulations.htm">modulations</a>, and <a href="../../Concepts/Mappings.htm">mappings</a>. These clipboards are only accessible within the instance of Polymeter that created them, hence they don't support copying data to other applications or other instances of Polymeter, nor do they persist after Polymeter exits. This shouldn't be a problem since Polymeter is an MDI (Multiple Document Interface) application, meaning it allows multiple documents to be opened at once. To move data between two Polymeter documents via clipboard, open both documents within a single instance of Polymeter.
+
+<p>The behavior of Cut/Copy/Paste is slightly non-standard due to each supported data type having its own clipboard. For example, if you copy some tracks, and then copy some steps, the steps don't replace the tracks, as would normally be the case if the Windows clipboard were used. Both the copied tracks and the copied steps are available for pasting in their respective views, because they're stored separately.
+
+<p>Certain types of data can also be moved between documents using tables, using the <a href="../../Menus/Tools/Export_Table.htm">Export Table</a> and <a href="../../Menus/Tools/Import_Table.htm">Import Table</a> commands, and such tables persist after Polymeter exits, unlike its clipboards.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

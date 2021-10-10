@@ -1,0 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Piano</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Piano</h3>
+
+<p>This <a href="../Docking_Windows/Docking_windows.htm">docking window</a> dynamically displays the output notes on a virtual piano keyboard. The piano keyboard's orientation can be horizontal or vertical, depending on whether the window is docked horizontally or vertically. To monitor MIDI output messages other than notes, e.g. controllers, use the <a href="../Docking_Windows/MIDI_Output_bar.htm">MIDI Output bar</a> instead.
+
+<p>By default, output notes are displayed for all MIDI channels. To show only a particular channel, use the <span class="cmd">Channel Filter</span> submenu of the window's context menu. The context menu also lets you to change the size of the piano keyboard, show or hide the key labels, and rotate the key labels. The window can optionally send MIDI notes when the corresponding keys are left-clicked. To enable this feature, use the context menu's <span class="cmd">Output Channel</span> submenu to select the desired MIDI channel.
+
+<a name="Piano_context_menu"><p><b>Context menu</b></a>
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><td>Channel Filter</td><td>To only show notes on a particular MIDI channel, select the corresponding submenu item, or select "All" to show notes from all channels.</td></tr>
+<tr><td>Output Channel</td><td>In this submenu, select the MIDI channel on which left-clicked piano keys should send the corresponding notes, or select "None" to disable this feature.</td></tr>
+<tr><td>Piano Size</td><td>To resize the keyboard, select a standard piano size from the submenu.</td></tr>
+<tr><td>Key Labels</td><td>Check this item to show labels on the piano keys that identify the corresponding MIDI notes.</td></tr>
+<tr><td>Rotate Labels</td><td>Check this item to rotate the key labels 90° counterclockwise, so that they're vertical instead of horizontal. This may allow the labels to use a larger font. This option is only supported when the window is docked horizontally.</td></tr>
+<tr><td>Color Velocities</td><td>Check this item to color the piano keys according to the velocities of the output notes. The colors range spectrally from blue (softest) to red (loudest).</td></tr>
+</table>
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

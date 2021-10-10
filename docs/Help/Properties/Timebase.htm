@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Timebase</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Timebase</h3>
+
+<p>This is the time division, also known as the timebase, in <a href="../Concepts/Steps.htm#Ticks">ticks</a> per quarter note (TPQN). It relates <em>ticks</em>, which are the smallest unit of time in MIDI, to <em>beats</em>, which are quarter notes. In other words, it specifies the number of ticks in a beat, and thereby determines the precision with which time can be represented. A range of predefined <a href="../Properties/Timebase.htm#Timebase_values">timebase values</a> are supported. At the default timebase of 120, a beat has 120 ticks. For a list of common note durations in ticks when using the default timebase, see <a href="../Views/Track_View/Track_Grid.htm#Track_Quant">Quant</a>.
+
+<p>The default timebase is recommended. Larger timebase values improve timing precision, but they also reduce the range of <a href="../Modulation/Duration_modulation.htm">duration</a> and <a href="../Modulation/Offset_modulation.htm">offset</a> modulation. That's because these modulation types interpret track <a href="../Concepts/Steps.htm">steps</a> as time offsets in ticks, and since the range of a step is finite, the larger the timebase, the less impact such time offsets have.
+
+<p>The timebase can't be changed during <a href="../Menus/Transport/Play.htm">playback</a>, and only one timebase can be used within any given document. Changing the timebase of an existing document causes all settings in ticks to be scaled, so that their values remain proportionally similar in the new timebase. Specifically track Quant, <a href="../Views/Track_View/Track_Grid.htm#Track_Offset">Offset</a>, <a href="../Views/Track_View/Track_Grid.htm#Track_Swing">Swing</a>, and <a href="../Views/Track_View/Track_Grid.htm#Track_Duration">Duration</a> are all scaled, along with the times of any <a href="../Concepts/Dubs.htm">dubs</a>. The scaling is only guaranteed to be exact if the new timebase is an integer multiple of the current one, otherwise it's approximate and may cause loss of precision.
+
+<a name="Timebase_values"><p><b>Timebase values</b></a>
+<p>This table lists the supported timebase values, all of which are multiples of 24 to ensure compatibility with <a href="../Options/MIDI/Send_MIDI_Clock.htm">MIDI clock</a> synchronization. The table also shows the Greatest Prime Factor (GPF) for each timebase, in other words the largest <a href="../Loose_Ends/Primes.htm">prime</a> number each timebase is evenly divisible by, which is useful information if you want to use odd subdivisions of a beat.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Ticks</th><th>GPF</th></tr>
+<tr><td>24</td><td>3</td></tr>
+<tr><td>48</td><td>3</td></tr>
+<tr><td>72</td><td>3</td></tr>
+<tr><td>96</td><td>3</td></tr>
+<tr><td>120</td><td>5</td></tr>
+<tr><td>144</td><td>3</td></tr>
+<tr><td>168</td><td>7</td></tr>
+<tr><td>192</td><td>3</td></tr>
+<tr><td>216</td><td>3</td></tr>
+<tr><td>240</td><td>5</td></tr>
+<tr><td>288</td><td>3</td></tr>
+<tr><td>336</td><td>7</td></tr>
+<tr><td>360</td><td>5</td></tr>
+<tr><td>384</td><td>3</td></tr>
+<tr><td>480</td><td>5</td></tr>
+<tr><td>504</td><td>7</td></tr>
+<tr><td>672</td><td>7</td></tr>
+<tr><td>768</td><td>3</td></tr>
+<tr><td>840</td><td>7</td></tr>
+<tr><td>960</td><td>5</td></tr>
+</table>
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

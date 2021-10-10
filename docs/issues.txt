@@ -1,0 +1,454 @@
+id	open	close	type	description	rev	user
+189	09/07/18		bug	song edits sometimes leave fragments, especially if zoom is changed while editing		
+272	01/26/19		bug	resizing docked pane via mouse drag leaves artifacts in Windows 10; affects stock VS2012 app too		
+273	01/26/19		bug	resizing docked pane via mouse drag leaves gap between scroll bar and pane, when two or more documents exist; affects stock VS2012 app too		
+290	03/31/19		bug	in piano bar, notes that are active when velocity color is enabled have incorrect key colors		
+297	11/04/19		bug	GraphViz times out if modulation is too complicated; introduce variable timeout option?		
+298	11/12/19		bug	MDI tab control sometimes disappears after opening or closing document; hard to reproduce		
+303	12/03/19		bug	playback lags behind UI by one tick (0.5 seconds) at tempo of 1 with GS Synth (see phase test)		
+304	12/10/19		bug	steps aren't drawn when track's quant is very large (e.g. 30720) and step view is zoomed in		
+312	02/18/20		bug	song CSV export omits tempo map, because CMidiFile::ReadTracks doesn't support tempo map		
+319	03/04/20		bug	in step view, very long tracks aren't displayed when zoomed in; caused by scroll view's 32-bit limitations		
+348	04/07/20		bug	stopping sequencer occasionally causes MIDI error 65 (still playing); happens every time in Mac Wine		
+349	04/07/20		bug	attempting to open MIDI device that's already open gives misleading out of memory error message		
+352	04/10/20		bug	sequencer is taking too long; probable cause is time-critical winmm thread preempting sequencer callback		
+358	04/17/20		bug	Time To Repeat command can take too long, stalling UI; show progress bar or use worker thread		
+376	06/20/20		bug	undoing modulation edit doesn't restore modulation selection; can't without also restoring track selection and Show Differences state		
+392	07/10/20		bug	Alt key commands don't work mode while cursor is hovering over MDI tab; affects stock VS2012 app too		
+1	03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
+2	03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
+3	03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
+4	03/22/18	03/26/18	done	add document read/write	0.0.00.043	
+5	03/22/18	03/26/18	done	add undo	0.0.00.043	
+24	03/25/18	03/26/18	done	prevent PPQ change while playing	0.0.00.043	
+6	03/22/18	03/27/18	done	test critical section in callback; no discernable impact	0.0.00.043	
+25	03/25/18	03/27/18	done	select MIDI device; options dialog	0.0.00.043	
+26	03/25/18	03/27/18	done	specify latency; options dialog	0.0.00.043	
+27	03/25/18	03/27/18	done	track names	0.0.00.043	
+28	03/25/18	03/30/18	done	drag reorder tracks	0.0.00.043	
+29	03/25/18	03/30/18	done	insert or delete tracks	0.0.00.043	
+30	03/25/18	03/30/18	done	undo test	0.0.00.043	
+31	03/25/18	04/01/18	done	icon	0.0.00.043	
+32	03/25/18	04/02/18	done	check for updates	0.0.00.043	
+33	03/25/18	04/09/18	done	duration offset	0.0.00.043	
+34	03/25/18	04/10/18	done	optionally show current position within each track	0.0.00.043	
+35	03/25/18	04/11/18	done	multi-track property editing	0.0.00.043	
+36	03/25/18	04/12/18	done	go to position, both while stopped and while playing	0.0.00.043	
+37	03/25/18	04/12/18	done	negative song position	0.0.00.043	
+38	03/25/18	04/13/18	done	export MIDI file	0.0.00.043	
+55	04/13/18	04/14/18	done	time to repeat; compute how long it takes for selected tracks to repeat, in beats and time	0.0.00.043	
+39	03/25/18	04/16/18	done	channels bar; one row per channel with columns for bank, patch, volume, and pan	0.0.00.043	
+57	04/15/18	04/16/18	done	input MIDI device; optionally pass input events through to output device via sequencer	0.0.00.043	
+60	04/17/18	04/17/18	done	handle MIDI device changes	0.0.00.043	
+61	04/17/18	04/18/18	done	if MIDI device change occurs while options dialog is active, dialog's device drop lists should update	0.0.00.043	
+58	04/16/18	04/19/18	done	grid control must support numeric edit with spin control	0.0.00.043	
+40	03/25/18	04/24/18	done	unlimited track length	0.0.01.000	
+41	03/25/18	04/26/18	done	make step width proportional to track's quantization	0.0.01.000	
+64	04/25/18	04/26/18	done	multi-channel edit in channels bar	0.0.01.000	
+62	04/24/18	04/27/18	done	add ruler numbered in beats to step view	0.0.01.000	
+66	04/26/18	04/28/18	done	sort tracks; multi-level sorting	0.0.01.000	
+42	03/25/18	04/30/18	done	add support for tied notes	0.0.02.000	
+63	04/24/18	04/30/18	done	indicate beats in step view, via vertical grid lines	0.0.02.000	
+43	03/25/18	05/02/18	done	in step view, add rectangular selection of steps via right-click and drag	0.0.02.000	
+44	03/25/18	05/02/18	done	in step view, add track selection via right-click and vertical drag over mute buttons	0.0.02.000	
+68	05/03/18	05/04/18	done	tied notes with swing overlapping due to incorrect durations; fixed	0.0.03.000	
+45	03/25/18	05/06/18	done	step editing commands; cut, copy, paste, insert, delete	0.0.04.000	
+69	05/03/18	05/08/18	done	add error check for product of track's length and quant exceeding range of 32-bit integer	0.0.04.000	
+54	04/12/18	05/10/18	done	synchronize vertical scrolling between track and step views	0.0.04.001	
+67	04/27/18	05/10/18	done	step view's ruler shouldn't scroll vertically off screen	0.0.04.001	
+7	03/22/18	05/12/18	done	velocity editing	0.0.05.000	
+75	05/13/18	05/13/18	done	contracting step selection over narrow steps leaves one pixel wide vertical strips of unerased selection	0.0.05.000	
+8	03/22/18	05/15/18	done	controller tracks	0.0.05.000	
+70	05/10/18	05/15/18	done	implement next/previous pane (F6)	0.0.05.000	
+76	05/15/18	05/15/18	done	mute buttons shouldn't scroll horizontally off screen	0.0.05.000	
+77	05/15/18	05/15/18	done	step selection is invisible if show current position option is false	0.0.05.000	
+78	05/15/18	05/16/18	done	reverse selected tracks or steps	0.0.05.001	
+46	03/25/18	05/17/18	done	rotate selected tracks or steps left or right	0.0.05.001	
+71	05/10/18	05/17/18	done	tempo nudge; implement spin button control for floating-point properties	0.0.05.001	
+79	05/15/18	05/18/18	done	other functions besides line for controller fill: sine, triangle	0.0.05.003	
+80	05/15/18	05/19/18	done	Ben reports missing MIDI devices, VirtualMIDISynth has blank name; wrong struct size in GetDeviceNames	0.0.05.003	
+85	05/19/18	05/19/18	done	muting track doesn't update current position color	0.0.05.004	
+86	05/19/18	05/20/18	done	make zoom step size adjustable	0.0.06.000	
+87	05/19/18	05/20/18	done	add tie notes mode; instead of always defaulting to untied note, let user specify the default	0.0.06.000	
+59	04/16/18	05/21/18	done	optionally show note names instead of numbers in note edit controls	0.0.06.000	
+84	05/18/18	05/21/18	done	track view occasionally paints incorrectly when scrolled via step view; clamp scroll range	0.0.06.000	
+88	05/19/18	05/21/18	done	key signature	0.0.06.000	
+89	05/19/18	05/21/18	done	transpose command	0.0.06.000	
+90	05/19/18	05/21/18	done	zoom should persist in document	0.0.06.000	
+47	03/25/18	05/22/18	done	record live arrangement of song, consisting of dubs (track mute/unmute)	0.0.06.000	
+91	05/19/18	05/22/18	done	show current position in time as well as beats and ticks	0.0.06.000	
+101	05/22/18	05/22/18	done	auto-repeated arrow key in tempo edit property sets tempo to one instead of incrementing	0.0.06.000	
+104	05/24/18	05/24/18	done	deleting current step crashes app	0.0.06.001	
+107	06/02/18	06/02/18	done	in a popup edit control, left-clicking up/down spin button or pressing up/down arrow key crashes in x64; bad cast	0.0.06.002	
+108	06/02/18	06/02/18	done	mute buttons aren't same height as steps and tracks	0.0.06.002	
+48	03/25/18	06/04/18	done	song view: edit arrangement on timeline	0.0.07.000	
+65	04/25/18	06/04/18	done	popup numeric edit's spin control should affect sequencer output immediately	0.0.07.000	
+81	05/15/18	06/04/18	done	shift selected tracks or steps left or right	0.0.07.000	
+105	05/30/18	06/04/18	done	add Track and Transport menus	0.0.07.000	
+94	05/20/18	06/05/18	done	track view's column widths and order should persist	0.0.07.000	
+95	05/20/18	06/05/18	done	channels bar's column widths and order should persist	0.0.07.000	
+96	05/20/18	06/05/18	done	splitter bar positions should be same for all documents and should persist	0.0.07.000	
+109	06/02/18	06/05/18	done	optionally show General MIDI patch and drum names instead of numbers (in Channels and Track views)	0.0.07.000	
+115	06/05/18	06/05/18	done	property lists weren't showing tooltips for partially visible property names, for all non-numeric property types	0.0.07.000	
+118	06/07/18	06/07/18	done	after recording, playback prompts to replace recording	0.0.07.002	
+92	05/19/18	06/09/18	done	toggling should behave consistently in step, mute, and song views	0.0.08.001	
+102	05/23/18	06/09/18	done	track solo	0.0.08.001	
+116	06/05/18	06/12/18	done	cut, copy, paste, delete and insert in song view	0.0.08.001	
+9	03/22/18	06/18/18	done	presets bar	0.0.08.001	
+120	06/13/18	06/18/18	done	page up / down and home / end keys should behave as usual in step and song views	0.0.08.001	
+121	06/18/18	06/18/18	done	track view columns disappear due to zero column widths	0.0.08.002	
+10	03/22/18	06/20/18	done	parts bar for grouping tracks; part members display as a single entity in live view and mute/unmute together	0.0.09.000	
+122	06/20/18	06/20/18	done	on opening doc, step or song view size is initially incorrect if doc was saved with any zoom other than one	0.0.09.000	
+123	06/20/18	06/20/18	done	full screen mode	0.0.09.000	
+11	03/22/18	06/21/18	done	live performance view (similar to Jock) with presets and grouped parts	0.0.09.000	
+97	05/21/18	06/23/18	done	song meter	0.0.09.002	
+12	03/22/18	07/03/18	done	inter-track modulation; modulation types are mute, note, velocity, and duration	0.0.09.004	
+125	07/04/18	07/04/18	done	in step view, fix inconsistent tie notes behavior	0.0.10.000	
+126	07/05/18	07/05/18	done	fix negative song position displaying incorrectly	0.0.10.000	
+127	07/05/18	07/05/18	done	add song start position to master properties	0.0.10.000	
+128	07/05/18	07/05/18	done	optionally show descriptions in properties bar	0.0.10.000	
+103	05/23/18	07/06/18	done	default note velocity should be configurable	0.0.10.000	
+110	06/04/18	07/06/18	done	optionally always record dubs and automatically save recording to new file name	0.0.10.000	
+129	07/05/18	07/06/18	done	in live view, add solo button	0.0.10.000	
+130	07/05/18	07/06/18	done	in live view, show elapsed time	0.0.10.000	
+131	07/05/18	07/06/18	done	add command to update a part from current track selection	0.0.10.000	
+136	07/06/18	07/06/18	done	undo update preset deletes preset instead of restoring its state	0.0.10.000	
+137	07/06/18	07/07/18	done	in track view, for non-note track types, using note edit control's spin buttons unexpectedly shows note names	0.0.10.000	
+132	07/05/18	07/09/18	done	in live view, indicate current position within each part	0.0.11.000	
+138	07/06/18	07/09/18	done	in live view, make font height configurable	0.0.11.000	
+140	07/08/18	07/09/18	done	view type should persist in document	0.0.11.000	
+141	07/08/18	07/09/18	done	on showing live view, select current preset if applicable	0.0.11.000	
+143	07/09/18	07/10/18	done	in live view, make list widths adjustable via dragging their headers; also make widths persistent	0.0.11.000	
+142	07/08/18	07/11/18	done	in live view, solo button should indicate mouse hover	0.0.11.000	
+144	07/09/18	07/11/18	done	in live view, part progress bars should scroll with parts list	0.0.11.000	
+145	07/13/18	07/13/18	done	right-click in step view ruler causes spurious step selection	0.0.12.000	
+146	07/13/18	07/16/18	done	right-click in live view's progress bars should clear selection	0.0.12.000	
+150	07/16/18	07/16/18	done	in live view, apply preset was setting document modified flag	0.0.12.000	
+13	03/22/18	07/17/18	done	overdubbing; add dubs to an existing recording	0.0.12.000	
+151	07/17/18	07/17/18	done	prevent self-modulation by excluding selected tracks from drop list of potential modulators; avoids error message	0.0.12.000	
+152	07/17/18	07/17/18	done	in modulation bar, don't notify undoable edit unless modulator has actually changed	0.0.12.000	
+153	07/17/18	07/17/18	done	in song view, undoing dubs past end of song doesn't update view correctly; affects recording too	0.0.12.000	
+154	07/17/18	07/18/18	done	add shift and rotate by specified number of steps	0.0.12.000	
+155	07/17/18	07/19/18	done	select all should work in song view	0.0.12.000	
+159	07/21/18	07/21/18	done	mouse wheel occasionally overflows stack; delegate by calling handler directly instead of sending message	0.0.12.000	
+160	07/21/18	07/21/18	done	add sort by track ID; useful for putting tracks back in their original order after sorting by something else	0.0.12.000	
+139	07/07/18	07/27/18	done	record indicator in live view	0.0.12.001	
+161	07/23/18	07/27/18	done	live view should include tempo, key signature and meter	0.0.12.001	
+169	07/27/18	07/27/18	done	in live view, if parts are selected, clicking in presets list should toggle parts instead of applying preset	0.0.12.001	
+170	07/27/18	07/27/18	done	pitch bend gets stuck when switching between presets; cache MIDI parameter values instead of part values	0.0.12.001	
+175	07/28/18	07/28/18	done	closing all open documents at once (via Windows dialog, select all, Close Window(s) button) crashes app	0.0.12.002	
+163	07/26/18	07/31/18	done	step view should indicate track selection	0.0.13.000	
+171	07/27/18	07/31/18	done	velocity tooltip disappears if cursor leaves window while dragging velocity bar; must call Popup	0.0.13.000	
+172	07/27/18	07/31/18	done	velocity tooltip occasionally disappears when velocity bar is left-clicked; calling Popup seems to fix it	0.0.13.000	
+178	07/30/18	07/31/18	done	in CLiveView::OnUpdate view type case, no need to test view type, it's already filtered outside switch	0.0.13.000	
+179	07/30/18	07/31/18	done	step view grid should draw each row's top grid line all at once instead of step by step	0.0.13.000	
+173	07/27/18	08/01/18	done	velocity pane close button, in slack area left of velocities	0.0.13.000	
+176	07/28/18	08/02/18	done	on entering live view, parts must have consistent mute states, otherwise part toggling behaves unexpectedly	0.0.13.000	
+177	07/29/18	08/05/18	done	after adding tracks to a part, presets can give unexpected results; make preset mutes consistent in live view	0.0.13.000	
+147	07/14/18	09/14/18	done	allow up to four mute modulators; temporary workaround until unlimited modulation is implemented	0.0.14.000	
+195	09/18/18	09/18/18	done	empty parts cause assertion in CTrackGroupArray::Read, due to null buffer pointer passed to GetBinary	0.0.15.000	
+196	09/18/18	09/18/18	done	song MIDI export that includes dubbing and merges tracks by channel	0.0.15.000	
+197	09/18/18	09/18/18	done	modulation dubbing in export differs from playback, due to different latency; use playback latency in export	0.0.15.000	
+191	09/14/18	09/19/18	done	left-clicking in step view's ruler should move current position, just as with song view	0.0.15.000	
+98	05/21/18	09/20/18	done	step and song view rulers should show beat:tick, or measure:beat:tick if meter is specified	0.0.15.000	
+199	09/19/18	09/21/18	done	in step and song views, arrows should scroll similarly to list control; Ctrl for by page, else by line	0.0.15.000	
+187	09/06/18	09/24/18	done	in live view, if list is too long to fit, auto-resizing unexpectedly creates horizontal scroll bar	0.0.15.000	
+188	09/06/18	09/24/18	done	in live view, left-click in list must set focus, else mouse wheel doesn't scroll list	0.0.15.000	
+174	07/27/18	09/25/18	done	velocity pane's tooltips should optionally show signed values; left-clicking origin label toggles signed mode	0.0.15.000	
+202	09/26/18	09/26/18	done	in properties grid enum fields, typing a value doesn't updated target property; override PushChar	0.0.15.000	
+203	09/26/18	09/26/18	done	in properties grid, for properties with options, Alt+Down should drop options list	0.0.15.000	
+148	07/14/18	10/01/18	done	unlimited modulation, allowing track to have any number of modulators of each type	0.0.15.000	
+204	10/01/18	10/01/18	done	double-click in parts or presets lists but not on an item crashes	0.0.15.000	
+192	09/17/18	10/02/18	done	add deselect command	0.0.15.000	
+185	08/29/18	10/03/18	done	status bar hints for Parts and Presets context menus	0.0.15.000	
+186	08/29/18	10/03/18	done	add Tracks command to Parts bar context menu; select tracks belonging to selected parts	0.0.15.000	
+157	07/19/18	10/08/18	done	stretch command; scale track length by percentage, stretching or squashing contents as needed	0.0.15.000	
+206	10/09/18	10/10/18	done	Apply Preset command doesn't update live view	0.0.15.001	
+207	10/10/18	10/10/18	done	song MIDI export shouldn't contain empty tracks; only output tracks for channels that are actually used	0.0.15.001	
+208	10/10/18	10/10/18	done	arrow keys don't navigate main menus if scroll view has focus	0.0.15.001	
+133	07/05/18	10/15/18	done	step fill command	0.0.16.000	
+210	10/17/18	10/17/18	done	velocity command has no effect if offset is negative	0.0.16.000	
+205	10/03/18	10/18/18	done	import MIDI file, converting notes to tracks	0.0.16.000	
+211	10/17/18	10/20/18	done	in track, mute, and song views, dragging selection beyond window boundaries should scroll view	0.0.16.000	
+134	07/05/18	10/25/18	done	pasting modulated tracks often behaves unexpectedly; in clipboard, modulators must be unique IDs not indices	0.0.16.001	
+216	10/25/18	10/25/18	done	pasting tracks doesn't update song view size	0.0.16.001	
+214	10/22/18	10/27/18	done	refactor so that document's rectangular step selection is always current; step view shouldn't handle commands	0.0.16.002	
+213	10/21/18	10/29/18	done	change modulation type or source for multiple modulations at once	0.0.16.002	
+215	10/23/18	10/29/18	done	velocity origin state should be the same in all open documents and should persist	0.0.16.002	
+218	10/28/18	10/29/18	done	song view's grid should indicate track selection, as in step view	0.0.16.002	
+182	07/31/18	11/01/18	done	invalid step selection error occurs unexpectedly if drag overshoots to the right of track's last step	0.0.16.002	
+219	11/01/18	11/01/18	done	capture isn't released if window loses focus during drag	0.0.16.002	
+158	07/20/18	11/05/18	done	add command to offset note/step velocities; should work for controller and modulator tracks too	0.0.16.002	
+180	07/30/18	11/05/18	done	add command to scale step values by a multiplier; boosts track velocity without altering dynamics	0.0.16.002	
+220	11/05/18	11/06/18	done	velocity command's clipping check gives false positives for step selection	0.0.16.003	
+221	11/06/18	11/06/18	done	velocity range can be incorrect for non-note tracks, due to not masking off step's tie bit	0.0.16.004	
+222	11/07/18	11/07/18	done	crash when opening existing document via command line or explorer; song view has null step view pointer	0.0.16.005	
+223	11/08/18	11/08/18	done	zooming song view all the way out causes current position marker to slip	0.0.17.000	
+190	09/08/18	11/12/18	done	add song view command to move current position to next or previous dub; Shift + left/right arrows	0.0.17.000	
+224	11/11/18	11/12/18	done	add song view command to center current position within view by scrolling as needed; Shift + Home	0.0.17.000	
+225	11/11/18	11/12/18	done	go to position command should automatically center current position if it's too close to either side	0.0.17.000	
+14	03/22/18	11/20/18	done	recursive mute modulation (modulation of modulation); only for tracks of modulator type, to avoid incompatibility	0.0.17.000	
+226	11/19/18	11/20/18	done	fill command doesn't handle non-rectangular selection properly; compute max track length	0.0.17.000	
+243	11/28/18	11/28/18	done	group overlap warning should include option to resolve conflict by reassigning conflicted tracks	0.0.18.000	
+111	06/04/18	12/02/18	done	record live MIDI input to tracks; useful for inputting melodies and chords, uses import quantization option	0.0.18.000	
+245	12/02/18	12/02/18	done	MIDI import mangles event times, due to integer division where floating point division was intended	0.0.18.000	
+209	10/11/18	12/07/18	done	dubs made while song position is negative aren't recorded, because minimum dub time is zero	0.0.18.001	
+244	11/28/18	12/07/18	done	presets bar's Apply command should add a dub when recording	0.0.18.001	
+247	12/06/18	12/07/18	done	song view was restoring step view's zoom; typo in song view's OnInitialUpdate	0.0.18.001	
+248	12/06/18	12/07/18	done	track MIDI export outputs empty modulator tracks	0.0.18.001	
+250	12/07/18	12/07/18	done	MIDI export has subtle differences between debug and release versions; export must reset cached parameters	0.0.18.001	
+251	12/07/18	12/10/18	done	song view should show negative time when start position is less than zero	0.0.19.000	
+258	12/10/18	12/10/18	done	adding or removing tracks or changing PPQ doesn't update song view	0.0.19.000	
+241	11/27/18	12/11/18	done	note window that limits modulated note to an octave; make start note a modulation target	0.0.19.000	
+252	12/08/18	12/12/18	done	position modulation; rotates target track by one or more steps	0.0.19.000	
+253	12/08/18	12/13/18	done	import steps from CSV file; export steps from selected tracks to CSV file	0.0.19.000	
+227	11/19/18	12/14/18	done	add clipboard support to modulation bar, so modulations can be copied from one track to another	0.0.19.001	
+228	11/19/18	12/14/18	done	sort modulations by type or source, via context menu	0.0.19.001	
+117	06/05/18	12/15/18	done	show tooltips for truncated items in all grid controls, via label tip extended style	0.0.19.001	
+246	12/05/18	12/15/18	done	find and replace for track names	0.0.19.001	
+254	12/08/18	12/15/18	done	import modulations from CSV file, replacing existing modulations; export modulations to CSV file	0.0.19.001	Benoit
+260	12/14/18	12/15/18	done	Ctrl + Tab should switch between documents; grid control must check for control key	0.0.19.001	
+261	12/15/18	12/15/18	done	show unnamed tracks in live view to avoid confusion	0.0.19.001	
+255	12/08/18	12/19/18	done	import tracks from CSV file; require column header, handle quotes, validate ranges; also export tracks	0.0.20.000	
+262	12/18/18	12/19/18	done	refactor track property info to centralize it and support property ranges and validation	0.0.20.000	
+229	11/19/18	01/03/19	done	MIDI output bar that displays sequencer output, with filtering options	0.0.21.000	Benoit
+230	11/19/18	01/09/19	done	command that resets window layout to defaults; useful for dual monitor setups	0.0.21.001	Benoit
+231	11/19/18	01/09/19	done	piano bar that displays sequencer output notes on a piano keyboard, with filtering	0.0.21.001	
+263	01/11/19	01/12/19	done	recursive position modulation; essential for position modulation of mute masks	0.0.22.000	
+265	01/13/19	01/14/19	done	piano bar's note names should match key signature	0.0.22.000	
+266	01/14/19	01/15/19	done	insert track from piano bar, via context menu or Ctrl + left-click	0.0.22.000	
+267	01/15/19	01/16/19	done	import MIDI file, import steps, and record to tracks corrupt track indices due to lack of track array transaction	0.0.22.001	
+268	01/16/19	01/17/19	done	in recursive modulation, handle mute by continuing instead of aborting	0.0.22.002	
+270	01/20/19	01/21/19	done	modulation bar paste doesn't set document modified flag	0.0.23.000	
+271	01/20/19	01/21/19	done	modulation bar doesn't update all views consistently	0.0.23.000	
+242	11/27/18	01/28/19	done	modulation graph, via GraphViz; output SVG and display in IWebBrowser control	0.0.23.000	
+256	12/09/18	01/28/19	done	right click on track list header divider unexpectedly shows view context menu	0.0.23.000	
+275	01/28/19	01/29/19	done	add MIDI input bar	0.0.23.001	
+276	01/29/19	01/29/19	done	MIDI through from input device to sequencer should exclude system status messages	0.0.23.001	
+277	01/30/19	01/30/19	done	graph doesn't fill window if system text size is greater than 100%	0.0.23.002	
+278	01/31/19	01/31/19	done	if no active document, graph should be empty	0.0.23.003	
+279	02/01/19	02/01/19	done	piano bar keys get stuck on if MIDI input device sends note off instead of note on with zero velocity	0.0.23.003	
+280	02/01/19	02/01/19	done	left-clicking piano key should optionally output note if sequencer is playing; add output channel to context menu	0.0.23.003	
+249	12/06/18	02/04/19	done	offset command that shifts selected tracks in time by adding a value to their offsets	0.0.23.004	
+282	02/06/19	02/07/19	done	exported MIDI file may have incorrect initial track mute state; chase to start position, not minimum dub time	0.0.23.004	
+283	02/10/19	02/12/19	done	add tools export of song MIDI data to CSV file; useful for debugging and comparing mixes	0.0.23.005	
+284	02/14/19	02/14/19	done	refactor export to avoid track mode special cases; export one MIDI file track per channel in all cases	0.0.23.006	
+281	02/04/19	02/26/19	done	optionally prevent overlapping instances of the same note on the same channel	0.0.24.000	
+287	03/19/19	03/22/19	done	add invert command to track menu	0.0.25.000	
+288	03/21/19	03/22/19	done	left-clicking within mute pane but not on mute button should toggle selected mutes	0.0.25.000	
+291	05/09/19	05/09/19	done	in velocity pane, bars with value of 64 don't quite line up with origin; rounding issue	0.0.25.001	
+293	05/22/19	05/30/19	done	piano bar shows tempo changes; ignore events with non-zero MSB	0.0.25.001	
+162	07/23/18	07/10/19	done	if key is Gb, note edit spin control drops an octave when Cb is incremented or decremented; error in ScanNoteName	0.0.25.002	
+292	05/12/19	09/11/19	done	support programmed tempo change and tempo map via tempo track type and tempo modulation	0.0.26.000	
+295	06/10/19	11/15/19	done	add unsigned / signed option to velocity scaling	0.0.26.000	
+302	11/20/19	11/20/19	done	switching from track view to song view sometimes leaves one cell upainted; simplifying OnDraw seems to fix it	0.0.26.000	
+305	12/12/19	12/14/19	done	add phase bar	0.0.26.000	
+306	12/26/19	12/26/19	done	zooming, scrolling or resizing song view erases portion of current position marker below last track	0.0.26.000	
+307	12/26/19	12/26/19	done	Time to Repeat function should report fractional ticks instead of extending cycle to beat boundary	0.0.26.000	
+308	12/26/19	12/26/19	done	Time to Repeat function should report years if needed	0.0.26.000	
+309	12/26/19	12/28/19	done	in song view, last track's bottom outline isn't drawn	0.0.26.000	
+314	02/19/20	02/19/20	done	tracks longer than 2047 steps are truncated; overload GetProfileString and increase buffer from 4K to 64K	0.0.26.001	
+315	02/19/20	02/25/20	done	GetPrivateProfileString limits tracks to 32767 steps and 255 dubs; avoid it by implementing INI file read/write	0.0.27.000	
+112	06/04/18	02/29/20	done	optionally record live MIDI input	0.0.27.001	
+316	02/27/20	02/29/20	done	crash can occur if MIDI input is received while closing app; main frame OnDestroy must close input device	0.0.27.001	
+317	02/27/20	02/29/20	done	exporting MIDI file modifies track mutes (without updating UI); save and restore track mutes	0.0.27.001	
+313	02/18/20	03/02/20	done	GetChannelUsage should exclude tempo tracks	0.0.27.001	
+311	01/27/20	03/04/20	done	add convergence calculator	0.0.27.001	
+320	03/04/20	03/04/20	done	editing of recorded input is half-baked so remove it for now	0.0.27.002	
+321	03/06/20	03/06/20	done	in track view, shift-selecting via keyboard fails at bottom and top of list; delay item changed notification	0.0.27.003	
+299	11/12/19	03/16/20	done	add scale, index and voicing modulation	0.0.28.000	
+300	11/12/19	03/17/20	done	step values grid view, to allow numeric editing of step values for selected tracks	0.0.28.000	
+322	03/17/20	03/17/20	done	changing track's Quant doesn't update its current position in Step view	0.0.28.000	
+49	03/25/18	03/20/20	done	MIDI mapping; both translation and mapping to track parameters, with manual assignment and learn mode	0.0.28.000	
+323	03/26/20	03/27/20	done	after disconnecting an input device and connecting a different input device, no MIDI input is received	0.0.28.001	
+324	03/27/20	03/27/20	done	mapping for input event that don't have a control parameter (wheel etc.) only works if control parameter is zero	0.0.28.002	
+325	03/27/20	03/28/20	done	MIDI learn should support multiple selection; learn multiple mappings all at once	0.0.28.003	
+326	03/27/20	03/28/20	done	add mapping command Map Tracks that creates mappings for all selected tracks	0.0.28.003	
+327	03/28/20	03/28/20	done	undoing MIDI learn doesn't always restore control parameter	0.0.28.003	
+328	03/30/20	03/30/20	done	voicing should sort scale into ascending order, so that index zero corresponds to lowest scale tone	0.0.28.004	
+329	03/30/20	03/30/20	done	index modulation was being converted from unsigned to signed twice, causing incorrect results	0.0.28.004	
+330	03/30/20	03/31/20	done	Step Values bar should account for key signature when displaying notes	0.0.28.005	
+332	03/31/20	04/01/20	done	export phase diagram to image sequence	0.0.29.000	
+333	04/01/20	04/01/20	done	refactor context menu handling	0.0.29.000	
+334	04/02/20	04/03/20	done	time shown in status bar should include milliseconds	0.0.29.000	
+335	04/02/20	04/03/20	done	go to position command should have option to specify time in h:mm:ss.millis	0.0.29.000	
+336	04/03/20	04/04/20	done	add chord modulation type; dynamic subset of indices into current scale	0.0.29.000	
+310	12/26/19	04/05/20	done	in song track name view, draw bottom gridline	0.0.29.000	
+338	04/04/20	04/05/20	done	allow mapping to target track steps, with output control parameter selecting which step	0.0.29.000	
+337	04/03/20	04/06/20	done	Time to Repeat command crashes or fails in OSX via WineBottler; culprit is GetNumberFormatEx, emulate it	0.0.29.000	
+339	04/04/20	04/06/20	done	show error message if sequencer callback takes too long	0.0.29.000	
+341	04/05/20	04/06/20	done	import steps should handle note names, with or without octaves	0.0.29.000	
+342	04/05/20	04/06/20	done	Step Values bar should support copying text to clipboard	0.0.29.000	
+345	04/06/20	04/06/20	done	editing tempo should update current time in status bar	0.0.29.000	
+343	04/05/20	04/07/20	done	Step Values bar should support standard editing commands, provided step selection is rectangular	0.0.29.002	Benoit
+346	04/06/20	04/14/20	done	optionally output MIDI clock and start / stop / song position	0.0.30.000	
+56	04/14/18	04/15/20	done	Insert Group command in modulation dialog; list boxes instead of drop lists, select multiple sources at once	0.0.30.000	
+357	04/16/20	04/17/20	done	Step Values bar should support editing multiple steps at once, within a contiguous range of selected items	0.0.30.000	
+368	05/13/20	04/17/20	done	assign custom colors to tracks	0.0.30.000	Benoit
+359	04/17/20	04/18/20	done	optimize add track events; don't iterate modulators for tracks that are muted or are modulators	0.0.30.001	
+361	04/22/20	04/22/20	done	if Modulations bar's grid is empty, modulation sort is disabled; only disable if there's no track selection	0.0.30.002	
+362	04/22/20	04/30/20	done	in Step Values bar, multi-step edit doesn't work if value is unchanged but differs from other steps in the range	0.0.30.002	
+363	04/30/20	04/30/20	done	list scrolling gets stuck if app loses focus during item drag; list's CancelDrag must kill scroll timer	0.0.30.002	
+364	04/30/20	04/30/20	done	Window menu's Windows command displays incorrect status bar hint; fix EnableWindowsDialog params	0.0.30.002	
+365	05/05/20	05/06/20	done	receiving MIDI input that's mapped to track properties stalls UI during playback; main frame's OnUpdate was resetting view timer for every update	0.0.30.002	
+369	05/22/20	05/23/20	done	negative voicing value should raise voice an octave up instead of lowering it an octave down	0.0.31.000	
+366	05/06/20	06/03/20	done	undo record doesn't restore input events	0.0.31.000	
+367	05/06/20	06/03/20	done	add option to record live input only, preserving dubs	0.0.31.000	
+15	03/22/18	06/08/20	done	offset modulation; feasible by delaying notes until subsequent callbacks	0.0.31.000	
+360	04/17/20	06/10/20	done	Convergences commands can take too long, stalling UI; show progress bar	0.0.31.000	
+371	06/08/20	06/13/20	done	add Transport menu commands that find next or previous convergence	0.0.31.001	
+350	04/07/20	06/17/20	done	properties bar should derive from custom dockable pane	0.0.31.002	
+16	03/22/18	06/18/20	done	add help IDs and resolve help ID conflicts	0.0.31.002	
+374	06/17/20	06/18/20	done	Graph bar's context menu doesn't show status hints for layout types; missing case in OnMenuSelect	0.0.31.002	
+375	06/18/20	06/18/20	done	if floating dock bar has focus when help is invoked, help browser ducks behind app's main window; specify topmost extended style in help project file	0.0.31.002	
+377	06/20/20	06/22/20	done	deleting modulation(s) doesn't deselect corresponding list items	0.0.31.002	
+378	06/20/20	06/22/20	done	inserting or pasting modulations doesn't select corresponding list items	0.0.31.002	
+379	06/20/20	06/22/20	done	pasting or inserting modulations while Show Differences is enabled can insert spurious all-zero mute modulations	0.0.31.002	
+380	06/24/20	06/24/20	done	non-client portion of floating dock bar isn't painted when restoring app from minimize; need RedrawAllMiniFrames	0.0.31.002	
+274	01/26/19	06/27/20	done	Docking Windows submenu doesn't show hints in status bar; handle in OnSetMessageString	0.0.32.000	
+381	06/24/20	06/28/20	done	track parameter mappings should work even when sequencer is stopped or there's no output device	0.0.32.000	
+382	06/24/20	06/30/20	done	MIDI import and Record Tracks commands should handle other channel messages instead of only notes	0.0.32.000	
+385	07/04/20	07/04/20	done	add Windows menu commands for new horizontal / vertical tab group	0.0.32.000	
+386	07/04/20	07/05/20	done	undoing/redoing track name, length, quant or mute while showing live view doesn't update live view	0.0.32.000	
+387	07/04/20	07/05/20	done	if multiple documents are shown via tab groups, playing but inactive document doesn't update its views	0.0.32.000	
+388	07/04/20	07/05/20	done	undoing/redoing tempo edit doesn't update song time in status bar	0.0.32.000	
+389	07/04/20	07/09/20	done	if document has multiple windows, changing view type affects first window instead of active one	0.0.32.000	
+390	07/09/20	07/09/20	done	live view actions don't update Phase bar's mute states when playback is stopped	0.0.32.000	
+391	07/09/20	07/09/20	done	solo command doesn't update Step Values bar's mute states when playback is stopped	0.0.32.000	
+384	07/04/20	07/17/20	done	if document has multiple windows with different view types, song mode causes mute state inconsistencies	0.0.32.000	
+397	07/28/20	07/28/20	done	add custom option to transport convergence size submenu	0.0.33.000	
+394	07/21/20	07/29/20	done	standardize status hints, e.g. View/Velocities	0.0.33.000	
+398	07/28/20	07/29/20	done	song view should show tool tips for truncated track names	0.0.33.000	
+399	07/31/20	07/31/20	done	changing length or quant of multiple tracks at once doesn't update Phase bar	0.0.33.000	
+400	08/03/20	08/04/20	done	next/previous pane command is unreliable; child frame doesn't always receive the command	0.0.33.000	
+404	08/22/20	09/07/20	done	add preset and part mapping, so presets can be selected and parts can be muted/unmuted via MIDI message	0.0.34.000	
+406	09/07/20	09/07/20	done	step mapping saved in document crashes app when document is reopened	0.0.34.000	
+408	09/20/20	09/24/20	done	in live view, order parts by their lowest track index and merge them with ungrouped tracks instead of appending	0.0.34.000	
+409	09/24/20	09/28/20	done	add commands to sort parts by name or lowest track index	0.0.34.000	
+411	09/30/20	09/30/20	done	selecting a part's tracks via parts bar followed by cut or delete crashes if part's tracks aren't in ascending order	0.0.34.000	
+412	10/07/20	10/07/20	done	Time to Repeat should compute greatest prime factor in common unit if possible	0.0.34.001	
+413	10/07/20	10/07/20	done	in Stretch command, make interpolation of non-note tracks optional	0.0.34.001	
+414	10/08/20	10/08/20	done	stretch interpolation is skewed, and should ignore tie bit	0.0.34.001	
+415	10/15/20	10/19/20	done	can't find GraphViz 2.44; layout executables are missing, specify layout via dot parameter, support x64	0.0.34.002	
+417	10/26/20	10/26/20	done	fill dialog's signed/unsigned radio buttons can cause validation errors; don't compensate value range	0.0.35.000	
+401	08/05/20	11/05/20	done	find and replace for step values; add another page to Velocities property sheet	0.0.35.000	
+17	03/22/18	11/16/20	done	PPQ change should update tracks (Quant, Offset, Swing, Duration) instead of zooming step view	0.0.35.000	
+356	04/15/20	11/16/20	done	canceling Find / Replace dialog crashes debug version, but only when run without debugger; don't destroy window	0.0.35.000	
+419	11/16/20	11/16/20	done	live view shows incorrect song position and time after transport commands; values lag by one update	0.0.35.000	
+420	11/16/20	11/16/20	done	live view shows incorrect song position after editing meter, and incorrect song time after editing tempo	0.0.35.000	
+418	11/16/20	11/17/20	done	after clicking drop list in property bar, undo/redo is disabled; check for read-only edit control with in-place edit ID	0.0.35.000	
+421	11/17/20	11/17/20	done	left-clicking grid control item after pressing and releasing Alt key crashes or throws improper argument	0.0.35.000	
+422	11/17/20	11/17/20	done	Step Values bar should support spin edit; increment/decrement via mouse wheel or arrow up/down	0.0.35.000	
+423	11/17/20	11/17/20	done	left-clicking grid control item crashes if window that's losing focus uses its kill focus handler to reset focus	0.0.35.000	
+351	04/07/20	11/18/20	done	attach and auto-hide are disabled for Piano and MIDI Input/Output bars, due to output capture management	0.0.35.000	
+425	11/18/20	11/18/20	done	pinned (auto-hide) Phase bar doesn't animate when unhidden; simplify visibility test in OnShowChanging	0.0.35.000	
+424	11/18/20	11/18/20	done	add maximize command to dockable pane's context menu; supports unattached floating panes only	0.0.35.000	
+426	12/01/20	12/01/20	done	song view's go to next/previous dub finds invisible dubs; must exclude last duplicate dub from search	0.0.35.001	
+427	12/01/20	12/04/20	done	go to next/previous dub should scroll vertically as needed to ensure found dub is visible	0.0.35.001	
+184	08/02/18	12/16/20	done	should be able to loop playback within a specified time range, especially in song view, even approximately	0.0.36.000	
+428	12/16/20	12/16/20	done	if song view has focus, edit keys misbehave in popup edit control; add focus edit checks to song view	0.0.36.000	
+432	01/15/21	01/19/21	done	import tracks from CSV file gives error if track's length is one	0.0.37.003	
+435	01/19/21	01/19/21	done	editing keys don't work within popup edit control when Live view has focus	0.0.37.003	
+436	01/19/21	01/19/21	done	select all shortcut doesn't work within popup edit control when Song view has focus	0.0.37.003	
+438	01/20/21	01/20/21	done	replace skips first matching track if selection mark is already on that track	0.0.37.003	
+439	01/20/21	01/20/21	done	find and replace should scroll view as needed to ensure matching track is visible	0.0.37.003	
+429	01/12/21	01/23/21	done	in Step Values bar, Step column should be one-origin; same for track fill dialog's step range	0.0.37.003	
+440	01/21/21	01/23/21	done	replace string not found shows empty message box	0.0.37.003	
+331	03/30/20	01/24/21	done	Step Values bar should provide a means of setting song position, via Ctrl+left-click on step value	0.0.37.003	
+441	01/23/21	01/24/21	done	display unique prime factors of selected track durations	0.0.37.003	
+430	01/12/21	02/10/21	done	renaming multiple tracks should optionally append sequence numbers to keep names unique	0.0.37.004	
+442	02/10/21	02/13/21	done	in Step and Song views, Shift + right click should expand existing rectangular selection	0.0.37.004	
+443	02/13/21	02/15/21	done	add mapping targets for transport commands	0.0.37.004	
+444	03/14/21	03/16/21	done	Song view doesn't enable edit commands for track selection only	0.0.37.005	
+445	03/14/21	03/16/21	done	in Song view, left-clicking track name tooltip should hide tooltip	0.0.37.005	
+446	04/07/21	05/30/21	done	Step Values bar doesn't set empty items for multiple selection of tracks having differing lengths	0.0.37.005	
+447	05/01/21	06/07/21	done	rename rounding and truncation functions to avoid conflicts with C++ 11	0.0.37.005	
+448	05/01/21	06/08/21	done	fix compilation errors and warnings in Visual Studio 2019	0.0.37.006	
+449	05/01/21	06/08/21	done	fix compilation errors in Visual Studio 2010	0.0.37.007	
+450	06/15/21	06/15/21	done	main frame should delete track color toolbar button in OnDestroy to avoid memory leak	0.0.37.008	
+451	06/20/21	06/20/21	done	dockable bars handle editing commands inconsistently; customize routing in child frame	0.0.37.008	
+453	06/26/21	06/26/21	done	graph should allow filtering by modulation type, via context menu	0.0.37.009	
+18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
+19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
+20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
+50	03/25/18		hold	animated visualization; Phase bar is a good start, but others?		
+51	03/25/18		hold	playback can be slow to start, due to device open delay; keep output device open all the time?		
+52	03/25/18		hold	output timing is unreliable at start of playback; likely only fixable by keeping output device open all the time		
+53	04/09/18		hold	undoing/redoing track or step edit should ensure affected track is visible		
+72	05/10/18		hold	right-click in step view background with no selection should show context menu?		
+73	05/10/18		hold	left-click anywhere in step view should toggle selected steps or mutes, as in original app; too confusing?		
+82	05/17/18		hold	installed app's shortcut icon has poor resolution; VS2008 installer bug, use WiX toolset instead?		
+93	05/19/18		hold	note correction to chord changes, from ChordEase; poorly defined, pitch class sets would be more general		
+99	05/21/18		hold	velocity pane visibility should be same for all documents?		
+106	05/30/18		hold	song view needs different menus?		
+113	06/04/18		hold	option to change track name font and thereby change track height		
+114	06/04/18		hold	song view should indicate undersampling (multiple dubs per cell at current zoom)		
+124	06/21/18		hold	track merge command; combine tracks that have identical settings and non-overlapping steps		
+135	07/05/18		hold	command to change track, part and preset names to title case		
+149	07/14/18		hold	channel volume sliders in live view; solving wrong problem?		
+156	07/17/18		hold	live view list controls should have grid lines but default color is too bright; draw gridlines in custom draw?		
+164	07/26/18		hold	live view should show approaching intersections between different loop lengths		
+165	07/26/18		hold	transpose within selected key; only doable if selected tracks are all in that key?		
+166	07/26/18		hold	in step view, steps should indicate whether track is muted; could be overdoing it, pink gives me a headache		
+167	07/26/18		hold	command to shift selected steps up or down one or more tracks		
+168	07/26/18		hold	replace steps, like paste but overwrite steps at insert position instead of shifting them; command or mode?		
+181	07/30/18		hold	optional tool tip in step view showing step's position and value; position in what format? Step index?		
+183	08/02/18		hold	mute tracks in song view; complicates sequencer and song view UI		
+193	09/17/18		hold	step zoom via Ctrl + mouse wheel doesn't work unless step view has focus; default OS behavior		
+194	09/17/18		hold	in step view, add command to select all steps of selected tracks		
+200	09/23/18		hold	ReadEnum should report undefined strings as errors? More accurate, but less robust		
+201	09/25/18		hold	pan column in channels bar should show signed values; conflicts with use of -1 as unspecified value		
+212	10/17/18		hold	in live view, dragging list selection beyond window boundaries should scroll list		
+217	10/27/18		hold	switching from song view to live view doesn't always update parts list to reflect dub state? Hard to replicate		
+232	11/19/18		hold	not/invert operator for modulations; would allow a single modulator track to control a crossfade		Benoit
+233	11/19/18		hold	highlight modulated parameters; complicates UI and doesn't fully capture modulation state		Benoit
+234	11/19/18		hold	detail view of modulations that shows target as well as source and type; editable, sortable, clipboard		Benoit
+235	11/19/18		hold	vertically fill the note column with values from a scale or chord		Benoit
+236	11/19/18		hold	length modulation; cool idea but hard to implement		Benoit
+257	12/09/18		hold	add hide/unhide column commands to track list header's context menu; where to store previous width?		
+259	12/12/18		hold	grid control's header should display tooltip for truncated column names; must subclass header control?		
+269	01/19/19		hold	document I/O doesn't support Unicode track names; initialize INI file with UTF-16 LE BOM (doubles file size)		
+285	02/28/19		hold	song export length doesn't account for negative start position; why is this so difficult?		
+289	03/25/19		hold	piano bar should be able to show channels separately via multiple keyboards; messy problem		
+296	06/12/19		hold	option for space bar to start/stop playback without needing to also press Ctrl key; causes many UI conflicts		
+318	03/02/20		hold	separate window for viewing/editing recorded MIDI input		
+340	04/04/20		hold	scale modulation often repeats same work for each track that uses the scale; but not always!		
+344	04/05/20		hold	Step Values bar doesn't allow arbitrary rectangular selection; grid control limitation, custom view?		
+347	04/06/20		hold	extend sequence lead-in to fix initial timing glitch; multiply m_nCBLen in GetPosition and Play		
+353	04/10/20		hold	post-voicing sort could be replaced with insert sorted, but benchmarking shows little room for improvement		
+354	04/11/20		hold	channel modulation; but is it really necessary? Same effect is achievable with mute modulations		
+355	04/11/20		hold	window that shows current song time in huge font; excessive?		
+370	05/27/20		hold	force MIDI thru to a specified channel; useful for controllers that lack channel setting, but complicates MidiInProc		
+372	06/08/20		hold	song view should show loop lengths and their covergences graphically, possibly in a separate timeline pane		
+373	06/13/20		hold	in phase bar, optionally hide muted tracks; affects find convergence due to orbit array reuse		
+383	07/01/20		hold	add more input quants; possible useful with larger time divisions		
+393	07/17/20		hold	switching to song view should set all mutes to match song's current dub state (chase); must be synchronous		
+395	07/22/20		hold	optionally show Phase diagram or other visualization in Live view; menu bar is hidden in full screen mode		
+396	07/22/20		hold	transition from one document to another without stopping playback; conflicts with recording implementation		
+402	08/05/20		hold	indicate step selection in Step view's velocities pane		
+403	08/22/20		hold	preset track type, interpreting step value as preset index; requires moving preset array into sequencer		
+405	08/22/20		hold	in mapping, add Note Number input event type: get data value from note's index, ignoring velocity and note off		
+407	09/17/20		hold	select all unmuted tracks; hardly worth cluttering up the Edit menu?		
+410	09/28/20		hold	live view position bars for track groups should reflect LCM of periods instead of maximum period; could be slow		
+416	10/20/20		hold	GraphViz PDF output looks better than SVG (if Adobe is installed) but it overrides our context menu		
+431	01/13/21		hold	device change notification should retry missing MIDI device and close message box if successful		
+434	01/19/21		hold	graph should optionally indicate track type		
+433	01/19/21		hold	track should be a potential mapping source, so tracks can automate parameters; inject MIDI event?		
+437	01/20/21		hold	add harmonizer and harmonic anticipation, adapted from ChordEase		
+452	06/24/21		hold	optional file information; author, comments		
+21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
+74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
+83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
+100	05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
+119	06/08/18		punt	untying note should set all steps to velocity of original tied note; better to preserve velocity		
+198	09/18/18		punt	modulation dubbing is sensitive to track order at longer latencies; also affects export		
+237	11/19/18		punt	step copy/cut/paste should support non-rectangular step selection; incompatible with step view design		Benoit
+238	11/19/18		punt	list view selection is hard to see when list doesn't have focus; curse at Microsoft or change theme		Benoit
+239	11/19/18		punt	sort on note name without octave; not sure why this is useful		Benoit
+240	11/21/18		punt	while drawing velocities in velocity pane, dragging left/right of window should scroll view; tried it, too confusing		
+264	01/11/19		punt	in Piano view, if multiple instances of a note overlap, velocity color may be inaccurate; unavoidable		
+286	02/28/19		punt	song playback doesn't always match live output when modulator tracks have big quants; dub granularity issue		
+294	05/30/19		punt	modulation list is empty regardless of track selection; can't reproduce it, brain fire?		
+301	11/12/19		punt	popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful		
+22	03/22/18		todo	context-sensitive help		
+23	03/22/18		todo	enable UI customization; new command IDs must be prefixed so renumbering doesn't change existing IDs		

@@ -1,0 +1,37 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Voicing modulation</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Voicing modulation</h3>
+
+<p>A <a href="../Modulation/Scale_modulation.htm">scale</a> or <a href="../Modulation/Chord_modulation.htm">chord</a> can be sorted and optionally widened, by applying one or more voicing modulators to the target track. The voicing modulator's steps are interpreted as follows: If the step value is one or more, it selects a tone to be shifted down an octave (dropped). The numbering scheme is one-based and starts from the highest-pitched tone, i.e. a value of 1 drops the highest tone, a value of 2 drops the second-highest tone, and so on, as shown below. Negative values cause the corresponding tone (determined by taking the absolute value) to be <em>raised</em> instead of dropped.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><td>N</td><td>The Nth-highest tone is shifted down an octave.</td></tr>
+<tr><td>3</td><td>The third-highest tone is shifted down an octave.</td></tr>
+<tr><td>2</td><td>The second-highest tone is shifted down an octave.</td></tr>
+<tr><td>1</td><td>The highest tone is shifted down an octave.</td></tr>
+<tr><td>0</td><td>The scale or chord is sorted, but no tones are shifted.</td></tr>
+<tr><td>&minus;1</td><td>The highest tone is shifted up an octave.</td></tr>
+<tr><td>&minus;2</td><td>The second-highest tone is shifted up an octave.</td></tr>
+<tr><td>&minus;3</td><td>The third-highest tone is shifted up an octave.</td></tr>
+<tr><td>&minus;N</td><td>The Nth-highest tone is shifted up an octave.</td></tr>
+</table>
+
+<p>Multiple voices can be dropped by applying multiple voicing modulators to the track. For example, to create a drop 2/4 voicing of a tetrachord, apply two voicing modulators, one outputting 2 and the other outputting 4. Many other combinations are possible.
+
+<p>To shift a tone two octaves instead of one, specify the same voicing modulation twice in the track's modulation list. If a voicing modulator exceeds the range of the current scale or chord, it's ignored.
+
+<p>After the voicing is applied, the tones are sorted again, and only then is a tone picked via <a href="../Modulation/Index_modulation.htm">index modulation</a>.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

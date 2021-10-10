@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>MIDI Input</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>MIDI Input</h3>
+
+<p>This <a href="../Docking_Windows/Docking_windows.htm">docking window</a> displays input MIDI events in real time, which can be useful for debugging your MIDI setup. To display output events, use the <a href="../Docking_Windows/MIDI_Output_bar.htm">MIDI Output bar</a>, which works similarly.
+
+<p>By default, the window shows all input received from the MIDI input device. The data can be filtered, so that only a subset of the events are shown, using optional filters which are accessible via context menu. The filtering is non-destructive, i.e. if you remove a filter, any events that were rejected by that filter reappear.
+
+<p>For example, to only see events on channel 10, select 10 in the <span class="cmd">Channel Filter</span> submenu. To only see Note On messages, select "Note On" in the <span class="cmd">Message Filter</span> submenu. To remove all filters, use context menu's <span class="cmd">Reset Filters</span> command.
+
+<p>To pause the display, select <span class="cmd">Pause</span> in the window's context menu. Events continue to be captured while you're paused, so you won't miss any. To resume the display, reselect <span class="cmd">Pause</span> in the context menu. The context menu also allows you to clear the event history, via <span class="cmd">Clear History</span>.
+
+<a name="MIDI_IO_context_menu"><p><b>Context menu</b></a>
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><td>Channel Filter</td><td>To show only a particular channel, select the corresponding submenu item, or select "All" to show messages from all channels.</td></tr>
+<tr><td>Message Filter</td><td>To show only a particular message type, select the corresponding submenu item, or select "All" to show all message types.</td></tr>
+<tr><td>System Messages</td><td>Check this item to enable the display of system messages.</td></tr>
+<tr><td>Reset Filters</td><td>Resets all filters to their default settings (show all channels and all messages, including system messages).</td></tr>
+<tr><td>Pause</td><td>Pauses and unpauses the display.</td></tr>
+<tr><td>Clear History</td><td>Removes all stored messages from the history.</td></tr>
+<tr><td>Export</td><td>Exports the current message history to a CSV file. All messages are exported, regardless of filtering.</td></tr>
+<tr><td>Note Names</td><td>Check this item to display note names instead of numbers.</td></tr>
+<tr><td>Controller Names</td><td>Check this item to display controller names instead of numbers.</td></tr>
+<tr><td>Reset Columns</td><td>This command resets the list column header to its default state.</td></tr>
+</table>
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

@@ -1,0 +1,1856 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#ifndef APSTUDIO_INVOKED
+#include "targetver.h"
+#endif
+#include "afxres.h"
+#include "verrsrc.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#ifndef APSTUDIO_INVOKED\r\n"
+    "#include ""targetver.h""\r\n"
+    "#endif\r\n"
+    "#include ""afxres.h""\r\n"
+    "#include ""verrsrc.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#include ""res\\Polymeter.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""      // Standard components\r\n"
+    "#if !defined(_AFXDLL)\r\n"
+    "#include ""afxprint.rc""        // printing/print preview resources\r\n"
+    "#include ""afxribbon.rc""        // MFC ribbon and control bar resources\r\n"
+    "#endif\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\Polymeter.ico"
+IDR_PolymeterTYPE       ICON                    "res\\PolymeterDoc.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
+IDR_MAINFRAME_256       BITMAP                  "res\\Toolbar256.bmp"
+IDB_FILTER              BITMAP                  "res\\filter.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Toolbar
+//
+
+IDR_MAINFRAME TOOLBAR 16, 15
+BEGIN
+    BUTTON      ID_FILE_NEW
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_FILE_SAVE
+    SEPARATOR
+    BUTTON      ID_EDIT_CUT
+    BUTTON      ID_EDIT_COPY
+    BUTTON      ID_EDIT_PASTE
+    SEPARATOR
+    BUTTON      ID_EDIT_UNDO
+    BUTTON      ID_EDIT_REDO
+    SEPARATOR
+    BUTTON      ID_FILE_PRINT
+    SEPARATOR
+    BUTTON      ID_TRANSPORT_PLAY
+    BUTTON      ID_TRANSPORT_PAUSE
+    BUTTON      ID_TRANSPORT_RECORD
+    BUTTON      ID_TRANSPORT_REWIND
+    BUTTON      ID_TRANSPORT_LOOP
+    BUTTON      ID_TRANSPORT_RECORD_TRACKS
+    SEPARATOR
+    BUTTON      ID_VIEW_VELOCITIES
+    BUTTON      ID_TRACK_TIE_NOTES
+    SEPARATOR
+    BUTTON      ID_TRACK_COLOR
+    SEPARATOR
+    BUTTON      ID_APP_ABOUT
+END
+
+IDR_MAINFRAME_256 TOOLBAR 16, 15
+BEGIN
+    BUTTON      ID_FILE_NEW
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_FILE_SAVE
+    SEPARATOR
+    BUTTON      ID_EDIT_CUT
+    BUTTON      ID_EDIT_COPY
+    BUTTON      ID_EDIT_PASTE
+    SEPARATOR
+    BUTTON      ID_EDIT_UNDO
+    BUTTON      ID_EDIT_REDO
+    SEPARATOR
+    BUTTON      ID_FILE_PRINT
+    SEPARATOR
+    BUTTON      ID_TRANSPORT_PLAY
+    BUTTON      ID_TRANSPORT_PAUSE
+    BUTTON      ID_TRANSPORT_RECORD
+    BUTTON      ID_TRANSPORT_REWIND
+    BUTTON      ID_TRANSPORT_LOOP
+    BUTTON      ID_TRANSPORT_RECORD_TRACKS
+    SEPARATOR
+    BUTTON      ID_VIEW_VELOCITIES
+    BUTTON      ID_TRACK_TIE_NOTES
+    SEPARATOR
+    BUTTON      ID_TRACK_COLOR
+    SEPARATOR
+    BUTTON      ID_APP_ABOUT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINFRAME MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM "&Close",                      ID_FILE_CLOSE
+        MENUITEM SEPARATOR
+        MENUITEM "Recent File",                 ID_FILE_MRU_FILE1, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&View"
+    BEGIN
+        POPUP "&Docking Windows"
+        BEGIN
+            MENUITEM "<placeholder>",               ID_VIEW_TOOLBAR
+        END
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        POPUP "&Application Look"
+        BEGIN
+            MENUITEM "Windows &2000",               ID_VIEW_APPLOOK_WIN_2000
+            MENUITEM "Office &XP",                  ID_VIEW_APPLOOK_OFF_XP
+            MENUITEM "&Windows XP",                 ID_VIEW_APPLOOK_WIN_XP
+            MENUITEM "Office 200&3",                ID_VIEW_APPLOOK_OFF_2003
+            MENUITEM "Visual Studio 200&5",         ID_VIEW_APPLOOK_VS_2005
+            MENUITEM "Visual Studio 200&8",         ID_VIEW_APPLOOK_VS_2008
+            POPUP "Office 200&7"
+            BEGIN
+                MENUITEM "&Blue Style",                 ID_VIEW_APPLOOK_OFF_2007_BLUE
+                MENUITEM "B&lack Style",                ID_VIEW_APPLOOK_OFF_2007_BLACK
+                MENUITEM "&Silver Style",               ID_VIEW_APPLOOK_OFF_2007_SILVER
+                MENUITEM "&Aqua Style",                 ID_VIEW_APPLOOK_OFF_2007_AQUA
+            END
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Properties",                 ID_VIEW_PROPERTIES
+        MENUITEM "&Channels",                   ID_VIEW_CHANNELS
+        POPUP "&Groups"
+        BEGIN
+            MENUITEM "&Presets",                    ID_VIEW_PRESETS
+            MENUITEM "P&arts",                      ID_VIEW_PARTS
+        END
+    END
+    POPUP "&Tools"
+    BEGIN
+        MENUITEM "&Devices",                    ID_TOOLS_DEVICES
+        MENUITEM "&Options...",                 ID_TOOLS_OPTIONS
+        MENUITEM SEPARATOR
+        MENUITEM "&Convergences...",            ID_TOOLS_CONVERGENCES
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Help Topics",                ID_HELP_FINDER
+        MENUITEM "Polymeter on the &Web",       ID_APP_HOME_PAGE
+        MENUITEM "Check for &Updates...",       ID_APP_CHECK_FOR_UPDATES
+        MENUITEM SEPARATOR
+        MENUITEM "&About Polymeter...",         ID_APP_ABOUT
+    END
+END
+
+IDR_PolymeterTYPE MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM "&Close",                      ID_FILE_CLOSE
+        MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
+        MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
+        MENUITEM SEPARATOR
+        MENUITEM "&Export...",                  ID_FILE_EXPORT
+        MENUITEM "&Import...",                  ID_FILE_IMPORT
+        MENUITEM SEPARATOR
+        MENUITEM "Recent File",                 ID_FILE_MRU_FILE1
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Undo",                       ID_EDIT_UNDO
+        MENUITEM "&Redo",                       ID_EDIT_REDO
+        MENUITEM SEPARATOR
+        MENUITEM "Cu&t",                        ID_EDIT_CUT
+        MENUITEM "&Copy",                       ID_EDIT_COPY
+        MENUITEM "&Paste",                      ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "&Insert",                     ID_EDIT_INSERT
+        MENUITEM "&Delete",                     ID_EDIT_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM "Select &All",                 ID_EDIT_SELECT_ALL
+        MENUITEM "De&select",                   ID_EDIT_DESELECT
+        MENUITEM "Re&name",                     ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Find...",                    ID_EDIT_FIND
+        MENUITEM "R&eplace...",                 ID_EDIT_REPLACE
+    END
+    POPUP "&View"
+    BEGIN
+        POPUP "&Docking Windows"
+        BEGIN
+            MENUITEM "<placeholder>",               ID_VIEW_TOOLBAR
+        END
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        POPUP "&Application Look"
+        BEGIN
+            MENUITEM "Windows &2000",               ID_VIEW_APPLOOK_WIN_2000
+            MENUITEM "Office &XP",                  ID_VIEW_APPLOOK_OFF_XP
+            MENUITEM "&Windows XP",                 ID_VIEW_APPLOOK_WIN_XP
+            MENUITEM "Office 200&3",                ID_VIEW_APPLOOK_OFF_2003
+            MENUITEM "Visual Studio 200&5",         ID_VIEW_APPLOOK_VS_2005
+            MENUITEM "Visual Studio 200&8",         ID_VIEW_APPLOOK_VS_2008
+            POPUP "Office 200&7"
+            BEGIN
+                MENUITEM "&Blue Style",                 ID_VIEW_APPLOOK_OFF_2007_BLUE
+                MENUITEM "B&lack Style",                ID_VIEW_APPLOOK_OFF_2007_BLACK
+                MENUITEM "&Silver Style",               ID_VIEW_APPLOOK_OFF_2007_SILVER
+                MENUITEM "&Aqua Style",                 ID_VIEW_APPLOOK_OFF_2007_AQUA
+            END
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Zoom &In",                    ID_VIEW_ZOOM_IN
+        MENUITEM "Zoom &Out",                   ID_VIEW_ZOOM_OUT
+        MENUITEM "Zoom &Reset",                 ID_VIEW_ZOOM_RESET
+        MENUITEM SEPARATOR
+        MENUITEM "&Properties",                 ID_VIEW_PROPERTIES
+        MENUITEM "&Channels",                   ID_VIEW_CHANNELS
+        MENUITEM "&Modulations",                ID_VIEW_MODULATIONS
+        POPUP "&Groups"
+        BEGIN
+            MENUITEM "&Presets",                    ID_VIEW_PRESETS
+            MENUITEM "P&arts",                      ID_VIEW_PARTS
+        END
+        MENUITEM "&Velocities",                 ID_VIEW_VELOCITIES
+        MENUITEM SEPARATOR
+        MENUITEM "&Track",                      ID_VIEW_TYPE_TRACK
+        MENUITEM "&Song",                       ID_VIEW_TYPE_SONG
+        MENUITEM "&Live",                       ID_VIEW_TYPE_LIVE
+    END
+    POPUP "Tr&ack"
+    BEGIN
+        MENUITEM "&Length",                     ID_TRACK_LENGTH
+        POPUP "S&hift"
+        BEGIN
+            MENUITEM "&Left",                       ID_TRACK_SHIFT_LEFT
+            MENUITEM "&Right",                      ID_TRACK_SHIFT_RIGHT
+            MENUITEM "&Steps...",                   ID_TRACK_SHIFT_STEPS
+        END
+        POPUP "&Rotate"
+        BEGIN
+            MENUITEM "&Left",                       ID_TRACK_ROTATE_LEFT
+            MENUITEM "&Right",                      ID_TRACK_ROTATE_RIGHT
+            MENUITEM "&Steps...",                   ID_TRACK_ROTATE_STEPS
+            MENUITEM "&Offset...",                  ID_TRACK_OFFSET
+        END
+        MENUITEM "R&everse",                    ID_TRACK_REVERSE
+        MENUITEM "&Invert",                     ID_TRACK_INVERT
+        MENUITEM SEPARATOR
+        MENUITEM "&Tie Notes",                  ID_TRACK_TIE_NOTES
+        MENUITEM "Tr&anspose...",               ID_TRACK_TRANSPOSE
+        MENUITEM "&Velocity...",                ID_TRACK_VELOCITY
+        MENUITEM "&Fill...",                    ID_TRACK_FILL
+        MENUITEM "Stret&ch...",                 ID_TRACK_STRETCH
+        MENUITEM SEPARATOR
+        MENUITEM "&Mute",                       ID_TRACK_MUTE
+        MENUITEM "S&olo",                       ID_TRACK_SOLO
+        MENUITEM SEPARATOR
+        MENUITEM "&Group",                      ID_TRACK_GROUP
+        MENUITEM "&Preset",                     ID_TRACK_PRESET_CREATE
+        MENUITEM "Mo&dulation...",              ID_TRACK_MODULATION
+        MENUITEM SEPARATOR
+        MENUITEM "&Sort...",                    ID_TRACK_SORT
+    END
+    POPUP "T&ransport"
+    BEGIN
+        MENUITEM "&Play",                       ID_TRANSPORT_PLAY
+        MENUITEM "Pa&use",                      ID_TRANSPORT_PAUSE
+        MENUITEM "&Record",                     ID_TRANSPORT_RECORD
+        MENUITEM SEPARATOR
+        MENUITEM "Re&wind",                     ID_TRANSPORT_REWIND
+        MENUITEM "&Loop",                       ID_TRANSPORT_LOOP
+        MENUITEM "&Go To Position...",          ID_TRANSPORT_GO_TO_POSITION
+        MENUITEM SEPARATOR
+        MENUITEM "&Next Convergence",           ID_TRANSPORT_CONVERGENCE_NEXT
+        MENUITEM "Pre&vious Convergence",       ID_TRANSPORT_CONVERGENCE_PREVIOUS
+        POPUP "Convergence &Size"
+        BEGIN
+            MENUITEM "&All",                        ID_TRANSPORT_CONVERGENCE_SIZE_ALL
+            MENUITEM "&Custom...",                  ID_TRANSPORT_CONVERGENCE_SIZE_CUSTOM
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Record &Tracks",              ID_TRANSPORT_RECORD_TRACKS
+    END
+    POPUP "&Tools"
+    BEGIN
+        MENUITEM "&Statistics",                 ID_TOOLS_STATISTICS
+        MENUITEM "Time to &Repeat",             ID_TOOLS_TIME_TO_REPEAT
+        MENUITEM "&Prime Factors",              ID_TOOLS_PRIME_FACTORS
+        MENUITEM "&Velocity Range",             ID_TOOLS_VELOCITY_RANGE
+        MENUITEM SEPARATOR
+        MENUITEM "&Devices",                    ID_TOOLS_DEVICES
+        MENUITEM "&Options...",                 ID_TOOLS_OPTIONS
+        MENUITEM SEPARATOR
+        POPUP "&Import Table"
+        BEGIN
+            MENUITEM "&Tracks...",                  ID_TOOLS_IMPORT_TRACKS
+            MENUITEM "&Steps...",                   ID_TOOLS_IMPORT_STEPS
+            MENUITEM "&Modulations...",             ID_TOOLS_IMPORT_MODULATIONS
+        END
+        POPUP "&Export Table"
+        BEGIN
+            MENUITEM "&Tracks...",                  ID_TOOLS_EXPORT_TRACKS
+            MENUITEM "&Steps...",                   ID_TOOLS_EXPORT_STEPS
+            MENUITEM "&Modulations...",             ID_TOOLS_EXPORT_MODULATIONS
+            MENUITEM "S&ong...",                    ID_TOOLS_EXPORT_SONG
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Convergences...",            ID_TOOLS_CONVERGENCES
+        MENUITEM SEPARATOR
+        MENUITEM "&MIDI Learn",                 ID_TOOLS_MIDI_LEARN
+    END
+    POPUP "&Window"
+    BEGIN
+        MENUITEM "&New Window",                 ID_WINDOW_NEW
+        MENUITEM "&Full Screen",                ID_WINDOW_FULL_SCREEN
+        MENUITEM "&Reset Layout",               ID_WINDOW_RESET_LAYOUT
+        MENUITEM SEPARATOR
+        MENUITEM "New &Horizontal Tab Group",   ID_WINDOW_NEW_HORZ_TAB_GROUP
+        MENUITEM "New &Vertical Tab Group",     ID_WINDOW_NEW_VERT_TAB_GROUP
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Help Topics",                ID_HELP_FINDER
+        MENUITEM "Polymeter on the &Web",       ID_APP_HOME_PAGE
+        MENUITEM "Check for &Updates...",       ID_APP_CHECK_FOR_UPDATES
+        MENUITEM SEPARATOR
+        MENUITEM "&About Polymeter...",         ID_APP_ABOUT
+    END
+END
+
+IDR_POPUP_EDIT MENU
+BEGIN
+    POPUP "Edit"
+    BEGIN
+        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
+        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
+        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "&Insert",                     ID_EDIT_INSERT
+        MENUITEM "&Delete",                     ID_EDIT_DELETE
+    END
+END
+
+IDR_THEME_MENU MENU
+BEGIN
+    MENUITEM "Office 2007 (&Blue Style)",   ID_VIEW_APPLOOK_OFF_2007_BLUE
+    MENUITEM "Office 2007 (B&lack Style)",  ID_VIEW_APPLOOK_OFF_2007_BLACK
+    MENUITEM "Office 2007 (&Silver Style)", ID_VIEW_APPLOOK_OFF_2007_SILVER
+    MENUITEM "Office 2007 (&Aqua Style)",   ID_VIEW_APPLOOK_OFF_2007_AQUA
+    MENUITEM "Win&dows 7",                  ID_VIEW_APPLOOK_WINDOWS_7
+END
+
+IDR_LIST_COL_HDR MENU
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "&Reset",                      ID_LIST_COL_HDR_RESET
+    END
+END
+
+IDR_PRESETS_CTX MENU
+BEGIN
+    POPUP "&Presets"
+    BEGIN
+        MENUITEM "&Create",                     ID_TRACK_PRESET_CREATE
+        MENUITEM "&Apply",                      ID_TRACK_PRESET_APPLY
+        MENUITEM "&Delete",                     ID_EDIT_DELETE
+        MENUITEM "&Rename",                     ID_EDIT_RENAME
+        MENUITEM "&Update",                     ID_TRACK_PRESET_UPDATE
+    END
+END
+
+IDR_PARTS_CTX MENU
+BEGIN
+    POPUP "&Parts"
+    BEGIN
+        MENUITEM "&Create",                     ID_TRACK_PART_CREATE
+        MENUITEM "&Delete",                     ID_EDIT_DELETE
+        MENUITEM "&Rename",                     ID_EDIT_RENAME
+        MENUITEM "&Update",                     ID_TRACK_PART_UPDATE
+        MENUITEM "&Tracks",                     ID_PARTS_SELECT_TRACKS
+        MENUITEM SEPARATOR
+        POPUP "&Sort"
+        BEGIN
+            MENUITEM "By &Name",                    ID_PARTS_SORT_BY_NAME
+            MENUITEM "By &Track",                   ID_PARTS_SORT_BY_TRACK
+        END
+    END
+END
+
+IDR_MODULATION_CTX MENU
+BEGIN
+    POPUP "&Modulation"
+    BEGIN
+        MENUITEM "&Insert",                     ID_EDIT_INSERT
+        MENUITEM "Insert &Group...",            ID_MODULATION_INSERT_GROUP
+        MENUITEM "&Delete",                     ID_EDIT_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM "Cu&t",                        ID_EDIT_CUT
+        MENUITEM "&Copy",                       ID_EDIT_COPY
+        MENUITEM "&Paste",                      ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Select &All",                 ID_EDIT_SELECT_ALL
+        MENUITEM "Sh&ow Differences",           ID_MODULATION_SHOW_DIFFERENCES
+        POPUP "&Sort"
+        BEGIN
+            MENUITEM "By &Type",                    ID_MODULATION_SORT_BY_TYPE
+            MENUITEM "By &Source",                  ID_MODULATION_SORT_BY_SOURCE
+        END
+    END
+END
+
+IDR_MIDI_EVENT_CTX MENU
+BEGIN
+    POPUP "MIDI &Event"
+    BEGIN
+        POPUP "&Channel Filter"
+        BEGIN
+            MENUITEM SEPARATOR
+        END
+        POPUP "&Message Filter"
+        BEGIN
+            MENUITEM SEPARATOR
+        END
+        MENUITEM "&System Messages",            ID_MIDI_EVENT_SHOW_SYSTEM_MESSAGES
+        MENUITEM "Reset &Filters",              ID_MIDI_EVENT_RESET_FILTERS
+        MENUITEM SEPARATOR
+        MENUITEM "&Pause",                      ID_MIDI_EVENT_PAUSE
+        MENUITEM "Clear &History",              ID_MIDI_EVENT_CLEAR_HISTORY
+        MENUITEM "&Export...",                  ID_MIDI_EVENT_EXPORT
+        MENUITEM SEPARATOR
+        MENUITEM "&Note Names",                 ID_MIDI_EVENT_SHOW_NOTE_NAMES
+        MENUITEM "C&ontroller Names",           ID_MIDI_EVENT_SHOW_CONTROLLER_NAMES
+        MENUITEM "&Reset Columns",              ID_LIST_COL_HDR_RESET
+    END
+END
+
+IDR_PIANO_CTX MENU
+BEGIN
+    POPUP "&Piano"
+    BEGIN
+        POPUP "&Channel Filter"
+        BEGIN
+            MENUITEM SEPARATOR
+        END
+        POPUP "&Output Channel"
+        BEGIN
+            MENUITEM SEPARATOR
+        END
+        POPUP "&Piano Size"
+        BEGIN
+            MENUITEM SEPARATOR
+        END
+        MENUITEM "&Key Labels",                 ID_PIANO_SHOW_KEY_LABELS
+        MENUITEM "&Rotate Labels",              ID_PIANO_ROTATE_LABELS
+        MENUITEM "Color &Velocities",           ID_PIANO_COLOR_VELOCITY
+        MENUITEM "&Insert Track",               ID_PIANO_INSERT_TRACK
+    END
+END
+
+IDR_GRAPH_CTX MENU
+BEGIN
+    POPUP "&Graph"
+    BEGIN
+        POPUP "&Scope"
+        BEGIN
+            MENUITEM SEPARATOR
+        END
+        POPUP "&Layout"
+        BEGIN
+            MENUITEM SEPARATOR
+        END
+        POPUP "&Filter"
+        BEGIN
+            MENUITEM SEPARATOR
+        END
+        POPUP "&Zoom"
+        BEGIN
+            MENUITEM "&In",                         ID_GRAPH_ZOOM_IN
+            MENUITEM "&Out",                        ID_GRAPH_ZOOM_OUT
+            MENUITEM "&Reset",                      ID_GRAPH_ZOOM_RESET
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Highlight",                  ID_GRAPH_HIGHLIGHT_SELECT
+        MENUITEM "Lab&els",                     ID_GRAPH_EDGE_LABELS
+        MENUITEM SEPARATOR
+        MENUITEM "Save &As...",                 ID_GRAPH_SAVEAS
+        MENUITEM "&Reload",                     ID_GRAPH_RELOAD
+    END
+END
+
+IDR_STEP_VALUES_CTX MENU
+BEGIN
+    POPUP ""
+    BEGIN
+        POPUP "&Format"
+        BEGIN
+            MENUITEM "&Signed",                     ID_STEP_VALUES_FORMAT_SIGNED
+            MENUITEM "&Notes",                      ID_STEP_VALUES_FORMAT_NOTES
+            MENUITEM "&Octaves",                    ID_STEP_VALUES_FORMAT_OCTAVES
+            MENUITEM "&Ties",                       ID_STEP_VALUES_FORMAT_TIES
+            MENUITEM "&Hex",                        ID_STEP_VALUES_FORMAT_HEX
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "C&ut",                        ID_EDIT_CUT
+        MENUITEM "&Copy",                       ID_EDIT_COPY
+        MENUITEM "&Paste",                      ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "&Insert",                     ID_EDIT_INSERT
+        MENUITEM "&Delete",                     ID_EDIT_DELETE
+        MENUITEM "Select &All",                 ID_EDIT_SELECT_ALL
+        MENUITEM SEPARATOR
+        MENUITEM "&Export",                     ID_STEP_VALUES_EXPORT_COPY
+        POPUP "&Options"
+        BEGIN
+            MENUITEM "Columns = &Steps",            ID_STEP_VALUES_LAYOUT_COLS_STEPS
+            MENUITEM "Columns = &Tracks",           ID_STEP_VALUES_LAYOUT_COLS_TRACKS
+            MENUITEM SEPARATOR
+            MENUITEM "&Comma Delimited",            ID_STEP_VALUES_DELIMIT_COMMA
+            MENUITEM "T&ab Delimited",              ID_STEP_VALUES_DELIMIT_TAB
+        END
+    END
+END
+
+IDR_MAPPING_CTX MENU
+BEGIN
+    POPUP ""
+    BEGIN
+        MENUITEM "&Insert",                     ID_EDIT_INSERT
+        MENUITEM "&Delete",                     ID_EDIT_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM "Cu&t",                        ID_EDIT_CUT
+        MENUITEM "&Copy",                       ID_EDIT_COPY
+        MENUITEM "&Paste",                      ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Select &All",                 ID_EDIT_SELECT_ALL
+        MENUITEM "&Learn",                      ID_TOOLS_MIDI_LEARN
+        MENUITEM "&Map Tracks",                 ID_MAPPING_MAP_SELECTED_TRACKS
+    END
+END
+
+IDR_PHASE_CTX MENU
+BEGIN
+    POPUP "ERT"
+    BEGIN
+        MENUITEM "Export &Video...",            ID_PHASE_EXPORT_VIDEO
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_MAINFRAME ACCELERATORS
+BEGIN
+    "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL, NOINVERT
+    VK_INSERT,      ID_EDIT_COPY,           VIRTKEY, CONTROL, NOINVERT
+    VK_DELETE,      ID_EDIT_CUT,            VIRTKEY, SHIFT, NOINVERT
+    "X",            ID_EDIT_CUT,            VIRTKEY, CONTROL, NOINVERT
+    VK_DELETE,      ID_EDIT_DELETE,         VIRTKEY, NOINVERT
+    "D",            ID_EDIT_DESELECT,       VIRTKEY, CONTROL, NOINVERT
+    "F",            ID_EDIT_FIND,           VIRTKEY, CONTROL, NOINVERT
+    VK_INSERT,      ID_EDIT_INSERT,         VIRTKEY, NOINVERT
+    "V",            ID_EDIT_PASTE,          VIRTKEY, CONTROL, NOINVERT
+    VK_INSERT,      ID_EDIT_PASTE,          VIRTKEY, SHIFT, NOINVERT
+    "Y",            ID_EDIT_REDO,           VIRTKEY, CONTROL, NOINVERT
+    VK_F2,          ID_EDIT_RENAME,         VIRTKEY, NOINVERT
+    "H",            ID_EDIT_REPLACE,        VIRTKEY, CONTROL, NOINVERT
+    "A",            ID_EDIT_SELECT_ALL,     VIRTKEY, CONTROL, NOINVERT
+    "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL, NOINVERT
+    "E",            ID_FILE_EXPORT,         VIRTKEY, CONTROL, NOINVERT
+    "I",            ID_FILE_IMPORT,         VIRTKEY, CONTROL, NOINVERT
+    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL, NOINVERT
+    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
+    "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL, NOINVERT
+    "S",            ID_FILE_SAVE_AS,        VIRTKEY, SHIFT, CONTROL, NOINVERT
+    VK_F1,          ID_HELP_FINDER,         VIRTKEY, NOINVERT
+    VK_F6,          ID_NEXT_PANE,           VIRTKEY, NOINVERT
+    VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT, NOINVERT
+    "L",            ID_TOOLS_MIDI_LEARN,    VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "O",            ID_TOOLS_OPTIONS,       VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "F",            ID_TRACK_FILL,          VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "G",            ID_TRACK_GROUP,         VIRTKEY, CONTROL, NOINVERT
+    "I",            ID_TRACK_INVERT,        VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "L",            ID_TRACK_LENGTH,        VIRTKEY, CONTROL, NOINVERT
+    "M",            ID_TRACK_MODULATION,    VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "M",            ID_TRACK_MUTE,          VIRTKEY, CONTROL, NOINVERT
+    "O",            ID_TRACK_OFFSET,        VIRTKEY, CONTROL, ALT, NOINVERT
+    "P",            ID_TRACK_PRESET_CREATE, VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "3",            ID_TRACK_REVERSE,       VIRTKEY, CONTROL, NOINVERT
+    "1",            ID_TRACK_ROTATE_LEFT,   VIRTKEY, CONTROL, NOINVERT
+    "2",            ID_TRACK_ROTATE_RIGHT,  VIRTKEY, CONTROL, NOINVERT
+    "J",            ID_TRACK_ROTATE_STEPS,  VIRTKEY, CONTROL, NOINVERT
+    "1",            ID_TRACK_SHIFT_LEFT,    VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "2",            ID_TRACK_SHIFT_RIGHT,   VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "J",            ID_TRACK_SHIFT_STEPS,   VIRTKEY, SHIFT, CONTROL, NOINVERT
+    VK_OEM_5,       ID_TRACK_SOLO,          VIRTKEY, CONTROL, NOINVERT
+    "S",            ID_TRACK_SORT,          VIRTKEY, CONTROL, ALT, NOINVERT
+    "E",            ID_TRACK_STRETCH,       VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "T",            ID_TRACK_TIE_NOTES,     VIRTKEY, CONTROL, NOINVERT
+    "T",            ID_TRACK_TRANSPOSE,     VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "V",            ID_TRACK_VELOCITY,      VIRTKEY, SHIFT, CONTROL, NOINVERT
+    VK_RIGHT,       ID_TRANSPORT_CONVERGENCE_NEXT, VIRTKEY, ALT, NOINVERT
+    VK_LEFT,        ID_TRANSPORT_CONVERGENCE_PREVIOUS, VIRTKEY, ALT, NOINVERT
+    VK_OEM_2,       ID_TRANSPORT_GO_TO_POSITION, VIRTKEY, CONTROL, NOINVERT
+    "L",            ID_TRANSPORT_LOOP,      VIRTKEY, CONTROL, ALT, NOINVERT
+    VK_SPACE,       ID_TRANSPORT_PAUSE,     VIRTKEY, SHIFT, CONTROL, NOINVERT
+    VK_SPACE,       ID_TRANSPORT_PLAY,      VIRTKEY, CONTROL, NOINVERT
+    "R",            ID_TRANSPORT_RECORD,    VIRTKEY, CONTROL, NOINVERT
+    "R",            ID_TRANSPORT_RECORD_TRACKS, VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "W",            ID_TRANSPORT_REWIND,    VIRTKEY, CONTROL, NOINVERT
+    "C",            ID_VIEW_CHANNELS,       VIRTKEY, CONTROL, ALT, NOINVERT
+    "M",            ID_VIEW_MODULATIONS,    VIRTKEY, CONTROL, ALT, NOINVERT
+    "A",            ID_VIEW_PARTS,          VIRTKEY, CONTROL, ALT, NOINVERT
+    "E",            ID_VIEW_PRESETS,        VIRTKEY, CONTROL, ALT, NOINVERT
+    "P",            ID_VIEW_PROPERTIES,     VIRTKEY, CONTROL, ALT, NOINVERT
+    VK_F9,          ID_VIEW_TYPE_LIVE,      VIRTKEY, CONTROL, NOINVERT
+    VK_F9,          ID_VIEW_TYPE_SONG,      VIRTKEY, NOINVERT
+    VK_F8,          ID_VIEW_TYPE_TRACK,     VIRTKEY, NOINVERT
+    VK_F7,          ID_VIEW_VELOCITIES,     VIRTKEY, NOINVERT
+    VK_OEM_PLUS,    ID_VIEW_ZOOM_IN,        VIRTKEY, CONTROL, NOINVERT
+    VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
+    "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
+    VK_F11,         ID_WINDOW_FULL_SCREEN,  VIRTKEY, NOINVERT
+    VK_BACK,        ID_EDIT_UNDO,           VIRTKEY, ALT, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 240, 100
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About Polymeter"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    ICON            IDR_MAINFRAME,IDC_STATIC,7,7,20,20
+    LTEXT           "Polymeter 0.0",IDC_ABOUT_VERSION,40,7,135,8,SS_NOPREFIX
+    LTEXT           "Copyleft 2018 Chris Korda",IDC_STATIC,40,20,135,8
+    DEFPUSHBUTTON   "OK",IDOK,183,7,50,14,WS_GROUP
+    EDITTEXT        IDC_ABOUT_LICENSE,7,38,226,55,ES_MULTILINE | ES_READONLY | WS_VSCROLL
+END
+
+IDD_OPTIONS DIALOGEX 0, 0, 311, 250
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Options"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_OPTIONS_GRID,"MfcPropertyGrid",WS_TABSTOP | 0x100,7,7,297,216
+    DEFPUSHBUTTON   "OK",IDOK,199,229,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,254,229,50,14
+    PUSHBUTTON      "&Reset All",IDC_OPTIONS_RESET_ALL,7,229,50,14
+END
+
+IDD_PROGRESS DIALOG 0, 0, 186, 49
+STYLE DS_SETFONT | DS_MODALFRAME | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Progress"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "Progress",IDC_PROGRESS,"msctls_progress32",PBS_SMOOTH | WS_BORDER,7,7,172,14
+    PUSHBUTTON      "Cancel",IDCANCEL,67,28,50,14
+    RTEXT           "",IDC_PROGRESS_PERCENT,139,27,40,15,SS_CENTERIMAGE
+END
+
+IDD_GO_TO_POSITION DIALOGEX 0, 0, 119, 61
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Go To Position"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_GO_TO_POS_EDIT,7,7,105,14,ES_AUTOHSCROLL
+    CONTROL         "&MBT",IDC_GO_TO_POS_FORMAT_MBT,"Button",BS_AUTORADIOBUTTON | WS_GROUP,23,25,30,10
+    CONTROL         "&Time",IDC_GO_TO_POS_FORMAT_TIME,"Button",BS_AUTORADIOBUTTON,63,25,33,10
+    DEFPUSHBUTTON   "OK",IDOK,7,40,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,62,40,50,14
+END
+
+IDD_EXPORT DIALOGEX 0, 0, 131, 63
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Export"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Duration:",IDC_STATIC,7,7,31,8
+    EDITTEXT        IDC_EXPORT_DURATION,7,17,60,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,20,42,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,74,42,50,14
+END
+
+IDD_TRACK_SORT DIALOGEX 0, 0, 204, 167
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Track Sort"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Sort 1",IDC_STATIC,7,7,190,42
+    LTEXT           "Property:",IDC_STATIC,17,17,31,8
+    COMBOBOX        IDC_TRACK_SORT_PROP1,17,27,80,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Direction:",IDC_STATIC,107,17,32,8
+    COMBOBOX        IDC_TRACK_SORT_DIR1,107,27,80,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Sort 2",IDC_STATIC,7,51,190,42
+    LTEXT           "Property:",IDC_STATIC,17,61,31,8
+    COMBOBOX        IDC_TRACK_SORT_PROP2,17,71,80,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Direction:",IDC_STATIC,107,61,32,8
+    COMBOBOX        IDC_TRACK_SORT_DIR2,107,71,80,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Sort 3",IDC_STATIC,7,95,190,42
+    LTEXT           "Property:",IDC_STATIC,17,105,31,8
+    COMBOBOX        IDC_TRACK_SORT_PROP3,17,115,80,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Direction:",IDC_STATIC,107,105,32,8
+    COMBOBOX        IDC_TRACK_SORT_DIR3,107,115,80,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,91,146,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,146,146,50,14
+END
+
+IDD_OFFSET DIALOGEX 0, 0, 118, 62
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Offset"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Offset:",IDC_OFFSET_CAPTION,34,7,50,8
+    EDITTEXT        IDC_OFFSET_EDIT,34,17,50,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_OFFSET_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,78,15,10,14
+    DEFPUSHBUTTON   "OK",IDOK,7,41,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,61,41,50,14
+END
+
+IDD_STRETCH DIALOGEX 0, 0, 119, 71
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Stretch"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "&Percentage:",IDC_STRETCH_CAPTION,34,7,50,8
+    EDITTEXT        IDC_STRETCH_EDIT,34,17,50,14,ES_AUTOHSCROLL
+    CONTROL         "&Interpolate",IDC_STRETCH_INTERPOLATE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,34,35,51,10
+    DEFPUSHBUTTON   "OK",IDOK,7,50,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,62,50,50,14
+END
+
+IDD_FILL DIALOGEX 0, 0, 229, 156
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Fill"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "&Value Range",IDC_STATIC,7,7,215,42,WS_GROUP
+    LTEXT           "Start:",IDC_STATIC,14,17,20,8
+    EDITTEXT        IDC_FILL_VALUE_START,14,27,40,14,ES_AUTOHSCROLL
+    LTEXT           "End:",IDC_STATIC,62,17,16,8
+    EDITTEXT        IDC_FILL_VALUE_END,62,27,40,14,ES_AUTOHSCROLL
+    CONTROL         "&Unsigned",IDC_FILL_SIGNED1,"Button",BS_AUTORADIOBUTTON | WS_GROUP,120,17,46,10
+    CONTROL         "Signe&d",IDC_FILL_SIGNED2,"Button",BS_AUTORADIOBUTTON,120,31,38,10
+    GROUPBOX        "&Step Range",IDC_STATIC,7,52,215,42,WS_GROUP
+    LTEXT           "Start:",IDC_STATIC,14,62,20,8
+    EDITTEXT        IDC_FILL_STEP_START,14,72,40,14,ES_AUTOHSCROLL
+    LTEXT           "End:",IDC_STATIC,62,62,16,8
+    EDITTEXT        IDC_FILL_STEP_END,62,72,40,14,ES_AUTOHSCROLL
+    LTEXT           "&Function:",IDC_STATIC,7,101,31,8
+    COMBOBOX        IDC_FILL_FUNCTION,7,111,70,89,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "F&requency:",IDC_STATIC,85,101,38,8
+    EDITTEXT        IDC_FILL_FREQUENCY,85,111,40,14,ES_AUTOHSCROLL
+    LTEXT           "&Phase:",IDC_STATIC,133,101,23,8
+    EDITTEXT        IDC_FILL_PHASE,133,111,40,14,ES_AUTOHSCROLL
+    LTEXT           "&Curviness:",IDC_STATIC,181,101,35,8
+    EDITTEXT        IDC_FILL_CURVINESS,181,111,40,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,116,135,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,172,135,50,14
+END
+
+IDD_VELOCITY_OFFSET DIALOGEX 0, 0, 150, 70
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Offset"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "&Offset:",IDC_STATIC,7,7,23,8
+    EDITTEXT        IDC_VELOCITY_OFFSET_EDIT,7,17,40,14,ES_AUTOHSCROLL
+    GROUPBOX        "Apply to",IDC_STATIC,61,7,56,42
+    CONTROL         "&Tracks",IDC_VELOCITY_OFFSET_TARGET,"Button",BS_AUTORADIOBUTTON | WS_GROUP,70,19,38,10
+    CONTROL         "&Steps",IDC_VELOCITY_OFFSET_TARGET2,"Button",BS_AUTORADIOBUTTON,70,32,34,10
+END
+
+IDD_VELOCITY_SCALE DIALOGEX 0, 0, 150, 70
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Scale"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "&Multiplier:",IDC_STATIC,7,7,34,8
+    EDITTEXT        IDC_VELOCITY_SCALE_EDIT,7,17,70,14,ES_AUTOHSCROLL
+    CONTROL         "&Unsigned",IDC_VELOCITY_SCALE_UNSIGNED,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,37,46,10
+    CONTROL         "&Signed",IDC_VELOCITY_SCALE_SIGNED,"Button",BS_AUTORADIOBUTTON,7,52,38,10
+END
+
+IDD_PROCESSING DIALOGEX 0, 0, 200, 45
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Processing"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Cancel",IDCANCEL,75,24,50,14
+    LTEXT           "",IDC_PROCESSING_STATUS,7,7,186,8
+END
+
+IDD_CONVERGENCES DIALOGEX 0, 0, 310, 178
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_MAXIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Convergences"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Type a comma-separated list of positive integers and press Enter:",IDC_STATIC,7,7,217,8
+    EDITTEXT        IDC_CONVERGE_INPUT,7,17,296,14,ES_AUTOHSCROLL
+    LTEXT           "Output:",IDC_STATIC,7,34,26,8
+    EDITTEXT        IDC_CONVERGE_OUTPUT,7,44,296,127,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL
+END
+
+IDD_RECORD DIALOGEX 0, 0, 219, 101
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Record"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "&Duration",-1,7,7,130,37
+    EDITTEXT        IDC_RECORD_DURATION,14,19,60,14,ES_AUTOHSCROLL
+    CONTROL         "&Time",IDC_RECORD_DURATION_UNIT,"Button",BS_AUTORADIOBUTTON | WS_GROUP,86,15,33,10
+    CONTROL         "&Frames",IDC_RECORD_DURATION_UNIT2,"Button",BS_AUTORADIOBUTTON,86,29,41,10
+    LTEXT           "Frame &Rate:",-1,149,9,42,8
+    EDITTEXT        IDC_RECORD_FRAME_RATE,149,19,40,14,ES_AUTOHSCROLL
+    LTEXT           "Frame &Size:",-1,7,47,41,8
+    COMBOBOX        IDC_RECORD_FRAME_SIZE,7,57,100,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Width:",IDC_RECORD_FRAME_WIDTH_CAP,116,47,23,8
+    EDITTEXT        IDC_RECORD_FRAME_WIDTH,116,57,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "&Height:",IDC_RECORD_FRAME_HEIGHT_CAP,164,47,24,8
+    EDITTEXT        IDC_RECORD_FRAME_HEIGHT,164,57,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    DEFPUSHBUTTON   "OK",IDOK,106,80,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,162,80,50,14
+END
+
+IDD_MODULATION DIALOGEX 0, 0, 253, 178
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Modulation"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "&Source Tracks:",IDC_STATIC,7,7,51,8
+    LISTBOX         IDC_MODULATION_SOURCE_LIST,7,17,150,134,LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Type:",IDC_STATIC,166,7,20,8
+    LISTBOX         IDC_MODULATION_TYPE_LIST,166,17,80,134,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,142,157,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,196,157,50,14
+END
+
+IDD_VELOCITY_REPLACE DIALOGEX 0, 0, 150, 70
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Replace"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "&Find what:",IDC_STATIC,7,7,36,8
+    EDITTEXT        IDC_VELOCITY_REPLACE_WHAT,7,17,40,14,ES_AUTOHSCROLL
+    LTEXT           "&Replace with:",IDC_STATIC,53,7,46,8
+    EDITTEXT        IDC_VELOCITY_REPLACE_WITH,53,17,40,14,ES_AUTOHSCROLL
+    CONTROL         "&Unsigned",IDC_VELOCITY_SCALE_UNSIGNED,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,37,46,10
+    CONTROL         "&Signed",IDC_VELOCITY_SCALE_SIGNED,"Button",BS_AUTORADIOBUTTON,7,52,38,10
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 233
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 93
+    END
+
+    IDD_OPTIONS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 304
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 243
+    END
+
+    IDD_PROGRESS, DIALOG
+    BEGIN
+    END
+
+    IDD_GO_TO_POSITION, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 112
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 54
+    END
+
+    IDD_EXPORT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 124
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 56
+    END
+
+    IDD_TRACK_SORT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 197
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 160
+    END
+
+    IDD_OFFSET, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 111
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 55
+    END
+
+    IDD_STRETCH, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 112
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 64
+    END
+
+    IDD_FILL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 222
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 149
+    END
+
+    IDD_VELOCITY_OFFSET, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 143
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 63
+    END
+
+    IDD_VELOCITY_SCALE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 143
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 63
+    END
+
+    IDD_PROCESSING, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 193
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 38
+    END
+
+    IDD_CONVERGENCES, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 303
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 171
+    END
+
+    IDD_RECORD, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 212
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 94
+    END
+
+    IDD_MODULATION, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 246
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 171
+    END
+
+    IDD_VELOCITY_REPLACE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 143
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 63
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_OPTIONS DLGINIT
+BEGIN
+    IDC_OPTIONS_GRID, 0x37c, 414, 0
+0x4d3c, 0x4346, 0x7250, 0x706f, 0x7265, 0x7974, 0x7247, 0x6469, 0x485f, 
+0x6165, 0x6564, 0x4372, 0x7274, 0x3e6c, 0x5254, 0x4555, 0x2f3c, 0x464d, 
+0x5043, 0x6f72, 0x6570, 0x7472, 0x4779, 0x6972, 0x5f64, 0x6548, 0x6461, 
+0x7265, 0x7443, 0x6c72, 0x3c3e, 0x464d, 0x5043, 0x6f72, 0x6570, 0x7472, 
+0x4779, 0x6972, 0x5f64, 0x6544, 0x6373, 0x6972, 0x7470, 0x6f69, 0x416e, 
+0x6572, 0x3e61, 0x4146, 0x534c, 0x3c45, 0x4d2f, 0x4346, 0x7250, 0x706f, 
+0x7265, 0x7974, 0x7247, 0x6469, 0x445f, 0x7365, 0x7263, 0x7069, 0x6974, 
+0x6e6f, 0x7241, 0x6165, 0x3c3e, 0x464d, 0x5043, 0x6f72, 0x6570, 0x7472, 
+0x4779, 0x6972, 0x5f64, 0x6c41, 0x6870, 0x6261, 0x7465, 0x6369, 0x6f4d, 
+0x6564, 0x463e, 0x4c41, 0x4553, 0x2f3c, 0x464d, 0x5043, 0x6f72, 0x6570, 
+0x7472, 0x4779, 0x6972, 0x5f64, 0x6c41, 0x6870, 0x6261, 0x7465, 0x6369, 
+0x6f4d, 0x6564, 0x3c3e, 0x464d, 0x5043, 0x6f72, 0x6570, 0x7472, 0x4779, 
+0x6972, 0x5f64, 0x6f4d, 0x6964, 0x6966, 0x6465, 0x7250, 0x706f, 0x7265, 
+0x6974, 0x7365, 0x463e, 0x4c41, 0x4553, 0x2f3c, 0x464d, 0x5043, 0x6f72, 
+0x6570, 0x7472, 0x4779, 0x6972, 0x5f64, 0x6f4d, 0x6964, 0x6966, 0x6465, 
+0x7250, 0x706f, 0x7265, 0x6974, 0x7365, 0x3c3e, 0x464d, 0x5043, 0x6f72, 
+0x6570, 0x7472, 0x4779, 0x6972, 0x5f64, 0x5356, 0x6f44, 0x4e74, 0x7465, 
+0x6f4c, 0x6b6f, 0x543e, 0x5552, 0x3c45, 0x4d2f, 0x4346, 0x7250, 0x706f, 
+0x7265, 0x7974, 0x7247, 0x6469, 0x565f, 0x4453, 0x746f, 0x654e, 0x4c74, 
+0x6f6f, 0x3e6b, 0x4d3c, 0x4346, 0x7250, 0x706f, 0x7265, 0x7974, 0x7247, 
+0x6469, 0x445f, 0x7365, 0x7263, 0x7069, 0x6974, 0x6e6f, 0x6f52, 0x7377, 
+0x303e, 0x2f3c, 0x464d, 0x5043, 0x6f72, 0x6570, 0x7472, 0x4779, 0x6972, 
+0x5f64, 0x6544, 0x6373, 0x6972, 0x7470, 0x6f69, 0x526e, 0x776f, 0x3e73, 
+
+    0
+END
+
+IDD_FILL DLGINIT
+BEGIN
+    IDC_FILL_FUNCTION, 0x403, 7, 0
+0x694c, 0x656e, 0x7261, "\000" 
+    IDC_FILL_FUNCTION, 0x403, 5, 0
+0x6953, 0x656e, "\000" 
+    IDC_FILL_FUNCTION, 0x403, 9, 0
+0x7254, 0x6169, 0x676e, 0x656c, "\000" 
+    IDC_FILL_FUNCTION, 0x403, 8, 0
+0x6152, 0x706d, 0x5520, 0x0070, 
+    IDC_FILL_FUNCTION, 0x403, 10, 0
+0x6152, 0x706d, 0x4420, 0x776f, 0x006e, 
+    IDC_FILL_FUNCTION, 0x403, 7, 0
+0x7153, 0x6175, 0x6572, "\000" 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_CURSOR_DRAG_MULTI   CURSOR                  "res\\dragmulti.cur"
+IDC_CURSOR_DRAG_SINGLE  CURSOR                  "res\\dragsingle.cur"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_APP_HELP_FILE_MISSING "Can't find help file '%1'"
+    IDS_APP_LICENSE         "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.  You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA."
+    IDS_APP_UNKNOWN_SYSTEM_ERROR "Unknown system error %d (0x%X)"
+    IDS_BAR_Channels        "Channels"
+    IDS_BAR_Graph           "Graph"
+    IDS_BAR_Mapping         "Mapping"
+    IDS_BAR_MidiInput       "MIDI Input"
+    IDS_BAR_MidiOutput      "MIDI Output"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_BAR_Modulations     "Modulations"
+    IDS_BAR_Parts           "Parts"
+    IDS_BAR_Phase           "Phase"
+    IDS_BAR_Piano           "Piano"
+    IDS_BAR_Presets         "Presets"
+    IDS_BAR_Properties      "Properties"
+    IDS_BAR_StepValues      "Step Values"
+    IDS_CHANNEL_COL_BankLSB "Bank LSB"
+    IDS_CHANNEL_COL_BankMSB "Bank MSB"
+    IDS_CHANNEL_COL_Number  "#"
+    IDS_CHANNEL_COL_Pan     "Pan"
+    IDS_CHANNEL_COL_Patch   "Patch"
+    IDS_CHANNEL_COL_Volume  "Volume"
+    IDS_CKUP_CANT_GET_ADDR  "Can't get address '%1'.\n%2"
+    IDS_CKUP_CANT_LOAD_DLL  "Can't load library '%1'.\n%2"
+    IDS_COLOR_MENU_AUTOMATIC "Automatic"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_COLOR_MENU_MORE_COLORS "More Colors..."
+    IDS_CONVERGENCE_SIZE    "Convergence Size"
+    IDS_CONVERGENCE_SIZE_EDIT_CAPTION "Modulos:"
+    IDS_CONVERGE_HINT       "Enter at least two positive integers separated by commas."
+    IDS_CSV_FILE_FILTER     "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*||"
+    IDS_DOC_BAD_FORMAT      "'%1' has an invalid format."
+    IDS_DOC_BAD_STEP_SELECTION "Invalid step selection."
+    IDS_DOC_CANT_TRUNCATE_RECORDING 
+                            "Can't set song length shorter than the recording."
+    IDS_DOC_CLIP_WARNING    "Clipping may occur."
+    IDS_DOC_CONVERGENCE_OUT_OF_RANGE "Convergence is out of range."
+    IDS_DOC_GROUP_OVERLAP   "One or more of the selected tracks already belong to a group, and will be reassigned."
+    IDS_DOC_NEWER_VERSION   "'%1' is from a newer document version. Some of its features may not be supported."
+    IDS_DOC_SEARCH_TEXT_NOT_FOUND "Search text not found."
+    IDS_DOC_TRACK_TOO_LONG  "Track too long."
+    IDS_DOC_VALUE_NOT_FOUND "Value not found."
+    IDS_DOC_VELOCITY_RANGE  "Velocity range: %d, %d"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_EDIT_APPLY_PRESET   "Apply Preset"
+    IDS_EDIT_CREATE_PART    "Create Part"
+    IDS_EDIT_CREATE_PRESET  "Create Preset"
+    IDS_EDIT_CUT_MAPPINGS   "Cut Mapping"
+    IDS_EDIT_CUT_STEPS      "Cut Steps"
+    IDS_EDIT_CUT_TRACKS     "Cut Tracks"
+    IDS_EDIT_DELETE_MAPPINGS "Delete Mapping"
+    IDS_EDIT_DELETE_PARTS   "Delete Parts"
+    IDS_EDIT_DELETE_PRESETS "Delete Presets"
+    IDS_EDIT_DELETE_STEPS   "Delete Steps"
+    IDS_EDIT_DELETE_TRACKS  "Delete Tracks"
+    IDS_EDIT_DUB            "Dub"
+    IDS_EDIT_FILL_STEPS     "Fill Steps"
+    IDS_EDIT_INSERT_MAPPING "Insert Mapping"
+    IDS_EDIT_INSERT_STEPS   "Insert Steps"
+    IDS_EDIT_INSERT_TRACKS  "Insert Tracks"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_EDIT_INVERT         "Invert"
+    IDS_EDIT_LEARN_MAPPING  "Learn Mapping"
+    IDS_EDIT_LEARN_MULTI_MAPPING "Learn Mappings"
+    IDS_EDIT_LOOP_RANGE     "Loop Range"
+    IDS_EDIT_MENU           "Edit"
+    IDS_EDIT_MODIFY_PARTS   "Modify Parts"
+    IDS_EDIT_MODULATION     "Modulation"
+    IDS_EDIT_MOVE_MAPPINGS  "Move Mappings"
+    IDS_EDIT_MOVE_PARTS     "Move Parts"
+    IDS_EDIT_MOVE_PRESETS   "Move Presets"
+    IDS_EDIT_MOVE_STEPS     "Move Steps"
+    IDS_EDIT_MOVE_TRACKS    "Move Tracks"
+    IDS_EDIT_MULTI_STEP_RECT "Multiple Steps"
+    IDS_EDIT_PASTE_MAPPINGS "Paste Mapping"
+    IDS_EDIT_PASTE_STEPS    "Paste Steps"
+    IDS_EDIT_PASTE_TRACKS   "Paste Tracks"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_EDIT_RECORD         "Record"
+    IDS_EDIT_REDO_PREFIX    "&Redo"
+    IDS_EDIT_RENAME_PART    "Rename Part"
+    IDS_EDIT_RENAME_PRESET  "Rename Preset"
+    IDS_EDIT_REVERSE        "Reverse"
+    IDS_EDIT_ROTATE         "Rotate"
+    IDS_EDIT_SHIFT          "Shift"
+    IDS_EDIT_SOLO           "Solo"
+    IDS_EDIT_SORT_MAPPINGS  "Sort Mappings"
+    IDS_EDIT_SORT_PARTS     "Sort Parts"
+    IDS_EDIT_TIME_DIVISION  "Time Division"
+    IDS_EDIT_TRACK_SORT     "Track Sort"
+    IDS_EDIT_TRANSPOSE      "Transpose"
+    IDS_EDIT_UNDO_PREFIX    "&Undo"
+    IDS_EDIT_UPDATE_PART    "Update Part"
+    IDS_EDIT_UPDATE_PRESET  "Update Preset"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_EDIT_VELOCITY       "Velocity"
+    IDS_ERR_TRACK_LENGTH_CURSOR 
+                            "Cursor must be over track step to indicate desired length."
+    IDS_EXPORT              "Export"
+    IDS_EXPORT_BAD_DURATION "Invalid duration. Time format is HH:MM:SS and duration must be greater than zero."
+    IDS_EXPORT_EMPTY_FILE   "Nothing to export."
+    IDS_EXPORT_ERROR        "Error during export."
+    IDS_EXPORT_FILE_FILTER  "MIDI Files (*.mid)|*.mid|All Files (*.*)|*.*||"
+    IDS_FILTER_ALL          "All"
+    IDS_GRAPHVIZ_BROWSE_TITLE "Where is Graphviz?"
+    IDS_GRAPHVIZ_DOWNLOAD_IT 
+                            "In your internet browser, navigate to graphviz.org/download, scroll down to Executable Packages for Windows, and download the latest stable Windows release. If there's a choice between .msi or .zip, the .msi package is recommended because it has an installer. After Graphviz is installed (for .msi) or unzipped to a folder (for .zip), press OK to continue."
+    IDS_GRAPHVIZ_IS_IT_PRESENT 
+                            "The graphing feature requires Graphviz, a free and open source graph visualization software available from graphviz.org.\n\nGraphviz doesn't seem to be in its usual location. Is Graphviz already present on your system?"
+    IDS_GRAPHVIZ_IS_LOCATION_KNOWN 
+                            "Do you know where Graphviz is located on your system?"
+    IDS_GRAPHVIZ_IS_READY   "Graphviz is ready to use."
+    IDS_GRAPHVIZ_NOT_FOUND_RETRY "Graphviz wasn't found. Try again?"
+    IDS_GRAPHVIZ_OK_TO_SEARCH 
+                            "OK to search your system for Graphviz? This could take a while."
+    IDS_GRAPHVIZ_SEARCHING_DRIVE "Searching drive"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_GRAPH_ERROR         "Graph error."
+    IDS_GRAPH_SCOPE_ALL     "All"
+    IDS_GRAPH_SCOPE_BIDIRECTIONAL "Bidirectional"
+    IDS_GRAPH_SCOPE_RECURSIVE "Recursive"
+    IDS_GRAPH_SCOPE_SELECTED "Selected"
+    IDS_GRID_ERR_BAD_TIME_FORMAT "Enter time in hh:mm:ss format."
+    IDS_HINT_APPLOOK_SELECT "Select this application theme"
+    IDS_HINT_GRAPH_FILTER_MOD_TYPE "Show only this modulation type"
+    IDS_HINT_GRAPH_FILTER_MOD_TYPE_ALL "Show all modulation types"
+    IDS_HINT_GRAPH_LAYOUT   "Use this layout engine"
+    IDS_HINT_GRAPH_SCOPE_ALL 
+                            "Show all modulations regardless of track selection"
+    IDS_HINT_GRAPH_SCOPE_BIDIRECTIONAL 
+                            "Show direct and indirect modulators and modulatees of selected tracks"
+    IDS_HINT_GRAPH_SCOPE_RECURSIVE 
+                            "Show direct and indirect modulators of selected tracks"
+    IDS_HINT_GRAPH_SCOPE_SELECTED "Show direct modulators of selected tracks"
+    IDS_HINT_MAIN_CONVERGENCE_SIZE 
+                            "Require at least this many modulos to coincide"
+    IDS_HLINK_CANT_LAUNCH   "Can't launch browser."
+END
+
+STRINGTABLE
+BEGIN
+    IDS_IMPORT              "Import"
+    IDS_IMPORT_ERR_FORMAT   "Format error."
+    IDS_IMPORT_ERR_LOCATION "Row %d, Column %d"
+    IDS_IMPORT_ERR_PROPERTY "Undefined property name."
+    IDS_IMPORT_ERR_RANGE    "Range error."
+    IDS_MAIN_DOCKING_BAR_HINT_FMT "Show or hide the %1 window"
+    IDS_MAIN_TRACK_COLORS   "Track Colors"
+    IDS_MAPPING_COL_IN_CHANNEL "In Channel"
+    IDS_MAPPING_COL_IN_CONTROL "In Control"
+    IDS_MAPPING_COL_IN_EVENT "In Event"
+    IDS_MAPPING_COL_NUMBER  "#"
+    IDS_MAPPING_COL_OUT_CHANNEL "Out Channel"
+    IDS_MAPPING_COL_OUT_CONTROL "Out Control"
+    IDS_MAPPING_COL_OUT_EVENT "Out Event"
+    IDS_MAPPING_COL_RANGE_END "Range End"
+    IDS_MAPPING_COL_RANGE_START "Range Start"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_MAPPING_COL_TRACK   "Track"
+    IDS_MIDIEVT_COL_CHANNEL "Channel"
+    IDS_MIDIEVT_COL_MESSAGE "Message"
+    IDS_MIDIEVT_COL_P1      "P1"
+    IDS_MIDIEVT_COL_P2      "P2"
+    IDS_MIDIEVT_COL_TIME    "Time"
+    IDS_MIDI_DEVICES_MISSING "MIDI devices are missing."
+    IDS_MIDI_INCOMPATIBLE_SONG_POSITION 
+                            "Song position is incompatible with MIDI clock sync.\nPlayback will start from the nearest sixteenth note."
+    IDS_MIDI_INPUT          "Input"
+    IDS_MIDI_MSG_NOTE_OFF   "Note Off"
+    IDS_MIDI_MSG_NOTE_ON    "Note On"
+    IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
+    IDS_MIDI_OUTPUT         "Output"
+    IDS_MIDI_SYS_STAT_ACTIVE_SENSING "Active Sensing"
+    IDS_MIDI_SYS_STAT_CLOCK "Clock"
+    IDS_MIDI_SYS_STAT_CONTINUE "Continue"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_MIDI_SYS_STAT_EOX   "EOX"
+    IDS_MIDI_SYS_STAT_MTC_QTR_FRAME "MTC Qtr Frame"
+    IDS_MIDI_SYS_STAT_SONG_POSITION "Song Position"
+    IDS_MIDI_SYS_STAT_SONG_SELECT "Song Select"
+    IDS_MIDI_SYS_STAT_START "Start"
+    IDS_MIDI_SYS_STAT_STOP  "Stop"
+    IDS_MIDI_SYS_STAT_SYSEX "System Exclusive"
+    IDS_MIDI_SYS_STAT_SYSTEM_RESET "System Reset"
+    IDS_MIDI_SYS_STAT_TUNE_REQUEST "Tune Request"
+    IDS_MOD_DIFFERENCES     "<Differences>"
+    IDS_MOD_SOURCE          "Source"
+    IDS_NONE                "<None>"
+    IDS_NOTE_OVERLAP_Allow  "Allow"
+    IDS_NOTE_OVERLAP_Prevent "Prevent"
+    IDS_OFFSET_NOTES        "Semitones:"
+    IDS_OFFSET_STEPS        "Steps:"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_OFFSET_TICKS        "Ticks:"
+    IDS_OPT_DESC_General_bAlwaysRecord 
+                            "Always record dubs during playback and automatically save the recordings"
+    IDS_OPT_DESC_General_bCheckForUpdates 
+                            "Automatically check for newer version of app during startup"
+    IDS_OPT_DESC_General_bPropertyDescrips 
+                            "If true, show descriptions area in properties bar"
+    IDS_OPT_DESC_Midi_bSendMidiClock 
+                            "Transmit MIDI synchronization messages to slave device"
+    IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
+    IDS_OPT_DESC_Midi_iInputDevice "Selected MIDI input device"
+    IDS_OPT_DESC_Midi_iInputQuant 
+                            "Quantization for converting MIDI input to steps"
+    IDS_OPT_DESC_Midi_iOutputDevice "Selected MIDI output device"
+    IDS_OPT_DESC_Midi_nBufferSize "Size of MIDI event buffer, in bytes"
+    IDS_OPT_DESC_Midi_nDefaultVelocity 
+                            "Default note velocity or controller value for new steps"
+    IDS_OPT_DESC_Midi_nLatency "Desired MIDI latency, in milliseconds"
+    IDS_OPT_DESC_Midi_nRecordInput 
+                            "Type of data captured by the Record command"
+    IDS_OPT_DESC_View_bShowCurPos 
+                            "Indicate current position within each track"
+    IDS_OPT_DESC_View_bShowGMNames 
+                            "Display General MIDI patch and drum names instead of numbers"
+    IDS_OPT_DESC_View_bShowNoteNames 
+                            "Display notes as names instead of numbers"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_OPT_DESC_View_bShowTrackColors 
+                            "Allow tracks to be assigned custom colors"
+    IDS_OPT_DESC_View_bUniqueTrackNames 
+                            "When renaming multiple tracks, append number to keep names unique"
+    IDS_OPT_DESC_View_fUpdateFreq 
+                            "Frequency at which view is updated, in Hertz"
+    IDS_OPT_DESC_View_fZoomDelta "Zoom step size, as a percentage"
+    IDS_OPT_DESC_View_nLiveFontHeight "Height of live view font, in pixels"
+    IDS_OPT_GROUP_General   "General"
+    IDS_OPT_GROUP_Midi      "MIDI"
+    IDS_OPT_GROUP_View      "View"
+    IDS_OPT_NAME_General_bAlwaysRecord "Always Record"
+    IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
+    IDS_OPT_NAME_General_bPropertyDescrips "Show Property Descriptions"
+    IDS_OPT_NAME_Midi_bSendMidiClock "Send MIDI Clock"
+    IDS_OPT_NAME_Midi_bThru "Thru"
+    IDS_OPT_NAME_Midi_iInputDevice "Input Device"
+    IDS_OPT_NAME_Midi_iInputQuant "Input Quantization"
+    IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_OPT_NAME_Midi_nBufferSize "Buffer Size"
+    IDS_OPT_NAME_Midi_nDefaultVelocity "Default Velocity"
+    IDS_OPT_NAME_Midi_nLatency "Latency"
+    IDS_OPT_NAME_Midi_nRecordInput "Record Input"
+    IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
+    IDS_OPT_NAME_View_bShowGMNames "Show General MIDI Names"
+    IDS_OPT_NAME_View_bShowNoteNames "Show Note Names"
+    IDS_OPT_NAME_View_bShowTrackColors "Show Track Colors"
+    IDS_OPT_NAME_View_bUniqueTrackNames "Unique Track Names"
+    IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
+    IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
+    IDS_OPT_NAME_View_nLiveFontHeight "Live View Font Height"
+    IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
+    IDS_PDR_DESC_iNoteOverlap 
+                            "How to handle overlapping instances of the same note on a channel"
+    IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
+    IDS_PDR_DESC_nLoopFrom  "Starting position of loop, in beats and ticks"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_PDR_DESC_nLoopTo    "Ending position of loop, in beats and ticks"
+    IDS_PDR_DESC_nMeter     "Number of beats in a measure"
+    IDS_PDR_DESC_nRecordOffset 
+                            "Offset added to recorded MIDI event times during playback, in ticks"
+    IDS_PDR_DESC_nSongLength "Song duration in HH:MM:SS format"
+    IDS_PDR_DESC_nStartPos  "Starting position of song in beats and ticks"
+    IDS_PDR_DESC_nTimeDiv   "Time division, in ticks per quarter note"
+    IDS_PDR_GROUP_Master    "Master"
+    IDS_PDR_NAME_fTempo     "Tempo"
+    IDS_PDR_NAME_iNoteOverlap "Note Overlap"
+    IDS_PDR_NAME_nKeySig    "Key Signature"
+    IDS_PDR_NAME_nLoopFrom  "Loop From"
+    IDS_PDR_NAME_nLoopTo    "Loop To"
+    IDS_PDR_NAME_nMeter     "Meter"
+    IDS_PDR_NAME_nRecordOffset "Record Offset"
+    IDS_PDR_NAME_nSongLength "Song Length"
+    IDS_PDR_NAME_nStartPos  "Start Position"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_PDR_NAME_nTimeDiv   "Timebase"
+    IDS_PHASE_EXPORT_OVERWRITE_WARN 
+                            "Destination folder already contains an image sequence.\nDo you want to replace it?"
+    IDS_PROPS_MORE_COLORS   "More Colors..."
+    IDS_RANGE_TYPE_DUAL     "Dual"
+    IDS_RANGE_TYPE_NONE     "None"
+    IDS_RANGE_TYPE_OCTAVE   "Octave"
+    IDS_RECDLG_CUSTOM       "Custom"
+    IDS_RECORD_INPUT_OPT_DubsAndMidi "Dubs + MIDI"
+    IDS_RECORD_INPUT_OPT_DubsOnly "Dubs Only"
+    IDS_RECORD_INPUT_OPT_MidiOnly "MIDI Only"
+    IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
+    IDS_SC_MAXIMIZE         "&Maximize"
+    IDS_SC_RESTORE          "&Restore"
+    IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format."
+    IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
+    IDS_SEQERR_CALLBACK_TOO_LONG "Sequencer callback took too long."
+END
+
+STRINGTABLE
+BEGIN
+    IDS_SEQERR_TOO_MANY_RECURSIONS 
+                            "Modulation exceeded the maximum number of recursions."
+    IDS_SEQ_MIDI_ERROR      "MIDI error %d."
+    IDS_SM_FILTER_CHANNEL_ALL "Show all channels"
+    IDS_SM_FILTER_CHANNEL_SELECT "Show selected channel only"
+    IDS_SM_FILTER_MESSAGE_ALL "Show all messages"
+    IDS_SM_FILTER_MESSAGE_SELECT "Show selected message only"
+    IDS_SM_OUTPUT_CHANNEL_NONE "Don't output notes"
+    IDS_SM_OUTPUT_CHANNEL_SELECT "Output notes on this channel"
+    IDS_SM_PIANO_SIZE       "Select piano size in keys"
+    IDS_SORT_DIR_ASCENDING  "Ascending"
+    IDS_SORT_DIR_DESCENDING "Descending"
+    IDS_STATUS_PANE1        "Pane 1"
+    IDS_STATUS_PANE2        "Pane 2"
+    IDS_SVG_FILE_FILTER     "SVG Files (*.svg)|*.svg|All Files (*.*)|*.*||"
+    IDS_TIME_TO_REPEAT_BEATS "beats"
+    IDS_TIME_TO_REPEAT_DAYS "days"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_TIME_TO_REPEAT_TICKS "ticks"
+    IDS_TIME_TO_REPEAT_YEARS "years"
+    IDS_TOOLBAR_CUSTOMIZE   "Customize..."
+    IDS_TOOLBAR_STANDARD    "Standard"
+    IDS_TRACK_TYPE_CHAN_AFT "Channel Aftertouch"
+    IDS_TRACK_TYPE_CONTROL  "Control"
+    IDS_TRACK_TYPE_KEY_AFT  "Key Aftertouch"
+    IDS_TRACK_TYPE_MODULATOR "Modulator"
+    IDS_TRACK_TYPE_NOTE     "Note"
+    IDS_TRACK_TYPE_PATCH    "Patch"
+    IDS_TRACK_TYPE_TEMPO    "Tempo"
+    IDS_TRACK_TYPE_WHEEL    "Wheel"
+    IDS_TRANSPORT_LOOP      "Loop"
+    IDS_TRANSPORT_PAUSE     "Pause"
+    IDS_TRANSPORT_PLAY      "Play"
+    IDS_TRANSPORT_RECORD    "Record"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_TRK_Channel         "Channel"
+    IDS_TRK_Chord           "Chord"
+    IDS_TRK_Duration        "Duration"
+    IDS_TRK_Index           "Index"
+    IDS_TRK_Length          "Length"
+    IDS_TRK_Mute            "Mute"
+    IDS_TRK_Name            "Name"
+    IDS_TRK_Note            "Note"
+    IDS_TRK_Number          "#"
+    IDS_TRK_Offset          "Offset"
+    IDS_TRK_Position        "Position"
+    IDS_TRK_Quant           "Quant"
+    IDS_TRK_Range           "Range"
+    IDS_TRK_RangeStart      "Range Start"
+    IDS_TRK_RangeType       "Range Type"
+    IDS_TRK_STEP            "Step"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_TRK_Scale           "Scale"
+    IDS_TRK_Swing           "Swing"
+    IDS_TRK_Tempo           "Tempo"
+    IDS_TRK_Type            "Type"
+    IDS_TRK_Velocity        "Velocity"
+    IDS_TRK_Voicing         "Voicing"
+    IDS_TYPE_TRACK          "Track"
+    IDS_VELOCITY            "Velocity"
+    IDS_WINDOW_MANAGER      "&Windows..."
+    IDS_WINDOW_RESET_LAYOUT_WARN 
+                            "Reset all windows to their default layout? This action can't be undone, and the application will restart."
+    IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
+END
+
+STRINGTABLE
+BEGIN
+    IDR_MAINFRAME           "Polymeter"
+END
+
+STRINGTABLE
+BEGIN
+    IDR_PolymeterTYPE       "\nPolymeter\nPolymeter\nPolymeter Files (*.plm)\n.plm\nPolymeter.Document\nPolymeter.Document"
+END
+
+STRINGTABLE
+BEGIN
+    ID_APP_CHECK_FOR_UPDATES "Check for a newer version\nCheck for Updates"
+    ID_APP_HOME_PAGE        "Go to the Polymeter home page\nHome Page"
+    ID_EDIT_DELETE          "Delete the selection\nDelete"
+    ID_EDIT_DESELECT        "Unselect the entire document\nDeselect"
+    ID_EDIT_INSERT          "Insert a new item\nInsert"
+    ID_EDIT_RENAME          "Rename the selected item\nRename"
+    ID_FILE_EXPORT          "Export to a MIDI file\nExport"
+    ID_FILE_IMPORT          "Import tracks from a MIDI file\nImport"
+    ID_GRAPH_EDGE_LABELS    "Show labels on edges"
+    ID_GRAPH_HIGHLIGHT_SELECT "Highlight track selection"
+    ID_GRAPH_RELOAD         "Reload graph"
+    ID_GRAPH_SAVEAS         "Save current graph to a file"
+    ID_GRAPH_ZOOM_IN        "Zoom in a level"
+END
+
+STRINGTABLE
+BEGIN
+    ID_GRAPH_ZOOM_OUT       "Zoom out a level"
+    ID_GRAPH_ZOOM_RESET     "Reset zoom to default"
+    ID_INDICATOR_SONG_POS   "000000000.000"
+    ID_INDICATOR_SONG_TIME  "00000:00:00.000"
+    ID_LIST_COL_HDR_RESET   "Reset column header to default state"
+    ID_MAPPING_MAP_SELECTED_TRACKS 
+                            "Create mappings for selected tracks\nMap Tracks"
+    ID_MIDI_EVENT_CLEAR_HISTORY "Remove all events from history"
+    ID_MIDI_EVENT_EXPORT    "Export events to CSV file"
+    ID_MIDI_EVENT_PAUSE     "Pause display while continuing to capture events"
+    ID_MIDI_EVENT_RESET_FILTERS 
+                            "Remove all filters so all events are displayed"
+    ID_MIDI_EVENT_SHOW_CONTROLLER_NAMES "Show continuous controller names"
+    ID_MIDI_EVENT_SHOW_NOTE_NAMES "Show note names in note events"
+    ID_MIDI_EVENT_SHOW_SYSTEM_MESSAGES "Show system messages if checked"
+    ID_MODULATION_INSERT_GROUP 
+                            "Insert a group of modulators\nInsert Modulation Group"
+    ID_MODULATION_SHOW_DIFFERENCES 
+                            "Show modulations that differ for selected tracks"
+    ID_MODULATION_SORT_BY_SOURCE "Sort modulations by source track"
+END
+
+STRINGTABLE
+BEGIN
+    ID_MODULATION_SORT_BY_TYPE "Sort modulations by type"
+    ID_PARTS_SELECT_TRACKS  "Select tracks belonging to selected parts"
+    ID_PARTS_SORT_BY_NAME   "Sort parts by name"
+    ID_PARTS_SORT_BY_TRACK  "Sort parts by first track"
+    ID_PHASE_EXPORT_VIDEO   "Export video as image sequence\nExport Video"
+    ID_PIANO_COLOR_VELOCITY "Color keys to show note velocities"
+    ID_PIANO_INSERT_TRACK   "Insert track for selected note"
+    ID_PIANO_ROTATE_LABELS  "Rotate key labels sideways"
+    ID_PIANO_SHOW_KEY_LABELS "Show note names on piano keys"
+    ID_STEP_VALUES_DELIMIT_COMMA "Export comma delimited values"
+    ID_STEP_VALUES_DELIMIT_TAB "Export tab delimited values"
+    ID_STEP_VALUES_EXPORT_COPY 
+                            "Export selected steps as text and copy them to the clipboard"
+    ID_STEP_VALUES_FORMAT_HEX "Show values in hexadecimal"
+    ID_STEP_VALUES_FORMAT_NOTES "Show steps as notes"
+    ID_STEP_VALUES_FORMAT_OCTAVES "Include octave in note name"
+    ID_STEP_VALUES_FORMAT_SIGNED "Show steps as signed integers"
+END
+
+STRINGTABLE
+BEGIN
+    ID_STEP_VALUES_FORMAT_TIES "Include tied note state"
+    ID_STEP_VALUES_LAYOUT_COLS_STEPS 
+                            "In export, columns are steps and rows are tracks"
+    ID_STEP_VALUES_LAYOUT_COLS_TRACKS 
+                            "In export, columns are tracks and rows are steps"
+    ID_TOOLS_CONVERGENCES   "Show convergences calculator\nConvergences"
+    ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
+    ID_TOOLS_EXPORT_MODULATIONS 
+                            "Export modulations to a CSV file\nExport Modulations"
+    ID_TOOLS_EXPORT_SONG    "Export song MIDI data to a CSV file\nExport Song"
+    ID_TOOLS_EXPORT_STEPS   "Export steps from selected tracks to a CSV file\nExport Steps"
+    ID_TOOLS_EXPORT_TRACKS  "Export selected tracks to a CSV file\nExport Tracks"
+    ID_TOOLS_IMPORT_MODULATIONS 
+                            "Import modulations from a CSV file\nImport Modulations"
+    ID_TOOLS_IMPORT_STEPS   "Import steps from a CSV file\nImport Steps"
+    ID_TOOLS_IMPORT_TRACKS  "Import tracks from a CSV file\nImport Tracks"
+    ID_TOOLS_MIDI_LEARN     "Learn mappings from MIDI input\nMIDI Learn"
+    ID_TOOLS_OPTIONS        "Edit the options\nOptions"
+    ID_TOOLS_PRIME_FACTORS  "Compute the prime factors of the selected tracks' durations\nPrime Factors"
+    ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
+END
+
+STRINGTABLE
+BEGIN
+    ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for the selected tracks to repeat\nTime to Repeat"
+    ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks or steps\nVelocity Range "
+    ID_TRACK_COLOR          "Assign color to selected tracks\nTrack Color"
+    ID_TRACK_FILL           "Fill selected tracks or steps with a range of values\nFill"
+    ID_TRACK_GROUP          "Group the selected tracks into a part\nCreate Group"
+    ID_TRACK_INVERT         "Invert the selected tracks or steps\nInvert"
+    ID_TRACK_LENGTH         "Set the length of one or more tracks\nLength"
+    ID_TRACK_MODULATION     "Create a modulation that targets the selected tracks\nCreate Modulation"
+    ID_TRACK_MUTE           "Mute or unmute the selected tracks\nMute"
+    ID_TRACK_OFFSET         "Offset the selected tracks by a given number of ticks\nOffset Tracks"
+    ID_TRACK_PART_CREATE    "Create a new part from the selected tracks\nCreate Part"
+    ID_TRACK_PART_UPDATE    "Update the selected part from the selected tracks\nUpdate Part"
+    ID_TRACK_PRESET_APPLY   "Apply the selected preset to the track mutes\nApply Preset"
+    ID_TRACK_PRESET_CREATE  "Create a new preset from the track mutes\nCreate Preset"
+    ID_TRACK_PRESET_UPDATE  "Update the selected preset from the track mutes\nUpdate Preset"
+    ID_TRACK_REVERSE        "Reverse the selected tracks or steps\nReverse"
+END
+
+STRINGTABLE
+BEGIN
+    ID_TRACK_ROTATE_LEFT    "Rotate the selected tracks or steps left\nRotate Left"
+    ID_TRACK_ROTATE_RIGHT   "Rotate the selected tracks or steps right\nRotate Right"
+    ID_TRACK_ROTATE_STEPS   "Rotate the selection left or right a given number of steps\nRotate Steps"
+    ID_TRACK_SHIFT_LEFT     "Shift the selected tracks or steps left\nShift Left"
+    ID_TRACK_SHIFT_RIGHT    "Shift the selected tracks or steps right\nShift Right"
+    ID_TRACK_SHIFT_STEPS    "Shift the selection left or right a given number of steps\nShift Steps"
+    ID_TRACK_SOLO           "Solo the selected tracks\nSolo"
+    ID_TRACK_SORT           "Sort the selected tracks\nSort"
+    ID_TRACK_STRETCH        "Stretch or shrink the selected tracks\nStretch"
+    ID_TRACK_TIE_NOTES      "Toggle tie notes mode; if on, new notes are tied\nTie Notes"
+    ID_TRACK_TRANSPOSE      "Transpose the selected tracks\nTranspose"
+    ID_TRACK_VELOCITY       "Transform the velocities of the selected tracks or steps\nVelocity"
+    ID_TRANSPORT_CONVERGENCE_NEXT "Go to next convergence\nNext Convergence"
+    ID_TRANSPORT_CONVERGENCE_PREVIOUS 
+                            "Go to previous convergence\nPrevious Convergence"
+    ID_TRANSPORT_CONVERGENCE_SIZE_ALL 
+                            "Require all modulos to coincide\nFull Convergence"
+    ID_TRANSPORT_CONVERGENCE_SIZE_CUSTOM 
+                            "Customize number of modulos to coincide\nCustom Convergence"
+END
+
+STRINGTABLE
+BEGIN
+    ID_TRANSPORT_GO_TO_POSITION 
+                            "Go to specified position within song\nGo To Position"
+    ID_TRANSPORT_LOOP       "Loop playback\nLoop"
+    ID_TRANSPORT_PAUSE      "Pause or continue playback\nPause"
+    ID_TRANSPORT_PLAY       "Start or stop playback\nPlay"
+    ID_TRANSPORT_RECORD     "Start or stop recording\nRecord"
+    ID_TRANSPORT_RECORD_TRACKS 
+                            "Start or stop recording MIDI input to tracks\nRecord Tracks"
+    ID_TRANSPORT_REWIND     "Rewind to start of song\nRewind"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_CHANNELS        "Show or hide the channels bar\nShow Channels"
+    ID_VIEW_CUSTOMIZE       "Customize the application's interface\nCustomize"
+    ID_VIEW_MODULATIONS     "Show or hide the modulations bar\nShow Modulations"
+    ID_VIEW_PARTS           "Show or hide the parts bar\nShow Parts"
+    ID_VIEW_PRESETS         "Show or hide the presets bar\nShow Presets"
+    ID_VIEW_PROPERTIES      "Show or hide the properties bar\nShow Properties"
+    ID_VIEW_TYPE_LIVE       "Show the live view\nLive View"
+    ID_VIEW_TYPE_SONG       "Show the song view\nSong View"
+    ID_VIEW_TYPE_TRACK      "Show the track view\nTrack View"
+    ID_VIEW_VELOCITIES      "Show or hide the track view's velocities pane\nShow Velocities"
+    ID_VIEW_ZOOM_IN         "Zoom in\nZoom In"
+    ID_VIEW_ZOOM_OUT        "Zoom out\nZoom Out"
+    ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
+    ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
+END
+
+STRINGTABLE
+BEGIN
+    ID_WINDOW_MANAGER       "Manage child windows\nWindows"
+    ID_WINDOW_NEW_HORZ_TAB_GROUP 
+                            "Create a new horizontal tab group\nNew Horizontal Tab Group"
+    ID_WINDOW_NEW_VERT_TAB_GROUP 
+                            "Create a new horizontal tab group \nNew Vertical Tab Group"
+    ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"
+END
+
+STRINGTABLE
+BEGIN
+    AFX_IDS_APP_TITLE       "Polymeter"
+    AFX_IDS_IDLEMESSAGE     "Ready"
+END
+
+STRINGTABLE
+BEGIN
+    ID_INDICATOR_EXT        "EXT"
+    ID_INDICATOR_CAPS       "CAP"
+    ID_INDICATOR_NUM        "NUM"
+    ID_INDICATOR_SCRL       "SCRL"
+    ID_INDICATOR_OVR        "OVR"
+    ID_INDICATOR_REC        "REC"
+END
+
+STRINGTABLE
+BEGIN
+    ID_FILE_NEW             "Create a new document\nNew"
+    ID_FILE_OPEN            "Open an existing document\nOpen"
+    ID_FILE_CLOSE           "Close the active document\nClose"
+    ID_FILE_SAVE            "Save the active document\nSave"
+    ID_FILE_SAVE_AS         "Save the active document with a new name\nSave As"
+END
+
+STRINGTABLE
+BEGIN
+    ID_APP_ABOUT            "Display program information, version number and copyleft\nAbout"
+    ID_APP_EXIT             "Quit the application; prompts to save documents\nExit"
+    ID_HELP_FINDER          "List help topics\nHelp Topics"
+END
+
+STRINGTABLE
+BEGIN
+    ID_FILE_MRU_FILE1       "Open this document"
+    ID_FILE_MRU_FILE2       "Open this document"
+    ID_FILE_MRU_FILE3       "Open this document"
+    ID_FILE_MRU_FILE4       "Open this document"
+    ID_FILE_MRU_FILE5       "Open this document"
+    ID_FILE_MRU_FILE6       "Open this document"
+    ID_FILE_MRU_FILE7       "Open this document"
+    ID_FILE_MRU_FILE8       "Open this document"
+    ID_FILE_MRU_FILE9       "Open this document"
+    ID_FILE_MRU_FILE10      "Open this document"
+    ID_FILE_MRU_FILE11      "Open this document"
+    ID_FILE_MRU_FILE12      "Open this document"
+    ID_FILE_MRU_FILE13      "Open this document"
+    ID_FILE_MRU_FILE14      "Open this document"
+    ID_FILE_MRU_FILE15      "Open this document"
+    ID_FILE_MRU_FILE16      "Open this document"
+END
+
+STRINGTABLE
+BEGIN
+    ID_NEXT_PANE            "Switch to the next window pane\nNext Pane"
+    ID_PREV_PANE            "Switch back to the previous window pane\nPrevious Pane"
+END
+
+STRINGTABLE
+BEGIN
+    ID_WINDOW_NEW           "Open another window for the active document\nNew Window"
+    ID_WINDOW_ARRANGE       "Arrange icons at the bottom of the window\nArrange Icons"
+    ID_WINDOW_CASCADE       "Arrange windows so they overlap\nCascade Windows"
+    ID_WINDOW_TILE_HORZ     "Arrange windows as non-overlapping tiles\nTile Windows"
+    ID_WINDOW_TILE_VERT     "Arrange windows as non-overlapping tiles\nTile Windows"
+    ID_WINDOW_SPLIT         "Split the active window into panes\nSplit"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_CLEAR           "Erase the selection\nErase"
+    ID_EDIT_CLEAR_ALL       "Erase everything\nErase All"
+    ID_EDIT_COPY            "Copy the selection and put it on the Clipboard\nCopy"
+    ID_EDIT_CUT             "Cut the selection and put it on the Clipboard\nCut"
+    ID_EDIT_FIND            "Find the specified text\nFind"
+    ID_EDIT_PASTE           "Insert Clipboard contents\nPaste"
+    ID_EDIT_REPEAT          "Repeat the last action\nRepeat"
+    ID_EDIT_REPLACE         "Replace specific text with different text\nReplace"
+    ID_EDIT_SELECT_ALL      "Select the entire document\nSelect All"
+    ID_EDIT_UNDO            "Undo the last action\nUndo"
+    ID_EDIT_REDO            "Redo the previously undone action\nRedo"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_STATUS_BAR      "Show or hide the status bar\nToggle Status Bar"
+END
+
+STRINGTABLE
+BEGIN
+    AFX_IDS_SCSIZE          "Change the window size"
+    AFX_IDS_SCMOVE          "Change the window position"
+    AFX_IDS_SCMINIMIZE      "Reduce the window to an icon"
+    AFX_IDS_SCMAXIMIZE      "Enlarge the window to full size"
+    AFX_IDS_SCNEXTWINDOW    "Switch to the next document window"
+    AFX_IDS_SCPREVWINDOW    "Switch to the previous document window"
+    AFX_IDS_SCCLOSE         "Close the active window and prompts to save the documents"
+END
+
+STRINGTABLE
+BEGIN
+    AFX_IDS_SCRESTORE       "Restore the window to normal size"
+    AFX_IDS_SCTASKLIST      "Activate Task List"
+    AFX_IDS_MDICHILD        "Activate this window"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE 9, 1
+#include "res\Polymeter.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"      // Standard components
+#if !defined(_AFXDLL)
+#include "afxprint.rc"        // printing/print preview resources
+#include "afxribbon.rc"        // MFC ribbon and control bar resources
+#endif
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

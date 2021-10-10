@@ -1,0 +1,23 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Index modulation</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Index modulation</h3>
+
+<p>Index modulation picks a note from the current <a href="../Modulation/Scale_modulation.htm">scale</a> or <a href="../Modulation/Chord_modulation.htm">chord</a>. Only <a href="../Views/Track_View/Track_Grid.htm#Track_Type">note tracks</a> support index modulation. If a chord exists, the index accesses the chord's tones, otherwise if a scale exists, the index accesses the scale's tones. If neither exists, index modulation has no effect. If a track has multiple unmuted index modulators, they're summed to produce a single index value.
+
+<p>The index is zero-based, meaning zero accesses the first tone, one accesses the second tone, and so on. If the index exceeds the range of the chord or scale, it wraps around. For example, if the scale has seven tones, they correspond to index values 0 through 6. If the index has a value of 7, it wraps around and accesses the first tone. Similarly, if the index has a value of &minus;1, it wraps around in the other direction and accesses the last tone.
+
+<p>The mapping from index values to scale or chord tones may be affected by the order in which the scale or chord modulations are listed for the target track. For this reason, it's advisable to keep scale and chord modulations in ascending sequential order.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

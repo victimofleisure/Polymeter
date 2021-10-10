@@ -1,0 +1,527 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Polymeter - Release Notes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="author" content="Chris Korda">
+<meta name="description" content="Free polymeter MIDI sequencer software for music that's in multiple prime meters simultaneously.">
+<link href="./style.css" rel=stylesheet title=default type=text/css>
+</head>
+<body>
+<div class=menu>
+<a href="./index.html"><img src="./images/polymeter-32.png" width="32" height="32" alt="Polymeter MIDI sequencer icon"></a>
+<div class=title>Polymeter</div><p>
+<div class=menuitem0 title="Overview"><a href="./index.html">Home</a></div>
+<div class=menuitem0 title="Screenshots"><a href="./screenshots.html">Screenshots</a></div>
+<div class=menuitem0 title="Features"><a href="./features.html">Features</a></div>
+<div class=menuitem0 title="Download"><a href="./download.html">Download</a></div>
+<div class=menuitem0 title="Documentation"><a href="./helpframe.html">Documentation</a></div>
+<div class=menuitem0 title="Development"><a href="./development.html">Development</a></div>
+<div class=menuitem0 title="FAQ"><a href="./faq.html">FAQ</a></div>
+<div class=menuitem0 title="Gallery"><a href="./gallery/bongo.html">Gallery</a></div>
+<div class=menuitem0 title="Videos"><a href="./videos.html">Videos</a></div>
+<div class=menuitem0 title="Forums"><a href="./forums.html">Forums</a></div>
+<div class=menuitem0 title="Links"><a href="./links.html">Links</a></div>
+<div class=menuitem0 title="Contact"><a href="./contact.html">Contact</a></div><br>
+<div class=images><br><a href="https://translate.google.com/translate?sl=auto&tl=es&js=y&prev=_t&hl=en&ie=UTF-8&u=https%3A%2F%2Fvictimofleisure.github.io%2FPolymeter%2F&edit-text="><img src="./images/translate.png" width="100" height="33" alt="Translate button"></a></div>
+</div>
+<div id=body>
+<!--  content goes HERE  -->
+
+<h1>Release Notes</h1>
+
+<h3>0.0.37.009 &emsp;<small>06/26/2021</small></h3>
+
+<p><ol>
+<li>Song view didn't always enable the edit commands for a track selection; fixed.
+<li>In Song view, left-clicking the track name tooltip now hides the tooltip.
+<li>In Step Values bar, explicitly set unused items to empty string.
+<li>Rename rounding functions to avoid conflicts with C++ 11.
+<li>Fix compilation errors and warnings in Visual Studio 2019.
+<li>Fix compilation errors in Visual Studio 2010.
+<li>Dockable bars were handling editing commands inconsistently; fixed.
+<li>Graph bar now allows filtering by modulation type.
+</ol>
+
+<h3>0.0.37.004 &emsp;<small>02/21/2021</small></h3>
+
+<p><ol>
+<li>Import tracks from CSV file gives error if track's length is one; fixed.
+<li>Editing keys don't work within popup edit control when Live view has focus; fixed.
+<li>Select All shortcut doesn't work within popup edit control when Song view has focus; fixed.
+<li>Replace skips first matching track if selection mark is already on that track; fixed.
+<li>Find and replace should scroll view as needed to ensure matching track is visible.
+<li>Step Values bar's Step column should be one-origin; same for track fill dialog's step range.
+<li>Replace string not found shows empty message box; fixed.
+<li>Step Values bar should allow setting song position, via Ctrl+left-click on step value.
+<li>Add Tools command to display unique prime factors of selected tracks' durations.
+<li>Renaming multiple tracks optionally appends sequence numbers to keep names unique.
+<li>In Step and Song views, Shift + right click expands existing rectangular selection.
+<li>Add mapping targets for transport commands: Play, Pause, Record, Loop.
+</ol>
+
+<h3>0.0.36.000 &emsp;<small>12/20/2020</small></h3>
+
+<p><ol>
+<li>The Song view's go to next/previous dub (Alt+Left/Right) finds invisible dubs; fixed.
+<li>Go to next/previous dub now scrolls vertically as needed to ensure found dub is visible.
+<li>Add the Transport/Loop command to loop playback within a specified time range.
+<li>If the Song view has focus, the edit keys misbehave in a popup edit control; fixed.
+</ol>
+
+<h3>0.0.35.000 &emsp;<small>11/20/2020</small></h3>
+
+<p><ol>
+<li>The Fill dialog's signed/unsigned radio buttons can cause validation errors; fixed.
+<li>Add Find/Replace for step values, as a subpage of the Velocities command.
+<li>Changing the PPQ now compensates tick-dependent properties to preserve the timing.
+<li>Canceling the Find/Replace dialog crashes the debug version; fixed.
+<li>The Live view shows the wrong song position and time after transport commands; fixed.
+<li>The Live view shows the wrong song position or time after editing meter or tempo; fixed.
+<li>Undo/redo is unexpectedly disabled after clicking a drop list in the property bar; fixed.
+<li>After pressing and releasing the Alt key, left-clicking a grid control item crashes; fixed.
+<li>The Step Values bar supports increment/decrement via the mouse wheel or arrow keys.
+<li>Left-clicking a grid control item crashes if the window that lost focus resets focus; fixed.
+<li>Attach and Auto-Hide are now enabled for the Piano and MIDI Input/Output bars.
+<li>The Phase bar doesn't animate when set to Auto-Hide and unhidden; fixed.
+<li>Add a maximize command to the dockable pane's context menu.
+</ol>
+
+<h3>0.0.34.001 &emsp;<small>10/09/2020</small></h3>
+
+<p><ol>
+<li>Add preset and part mapping; select presets or mute/unmute parts via MIDI message.
+<li>In Live view, parts are now ordered by lowest track index and merged with ungrouped tracks instead of appended.
+<li>In Parts bar's context menu, add commands to sort parts by name or lowest track index.
+<li>Step mapping saved in a document crashes app when the document is reopened; fixed.
+<li>Reordering a part's tracks and then selecting them via the Parts bar followed by cut or delete sometimes crashes app; fixed.
+<li>Time to Repeat now computes the greatest prime factor in a common unit if possible.
+<li>The Stretch command now makes interpolation of non-note tracks optional.
+<li>The Stretch command's interpolation was skewed, and was including the tie bit; fixed.
+<li>Can't find more recent versions of GraphViz; fixed.
+</ol>
+
+<h3>0.0.33.000 &emsp;<small>08/04/2020</small></h3>
+
+<p><ol>
+<li>Add a Custom option to Transport menu's Convergence Size submenu.
+<li>Song view now shows tool tips for truncated track names.
+<li>Changing length or quant of multiple tracks at once doesn't update Phase bar; fixed.
+<li>Next Pane (F6) and Previous Pane (Shift+F6) commands are unreliable; fixed.
+</ol>
+
+<h3>0.0.32.000 &emsp;<small>07/14/2020</small></h3>
+
+<p><ol>
+<li>Graph bar's context menu doesn't show status hints for layout types; fixed.
+<li>Deleting modulation(s) doesn't deselect corresponding list items; fixed.
+<li>Inserting or pasting modulations doesn't select corresponding list items; fixed;
+<li>Pasting or inserting modulations while Show Differences is enabled can insert spurious all-zero mute modulations; fixed.
+<li>Non-client portion of floating dockable bar isn't painted when restoring app from minimize; fixed.
+<li>Docking Windows submenu doesn't show hints in status bar; fixed.
+<li>Track parameter mappings should work even when sequencer is stopped or there's no output device; fixed.
+<li>MIDI import and Record Tracks commands should handle other channel messages instead of only notes; fixed.
+<li>Add Windows menu commands for new horizontal / vertical tab group.
+<li>Undoing/redoing track name, length, quant or mute while showing live view doesn't update live view; fixed.
+<li>If multiple documents are shown via tab groups, playing but inactive document doesn't update its views; fixed.
+<li>Undoing/redoing tempo edit doesn't update song time in status bar; fixed.
+<li>If document has multiple windows, changing view type affects first window instead of active one; fixed.
+<li>Live view actions don't update Phase bar's mute states when playback is stopped; fixed.
+<li>Solo command doesn't update Step Values bar's mute states when playback is stopped; fixed.
+</ol>
+
+<h3>0.0.31.001 &emsp;<small>06/11/2020</small></h3>
+
+<p><ol>
+<li>The Offset modulation type was added. The step value is an unsigned delay in ticks.
+<li>Voicing modulation now supports raising (via a negative voicing value) as well as lowering.
+<li>An option was added to record live MIDI input only, preserving the song's dubs.
+<li>Undoing the record command didn't restore MIDI input events; fixed.
+<li>The convergences commands could take too long; it now shows a progress dialog.
+<li>The Transport menu now includes commands to find the next or previous convergence.
+</ol>
+
+<h3>0.0.30.002 &emsp;<small>05/06/2020</small></h3>
+
+<p><ol>
+<li>The sequencer can now optionally transmit MIDI clocks, for synchronizing slave devices.
+<li>The Step Values bar now supports multi-step editing; if the edit occurs within a contiguous selection, the track's corresponding steps are filled with the new value.
+<li>An Insert Group command was added to the Modulation bar's context menu, allowing multiple modulators to be assigned at once; this is useful for scales and chords.
+<li>Custom colors can now optionally be assigned to tracks in Track View.
+<li>The sequencer is better optimized and will process complex modulation schemes faster.
+<li>In the Modulations bar's context menu, sorting could be unexpectedly disabled; fixed.
+<li>List auto-scrolling gets stuck if the app loses focus while list items are being dragged; fixed.
+<li>The Window menu's Windows command displays an incorrect status bar hint; fixed.
+<li>Receiving MIDI input that's mapped to track properties stalls the UI during playback; fixed.
+</ol>
+
+<h3>0.0.29.002 &emsp;<small>04/07/2020</small></h3>
+
+<p><ol>
+<li>Add Chord modulation type; a chord is a dynamic subset of the current scale.
+<li>Mapping can now target track steps; the output control parameter selects the step.
+<li>The Phase bar can now export video, as an image sequence in PNG format.
+<li>The current time shown in the status bar now includes milliseconds.
+<li>The Go To Position command now lets the user specify the position as a time.
+<li>The Import Steps command now supports note names, with or without octaves.
+<li>The Step Values bar now supports copying items to the clipboard as CSV text.
+<li>The Step Values bar now supports copy/cut/paste for rectangular selections.
+<li>The handling of context menus in docking bars was inconsistent; fixed.
+<li>In the Song view's track name pane, the bottom gridline wasn't being drawn; fixed.
+<li>The Time to Repeat command crashed or failed when running on a Mac via Wine; fixed.
+<li>Editing the tempo didn't update the current time in the status bar; fixed.
+<li>If the sequencer callback takes too long, an error message is now shown.
+</ol>
+
+<h3>0.0.28.005 &emsp;<small>03/31/2020</small></h3>
+
+<p><ol>
+<li>Add scale, index and voicing modulation.
+<li>Add Step Values bar; allows numeric editing of step values for selected tracks.
+<li>Add Mapping bar; allows mapping of MIDI input to track parameters or different messages.
+<li>Changing track's Quant doesn't update its current position in Step view; fixed.
+<li>MIDI input might not be received after a MIDI device change; fixed.
+</ol>
+
+<h3>0.0.27.002 &emsp;<small>03/03/2020</small></h3>
+
+<p><ol>
+<li>Maximum track length is greatly increased, up to millions of steps, depending on the Quant.
+<li>Document read/write is much faster, especially for very long tracks.
+<li>The Record command now optionally records MIDI events received from the input device and saves them in the document; they're played back only in Song view.
+<li>A convergence calculator was added to the Tools menu.
+<li>Previous versions could crash if MIDI input was received while closing the app; fixed.
+<li>The MIDI export was altering track mute states; fixed.
+<li>The MIDI export was exporting tempo tracks; fixed.
+</ol>
+
+<h3>0.0.26.001 &emsp;<small>02/19/2020</small></h3>
+
+<p><ol>
+<li>Previous versions limited tracks to 2047 steps and 255 dubs; this is now increased to 32767 steps and 4095 dubs.
+</ol>
+
+<h3>0.0.26.000 &emsp;<small>12/28/2019</small></h3>
+
+<p><ol>
+<li>Add programmed tempo change and tempo map, via tempo track type and tempo modulation; track's Duration attribute is repurposed as tempo change percentage.
+<li>Add unsigned / signed option to velocity scaling.
+<li>Add Phase bar for visualizing phase relationships between different track lengths.
+<li>Switching from track view to song view sometimes leaves one cell unpainted; fixed.
+<li>Time to Repeat function now reports fractional ticks instead of extending cycle to nearest beat boundary.
+<li>Time to Repeat function now reports years if needed.
+<li>Zooming, scrolling or resizing Song view erases portion of current position marker below last track; fixed.
+<li>In Song view, last track's bottom outline isn't drawn; fixed.
+</ol>
+
+<h3>0.0.25.001 &emsp;<small>05/31/2019</small></h3>
+
+<p><ol>
+<li>Added an invert command to the track menu; inverts selected tracks or steps.
+<li>Left-clicking within the mute pane but not on a mute button now toggles the selected track mutes.
+<li>Velocity bars with a value of 64 didn't line up with the origin; fixed.
+<li>Tempo changes were causing a spurious stuck note on the piano bar; fixed.
+</ol>
+
+<h3>0.0.24.001 &emsp;<small>02/26/2019</small></h3>
+
+<p><ol>
+<li>Added an option to prevent note overlaps (overlapping instances of the same note on the same MIDI channel), in MIDI output and export.
+<li>The MIDI file export now outputs one track per channel in all cases.
+</ol>
+
+<h3>0.0.23.005 &emsp;<small>02/13/2019</small></h3>
+
+<p><ol>
+<li>Add Graph bar for displaying modulation graphs; requires Graphviz.
+<li>Add MIDI Input bar that displays MIDI input events, with filtering.
+<li>In modulation bar, paste wasn't setting document modified flag; fixed.
+<li>Right click on list header divider showed incorrect context menu; fixed.
+<li>Piano bar keys get stuck on if MIDI input device sends note off commands instead of note on commands with zero velocity; fixed.
+<li>Left-clicking piano bar key now optionally outputs MIDI note if sequencer is playing and piano bar's output channel is set.
+<li>Add track offset command that offsets selected tracks by a given number of ticks.
+<li>An exported MIDI file could have an incorrect initial track mute state; fixed.
+<li>Add Tools Export Song command that exports song MIDI data to a CSV file.
+</ol>
+
+<h3>0.0.22.002 &emsp;<small>01/17/2019</small></h3>
+
+<p><ol>
+<li>Added recursive position modulation; modulations can now be position modulated.
+<li>Piano bar's note names now match key signature.
+<li>Tracks can now be inserted from the piano bar, via context menu or Ctrl+left-click.
+<li>The Import MIDI File, Import Steps, and Record to Tracks commands were corrupting track indices in modulations, presets, and parts; fixed.
+<li>Recursive modulation was handling mute incorrectly for depths of three or more; fixed.
+</ol>
+
+<h3>0.0.21.001 &emsp;<small>01/10/2019</small></h3>
+
+<p><ol>
+<li>Added MIDI output bar that displays sequencer output, with filtering options.
+<li>Added piano bar that displays output notes on a piano keyboard, with filtering.
+<li>Added command that resets window layout to defaults.
+</ol>
+
+<h3>0.0.20.000 &emsp;<small>12/19/2018</small></h3>
+
+<p><ol>
+<li>Added track export to CSV, and track import from CSV.
+</ol>
+
+<h3>0.0.19.001 &emsp;<small>12/15/2018</small></h3>
+
+<p><ol>
+<li>The song view now shows negative time when start position is less than zero.
+<li>Adding or removing tracks or changing PPQ wasn't updating the Song view; fixed.
+<li>Added note range to the Track view, so a modulated note can be limited to a range.
+<li>Added position modulation type; it rotates the target track by one or more steps.
+<li>Added import steps from CSV file, and export steps from selected tracks to CSV file.
+<li>Added clipboard support to the modulation bar, allowing copy / paste of modulations.
+<li>Added sorting of modulations by type or source, via the modulations bar context menu.
+<li>Tooltips are now shown for truncated items in all grid controls.
+<li>Added find and replace for track names.
+<li>Ctrl + Tab wasn't always switching between documents; fixed.
+<li>Unnamed tracks are now shown in the Live view to avoid confusion.
+<li>Added import modulations from CSV file; also added export modulations.
+</ol>
+
+<h3>0.0.18.001 &emsp;<small>12/07/2018</small></h3>
+
+<p><ol>
+<li>Added a Record Tracks command that records live MIDI input (notes only) to tracks.
+<li>The group overlap warning now lets you resolve the conflict by reassigning tracks.
+<li>The MIDI import was mangling event times; its timing accuracy is now much improved.
+<li>During recording, dubs made while song position was negative weren't recorded; fixed.
+<li>During recording, presets applied via the Presets bar weren't recorded; fixed.
+<li>The Song view wasn't restoring its zoom from the document correctly; fixed.
+<li>The MIDI export wasn't reliably outputting initial controller events; fixed.
+<li>The MIDI export no longer outputs modulator tracks.
+</ol>
+
+<h3>0.0.17.000 &emsp;<small>11/20/2018</small></h3>
+
+<p><ol>
+<li>Added recursive mute modulation (modulation of modulation), for tracks of modulator type only.
+<li>Added Song view shortcut keys that move current position to next or previous dub (Shift + left/right arrows).
+<li>Added song view shortcut key to center current position within view by scrolling as needed (Shift + Home).
+<li>The Go To Position command now automatically centers the current position if it's too close to either side.
+<li>Zooming the Song view all the way out caused the current position marker to slip; fixed.
+<li>The fill command didn't handle non-rectangular selections properly; fixed.
+</ol>
+
+<h3>0.0.16.005 &emsp;<small>11/07/2018</small></h3>  
+
+<p><ol>
+<li>Added an Import command that reads a MIDI file and converts its notes to tracks.
+<li>Added a Fill command that fills selected tracks or steps with a range of values.
+<li>The song MIDI export now only output tracks for channels that are actually used.
+<li>The velocity command can now offset or scale step velocities.
+<li>Modulation type and source can now be changed for multiple modulations at once.
+<li>The velocity origin setting is now persistent and consistent for all open documents.
+<li>The Song view's grid now indicates track selection, as in the Step view.
+<li>The Apply Preset command wasn't updating the Live view; fixed.
+<li>The arrow keys didn't navigate the main menus if a scroll view had focus; fixed.
+<li>The Velocity command had no effect if the offset was negative; fixed.
+<li>In the Track and Song Views, dragging a rectangular selection beyond the window boundaries now automatically scrolls the view.
+<li>Pasting tracks didn't update the Song view size; fixed.
+<li>Pasting modulated tracks often behaved unexpectedly; fixed.
+<li>When dragging a rectangular selection in the Step view, overshooting to the right of track's last step caused an an invalid step selection error; fixed.
+<li>Mouse capture wasn't released if a window lost focus during dragging; fixed.
+</ol>
+
+<h3>0.0.15.000 &emsp;<small>10/08/2018</small></h3>  
+
+<p><ol>
+<li>Unlimited modulation, allowing a track to have any number of modulators of each type.
+<li>Added a song MIDI export that includes dubbing and merges the tracks by channel.
+<li>Added a track stretch command that scales track length by a percentage, stretching or squashing the contents.
+<li>Added a deselect command.
+<li>Added status bar hints for the Parts and Presets context menus.
+<li>Added a Tracks command to the Parts bar context menu; it selects tracks belonging to the selected parts.
+<li>Step and Song view rulers now show beat:tick, or measure:beat:tick if meter is specified.
+<li>Left-clicking in the Step view's ruler now moves the current position, as in Song view.
+<li>In the Step and Song views, the arrow keys now scroll similarly to a list control; Ctrl for by page, else by line.
+<li>The velocity pane's tooltips now optionally show signed values; left-clicking the origin label toggles signed mode.
+<li>In property grids, for properties with options, Alt+Down now drops the options list.
+<li>In property grids, for properties with options, typing a value didn't update the target property; fixed.
+<li>In the Live view, if the list was too long to fit, a horizontal scroll bar appeared; fixed.
+<li>In the Live view, after left-clicking a list, the mouse wheel didn't scroll the list; fixed.
+<li>Double-clicking in the Parts or Presets lists but not on an item crashed the app; fixed.
+</ol>
+
+<h3>0.0.13.000 &emsp;<small>08/18/2018</small></h3>  
+
+<p><ol>
+<li>The Step view now indicates track selection.
+<li>Step view drawing is better optimized.
+<li>A close button was added to the velocity pane.
+<li>On entering the Live view, parts and presets are now forced to have consistent mute states.
+<li>The velocity tooltip disappears if the cursor leaves the window while dragging the velocity bar; fixed.
+<li>The velocity tooltip occasionally disappears when velocity bar is left-clicked; fixed.
+</ol>
+
+<h3>0.0.12.002 &emsp;<small>07/28/2018</small></h3>  
+
+<p><ol>
+<li>Allow overdubbing, i.e. adding dubs to an existing recording.
+<li>Add commands to shift or rotate by a given number of steps, specified via dialog.
+<li>The Song view now support the Select All command; useful for deleting an entire recording.
+<li>Allow sorting by track ID; useful for putting tracks back in their original order after sorting by something else.
+<li>Prevent self-modulation by excluding the selected tracks from modulator drop list.
+<li>Right-clicking in the Step view ruler caused spurious step selection; fixed.
+<li>Right-clicking in the Live view's progress bars didn't clear the selection; fixed.
+<li>In the Live view, applying a preset was marking the document as modified; fixed.
+<li>In the Modulation bar, don't create an undo state unless the modulator actually changes.
+<li>In the Song view, undoing dubs past end of song didn't update the view correctly; fixed.
+<li>Spinning the mouse wheel fast could potentially overflow the stack; fixed.
+<li>Pitch bend was getting stuck when switching between presets; fixed.
+<li>Add tempo, key signature, meter and record indicator to live view.
+<li>Closing all open documents at once (via Windows dialog) crashes app; fixed.
+</ol>
+
+<h3>0.0.11.000 &emsp;<small>07/11/2018</small></h3>  
+
+<p><ol>
+<li>The view type (Track, Song, or Live) now persists in the document.
+<li>The Live view now has progress bars that indicate the current position within each part.
+<li>The Live view's font height is now configurable via the options.
+<li>On switching to the Live view, the current preset is now selected if applicable.
+<li>In the Live view, the widths of the Presets and Parts lists can now be adjusted by dragging their headers, and also persist.
+<li>In the Live view, the solo button now indicates mouse hover.
+</ol>
+
+<h3>0.0.10.001 &emsp;<small>07/08/2018</small></h3>  
+
+<p><ol>
+<li>Add option to always record and automatically save the recording to a new file name.
+<li>Add option to display property descriptions in the properties bar.
+<li>Add option to specify the default note velocity.
+<li>Add song start position to the master properties.
+<li>Add command to update an existing part from the current track selection.
+<li>Add solo button to the Live view.
+<li>Add elapsed time to the Live view.
+<li>In Step view, toggling the tie notes state behaved inconsistently; fixed.
+<li>Negative song positions were displayed incorrectly; fixed.
+<li>Undoing the update preset command deleted the preset instead of restoring its state; fixed.
+<li>In track view, for non-note track types, using the note edit control's spin buttons unexpectedly showed note names; fixed.
+</ol>
+
+<h3>0.0.09.004 &emsp;<small>07/03/2018</small></h3>  
+
+<p><ol>
+<li>Add live performance view (similar to Jock) with presets and grouped parts.
+<li>Add a parts bar for grouping tracks; part members display as a single entity in live view and mute/unmute together.
+<li>Add inter-track modulation; the supported types are mute, note, velocity, and duration.
+<li>Add full screen mode.
+<li>Add song meter (in beats per measure) to the master properties.
+<li>On opening a document, the step or song view size is initially incorrect if the document was saved with any zoom other than one; fixed.
+</ol>
+
+<h3>0.0.08.002 &emsp;<small>06/18/2018</small></h3>  
+
+<p><ol>
+<li>Add presets bar.
+<li>Add track solo.
+<li>Add cut, copy, paste, delete, and insert in song view.
+<li>Left-click behavior is now consistent in step, mute, and song views.
+<li>Support Page Up / Down, Home and End keys in step and song views.
+<li>Track view was initially blank due to all its columns having zero width; fixed.
+</ol>
+
+<h3>0.0.07.001 &emsp;<small>06/06/2018</small></h3>  
+
+<p><ol>
+<li>Add song view, for editing the arrangement on a timeline.
+<li>Add commands to shift selected tracks or steps left or right.
+<li>Add Track and Transport menus.
+<li>Popup numeric edit's spin buttons now affect the output immediately.
+<li>Column widths and order and splitter bar positions now persist.
+<li>Add option to show General MIDI patch and drum names instead of numbers.
+<li>Property lists weren't showing tooltips for partially visible captions; fixed.
+<li>After recording, playback prompts to replace recording; fixed.
+</ol>
+
+<h3>0.0.06.002 &emsp;<small>06/02/2018</small></h3>  
+
+<p><ol>
+<li>In a popup edit control, left-clicking its up/down spin button or pressing an up/down arrow key could crash app, for 64-bit version only; fixed.
+<li>Mute buttons may have different height than steps and tracks, depending on Windows version and configuration; fixed.
+</ol>
+
+<h3>0.0.06.001 &emsp;<small>05/26/2018</small></h3>  
+
+<p><ol>
+<li>Implement recording of track dubs (mute/unmute).
+<li>Song mode for playback of recorded dubs; View/Mode.
+<li>Add tie notes mode; instead of always defaulting to untied note, user can specify default.
+<li>Add key signature.
+<li>Add transpose command.
+<li>Make zoom step size adjustable.
+<li>Make zoom persist in document.
+<li>Show current position in time as well as in beats and ticks.
+<li>Optionally show note names instead of numbers in note edit controls.
+<li>Give tracks unique IDs, for use in groups.
+<li>Deleting current step crashes app; fixed.
+<li>Track view occasionally paints incorrectly when scrolled via step view; fixed.
+<li>Auto-repeated arrow key in tempo edit property unexpectedly sets tempo to one; fixed.
+</ol>
+
+<h3>0.0.05.004 &emsp;<small>05/19/2018</small></h3>  
+
+<p><ol>
+<li>Add other track types besides note: controller, patch change, aftertouch, pitch bend.
+<li>Add velocity pane for editing velocities, controllers, etc.
+<li>Add next pane (F6) and previous pane (Shift+F6) commands.
+<li>Add Length command that lets you set track length via the cursor.
+<li>Add Reverse command that reverses selected tracks or steps.
+<li>Add Rotate command that rotates selected tracks or steps left or right.
+<li>Add Tempo nudge, via spin button control in tempo property.
+<li>Output MIDI devices were sometimes missing; fixed.
+<li>MIDI devices with duplicate names weren't shown in Options dialog; fixed.
+<li>The mute buttons were scrolling horizontally off screen; fixed.
+<li>The step selection was invisible if the show current position option was false; fixed.
+<li>Contracting the step selection over narrow steps left strips of unerased selection; fixed.
+</ol>
+
+<h3>0.0.04.001 &emsp;<small>05/10/2018</small></h3>
+
+<p><ol>
+<li>Add step editing commands; cut, copy, paste, insert, delete.
+<li>Synchronize vertical scrolling between track and step views.
+<li>Step view's ruler was scrolling vertically off screen; fixed.
+</ol>
+
+<h3>0.0.03.000 &emsp;<small>05/04/2018</small></h3>
+
+<p><ol>
+<li>Tied notes with swing were overlapping due to incorrect durations; fixed.
+</ol>
+
+<h3>0.0.02.001 &emsp;<small>05/03/2018</small></h3>
+
+<p><ol>
+<li>Add support for tied notes; Shift+left-click in step view toggles tie state.
+<li>Indicate beats in step view, via vertical grid lines.
+<li>In step view, add rectangular selection of steps via right-click and drag.
+<li>In step view, add track selection via right-click and vertical drag over mute buttons.
+</ol>
+
+<h3>0.0.01.000 &emsp;<small>04/29/2018</small></h3>
+
+<p><ol>
+<li>Unlimited track length.
+<li>Width of steps within each track now varies in proportion to the track's quantization.
+<li>UI completely redesigned.
+<li>Multi-channel edit in channels bar.
+<li>Track sort, with multi-level sorting.
+</ol>
+
+<h3>0.0.00.043 &emsp;<small>04/22/2018</small></h3>
+
+<p>This is the initial release.
+
+<!--  content stops HERE  -->
+</div>
+</body>
+</html>

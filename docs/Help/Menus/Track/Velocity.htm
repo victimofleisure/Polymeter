@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Velocity</title>
+<link rel=stylesheet href="../../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Velocity</h3>
+
+<p>This command changes the velocities of the selected <a href="../../Concepts/Tracks.htm">tracks</a> or <a href="../../Concepts/Steps.htm">steps</a>. It has three functions: Offset, Scale and Replace. If a <a href="../../Views/Track_View/Step_Selection.htm">step selection</a> exists, it takes priority, and in this case only the selected steps are affected. Otherwise the command operates on the <a href="../../Views/Track_View/Track_Selection.htm">selected tracks</a>. The command supports all <a href="../../Concepts/Tracks.htm#Track_types">track types</a>, even though they interpret step values differently. For <a href="../../Tracks/Note_tracks.htm">note tracks</a>, only notes that start within the step selection are affected. For all functions, the resulting values are <a href="../../Loose_Ends/Clipping.htm">clipped</a> so that they can't exceed the permissible range. If clipping is likely, a "Clipping may occur" warning message is displayed, giving you the opportunity to cancel or continue. The clipping check accounts for all velocity offsets including <a href="../../Modulation/Velocity_modulation.htm">velocity modulation</a>.
+
+<a name="Offsetting_velocities"><p><b>Offset</b></a>
+<p>Use this function to apply an offset, in other words to add or subtract a value from the velocities. The offset is a positive or negative integer. If a step selection exists, the specified offset is added to the selected steps. If a step selection doesn't exist, the "Apply to" setting determines how the offset affects the selected tracks: if it's "Tracks," the offset is added to their <a href="../../Views/Track_View/Track_Grid.htm#Track_Velocity">velocity offsets</a>, whereas if it's "Steps," the offset is added to their step values or note velocities.
+
+<a name="Scaling_velocities"><p><b>Scale</b></a>
+<p>Use this function to apply scaling, in other words to multiply the velocities by a value. The scale may be positive or negative, and may also be fractional. If a step selection exists, each selected step is multiplied by the specified scale, otherwise for each selected track, all of its step values are multiplied by the specified scale. If "Signed" is selected, the steps are interpreted as signed values ranging from &minus;64 to +63, otherwise they're interpreted as unsigned values ranging from 0 to 127.
+
+<a name="Replacing_velocities"><p><b>Replace</b></a>
+<p>Use this function to replace a particular step value with a different one. If a step selection exists, the replacement only occurs with the selected steps, otherwise it occurs within all steps of the selected tracks. The find and replace operation can operate on <a href="../../Concepts/Steps.htm#Unsigned_versus_signed_steps">signed or unsigned steps</a>.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Modulations</title>
+<link rel=stylesheet href="../content.css" type="text/css">   
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Modulations</h3>
+
+<p>Besides juxtaposition, another important method of combining <a href="../Concepts/Tracks.htm">tracks</a> is <em>modulation</em>, in which a track modulates (varies) some property of another track. The track that does the modulating is called the modulator or <em>source</em>, whereas the track that's being modulated is called the target or <em>sink</em>. There are many types of modulation, and they vary in terms of the targets they support, and how they interpret step values, as shown below.
+
+<a name="Modulation_types"><p><b>Modulation types</b></a>
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Type</th><th>Targets</th><th>Effect</th><th>Step</th></tr>
+<tr><td><a href="../Modulation/Mute_modulation.htm">Mute</a></td><td>All</td><td>Mutes or unmutes target</td><td>Boolean; non-zero value mutes target</td></tr>
+<tr><td><a href="../Modulation/Note_modulation.htm">Note</a></td><td>Note tracks, scale modulators, chord modulators</td><td>Offsets note or tone</td><td>Signed offset in semitones or scale tones</td></tr>
+<tr><td><a href="../Modulation/Velocity_modulation.htm">Velocity</a></td><td>All <a href="../Concepts/Tracks.htm#Track_types">track types</a> except Tempo and Modulator</td><td>Offsets note velocity or controller value</td><td>Signed MIDI data offset</td></tr>
+<tr><td><a href="../Modulation/Duration_modulation.htm">Duration</a></td><td>Note tracks only</td><td>Offsets note duration</td><td>Signed offset in ticks</td></tr>
+<tr><td><a href="../Modulation/Range_modulation.htm">Range</a></td><td>Note tracks only</td><td>Offsets range start</td><td>Signed offset in semitones</td></tr>
+<tr><td><a href="../Modulation/Position_modulation.htm">Position</a></td><td>All</td><td>Rotates step array</td><td>Signed rotation in steps</td></tr>
+<tr><td><a href="../Modulation/Tempo_modulation.htm">Tempo</a></td><td><a href="../Tracks/Tempo_tracks.htm">Tempo tracks</a> only</td><td>Scales tempo</td><td>Signed fractional tempo change</td></tr>
+<tr><td><a href="../Modulation/Scale_modulation.htm">Scale</a></td><td>Note tracks only</td><td>Adds note to current scale</td><td>Signed note offset in semitones</td></tr>
+<tr><td><a href="../Modulation/Chord_modulation.htm">Chord</a></td><td>Note tracks only</td><td>Adds scale tone to current chord</td><td>Signed zero-based scale tone index</td></tr>
+<tr><td><a href="../Modulation/Index_modulation.htm">Index</a></td><td>Note tracks only</td><td>Picks a scale or chord tone</td><td>Signed zero-based scale or chord tone index</td></tr>
+<tr><td><a href="../Modulation/Voicing_modulation.htm">Voicing</a></td><td>Note tracks only</td><td>Drops or raises a scale or chord tone</td><td>Signed one-based voice index</td></tr>
+<tr><td><a href="../Modulation/Offset_modulation.htm">Offset</a></td><td>Note tracks only</td><td>Offsets playback timing</td><td>Unsigned offset in ticks</td></tr>
+</table>
+
+<a name="Modulation_relationships"><p><b>Modulation relationships</b></a>
+<p>The relationship between source and target tracks can be any of the following:
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Relationship</th><th>Meaning</th></tr>
+<tr><td>One to one</td><td>A single source modulating a single target</td></tr>
+<tr><td>One to many</td><td>A single source modulating multiple targets</td></tr>
+<tr><td>Many to one</td><td>Multiple sources modulating a single target</td></tr>
+<tr><td>Many to many</td><td>Multiple sources modulating multiple targets</td></tr>
+</table>
+
+<p>In the above relationships, the modulations don't necessarily have to be all of the same type. For example a note track could have its mute state modulated by one source track, and its note modulated by a different source track.
+
+<p>Recursive relationships are also possible, in other words a modulator can modulate a modulator. There are some limits on this, which are explained below. The only thing that's definitely not allowed is a track modulating itself, either directly, or indirectly via a loop, as this would lead to infinite recursion. The user interface tries to prevent self-modulation, but if it occurs you'll get the error message "Modulation exceeded the maximum number of recursions."
+
+<p>The maximum recursion depth is 32 levels, however only <a href="../Modulation/Mute_modulation.htm">mute modulation</a> and <a href="../Modulation/Position_modulation.htm">position modulation</a> fully support recursion. A first level modulator&mdash;one that directly targets a <a href="../Tracks/Note_tracks.htm">note track</a> or <a href="../Tracks/Controller_tracks.htm">controller track</a>&mdash;can have any <a href="../Concepts/Modulations.htm#Modulation_types">modulation type</a>, but deeper levels can only be mute or position modulators. For example, a note modulator can't be the target of another note modulator, but it can be the target of a mute or position modulator.
+
+<p>There's one important exception to the above recursion rules: a <a href="../Modulation/Scale_modulation.htm">scale modulator</a> or <a href="../Modulation/Chord_modulation.htm">chord modulator</a> can be modulated by one or more note modulators.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>
