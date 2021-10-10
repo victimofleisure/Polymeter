@@ -15,6 +15,7 @@ id	open	close	type	description	rev	user
 358	04/17/20		bug	Time To Repeat command can take too long, stalling UI; show progress bar or use worker thread		
 376	06/20/20		bug	undoing modulation edit doesn't restore modulation selection; can't without also restoring track selection and Show Differences state		
 392	07/10/20		bug	Alt key commands don't work mode while cursor is hovering over MDI tab; affects stock VS2012 app too		
+458	07/22/21		bug	song position and loop to/from don't report formatting errors; song length reports errors but doesn't retry		
 1	03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 2	03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 3	03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -368,6 +369,14 @@ id	open	close	type	description	rev	user
 450	06/15/21	06/15/21	done	main frame should delete track color toolbar button in OnDestroy to avoid memory leak	0.0.37.008	
 451	06/20/21	06/20/21	done	dockable bars handle editing commands inconsistently; customize routing in child frame	0.0.37.008	
 453	06/26/21	06/26/21	done	graph should allow filtering by modulation type, via context menu	0.0.37.009	
+455	06/27/21	06/28/21	done	accelerators for shift and rotate are counterintuitive; Ctrl should be rotate and Ctrl+Shift should be shift	0.0.38.000	
+456	07/17/21	07/17/21	done	Reset Layout fails to restart app in Windows 10, but only in Release; replace GetStartupInfo with minimal init	0.0.38.000	
+457	07/19/21	07/19/21	done	disable Phase bar's Export Video command while document is playing to avoid playback glitches	0.0.38.000	
+459	08/13/21	08/13/21	done	stretch command's interpolation should wrap around to first sample instead of clamping	0.0.38.000	
+460	08/13/21	08/13/21	done	next/previous pane command should set focus to track view	0.0.38.000	
+461	08/19/21	08/19/21	done	song length limited to less than thirteen hours; use custom time string conversions	0.0.38.001	
+463	08/31/21	08/31/21	done	changing meter should update loop from/to positions	0.0.38.001	
+464	09/22/21	09/22/21	done	in track view's note column, typing note name without octave doesn't work	0.0.38.001	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -436,6 +445,8 @@ id	open	close	type	description	rev	user
 433	01/19/21		hold	track should be a potential mapping source, so tracks can automate parameters; inject MIDI event?		
 437	01/20/21		hold	add harmonizer and harmonic anticipation, adapted from ChordEase		
 452	06/24/21		hold	optional file information; author, comments		
+454	06/27/21		hold	graph filter modeless dialog that allows multiple modulation types to be selected at once		
+462	08/31/21		hold	dialog that allows song dubs to be edited directly; complex because each track stores its own dubs		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
@@ -451,4 +462,4 @@ id	open	close	type	description	rev	user
 294	05/30/19		punt	modulation list is empty regardless of track selection; can't reproduce it, brain fire?		
 301	11/12/19		punt	popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful		
 22	03/22/18		todo	context-sensitive help		
-23	03/22/18		todo	enable UI customization; new command IDs must be prefixed so renumbering doesn't change existing IDs		
+23	03/22/18		todo	enable persistence of UI customizations; prefix new command IDs so renumbering doesn't shift existing IDs		
