@@ -11,13 +11,13 @@
 
 <h3>Note modulation</h3>
 
-<p>In note <a href="../Concepts/Modulations.htm">modulation</a>, a track's note is altered by one or more tracks. A note modulator track is interpreted as an array of signed offsets (in semitones), which are added to the target track's default note. For example, suppose the target track has a default note of C. If the corresponding step in the note modulator track contains zero, C is output as usual, but if the modulator step contains 3, the target track outputs Eb instead, because C + 3 semitones = Eb.
+<p>In note <a href="../Concepts/Modulations.htm">modulation</a>, a track's note is altered by one or more tracks. A note modulator track is interpreted as an array of <a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">signed</a> offsets (in semitones), which are added to the target track's default note. For example, suppose the target track has a default note of C. If the corresponding step in the note modulator track contains zero, C is output as usual, but if the modulator step contains 3, the target track outputs Eb instead, because C + 3 semitones = Eb.
 
 <p>If a target track has multiple note modulators, they're summed. This means that a pair of note modulations can potentially cancel each other out, for example if one modulator produces 3 and the other produces &minus;3, the net offset is zero, and the target note remains unchanged.
 
 <p>It's often useful to know what notes a given set of note modulators will produce, and whether those notes form a subset of any common scales. For details, see the <a href="https://victimofleisure.github.io/Polymeter/tools/atonal/Addends.htm">Table of Addends and Their Associated Pitch Sets</a>.
 
-<p>When many note offsets are summed, the resulting pitch can potentially cover a large range. This can be addressed by limiting the output to an octave. For more on this, see <a href="../Views/Track_View/Track_Grid.htm#Track_Range_Type">range</a> and <a href="../Modulation/Range_modulation.htm">range modulation</a>.
+<p>When many note modulators are summed, the resulting pitch can potentially vary over a large range. This can be addressed by limiting the output to an octave. For more on this, see <a href="../Views/Track_View/Track_Grid.htm#Track_Range_Type">range</a> and <a href="../Modulation/Range_modulation.htm">range modulation</a>.
 
 <p>Note modulation usually targets <a href="../Tracks/Note_tracks.htm">note tracks</a>, but it can also target <a href="../Modulation/Scale_modulation.htm">scale modulators</a> and <a href="../Modulation/Chord_modulation.htm">chord modulators</a>.
 

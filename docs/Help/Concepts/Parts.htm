@@ -11,7 +11,23 @@
 
 <h3>Parts</h3>
 
-<p>***
+<p>A part is a group of <a href="../Concepts/Tracks.htm">tracks</a> that correspond to a single item in the <a href="../Views/Live_View.htm">live view</a>'s track list. Polymeter compositions tend to involve many tracks, because each track outputs only one note or control event at a time. The proliferation of tracks can become overwhelming and cumbersome to perform with, particularly if the track list gets long enough to require frequent scrolling. Grouping tracks into parts reduces visual clutter, and may shorten the live view's track list enough to avoid scrolling during a performance.
+
+<p>A part's member tracks all share the same <a href="../Views/Track_View/Track_Mutes.htm">mute</a> state in live view, meaning if one member is muted, they're all muted. Put another way, by grouping tracks into a part, you lose the ability to mute some of them but not others in live view. For example, if you're using several tracks to form a chord, and the entire chord should always be muted or unmuted as a single entity, you may want to group the tracks into a part. For another example, if you have modulator tracks that can remain unmuted all the time, they can all be grouped into a single part.
+
+<p>Parts are edited using the <a href="../Docking_Windows/Parts_bar.htm">Parts bar</a>. To create a new part, first <a href="../Views/Track_View/Track_Selection.htm">select</a> its member tracks, and then use the Track menu's <a href="../Menus/Track/Create_Group.htm">Group</a> command. A new part initially has the same name as its first member track, but you can rename it.
+
+<p>A track can belong to at most one part. When you create a new part, if any of the selected tracks already belong to a part, a warning message is displayed, giving you the option to continue or cancel. If you continue, the offending tracks are removed from their previous part before being reassigned to the new one.
+
+<p>To update an existing part, in other words to add or remove members, do as follows:
+
+<ol>
+<li>Select the part's member tracks, by right-clicking the part's list item and then using the Tracks command on the Parts bar's <a href="../Docking_Windows/Parts_bar.htm#Parts_context_menu">context menu</a>.
+<li>In the <a href="../Views/Track_View/Track_View.htm">track view</a>, select or deselect tracks as desired.
+<li>Right-click the part's list item and use the Update command on the Parts bar's context menu. If any of the selected parts belong to a different part than the one you're updating, a warning message is displayed, as explained above.
+</ol>
+
+<p>To avoid confusion, it's recommended to keep all the member tracks of a part contiguous in track view. You may want to use <a href="../Menus/Track/Color.htm">color</a> to distinguish your parts from each other.
 
 <!--  content stops HERE  -->
 			

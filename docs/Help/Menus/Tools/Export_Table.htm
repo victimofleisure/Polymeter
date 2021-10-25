@@ -11,7 +11,7 @@
 
 <h3>Export Table</h3>
 
-<p>Each of these commands exports data to a Comma-Separated Values (CSV) file. In all cases, a file dialog is displayed, prompting you to specify the output CSV file. The exports have different targets, and produce differently formatted data, as explained below.
+<p>Each of these commands exports data to a Comma-Separated Values (CSV) file. In all cases, a file dialog is displayed, prompting you to specify the name and location of the output CSV file. The exports have different targets, and produce differently formatted data, as explained below.
 
 <a name="Export_Tracks"><p><b>Export Tracks</b></a>
 <p>This command exports <a href="../../Concepts/Tracks.htm">track</a> data to a CSV file. If a <a href="../../Views/Track_View/Track_Selection.htm">track selection</a> exists, only the selected tracks are exported, otherwise all tracks are exported. The first output row is a column header specifying the names of the track properties. Each subsequent row corresponds to a track, and contains the data for each of the track's properties. You can also <a href="../../Menus/Tools/Import_Table.htm#Import_Tracks">import tracks</a>, using this same file format.
@@ -23,7 +23,7 @@
 <p>This command exports <a href="../../Concepts/Modulations.htm">modulation</a> data to a CSV file. All modulations in the current document are exported. Each output row corresponds to a modulation, and contains three integers, corresponding to the modulation's enumerated type, source track index, and sink track index. You can also <a href="../../Menus/Tools/Import_Table.htm#Import_Modulations">import modulations</a>, using this same file format.
 
 <a name="Export_Song"><p><b>Export Song</b></a>
-<p>This command is similar to the <a href="../../Menus/File/Export.htm">MIDI file export</a>, except that it exports the MIDI messages as text. The resulting CSV file contains the same data as the MIDI file export, but in a human-readable format. This can be useful for debugging purposes, for example exports can be meaningfully compared using a file comparison utility. The command displays a dialog prompting you for the desired duration. If any <a href="../../Concepts/Dubs.htm">dubs</a> exist, they're applied during the export, otherwise the unmuted tracks are looped for the specified duration.
+<p>This command is similar to the <a href="../../Menus/File/Export.htm">MIDI file export</a>, except that it exports the MIDI messages as text. The resulting CSV file contains the same data as the MIDI file export, but in a human-readable format. This can be useful for debugging purposes, for example text exports can be meaningfully compared using a file comparison utility. The command displays a dialog prompting you for the desired duration. If any <a href="../../Concepts/Dubs.htm">dubs</a> exist, they're applied during the export, otherwise the unmuted tracks are looped for the specified duration.
 
 <!--  content stops HERE  -->
 			

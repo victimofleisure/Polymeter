@@ -11,9 +11,11 @@
 
 <h3>Export</h3>
 
-<p>This command exports the current document as a type 1 MIDI file, containing at most 17 tracks. The first track is reserved for the tempo map, and it's followed by one track for each MIDI channel that's utilized in the document. If the document contains song dubs, they're applied, otherwise the unmuted tracks are repeated out to the <a href="../../Properties/Song_Length.htm">song length</a>.
+<p>This command exports the current document as a type 1 MIDI file, containing at most 17 tracks. The first track is reserved for the tempo map, and it's followed by one track for each MIDI channel that's utilized in the document. If the document contains song <a href="../../Concepts/Dubs.htm">dubs</a>, they're applied, otherwise the unmuted tracks are looped until the specified duration is reached.
 
-<p>For each MIDI channel, all Polymeter tracks that output to that channel are merged into a single MIDI file track. The resulting MIDI file track gets its name from the first Polymeter track that contributed to it. If no Polymeter tracks output to the channel, the corresponding track is omitted from the MIDI file to save space.
+<p>For each MIDI channel, all Polymeter <a href="../../Concepts/Tracks.htm">tracks</a> that output to that channel are merged into a single MIDI file track. The resulting MIDI file track gets its name from the first Polymeter track that contributed to it. If no Polymeter tracks output to the channel, the corresponding track is omitted from the MIDI file to save space.
+
+<p>The command displays a dialog that prompts you to choose the name and location of the destination file. After you press OK to continue, another dialog prompts you for the export duration in hours, minutes and seconds. For <a href="../../Concepts/Songs.htm">songs</a>, the export duration defaults to the current <a href="../../Properties/Song_Length.htm">song length</a>, otherwise it defaults to its previous value.
 
 <p>The document can also be <a href="../../Menus/Tools/Export_Table.htm#Export_Song">exported as a table</a>, which can be useful for debugging.
 

@@ -11,7 +11,7 @@
 
 <h3>Chord modulation</h3>
 
-<p>A chord is a subset of a <a href="../Modulation/Scale_modulation.htm">scale</a>. A chord can contain any number of tones, up to and including all of the tones of the scale. Chords are created by modulating a note track with scale, chord, and index modulators. Voicing modulators may optionally be added also. In the same way that scale modulators build a current scale consisting of notes, chord modulators build a current chord consisting of scale tones. A chord modulator's step values are signed zero-based indexes into the current scale, wrapped as needed to avoid range errors. The order of the chord modulators within the track's modulation list matters, because the step values are appended to the chord in that order. Muted chord modulators are excluded.
+<p>A chord is a subset of a <a href="../Modulation/Scale_modulation.htm">scale</a>. A chord can contain any number of tones, up to and including all of the tones of the scale. Chords are created by modulating a note track with scale, chord, and index modulators. Voicing modulators may optionally be added also. In the same way that scale modulators build a current scale consisting of notes, chord modulators build a current chord consisting of scale tones. A chord modulator's step values are <a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">signed</a> zero-based indexes into the current scale, <a href="../Loose_Ends/Modular_arithmetic.htm">wrapped</a> as needed to avoid range errors. The order of the chord modulators within the track's modulation list matters, because the step values are appended to the chord in that order. Muted chord modulators are excluded.
 
 <p>Chord modulation occurs when a track with unmuted scale modulators also has unmuted chord modulators. In this case the track's <a href="../Modulation/Index_modulation.htm">index modulation</a> accesses the current chord instead of the current scale. This adds an extra level of mapping. The index modulation picks a chord tone, the chord tone maps to a scale tone, and the scale tone maps to a note. Suppose the track has four chord modulators, which contain 0, 2, 4, and 6 respectively. These correspond to the first, third, fifth, and seventh notes of the current scale. Assuming the scale is C major, this chord modulation produces a C major seventh chord.
 
@@ -19,8 +19,8 @@
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <caption>Scale modulation</caption>
-<tr><th>Index</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
 <tr><th>Scale Tone</th><td>0</td><td>2</td><td>4</td><td>5</td><td>7</td><td>9</td><td>11</td></tr>
+<tr><th>Index</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
 <tr><th>Note</th><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td><td>A</td><td>B</td></tr>
 </table>
 
@@ -28,9 +28,9 @@
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <caption>Chord Modulation</caption>
-<tr><th>Index</th><td>0</td><td>1</td><td>2</td><td>3</td></tr>
-<tr><th>Chord Tone</th><td>0</td><td>2</td><td>4</td><td>6</td></tr>
 <tr><th>Scale Tone</th><td>0</td><td>4</td><td>7</td><td>11</td></tr>
+<tr><th>Chord Tone</th><td>0</td><td>2</td><td>4</td><td>6</td></tr>
+<tr><th>Index</th><td>0</td><td>1</td><td>2</td><td>3</td></tr>
 <tr><th>Note</th><td>C</td><td>E</td><td>G</td><td>B</td></tr>
 </table>
 

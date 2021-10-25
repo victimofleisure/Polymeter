@@ -33,7 +33,7 @@
 <tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Channel">Channel</a></td><td>Which MIDI channel the track outputs on</td></tr>
 <tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Note">Note</a></td><td>Which MIDI note or controller the track outputs</td></tr>
 <tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Length">Length</a></td><td>Length of the track, in steps</td></tr>
-<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Quant">Quant</a></td><td>Duration of each of the track's steps, in ticks</td></tr>
+<tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Quant">Quant</a></td><td>Duration of each of the track's steps, in <a href="../Concepts/Steps.htm#Ticks">ticks</a></td></tr>
 <tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Offset">Offset</a></td><td>Time offset applied to the track's steps, in ticks; positive = later, negative = earlier</td></tr>
 <tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Swing">Swing</a></td><td>Time offset applied to the track's even-numbered steps, in ticks; positive = later, negative = earlier</td></tr>
 <tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Velocity">Velocity</a></td><td>Offset added to the track's step velocities</td></tr>
@@ -45,7 +45,7 @@
 <a name="Track_types"><p><b>Track types</b></a>
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Type</th><th>Outputs</th><th>Step</th></tr>
-<tr><td><a href="../Tracks/Note_tracks.htm">Note</a></td><td>Note message</td><td>Unsigned note velocity; steps can also be <a href="../Tracks/Note_tracks.htm#Tied_notes">tied</a> together to form longer notes</td></tr>
+<tr><td><a href="../Tracks/Note_tracks.htm">Note</a></td><td>Note message</td><td><a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">Unsigned</a> note velocity; steps can also be <a href="../Tracks/Note_tracks.htm#Tied_notes">tied</a> together to form longer notes</td></tr>
 <tr><td><a href="../Tracks/Controller_tracks.htm">Key Aftertouch</a></td><td>Key aftertouch message</td><td>Unsigned key aftertouch pressure</td></tr>
 <tr><td><a href="../Tracks/Controller_tracks.htm">Control</a></td><td>Continuous controller message</td><td>Controller value; signed or unsigned depending on context</td></tr>
 <tr><td><a href="../Tracks/Controller_tracks.htm">Patch</a></td><td>Program change message</td><td>Unsigned program number</td></tr>

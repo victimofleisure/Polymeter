@@ -13,6 +13,9 @@
 
 <p>This <a href="../../Concepts/Grid_controls.htm">grid control</a> constitutes the left pane of the <a href="../../Views/Track_View/Track_View.htm">track view</a>, and contains one row for each <a href="../../Concepts/Tracks.htm">track</a>. Most <a href="../../Concepts/Tracks.htm#Track_properties">track properties</a> are editable via this grid. The grid's columns are described below.
 
+<a name="Track_Number"><p><b>Number</b></a>
+<p>This column is the track number, which is read-only. The column caption is a number sign (#). Left-click in this column to <a href="../../Concepts/List_controls.htm">select</a> tracks. To move a track, left-click in this column, and while keeping the left mouse button pressed, drag the track to the desired location, and then release the left mouse button. Multiple <a href="../../Views/Track_View/Track_Selection.htm">selected tracks</a> can be moved in the same manner.
+
 <a name="Track_Name"><p><b>Name</b></a>
 <p>This is the track's name. Appropriately naming tracks makes compositions easier to manage. If you name multiple tracks at once, and the <a href="../../Options/View/Unique_Track_Names.htm">Unique track names</a> option is enabled, sequential numbers are appended to the track names to make them unique. Polymeter supports <a href="../../Menus/Edit/Find.htm">Find</a> and <a href="../../Menus/Edit/Replace.htm">Replace</a> for track names.
 
@@ -27,7 +30,7 @@
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Type</th><th>Meaning</th></tr>
-<tr><td>Note</td><td>Which note is output. The octave may be altered by the track's range, and the note may be altered via <a href="../../Modulation/Note_modulation.htm">note modulation</a>. The note may also be altered via a combination of scale, chord, index, and voicing modulation.</td></tr>
+<tr><td>Note</td><td>Which note is output. The octave may be altered by the track's <a href="../../Views/Track_View/Track_Grid.htm#Track_Range_Type">range</a>, and the note may be altered via <a href="../../Modulation/Note_modulation.htm">note modulation</a>. The note may also be altered via a combination of scale, chord, index, and voicing modulation.</td></tr>
 <tr><td>Key Aftertouch</td><td>For which note aftertouch is sent.</td></tr>
 <tr><td>Control</td><td>Which continuous controller number is sent.</td></tr>
 <tr><td>Patch</td><td>Unused.</td></tr>
@@ -40,7 +43,7 @@
 <p>For <a href="../../Tracks/Note_tracks.htm">note tracks</a>, the note property is normally displayed as a MIDI note name instead of a number (for example C4 instead of 60), however this behavior can be disabled by setting the <a href="../../Options/View/Show_Note_Names.htm">Show Note Names</a> option to false, and the note value can be entered numerically regardless of this option. For channel 10 only, the note property is normally displayed as a General MIDI drum name, using a drop list instead of an edit box, but this can be disabled by setting <a href="../../Options/View/Show_General_MIDI_Names.htm">Show General MIDI Names</a> to false.
 
 <a name="Track_Length"><p><b>Length</b></a>
-<p>This is the length of the track, in steps. It can't be less than one, nor can it exceed the <a href="../../Loose_Ends/Maximum_track_length.htm">maximum track length</a>. Increasing the length appends empty steps to the end of the track. Decreasing the length removes existing steps from the end of the track.
+<p>This is the length of the track, in steps. It can't be less than one, nor can it exceed the <a href="../../Loose_Ends/Maximum_track_length.htm">maximum track length</a>. Increasing the length appends empty steps to the end of the track. Decreasing the length removes existing steps from the end of the track. To set the length visually instead of numerically, use the Track menu's <a href="../../Menus/Track/Length.htm">Length</a> command.
 
 <a name="Track_Quant"><p><b>Quant</b></a>
 <p>This is the duration of each track step, in <a href="../../Concepts/Steps.htm#Ticks">ticks</a>. The table below gives common Quant values for the default <a href="../../Properties/Timebase.htm">timebase</a> (120 ticks per quarter note).
@@ -65,7 +68,7 @@
 <p>This is the track's time offset, in <a href="../../Concepts/Steps.htm#Ticks">ticks</a>. Negative values make the track earlier; positive values make it later. The offset can also be altered via <a href="../../Modulation/Offset_modulation.htm">offset modulation</a>.
 
 <a name="Track_Swing"><p><b>Swing</b></a>
-<p>This is the track's amount of swing, in <a href="../../Concepts/Steps.htm#Ticks">ticks</a>. Swing is a time offset that's applied to even-numbered steps. A positive value delays the even-numbered steps, and lengthens the odd-numbered steps to compensate. A negative value hastens the even-numbered steps, and shortens the odd-numbered steps to compensate. Swing is usually positive, and can't exceed the track's <a href="../../Views/Track_View/Track_Grid.htm#Track_Quant">Quant</a>. Setting swing to one-third of the track's Quant gives triplet feel. Swing affects all <a href="../../Concepts/Tracks.htm#Track_types">track types</a> except Modulator.
+<p>This is the track's amount of swing, in <a href="../../Concepts/Steps.htm#Ticks">ticks</a>. Swing is a time offset that's applied to even-numbered steps. A positive value delays the even-numbered steps, and lengthens the odd-numbered steps to compensate. A negative value hastens the even-numbered steps, and shortens the odd-numbered steps to compensate. Swing is usually positive, and can't exceed the track's <a href="../../Views/Track_View/Track_Grid.htm#Track_Quant">Quant</a>. Setting swing to one-third of the track's Quant results in triplet feel. Swing affects all <a href="../../Concepts/Tracks.htm#Track_types">track types</a> except Modulator.
 
 <p>
 <table border=0 cellpadding=2 cellspacing=0>
@@ -95,7 +98,7 @@
 <p>For tempo tracks and tempo modulators, Duration is repurposed to be the range of the tempo change, as a percentage; see <a href="../../Tracks/Tempo_tracks.htm">tempo tracks</a>.
 
 <a name="Track_Range_Type"><p><b>Range Type</b></a>
-<p>This the type of range to be applied to the track. Range only affects note tracks. The Octave type forces the output note to stay within a one-octave range, the bottom of which is determined by the <a href="../../Views/Track_View/Track_Grid.htm#Track_Range_Start">Range Start</a> property. The note is shifted by as many octaves as necessary to keep it within the specified range. For chords and arpeggios, this produces inversions.
+<p>This is the type of range to be applied to the track. Range only affects note tracks. The Octave type forces the output note to stay within a one-octave range, the bottom of which is determined by the <a href="../../Views/Track_View/Track_Grid.htm#Track_Range_Start">Range Start</a> property. The note is shifted by as many octaves as necessary to keep it within the specified range. For chords and arpeggios, this produces inversions.
 
 <p>The Dual type is similar except that it creates a two-octave range, and assigns the note to the upper or lower octave depending on its pitch. The Range Start property determines the start of the upper octave. If the note is below the Range Start value, it's shifted to the lower octave, otherwise it's shifted to the upper octave.
 

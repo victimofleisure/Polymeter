@@ -377,6 +377,11 @@ id	open	close	type	description	rev	user
 461	08/19/21	08/19/21	done	song length limited to less than thirteen hours; use custom time string conversions	0.0.38.001	
 463	08/31/21	08/31/21	done	changing meter should update loop from/to positions	0.0.38.001	
 464	09/22/21	09/22/21	done	in track view's note column, typing note name without octave doesn't work	0.0.38.001	
+22	03/22/18	10/23/21	done	context-sensitive help	1.0.00.000	
+23	03/22/18	10/23/21	done	enable persistence of UI customizations; prefix new command IDs so renumbering doesn't shift existing IDs	1.0.00.000	
+465	10/25/21	10/25/21	done	in mappings, add descending sort via Shift + left click in column header	1.0.00.000	
+466	10/25/21	10/25/21	done	increase maximum view update frequency	1.0.00.000	
+467	10/25/21	10/25/21	done	in track view, fix status hint and command help for grid control's context menu	1.0.00.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -461,5 +466,3 @@ id	open	close	type	description	rev	user
 286	02/28/19		punt	song playback doesn't always match live output when modulator tracks have big quants; dub granularity issue		
 294	05/30/19		punt	modulation list is empty regardless of track selection; can't reproduce it, brain fire?		
 301	11/12/19		punt	popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful		
-22	03/22/18		todo	context-sensitive help		
-23	03/22/18		todo	enable persistence of UI customizations; prefix new command IDs so renumbering doesn't shift existing IDs		

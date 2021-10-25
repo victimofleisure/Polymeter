@@ -40,9 +40,9 @@ del /s /q *.tmp
 cd ..
 "C:\Chris\MyProjects\doc2web graph\Debug\doc2web.exe" /nospaces "C:\Chris\MyProjects\Polymeter\Help\help.txt" C:\Temp\polymeter_help.gv
 if errorlevel 1 goto err
-"C:\Program Files\Graphviz\bin\dot.exe" -Tsvg -Kdot -o"C:\Chris\MyProjects\Polymeter\web\Help\polymeter_help.svg" C:\Temp\polymeter_help.gv
-if errorlevel 1 goto err
-del C:\Temp\polymeter_help.gv
+rem "C:\Program Files\Graphviz\bin\dot.exe" -Tsvg -Kdot -o"C:\Chris\MyProjects\Polymeter\web\Help\polymeter_help.svg" C:\Temp\polymeter_help.gv
+rem if errorlevel 1 goto err
+rem del C:\Temp\polymeter_help.gv
 goto exit
 :err
 pause Error!

@@ -11,15 +11,15 @@
 
 <h3>Mapping</h3>
 
-<p>This <a href="../Docking_Windows/Docking_windows.htm">docking window</a> lets you edit your <a href="../Concepts/Mappings.htm">mappings</a>. Mappings can be inserted, revised, deleted, copied, cut, pasted, and reordered via dragging. Mappings can also be sorted by left-clicking the appropriate item in the column header.
+<p>This <a href="../Docking_Windows/Docking_windows.htm">docking window</a> lets you edit your <a href="../Concepts/Mappings.htm">mappings</a>. Mappings can be inserted, revised, deleted, copied, cut, pasted, and reordered via dragging. Mappings can also be sorted by left-clicking the appropriate item within the column header. To sort in descending order, press the <span class="key">Shift</span> key while left-clicking.
 
-<p>The mappings are displayed in a <a href="../Concepts/Grid_controls.htm">grid control</a>. Each mapping consists of input and output event properties, an output range, and a target track. The input properties include the input event type (note on, control, etc.), the input MIDI channel, and the note or control number if appropriate. Input properties can entered manually, or <a href="../Docking_Windows/Mapping_bar.htm#Learning_mappings">learned</a> from the MIDI input.
+<p>The mappings are displayed in a <a href="../Concepts/Grid_controls.htm">grid control</a>. Each mapping consists of input and output event properties, an output range, and a target track. The input properties include the input event type (note on, control, etc.), the input MIDI channel, and the note or control number if appropriate. Input properties can be entered manually, or <a href="../Docking_Windows/Mapping_bar.htm#Learning_mappings">learned</a> from the MIDI input.
 
 <p>The output properties start with the <a href="../Docking_Windows/Mapping_bar.htm#Output_event_types">output event type</a>, which may be either a MIDI message (note on, control, etc.) or a target property. If the output event is a MIDI message, the mapping is a translation, in which case the output MIDI channel and the note/control number are also relevant. Otherwise, the mapping targets a property, in which case the output MIDI channel is irrelevant, the output control may not matter either, and a target track may be required.
 
 <p>To map a MIDI message to the same property in multiple tracks, create multiple mappings, one for each target track. It's easiest to do this via copy and paste: create a mapping for one of the tracks first, and when it's set up correctly, clone it as many times as needed, and finally edit the copies to target different tracks.
 
-<p>The output range (start value and end value) allow the input MIDI data to be shifted or scaled to any integer range. If the start is bigger than end, the control direction is reversed, in which case turning the knob up makes the value smaller.
+<p>The output range (start value and end value) allow the input MIDI data to be shifted or scaled to any integer range. If the start is bigger than the end, the control direction is reversed, in which case turning the knob up makes the value smaller.
 
 <a name="Mapping_columns"><p><b>Mapping columns</b></a>
 <p><table border=1 cellpadding=2 cellspacing=0>
@@ -28,7 +28,7 @@
 <tr><td>Input Control</td><td>The parameter that further specifies the input event. For Note On and Key Aftertouch events, it's the note number, for Control events it's the controller number, and for other input event types it's ignored.</td></tr>
 <tr><td>Output Event</td><td>The <a href="../Docking_Windows/Mapping_bar.htm#Output_event_types">type</a> of output event that's being mapped to. For translations, these are MIDI channel messages, otherwise they're properties.</td></tr>
 <tr><td>Output Channel</td><td>The MIDI channel of the output event. This is only applicable for translations.</td></tr>
-<tr><td>Output Control</td><td>The parameter associated with the output event. This is only applicable for certain event types.</td></tr>
+<tr><td>Output Control</td><td>The parameter associated with the output event. This is only applicable for certain event types; see below.</td></tr>
 <tr><td>Range Start</td><td>The starting value of the output range.</td></tr>
 <tr><td>Range End</td><td>The ending value of the output range.</td></tr>
 <tr><td>Track</td><td>The target track. This is only applicable when mapping to track properties.</td></tr>
@@ -67,13 +67,13 @@
 </table>
 
 <a name="Learning_mappings"><p><b>Learning mappings</b></a>
-<p>The application also supports <a href="../Menus/Tools/MIDI_Learn.htm">MIDI learn</a> mode, i.e. the input messages can be learned from the MIDI input device. To do this, select a mapping in the Mapping window, and then enable learn mode via <span class="cmd">Tools/MIDI Learn</span>, or via the keyboard shortcut <span class="key">Ctrl+Shift+L</span>, or via the Mapping window's context menu. The background color of the selected mapping changes to green, indicating that this mapping will be learned. Now move the associated knob on the MIDI input device, and the mapping's input properties will snap to the appropriate values for that knob. To learn other mappings, select each mapping one at a time and move its associated knob. To learn multiple mappings at once, select them all and move the knob that you want to assign to all of them. After all mappings have been learned, disable MIDI learn mode.
+<p>The application also supports <a href="../Menus/Tools/MIDI_Learn.htm">MIDI learn</a> mode, i.e. the input messages can be learned from the MIDI input device. To do this, select a mapping in the Mapping window, and then enable learn mode via <span class="cmd">Tools/MIDI Learn</span>, or via the keyboard shortcut <span class="key">Ctrl+Shift+L</span>, or via the Mapping window's <a href="../Docking_Windows/Mapping_bar.htm#Mapping_context_menu">context menu</a>. The background color of the selected mapping changes to green, indicating that this mapping will be learned. Now move the associated knob on the MIDI input device, and the mapping's input properties will snap to the appropriate values for that knob. To learn other mappings, select each mapping one at a time and move its associated knob. To learn multiple mappings at once, select them all and move the knob that you want to assign to all of them. After all mappings have been learned, disable MIDI learn mode.
 
 <a name="Mapping_context_menu"><p><b>Context menu</b></a>
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><td>Insert</td><td>Inserts a new mapping at the current position</td></tr>
 <tr><td>Delete</td><td>Deletes the selected mappings</td></tr>
-<tr><td>Cut</td><td>Deletes the selected mappings after copying them to the clipboard</td></tr>
+<tr><td>Cut</td><td>Deletes the selected mappings after copying them to the <a href="../Menus/Edit/Standard_editing_commands.htm#Clipboards">clipboard</a></td></tr>
 <tr><td>Copy</td><td>Copies the selected mappings to the clipboard</td></tr>
 <tr><td>Paste</td><td>Inserts the contents of the mapping clipboard at the current position</td></tr>
 <tr><td>Select All</td><td>Selects all mappings</td></tr>

@@ -11,7 +11,7 @@
 
 <h3>Range modulation</h3>
 
-<p>In range <a href="../Concepts/Modulations.htm">modulation</a>, a track's notes are transposed by one or more octaves as needed to keep them within a specified <a href="../Views/Track_View/Track_Grid.htm#Track_Range_Type">range</a>. The size of the range is typically one octave, though other sizes are possible. The start note of the range is variable, and can be altered by one or more modulator tracks. A range modulator track is interpreted as an array of signed offsets, which are added to the range <a href="../Views/Track_View/Track_Grid.htm#Track_Range_Start">start note</a>. If a target track has multiple range modulators, they're summed.
+<p>In range <a href="../Concepts/Modulations.htm">modulation</a>, a track's notes are transposed by one or more octaves as needed to keep them within a specified <a href="../Views/Track_View/Track_Grid.htm#Track_Range_Type">range</a>. The size of the range is typically one octave, though other sizes are possible. The start note of the range is variable, and can be altered by one or more modulator tracks. A range modulator track is interpreted as an array of <a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">signed</a> offsets, which are added to the range <a href="../Views/Track_View/Track_Grid.htm#Track_Range_Start">start note</a>. If a target track has multiple range modulators, they're summed.
 
 <p>Because the transposition is by octaves only, the notes remain in the same scale and key; only their octaves are affected. If several tracks forming a chord are range modulated together, the chord cycles through its possible inversions.
 

@@ -11,7 +11,7 @@
 
 <h3>Modulations</h3>
 
-<p>Besides juxtaposition, another important method of combining <a href="../Concepts/Tracks.htm">tracks</a> is <em>modulation</em>, in which a track modulates (varies) some property of another track. The track that does the modulating is called the modulator or <em>source</em>, whereas the track that's being modulated is called the target or <em>sink</em>. There are many types of modulation, and they vary in terms of the targets they support, and how they interpret step values, as shown below.
+<p>Besides juxtaposition, another important method of combining <a href="../Concepts/Tracks.htm">tracks</a> is <em>modulation</em>, in which a track alters the behavior of another track. The track that does the modulating is called the modulator or <em>source</em>, whereas the track that's being modulated is called the target or <em>sink</em>. There are many types of modulation, and they vary in terms of the targets they support, and how they interpret step values, as shown below.
 
 <a name="Modulation_types"><p><b>Modulation types</b></a>
 <p><table border=1 cellpadding=2 cellspacing=0>
@@ -47,7 +47,7 @@
 
 <p>The maximum recursion depth is 32 levels, however only <a href="../Modulation/Mute_modulation.htm">mute modulation</a> and <a href="../Modulation/Position_modulation.htm">position modulation</a> fully support recursion. A first level modulator&mdash;one that directly targets a <a href="../Tracks/Note_tracks.htm">note track</a> or <a href="../Tracks/Controller_tracks.htm">controller track</a>&mdash;can have any <a href="../Concepts/Modulations.htm#Modulation_types">modulation type</a>, but deeper levels can only be mute or position modulators. For example, a note modulator can't be the target of another note modulator, but it can be the target of a mute or position modulator.
 
-<p>There's one important exception to the above recursion rules: a <a href="../Modulation/Scale_modulation.htm">scale modulator</a> or <a href="../Modulation/Chord_modulation.htm">chord modulator</a> can be modulated by one or more note modulators.
+<p>There's one important exception to the above recursion rules: a <a href="../Modulation/Scale_modulation.htm">scale modulator</a> or <a href="../Modulation/Chord_modulation.htm">chord modulator</a> can be targeted by one or more note modulators.
 
 <!--  content stops HERE  -->
 			

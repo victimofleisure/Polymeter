@@ -11,9 +11,9 @@
 
 <h3>Position modulation</h3>
 
-<p>In position <a href="../Concepts/Modulations.htm">modulation</a>, a track's step array is temporarily <a href="../Menus/Track/Rotate.htm">rotated</a> left or right by one or more steps. Rotation is similar to shifting, except that it's lossless, because any shifted elements that "fall off" one side wrap around to the other side. For example rotating 1234 right by one step yields 4123, because the 4 wraps around to the left.
+<p>In position <a href="../Concepts/Modulations.htm">modulation</a>, a track's step array is temporarily <a href="../Menus/Track/Rotate.htm">rotated</a> left or right by one or more steps. Rotation is similar to shifting, except that it's lossless, because any shifted elements that "fall off" one side wrap around to the other side. For example, rotating 1234 right by one step yields 4123, because the 4 wraps around to the left.
 
-<p>A position modulator track is interpreted as an array of signed offsets (in steps), which determine the amount of rotation. A positive value rotates to the right (later in time), a negative value rotates to the left (earlier in time), and a rotation of zero has no effect. If a target track has multiple position modulators, they're summed.
+<p>A position modulator track is interpreted as an array of <a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">signed</a> offsets (in steps), which determine the amount of rotation. A positive value rotates to the right (later in time), a negative value rotates to the left (earlier in time), and a rotation of zero has no effect. If a target track has multiple position modulators, they're summed.
 
 <p>Position modulation is a powerful technique for generating variations. It has a downside however, which is that it can easily cause multiple overlapping instances of the same note on the same channel. On some instruments this may produce undesired artifacts, such as notes being cut off prematurely. For this reason, you may want to prevent <a href="../Properties/Note_Overlap.htm">note overlaps</a>.
 

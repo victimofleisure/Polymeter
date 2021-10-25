@@ -11,7 +11,51 @@
 
 <h3>Song View</h3>
 
-<p>***
+<p>The song <a href="../Views/Views.htm">view</a> is for arranging your <a href="../Concepts/Tracks.htm">tracks</a>. The arrangement is also known as a <a href="../Concepts/Songs.htm">song</a>, and it consists of a sequence of <a href="../Concepts/Dubs.htm">dubs</a>, each of which mutes or unmutes one more tracks. To display the song view, use the View menu's <a href="../Menus/View/Show_Song_View.htm">Song</a> command.
+
+<p>Song view contains one row for each track, and is vertically split into two <a href="../Views/Track_View/Track_View.htm#Panes">panes</a>. The left pane contains the track names, and the right pane contains the <a href="../Views/Song_View.htm#Song_Grid">song grid</a>, explained below. To change the proportions of the panes, drag the splitter bar that separates them.
+
+<p>Instead of creating an arrangement entirely via editing in song view, you may find it more intuitive to first <a href="../Menus/Transport/Record.htm">record</a> a rough arrangement in <a href="../Views/Live_View.htm">live view</a>, and then refine it in song view. For complex arrangements, you can repeat the record/edit cycle for each section, instead of trying to get the entire arrangement right in one take.
+
+<a name="Song_Grid"><p><b>Song Grid</b></a>
+<p>The song grid is a timeline editor for dubbing. It lets you "paint" with your tracks, by drawing the regions where each track should be audible. Each grid row corresponds to a track, and wherever the row is highlighted in green, the corresponding track is unmuted (audible). Tracks are automatically repeated infinitely, and always maintain correct phase regardless of dubbing.
+
+<p>The vertical axis is tracks, and the horizontal axis is time. The grid's width is determined by the <a href="../Properties/Song_Length.htm">Song Length</a>; to access the time beyond the maximum horizontal scroll position, increase the song length. The grid can be zoomed in the horizontal axis only, via the <a href="../Menus/View/Zoom_In.htm">Zoom In</a>, <a href="../Menus/View/Zoom_Out.htm">Zoom Out</a>, and <a href="../Menus/View/Zoom_Reset.htm">Zoom Reset</a> commands. You can also zoom by spinning the mouse wheel while pressing the <span class="key">Ctrl</span> key, and this centers the zooming at the cursor position.
+
+<p>A grid row is divided into cells, each of which represent one or more <a href="../Concepts/Steps.htm">steps</a> of the corresponding track. The zoom specifies the duration of a grid cell, hence for any given row, zoom determines the relationship between that row's cells and the corresponding track's steps. As you zoom in, more detail becomes visible, because each cell represents fewer steps. Cells that represent at least one non-zero step are marked with a black square. For <a href="../Tracks/Note_tracks.htm#Tied_notes">tied notes</a>, only the note's first step is considered.
+
+<p>The song grid has features in common with the track view's <a href="../Views/Track_View/Track_Steps.htm">steps pane</a>. For example, left-clicking toggles cells, and a rectangular range of cells can be <a href="../Views/Song_View.htm#Cell_selection">drag-selected</a> via the right mouse button, similarly to <a href="../Views/Track_View/Step_Selection.htm">step selection</a>. The ruler at the top of the grid is marked in beats and ticks, and possibly also in measures, depending on the <a href="../Properties/Meter.htm">meter</a>. Left-clicking in the ruler jumps to the corresponding <a href="../Properties/Meter.htm#Song_position">song position</a>. Right-clicking in the ruler clears the current cell selection.
+
+<p>Be careful when editing while zoomed out, because the further out you're zoomed, the more details are hidden. This is most likely to be a problem when extending an existing dub. In such cases you should zoom in and make sure you haven't left unintended gaps. It's also recommended to step through your dubs, using the left and right arrow keys in combination with the <span class="key">Alt</span> key, as this can help you find mistakes.
+
+<a name="Song_grid_quick_help"><p><b>Quick help</b></a>
+<ul>
+<li>Each grid cell represents a timespan. A grid cell is highlighted in green if the corresponding track is unmuted (audible) during that cell's timespan.
+<li>To toggle a single cell from muted to unmuted or vice versa, left-click it.
+<li>To mute a cell regardless of its current state, left-click it while pressing the <span class="key">Ctrl</span> key.
+<li>To select a rectangular range of cells, right-click one corner of the range, and while keeping the right mouse button pressed, drag the pointer to the diagonally opposite corner, and then release the right mouse button.
+<li>To toggle multiple adjacent cells, first select them as explained above, and then toggle them by left-clicking anywhere within the grid.
+<li>To mute the selected cells regardless of their current state, keep the <span class="key">Ctrl</span> key pressed while left-clicking.
+<li>To clear a cell selection, right-click in the ruler at the top of the view, or press the <span class="key">Esc</span> key.
+<li>If a cell selection exists, the <a href="../Menus/Edit/Standard_editing_commands.htm">standard editing commands</a> apply to cells rather than tracks, provided the grid has the input focus; see below.
+<li>To <a href="../Views/Track_View/Track_Selection.htm">select</a> a track, left-click on its name. Ctrl+left-click and Shift+left-click both do what you'd expect (select multiple tracks and select a range of tracks). Note that this transfers the input focus to the track name area, hence subsequent standard editing commands affect tracks rather than cells, unless you restore the input focus to the grid by clicking within it.
+<li>Zooming changes the duration of grid cells. To see more detail, zoom in; to see the big picture, zoom out.
+</ul>
+
+<a name="Cell_selection"><p><b>Cell selection</b></a>
+<p>It's often useful to select a contiguous range of cells in one or more tracks, also known as a cell selection. A cell selection must be rectangular. To make a cell selection, right-click any corner of the desired range, and while keeping the right mouse pressed, drag the pointer to the diagonally opposite corner of the range, and then release the right mouse button. If the pointer reaches an edge of the view while you're dragging, the view is scrolled automatically, and this lets you make a cell selection larger than what would fit on the screen. A selected cell is colored either cyan or yellow, depending on whether the cell is unmuted, as shown below:
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Unmuted</th><th>Selected</th><th>Color</th></tr>
+<tr><td>No</td><td>No</td><td>White</td></tr>
+<tr><td>Yes</td><td>No</td><td>Green</td></tr>
+<tr><td>No</td><td>Yes</td><td>Cyan</td></tr>
+<tr><td>Yes</td><td>Yes</td><td>Yellow</td></tr>
+</table>
+
+<p>The selected cells can be toggled by left-clicking anywhere in the view, or muted by left-clicking with the <span class="key">Ctrl</span> key down. A cell selection can also be copied, cut, pasted at, inserted at, or deleted via the <a href="../Menus/Edit/Standard_editing_commands.htm">standard editing commands</a>. When deleting an entire section from an arrangement, or inserting empty space into the middle of an arrangement, make sure your cell selection includes all the tracks.
+
+<p>Empty space can be inserted in two ways. One way is to make a cell selection that's one cell wide and then repeat the insert command as many times as needed. The other way is to find an empty area of the view, select an area of the desired width, copy it, select the upper left corner of the area where the insertion should go, and then paste.
 
 <!--  content stops HERE  -->
 			

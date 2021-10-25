@@ -11,9 +11,15 @@
 
 <h3>Songs</h3>
 
-<p>A song is a series of <a href="../Concepts/Dubs.htm">dubs</a>, which constitute a particular arrangement of a composition's <a href="../Concepts/Tracks.htm">tracks</a>.
+<p>A song is a particular arrangement of your <a href="../Concepts/Tracks.htm">tracks</a>, created by muting and unmuting them over time. In other words, a song is a sequence of <a href="../Concepts/Dubs.htm">dubs</a>, each of which mutes or unmutes one or more tracks at a particular time. The song can be visualized and edited in <a href="../Views/Song_View.htm">song view</a>. It's possible to create a song entirely by editing in song view, but it's often more intuitive to <a href="../Menus/Transport/Record.htm">record</a> a rough arrangement in <a href="../Views/Live_View.htm">live view</a> and then use song view to refine the transitions.
 
-<p>***
+<p>Creating a song is optional. The main advantage of creating a song is that you can "paint" with your <a href="../Concepts/Polymeter.htm">polymeter</a> loops on a timeline, in a completely non-destructive way. Editing the song never modifies the underlying tracks, and the tracks always maintain correct phase, no matter how much they're dubbed.
+
+<p>During <a href="../Menus/Transport/Play.htm">playback</a>, if the song view is active, the <a href="../Views/Track_View/Track_Mutes.htm">track mutes</a> are automated, meaning tracks are automatically muted or unmuted as required by the song arrangement. You can start playback at any <a href="../Properties/Meter.htm#Song_position">position</a>, or skip around within the song while it's playing, and the track mutes "chase" to the appropriate state. Note however that a track must have at least one dub in order to be automated.
+
+<p>If the song exists, meaning at least one track has dubs, the MIDI file <a href="../Menus/File/Export.htm">export</a> applies the dubs to the tracks, so that the resulting file follows the arrangement.
+
+<p>A song may also include <a href="../Loose_Ends/Recording_MIDI_input.htm">recorded MIDI input</a> such as note or control change messages.
 
 <!--  content stops HERE  -->
 			

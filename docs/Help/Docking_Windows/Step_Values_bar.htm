@@ -11,25 +11,25 @@
 
 <h3>Step Values</h3>
 
-<p>This <a href="../Docking_Windows/Docking_windows.htm">docking window</a> lets you edit step values numerically, using a <a href="../Concepts/Grid_controls.htm">grid control</a>. In some case this may be more convenient than dragging velocity bars in the <a href="../Views/Track_View/Velocities_Pane.htm">Velocities pane</a>. It's particularly useful for editing <a href="../Modulation/Note_modulation.htm">note modulator</a> tracks and similar cases.
+<p>This <a href="../Docking_Windows/Docking_windows.htm">docking window</a> lets you edit step values numerically, using a <a href="../Concepts/Grid_controls.htm">grid control</a>. In some cases this may be more convenient than dragging velocity bars in the <a href="../Views/Track_View/Velocities_Pane.htm">Velocities pane</a>. It's particularly useful for editing <a href="../Modulation/Note_modulation.htm">note modulator</a> tracks and similar cases.
 
 <p>Step values are shown for the <a href="../Views/Track_View/Track_Selection.htm">selected tracks</a> only. Note that selecting a large number of tracks at once may cause the Step Values window to perform poorly. It's recommended to hide the Step Values window when it's not needed.
 
 <a name="Step_values_display_formats"><p><b>Display formats</b></a>
-<p>Various display formats can be selected using the window's context menu. If Signed is enabled, the steps are interpreted as signed values from &minus;64 to +64, otherwise they're considered unsigned values. If Notes is enabled, the steps are displayed as notes, with or without octave information, depending on whether Octaves is enabled. If Ties is enabled, the <a href="../Tracks/Note_tracks.htm#Tied_notes">tied note</a> bit (the MSB) is included, otherwise it's masked off; this is an advanced feature, as is Hexadecimal display.
+<p>Various display formats can be selected using the window's <a href="../Docking_Windows/Step_Values_bar.htm#Step_values_context_menu">context menu</a>. If Signed is enabled, the steps are interpreted as <a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">signed</a> values from &minus;64 to +64, otherwise they're considered unsigned values. If Notes is enabled, the steps are displayed as notes, with or without octave information, depending on whether Octaves is enabled. If Ties is enabled, the <a href="../Tracks/Note_tracks.htm#Tied_notes">tied note</a> bit (the MSB) is included, otherwise it's masked off; this is an advanced feature, as is Hexadecimal display.
 
 <a name="Step_values_context_menu"><p><b>Context menu</b></a>
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Item</th><th>Description</th></tr>
 <tr><td>Format</td><td>This submenu lets you select a <a href="../Docking_Windows/Step_Values_bar.htm#Step_values_display_formats">display format</a>.</td></tr>
-<tr><td>Cut</td><td>Deletes the selected steps after copying them to the clipboard.</td></tr>
+<tr><td>Cut</td><td>Deletes the selected steps after copying them to the <a href="../Menus/Edit/Standard_editing_commands.htm#Clipboards">clipboard</a>.</td></tr>
 <tr><td>Copy</td><td>Copies the selected steps to the clipboard.</td></tr>
 <tr><td>Paste</td><td>Inserts the contents of the steps clipboard at the current position.</td></tr>
 <tr><td>Insert</td><td>Inserts a new step.</td></tr>
 <tr><td>Delete</td><td>Deletes the selected steps.</td></tr>
 <tr><td>Select All</td><td>Selects all steps.</td></tr>
 <tr><td>Export</td><td>Exports the steps as text to the system clipboard.</td></tr>
-<tr><td>Options</td><td>Configures the export. You can choose Columns = Steps vs. Columns = Tracks, and Comma Delimited (CSV) vs. Tab Delimited.</td></tr>
+<tr><td>Options</td><td>Configures the export. You can choose Columns = Steps versus Columns = Tracks, and Comma Delimited (CSV) versus Tab Delimited.</td></tr>
 </table>
 
 <!--  content stops HERE  -->

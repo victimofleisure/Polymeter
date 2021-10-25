@@ -11,9 +11,9 @@
 
 <h3>Duration modulation</h3>
 
-<p>In duration <a href="../Concepts/Modulations.htm">modulation</a>, a track's note <a href="../Views/Track_View/Track_Grid.htm#Track_Duration">durations</a> are altered by one or more modulator tracks. A duration modulator track is interpreted as an array of signed offsets (in MIDI <a href="../Concepts/Steps.htm#Ticks">ticks</a>), which are added to the note durations. If a target track has multiple duration modulators, they're summed. The duration is prevented from being less than one.
+<p>In duration <a href="../Concepts/Modulations.htm">modulation</a>, a track's note <a href="../Views/Track_View/Track_Grid.htm#Track_Duration">durations</a> are altered by one or more modulator tracks. A duration modulator track is interpreted as an array of <a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">signed</a> offsets (in MIDI <a href="../Concepts/Steps.htm#Ticks">ticks</a>), which are added to the note durations. If a target track has multiple duration modulators, they're summed. The duration is prevented from being less than one.
 
-<p>Decreasing the duration causes the notes become more staccato and percussive, whereas increasing it causes the notes to become more legato and potentially <a href="../Properties/Note_Overlap.htm">overlapped</a>. Duration modulation is more effective if the output instrument has a rapid attack and decay.
+<p>Decreasing the duration causes the notes to become more staccato and percussive, whereas increasing it causes the notes to become more legato and potentially <a href="../Properties/Note_Overlap.htm">overlapped</a>. Duration modulation is more effective if the output instrument has a rapid attack and decay.
 
 <!--  content stops HERE  -->
 			

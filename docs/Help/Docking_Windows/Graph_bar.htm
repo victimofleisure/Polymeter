@@ -11,11 +11,11 @@
 
 <h3>Graph</h3>
 
-<p>This <a href="../Docking_Windows/Docking_windows.htm">docking window</a> graphs your <a href="../Concepts/Modulations.htm">modulations</a>, in order to make them easier to visualize. To use this feature, you must first download and install <a href="http://www.graphviz.org/download/">Graphviz</a>, an excellent free graphing software that's used by many well-known projects. If you're running 64-bit Windows, it's recommended to use a 64-bit build of Graphviz. More recent versions of Graphviz only support Windows 10.
+<p>This <a href="../Docking_Windows/Docking_windows.htm">docking window</a> graphs your <a href="../Concepts/Modulations.htm">modulations</a>, in order to make them easier to visualize. To use this feature, you must first download and install <a href="http://www.graphviz.org/download/">Graphviz</a>, an excellent free graphing software that's used by many notable projects. If you're running 64-bit Windows, it's recommended to use a 64-bit build of Graphviz. More recent versions of Graphviz only support Windows 10.
 
 <p>Polymeter looks for Graphviz in two system folders: Program Files, and Program Files (x86). If it's not found in either place, you'll be prompted for the location of Graphviz.
 
-<p>The graphing options are selected via context menu. The scope of the graph can be one of these:
+<p>The graphing options are selected via <a href="../Docking_Windows/Graph_bar.htm#Graph_context_menu">context menu</a>. The scope of the graph can be one of these:
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Scope</th><th>Description</th></tr>
@@ -25,7 +25,7 @@
 <tr><td>Bidirectional</td><td>Show direct and indirect modulators and targets of selected tracks</td></tr>
 </table>
 
-<p>Various graph layouts are supported, including dot (for hierarchical graphs) and neato (for non-hierarchical graphs). The edges are colored to indicate modulation type, and edge labels can optionally be displayed. The graph is generated as vectors (SVG format) so it's zoomable, and can be exported for printing. Hovering over a node's label shows a tooltip containing the track number. The graph is displayed using a web browser control (IWebBrowser2). Note that the recommended Internet Explorer version is 11 or later (Edge); earlier versions of IE may display the graph incorrectly or not at all.
+<p>Various graph layouts are supported, including dot (for hierarchical graphs) and neato (for non-hierarchical graphs). The edges are <a href="../Docking_Windows/Graph_bar.htm#Graph_edge_colors">colored</a> to indicate modulation type, and edge labels can optionally be displayed. The graph is generated as vectors (SVG format) so it's zoomable, and can be exported for printing. Hovering over a node's label shows a tooltip containing the track number. The graph is displayed using a web browser control (IWebBrowser2). Note that the recommended Internet Explorer version is 11 or later (Edge); earlier versions of IE may display the graph incorrectly or not at all.
 
 <a name="Graph_context_menu"><p><b>Context menu</b></a>
 <p><table border=1 cellpadding=2 cellspacing=0>
@@ -37,6 +37,23 @@
 <tr><td>Labels</td><td>This item enables or disables edge labels. When this option is enabled, a label appears next to every connecting line in the graph, identifying the corresponding modulation type. This is only recommended for simple graphs, because otherwise the graph is hard to read.</td></tr>
 <tr><td>Save As</td><td>This item saves the current graph to a file. Currently the only supported format is SVG.</td></tr>
 <tr><td>Reload</td><td>This item redraws the graph.</td></tr>
+</table>
+
+<a name="Graph_edge_colors"><p><b>Graph edge colors</b></a>
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Color</th><th>Modulation Type</th></tr>
+<tr><td>Black</td><td><a href="../Modulation/Mute_modulation.htm">Mute</a></td></tr>
+<tr><td>Red</td><td><a href="../Modulation/Note_modulation.htm">Note</a></td></tr>
+<tr><td>Green</td><td><a href="../Modulation/Velocity_modulation.htm">Velocity</a></td></tr>
+<tr><td>Blue</td><td><a href="../Modulation/Duration_modulation.htm">Duration</a></td></tr>
+<tr><td>Dark Cyan</td><td><a href="../Modulation/Range_modulation.htm">Range</a></td></tr>
+<tr><td>Magenta</td><td><a href="../Modulation/Position_modulation.htm">Position</a></td></tr>
+<tr><td>Brown</td><td><a href="../Modulation/Tempo_modulation.htm">Tempo</a></td></tr>
+<tr><td>Purple</td><td><a href="../Modulation/Scale_modulation.htm">Scale</a></td></tr>
+<tr><td>Dark Green</td><td><a href="../Modulation/Chord_modulation.htm">Chord</a></td></tr>
+<tr><td>Olive</td><td><a href="../Modulation/Index_modulation.htm">Index</a></td></tr>
+<tr><td>Orange</td><td><a href="../Modulation/Voicing_modulation.htm">Voicing</a></td></tr>
+<tr><td>Turquoise</td><td><a href="../Modulation/Offset_modulation.htm">Offset</a></td></tr>
 </table>
 
 <!--  content stops HERE  -->

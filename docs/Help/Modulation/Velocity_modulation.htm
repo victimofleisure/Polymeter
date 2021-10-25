@@ -11,7 +11,7 @@
 
 <h3>Velocity modulation</h3>
 
-<p>In velocity <a href="../Concepts/Modulations.htm">modulation</a>, a track's note <a href="../Views/Track_View/Track_Grid.htm#Track_Velocity">velocities</a> are altered by one or more modulator tracks. A velocity modulator track is interpreted as an array of signed offsets, which are added to the note velocities. If a target track has multiple velocity modulators, they're summed. If the offset becomes too large or too small the velocity <a href="../Loose_Ends/Clipping.htm">clips</a>, but otherwise the target's original dynamics are preserved.
+<p>In velocity <a href="../Concepts/Modulations.htm">modulation</a>, a track's note <a href="../Views/Track_View/Track_Grid.htm#Track_Velocity">velocities</a> are altered by one or more modulator tracks. A velocity modulator track is interpreted as an array of <a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">signed</a> offsets, which are added to the note velocities. If a target track has multiple velocity modulators, they're summed. If the offset becomes too large or too small the velocity <a href="../Loose_Ends/Clipping.htm">clips</a>, but otherwise the target's original dynamics are preserved.
 
 <p>It's interesting to combine velocity modulations that operate on different time scales, for example a longer modulator that applies a gradual crescendo could be combined with a shorter modulator that applies "ripple" to the velocities.
 
