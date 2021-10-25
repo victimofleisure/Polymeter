@@ -34,6 +34,8 @@ echo y | C:\Chris\tools\fsr links.htm "\"http://waveshop.sourceforge.net/\"" "\"
 echo y | C:\Chris\tools\fsr links.htm "\"http://whorld.sourceforge.net/\"" "\"https://victimofleisure.github.io/Whorld/\""
 echo y | C:\Chris\tools\fsr links.htm "\"http://whorld.org/\"" "\"https://victimofleisure.github.io/Whorld/\""
 ren links.htm links.html
+copy C:\Chris\MyProjects\Polymeter\Help\help.txt Help
+if errorlevel 1 goto err
 goto exit
 :err
 pause Error!
