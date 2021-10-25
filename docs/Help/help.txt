@@ -1209,7 +1209,7 @@ By default, output notes are displayed for all MIDI channels. To show only a par
 <tr><td>Output Channel</td><td>In this submenu, select the MIDI channel on which left-clicked piano keys should send the corresponding notes, or select "None" to disable this feature.</td></tr>
 <tr><td>Piano Size</td><td>To resize the keyboard, select a standard piano size from the submenu.</td></tr>
 <tr><td>Key Labels</td><td>Check this item to show labels on the piano keys that identify the corresponding MIDI notes.</td></tr>
-<tr><td>Rotate Labels</td><td>Check this item to rotate the key labels 90° counterclockwise, so that they're vertical instead of horizontal. This may allow the labels to use a larger font. This option is only supported when the window is docked horizontally.</td></tr>
+<tr><td>Rotate Labels</td><td>Check this item to rotate the key labels 90&deg; counterclockwise, so that they're vertical instead of horizontal. This may allow the labels to use a larger font. This option is only supported when the window is docked horizontally.</td></tr>
 <tr><td>Color Velocities</td><td>Check this item to color the piano keys according to the velocities of the output notes. The colors range spectrally from blue (softest) to red (loudest).</td></tr>
 </table>
 
