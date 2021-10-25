@@ -12,6 +12,7 @@
 		02		05apr20	add track step mapping
 		03		07sep20	add preset and part mapping
 		04		13feb21	add string ID to special target macro
+		05		25oct21	add optional sort direction
 
 */
 
@@ -122,7 +123,7 @@ public:
 	void	Delete(int iMapping, int nCount = 1);
 	void	Delete(const CIntArrayEx& arrSelection);
 	void	Move(const CIntArrayEx& arrSelection, int iDropPos);
-	void	Sort(int iProp);
+	void	Sort(int iProp, bool bDescending = false);
 	static	int		SortCompare(const void *arg1, const void *arg2);
 	void	OnTrackArrayEdit(const CIntArrayEx& arrTrackMap);
 
@@ -131,6 +132,7 @@ protected:
 	CMappingArray	m_arrMapping;	// array of mappings
 	WCritSec	m_csMapping;		// critical section for serializing access to mappings
 	static int	m_iSortProp;		// index of property to sort mappings by
+	static bool	m_bSortDescending;	// true if sort should be descending
 };
 
 inline WCritSec& CSeqMapping::GetCritSec()

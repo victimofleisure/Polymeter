@@ -72,6 +72,7 @@
 		62		08jun21	fix warning for CString as variadic argument
 		63		20jun21	move focus edit handling to child frame
 		64		19jul21	enable stretch for track selection only
+		65		25oct21 in sort mappings, add optional sort direction
 
 */
 
@@ -3813,11 +3814,12 @@ void CPolymeterDoc::MoveMappings(const CIntArrayEx& arrSelection, int iDropPos)
 	UpdateAllViews(NULL, HINT_MAPPING_ARRAY, &hint);
 }
 
-void CPolymeterDoc::SortMappings(int iProp)
+void CPolymeterDoc::SortMappings(int iProp, bool bDescending)
 {
 	ASSERT(iProp >= 0 && iProp < CMapping::PROPERTIES);
 	NotifyUndoableEdit(0, UCODE_SORT_MAPPINGS);
-	m_Seq.m_mapping.Sort(iProp);
+	m_Seq.m_mapping.Sort(iProp, bDescending);
+	SetModifiedFlag();
 	CSelectionHint	hint(NULL);
 	UpdateAllViews(NULL, HINT_MAPPING_ARRAY, &hint);
 }

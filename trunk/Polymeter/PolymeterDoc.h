@@ -39,6 +39,7 @@
 		29		16dec20	add looping of playback
 		30		24jan21	add prime factors command
 		31		07jun21	rename rounding functions
+		32		25oct21 in sort mappings, add optional sort direction
 
 */
 
@@ -286,7 +287,7 @@ public:
 	void	DeleteMappings(const CIntArrayEx& arrSelection, bool bIsCut);
 	void	InsertMappings(int iInsert, const CMappingArray& arrMapping, bool bIsPaste);
 	void	MoveMappings(const CIntArrayEx& arrSelection, int iDropPos);
-	void	SortMappings(int iProp);
+	void	SortMappings(int iProp, bool bDescending = false);
 	void	LearnMapping(int iMapping, DWORD nInMidiMsg, bool bCoalesceEdit = false);
 	void	LearnMappings(const CIntArrayEx& arrSelection, DWORD nInMidiMsg, bool bCoalesceEdit = false);
 	void	CreateModulation(int iSelItem = -1);

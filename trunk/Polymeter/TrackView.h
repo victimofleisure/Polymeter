@@ -13,6 +13,7 @@
 		03		17apr20	add track color
 		04		09jul20	add pointer to parent frame
 		05		20jan21	add ensure visible method
+		06		25oct21	add menu select and exit menu handlers
 
 */
 
@@ -129,6 +130,8 @@ protected:
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu);
+	afx_msg void OnExitMenuLoop(BOOL bIsTrackPopupMenu);
 	afx_msg void OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnListItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnListReorder(NMHDR* pNMHDR, LRESULT* pResult);

@@ -19,6 +19,7 @@
 		09		01apr20	add list column header reset handler
 		10		03jun20	add global recording state
 		11		17jun20	add tracking help handler
+		12		23oct21	add resource versioning
 
 */
 
@@ -120,6 +121,8 @@ public:
 	CTrack::CMidiEventArray	m_arrMidiInEvent;	// array of MIDI input events
 	int		m_nMidiInStartTime;	// first MIDI input event's time, in active document's ticks
 	CPolymeterDoc	*m_pPlayingDoc;	// pointer to playing document if any
+	int		m_nOldResourceVersion;	// previous resource version number
+	static const int	m_nNewResourceVersion;	// current resource version number
 
 protected:
 // Types

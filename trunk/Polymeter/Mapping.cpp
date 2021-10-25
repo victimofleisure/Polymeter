@@ -15,6 +15,7 @@
 		05		15feb21	add mapping targets for transport commands
 		06		07jun21	rename rounding functions
 		07		30jun21	move step mapping range checks into critical section
+		08		25oct21	add optional sort direction
 
 */
 
@@ -339,20 +340,25 @@ void CSeqMapping::Move(const CIntArrayEx& arrSelection, int iDropPos)
 	m_arrMapping.MoveSelection(arrSelection, iDropPos);
 }
 
-void CSeqMapping::Sort(int iProp)
+void CSeqMapping::Sort(int iProp, bool bDescending)
 {
 	WCritSec::Lock	lock(m_csMapping);	// serialize access to mappings
 	m_iSortProp = iProp;
+	m_bSortDescending = bDescending;
 	qsort(m_arrMapping.GetData(), m_arrMapping.GetSize(), sizeof(CMapping), SortCompare);
 }
 
 int CSeqMapping::m_iSortProp;	// index of property to sort mappings by
+bool CSeqMapping::m_bSortDescending;	// true if sort should be descending
 
 int CSeqMapping::SortCompare(const void *arg1, const void *arg2)
 {
 	const CMapping*	pMapping1 = (CMapping *)arg1;
 	const CMapping*	pMapping2 = (CMapping *)arg2;
-	return CTrack::Compare(pMapping1->GetProperty(m_iSortProp), pMapping2->GetProperty(m_iSortProp));
+	int	nResult = CTrack::Compare(pMapping1->GetProperty(m_iSortProp), pMapping2->GetProperty(m_iSortProp));
+	if (m_bSortDescending)
+		nResult = -nResult;
+	return nResult;
 }
 
 void CSeqMapping::OnTrackArrayEdit(const CIntArrayEx& arrTrackMap)

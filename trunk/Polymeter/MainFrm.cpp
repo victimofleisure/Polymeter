@@ -53,6 +53,7 @@
 		43		18jul21	track color handler must set document modified flag
 		44		08aug21	fix help for docking windows submenu
 		45		31aug21	on meter change, update format of loop from/to
+		46		23oct21	allow persistent UI customization in Release
 
 */
 
@@ -418,16 +419,23 @@ BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParent
 	}
 #endif
 
-	// ck: disable UI customization for now, it's too confusing during development
-#if _MFC_VER < 0xb00
-	m_wndMenuBar.RestoreOriginalstate();
-	m_wndToolBar.RestoreOriginalstate();
-#else	// MS fixed typo
-	m_wndMenuBar.RestoreOriginalState();
-	m_wndToolBar.RestoreOriginalState();
+#ifdef _DEBUG
+	bool	bResetCustomizations = true;	// customizations are too confusing during development
+#else
+	// in Release only, reset customizations if resource version changed
+	bool	bResetCustomizations = theApp.m_nNewResourceVersion != theApp.m_nOldResourceVersion;
 #endif
-	theApp.GetKeyboardManager()->ResetAll();
-	theApp.GetContextMenuManager()->ResetState();
+	if (bResetCustomizations) {	// if resetting UI to its default state
+#if _MFC_VER < 0xb00
+		m_wndMenuBar.RestoreOriginalstate();
+		m_wndToolBar.RestoreOriginalstate();
+#else	// MS fixed typo
+		m_wndMenuBar.RestoreOriginalState();
+		m_wndToolBar.RestoreOriginalState();
+#endif
+		theApp.GetKeyboardManager()->ResetAll();
+		theApp.GetContextMenuManager()->ResetState();
+	}
 
 	return TRUE;
 }

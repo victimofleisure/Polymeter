@@ -19,6 +19,7 @@
 		09		17jun20	in command help handler, try tracking help first
 		10		09jul20	add pointer to parent frame
 		11		10feb21	add option to keep track names unique
+		12		25oct21	add menu select and exit menu handlers
 
 */
 
@@ -534,7 +535,6 @@ BEGIN_MESSAGE_MAP(CTrackView, CView)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
-	ON_WM_CONTEXTMENU()
 	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 	ON_NOTIFY(LVN_GETDISPINFO, IDC_TRACK_GRID, OnListGetdispinfo)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_TRACK_GRID, OnListItemChanged)
@@ -544,6 +544,8 @@ BEGIN_MESSAGE_MAP(CTrackView, CView)
 	ON_MESSAGE(UWM_LIST_SCROLL_KEY, OnListScrollKey)
 	ON_MESSAGE(UWM_LIST_SELECTION_CHANGE, OnListSelectionChange)
 	ON_WM_CONTEXTMENU()
+	ON_WM_MENUSELECT()
+	ON_WM_EXITMENULOOP()
 	ON_COMMAND(ID_LIST_COL_HDR_RESET, OnListColHdrReset)
 	ON_NOTIFY(HDN_ENDDRAG, 0, OnListHdrEndDrag)
 	ON_NOTIFY(HDN_ENDTRACK, 0, OnListHdrEndTrack)
@@ -597,6 +599,20 @@ LRESULT CTrackView::OnCommandHelp(WPARAM wParam, LPARAM lParam)
 		return TRUE;
 	theApp.WinHelp(GetDlgCtrlID());
 	return TRUE;
+}
+
+void CTrackView::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
+{
+	// this ensures status hint and command help work for list control's context menu
+	UNREFERENCED_PARAMETER(hSysMenu);
+	if (!(nFlags & MF_SYSMENU))	// if not system menu item
+		AfxGetMainWnd()->SendMessage(WM_SETMESSAGESTRING, nItemID, 0);	// set status hint
+}
+
+void CTrackView::OnExitMenuLoop(BOOL bIsTrackPopupMenu)
+{
+	if (bIsTrackPopupMenu)	// if exiting context menu, restore status idle message
+		AfxGetMainWnd()->SendMessage(WM_SETMESSAGESTRING, AFX_IDS_IDLEMESSAGE, 0);
 }
 
 void CTrackView::OnSetFocus(CWnd* pOldWnd)

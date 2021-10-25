@@ -28,6 +28,7 @@
 		18		16mar21	add track selection to edit command update handlers
 		19		07jun21	rename rounding functions
 		20		20jun21	move focus edit handling to child frame
+		21		22oct21	Ctrl + left click now mutes in all cases
 
 */
 
@@ -729,9 +730,9 @@ void CSongView::OnLButtonDown(UINT nFlags, CPoint point)
 	CPolymeterDoc	*pDoc = GetDocument();
 	double	fTicksPerCell = GetTicksPerCell();
 	if (HaveSelection()) {	// if selection exists
-		if (nFlags & MK_CONTROL)
+		if (nFlags & MK_CONTROL)	// if control key is down
 			pDoc->SetDubs(m_rCellSel, fTicksPerCell, true);
-		else
+		else	// control key is up
 			pDoc->ToggleDubs(m_rCellSel, fTicksPerCell);
 		ResetSelection();
 	} else {	// no selection
@@ -739,7 +740,10 @@ void CSongView::OnLButtonDown(UINT nFlags, CPoint point)
 		int	iTrack = HitTest(point, iCell);
 		if (iTrack >= 0 && iCell >= 0) {	// if hit on cell
 			CRect	rCell(CPoint(iCell, iTrack), CSize(1, 1));
-			pDoc->ToggleDubs(rCell, fTicksPerCell);
+			if (nFlags & MK_CONTROL)	// if control key is down
+				pDoc->SetDubs(rCell, fTicksPerCell, true);
+			else	// control key is up
+				pDoc->ToggleDubs(rCell, fTicksPerCell);
 		}
 	}
 	CScrollView::OnLButtonDown(nFlags, point);

@@ -15,6 +15,7 @@
 		05		17apr20	add track color option
 		06		03jun20	add record input options
 		07		10feb21	add unique track names option
+		08		24oct21	increase maximum view update frequency
 
 */
 
@@ -41,7 +42,7 @@ PROPDEF(	Midi,		NONE,		VAR,		short,		nDefaultVelocity,	100,		1,			127,		NULL,		0
 PROPDEF(	Midi,		NONE,		ENUM,		int,		iInputQuant,		INQNT_16,	0,			0,			NULL,		0)
 PROPDEF(	Midi,		NONE,		ENUM,		int,		nRecordInput,		0,			0,			0,			m_oiRecordInput, RECORD_INPUT_OPTS)
 PROPDEF(	Midi,		NONE,		VAR,		bool,		bSendMidiClock,		0,			0,			0,			NULL,		0)
-PROPDEF(	View,		NONE,		VAR,		float,		fUpdateFreq,		20.0f,		1.0f,		60.0f,		NULL,		0)
+PROPDEF(	View,		NONE,		VAR,		float,		fUpdateFreq,		20.0f,		1.0f,		250.0f,		NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowCurPos,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowNoteNames,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowGMNames,		1,			0,			0,			NULL,		0)

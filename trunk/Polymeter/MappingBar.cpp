@@ -15,6 +15,7 @@
 		05		19nov20	add sender argument to set mapping property
 		06		15feb21	add mapping targets for transport commands
 		07		20jun21	remove dispatch edit keys
+		08		25oct21	add descending sort via Shift key
 		
 */
 
@@ -488,7 +489,8 @@ void CMappingBar::OnListColumnClick(NMHDR* pNMHDR, LRESULT* pResult)
 		CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 		ASSERT(pDoc != NULL);
 		if (pDoc != NULL) {
-			pDoc->SortMappings(iProp);
+			bool	bDescending = (GetKeyState(VK_SHIFT) & GKS_DOWN) != 0;
+			pDoc->SortMappings(iProp, bDescending);
 		}
 	}
 	pResult = 0;

@@ -24,6 +24,7 @@
 		14		28jun20	do track parameter mappings even if no output device
 		15		17jul21	in RestartApp, replace GetStartupInfo with minimal init
 		16		19jul21	include step parent header for its pane IDs
+		17		23oct21	add resource versioning
 
 */
 
@@ -59,6 +60,9 @@
 #define CHECK_MIDI(x) { MMRESULT nResult = x; if (MIDI_FAILED(nResult)) { OnMidiError(nResult); return false; } }
 
 #define RK_TIE_NOTES _T("bTieNotes")
+#define RK_RESOURCE_VERSION _T("nResourceVersion")
+
+const int CPolymeterApp::m_nNewResourceVersion = 1;	// update if resource change breaks customization
 
 #include "HelpIDs.h"	// help IDs generated automatically by doc2web
 const CPolymeterApp::HELP_RES_MAP CPolymeterApp::m_HelpResMap[] = {
@@ -85,6 +89,7 @@ CPolymeterApp::CPolymeterApp()
 	m_bHelpInit = false;
 	m_nMidiInStartTime = 0;
 	m_pPlayingDoc = NULL;
+	m_nOldResourceVersion = 0;
 }
 
 // The one and only CPolymeterApp object
@@ -135,6 +140,7 @@ BOOL CPolymeterApp::InitInstance()
 	SetRegistryKey(_T("Anal Software"));
 	LoadStdProfileSettings(4);  // Load standard INI file options (including MRU)
 
+	m_nOldResourceVersion = theApp.GetProfileInt(REG_SETTINGS, RK_RESOURCE_VERSION, 0);
 	m_Options.ReadProperties();	// get options from registry
 	m_bTieNotes = GetProfileInt(REG_SETTINGS, RK_TIE_NOTES, 0) != 0;
 	CChildFrame::LoadPersistentState();
@@ -190,6 +196,11 @@ BOOL CPolymeterApp::InitInstance()
 	// The main window has been initialized, so show and update it
 	pMainFrame->ShowWindow(m_nCmdShow);
 	pMainFrame->UpdateWindow();
+
+	// now that we're up, check for resource version change, and update profile if needed
+	if (m_nNewResourceVersion != m_nOldResourceVersion) {	// if resource version changed
+		theApp.WriteProfileInt(REG_SETTINGS, RK_RESOURCE_VERSION, m_nNewResourceVersion);
+	}
 
 	return TRUE;
 }
