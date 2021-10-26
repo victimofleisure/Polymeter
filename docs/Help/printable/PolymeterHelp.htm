@@ -307,11 +307,11 @@
 
 <p>Polymeter is the use of multiple meters simultaneously within a single piece of music. In this application, polymeter means combining <a href="#Tracks">loops</a> of different lengths, so that they slip relative to each other, the way oscillators with different frequencies shift phase relative to each other. Polymeter is more interesting when the loop lengths being combined are <a href="#Primes">relatively prime</a>, meaning they share no common factors except one. Such loop combinations gradually drift apart (diverge) and then drift back together (converge) in a predictable way, producing intricate patterns of interference as they do so. Various tools are provided to work with <a href="#Convergences">convergences</a>.
 
-<a name="Complex_polymeter"><h2>Complex polymeter</h2></a>
+<a name="Complex_polymeter"><h3>Complex polymeter</h3></a>
 
 <p>Complex polymeter is the simultaneous use of three or more relatively prime meters. For example, a composition that uses the meters 4/4, 5/4, and 7/4 all at the same time is in complex polymeter.
 
-<a name="Polymeter_versus_polyrhythm,_odd_time,_and_phasing"><h2>Polymeter versus polyrhythm, odd time, and phasing</h2></a>
+<a name="Polymeter_versus_polyrhythm,_odd_time,_and_phasing"><h3>Polymeter versus polyrhythm, odd time, and phasing</h3></a>
 
 <ul>
 <li>Polyrhythm means combining different rhythms. There's no requirement that the rhythms be different lengths or exhibit phase shift. Polyrhythm is a very general category, of which polymeter is a subset.
@@ -336,7 +336,7 @@
 
 <p>The simplest way to create polymeter is by juxtaposing tracks of different lengths, assuming the lengths are <a href="#Primes">relatively prime</a>. More complex methods include using tracks to alter the behavior of other tracks, in a process called <a href="#Modulations">modulation</a>.
 
-<a name="Track_properties"><h2>Track properties</h2></a>
+<a name="Track_properties"><h3>Track properties</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><td><a href="#Track_Name">Name</a></td><td>The track's name</td></tr>
@@ -353,7 +353,7 @@
 <tr><td><a href="#Track_Range_Start">Range Start</a></td><td>Lowest note of the track's range</td></tr>
 <tr><td><a href="#Track_Mutes">Mute</a></td><td>True if the track is muted</td></tr></table>
 
-<a name="Track_types"><h2>Track types</h2></a>
+<a name="Track_types"><h3>Track types</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Type</th><th>Outputs</th><th>Step</th></tr>
@@ -390,7 +390,7 @@
 
 <p>Because a track's steps are evenly spaced in time, undesirably stiff rhythms may result. Rhythmic stiffness can be mitigated by adjusting the track's <a href="#Track_Swing">swing</a>, or by applying <a href="#Offset_modulation">offset modulation</a> to the track.
 
-<a name="Unsigned_versus_signed_steps"><h2>Unsigned versus signed steps</h2></a>
+<a name="Unsigned_versus_signed_steps"><h3>Unsigned versus signed steps</h3></a>
 
 <p>Steps are stored in seven binary bits, and therefore have 2<sup>7</sup> or 128 possible values. The values range either from 0 to 127, or from &minus;64 to +63, depending on whether the step is interpreted as an unsigned or signed number. This convention derives from the MIDI standard, which commonly uses 7-bit data for message parameters and data. For example the data of a MIDI control change message is considered unsigned for volume controls, but signed for pan controls. To convert a value from unsigned to signed, subtract 64 from it; to do the reverse, add 64. The following table shows some correspondences between unsigned and signed values.
 
@@ -405,7 +405,7 @@
 
 <p>Whether a step is interpreted as unsigned or signed depends on the context in which the step is used. The context is determined by the <a href="#Track_types">track type</a>, except for <a href="#Modulator_tracks">modulator tracks</a>, in which case it's determined by the <a href="#Modulation_types">modulation type</a>.
 
-<a name="Ticks"><h2>Ticks</h2></a>
+<a name="Ticks"><h3>Ticks</h3></a>
 
 <p>A tick is the smallest unit of relative time that can be used within a given MIDI composition. Ticks are related to beats (quarter notes) by the <a href="#Timebase">timebase</a>, which specifies the number of ticks per beat. Various properties of a <a href="#Tracks">track</a>, including the duration of its <a href="#Steps">steps</a> (also known as its <a href="#Track_Quant">Quant</a>) are specified in ticks. The length of a tick in absolute time depends on the <a href="#Tempo">tempo</a>, as shown below:
 
@@ -417,7 +417,7 @@
 
 <p>Besides juxtaposition, another important method of combining <a href="#Tracks">tracks</a> is <em>modulation</em>, in which a track alters the behavior of another track. The track that does the modulating is called the modulator or <em>source</em>, whereas the track that's being modulated is called the target or <em>sink</em>. There are many types of modulation, and they vary in terms of the targets they support, and how they interpret step values, as shown below.
 
-<a name="Modulation_types"><h2>Modulation types</h2></a>
+<a name="Modulation_types"><h3>Modulation types</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Type</th><th>Targets</th><th>Effect</th><th>Step</th></tr>
@@ -435,7 +435,7 @@
 <tr><td><a href="#Offset_modulation">Offset</a></td><td>Note tracks only</td><td>Offsets playback timing</td><td>Unsigned offset in ticks</td></tr>
 </table>
 
-<a name="Modulation_relationships"><h2>Modulation relationships</h2></a>
+<a name="Modulation_relationships"><h3>Modulation relationships</h3></a>
 
 <p>The relationship between source and target tracks can be any of the following:
 
@@ -538,7 +538,7 @@
 
 <p>It's more interesting if something happens at these convergences. In 4/4 music, significant changes often occur at powers of two, e.g. 16, 32, 64, etc. In polymeter, significant changes should naturally occur at the convergences between the different lengths.
 
-<a name="Convergence_example"><h2>Convergence example</h2></a>
+<a name="Convergence_example"><h3>Convergence example</h3></a>
 
 <p>This table shows the partial convergences of 3, 5, and 7 up to their first full convergence at 105. Subsequent full convergences would occur at 210, 315, 420, and so on. The table could be extended infinitely far into the future or past, and would continue to repeat this same pattern of convergences.
 
@@ -563,7 +563,7 @@
 
 <p>The application makes frequent use of lists, some of which are editable <a href="#Grid_controls">grid controls</a>. Within a list, rows can be selected either via the mouse, or via the keyboard.
 
-<a name="Selecting_rows_via_mouse"><h2>Selecting rows via mouse</h2></a>
+<a name="Selecting_rows_via_mouse"><h3>Selecting rows via mouse</h3></a>
 
 <ul>
 <li>To select a single row, left-click it.
@@ -572,7 +572,7 @@
 <li>To deselect all rows, left-click below the last row, or to the right of the last column.
 </ul>
 
-<a name="Selecting_rows_via_keyboard"><h2>Selecting rows via keyboard</h2></a>
+<a name="Selecting_rows_via_keyboard"><h3>Selecting rows via keyboard</h3></a>
 
 <p>You can also select list rows via the keyboard, using the up/down arrow keys, possibly in combination with other keys.
 
@@ -582,7 +582,7 @@
 <li>To add or remove a row to or from an existing selection, first navigate to the desired row as described above, but while pressing the <span class="key">Ctrl</span> key. This moves the list selection mark (usually a dotted rectangular outline) without disrupting the existing selection. When the selection mark is on the desired item, press <span class="key">Ctrl+Alt+Space</span> to toggle the item's selection state. The <span class="key">Alt</span> key is necessary because <span class="key">Ctrl+Space</span> is reserved for the <a href="#Play">Play</a> command.
 </ul>
 
-<a name="List_columns"><h2>List columns</h2></a>
+<a name="List_columns"><h3>List columns</h3></a>
 
 <p>You can change the width of list columns by using the mouse. To change the width of a column, drag the boundary on the right side of the column heading until the column is the width that you want. To auto-size a column so that it's the same width as its widest visible item, double-click the boundary on the right side of the column heading.
 
@@ -616,7 +616,7 @@
 
 <p>The placement of notes, their durations, and their velocities are all determined by a note track's steps. If a note is tied, meaning it occupies multiple adjacent steps, the first of its steps determines its velocity. Note placement and duration are edited using the <a href="#Track_Steps">track steps</a> pane. To edit note velocities, use the <a href="#Velocities_Pane">velocities pane</a> or the <a href="#Step_Values_bar">step values bar</a>; for other methods, see <a href="#Steps">steps</a>. To offset all of a track's note velocities by a constant, enter a non-zero value for the <a href="#Track_Velocity">track velocity</a> property. Note tracks can be limited to a specified range of notes via the <a href="#Track_Range_Type">range</a> properties.
 
-<a name="Tied_notes"><h2>Tied notes</h2></a>
+<a name="Tied_notes"><h3>Tied notes</h3></a>
 
 <p>Notes longer than one <a href="#Steps">step</a> are created by joining two or more adjacent steps. Steps joined in this way are said to be <em>tied</em>. Each step has an attribute called a <em>tie bit</em>, and if a step's tie bit is set, that step joins itself with the next step. If the next step is occupied, it extends the duration of the existing note by a step, instead of triggering a new note. If the next step isn't occupied, the tie bit has no effect.
 
@@ -645,7 +645,7 @@
 
 <p>At least one of a note track's steps must be either empty or untied, otherwise the track will be silent. Tying only applies to note tracks; for all other <a href="#Track_types">track types</a>, the tie bit is irrelevant and isn't shown. You can specify whether steps are initially tied or untied, using the <a href="#Tie_Notes">Tie Notes</a> command.
 
-<a name="Triggering_samples"><h2>Triggering samples</h2></a>
+<a name="Triggering_samples"><h3>Triggering samples</h3></a>
 
 <p><a href="#Tied_notes">Tied notes</a> are more likely to be useful with melodic or chordal parts, because the instruments associated with such parts are typically sensitive to note duration. Tied notes may be irrelevant when triggering drums, because drum sounds commonly play their entire sample, regardless of the triggering note's duration. Many hardware and software drum machines ignore note duration, including the drum channel (channel ten) of a General MIDI synth, such as the GS Wavetable Synth that ships with Windows. If you're writing drum parts for a device that ignores note duration, you may find it convenient to use only untied steps, so that setting consecutive steps always retriggers the sample.
 
@@ -873,7 +873,7 @@
 
 <p>To switch between the different views, use the View menu's Track, Song, and Live commands or their keyboard shortcuts. Normally only one view is shown at a time. To show multiple views at once, <a href="#Splits">split</a> the view area into two or more tab groups.
 
-<a name="Song_Mode"><h2>Song Mode</h2></a>
+<a name="Song_Mode"><h3>Song Mode</h3></a>
 
 <p>Which view is shown can affect <a href="#Play">playback</a>. If song view is shown, the sequencer operates in <em>song mode</em>, which means that tracks are automatically muted and unmuted to reflect the <a href="#Songs">arrangement</a>. If <a href="#Splits">multiple views</a> are shown, which view is <em>active</em> determines whether song mode is in effect. When you enter song mode, the <a href="#Track_Mutes">track mutes</a> snap to appropriate states based on your <a href="#Song_position">position</a> within the song.
 
@@ -883,7 +883,7 @@
 
 <p>The track <a href="#Views">view</a> is the main interface for editing <a href="#Tracks">tracks</a>, and contains one row for each track. The view is split vertically into two <a href="#Panes">panes</a>. The left pane contains the <a href="#Track_Grid">track grid</a>, and the right pane contains the <a href="#Track_Mutes">track mutes</a> and <a href="#Track_Steps">track steps</a>. The right pane can also be split horizontally to show the optional <a href="#Velocities_Pane">velocities pane</a>, which lets you edit the step values graphically by dragging bars. To display the track view, use the View menu's <a href="#Show_Track_View">Track</a> command.
 
-<a name="Track_view_quick_help"><h3>Quick help</h3></a>
+<a name="Track_view_quick_help"><h4>Quick help</h4></a>
 
 <ul>
 <li>To alter the pattern of a track, left-click in its <a href="#Steps">steps</a>, which are shown as outlined rectangles. The steps area is to the right of the vertical splitter bar and <a href="#Track_Mutes">track mutes</a>, and looks similar to graph paper.
@@ -902,7 +902,7 @@
 <li>Columns can be resized or reordered via the column header. To reset the columns to their default width and order, right-click in the column header and select <span class="cmd">Reset</span> in the context menu.
 </ul>
 
-<a name="Panes"><h3>Panes</h3></a>
+<a name="Panes"><h4>Panes</h4></a>
 
 <p>Certain windows may be horizontally or vertically split into panes, separated by a moveable border called a <em>splitter bar</em>. To resize a pane, drag the splitter bar that separates it from its neighbor, in other words left-click on the splitter bar, and while keeping the left mouse button pressed, move the split until the pane is the desired size. While the pointer is positioned over a splitter bar, the cursor changes to indicate that resizing is possible. The borders that separate <a href="#Docking_windows">docking windows</a> from each other, and from the document area, behave similarly to splitter bars.
 
@@ -910,23 +910,23 @@
 
 <p>This <a href="#Grid_controls">grid control</a> constitutes the left pane of the <a href="#Track_View">track view</a>, and contains one row for each <a href="#Tracks">track</a>. Most <a href="#Track_properties">track properties</a> are editable via this grid. The grid's columns are described below.
 
-<a name="Track_Number"><h3>Number</h3></a>
+<a name="Track_Number"><h4>Number</h4></a>
 
 <p>This column is the track number, which is read-only. The column caption is a number sign (#). Left-click in this column to <a href="#List_controls">select</a> tracks. To move a track, left-click in this column, and while keeping the left mouse button pressed, drag the track to the desired location, and then release the left mouse button. Multiple <a href="#Track_Selection">selected tracks</a> can be moved in the same manner.
 
-<a name="Track_Name"><h3>Name</h3></a>
+<a name="Track_Name"><h4>Name</h4></a>
 
 <p>This is the track's name. Appropriately naming tracks makes compositions easier to manage. If you name multiple tracks at once, and the <a href="#Unique_Track_Names">Unique track names</a> option is enabled, sequential numbers are appended to the track names to make them unique. Polymeter supports <a href="#Find">Find</a> and <a href="#Replace">Replace</a> for track names.
 
-<a name="Track_Type"><h3>Type</h3></a>
+<a name="Track_Type"><h4>Type</h4></a>
 
 <p>This property selects the track's <a href="#Track_types">type</a>, which determines what the track outputs, and how its <a href="#Track_Steps">steps</a> are interpreted.
 
-<a name="Track_Channel"><h3>Channel</h3></a>
+<a name="Track_Channel"><h4>Channel</h4></a>
 
 <p>This property selects which MIDI channel the track outputs messages on.
 
-<a name="Track_Note"><h3>Note</h3></a>
+<a name="Track_Note"><h4>Note</h4></a>
 
 <p>This property has different meanings depending on the <a href="#Track_Type">track type</a>.
 
@@ -944,11 +944,11 @@
 
 <p>For <a href="#Note_tracks">note tracks</a>, the note property is normally displayed as a MIDI note name instead of a number (for example C4 instead of 60), however this behavior can be disabled by setting the <a href="#Show_Note_Names">Show Note Names</a> option to false, and the note value can be entered numerically regardless of this option. For channel 10 only, the note property is normally displayed as a General MIDI drum name, using a drop list instead of an edit box, but this can be disabled by setting <a href="#Show_General_MIDI_Names">Show General MIDI Names</a> to false.
 
-<a name="Track_Length"><h3>Length</h3></a>
+<a name="Track_Length"><h4>Length</h4></a>
 
 <p>This is the length of the track, in steps. It can't be less than one, nor can it exceed the <a href="#Maximum_track_length">maximum track length</a>. Increasing the length appends empty steps to the end of the track. Decreasing the length removes existing steps from the end of the track. To set the length visually instead of numerically, use the Track menu's <a href="#Length">Length</a> command.
 
-<a name="Track_Quant"><h3>Quant</h3></a>
+<a name="Track_Quant"><h4>Quant</h4></a>
 
 <p>This is the duration of each track step, in <a href="#Ticks">ticks</a>. The table below gives common Quant values for the default <a href="#Timebase">timebase</a> (120 ticks per quarter note).
 
@@ -968,11 +968,11 @@
 
 <p>Changing a track's quant causes it to play at a different speed. You can compensate for this by <a href="#Stretch">stretching</a> the track. Multiplying the track's quant by its <a href="#Track_Length">length</a> gives the duration of one cycle through the track, also known as its <a href="#Period">period</a>.
 
-<a name="Track_Offset"><h3>Offset</h3></a>
+<a name="Track_Offset"><h4>Offset</h4></a>
 
 <p>This is the track's time offset, in <a href="#Ticks">ticks</a>. Negative values make the track earlier; positive values make it later. The offset can also be altered via <a href="#Offset_modulation">offset modulation</a>.
 
-<a name="Track_Swing"><h3>Swing</h3></a>
+<a name="Track_Swing"><h4>Swing</h4></a>
 
 <p>This is the track's amount of swing, in <a href="#Ticks">ticks</a>. Swing is a time offset that's applied to even-numbered steps. A positive value delays the even-numbered steps, and lengthens the odd-numbered steps to compensate. A negative value hastens the even-numbered steps, and shortens the odd-numbered steps to compensate. Swing is usually positive, and can't exceed the track's <a href="#Track_Quant">Quant</a>. Setting swing to one-third of the track's Quant results in triplet feel. Swing affects all <a href="#Track_types">track types</a> except Modulator.
 
@@ -995,17 +995,17 @@
 </td><td>Negative</td></tr>
 </table>
 
-<a name="Track_Velocity"><h3>Velocity</h3></a>
+<a name="Track_Velocity"><h4>Velocity</h4></a>
 
 <p>This is the track's velocity offset. It's a signed value that's added to the velocity values obtained from the track steps. The result is clamped so that it can't exceed the valid range of MIDI data, which can potentially result in <a href="#Clipping">clipping</a>. Velocity affects all <a href="#Track_types">track types</a> except Tempo and Modulator. The velocity can also be altered via <a href="#Velocity_modulation">velocity modulation</a>.
 
-<a name="Track_Duration"><h3>Duration</h3></a>
+<a name="Track_Duration"><h4>Duration</h4></a>
 
 <p>This is the track's duration offset, in <a href="#Ticks">ticks</a>. For note tracks, it's a signed value that's added to the durations of all notes played by the track. Positive values make the note longer (more legato), and negative values make it shorter (more staccato). Positive values may cause notes to overlap, in which case collisions may occur; see <a href="#Note_Overlap">note overlap</a>. The duration is clamped to prevent it from being less than one. The duration can also be altered via <a href="#Duration_modulation">duration modulation</a>.
 
 <p>For tempo tracks and tempo modulators, Duration is repurposed to be the range of the tempo change, as a percentage; see <a href="#Tempo_tracks">tempo tracks</a>.
 
-<a name="Track_Range_Type"><h3>Range Type</h3></a>
+<a name="Track_Range_Type"><h4>Range Type</h4></a>
 
 <p>This is the type of range to be applied to the track. Range only affects note tracks. The Octave type forces the output note to stay within a one-octave range, the bottom of which is determined by the <a href="#Track_Range_Start">Range Start</a> property. The note is shifted by as many octaves as necessary to keep it within the specified range. For chords and arpeggios, this produces inversions.
 
@@ -1013,7 +1013,7 @@
 
 <p>Range can be used to limit the width of <a href="#Note_modulation">note modulation</a>. Range behaves differently when <a href="#Scale_modulation">scale modulation</a> and/or <a href="#Chord_modulation">chord modulation</a> are used.
 
-<a name="Track_Range_Start"><h3>Range Start</h3></a>
+<a name="Track_Range_Start"><h4>Range Start</h4></a>
 
 <p>This is the starting note of the range to apply to the track. It only affects note tracks, and only has an effect if <a href="#Track_Range_Type">Range Type</a> isn't None. Range start can be modulated via <a href="#Range_modulation">range modulation</a>.
 
@@ -1037,7 +1037,7 @@
 
 <p>The steps area can be zoomed horizontally, using the <a href="#Zoom_In">Zoom In</a>, <a href="#Zoom_Out">Zoom Out</a>, and <a href="#Zoom_Reset">Zoom Reset</a> commands. You can also zoom by spinning the mouse wheel while pressing the <span class="key">Ctrl</span> key, and this centers the zooming at the cursor position. The width of the steps area is determined by the track with the longest <a href="#Period">period</a>. The ruler at the top of the steps area is marked in beats and ticks; see <a href="#Meter">meter</a> for details. Left-clicking in the ruler jumps to the corresponding <a href="#Song_position">song position</a>. Right-clicking in the ruler clears the current step selection if any.
 
-<a name="Track_steps_quick_help"><h3>Quick help</h3></a>
+<a name="Track_steps_quick_help"><h4>Quick help</h4></a>
 
 <ul>
 <li>Left-click a step to create a note or event. Left-click the step again to empty it.
@@ -1113,7 +1113,7 @@
 
 <p>Instead of creating an arrangement entirely via editing in song view, you may find it more intuitive to first <a href="#Record">record</a> a rough arrangement in <a href="#Live_View">live view</a>, and then refine it in song view. For complex arrangements, you can repeat the record/edit cycle for each section, instead of trying to get the entire arrangement right in one take.
 
-<a name="Song_Grid"><h2>Song Grid</h2></a>
+<a name="Song_Grid"><h3>Song Grid</h3></a>
 
 <p>The song grid is a timeline editor for dubbing. It lets you "paint" with your tracks, by drawing the regions where each track should be audible. Each grid row corresponds to a track, and wherever the row is highlighted in green, the corresponding track is unmuted (audible). Tracks are automatically repeated infinitely, and always maintain correct phase regardless of dubbing.
 
@@ -1125,7 +1125,7 @@
 
 <p>Be careful when editing while zoomed out, because the further out you're zoomed, the more details are hidden. This is most likely to be a problem when extending an existing dub. In such cases you should zoom in and make sure you haven't left unintended gaps. It's also recommended to step through your dubs, using the left and right arrow keys in combination with the <span class="key">Alt</span> key, as this can help you find mistakes.
 
-<a name="Song_grid_quick_help"><h2>Quick help</h2></a>
+<a name="Song_grid_quick_help"><h3>Quick help</h3></a>
 
 <ul>
 <li>Each grid cell represents a timespan. A grid cell is highlighted in green if the corresponding track is unmuted (audible) during that cell's timespan.
@@ -1140,7 +1140,7 @@
 <li>Zooming changes the duration of grid cells. To see more detail, zoom in; to see the big picture, zoom out.
 </ul>
 
-<a name="Cell_selection"><h2>Cell selection</h2></a>
+<a name="Cell_selection"><h3>Cell selection</h3></a>
 
 <p>It's often useful to select a contiguous range of cells in one or more tracks, also known as a cell selection. A cell selection must be rectangular. To make a cell selection, right-click any corner of the desired range, and while keeping the right mouse pressed, drag the pointer to the diagonally opposite corner of the range, and then release the right mouse button. If the pointer reaches an edge of the view while you're dragging, the view is scrolled automatically, and this lets you make a cell selection larger than what would fit on the screen. A selected cell is colored either cyan or yellow, depending on whether the cell is unmuted, as shown below:
 
@@ -1220,7 +1220,7 @@
 
 <p>Docking windows can be arranged by dragging, by using commands on the Window menu, and by right-clicking the title bar of the window to be arranged.
 
-<a name="Floating_windows"><h2>Floating windows</h2></a>
+<a name="Floating_windows"><h3>Floating windows</h3></a>
 
 <p>You can undock a window from its default location in the application and move that window anywhere on the desktop or to another monitor. You can dock multiple windows together in a "raft" and then move them as a unit anywhere on the desktop or to another monitor.
 
@@ -1248,7 +1248,7 @@
 
 <p>A floating window can be maximized to cover the entire screen. To maximize a floating window, select the Maximize item from its Window menu. To restore a maximized window to its previous size and location, select the Restore item from its Window menu.
 
-<a name="Auto_hide"><h2>Auto hide</h2></a>
+<a name="Auto_hide"><h3>Auto hide</h3></a>
 
 <p>Docking windows support a feature called Auto Hide. Auto Hide causes a window to slide out of the way when you use a different window. When a window is auto-hidden, its name appears on a tab at the edge of the application. To use the window again, point to the tab so that the window slides back into view.
 
@@ -1259,7 +1259,7 @@
 
 <p>Docking windows that have Auto Hide enabled may temporarily slide into view when the window has focus. To hide the window again, select an item outside of the current window. When the window loses focus, it slides back out of view.
 
-<a name="Specifying_a_Monitor"><h2>Specifying a Monitor</h2></a>
+<a name="Specifying_a_Monitor"><h3>Specifying a Monitor</h3></a>
 
 <p>If you have a second <a href="#Multiple_monitors">monitor</a> and your operating system supports it, you can choose which monitor displays a window. You can even group multiple windows together in "rafts" on other monitors.
 
@@ -1269,7 +1269,7 @@
 <li>In the application, drag the window to the other monitor.
 </ul>
 
-<a name="Resetting_window_layouts"><h2>Resetting window layouts</h2></a>
+<a name="Resetting_window_layouts"><h3>Resetting window layouts</h3></a>
 
 <p>You can return the application to the original window layout by using the <a href="#Reset_Layout">Window/Reset Layout</a> command.
 
@@ -1285,7 +1285,7 @@
 
 <p>This <a href="#Docking_windows">docking window</a> lets you edit the <a href="#Master_properties">master properties</a>. These properties are saved in the document. To edit a property, left-click it and change its value. To save your edit, press <span class="key">Enter</span> or <span class="key">Tab</span>, or left-click outside the property being edited. To cancel your edit, press <span class="key">Escape</span>. While you're editing a property, the arrow keys may have different meanings. For example, for numeric edits and drop lists, the up/down arrows scroll through the possible values. If you're not editing a property, the up/down arrows navigate through the list of properties. To edit the currently selected property, press <span class="key">Tab</span>.
 
-<a name="Master_properties"><h2>Master properties</h2></a>
+<a name="Master_properties"><h3>Master properties</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><td><a href="#Tempo">Tempo</a></td><td>Tempo, in beats per minute</td></tr>
@@ -1304,7 +1304,7 @@
 
 <p>This <a href="#Docking_windows">docking window</a> lets you edit the setup for each MIDI channel. The messages specified here are sent when playback starts. This is useful if you want to initialize your instruments, by sending them patch change messages, for example. The properties are edited via a <a href="#Grid_controls">grid control</a>.
 
-<a name="Channels_columns"><h2>Columns</h2></a>
+<a name="Channels_columns"><h3>Columns</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Column</th><th>Description</th></tr>
@@ -1320,7 +1320,7 @@
 
 <p>This <a href="#Docking_windows">docking window</a> lets you edit your <a href="#Presets">presets</a>. When you create a preset, it's given a temporary numeric name which you're free to change. For item selection methods, see <a href="#List_controls">list controls</a>.
 
-<a name="Presets_context_menu"><h2>Context menu</h2></a>
+<a name="Presets_context_menu"><h3>Context menu</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Item</th><th>Description</th><th>Selection</th></tr>
@@ -1335,7 +1335,7 @@
 
 <p>This <a href="#Docking_windows">docking window</a> lets you edit your <a href="#Parts">parts</a>. When you create a preset, it has the same name as its first member <a href="#Tracks">track</a>, but you're free to rename it. For item selection methods, see <a href="#List_controls">list controls</a>.
 
-<a name="Parts_context_menu"><h2>Context menu</h2></a>
+<a name="Parts_context_menu"><h3>Context menu</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Item</th><th>Description</th><th>Selection</th></tr>
@@ -1351,7 +1351,7 @@
 
 <p>This <a href="#Docking_windows">docking window</a> lets you edit your <a href="#Modulations">modulations</a>. The modulations are edited using a <a href="#Grid_controls">grid control</a>. Only modulators for the <a href="#Track_Selection">selected tracks</a> are shown. If no tracks are selected, or if the selected tracks don't have any modulators, the window is empty.
 
-<a name="Creating_a_modulation"><h2>Creating a modulation</h2></a>
+<a name="Creating_a_modulation"><h3>Creating a modulation</h3></a>
 
 <p>To create a modulation, do the following:
 
@@ -1365,7 +1365,7 @@
 
 <p>The new modulation is inserted at the current position in the modulation list. To append, first left-click or right-click below the last list item, so that no item is selected. If your modulation gets inserted in the wrong place, you can move it afterwards by left-clicking and dragging it.
 
-<a name="Creating_a_modulation_group"><h2>Creating a modulation group</h2></a>
+<a name="Creating_a_modulation_group"><h3>Creating a modulation group</h3></a>
 
 <p>Sometimes it's desirable to create a group of modulations, all targeting the same tracks and having the same <a href="#Modulation_types">modulation type</a>, but with different source tracks. Instead of <a href="#Creating_a_modulation">creating</a> the modulations one by one, it's easier to create them all at once, as follows:
 
@@ -1376,13 +1376,13 @@
 <li>In the Modulation dialog, select one or more source tracks and a modulation type, and then press OK to create the modulations.
 </ol>
 
-<a name="Show_Differences"><h2>Show Differences</h2></a>
+<a name="Show_Differences"><h3>Show Differences</h3></a>
 
 <p>The Modulations bar normally shows all modulations that the <a href="#Track_Selection">selected tracks</a> have in common. If the selected tracks don't all have exactly the same modulations, the message "&lt;Differences&gt;" is displayed at the bottom of the list. This message indicates that at least one of the selected tracks has a modulation that's hidden, because it's not shared by the other tracks.
 
 <p>In some cases you may prefer to show all modulations that target any of the selected tracks, regardless of whether all the selected tracks share them. To do this, enable <span class="cmd">Show Differences</span> mode via the <a href="#Modulations_context_menu">context menu</a>. In Show Differences mode, the modulations list is a summary report. Each row of the report corresponds to a unique combination of modulation type and source track, and the number of instances of that combination is displayed in the index column. The report is sorted into descending order by number of instances. Reordering the modulations via drag and drop isn't supported in Show Differences mode.
 
-<a name="Modulations_context_menu"><h2>Context menu</h2></a>
+<a name="Modulations_context_menu"><h3>Context menu</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Item</th><th>Description</th></tr>
@@ -1407,7 +1407,7 @@
 
 <p>To pause the display, select <span class="cmd">Pause</span> in the window's context menu. Events continue to be captured while you're paused, so you won't miss any. To resume the display, reselect <span class="cmd">Pause</span> in the context menu. The context menu also allows you to clear the event history, via <span class="cmd">Clear History</span>.
 
-<a name="MIDI_IO_context_menu"><h2>Context menu</h2></a>
+<a name="MIDI_IO_context_menu"><h3>Context menu</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><td>Channel Filter</td><td>To show only a particular channel, select the corresponding submenu item, or select "All" to show messages from all channels.</td></tr>
@@ -1432,7 +1432,7 @@
 
 <p>By default, output notes are displayed for all MIDI channels. To show only a particular channel, use the <span class="cmd">Channel Filter</span> submenu of the window's <a href="#Piano_context_menu">context menu</a>. The context menu also lets you change the size of the piano keyboard, show or hide the key labels, and rotate the key labels. The window can optionally send MIDI notes when the corresponding keys are left-clicked. To enable this feature, use the context menu's <span class="cmd">Output Channel</span> submenu to select the desired MIDI channel.
 
-<a name="Piano_context_menu"><h2>Context menu</h2></a>
+<a name="Piano_context_menu"><h3>Context menu</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><td>Channel Filter</td><td>To only show notes on a particular MIDI channel, select the corresponding submenu item, or select "All" to show notes from all channels.</td></tr>
@@ -1461,7 +1461,7 @@
 
 <p>Various graph layouts are supported, including dot (for hierarchical graphs) and neato (for non-hierarchical graphs). The edges are <a href="#Graph_edge_colors">colored</a> to indicate modulation type, and edge labels can optionally be displayed. The graph is generated as vectors (SVG format) so it's zoomable, and can be exported for printing. Hovering over a node's label shows a tooltip containing the track number. The graph is displayed using a web browser control (IWebBrowser2). Note that the recommended Internet Explorer version is 11 or later (Edge); earlier versions of IE may display the graph incorrectly or not at all.
 
-<a name="Graph_context_menu"><h2>Context menu</h2></a>
+<a name="Graph_context_menu"><h3>Context menu</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><td>Scope</td><td>Use this submenu to select the scope of the graph. Scopes are explained above.</td></tr>
@@ -1474,7 +1474,7 @@
 <tr><td>Reload</td><td>This item redraws the graph.</td></tr>
 </table>
 
-<a name="Graph_edge_colors"><h2>Graph edge colors</h2></a>
+<a name="Graph_edge_colors"><h3>Graph edge colors</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Color</th><th>Modulation Type</th></tr>
@@ -1509,7 +1509,7 @@
 
 <p>If you hover the pointer over an orbit, after a short delay, a tooltip is shown containing the corresponding Length and Quant.
 
-<a name="Exporting_phase_video"><h2>Exporting video</h2></a>
+<a name="Exporting_phase_video"><h3>Exporting video</h3></a>
 
 <p>The phase visualization can be exported as a series of frames in sequentially numbered PNG files. The resulting image sequence can then be converted to a video using <a href="http://ffmpeg.org">ffmpeg</a> or an equivalent program. To start exporting, select <span class="cmd">Export Video</span> from the phase bar's context menu. This command is only available while playback of the document is <a href="#Play">stopped</a>.
 
@@ -1525,11 +1525,11 @@
 
 <p>Step values are shown for the <a href="#Track_Selection">selected tracks</a> only. Note that selecting a large number of tracks at once may cause the Step Values window to perform poorly. It's recommended to hide the Step Values window when it's not needed.
 
-<a name="Step_values_display_formats"><h2>Display formats</h2></a>
+<a name="Step_values_display_formats"><h3>Display formats</h3></a>
 
 <p>Various display formats can be selected using the window's <a href="#Step_values_context_menu">context menu</a>. If Signed is enabled, the steps are interpreted as <a href="#Unsigned_versus_signed_steps">signed</a> values from &minus;64 to +64, otherwise they're considered unsigned values. If Notes is enabled, the steps are displayed as notes, with or without octave information, depending on whether Octaves is enabled. If Ties is enabled, the <a href="#Tied_notes">tied note</a> bit (the MSB) is included, otherwise it's masked off; this is an advanced feature, as is Hexadecimal display.
 
-<a name="Step_values_context_menu"><h2>Context menu</h2></a>
+<a name="Step_values_context_menu"><h3>Context menu</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Item</th><th>Description</th></tr>
@@ -1556,7 +1556,7 @@
 
 <p>The output range (start value and end value) allow the input MIDI data to be shifted or scaled to any integer range. If the start is bigger than the end, the control direction is reversed, in which case turning the knob up makes the value smaller.
 
-<a name="Mapping_columns"><h2>Mapping columns</h2></a>
+<a name="Mapping_columns"><h3>Mapping columns</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><td>Input Event</td><td>The type of input MIDI event being mapped; these are all MIDI channel messages.</td></tr>
@@ -1570,7 +1570,7 @@
 <tr><td>Track</td><td>The target track. This is only applicable when mapping to track properties.</td></tr>
 </table>
 
-<a name="Output_event_types"><h2>Output event types</h2></a>
+<a name="Output_event_types"><h3>Output event types</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th colspan=4>Translations</th></tr>
@@ -1603,11 +1603,11 @@
 <tr><td><a href="#Loop">Loop</a></td><td>N/A</td><td>N/A</td><td>Non-zero to loop</td></tr>
 </table>
 
-<a name="Learning_mappings"><h2>Learning mappings</h2></a>
+<a name="Learning_mappings"><h3>Learning mappings</h3></a>
 
 <p>The application also supports <a href="#MIDI_Learn">MIDI learn</a> mode, i.e. the input messages can be learned from the MIDI input device. To do this, select a mapping in the Mapping window, and then enable learn mode via <span class="cmd">Tools/MIDI Learn</span>, or via the keyboard shortcut <span class="key">Ctrl+Shift+L</span>, or via the Mapping window's <a href="#Mapping_context_menu">context menu</a>. The background color of the selected mapping changes to green, indicating that this mapping will be learned. Now move the associated knob on the MIDI input device, and the mapping's input properties will snap to the appropriate values for that knob. To learn other mappings, select each mapping one at a time and move its associated knob. To learn multiple mappings at once, select them all and move the knob that you want to assign to all of them. After all mappings have been learned, disable MIDI learn mode.
 
-<a name="Mapping_context_menu"><h2>Context menu</h2></a>
+<a name="Mapping_context_menu"><h3>Context menu</h3></a>
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><td>Insert</td><td>Inserts a new mapping at the current position</td></tr>
@@ -1637,7 +1637,7 @@
 
 <p>The timebase can't be changed during <a href="#Play">playback</a>, and only one timebase can be used within any given document. Changing the timebase of an existing document causes all settings in ticks to be scaled, so that their values remain proportionally similar in the new timebase. Specifically track Quant, <a href="#Track_Offset">Offset</a>, <a href="#Track_Swing">Swing</a>, and <a href="#Track_Duration">Duration</a> are all scaled, along with the times of any <a href="#Dubs">dubs</a>. The scaling is only guaranteed to be exact if the new timebase is an integer multiple of the current one, otherwise it's approximate and may cause loss of precision.
 
-<a name="Timebase_values"><h2>Timebase values</h2></a>
+<a name="Timebase_values"><h3>Timebase values</h3></a>
 
 <p>This table lists the supported timebase values, all of which are multiples of 24 to ensure compatibility with <a href="#Send_MIDI_Clock">MIDI clock</a> synchronization. The table also shows the Greatest Prime Factor (GPF) for each timebase, in other words the largest <a href="#Primes">prime</a> number each timebase is evenly divisible by, which is useful information if you want to use odd subdivisions of a beat.
 
@@ -1671,7 +1671,7 @@
 
 <p>Since <a href="#Polymeter">polymeter</a> is the use of multiple meters at once, it might seem pointless to specify a meter, but it can still be useful to change how song positions are displayed, particularly if your composition emphasizes one meter more than others.
 
-<a name="Song_position"><h2>Song position</h2></a>
+<a name="Song_position"><h3>Song position</h3></a>
 
 <p>A song position is a location within the output MIDI sequence. Song positions are maintained internally in <a href="#Ticks">ticks</a>, but they're displayed either as beats and ticks, or as measures, beats and ticks (also known as MBT), depending on the <a href="#Meter">Meter</a> property. Ticks are zero-based, whereas both beats and measures are one-based, hence a song position of zero ticks is displayed as 1:000 if meter is one, or 1:1:000 if meter is greater than one.
 
@@ -1771,7 +1771,7 @@
 <tr><td>Latency too long</td><td>User interface lags behind playback; delay between your actions and their effects</td></tr>
 </table>
 
-<a name="Underruns"><h3>Underruns</h3></a>
+<a name="Underruns"><h4>Underruns</h4></a>
 
 <p>During <a href="#Play">playback</a>, the MIDI sequence is prepared ahead of time in chunks. The length of the chunks is determined by the <a href="#Latency">Latency</a> setting. Ideally the application prepares the next chunk while the previous chunk is being played, and thus stays ahead of demand. However if a chunk takes too long to prepare, the previous chunk may run out before the next chunk can be delivered. This situation is called an <em>underrun</em>.
 
@@ -1940,7 +1940,7 @@
 
 <p>Within the track view, if a <a href="#Step_Selection">step selection</a> exists, it takes priority over the <a href="#Track_Selection">track selection</a>. In other words, if both tracks and steps are selected, the editing commands operate on the selected steps. The song view works similarly.
 
-<a name="Clipboards"><h3>Clipboards</h3></a>
+<a name="Clipboards"><h4>Clipboards</h4></a>
 
 <p>The Polymeter application doesn't use the Windows clipboard, except for text. Instead, Polymeter has internal clipboards for each of the following types of data: <a href="#Tracks">tracks</a>, <a href="#Steps">steps</a>, <a href="#Dubs">dubs</a>, <a href="#Modulations">modulations</a>, and <a href="#Mappings">mappings</a>. These clipboards are only accessible within the instance of Polymeter that created them, hence they don't support copying data to other applications or other instances of Polymeter, nor do they persist after Polymeter exits. This shouldn't be a problem since Polymeter is an MDI (Multiple Document Interface) application, meaning it allows multiple documents to be opened at once. To move data between two Polymeter documents via clipboard, open both documents within a single instance of Polymeter.
 
@@ -2039,11 +2039,11 @@
 
 <p>This submenu contains commands to show or hide windows associated with groups, such as <a href="#Presets">presets</a> and <a href="#Parts">parts</a>.
 
-<a name="Show_Presets"><h3>Presets</h3></a>
+<a name="Show_Presets"><h4>Presets</h4></a>
 
 <p>This command shows or hides the <a href="#Presets_bar">Presets bar</a>.
 
-<a name="Show_Parts"><h3>Parts</h3></a>
+<a name="Show_Parts"><h4>Parts</h4></a>
 
 <p>This command shows or hides the <a href="#Parts_bar">Parts bar</a>.
 
@@ -2067,7 +2067,7 @@
 
 <p>This command lets you customize your toolbars, menus, and keyboard shortcuts. It displays a tabbed dialog. The various tabs are explained below.
 
-<a name="Customize_Commands"><h3>Commands tab</h3></a>
+<a name="Customize_Commands"><h4>Commands tab</h4></a>
 
 <p>This tab contains commands that you can drag onto your menus and toolbars. It allows you to add commands and modify existing commands on the Menu bar or any toolbar. For detailed instructions, see the <a href="#Customize_Menu">Menu tab</a>.
 
@@ -2075,7 +2075,7 @@
 
 <p>You can also select <b>New Menu</b>, which allows you to drag a new submenu onto the menu you're customizing. After you've created the submenu, you can drag commands onto it. To rename the submenu, right-click its name, and in the resulting context menu, select <b>Button Appearance</b>; in the resulting dialog, type the new name in the <b>Button Text</b> edit box. To give the name a mnemonic, insert an ampersand before the character that should be the mnemonic.
 
-<a name="Customize_Toolbars"><h3>Toolbars tab</h3></a>
+<a name="Customize_Toolbars"><h4>Toolbars tab</h4></a>
 
 <p>This tab allows you to create, rename, delete, and reset your toolbars. The following table describes the tab options.
 
@@ -2089,7 +2089,7 @@
 <tr><td>Delete</td><td>Deletes a user-defined toolbar from your project. Only available if you select a user-defined toolbar.</td></tr>
 </table>
 
-<a name="Customize_Keyboard"><h3>Keyboard tab</h3></a>
+<a name="Customize_Keyboard"><h4>Keyboard tab</h4></a>
 
 <p>This tab allows you to customize keyboard shortcuts (also known as shortcut keys or keyboard accelerators) by assigning them to a command. You can also remove keyboard shortcuts. To assign or remove a keyboard shortcut:
 
@@ -2109,7 +2109,7 @@
 </ol>
 </ol>
 
-<a name="Customize_Menu"><h3>Menu tab</h3></a>
+<a name="Customize_Menu"><h4>Menu tab</h4></a>
 
 <p>This tab allows you to change the appearance of the application frame menus and context menus. First select the menu you wish to customize.
 
@@ -2131,7 +2131,7 @@
 
 <p>The tab also lists animations you can apply to your menu bar, and lets you enable or disable menu shadows.
 
-<a name="Customize_Options"><h3>Options tab</h3></a>
+<a name="Customize_Options"><h4>Options tab</h4></a>
 
 <p>This tab allows you to change the appearance of your menu bar and toolbars; for example, you can change the size of your toolbar buttons, and show ToolTips and shortcut keys. The following table describes the options.
 
@@ -2171,15 +2171,15 @@
 
 <p>If a <a href="#Step_Selection">step selection</a> exists, it takes priority. In this case only the selected steps are shifted. Otherwise the command operates on the <a href="#Track_Selection">selected tracks</a> in their entirety.
 
-<a name="Shift_Left"><h3>Shift Left</h3></a>
+<a name="Shift_Left"><h4>Shift Left</h4></a>
 
 <p>This command shifts tracks one step to the left. The leftmost step is lost, and an empty step is shifted in on the right to replace it.
 
-<a name="Shift_Right"><h3>Shift Right</h3></a>
+<a name="Shift_Right"><h4>Shift Right</h4></a>
 
 <p>This command shifts tracks one step to the right. The rightmost step is lost, and an empty step is shifted in on the left to replace it.
 
-<a name="Shift_Steps"><h3>Shift Steps</h3></a>
+<a name="Shift_Steps"><h4>Shift Steps</h4></a>
 
 <p>This command shifts tracks by any amount. A dialog is displayed, prompting you for the desired shift in steps. The shift can be positive (right) or negative (left). After you press OK, the tracks are then shifted by the specified number of steps. Empty steps are shifted in as needed.
 
@@ -2189,19 +2189,19 @@
 
 <p>If a <a href="#Step_Selection">step selection</a> exists, it takes priority. In this case only the selected steps are rotated. Otherwise the command operates on the <a href="#Track_Selection">selected tracks</a> in their entirety.
 
-<a name="Rotate_Left"><h3>Rotate Left</h3></a>
+<a name="Rotate_Left"><h4>Rotate Left</h4></a>
 
 <p>This command rotates tracks one step to the left.
 
-<a name="Rotate_Right"><h3>Rotate Right</h3></a>
+<a name="Rotate_Right"><h4>Rotate Right</h4></a>
 
 <p>This command rotates tracks one step to the right.
 
-<a name="Rotate_Steps"><h3>Rotate Steps</h3></a>
+<a name="Rotate_Steps"><h4>Rotate Steps</h4></a>
 
 <p>This command rotates tracks by any amount. A dialog is displayed, prompting you for the desired rotation in steps. The rotation can be positive (right) or negative (left). After you press OK, the tracks are then rotated by the specified number of steps.
 
-<a name="Offset_Tracks"><h3>Offset Tracks</h3></a>
+<a name="Offset_Tracks"><h4>Offset Tracks</h4></a>
 
 <p>This command adds a specified amount to the <a href="#Track_Offset">track offset</a> for the <a href="#Track_Selection">selected tracks</a>. A dialog is displayed, prompting you for the desired offset change, in <a href="#Ticks">ticks</a>. The change can be positive (later) or negative (earlier).
 
@@ -2237,15 +2237,15 @@
 
 <p>This command changes the velocities of the selected <a href="#Tracks">tracks</a> or <a href="#Steps">steps</a>. It has three functions: Offset, Scale and Replace. If a <a href="#Step_Selection">step selection</a> exists, it takes priority, and in this case only the selected steps are affected. Otherwise the command operates on the <a href="#Track_Selection">selected tracks</a>. The command supports all <a href="#Track_types">track types</a>, even though they interpret step values differently. For <a href="#Note_tracks">note tracks</a>, only notes that start within the step selection are affected. For all functions, the resulting values are <a href="#Clipping">clipped</a> so that they can't exceed the permissible range. If clipping is likely, a "Clipping may occur" warning message is displayed, giving you the opportunity to cancel or continue. The clipping check accounts for all velocity offsets including <a href="#Velocity_modulation">velocity modulation</a>.
 
-<a name="Offsetting_velocities"><h3>Offset</h3></a>
+<a name="Offsetting_velocities"><h4>Offset</h4></a>
 
 <p>Use this function to apply an offset, in other words to add or subtract a value from the velocities. The offset is a positive or negative integer. If a step selection exists, the specified offset is added to the selected steps. If a step selection doesn't exist, the "Apply to" setting determines how the offset affects the selected tracks: if it's "Tracks," the offset is added to their <a href="#Track_Velocity">velocity offsets</a>, whereas if it's "Steps," the offset is added to their step values or note velocities.
 
-<a name="Scaling_velocities"><h3>Scale</h3></a>
+<a name="Scaling_velocities"><h4>Scale</h4></a>
 
 <p>Use this function to apply scaling, in other words to multiply the velocities by a value. The scale may be positive or negative, and may also be fractional. If a step selection exists, each selected step is multiplied by the specified scale, otherwise for each selected track, all of its step values are multiplied by the specified scale. If "Signed" is selected, the steps are interpreted as signed values ranging from &minus;64 to +63, otherwise they're interpreted as unsigned values ranging from 0 to 127.
 
-<a name="Replacing_velocities"><h3>Replace</h3></a>
+<a name="Replacing_velocities"><h4>Replace</h4></a>
 
 <p>Use this function to replace a particular step value with a different one. If a step selection exists, the replacement only occurs with the selected steps, otherwise it occurs within all steps of the selected tracks. The find and replace operation can operate on <a href="#Unsigned_versus_signed_steps">signed or unsigned steps</a>.
 
@@ -2255,27 +2255,27 @@
 
 <p>If a <a href="#Step_Selection">step selection</a> exists, it takes priority. In this case only the selected steps are filled. Otherwise the command fills all of the steps in the <a href="#Track_Selection">selected tracks</a>.
 
-<a name="Fill_value_range"><h3>Value Range</h3></a>
+<a name="Fill_value_range"><h4>Value Range</h4></a>
 
 <p>This is the range of values to be filled. For linear fills, these are the starting and ending values. For periodic functions, the difference between these two values is the amplitude of the resulting waveform. The range may be <a href="#Unsigned_versus_signed_steps">signed or unsigned</a>. To fill steps with a constant, set Start and End to the same value.
 
-<a name="Fill_step_range"><h3>Step Range</h3></a>
+<a name="Fill_step_range"><h4>Step Range</h4></a>
 
 <p>This is the range of steps to be filled. It's taken from the step selection if one exists, otherwise it's the maximum of the lengths of the selected tracks.
 
-<a name="Fill_function"><h3>Function</h3></a>
+<a name="Fill_function"><h4>Function</h4></a>
 
 <p>This is the type of function to fill with. The options are Linear, Sine, Triangle, Ramp Up, Ramp Down, and Square. All but the first are periodic functions.
 
-<a name="Fill_Frequency"><h3>Frequency</h3></a>
+<a name="Fill_Frequency"><h4>Frequency</h4></a>
 
 <p>This is the frequency of the periodic waveform, in Hertz. Frequency applies to all functions except Linear. To fill with one complete cycle of the waveform, set the frequency to one. Frequency is a real number and may be fractional.
 
-<a name="Fill_Phase"><h3>Phase</h3></a>
+<a name="Fill_Phase"><h4>Phase</h4></a>
 
 <p>This is the phase of the periodic waveform, in <a href="#Normalized_angles">normalized degrees</a>, ranging from zero to one. Phase applies to all functions except Linear. To start the waveform in its usual position, set the phase to one.
 
-<a name="Fill_Curviness"><h3>Curviness</h3></a>
+<a name="Fill_Curviness"><h4>Curviness</h4></a>
 
 <p>This makes a periodic waveform curvier. If it's zero, curviness is disabled. Otherwise, the curvature becomes more extreme as curviness diverges from one. This lets you make a wider variety of shapes by distorting the underlying waveform. Curviness applies to all functions except Linear. For a typical exponential curve, select the following: Step Range = 0 to 127 (or &minus;64 to +63), Function = Ramp Up, Frequency = 1, Phase = 0, Curviness = 100. For standard waveforms, leave Curviness zero.
 
@@ -2423,17 +2423,17 @@
 
 <p>Each of these commands imports data from a Comma-Separated Values (CSV) file. In all cases, a file dialog is displayed, prompting you to select the input CSV file. The imports have different targets, and expect differently formatted data, as explained below. Each import has a corresponding <a href="#Export_Tracks">export</a>, and in order to better understand a format, it may be helpful to examine the results of its export.
 
-<a name="Import_Tracks"><h3>Import Tracks</h3></a>
+<a name="Import_Tracks"><h4>Import Tracks</h4></a>
 
 <p>This command imports <a href="#Tracks">track</a> data from a CSV file. The first row must be a column header specifying which track properties are to be imported. Each column header item must be a valid track property name. It's not necessary to specify all the track properties, as any omitted properties will be initialized to default values. Track properties may be specified in any order, so long as the subsequent data rows use that same order. For a list of the track property names, examine the file resulting from the corresponding <a href="#Export_Tracks">export tracks</a> command.
 
 <p>Each subsequent row corresponds to a track to be inserted, and must contain properly formatted data values for the properties specified by the column header. Values containing commas must be enclosed in double quotes.
 
-<a name="Import_Steps"><h3>Import Steps</h3></a>
+<a name="Import_Steps"><h4>Import Steps</h4></a>
 
 <p>This command imports <a href="#Steps">step</a> data from a CSV file, containing one row per track, with no initial header row. Each row consists of a list of integers ranging from 0 to 255, corresponding to the step values for that track. The tracks needn't all be the same length. Each track's length is inferred from the number of step values found on its row. For note tracks, step values may exceed 127, due to the most significant bit being used for <a href="#Tied_notes">tying</a> steps together into longer notes. You can also <a href="#Export_Steps">export steps</a>.
 
-<a name="Import_Modulations"><h3>Import Modulations</h3></a>
+<a name="Import_Modulations"><h4>Import Modulations</h4></a>
 
 <p>This command imports <a href="#Modulations">modulation</a> data from a CSV file containing one row per modulation, with no initial header row. Each row consists of three integers, corresponding to the modulation's enumerated type, source track index, and sink track index. The <a href="#Modulation_types">modulation types</a> are zero-based. The track indices are also zero-based and must be within the range of the current tracks. You can also <a href="#Export_Modulations">export modulations</a>.
 
@@ -2441,19 +2441,19 @@
 
 <p>Each of these commands exports data to a Comma-Separated Values (CSV) file. In all cases, a file dialog is displayed, prompting you to specify the name and location of the output CSV file. The exports have different targets, and produce differently formatted data, as explained below.
 
-<a name="Export_Tracks"><h3>Export Tracks</h3></a>
+<a name="Export_Tracks"><h4>Export Tracks</h4></a>
 
 <p>This command exports <a href="#Tracks">track</a> data to a CSV file. If a <a href="#Track_Selection">track selection</a> exists, only the selected tracks are exported, otherwise all tracks are exported. The first output row is a column header specifying the names of the track properties. Each subsequent row corresponds to a track, and contains the data for each of the track's properties. You can also <a href="#Import_Tracks">import tracks</a>, using this same file format.
 
-<a name="Export_Steps"><h3>Export Steps</h3></a>
+<a name="Export_Steps"><h4>Export Steps</h4></a>
 
 <p>This command exports <a href="#Steps">step</a> data to a CSV file, for the selected tracks, or for all tracks if none are selected. Each output row corresponds to a track, and contains one integer for each of the track's steps. For note tracks, step values may exceed 127, due to the most significant bit being used for <a href="#Tied_notes">tying</a> steps together into longer notes. You can also <a href="#Import_Steps">import steps</a>, using this same file format.
 
-<a name="Export_Modulations"><h3>Export Modulations</h3></a>
+<a name="Export_Modulations"><h4>Export Modulations</h4></a>
 
 <p>This command exports <a href="#Modulations">modulation</a> data to a CSV file. All modulations in the current document are exported. Each output row corresponds to a modulation, and contains three integers, corresponding to the modulation's enumerated type, source track index, and sink track index. You can also <a href="#Import_Modulations">import modulations</a>, using this same file format.
 
-<a name="Export_Song"><h3>Export Song</h3></a>
+<a name="Export_Song"><h4>Export Song</h4></a>
 
 <p>This command is similar to the <a href="#Export">MIDI file export</a>, except that it exports the MIDI messages as text. The resulting CSV file contains the same data as the MIDI file export, but in a human-readable format. This can be useful for debugging purposes, for example text exports can be meaningfully compared using a file comparison utility. The command displays a dialog prompting you for the desired duration. If any <a href="#Dubs">dubs</a> exist, they're applied during the export, otherwise the unmuted tracks are looped for the specified duration.
 
@@ -2494,7 +2494,7 @@
 
 <p>Use this command to open a new window with the same contents as the active window. You can open multiple document windows to display different parts or views of a document at the same time. If you change the contents in one window, all other windows containing the same document reflect those changes. When you open a new window, it becomes the active window and is displayed on top of all other open windows.
 
-<a name="Splits"><h3>Splits</h3></a>
+<a name="Splits"><h4>Splits</h4></a>
 
 <p>You can split the view area horizontally or vertically into two or more tab groups. This lets you show multiple documents at once, which can be useful for comparing them. Splitting also lets you work with multiple views of a single document at the same time. For example, instead of switching back and forth between <a href="#Track_View">track view</a> and <a href="#Song_View">song view</a>, you may prefer to show your document in both views at once. To create another view of the active document, use the <a href="#New_Window">New Window</a> command.
 
@@ -2506,7 +2506,7 @@
 
 <p>If you create the initial split by dragging a tab, the drop location determines whether the split is vertical or horizontal. The split will be vertical unless you drop near the bottom of the view area, in which case the split will be horizontal; in the latter case, the bottom half of the view area is temporarily outlined to indicate that a horizontal split will occur.
 
-<a name="Multiple_monitors"><h3>Multiple monitors</h3></a>
+<a name="Multiple_monitors"><h4>Multiple monitors</h4></a>
 
 <p>Showing multiple views of the same document is more useful in a multiple monitor setup where each view has enough space to be fully utilized. The optimal setup is two identical monitors placed side by side and set to the same resolution, with the Windows desktop extended onto both monitors. In that case, you can resize the application's main window so that it fills both monitors. This is ideal for creating vertical <a href="#Splits">splits</a>.
 
