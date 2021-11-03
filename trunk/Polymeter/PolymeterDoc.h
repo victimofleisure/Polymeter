@@ -40,6 +40,7 @@
 		30		24jan21	add prime factors command
 		31		07jun21	rename rounding functions
 		32		25oct21 in sort mappings, add optional sort direction
+		33		30oct21	move song duration method from sequencer to here
 
 */
 
@@ -294,6 +295,7 @@ public:
 	void	ChangeTimeDivision(int nNewTimeDivTicks);
 	void	SetLoopRange(CLoopRange rngTicks);
 	void	OnLoopRangeChange();
+	int		GetSongDurationSeconds() const;
 
 // Overrides
 public:

@@ -29,6 +29,7 @@
 		19		07jun21	rename rounding functions
 		20		20jun21	move focus edit handling to child frame
 		21		22oct21	Ctrl + left click now mutes in all cases
+		22		31oct21	set song position in initial update
 
 */
 
@@ -122,9 +123,9 @@ void CSongView::OnInitialUpdate()
 	m_nZoom = Round(InvPow(fZoomDelta, fDocZoom));
 	m_fZoom = fDocZoom;
 	m_fZoomDelta = fZoomDelta;
-	m_nSongPosX = ConvertSongPosToX(pDoc->m_nSongPos);
 	CScrollView::OnInitialUpdate();
 	UpdateViewSize();
+	UpdateSongPos(pDoc->m_nSongPos);	// OpenDocument no longer sends view type update
 }
 
 void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)

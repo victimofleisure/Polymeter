@@ -191,12 +191,12 @@ BEGIN
             END
         END
         MENUITEM SEPARATOR
-        MENUITEM "&Properties",                 ID_VIEW_PROPERTIES
-        MENUITEM "&Channels",                   ID_VIEW_CHANNELS
+        MENUITEM "&Properties",                 ID_VIEW_BAR_Properties
+        MENUITEM "&Channels",                   ID_VIEW_BAR_Channels
         POPUP "&Groups"
         BEGIN
-            MENUITEM "&Presets",                    ID_VIEW_PRESETS
-            MENUITEM "P&arts",                      ID_VIEW_PARTS
+            MENUITEM "&Presets",                    ID_VIEW_BAR_Presets
+            MENUITEM "P&arts",                      ID_VIEW_BAR_Parts
         END
     END
     POPUP "&Tools"
@@ -280,13 +280,13 @@ BEGIN
         MENUITEM "Zoom &Out",                   ID_VIEW_ZOOM_OUT
         MENUITEM "Zoom &Reset",                 ID_VIEW_ZOOM_RESET
         MENUITEM SEPARATOR
-        MENUITEM "&Properties",                 ID_VIEW_PROPERTIES
-        MENUITEM "&Channels",                   ID_VIEW_CHANNELS
-        MENUITEM "&Modulations",                ID_VIEW_MODULATIONS
+        MENUITEM "&Properties",                 ID_VIEW_BAR_Properties
+        MENUITEM "&Channels",                   ID_VIEW_BAR_Channels
+        MENUITEM "&Modulations",                ID_VIEW_BAR_Modulations
         POPUP "&Groups"
         BEGIN
-            MENUITEM "&Presets",                    ID_VIEW_PRESETS
-            MENUITEM "P&arts",                      ID_VIEW_PARTS
+            MENUITEM "&Presets",                    ID_VIEW_BAR_Presets
+            MENUITEM "P&arts",                      ID_VIEW_BAR_Parts
         END
         MENUITEM "&Velocities",                 ID_VIEW_VELOCITIES
         MENUITEM SEPARATOR
@@ -614,6 +614,20 @@ BEGIN
     END
 END
 
+IDR_VIEW_EX_CTX MENU
+BEGIN
+    POPUP "View"
+    BEGIN
+        MENUITEM "Graph",                       ID_VIEW_BAR_Graph
+        MENUITEM "Phase",                       ID_VIEW_BAR_Phase
+        MENUITEM "Piano",                       ID_VIEW_BAR_Piano
+        MENUITEM "Mapping",                     ID_VIEW_BAR_Mapping
+        MENUITEM "MIDI Input",                  ID_VIEW_BAR_MidiInput
+        MENUITEM "MIDI Output",                 ID_VIEW_BAR_MidiOutput
+        MENUITEM "Step Values",                 ID_VIEW_BAR_StepValues
+    END
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -678,11 +692,11 @@ BEGIN
     "R",            ID_TRANSPORT_RECORD,    VIRTKEY, CONTROL, NOINVERT
     "R",            ID_TRANSPORT_RECORD_TRACKS, VIRTKEY, SHIFT, CONTROL, NOINVERT
     "W",            ID_TRANSPORT_REWIND,    VIRTKEY, CONTROL, NOINVERT
-    "C",            ID_VIEW_CHANNELS,       VIRTKEY, CONTROL, ALT, NOINVERT
-    "M",            ID_VIEW_MODULATIONS,    VIRTKEY, CONTROL, ALT, NOINVERT
-    "A",            ID_VIEW_PARTS,          VIRTKEY, CONTROL, ALT, NOINVERT
-    "E",            ID_VIEW_PRESETS,        VIRTKEY, CONTROL, ALT, NOINVERT
-    "P",            ID_VIEW_PROPERTIES,     VIRTKEY, CONTROL, ALT, NOINVERT
+    "C",            ID_VIEW_BAR_Channels,       VIRTKEY, CONTROL, ALT, NOINVERT
+    "M",            ID_VIEW_BAR_Modulations,    VIRTKEY, CONTROL, ALT, NOINVERT
+    "A",            ID_VIEW_BAR_Parts,          VIRTKEY, CONTROL, ALT, NOINVERT
+    "E",            ID_VIEW_BAR_Presets,        VIRTKEY, CONTROL, ALT, NOINVERT
+    "P",            ID_VIEW_BAR_Properties,     VIRTKEY, CONTROL, ALT, NOINVERT
     VK_F9,          ID_VIEW_TYPE_LIVE,      VIRTKEY, CONTROL, NOINVERT
     VK_F9,          ID_VIEW_TYPE_SONG,      VIRTKEY, NOINVERT
     VK_F8,          ID_VIEW_TYPE_TRACK,     VIRTKEY, NOINVERT
@@ -1632,13 +1646,13 @@ BEGIN
     ID_TOOLS_IMPORT_STEPS   "Import steps from a CSV file\nImport Steps"
     ID_TOOLS_IMPORT_TRACKS  "Import tracks from a CSV file\nImport Tracks"
     ID_TOOLS_MIDI_LEARN     "Learn mappings from MIDI input\nMIDI Learn"
-    ID_TOOLS_OPTIONS        "Edit the options\nOptions"
-    ID_TOOLS_PRIME_FACTORS  "Compute the prime factors of the selected tracks' durations\nPrime Factors"
-    ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TOOLS_OPTIONS        "Edit the options\nOptions"
+    ID_TOOLS_PRIME_FACTORS  "Compute the prime factors of the selected tracks' durations\nPrime Factors"
+    ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
     ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for the selected tracks to repeat\nTime to Repeat"
     ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks or steps\nVelocity Range "
     ID_TRACK_COLOR          "Assign color to selected tracks\nTrack Color"
@@ -1652,13 +1666,13 @@ BEGIN
     ID_TRACK_PART_CREATE    "Create a new part from the selected tracks\nCreate Part"
     ID_TRACK_PART_UPDATE    "Update the selected part from the selected tracks\nUpdate Part"
     ID_TRACK_PRESET_APPLY   "Apply the selected preset to the track mutes\nApply Preset"
-    ID_TRACK_PRESET_CREATE  "Create a new preset from the track mutes\nCreate Preset"
-    ID_TRACK_PRESET_UPDATE  "Update the selected preset from the track mutes\nUpdate Preset"
-    ID_TRACK_REVERSE        "Reverse the selected tracks or steps\nReverse"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_PRESET_CREATE  "Create a new preset from the track mutes\nCreate Preset"
+    ID_TRACK_PRESET_UPDATE  "Update the selected preset from the track mutes\nUpdate Preset"
+    ID_TRACK_REVERSE        "Reverse the selected tracks or steps\nReverse"
     ID_TRACK_ROTATE_LEFT    "Rotate the selected tracks or steps left\nRotate Left"
     ID_TRACK_ROTATE_RIGHT   "Rotate the selected tracks or steps right\nRotate Right"
     ID_TRACK_ROTATE_STEPS   "Rotate the selection left or right a given number of steps\nRotate Steps"
@@ -1672,16 +1686,16 @@ BEGIN
     ID_TRACK_TRANSPOSE      "Transpose the selected tracks\nTranspose"
     ID_TRACK_VELOCITY       "Transform the velocities of the selected tracks or steps\nVelocity"
     ID_TRANSPORT_CONVERGENCE_NEXT "Go to next convergence\nNext Convergence"
+END
+
+STRINGTABLE
+BEGIN
     ID_TRANSPORT_CONVERGENCE_PREVIOUS 
                             "Go to previous convergence\nPrevious Convergence"
     ID_TRANSPORT_CONVERGENCE_SIZE_ALL 
                             "Require all modulos to coincide\nFull Convergence"
     ID_TRANSPORT_CONVERGENCE_SIZE_CUSTOM 
                             "Customize number of modulos to coincide\nCustom Convergence"
-END
-
-STRINGTABLE
-BEGIN
     ID_TRANSPORT_GO_TO_POSITION 
                             "Go to specified position within song\nGo To Position"
     ID_TRANSPORT_LOOP       "Loop playback\nLoop"
@@ -1695,24 +1709,35 @@ END
 
 STRINGTABLE
 BEGIN
-    ID_VIEW_CHANNELS        "Show or hide the channels bar\nShow Channels"
     ID_VIEW_CUSTOMIZE       "Customize the application's interface\nCustomize"
-    ID_VIEW_MODULATIONS     "Show or hide the modulations bar\nShow Modulations"
-    ID_VIEW_PARTS           "Show or hide the parts bar\nShow Parts"
-    ID_VIEW_PRESETS         "Show or hide the presets bar\nShow Presets"
-    ID_VIEW_PROPERTIES      "Show or hide the properties bar\nShow Properties"
+    ID_VIEW_BAR_Channels        "Show or hide the channels bar\nShow Channels"
+    ID_VIEW_BAR_Graph           "Show or hide the graph bar\nShow Graph"
+    ID_VIEW_BAR_Mapping         "Show or hide the mapping bar\nShow Mapping"
+    ID_VIEW_BAR_MidiInput       "Show or hide the MIDI input bar\nShow MIDI Input"
+    ID_VIEW_BAR_MidiOutput      "Show or hide the MIDI output bar\nShow MIDI Output"
+    ID_VIEW_BAR_Modulations     "Show or hide the modulations bar\nShow Modulations"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_BAR_Parts           "Show or hide the parts bar\nShow Parts"
+    ID_VIEW_BAR_Phase           "Show or hide the phase bar\nShow Phase"
+    ID_VIEW_BAR_Piano           "Show or hide the piano bar\nShow Piano"
+    ID_VIEW_BAR_Presets         "Show or hide the presets bar\nShow Presets"
+    ID_VIEW_BAR_Properties      "Show or hide the properties bar\nShow Properties"
+    ID_VIEW_BAR_StepValues      "Show or hide the step values bar\nShow Step Values"
     ID_VIEW_TYPE_LIVE       "Show the live view\nLive View"
     ID_VIEW_TYPE_SONG       "Show the song view\nSong View"
     ID_VIEW_TYPE_TRACK      "Show the track view\nTrack View"
     ID_VIEW_VELOCITIES      "Show or hide the track view's velocities pane\nShow Velocities"
     ID_VIEW_ZOOM_IN         "Zoom in\nZoom In"
     ID_VIEW_ZOOM_OUT        "Zoom out\nZoom Out"
-    ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
-    ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
+    ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "Manage child windows\nWindows"
     ID_WINDOW_NEW_HORZ_TAB_GROUP 
                             "Create a new horizontal tab group\nNew Horizontal Tab Group"

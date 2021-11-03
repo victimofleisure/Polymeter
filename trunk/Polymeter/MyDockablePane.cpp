@@ -12,6 +12,7 @@
 		02		17jun20	in command help handler, try tracking help first
 		03		18nov20	add maximize/restore to docking context menu
 		04		19nov20	use visible style to determine pane visibility
+		05		01nov21	add toggle show pane method
 
 */
 
@@ -83,6 +84,13 @@ bool CMyDockablePane::FixListContextMenuPoint(CWnd *pWnd, CListCtrlExSel& list, 
 	return false;
 }
 
+void CMyDockablePane::ToggleShowPane()
+{
+	bool	bShow = !IsVisible();
+	ShowPane(bShow, 0, TRUE);	// no delay, activate
+	if (bShow)	// if showing pane
+		SetFocus();	// ShowPane's activate flag is unreliable
+}
 
 ////////////////////////////////////////////////////////////////////////////
 // CMyDockablePane message map

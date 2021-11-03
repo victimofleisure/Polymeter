@@ -25,6 +25,7 @@
 		15		08jun21	fix warning for CString as variadic argument
 		16		26jun21	add filtering by modulation type
 		17		23jul21	eliminate spurious background tooltip
+		18		03nov21	make save as filename default to document title
 
 */
 
@@ -104,6 +105,10 @@ const LPCTSTR CGraphBar::m_arrGraphFindExeName[] = {
 #define RK_GRAPHVIZ_PATH _T("GraphvizPath")
 
 CString	CGraphBar::m_sGraphvizPath;
+
+// Since GraphViz 2.38, SVG output can be clipped due to bug #1855; 
+// rendering with Cairo avoids it, at the cost of bloated SVG files
+#define GRAPH_RENDER_WITH_CAIRO 0
 
 CGraphBar::CGraphBar()
 {
@@ -273,7 +278,11 @@ UINT CGraphBar::GraphThread(LPVOID pParam)
 	LPCTSTR	pszLayout = m_arrGraphLayout[params.m_iGraphLayout];
 	CPathStr	sExePath(m_sGraphvizPath);
 	sExePath.Append(m_arrGraphExeName);
+#if GRAPH_RENDER_WITH_CAIRO
+	sCmdLine.Format(_T("%s -K%s -Tsvg:cairo -o\"%s\" \"%s\""), 
+#else
 	sCmdLine.Format(_T("%s -K%s -Tsvg -o\"%s\" \"%s\""), 
+#endif
 		sExePath.GetString(), pszLayout, sGraphPath.GetString(), sDataPath.GetString());
 	TCHAR	*pCmdLine = sCmdLine.GetBuffer(0);
 	STARTUPINFO	si;
@@ -992,7 +1001,10 @@ void CGraphBar::OnGraphFilter(UINT nID)
 void CGraphBar::OnGraphSaveAs()
 {
 	CString	sFilter(LPCTSTR(IDS_SVG_FILE_FILTER));
-	CFileDialog	fd(FALSE, _T(".csv"), NULL, OFN_OVERWRITEPROMPT, sFilter);
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	CPathStr	sDefName(pDoc->GetTitle());
+	sDefName.RemoveExtension();
+	CFileDialog	fd(FALSE, _T(".svg"), sDefName, OFN_OVERWRITEPROMPT, sFilter);
 	if (fd.DoModal() == IDOK) {
 		if (!CopyFile(m_tfpGraph.GetPath(), fd.GetPathName(), FALSE))
 			AfxMessageBox(GetLastErrorString());

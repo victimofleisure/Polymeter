@@ -25,6 +25,7 @@
 		15		17jul20	refactor set song mode
 		16		16dec20	add looping of playback
 		17		07jun21	rename rounding functions
+		18		30oct21	remove song duration method
 
 */
 
@@ -90,7 +91,6 @@ public:
 	void	SetInitialMidiEvents(const CDWordArrayEx& arrMidiEvent);
 	bool	GetSongMode() const;
 	void	SetSongMode(bool bEnable, bool bChaseDubs = false);
-	int		GetSongDurationSeconds() const;
 	int		GetStartPosition() const;
 	void	SetMidiOutputCapture(bool bEnable);
 	void	GetMidiOutputEvents(CMidiEventArray& arrMidiEvent);

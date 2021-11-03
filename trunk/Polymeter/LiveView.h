@@ -14,6 +14,7 @@
 		04		09jul20	add pointer to parent frame
 		05		19jan21	add edit command handlers
 		06		20jun21	remove edit command handlers
+		07		31oct21	add view type change method
 
 */
 
@@ -174,6 +175,7 @@ protected:
 	void	UpdateStatus();
 	void	OnTrackMuteChange();
 	void	OnTrackPropChange(int iTrack, int iProp);
+	void	OnViewTypeChange();
 	void	ApplyMuteChanges();
 	void	MonitorMuteChanges();
 	void	InvalidateMuteCache();

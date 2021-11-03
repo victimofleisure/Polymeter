@@ -73,6 +73,9 @@
 		63		20jun21	move focus edit handling to child frame
 		64		19jul21	enable stretch for track selection only
 		65		25oct21 in sort mappings, add optional sort direction
+		66		30oct21	in time shift calc, handle positive case also
+		67		30oct21	song duration method must account for start position
+		68		31oct21	suppress view type notification when opening document
 
 */
 
@@ -238,9 +241,11 @@ void CPolymeterDoc::CMyUndoManager::OnUpdateTitles()
 void CPolymeterDoc::SetViewType(int nViewType)
 {
 	if (nViewType != m_nViewType) {	// if view type changed
+		int	nPrevViewType = m_nViewType;	// save current view type
 		m_nViewType = nViewType;
 		m_Seq.SetSongMode(nViewType == VIEW_Song);
-		UpdateAllViews(NULL, HINT_VIEW_TYPE);
+		if (nPrevViewType >= 0)	// if not opening document
+			UpdateAllViews(NULL, HINT_VIEW_TYPE);
 		if (nViewType == VIEW_Live)	// if showing live view
 			Deselect();	// disable most editing commands
 	}
@@ -3067,9 +3072,15 @@ void CPolymeterDoc::OnImportTracks(CTrackArray& arrTrack)
 	InsertTracks(arrTrack, iInsTrack);
 }
 
+int CPolymeterDoc::GetSongDurationSeconds() const
+{
+	int	nSongTicks = m_Seq.GetSongDuration() - m_nStartPos;	// account for master start position
+	return static_cast<int>(m_Seq.ConvertPositionToSeconds(nSongTicks)) + 1;	// round up
+}
+
 void CPolymeterDoc::UpdateSongLength()
 {
-	m_nSongLength = m_Seq.GetSongDurationSeconds();
+	m_nSongLength = GetSongDurationSeconds();
 	CPropHint	hint(0, CMasterProps::PROP_nSongLength);
 	UpdateAllViews(NULL, HINT_MASTER_PROP, &hint);
 	OnTransportRewind();
@@ -3094,10 +3105,13 @@ bool CPolymeterDoc::ShowGMDrums(int iTrack) const
 
 int CPolymeterDoc::CalcSongTimeShift() const
 {
-	if (m_nStartPos >= 0)	// if positive song position
-		return 0;
 	int	nTimeDivTicks = GetTimeDivisionTicks();
-	return ((m_nStartPos + 1) / nTimeDivTicks - 1) * nTimeDivTicks;	// round down to nearest beat
+	int	nBeats;
+	if (m_nStartPos < 0)	// if negative song position
+		nBeats = (m_nStartPos + 1) / nTimeDivTicks - 1;	// round down to nearest beat
+	else	// positive song position
+		nBeats = m_nStartPos / nTimeDivTicks;	// truncate to nearest beat
+	return nBeats * nTimeDivTicks;	// convert beats to ticks
 }
 
 void CPolymeterDoc::SetDubs(const CRect& rSelection, double fTicksPerCell, bool bMute)
@@ -3649,7 +3663,7 @@ bool CPolymeterDoc::PromptForExportParams(bool bSongMode, int& nDuration)
 {
 	CExportDlg	dlg;
 	if (bSongMode)	// if song mode
-		dlg.m_nDuration = m_Seq.GetSongDurationSeconds();
+		dlg.m_nDuration = GetSongDurationSeconds();
 	else	// track mode
 		dlg.m_nDuration = theApp.GetProfileInt(RK_EXPORT_DLG, RK_EXPORT_DURATION, TRACK_EXPORT_DURATION);
 	if (dlg.DoModal() != IDOK)	// do dialog
@@ -4025,7 +4039,7 @@ BOOL CPolymeterDoc::OnOpenDocument(LPCTSTR lpszPathName)
 			CChildFrame	*pChildFrame = DYNAMIC_DOWNCAST(CChildFrame, pView->GetParentFrame());
 			ASSERT(pChildFrame != NULL);
 			int	nViewType = m_nViewType;
-			m_nViewType = -1;	// spoof no-op test
+			m_nViewType = -1;	// spoof no-op test; also prevents prematurely notifying views
 			pChildFrame->SetViewType(nViewType);
 		}
 	}

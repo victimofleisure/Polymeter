@@ -45,6 +45,7 @@
 		35		16dec20	add looping of playback
 		36		07jun21	rename rounding functions
 		37		08jun21	fix local name reuse warning
+		38		30oct21	remove song duration method
 
 */
 
@@ -1252,12 +1253,6 @@ bool CSequencer::ConvertTimeStringToPosition(const CString& sPos, LONGLONG& nPos
 	if (bHasLeadingSign)	// if leading sign present
 		nPos = -nPos;	// negate result
 	return true;
-}
-
-int CSequencer::GetSongDurationSeconds() const
-{
-	int	nSongTicks = GetSongDuration();
-	return static_cast<int>(ConvertPositionToSeconds(nSongTicks)) + 1;	// round up
 }
 
 void CSequencer::AddDubNow(int iTrack)

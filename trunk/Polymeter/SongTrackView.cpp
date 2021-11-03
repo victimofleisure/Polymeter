@@ -13,6 +13,7 @@
 		03		29jul20	add tool tip for truncated names
 		04		16mar21	in left button down handler, hide tool tip if needed
 		05		13aug21	remove experimental arrow key selection code
+		06		31oct21	in tool tip show handler, make sure our tip exists
 
 */
 
@@ -301,9 +302,11 @@ lblToolTipError:
 void CSongTrackView::OnToolTipShow(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	UNREFERENCED_PARAMETER(pNMHDR);
-	CPoint	ptTip(m_ptTipTool);
-	ptTip.x -= GetSystemMetrics(SM_CXEDGE);	// account for window edge, so tip text lines up with underlying text
-	ClientToScreen(&ptTip);	// convert to screen coords
-	m_wndTip.SetWindowPos(NULL, ptTip.x, ptTip.y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);	// reposition tip
-	*pResult = true;	// suppress default positioning
+	if (m_wndTip.m_hWnd) {	// if our tip exists (notification could be for another window's tip)
+		CPoint	ptTip(m_ptTipTool);
+		ptTip.x -= GetSystemMetrics(SM_CXEDGE);	// account for window edge, so tip text lines up with underlying text
+		ClientToScreen(&ptTip);	// convert to screen coords
+		m_wndTip.SetWindowPos(NULL, ptTip.x, ptTip.y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);	// reposition tip
+		*pResult = true;	// suppress default positioning
+	}
 }

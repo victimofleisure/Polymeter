@@ -54,6 +54,8 @@
 		44		08aug21	fix help for docking windows submenu
 		45		31aug21	on meter change, update format of loop from/to
 		46		23oct21	allow persistent UI customization in Release
+		47		30oct21	song duration method moved to document
+		48		01nov21	generate message handlers for showing docking bars
 
 */
 
@@ -761,16 +763,10 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_COMMAND(ID_EDIT_FIND, OnEditFind)
 	ON_COMMAND(ID_EDIT_REPLACE, OnEditReplace)
 	ON_REGISTERED_MESSAGE(WM_FINDREPLACE, OnFindReplace)
-	ON_COMMAND(ID_VIEW_CHANNELS, OnViewChannels)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_CHANNELS, OnUpdateViewChannels)
-	ON_COMMAND(ID_VIEW_PROPERTIES, OnViewProperties)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_PROPERTIES, OnUpdateViewProperties)
-	ON_COMMAND(ID_VIEW_PRESETS, OnViewPresets)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_PRESETS, OnUpdateViewPresets)
-	ON_COMMAND(ID_VIEW_PARTS, OnViewParts)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_PARTS, OnUpdateViewParts)
-	ON_COMMAND(ID_VIEW_MODULATIONS, OnViewModulations)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_MODULATIONS, OnUpdateViewModulations)
+	#define MAINDOCKBARDEF(name, width, height, style) \
+		ON_COMMAND(ID_VIEW_BAR_##name, OnViewBar##name) \
+		ON_UPDATE_COMMAND_UI(ID_VIEW_BAR_##name, OnUpdateViewBar##name)
+	#include "MainDockBarDef.h"	// generate docking bar message map entries
 	ON_COMMAND(ID_WINDOW_FULL_SCREEN, OnWindowFullScreen)
 	ON_COMMAND(ID_WINDOW_RESET_LAYOUT, OnWindowResetLayout)
 	ON_COMMAND(ID_TOOLS_CONVERGENCES, OnToolsConvergences)
@@ -804,6 +800,11 @@ void CMainFrame::OnWindowManager()
 void CMainFrame::OnViewCustomize()
 {
 	CMFCToolBarsCustomizeDialog* pDlgCust = new CMFCToolBarsCustomizeDialog(this, TRUE /* scan menus */);
+	CMenu menuView;
+	menuView.LoadMenu(IDR_VIEW_EX_CTX);	// extra view commands that aren't on default main menus
+	CString	sMenuViewName;
+	menuView.GetMenuString(0, sMenuViewName, MF_BYPOSITION);
+	pDlgCust->AddMenuCommands(&menuView, FALSE, sMenuViewName);	// make available for customization
 	pDlgCust->EnableUserDefinedToolbars();
 	pDlgCust->Create();
 }
@@ -981,7 +982,7 @@ LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 			break;
 		case CMasterProps::PROP_nSongLength:
 			if (pDoc->m_Seq.HasDubs()) {
-				int	nSongLength = pDoc->m_Seq.GetSongDurationSeconds();
+				int	nSongLength = pDoc->GetSongDurationSeconds();
 				if (pDoc->m_nSongLength < nSongLength) {	// if new song length is shorter than recording
 					AfxMessageBox(IDS_DOC_CANT_TRUNCATE_RECORDING);
 					pDoc->UpdateSongLength();	// restore song length from dubs
@@ -1194,64 +1195,16 @@ LRESULT CMainFrame::OnFindReplace(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-void CMainFrame::OnViewChannels()
-{
-	bool	bShow = !m_wndChannelsBar.IsVisible();
-	m_wndChannelsBar.ShowPane(bShow, 0, TRUE);
-	if (bShow)
-		m_wndChannelsBar.SetFocus();	// ShowPane's activate flag doesn't work
-}
-
-void CMainFrame::OnUpdateViewChannels(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_wndChannelsBar.IsVisible());
-}
-
-void CMainFrame::OnViewProperties()
-{
-	bool	bShow = !m_wndPropertiesBar.IsVisible();
-	m_wndPropertiesBar.ShowPane(bShow, 0, TRUE);
-}
-
-void CMainFrame::OnUpdateViewProperties(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_wndPropertiesBar.IsVisible());
-}
-
-void CMainFrame::OnViewPresets()
-{
-	bool	bShow = !m_wndPresetsBar.IsVisible();
-	m_wndPresetsBar.ShowPane(bShow, 0, TRUE);
-}
-
-void CMainFrame::OnUpdateViewPresets(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_wndPresetsBar.IsVisible());
-}
-
-void CMainFrame::OnViewParts()
-{
-	bool	bShow = !m_wndPartsBar.IsVisible();
-	m_wndPartsBar.ShowPane(bShow, 0, TRUE);
-}
-
-void CMainFrame::OnUpdateViewParts(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_wndPartsBar.IsVisible());
-}
-
-void CMainFrame::OnViewModulations()
-{
-	bool	bShow = !m_wndModulationsBar.IsVisible();
-	m_wndModulationsBar.ShowPane(bShow, 0, TRUE);
-	if (bShow)
-		m_wndModulationsBar.SetFocus();	// ShowPane's activate flag doesn't work
-}
-
-void CMainFrame::OnUpdateViewModulations(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_wndModulationsBar.IsVisible());
-}
+#define MAINDOCKBARDEF(name, width, height, style) \
+	void CMainFrame::OnViewBar##name() \
+	{ \
+		m_wnd##name##Bar.ToggleShowPane(); \
+	} \
+	void CMainFrame::OnUpdateViewBar##name(CCmdUI *pCmdUI) \
+	{ \
+		pCmdUI->SetCheck(m_wnd##name##Bar.IsVisible()); \
+	}
+#include "MainDockBarDef.h"	// generate docking bar message handlers
 
 void CMainFrame::OnToolsOptions()
 {

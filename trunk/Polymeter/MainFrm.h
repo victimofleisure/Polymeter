@@ -34,6 +34,7 @@
 		24		08jun21	define tracking ID accessor if earlier than VS2012
 		25		15jun21	use auto pointer for tool bar track color button
 		26		08aug21	override get message string
+		27		01nov21	generate message handlers for showing docking bars
 
 */
 
@@ -214,16 +215,10 @@ protected:
 	afx_msg void OnEditFind();
 	afx_msg void OnEditReplace();
 	afx_msg LRESULT OnFindReplace(WPARAM wParam, LPARAM lParam);
-	afx_msg void OnViewChannels();
-	afx_msg void OnUpdateViewChannels(CCmdUI *pCmdUI);
-	afx_msg void OnViewProperties();
-	afx_msg void OnUpdateViewProperties(CCmdUI *pCmdUI);
-	afx_msg void OnViewPresets();
-	afx_msg void OnUpdateViewPresets(CCmdUI *pCmdUI);
-	afx_msg void OnViewParts();
-	afx_msg void OnUpdateViewParts(CCmdUI *pCmdUI);
-	afx_msg void OnViewModulations();
-	afx_msg void OnUpdateViewModulations(CCmdUI *pCmdUI);
+	#define MAINDOCKBARDEF(name, width, height, style) \
+		afx_msg void OnViewBar##name(); \
+		afx_msg void OnUpdateViewBar##name(CCmdUI *pCmdUI);
+	#include "MainDockBarDef.h"	// generate docking bar message handlers
 	afx_msg void OnWindowFullScreen();
 	afx_msg void OnWindowResetLayout();
 	afx_msg LRESULT OnResetToolBar(WPARAM wParam, LPARAM lParam);

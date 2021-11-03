@@ -10,6 +10,7 @@
         00		08jan19	initial version
 		01		01apr20	add ShowDockingContextMenu
 		02		18nov20	add maximize/restore to docking context menu
+		03		01nov21	add toggle show pane method
 
 */
 
@@ -33,6 +34,7 @@ public:
 	bool	ShowDockingContextMenu(CWnd* pWnd, CPoint point);
 	bool	FixContextMenuPoint(CWnd *pWnd, CPoint& point);
 	bool	FixListContextMenuPoint(CWnd *pWnd, CListCtrlExSel& list, CPoint& point);
+	void	ToggleShowPane();
 
 // Overrides
 

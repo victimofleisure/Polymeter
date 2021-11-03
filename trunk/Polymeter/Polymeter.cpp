@@ -25,6 +25,7 @@
 		15		17jul21	in RestartApp, replace GetStartupInfo with minimal init
 		16		19jul21	include step parent header for its pane IDs
 		17		23oct21	add resource versioning
+		18		31oct21	in ctor, set base class flag to defer showing main window
 
 */
 
@@ -62,7 +63,7 @@
 #define RK_TIE_NOTES _T("bTieNotes")
 #define RK_RESOURCE_VERSION _T("nResourceVersion")
 
-const int CPolymeterApp::m_nNewResourceVersion = 1;	// update if resource change breaks customization
+const int CPolymeterApp::m_nNewResourceVersion = 2;	// update if resource change breaks customization
 
 #include "HelpIDs.h"	// help IDs generated automatically by doc2web
 const CPolymeterApp::HELP_RES_MAP CPolymeterApp::m_HelpResMap[] = {
@@ -73,6 +74,8 @@ const CPolymeterApp::HELP_RES_MAP CPolymeterApp::m_HelpResMap[] = {
 
 CPolymeterApp::CPolymeterApp()
 {
+	// prevent ReloadWindowPlacement from showing main window; it's shown at end of InitInstance
+	m_bDeferShowOnFirstWindowPlacementLoad = true;	// eliminates startup flicker
 	m_bHiColorIcons = TRUE;
 
 	// replace application ID string below with unique ID string; recommended

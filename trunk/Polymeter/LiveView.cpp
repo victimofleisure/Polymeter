@@ -23,6 +23,7 @@
 		13		19jan21	add edit command handlers
 		14		07jun21	rename rounding functions
 		15		20jun21	move focus edit handling to child frame
+		16		31oct21	add view type change method; call it on initial update
 
 */
 
@@ -92,6 +93,11 @@ BOOL CLiveView::PreCreateWindow(CREATESTRUCT& cs)
 void CLiveView::OnInitialUpdate()
 {
 	CView::OnInitialUpdate();
+	CPolymeterDoc	*pDoc = GetDocument();
+	if (pDoc->m_nViewType == CPolymeterDoc::VIEW_Live) {	// if initially showing live view
+		theApp.GetMainFrame()->UpdateSongPositionStrings(GetDocument());	// views are updated before main frame
+		OnViewTypeChange();	// OpenDocument no longer sends view type update
+	}
 }
 
 void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
@@ -176,13 +182,8 @@ void CLiveView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			m_wndPosBar.UpdateBars(pDoc->m_nSongPos);	// order matters; monitoring may invalidate bars
 			break;
 		case CPolymeterDoc::HINT_VIEW_TYPE:
-			m_iPreset = pDoc->FindCurrentPreset();
 			Update();
-			RecalcLayout();
-			UpdateSongCounters();
-			pDoc->MakePartMutesConsistent();
-			pDoc->MakePresetMutesConsistent();
-			InvalidateMuteCache();
+			OnViewTypeChange();
 			break;
 		case CPolymeterDoc::HINT_OPTIONS:
 			{
@@ -239,6 +240,18 @@ void CLiveView::OnTrackPropChange(int iTrack, int iProp)
 		}
 		break;
 	}
+}
+
+void CLiveView::OnViewTypeChange()
+{
+	// assume Update() was already called
+	CPolymeterDoc	*pDoc = GetDocument();
+	m_iPreset = pDoc->FindCurrentPreset();
+	RecalcLayout();
+	UpdateSongCounters();
+	pDoc->MakePartMutesConsistent();
+	pDoc->MakePresetMutesConsistent();
+	InvalidateMuteCache();
 }
 
 void CLiveView::UpdateSongCounters()
