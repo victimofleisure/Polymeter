@@ -3203,3 +3203,12 @@ int CMyDockablePane::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	SetTabbedPaneRTC(RUNTIME_CLASS(CMyTabbedPane));	// so CreateTabbedPane uses derived class
 	return 0;
 }
+
+11/3/21 delaying UI to improve sync with audio
+
+Tested using the Windows GS Synth, at 120 BPM and 120 TPQN, updating view at
+50 Hz: nPos - 50 ticks seems to work the best. That's +208ms. It's difficult
+to evaluate the sync in track view, but slightly easier in song view. There's
+a lot of jitter, possibly as much as +/- 10 ticks. Using Reason, the sync 
+difference is imperceptible.
+

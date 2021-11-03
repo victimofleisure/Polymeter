@@ -382,6 +382,8 @@ id	open	close	type	description	rev	user
 465	10/25/21	10/25/21	done	in mappings, add descending sort via Shift + left click in column header	1.0.00.000	
 466	10/25/21	10/25/21	done	increase maximum view update frequency	1.0.00.000	
 467	10/25/21	10/25/21	done	in track view, fix status hint and command help for grid control's context menu	1.0.00.000	
+285	02/28/19	10/30/21	done	song export length doesn't account for non-zero start position; similar issue with song view size	1.0.01.000	
+469	10/31/21	10/31/21	done	application flickers on startup; set base class flag to defer showing main window	1.0.01.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -422,7 +424,6 @@ id	open	close	type	description	rev	user
 257	12/09/18		hold	add hide/unhide column commands to track list header's context menu; where to store previous width?		
 259	12/12/18		hold	grid control's header should display tooltip for truncated column names; must subclass header control?		
 269	01/19/19		hold	document I/O doesn't support Unicode track names; initialize INI file with UTF-16 LE BOM (doubles file size)		
-285	02/28/19		hold	song export length doesn't account for negative start position; why is this so difficult?		
 289	03/25/19		hold	piano bar should be able to show channels separately via multiple keyboards; messy problem		
 296	06/12/19		hold	option for space bar to start/stop playback without needing to also press Ctrl key; causes many UI conflicts		
 318	03/02/20		hold	separate window for viewing/editing recorded MIDI input		
@@ -466,3 +467,4 @@ id	open	close	type	description	rev	user
 286	02/28/19		punt	song playback doesn't always match live output when modulator tracks have big quants; dub granularity issue		
 294	05/30/19		punt	modulation list is empty regardless of track selection; can't reproduce it, brain fire?		
 301	11/12/19		punt	popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful		
+468	10/30/21		punt	at refresh rate of 60 Hz or above, song view cursor flickers during playback if track count is five or less		
