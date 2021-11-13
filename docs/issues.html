@@ -192,6 +192,33 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>470</TD>
+<TD>11/07/21</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>app still flickers on startup due to duplicate view update; move main frame show/update to OnDelayedCreate</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>471</TD>
+<TD>11/08/21</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>if main frame creation fails, app crashes, due to erroneous deletion of main frame pointer in InitInstance</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>472</TD>
+<TD>11/08/21</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>graph sometimes clips rightmost objects, in GraphViz versions 2.44 and above; add option to render with Cairo</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>1</TD>
 <TD>03/22/18</TD>
 <TD>03/25/18</TD>
@@ -3504,6 +3531,42 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>473</TD>
+<TD>11/09/21</TD>
+<TD>11/11/21</TD>
+<TD>done</TD>
+<TD>graph should optionally crawl only sources, only targets, or both (bidirectional)</TD>
+<TD>1.0.02.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>454</TD>
+<TD>06/27/21</TD>
+<TD>11/12/21</TD>
+<TD>done</TD>
+<TD>graph should allow filtering for multiple modulation types, via a check list dialog</TD>
+<TD>1.0.02.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>474</TD>
+<TD>11/09/21</TD>
+<TD>11/12/21</TD>
+<TD>done</TD>
+<TD>graph should optionally limit recursion depth to a specified number of levels</TD>
+<TD>1.0.02.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>475</TD>
+<TD>11/12/21</TD>
+<TD>11/13/21</TD>
+<TD>done</TD>
+<TD>graph should optionally include a legend, mapping edge colors to modulation types</TD>
+<TD>1.0.02.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>18</TD>
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
@@ -3976,7 +4039,7 @@
 <TD>07/01/20</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>add more input quants; possible useful with larger time divisions</TD>
+<TD>add more input quants; possibly useful with larger time divisions</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -4107,20 +4170,20 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>454</TD>
-<TD>06/27/21</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>graph filter modeless dialog that allows multiple modulation types to be selected at once</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>462</TD>
 <TD>08/31/21</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>dialog that allows song dubs to be edited directly; complex because each track stores its own dubs</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>477</TD>
+<TD>11/13/21</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>modulation types filter dialog should be modeless or at least have a preview option</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -4256,6 +4319,15 @@
 <TD>&nbsp;</TD>
 <TD>punt</TD>
 <TD>at refresh rate of 60 Hz or above, song view cursor flickers during playback if track count is five or less</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>476</TD>
+<TD>11/13/21</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>optionally render phase diagram in 3D, with options for lighting and texture and rotation of orbital plane</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>

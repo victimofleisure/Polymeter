@@ -3212,3 +3212,49 @@ to evaluate the sync in track view, but slightly easier in song view. There's
 a lot of jitter, possibly as much as +/- 10 ticks. Using Reason, the sync 
 difference is imperceptible.
 
+11/5/21 duplicate view painting on app startup
+
+The stock InitInstance does ShowWindow first and then updateWindow, and this
+unsurprisingly causes a second paint message. But is it really necessary?
+Reversing the order seems to work fine, and definitely gets rid of the 
+duplicate paint. There could be a reason why it's necessary to do 
+ShowWindow first, but if so it's hard to detect.
+
+	pMainFrame->ShowWindow(m_nCmdShow);
+	pMainFrame->UpdateWindow();
+
+This fix does NOT solve the issue of duplicate view painting after a new or 
+open document command. For opening an existing document, the duplicate paint
+only occurs for Track View. This is revealing. There's something special 
+about Track View. But what? Could it be that these are different symptoms
+of the same problem? Or is there just additional handling for the primary
+view? Whatever it is, it's aggravated when the main window isn't maximized.
+
+Delaying the showing of CTrackView's grid control also helps a lot (in
+OnCreate, create the grid control without WS_VISIBLE and post yourself
+a message, and then the handler does ShowWindow for the grid control).
+But it doesn't change the fact that both new and open document are
+somehow causing CTrackView::OnDraw to be called twice.
+
+11/8/21 more on startup flicker
+
+The duplicate view update during startup is solved by moving the mainframe
+show/update code (see above) to CMainFrame::OnDelayedCreate. WM_DELAYED_CREATE 
+is posted rather than sent (by CMainFrame::OnCreate) and therefore isn't
+handled until after the message queue settles down. The ultimate cause is 
+probably late resizing of the view due to RecalcLayout or similar methods.
+Using PostMessage to defer a message until after the window size stabilizes 
+is a common fix for such situations.
+
+11/8/21 deleting main frame in InitInstance is an error
+
+The following cleanup code in the stock InitInstance is erroneous and 
+causes the app to crash if LoadFrame fails, due to deleting a pointer
+that was already deleted in CFrameWnd::PostNcDestroy.
+
+if (!pMainFrame || !pMainFrame->LoadFrame(IDR_MAINFRAME))
+{
+//	delete pMainFrame;//@@@ ERROR! frame self-destructs in CFrameWnd::PostNcDestroy()
+	return FALSE;
+}
+

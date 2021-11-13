@@ -20,21 +20,23 @@
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Scope</th><th>Description</th></tr>
 <tr><td>All</td><td>Show all modulations regardless of <a href="../Views/Track_View/Track_Selection.htm">track selection</a></td></tr>
-<tr><td>Selected</td><td>Show direct modulators of selected tracks</td></tr>
-<tr><td>Recursive</td><td>Show direct and indirect modulators of selected tracks</td></tr>
-<tr><td>Bidirectional</td><td>Show direct and indirect modulators and targets of selected tracks</td></tr>
+<tr><td>Sources</td><td>Show modulators of selected tracks</td></tr>
+<tr><td>Targets</td><td>Show targets of selected tracks</td></tr>
+<tr><td>Bidirectional</td><td>Show modulators and targets of selected tracks</td></tr>
 </table>
 
 <p>Various graph layouts are supported, including dot (for hierarchical graphs) and neato (for non-hierarchical graphs). The edges are <a href="../Docking_Windows/Graph_bar.htm#Graph_edge_colors">colored</a> to indicate modulation type, and edge labels can optionally be displayed. The graph is generated as vectors (SVG format) so it's zoomable, and can be exported for printing. Hovering over a node's label shows a tooltip containing the track number. The graph is displayed using a web browser control (IWebBrowser2). Note that the recommended Internet Explorer version is 11 or later (Edge); earlier versions of IE may display the graph incorrectly or not at all.
 
 <a name="Graph_context_menu"><p><b>Context menu</b></a>
 <p><table border=1 cellpadding=2 cellspacing=0>
-<tr><td>Scope</td><td>Use this submenu to select the scope of the graph. Scopes are explained above.</td></tr>
+<tr><td>Scope</td><td>Use this submenu to select the scope of the graph. Scopes are explained above. For scopes other than All, the modulation network is crawled by starting from the selected tracks and traversing their modulators, targets, or both. The traversal can be limited to a specific distance via the Depth option.</td></tr>
+<tr><td>Depth</td><td>Use this submenu to limit the recursion depth of the graph to a specific number of levels. To allow unlimited recursion depth, select Maximum. This option lets you simplify the graph by only including modulations that are closely connected to the selected tracks. It has no effect if the Scope is All.</td></tr>
 <tr><td>Layout</td><td>Use this submenu to select a Graphviz layout engine. The dot layout engine draws a hierarchical graph, which is often the most useful way to visualize a modulation network. The other layout engines draw various types of non-hierarchical graphs.  For more information on layouts, see the <a href="http://graphviz.org/documentation/">Graphviz documentation</a>.</td></tr>
-<tr><td>Filter</td><td>Use this submenu to limit the graph to a single modulation type. This can make a complex graph easier to comprehend. To show all types, select All. By default, all types are shown. The filter is applied after the modulation network has been crawled.</td></tr>
+<tr><td>Filter</td><td>Use this submenu to filter the graph by modulation type. To show all types, select All. To show only a single type, select its name. To show multiple types, select Multiple, check list items in the resulting dialog, and press OK. By default, all types are shown. The filter is applied after the modulation network has been crawled.</td></tr>
 <tr><td>Zoom</td><td>Use this submenu to zoom the graph in or out, or reset zoom to its default value. The shortcuts are <span class="key">Ctrl++</span> to zoom in, <span class="key">Ctrl+-</span> to zoom out, and <span class="key">Ctrl+0</span> to reset the zoom. To zoom in/out to/from the cursor position, spin the mouse wheel while pressing the <span class="key">Ctrl</span> key.</td></tr>
 <tr><td>Highlight</td><td>This item enables or disables highlighting of the selected tracks in the graph. When this option is enabled, the selected tracks are indicated by drawing the corresponding graph nodes with a different background color.</td></tr>
 <tr><td>Labels</td><td>This item enables or disables edge labels. When this option is enabled, a label appears next to every connecting line in the graph, identifying the corresponding modulation type. This is only recommended for simple graphs, because otherwise the graph is hard to read.</td></tr>
+<tr><td>Legend</td><td>This item enables or disables showing a legend that maps the <a href="../Docking_Windows/Graph_bar.htm#Graph_edge_colors">edge colors</a> in use to their corresponding modulation types.</td></tr>
 <tr><td>Save As</td><td>This item saves the current graph to a file. Currently the only supported format is SVG.</td></tr>
 <tr><td>Reload</td><td>This item redraws the graph.</td></tr>
 </table>

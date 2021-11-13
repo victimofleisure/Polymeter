@@ -16,6 +16,9 @@ id	open	close	type	description	rev	user
 376	06/20/20		bug	undoing modulation edit doesn't restore modulation selection; can't without also restoring track selection and Show Differences state		
 392	07/10/20		bug	Alt key commands don't work mode while cursor is hovering over MDI tab; affects stock VS2012 app too		
 458	07/22/21		bug	song position and loop to/from don't report formatting errors; song length reports errors but doesn't retry		
+470	11/07/21		bug	app still flickers on startup due to duplicate view update; move main frame show/update to OnDelayedCreate		
+471	11/08/21		bug	if main frame creation fails, app crashes, due to erroneous deletion of main frame pointer in InitInstance		
+472	11/08/21		bug	graph sometimes clips rightmost objects, in GraphViz versions 2.44 and above; add option to render with Cairo		
 1	03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 2	03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 3	03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -384,6 +387,10 @@ id	open	close	type	description	rev	user
 467	10/25/21	10/25/21	done	in track view, fix status hint and command help for grid control's context menu	1.0.00.000	
 285	02/28/19	10/30/21	done	song export length doesn't account for non-zero start position; similar issue with song view size	1.0.01.000	
 469	10/31/21	10/31/21	done	application flickers on startup; set base class flag to defer showing main window	1.0.01.000	
+473	11/09/21	11/11/21	done	graph should optionally crawl only sources, only targets, or both (bidirectional)	1.0.02.000	
+454	06/27/21	11/12/21	done	graph should allow filtering for multiple modulation types, via a check list dialog	1.0.02.000	
+474	11/09/21	11/12/21	done	graph should optionally limit recursion depth to a specified number of levels	1.0.02.000	
+475	11/12/21	11/13/21	done	graph should optionally include a legend, mapping edge colors to modulation types	1.0.02.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -436,7 +443,7 @@ id	open	close	type	description	rev	user
 370	05/27/20		hold	force MIDI thru to a specified channel; useful for controllers that lack channel setting, but complicates MidiInProc		
 372	06/08/20		hold	song view should show loop lengths and their covergences graphically, possibly in a separate timeline pane		
 373	06/13/20		hold	in phase bar, optionally hide muted tracks; affects find convergence due to orbit array reuse		
-383	07/01/20		hold	add more input quants; possible useful with larger time divisions		
+383	07/01/20		hold	add more input quants; possibly useful with larger time divisions		
 393	07/17/20		hold	switching to song view should set all mutes to match song's current dub state (chase); must be synchronous		
 395	07/22/20		hold	optionally show Phase diagram or other visualization in Live view; menu bar is hidden in full screen mode		
 396	07/22/20		hold	transition from one document to another without stopping playback; conflicts with recording implementation		
@@ -451,8 +458,8 @@ id	open	close	type	description	rev	user
 433	01/19/21		hold	track should be a potential mapping source, so tracks can automate parameters; inject MIDI event?		
 437	01/20/21		hold	add harmonizer and harmonic anticipation, adapted from ChordEase		
 452	06/24/21		hold	optional file information; author, comments		
-454	06/27/21		hold	graph filter modeless dialog that allows multiple modulation types to be selected at once		
 462	08/31/21		hold	dialog that allows song dubs to be edited directly; complex because each track stores its own dubs		
+477	11/13/21		hold	modulation types filter dialog should be modeless or at least have a preview option		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
@@ -468,3 +475,4 @@ id	open	close	type	description	rev	user
 294	05/30/19		punt	modulation list is empty regardless of track selection; can't reproduce it, brain fire?		
 301	11/12/19		punt	popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful		
 468	10/30/21		punt	at refresh rate of 60 Hz or above, song view cursor flickers during playback if track count is five or less		
+476	11/13/21		todo	optionally render phase diagram in 3D, with options for lighting and texture and rotation of orbital plane		
