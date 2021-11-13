@@ -26,6 +26,9 @@
 		16		26jun21	add filtering by modulation type
 		17		23jul21	eliminate spurious background tooltip
 		18		03nov21	make save as filename default to document title
+        19		11nov21	add graph depth attribute
+		20		12nov21	add modulation type dialog for multiple filters
+		21		13nov21	add optional legend to graph
 
 */
 
@@ -99,8 +102,10 @@ const LPCTSTR CGraphBar::m_arrGraphFindExeName[] = {
 };
 
 #define RK_GRAPH_SCOPE _T("Scope")
+#define RK_GRAPH_DEPTH _T("Depth")
 #define RK_GRAPH_LAYOUT _T("Layout")
 #define RK_EDGE_LABELS _T("EdgeLabels")
+#define RK_SHOW_LEGEND _T("Legend")
 #define RK_HIGHLIGHT_SELECT _T("HighlightSelect")
 #define RK_GRAPHVIZ_PATH _T("GraphvizPath")
 
@@ -108,19 +113,27 @@ CString	CGraphBar::m_sGraphvizPath;
 
 // Since GraphViz 2.38, SVG output can be clipped due to bug #1855; 
 // rendering with Cairo avoids it, at the cost of bloated SVG files
-#define GRAPH_RENDER_WITH_CAIRO 0
+bool CGraphBar::m_bUseCairo;
+// To render SVG using Cairo, create a DWORD registry value with 
+// this name within the graph bar's key and set its value non-zero
+#define RK_USE_CAIRO _T("UseCairo")
+
+#define MAKE_MOD_TYPE_MASK(iType) (static_cast<MOD_TYPE_MASK>(1) << iType)
 
 CGraphBar::CGraphBar()
 {
 	m_iGraphState = GTS_IDLE;
-	m_iGraphScope = GS_SELECTED;
-	m_iGraphLayout = GL_neato;
+	m_iGraphScope = GS_SOURCES;
+	m_nGraphDepth = 1;
+	m_iGraphLayout = GL_dot;
 	m_iGraphFilter = -1;
+	m_nGraphFilterMask = 0;
 	m_iZoomLevel = 0;
 	m_fZoomStep = 1.25;
 	m_bUpdatePending = false;
 	m_bHighlightSelect = true;
 	m_bEdgeLabels = false;
+	m_bShowLegend = false;
 	m_bGraphvizFound = false;
 	// read graph scope string from registry and try to map it to index
 	CString	sScope(theApp.GetProfileString(RK_GraphBar, RK_GRAPH_SCOPE));
@@ -132,17 +145,22 @@ CGraphBar::CGraphBar()
 	int iLayout = ARRAY_FIND(m_arrGraphLayout, sLayout);
 	if (iLayout >= 0)	// if string was found
 		m_iGraphLayout = iLayout;
+	RdReg(RK_GraphBar, RK_GRAPH_DEPTH, m_nGraphDepth);
 	RdReg(RK_GraphBar, RK_HIGHLIGHT_SELECT, m_bHighlightSelect);
 	RdReg(RK_GraphBar, RK_EDGE_LABELS, m_bEdgeLabels);
+	RdReg(RK_GraphBar, RK_SHOW_LEGEND, m_bShowLegend);
 	RdReg(RK_GraphBar, RK_GRAPHVIZ_PATH, m_sGraphvizPath);
+	RdReg(RK_GraphBar, RK_USE_CAIRO, m_bUseCairo);	// fix for GraphViz bug #1855, see above
 }
 
 CGraphBar::~CGraphBar()
 {
 	theApp.WriteProfileString(RK_GraphBar, RK_GRAPH_SCOPE, m_arrGraphScopeInternalName[m_iGraphScope]);
 	theApp.WriteProfileString(RK_GraphBar, RK_GRAPH_LAYOUT, m_arrGraphLayout[m_iGraphLayout]);
+	WrReg(RK_GraphBar, RK_GRAPH_DEPTH, m_nGraphDepth);
 	WrReg(RK_GraphBar, RK_HIGHLIGHT_SELECT, m_bHighlightSelect);
 	WrReg(RK_GraphBar, RK_EDGE_LABELS, m_bEdgeLabels);
+	WrReg(RK_GraphBar, RK_SHOW_LEGEND, m_bShowLegend);
 	WrReg(RK_GraphBar, RK_GRAPHVIZ_PATH, m_sGraphvizPath);
 }
 
@@ -278,12 +296,13 @@ UINT CGraphBar::GraphThread(LPVOID pParam)
 	LPCTSTR	pszLayout = m_arrGraphLayout[params.m_iGraphLayout];
 	CPathStr	sExePath(m_sGraphvizPath);
 	sExePath.Append(m_arrGraphExeName);
-#if GRAPH_RENDER_WITH_CAIRO
-	sCmdLine.Format(_T("%s -K%s -Tsvg:cairo -o\"%s\" \"%s\""), 
-#else
-	sCmdLine.Format(_T("%s -K%s -Tsvg -o\"%s\" \"%s\""), 
-#endif
-		sExePath.GetString(), pszLayout, sGraphPath.GetString(), sDataPath.GetString());
+	LPCTSTR	pszRender;
+	if (m_bUseCairo)
+		pszRender = _T(":cairo");	// fix for GraphViz bug #1855; see above
+	else	// default render
+		pszRender = _T("");
+	sCmdLine.Format(_T("%s -K%s -Tsvg%s -o\"%s\" \"%s\""), 
+		sExePath.GetString(), pszLayout, pszRender, sGraphPath.GetString(), sDataPath.GetString());
 	TCHAR	*pCmdLine = sCmdLine.GetBuffer(0);
 	STARTUPINFO	si;
 	GetStartupInfo(&si);
@@ -340,61 +359,68 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes) const
 	_fputts(_T("digraph {\n"), fout.m_pStream);
 	_ftprintf(fout.m_pStream, _T("graph[size=\"%g,%g\",ratio=fill];\n"), fWidth, fHeight);
 	_fputts(_T("overlap=false;\nsplines=true;\n"), fout.m_pStream);
-	_fputts(_T("node[fontname=\"Helvetica\"];\nedge[fontname=\"Helvetica\"];\n"), fout.m_pStream); 
+	_fputts(_T("node[fontname=\"Helvetica\"];\nedge[fontname=\"Helvetica\"];\n"), fout.m_pStream);
 	int	nTracks = pDoc->GetTrackCount();
 	CBoolArrayEx	arrRef;
 	arrRef.SetSize(nTracks);
-	CIntArrayEx	arrSelection;
-	const CIntArrayEx	*pSelection;
-	int	nItems;
-	switch (m_iGraphScope) {
-	case GS_SELECTED:
-		pSelection = &pDoc->m_arrTrackSel;
-		nItems = pDoc->GetSelectedCount();
-		break;
-	case GS_RECURSIVE:
-	case GS_BIDIRECTIONAL:
-		pDoc->m_Seq.GetTracks().GetLinkedTracks(pDoc->m_arrTrackSel, arrSelection, m_iGraphScope == GS_BIDIRECTIONAL);
-		pSelection = &arrSelection;
-		nItems = arrSelection.GetSize();
-		break;
-	case GS_ALL:
-		pSelection = NULL;
-		nItems = nTracks;
-		break;
-	default:
-		NODEFAULTCASE;
-		return false;
+	CTrackBase::CPackedModulationArray	arrMod;
+	MOD_TYPE_MASK	nModTypeUsedMask = 0;
+	if (m_iGraphScope == GS_ALL) {	// if showing all modulations
+		pDoc->m_Seq.GetModulations(arrMod);	// simple case
+	} else {	// showing modulations only for selected tracks
+		UINT	nLinkFlags;
+		switch (m_iGraphScope) {
+		case GS_SOURCES:
+			nLinkFlags = CTrackArray::MODLINKF_SOURCE;
+			break;
+		case GS_TARGETS:
+			nLinkFlags = CTrackArray::MODLINKF_TARGET;
+			break;
+		case GS_BIDIRECTIONAL:
+			nLinkFlags = CTrackArray::MODLINKF_SOURCE | CTrackArray::MODLINKF_TARGET;
+			break;
+		default:
+			ASSERT(0);	// logic error
+			nLinkFlags = 0;
+		}
+		int	nLevels;
+		if (m_nGraphDepth > 0)	// if explicit depth
+			nLevels = m_nGraphDepth;
+		else	// unlimited depth
+			nLevels = INT_MAX;
+		pDoc->m_Seq.GetTracks().GetLinkedTracks(pDoc->m_arrTrackSel, arrMod, nLinkFlags, nLevels);
 	}
+	MOD_TYPE_MASK	nModTypeFilterMask;
+	if (m_iGraphFilter >= 0) {	// if modulation type filter index is valid
+		if (m_iGraphFilter >= GRAPH_FILTER_MULTI)	// if multiple filters
+			nModTypeFilterMask = m_nGraphFilterMask;	// use filter bitmask
+		else	// single modulation type is selected
+			nModTypeFilterMask = MAKE_MOD_TYPE_MASK(m_iGraphFilter);	// make bitmask for this type
+	} else	// no filter
+		nModTypeFilterMask = static_cast<MOD_TYPE_MASK>(-1);
 	CString	sLine;
-	for (int iItem = 0; iItem < nItems; iItem++) {	// for each track or selected track
-		int	iTrack;
-		if (m_iGraphScope == GS_ALL)	// if showing all modulations
-			iTrack = iItem;	// item index is track index
-		else	// showing subset of modulations
-			iTrack = (*pSelection)[iItem];	// convert item index to track index
-		const CTrack& trk = pDoc->m_Seq.GetTrack(iTrack);
-		int	nMods = trk.m_arrModulator.GetSize();
-		for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
-			const CTrack::CModulation&	mod = trk.m_arrModulator[iMod];
-			if (mod.m_iSource >= 0) {	// if valid modulation source track index
-				if (m_iGraphFilter >= 0 && mod.m_iType != m_iGraphFilter)	// if modulation type doesn't pass filter
-					continue;	// skip this modulation
+	int	nMods = arrMod.GetSize();
+	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
+		const CTrackBase::CPackedModulation&	mod = arrMod[iMod];
+		if (mod.m_iSource >= 0) {	// if valid modulation source track index
+			MOD_TYPE_MASK	nModTypeBit = MAKE_MOD_TYPE_MASK(mod.m_iType);	// make bitmask for this type
+			if (nModTypeFilterMask & nModTypeBit) {	// if modulation's type passes filter
+				nModTypeUsedMask |= nModTypeBit;	// set corresponding bit in mask of types used in graph
 				if (m_bEdgeLabels) {	// if showing edge labels
 					_ftprintf(fout.m_pStream, _T("%d->%d[color=%s,label=\"%s\",fontcolor=%s];\n"), 
-						mod.m_iSource + 1, iTrack + 1, m_arrModTypeColor[mod.m_iType], 
+						mod.m_iSource + 1, mod.m_iTarget + 1, m_arrModTypeColor[mod.m_iType], 
 						CTrack::GetModulationTypeName(mod.m_iType).GetString(), m_arrModTypeColor[mod.m_iType]);
 				} else {	// no edge labels
 					_ftprintf(fout.m_pStream, _T("%d->%d[color=%s];\n"), 
-						mod.m_iSource + 1, iTrack + 1, m_arrModTypeColor[mod.m_iType]);
+						mod.m_iSource + 1, mod.m_iTarget + 1, m_arrModTypeColor[mod.m_iType]);
 				}
-				arrRef[iTrack] = true;
-				arrRef[mod.m_iSource] = true;
+				arrRef[mod.m_iSource] = true;	// mark source and target tracks as referenced
+				arrRef[mod.m_iTarget] = true;
 			}
 		}
 	}
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-		if (arrRef[iTrack]) {	// if track references an edge
+		if (arrRef[iTrack]) {	// if at least one edge references this track
 			const CTrack& trk = pDoc->m_Seq.GetTrack(iTrack);
 			CString	sName;
 			if (trk.m_sName.IsEmpty())	// if track name empty
@@ -415,9 +441,24 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes) const
 		int	nSels = pDoc->GetSelectedCount();
 		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 			int	iTrack = pDoc->m_arrTrackSel[iSel];
-			if (arrRef[iTrack])	// if track references an edge
+			if (arrRef[iTrack])	// if at least one edge references this track
 				_ftprintf(fout.m_pStream, _T("%d[style=filled,color=black,fillcolor=lightcyan2];\n"), iTrack + 1);
 		}
+	}
+	if (m_bShowLegend) {	// if showing graph legend
+		CString	s(_T("graph [fontname=\"Helvetica\" labelloc=\"b\" label=")
+			_T("<<TABLE BORDER=\"0\"><TR>\n"));	// legend is a single table row
+		for (int iModType = 0; iModType < CTrack::MODULATION_TYPES; iModType++) {	// for each modulation type
+			if (nModTypeUsedMask & MAKE_MOD_TYPE_MASK(iModType)) {	// if graph uses this modulation type
+				s += _T("<TD BGCOLOR=\"");	// add modulation type to legend
+				s += m_arrModTypeColor[iModType];
+				s += _T("\"> </TD><TD>");	// blank becomes color swatch
+				s += CTrack::GetModulationTypeName(iModType);
+				s += _T("</TD><TD> </TD>\n");	// extra cell adds margin
+			}
+		}
+		s += _T("</TR><TR><TD> </TD></TR></TABLE>>]\n");	// add blank row to avoid clipping bottom
+		_fputts(s, fout.m_pStream);
 	}
 	_fputts(_T("}\n"), fout.m_pStream);
 	return true;
@@ -536,7 +577,18 @@ void CGraphBar::DoContextMenu(CWnd* pWnd, CPoint point)
 	for (int iItem = 0; iItem < CTrack::MODULATION_TYPES; iItem++) {	// for each modulation type
 		arrItemStr[iItem + 1] = CTrack::GetModulationTypeName(iItem);	// skip wildcard
 	}
+	arrItemStr[GRAPH_FILTER_MULTI + 1] = LDS(IDS_GRAPH_FILTER_MULTI);
 	theApp.MakePopup(*pSubMenu, SMID_GRAPH_FILTER_FIRST, arrItemStr, m_iGraphFilter + 1);
+	// create graph depth submenu
+	pSubMenu = pPopup->GetSubMenu(SM_GRAPH_DEPTH);
+	VERIFY(theApp.InsertNumericMenuItems(pSubMenu, ID_GRAPH_DEPTH_MAX, 
+		SMID_GRAPH_DEPTH_FIRST + 1, 1, GRAPH_DEPTHS - 1, true));	// insert after
+	MENUITEMINFO itemInfo;
+	itemInfo.cbSize = sizeof(itemInfo);
+	itemInfo.fMask = MIIM_ID;
+	itemInfo.wID = SMID_GRAPH_DEPTH_FIRST;
+	VERIFY(pSubMenu->SetMenuItemInfo(0, &itemInfo, true));
+	pSubMenu->CheckMenuRadioItem(0, GRAPH_DEPTHS, m_nGraphDepth, MF_BYPOSITION);
 	// display the context menu
 	pPopup->TrackPopupMenu(0, point.x, point.y, this);
 }
@@ -855,6 +907,55 @@ bool CGraphBar::CFileFindDlg::CMyRecursiveFileFind::OnFile(const CFileFind& find
 	return false;	// stop iterating, we're good
 }
 
+CGraphBar::CModulationTypeDlg::CModulationTypeDlg() : CDialog(IDD)
+{
+}
+
+BEGIN_MESSAGE_MAP(CGraphBar::CModulationTypeDlg, CDialog)
+	ON_CLBN_CHKCHANGE(IDC_MOD_TYPE_LIST, OnCheckChangeList)
+END_MESSAGE_MAP()
+
+void CGraphBar::CModulationTypeDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_MOD_TYPE_LIST, m_list);
+}
+
+BOOL CGraphBar::CModulationTypeDlg::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+	for (int iItem = 0; iItem < CTrack::MODULATION_TYPES; iItem++) {	// for each modulation type
+		m_list.AddString(CTrack::GetModulationTypeName(iItem));	// insert list item for this type
+		if (m_nModTypeMask & MAKE_MOD_TYPE_MASK(iItem))	// if corresponding bit is set within mask
+			m_list.SetCheck(iItem, BST_CHECKED);	// check list item
+	}
+	GetDlgItem(IDOK)->EnableWindow(m_nModTypeMask != 0);
+	return TRUE;
+}
+
+void CGraphBar::CModulationTypeDlg::OnOK()
+{
+	MOD_TYPE_MASK	nModTypeMask = 0;	// init mask to zero (no types selected)
+	for (int iItem = 0; iItem < CTrack::MODULATION_TYPES; iItem++) {	// for each modulation type
+		if (m_list.GetCheck(iItem) & BST_CHECKED)	// if list item is checked
+			nModTypeMask |= MAKE_MOD_TYPE_MASK(iItem);	// set corresponding bit within mask
+	}
+	m_nModTypeMask = nModTypeMask;
+	CDialog::OnOK();
+}
+
+void CGraphBar::CModulationTypeDlg::OnCheckChangeList()
+{
+	bool	bGotChecks = false;
+	for (int iItem = 0; iItem < CTrack::MODULATION_TYPES; iItem++) {	// for each modulation type
+		if (m_list.GetCheck(iItem) & BST_CHECKED) {	// if list item is checked
+			bGotChecks = true;
+			break;	// we're done
+		}
+	}
+	GetDlgItem(IDOK)->EnableWindow(bGotChecks);
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CGraphBar message map
 
@@ -868,6 +969,7 @@ BEGIN_MESSAGE_MAP(CGraphBar, CMyDockablePane)
 	ON_MESSAGE(UWM_GRAPH_ERROR, OnGraphError)
 	ON_MESSAGE(UWM_DEFERRED_UPDATE, OnDeferredUpdate)
 	ON_COMMAND_RANGE(SMID_GRAPH_SCOPE_FIRST, SMID_GRAPH_SCOPE_LAST, OnGraphScope)
+	ON_COMMAND_RANGE(SMID_GRAPH_DEPTH_FIRST, SMID_GRAPH_DEPTH_LAST, OnGraphDepth)
 	ON_COMMAND_RANGE(SMID_GRAPH_LAYOUT_FIRST, SMID_GRAPH_LAYOUT_LAST, OnGraphLayout)
 	ON_COMMAND_RANGE(SMID_GRAPH_FILTER_FIRST, SMID_GRAPH_FILTER_LAST, OnGraphFilter)
 	ON_COMMAND(ID_GRAPH_SAVEAS, OnGraphSaveAs)
@@ -881,6 +983,8 @@ BEGIN_MESSAGE_MAP(CGraphBar, CMyDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_GRAPH_HIGHLIGHT_SELECT, OnUpdateGraphHighlightSelect)
 	ON_COMMAND(ID_GRAPH_EDGE_LABELS, OnGraphEdgeLabels)
 	ON_UPDATE_COMMAND_UI(ID_GRAPH_EDGE_LABELS, OnUpdateGraphEdgeLabels)
+	ON_COMMAND(ID_GRAPH_LEGEND, OnGraphLegend)
+	ON_UPDATE_COMMAND_UI(ID_GRAPH_LEGEND, OnUpdateGraphLegend)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -923,13 +1027,20 @@ void CGraphBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
 		if (nItemID >= SMID_GRAPH_SCOPE_FIRST) {
 			if (nItemID <= SMID_GRAPH_SCOPE_LAST) {
 				nItemID = m_arrHintGraphScopeID[nItemID - SMID_GRAPH_SCOPE_FIRST];
+			} else if (nItemID <= SMID_GRAPH_DEPTH_LAST) {
+				if (nItemID == SMID_GRAPH_DEPTH_FIRST)
+					nItemID = IDS_HINT_GRAPH_DEPTH_MAX;
+				else
+					nItemID = IDS_HINT_GRAPH_DEPTH;
 			} else if (nItemID <= SMID_GRAPH_LAYOUT_LAST) {
 				nItemID = IDS_HINT_GRAPH_LAYOUT;
 			} else if (nItemID <= SMID_GRAPH_FILTER_LAST) {
 				if (nItemID == SMID_GRAPH_FILTER_FIRST)
 					nItemID = IDS_HINT_GRAPH_FILTER_MOD_TYPE_ALL;
-				else
+				else if (nItemID < SMID_GRAPH_FILTER_LAST)
 					nItemID = IDS_HINT_GRAPH_FILTER_MOD_TYPE;
+				else
+					nItemID = IDS_HINT_GRAPH_FILTER_MOD_TYPE_MULTI;
 			}
 		}
 	}
@@ -982,6 +1093,14 @@ void CGraphBar::OnGraphScope(UINT nID)
 	UpdateGraph();
 }
 
+void CGraphBar::OnGraphDepth(UINT nID)
+{
+	int	nGraphDepth = nID - SMID_GRAPH_DEPTH_FIRST;
+	ASSERT(nGraphDepth >= 0 && nGraphDepth < GRAPH_DEPTHS);
+	m_nGraphDepth = nGraphDepth;
+	UpdateGraph();
+}
+
 void CGraphBar::OnGraphLayout(UINT nID)
 {
 	int	iGraphLayout = nID - SMID_GRAPH_LAYOUT_FIRST;
@@ -994,7 +1113,15 @@ void CGraphBar::OnGraphFilter(UINT nID)
 {
 	int	iGraphFilter = nID - SMID_GRAPH_FILTER_FIRST;
 	ASSERT(iGraphFilter >= 0 && iGraphFilter < GRAPH_FILTERS);
-	m_iGraphFilter = iGraphFilter - 1;	// account for wildcard
+	iGraphFilter--;	// account for wildcard
+	if (iGraphFilter == GRAPH_FILTER_MULTI) {	// if multiple filters
+		CModulationTypeDlg	dlg;	// show modulation type dialog
+		dlg.m_nModTypeMask = m_nGraphFilterMask;	// init dialog's bitmask
+		if (dlg.DoModal() != IDOK)	// if user canceled or error
+			return;	// bail out
+		m_nGraphFilterMask = dlg.m_nModTypeMask;	// update filter bitmask member
+	}
+	m_iGraphFilter = iGraphFilter;
 	UpdateGraph();
 }
 
@@ -1056,4 +1183,15 @@ void CGraphBar::OnGraphEdgeLabels()
 void CGraphBar::OnUpdateGraphEdgeLabels(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bEdgeLabels);
+}
+
+void CGraphBar::OnGraphLegend()
+{
+	m_bShowLegend ^= 1;
+	UpdateGraph();
+}
+
+void CGraphBar::OnUpdateGraphLegend(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bShowLegend);
 }

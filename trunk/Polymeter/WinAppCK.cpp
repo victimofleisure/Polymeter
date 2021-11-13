@@ -21,6 +21,7 @@
 		11		28jan19	add GetLogicalDrives
 		12		10feb19	add temp file path wrapper
 		13		13jun20	add conditional wait cursor wrapper
+		14		11nov21	add FindMenuItem and InsertNumericMenuItems
 
         enhanced application
  
@@ -182,6 +183,32 @@ bool CWinAppCK::GetLogicalDriveStringArray(CStringArrayEx& arrDrive)
 	while (*pDrive) {
 		arrDrive.Add(pDrive);
 		pDrive += _tcslen(pDrive) + 1;
+	}
+	return true;
+}
+
+int	CWinAppCK::FindMenuItem(const CMenu *pMenu, UINT nItemID)
+{
+	int	nItems = pMenu->GetMenuItemCount();
+	for (int iItem = 0; iItem < nItems; iItem++) {
+		if (pMenu->GetMenuItemID(iItem) == nItemID)
+			return(iItem);	// return item's position
+	}
+	return(-1);
+}
+
+bool CWinAppCK::InsertNumericMenuItems(CMenu *pMenu, UINT nPlaceholderID, UINT nStartID, int nStartVal, int nItems, bool bInsertAfter)
+{
+	int	iStartItem = FindMenuItem(pMenu, nPlaceholderID);
+	if (iStartItem < 0)
+		return false;
+	CString	sItem;
+	for (int iItem = 0; iItem < nItems; iItem++) {	// for each item in range
+		sItem.Format(_T("%d"), nStartVal + iItem);
+		int	iAmpersand = iItem >= nItems - nStartVal;
+		sItem.Insert(iAmpersand, '&');
+		if (!pMenu->InsertMenu(iItem + bInsertAfter, MF_STRING | MF_BYPOSITION, nStartID + iItem, sItem))
+			return false;
 	}
 	return true;
 }

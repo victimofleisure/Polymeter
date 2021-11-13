@@ -26,6 +26,9 @@
 		16		19jul21	include step parent header for its pane IDs
 		17		23oct21	add resource versioning
 		18		31oct21	in ctor, set base class flag to defer showing main window
+		19		07nov21	delay main frame show/update to avoid view flicker
+		20		08nov21	don't delete main frame pointer if load frame fails
+		21		11nov21	bump resource version
 
 */
 
@@ -63,7 +66,7 @@
 #define RK_TIE_NOTES _T("bTieNotes")
 #define RK_RESOURCE_VERSION _T("nResourceVersion")
 
-const int CPolymeterApp::m_nNewResourceVersion = 2;	// update if resource change breaks customization
+const int CPolymeterApp::m_nNewResourceVersion = 3;	// update if resource change breaks customization
 
 #include "HelpIDs.h"	// help IDs generated automatically by doc2web
 const CPolymeterApp::HELP_RES_MAP CPolymeterApp::m_HelpResMap[] = {
@@ -173,7 +176,8 @@ BOOL CPolymeterApp::InitInstance()
 	CMainFrame* pMainFrame = new CMainFrame;
 	if (!pMainFrame || !pMainFrame->LoadFrame(IDR_MAINFRAME))
 	{
-		delete pMainFrame;
+		// The stock code deletes pMainFrame here, but doing so crashes the app
+		// because the instance was already deleted by CFrameWnd::PostNcDestroy()
 		return FALSE;
 	}
 	m_pMainWnd = pMainFrame;
@@ -196,9 +200,10 @@ BOOL CPolymeterApp::InitInstance()
 	// app was launched with /RegServer, /Register, /Unregserver or /Unregister.
 	if (!ProcessShellCommand(cmdInfo))
 		return FALSE;
-	// The main window has been initialized, so show and update it
-	pMainFrame->ShowWindow(m_nCmdShow);
-	pMainFrame->UpdateWindow();
+
+	// The stock code shows and updates the main window here, but this makes the
+	// view flicker due to being painted twice; it's solved by moving show/update
+	// to CMainFrame::OnDelayedCreate which runs after the window sizes stabilize
 
 	// now that we're up, check for resource version change, and update profile if needed
 	if (m_nNewResourceVersion != m_nOldResourceVersion) {	// if resource version changed

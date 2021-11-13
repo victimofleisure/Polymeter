@@ -8,14 +8,15 @@
 		revision history:
 		rev		date	comments
         00		25jan19	initial version
+        01		11nov21	refactor graph scopes
 		
 */
 
 #ifdef GRAPHSCOPEDEF
 
 GRAPHSCOPEDEF(ALL)
-GRAPHSCOPEDEF(SELECTED)
-GRAPHSCOPEDEF(RECURSIVE)
+GRAPHSCOPEDEF(SOURCES)
+GRAPHSCOPEDEF(TARGETS)
 GRAPHSCOPEDEF(BIDIRECTIONAL)
 
 #undef GRAPHSCOPEDEF

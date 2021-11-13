@@ -34,6 +34,7 @@
 		24		01dec20	add dub array method to detect last duplicate
 		25		16dec20	add loop range class
 		26		08jun21	add cast in MIDI stream event operator to fix warning
+        27		11nov21	refactor modulation crawler to support levels
 
 */
 
@@ -185,12 +186,16 @@ public:
 		static	int		SortCompareBySource(const void *arg1, const void *arg2);
 	};
 	typedef CArrayEx<CModulationArray, CModulationArray&> CModulationArrayArray;
-	struct PACKED_MODULATION {
-		int		iType;		// index of modulation type
-		int		iSource;	// index of source track
-		int		iTarget;	// index of target track
+	class CPackedModulation {
+	public:
+		CPackedModulation();
+		CPackedModulation(int iType, int iSource, int iTarget);
+		int		m_iType;	// index of modulation type
+		int		m_iSource;	// index of source track
+		int		m_iTarget;	// index of target track
+		static	int		SortCompare(const void *p1, const void *p2);
 	};
-	class CPackedModulationArray : public CArrayEx<PACKED_MODULATION, PACKED_MODULATION&> {
+	class CPackedModulationArray : public CArrayEx<CPackedModulation, CPackedModulation&> {
 	public:
 		void	Import(LPCTSTR pszPath, int nTracks);
 		void	Export(LPCTSTR pszPath) const;
@@ -471,6 +476,17 @@ inline bool CTrackBase::CModulation::operator!=(const CModulation& mod) const
 	return !operator==(mod);
 }
 
+inline CTrackBase::CPackedModulation::CPackedModulation()
+{
+}
+
+inline CTrackBase::CPackedModulation::CPackedModulation(int iType, int iSource, int iTarget)
+{
+	m_iType = iType;
+	m_iSource = iSource;
+	m_iTarget = iTarget;
+}
+
 inline CTrackBase::CLoopRange::CLoopRange()
 {
 }
@@ -605,6 +621,10 @@ public:
 		FINDF_PARTIAL_MATCH		= 0x02,		// match substrings
 		FINDF_NO_WRAP_SEARCH	= 0x04,		// don't wrap search
 	};
+	enum {	// modulation linkage flags
+		MODLINKF_SOURCE			= 0x01,		// source links
+		MODLINKF_TARGET			= 0x02,		// target links
+	};
 
 // Operations
 	void	ImportSteps(LPCTSTR pszPath);
@@ -612,21 +632,24 @@ public:
 	void	ImportTracks(LPCTSTR pszPath);
 	void	ExportTracks(const CIntArrayEx *parrSelection, LPCTSTR pszPath) const;
 	int		FindName(const CString& sName, int iStart = 0, UINT nFlags = 0) const;
-	void	GetModulatees(CTrack::CModulationArrayArray& arrModulatee) const;
-	void	GetLinkedTracks(const CIntArrayEx& arrSelection, CIntArrayEx& arrLinkedTrack, bool bIncludeModulatees) const;
+	void	GetModulationTargets(CTrack::CModulationArrayArray& arrTarget) const;
+	void	GetLinkedTracks(const CIntArrayEx& arrSelection, CTrack::CPackedModulationArray& arrMod, UINT nLinkFlags = MODLINKF_SOURCE, int nLevels = 1) const;
 
 protected:
 // Types
 	class CModulationCrawler {
 	public:
-		CModulationCrawler(const CTrackArray& arrTrack, bool bIncludeModulatees);
-		void	Crawl(const CIntArrayEx& arrSelection, CIntArrayEx& arrLinkedTrack);
+		CModulationCrawler(const CTrackArray& arrTrack, CTrack::CPackedModulationArray& arrMod, UINT nLinkFlags = MODLINKF_SOURCE, int nLevels = 1);
+		void	Crawl(const CIntArrayEx& arrSelection);
 
 	protected:
 		const CTrackArray&	m_arrTrack;	// reference to parent track array
-		CBoolArrayEx	m_arrIsLinked;	// for each track, true if track is linked
-		CTrack::CModulationArrayArray	m_arrModulatee;	// modulatee cross-reference; each track's modulatee array
-		bool	m_bIncludeModulatees;	// if true, traverse modulatees as well as modulators
+		CTrack::CPackedModulationArray&	m_arrMod;	// reference to output array of modulations
+		CBoolArrayEx	m_arrIsCrawled;	// for each track, true if track has already been crawled
+		CTrack::CModulationArrayArray	m_arrTarget;	// for each track, array of modulation targets
+		UINT	m_nLinkFlags;	// modulation linkage flags; see enum above
+		int		m_nLevels;		// maximum number of modulation levels
+		int		m_nDepth;		// current recursion depth of crawl
 		void	Recurse(int iTrack);
 	};
 

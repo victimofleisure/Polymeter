@@ -56,6 +56,8 @@
 		46		23oct21	allow persistent UI customization in Release
 		47		30oct21	song duration method moved to document
 		48		01nov21	generate message handlers for showing docking bars
+		49		07nov21	move initial show/update to delayed create handler
+		50		11nov21	move static menu methods to app class
 
 */
 
@@ -705,16 +707,6 @@ bool CMainFrame::DoFindReplace()
 	return true;	// success: one or more matches were found
 }
 
-int	CMainFrame::FindMenuItem(const CMenu *pMenu, UINT nItemID)
-{
-	int	nItems = pMenu->GetMenuItemCount();
-	for (int iItem = 0; iItem < nItems; iItem++) {
-		if (pMenu->GetMenuItemID(iItem) == nItemID)
-			return(iItem);	// return item's position
-	}
-	return(-1);
-}
-
 // CMainFrame diagnostics
 
 #ifdef _DEBUG
@@ -1048,6 +1040,9 @@ LRESULT	CMainFrame::OnDelayedCreate(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
+	// The main window has been initialized, so show and update it
+	ShowWindow(theApp.m_nCmdShow);
+	UpdateWindow();
 	theApp.MidiInit();	// initialize MIDI devices
 	if (theApp.m_Options.m_General_bCheckForUpdates)	// if automatically checking for updates
 		AfxBeginThread(CheckForUpdatesThreadFunc, this);	// launch thread to check
@@ -1311,16 +1306,8 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
 {
 	CMDIFrameWndEx::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
 	if (!bSysMenu && pPopupMenu->GetMenuItemCount() == 2) {	// menu initially contains items for All and Custom
-		int	iItem = FindMenuItem(pPopupMenu, ID_TRANSPORT_CONVERGENCE_SIZE_ALL);
-		if (iItem >= 0) {
-			CString	sItem;
-			for (int iSize = 0; iSize < CONVERGENCE_SIZES; iSize++) {	// for each size
-				sItem.Format(_T("%d"), CONVERGENCE_SIZE_MIN + iSize);
-				int	iAmpersand = iSize >= CONVERGENCE_SIZES - 1;
-				sItem.Insert(iAmpersand, '&');
-				pPopupMenu->InsertMenu(iSize, MF_STRING | MF_BYPOSITION, ID_CONVERGENCE_SIZE_START + iSize, sItem);
-			}
-		}
+		VERIFY(theApp.InsertNumericMenuItems(pPopupMenu, ID_TRANSPORT_CONVERGENCE_SIZE_ALL, 
+			ID_CONVERGENCE_SIZE_START, CONVERGENCE_SIZE_MIN, CONVERGENCE_SIZES));
 	}
 }
 

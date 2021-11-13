@@ -11,6 +11,9 @@
 		01		10feb19	move temp file path wrapper to app
 		02		16oct20	add array of executable names to find
 		03		26jun21	add filtering by modulation type
+        04		11nov21	add graph depth attribute
+		05		12nov21	add modulation type dialog for multiple filters
+		06		13nov21	add optional legend to graph
 		
 */
 
@@ -82,6 +85,21 @@ protected:
 		afx_msg LRESULT	OnFindDone(WPARAM wParam, LPARAM lParam);
 		afx_msg LRESULT	OnFindDrive(WPARAM wParam, LPARAM lParam);
 	};
+	typedef UINT MOD_TYPE_MASK;	// modulation type mask; allows maximum of 32 types
+	class CModulationTypeDlg : public CDialog {
+	public:
+		CModulationTypeDlg();
+		MOD_TYPE_MASK	m_nModTypeMask;		// modulation type bitmask
+
+	protected:
+		virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+		virtual BOOL OnInitDialog();
+		virtual void OnOK();
+		enum { IDD = IDD_MODULATION_TYPE };
+		DECLARE_MESSAGE_MAP()
+		afx_msg void OnCheckChangeList();
+		CCheckListBox	m_list;		// check list box control
+	};
 
 // Constants
 	enum {	// graph thread states
@@ -96,13 +114,18 @@ protected:
 		#include "GraphTypeDef.h"
 		GRAPH_SCOPES
 	};
+	enum {	// graph depths
+		GRAPH_EXPLICIT_DEPTHS = 10,
+		GRAPH_DEPTHS	// one extra for unlimited
+	};
 	enum {	// graph layouts, from Graphviz
 		#define GRAPHLAYOUTDEF(name) GL_##name,
 		#include "GraphTypeDef.h"
 		GRAPH_LAYOUTS
 	};
 	enum {	// graph filters
-		GRAPH_FILTERS = CTrack::MODULATION_TYPES + 1,	// one extra for all
+		GRAPH_FILTERS = CTrack::MODULATION_TYPES + 2,	// extras for all and multiple
+		GRAPH_FILTER_MULTI = GRAPH_FILTERS - 2,	// index reserved for multiple filters
 	};
 	enum {	// user-defined window messages
 		UWM_GRAPH_DONE = WM_APP + 1689,
@@ -110,19 +133,22 @@ protected:
 		UWM_GRAPHVIZ_FIND_DONE,		// wParam is non-zero if find succeeded
 		UWM_GRAPHVIZ_FIND_DRIVE,	// wParam is index of logical drive being searched
 	};
-	enum {	// context submenus
+	enum {	// context submenus; order must match resource
 		SM_GRAPH_SCOPE,
+		SM_GRAPH_DEPTH,
 		SM_GRAPH_LAYOUT,
 		SM_GRAPH_FILTER,
 		CONTEXT_SUBMENUS
 	};
 	enum {	// submenu command ID ranges
 		SMID_GRAPH_SCOPE_FIRST = ID_APP_DYNAMIC_SUBMENU_BASE,
-		SMID_GRAPH_SCOPE_LAST = SMID_GRAPH_SCOPE_FIRST + GRAPH_SCOPES,
-		SMID_GRAPH_LAYOUT_FIRST = SMID_GRAPH_SCOPE_LAST + 1,
-		SMID_GRAPH_LAYOUT_LAST = SMID_GRAPH_LAYOUT_FIRST + GRAPH_LAYOUTS,
+		SMID_GRAPH_SCOPE_LAST = SMID_GRAPH_SCOPE_FIRST + GRAPH_SCOPES - 1,
+		SMID_GRAPH_DEPTH_FIRST = SMID_GRAPH_SCOPE_LAST + 1,
+		SMID_GRAPH_DEPTH_LAST = SMID_GRAPH_DEPTH_FIRST + GRAPH_DEPTHS - 1,
+		SMID_GRAPH_LAYOUT_FIRST = SMID_GRAPH_DEPTH_LAST + 1,
+		SMID_GRAPH_LAYOUT_LAST = SMID_GRAPH_LAYOUT_FIRST + GRAPH_LAYOUTS - 1,
 		SMID_GRAPH_FILTER_FIRST = SMID_GRAPH_LAYOUT_LAST + 1,
-		SMID_GRAPH_FILTER_LAST = SMID_GRAPH_FILTER_FIRST + GRAPH_FILTERS,
+		SMID_GRAPH_FILTER_LAST = SMID_GRAPH_FILTER_FIRST + GRAPH_FILTERS - 1,
 	};
 	enum {
 		BROWSER_ZOOM_PCT_MIN	= 10,
@@ -142,17 +168,21 @@ protected:
 	::ATL::CComPtr<IWebBrowser2> m_pBrowser;	// web browser interface
 	int		m_iGraphState;		// graph worker thread state; see enum above
 	int		m_iGraphScope;		// graph data scope; see GraphTypeDef.h
+	int		m_nGraphDepth;		// graph maximum recursion depth; 0 for unlimited
 	int		m_iGraphLayout;		// graph layout engine; see GraphTypeDef.h
-	int		m_iGraphFilter;		// graph filter; -1 for all, else modulation type index
+	int		m_iGraphFilter;		// index of modulation type to show, or -1 for all
+	MOD_TYPE_MASK	m_nGraphFilterMask;	// in multi-filter mode, bitmask of modulation types to show
 	int		m_iZoomLevel;		// zoom level in signed steps; zero is 100%
 	double	m_fZoomStep;		// zoom step size as fraction
 	bool	m_bUpdatePending;	// true if deferred update is pending
 	bool	m_bHighlightSelect;	// true if highlighting selection
 	bool	m_bEdgeLabels;		// true if showing edge labels
+	bool	m_bShowLegend;		// true if showing legend
 	bool	m_bGraphvizFound;	// true if graphviz binaries were located
 	CTempFilePath	m_tfpData;	// temp file path of graph input data (in DOT syntax)
 	CTempFilePath	m_tfpGraph;	// temp file path of graph output image
 	static	CString	m_sGraphvizPath;	// path to folder containing Graphviz binaries
+	static	bool	m_bUseCairo;	// true if rendering via Cairo; Graphviz bug #1855
 
 // Helpers
 	void	StartDeferredUpdate();
@@ -185,6 +215,7 @@ protected:
 	afx_msg LRESULT OnGraphError(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnDeferredUpdate(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnGraphScope(UINT nID);
+	afx_msg void OnGraphDepth(UINT nID);
 	afx_msg void OnGraphLayout(UINT nID);
 	afx_msg void OnGraphFilter(UINT nID);
 	afx_msg void OnGraphSaveAs();
@@ -197,4 +228,6 @@ protected:
 	afx_msg void OnUpdateGraphHighlightSelect(CCmdUI *pCmdUI);
 	afx_msg void OnGraphEdgeLabels();
 	afx_msg void OnUpdateGraphEdgeLabels(CCmdUI *pCmdUI);
+	afx_msg void OnGraphLegend();
+	afx_msg void OnUpdateGraphLegend(CCmdUI *pCmdUI);
 };

@@ -37,6 +37,7 @@
 		27		07jun21	rename rounding functions
 		28		08jun21	fix warning for CString as variadic argument
 		29		13aug21	in Resample, wrap second index instead of clamping
+        30		11nov21	refactor modulation crawler to support levels
 
 */
 
@@ -782,11 +783,11 @@ void CTrackBase::CPackedModulationArray::Import(LPCTSTR pszPath, int nTracks)
 	CStdioFile	fIn(pszPath, CFile::modeRead);
 	CString	sLine;
 	while (fIn.ReadString(sLine)) {	// for each line of input file
-		PACKED_MODULATION	mod;
-		if (_stscanf_s(sLine, _T("%d,%d,%d"), &mod.iType, &mod.iSource, &mod.iTarget) == 3) {
-			if (mod.iType >= 0 && mod.iType < MODULATION_TYPES && mod.iTarget >= 0 && mod.iTarget < nTracks) {
-				if (mod.iSource >= nTracks)	// if source is out of range
-					mod.iSource = -1;	// set source to undefined
+		CPackedModulation	mod;
+		if (_stscanf_s(sLine, _T("%d,%d,%d"), &mod.m_iType, &mod.m_iSource, &mod.m_iTarget) == 3) {
+			if (mod.m_iType >= 0 && mod.m_iType < MODULATION_TYPES && mod.m_iTarget >= 0 && mod.m_iTarget < nTracks) {
+				if (mod.m_iSource >= nTracks)	// if source is out of range
+					mod.m_iSource = -1;	// set source to undefined
 				Add(mod);
 			}
 		}
@@ -799,8 +800,8 @@ void CTrackBase::CPackedModulationArray::Export(LPCTSTR pszPath) const
 	CString	sLine;
 	int	nMods = GetSize();
 	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
-		const PACKED_MODULATION&	mod = GetAt(iMod);
-		sLine.Format(_T("%d,%d,%d\n"), mod.iType, mod.iSource, mod.iTarget);
+		const CPackedModulation&	mod = GetAt(iMod);
+		sLine.Format(_T("%d,%d,%d\n"), mod.m_iType, mod.m_iSource, mod.m_iTarget);
 		fOut.WriteString(sLine);	// write line to output file
 	}
 }
@@ -1038,11 +1039,11 @@ int CTrackArray::FindName(const CString& sName, int iStart, UINT nFlags) const
 	return -1;
 }
 
-void CTrackArray::GetModulatees(CTrack::CModulationArrayArray& arrModulatee) const
+void CTrackArray::GetModulationTargets(CTrack::CModulationArrayArray& arrTarget) const
 {
-	arrModulatee.RemoveAll();	// reset array just in case
+	arrTarget.RemoveAll();	// reset array just in case
 	int	nTracks = GetSize();
-	arrModulatee.SetSize(nTracks);
+	arrTarget.SetSize(nTracks);
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		const CTrack&	trk = GetAt(iTrack);
 		int	nMods = trk.m_arrModulator.GetSize();
@@ -1050,73 +1051,102 @@ void CTrackArray::GetModulatees(CTrack::CModulationArrayArray& arrModulatee) con
 			const CTrack::CModulation&	modulator = trk.m_arrModulator[iMod];
 			int	iModSource = modulator.m_iSource;
 			if (iModSource >= 0) {	// if modulator is valid
-				// for modulatees, m_iSource is redefined to be index of target instead
-				CTrack::CModulation	modulatee(modulator.m_iType, iTrack);
-				arrModulatee[iModSource].Add(modulatee);	// add modulatee to destination array
+				// for targets, m_iSource is redefined to be index of target instead
+				CTrack::CModulation	target(modulator.m_iType, iTrack);
+				arrTarget[iModSource].Add(target);	// add target to destination array
 			}
 		}
 	}
 }
 
-void CTrackArray::GetLinkedTracks(const CIntArrayEx& arrSelection, CIntArrayEx& arrLinkedTrack, bool bIncludeModulatees) const
+int CTrackBase::CPackedModulation::SortCompare(const void *p1, const void *p2)
 {
-	CModulationCrawler	crawler(*this, bIncludeModulatees);
-	crawler.Crawl(arrSelection, arrLinkedTrack);
+	CTrack::CPackedModulation *pMod1 = (CTrack::CPackedModulation *)p1;
+	CTrack::CPackedModulation *pMod2 = (CTrack::CPackedModulation *)p2;
+	int	retc;	// sort order is target, source, type
+	retc = CTrack::Compare(pMod1->m_iTarget, pMod2->m_iTarget);
+	if (!retc) {
+		retc = CTrack::Compare(pMod1->m_iSource, pMod2->m_iSource);
+		if (!retc) {
+			retc = CTrack::Compare(pMod1->m_iType, pMod2->m_iType);
+		}
+	}
+	return retc;
 }
 
-CTrackArray::CModulationCrawler::CModulationCrawler(const CTrackArray& arrTrack, bool bIncludeModulatees) 
-	: m_arrTrack(arrTrack)
+void CTrackArray::GetLinkedTracks(const CIntArrayEx& arrSelection, CTrack::CPackedModulationArray& arrMod, UINT nLinkFlags, int nLevels) const
 {
-	m_bIncludeModulatees = bIncludeModulatees;
+	CModulationCrawler	crawler(*this, arrMod, nLinkFlags, nLevels);
+	crawler.Crawl(arrSelection);
+	qsort(arrMod.GetData(), arrMod.GetSize(), sizeof(CTrack::CPackedModulation), CTrack::CPackedModulation::SortCompare);
 }
 
-void CTrackArray::CModulationCrawler::Crawl(const CIntArrayEx& arrSelection, CIntArrayEx& arrLinkedTrack)
+CTrackArray::CModulationCrawler::CModulationCrawler(const CTrackArray& arrTrack, CTrack::CPackedModulationArray& arrMod, UINT nLinkFlags, int nLevels) 
+	: m_arrTrack(arrTrack), m_arrMod(arrMod)
 {
-	arrLinkedTrack.RemoveAll();
+	m_nLinkFlags = nLinkFlags;
+	m_nLevels = nLevels;
+}
+
+void CTrackArray::CModulationCrawler::Crawl(const CIntArrayEx& arrSelection)
+{
+	m_arrMod.RemoveAll();	// empty destination array
+	m_nDepth = 0;	// init recursion depth
 	int	nTracks = m_arrTrack.GetSize();
-	if (m_bIncludeModulatees)	// if including modulatees
-		m_arrTrack.GetModulatees(m_arrModulatee);	// build modulatee cross-reference
-	m_arrIsLinked.SetSize(nTracks);
+	m_arrTrack.GetModulationTargets(m_arrTarget);	// build target cross-reference
+	m_arrIsCrawled.SetSize(nTracks);	// allocate crawled flags
 	int	nSels = arrSelection.GetSize();
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = arrSelection[iSel];
-		m_arrIsLinked[iTrack] = true;	// mark track linked
+		m_arrIsCrawled[iTrack] = true;	// mark track crawled
 		Recurse(iTrack);	// crawl track
-	}
-	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-		if (m_arrIsLinked[iTrack])	// if track is linked
-			arrLinkedTrack.Add(iTrack);	// add to track destination array
 	}
 }
 
 void CTrackArray::CModulationCrawler::Recurse(int iTrack)
 {
+	m_nDepth++;	// increment recursion depth
 	const CTrack& trk = m_arrTrack[iTrack];
-	int	nMods = trk.m_arrModulator.GetSize();
-	for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
-		const CTrack::CModulation&	mod = trk.m_arrModulator[iMod];
-		int	iModSource = mod.m_iSource;
-		if (iModSource >= 0) {	// if valid modulation source
-			if (!m_arrIsLinked[iModSource]) {	// if not already crawled
-				m_arrIsLinked[iModSource] = true;	// mark modulator linked
-				Recurse(iModSource);	// crawl modulator
-			}
-		}
-	}
-	if (m_bIncludeModulatees) {	// if including modulatees
-		const CTrack::CModulationArray&	arrTrackMod = m_arrModulatee[iTrack];
-		nMods = arrTrackMod.GetSize();
-		for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulatees
-			const CTrack::CModulation&	mod = arrTrackMod[iMod];
-			int	iModTarget = mod.m_iSource;
-			if (iModTarget >= 0) {	// if valid modulation target
-				if (!m_arrIsLinked[iModTarget]) {	// if not already crawled
-					m_arrIsLinked[iModTarget] = true;	// mark modulatee linked
-					Recurse(iModTarget);	// crawl modulatee
+	if (m_nLinkFlags & MODLINKF_SOURCE) {	// if crawling sources
+		int	nMods = trk.m_arrModulator.GetSize();
+		for (int iMod = 0; iMod < nMods; iMod++) {	// for each source
+			const CTrack::CModulation&	mod = trk.m_arrModulator[iMod];
+			int	iSource = mod.m_iSource;
+			if (iSource >= 0) {	// if source is a valid track index
+				CTrack::CModulation	modTarget(mod.m_iType, iTrack);
+				INT_PTR	iPos = m_arrTarget[iSource].Find(modTarget);
+				if (iPos >= 0) {	// if modulation found in source track's target array
+					m_arrTarget[iSource][iPos].m_iSource = -1;	// mark modulation used
+					CTrack::CPackedModulation	modPacked(mod.m_iType, iSource, iTrack);
+					m_arrMod.Add(modPacked);	// add modulation to destination array
+				}
+				if (!m_arrIsCrawled[iSource]) {	// if source track hasn't been crawled
+					m_arrIsCrawled[iTrack] = true;	// mark source track crawled
+					if (m_nDepth < m_nLevels)	// if maximum depth not reached
+						Recurse(iSource);	// crawl source track
 				}
 			}
 		}
 	}
+	if (m_nLinkFlags & MODLINKF_TARGET) {	// if crawling targets
+		CTrack::CModulationArray&	arrTarget = m_arrTarget[iTrack];
+		int	nMods = arrTarget.GetSize();
+		for (int iMod = 0; iMod < nMods; iMod++) {	// for each target
+			CTrack::CModulation&	mod = arrTarget[iMod];
+			int	iTarget = mod.m_iSource;	// target array redefines source as target
+			if (iTarget >= 0) {	// if target is a valid track index
+				mod.m_iSource = -1;	// mark modulation used
+				CTrack::CPackedModulation	modPacked(mod.m_iType, iTrack, iTarget);
+				m_arrMod.Add(modPacked);	// add modulation to destination array
+				if (!m_arrIsCrawled[iTarget]) {	// if target track hasn't been crawled
+					m_arrIsCrawled[iTrack] = true;	// mark target track crawled
+					if (m_nDepth < m_nLevels)	// if maximum depth not reached
+						Recurse(iTarget);	// crawl target track
+				}
+			}
+		}
+	}
+	m_nDepth--;	// decrement recursion depth
 }
 
 #define RK_GROUP_COUNT _T("Count")

@@ -23,6 +23,7 @@
 		13		28jan19	add GetLogicalDrives
 		14		10feb19	add temp file path wrapper
 		15		13jun20	add conditional wait cursor wrapper
+		16		11nov21	add FindMenuItem and InsertNumericMenuItems
 
         enhanced application
  
@@ -54,6 +55,8 @@ public:
 	static	bool	DeleteFolder(LPCTSTR Path, FILEOP_FLAGS nFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT);
 	static	CString	GetTitleFromPath(LPCTSTR Path);
 	static	bool	GetLogicalDriveStringArray(CStringArrayEx& arrDrive);
+	static	int		FindMenuItem(const CMenu *pMenu, UINT nItemID);
+	static	bool	InsertNumericMenuItems(CMenu *pMenu, UINT nPlaceholderID, UINT nStartID, int nStartVal, int nItems, bool bInsertAfter = false);
 
 // Overrides
 	// ClassWizard generated virtual function overrides

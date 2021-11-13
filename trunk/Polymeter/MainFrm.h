@@ -35,6 +35,7 @@
 		25		15jun21	use auto pointer for tool bar track color button
 		26		08aug21	override get message string
 		27		01nov21	generate message handlers for showing docking bars
+		28		11nov21	move static menu methods to app class
 
 */
 
@@ -124,7 +125,6 @@ public:
 	void	UpdateSongPositionStrings(const CPolymeterDoc *pDoc);
 	void	UpdateSongPositionDisplay();
 	void	FullScreen(bool bEnable);
-	static	int		FindMenuItem(const CMenu *pMenu, UINT nItemID);
 
 // Overrides
 public:

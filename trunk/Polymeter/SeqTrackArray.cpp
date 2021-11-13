@@ -26,6 +26,7 @@
 		16		04dec20	refactor find next dub time to return track index
 		17		10feb21	overload set track property, add set unique names
 		18		07jun21	rename rounding functions
+        19		11nov21	rename packed modulation members
 
 */
 
@@ -645,10 +646,10 @@ void CSeqTrackArray::GetModulations(CPackedModulationArray& arrMod) const
 		const CTrack&	trk = GetAt(iTrack);
 		int	nMods = trk.m_arrModulator.GetSize();
 		for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulations
-			PACKED_MODULATION	modPacked;
-			modPacked.iType = trk.m_arrModulator[iMod].m_iType;
-			modPacked.iSource = trk.m_arrModulator[iMod].m_iSource;
-			modPacked.iTarget = iTrack;
+			CPackedModulation	modPacked;
+			modPacked.m_iType = trk.m_arrModulator[iMod].m_iType;
+			modPacked.m_iSource = trk.m_arrModulator[iMod].m_iSource;
+			modPacked.m_iTarget = iTrack;
 			arrMod[iPackedMod] = modPacked;	// copy modulation info to destination array
 			iPackedMod++;
 		}
@@ -662,9 +663,9 @@ void CSeqTrackArray::SetModulations(const CPackedModulationArray& arrMod)
 	CModulationArrayArray	arrTrackMod;
 	arrTrackMod.SetSize(nTracks);
 	for (int iPackedMod = 0; iPackedMod < nPackedMods; iPackedMod++) {	// for each packed modulation
-		const PACKED_MODULATION&	modPacked = arrMod[iPackedMod];
-		CModulation	mod(modPacked.iType, modPacked.iSource);
-		arrTrackMod[modPacked.iTarget].Add(mod);
+		const CPackedModulation&	modPacked = arrMod[iPackedMod];
+		CModulation	mod(modPacked.m_iType, modPacked.m_iSource);
+		arrTrackMod[modPacked.m_iTarget].Add(mod);
 	}
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
 	for (int iTrack = 0; iTrack < nTracks; iTrack++)	// for each track
