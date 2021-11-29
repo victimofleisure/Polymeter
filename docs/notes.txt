@@ -3258,3 +3258,168 @@ if (!pMainFrame || !pMainFrame->LoadFrame(IDR_MAINFRAME))
 	return FALSE;
 }
 
+11/14/21 Phase bar's image sequence export doesn't support tempo change
+
+This is a complex issue, because the planet angles can no longer be 
+simply computed from the frame time; instead we must compensate the
+angles for a series of small stepwise tempo changes. But even if we
+solved this, it's not certain that our solution would match Reason's
+methodology precisely enough to avoid audio/video sync problems.
+
+11/15/21 phase video sync
+
+Ero Ayo (for example):
+The first note is at -72:60, which occurs at -0:00:36.250 or 750ms before
+position 1:00. The original export starts at exactly 750ms, whereas the 
+mastered version starts at 131ms, for a difference of 619ms. At 60 FPS, 
+each frame is 16.666ms, and 619 / 16.666 = 37.14, so for correct sync we
+should skip the first 37 frames of the image sequence. The start position 
+is -73:00, and 1:000 occurs at exactly 0:37:00 (time). In the finished 
+video, full convergence occurs at 37 seconds. Success!
+
+Fun Ife: master version starts at 106.209ms
+video must start at -6 frames (start pos = -1:000, skip 66 frames)
+
+Ibaramu: master version starts at 116.265ms
+Reason version starts at 428.397ms; 312ms offset, video must skip 19 frames
+
+11/16/21 elliptical orbits
+
+Benchmarked pretty carefully and it's definitely not slower, despite
+additional calculations for aspect ratio. If anything it's about 6 micros
+faster. That's due to not recreating the solid brushes for every draw.
+
+Ero Ayo ABC2: 16 us, 35 us, 26 us
+
+#define BENCH_PHASE_BAR_DRAW 1
+#if BENCH_PHASE_BAR_DRAW
+static int m_nSamps;//@@@
+static double m_fSampMin = 1e10, m_fSampMax, m_fSampSum;
+#endif
+
+LRESULT CPhaseBar::OnDrawD2D(WPARAM wParam, LPARAM lParam)
+{
+#if BENCH_PHASE_BAR_DRAW
+	CBenchmark b;//@@@
+#endif
+	...
+#if BENCH_PHASE_BAR_DRAW
+	double t = b.Elapsed();//@@@
+	m_nSamps++;
+	if (t < m_fSampMin)
+		m_fSampMin = t;
+	if (t > m_fSampMax)
+		m_fSampMax = t;
+	m_fSampSum += t;
+	if (m_nSamps >= 100) {
+		printf("%f %f %f\n", m_fSampMin, m_fSampMax, m_fSampSum / m_nSamps);
+		m_nSamps = 0;
+		m_fSampMin = 1e10;
+		m_fSampMax = 0;
+		m_fSampSum = 0;
+	}
+#endif
+	return 0;
+}
+
+11/16/21 mnemonics in docking windows submenu
+
+#include "MainFrm.h"//@@@
+void CMyDockablePane::GetPaneName(CString& strName) const
+{
+	int	iBar = m_nID - ID_APP_DOCKING_BAR_START - 1;
+	static const int arr[] = {
+		1, 0, 2, 1, 0, 5, 0, 0, 5, 1, 0, 5, // the horror!
+	};
+	CDockablePane::GetPaneName(strName);
+_tprintf(_T("%s %d %c\n"), strName, iBar, strName[arr[iBar]]);
+	strName.Insert(arr[iBar], '&');
+}
+
+This is a brutal solution. The hard-coded mnemonics indices are ugly.
+It also entagles CMyDockablePane with CMainFrame, possibly solvable
+by sending messages to main frame to retrieve the mnemonic indices.
+But the more serious issue is that according to MS, GetPaneName is
+used by floating bars; the MFC sources indicates otherwise (only
+usage is in BuildPaneMenu) but do we want to risk it? Is there
+a reliable way of detecting that we're in BuildPaneMenu?
+
+11/19/21 phase bar's failure to support tempo change
+
+First step is determining whether the song has tempo changes.
+bool bHasTempoChange = pDoc->m_Seq.GetTracks().FindType(CTrack::TT_TEMPO)) >= 0;
+This only considers the presence of tempo tracks, regardless of whether they're muted.
+
+If tempo changes exist, the next step is retrieving the tempo map, via pDoc->ExportMidi.
+
+11/23/21 phase bar tempo change support works
+
+PLM file: phase diagram tempo map 3
+Export MIDI file, length 1:40
+Import into Reason, export audio
+Export phase video, frame rate 30
+Create MP4 as follows:
+c:\apps\ffmpeg\bin\ffmpeg -framerate 30 -i "C:\Temp\Phase graph\data\img%%05d.png" 
+-i "C:\Chris\MyProjects\Polymeter\docs\debug\phase diagram tempo map 3.wav" 
+-c:v libx265 -movflags +faststart -vf format=yuv420p -preset veryslow -crf 23 
+-b:a 320k -shortest "phase diagram tempo map 3.mp4"
+
+The resulting video is correct. The final crash cymbal occurs at 1:32:834 (92.834 s)
+according to Reason, and the phase diagram is fully aligned in frame 2785.
+92.834 / 30 = 2785.02
+
+11/24/21 startup benchmarks
+
+Using Release version, after Reset Layout. Times are in milliseconds.
+Caching reduces the times by about 15 ms; to avoid the caching variance,
+rebuild the app before benchmarking. Total time (nearly half a second)
+is measured by adding a CBenchmark member to CPolymeterApp class, and 
+then printing the elapsed time at the end of CMainFrame::OnDelayedCreate.
+
+Total: 450
+CMainFrame::OnCreate: 220
+CPolymeterApp::InitInstance: 280
+
+removing EnableD2DSupport gets total down to 390; moving EnableD2DSupport
+to OnShowChanged will save 60, or 13%.
+
+InitInstance up to creating doc template: 3
+creating main frame: 270
+rest of InitInstance: 20
+
+390 - 270 = 120 unaccounted for; most likely this is from painting windows
+
+in CMainFrame::OnDelayedCreate:
+ShowWindow and UpdateWindow: 50
+MidiInit: 15
+CheckForUpdates: 0
+CMDIFrameWndEx::LoadFrame: 195
+
+Most of the easily observable overhead is LoadFrame; not much to do about that.
+
+11/27/21 updated benchmarks
+
+Startup code prior to InitInstance: 0 (40 us)
+
+Startup code was measured by copying AfxWinMain into the project,
+and adding as its first line:
+QueryPerformanceCounter((LARGE_INTEGER *)&tWinMain);
+and then as first line of InitInstance, adding:
+QueryPerformanceCounter((LARGE_INTEGER *)&t);
+and then subtracting and dividing by performance counter frequency:
+__int64	fPCFreq;
+QueryPerformanceFrequency((LARGE_INTEGER *)&fPCFreq);
+printf("%f\n", double(t - tWinMain) / fPCFreq);
+
+From start of InitInstance to start of OnDelayedCreate: 300 .. 330
+From start of InitInstance to end of InitInstance: 300 .. 330
+Win32Console::Create: 90 <- this can cause confusion!
+CWinAppEx::InitInstance: 0
+InitInstance from after Win32Console::Create to end: 230
+Creating main frame: 190
+CMDIFrameWndEx::LoadFrame: 190
+
+Looks like startup overhead is roughly proportional to the number of docking panes,
+so consider carefully before adding more docking panes; they're expensive.
+
+

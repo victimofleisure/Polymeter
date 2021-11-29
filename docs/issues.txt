@@ -7,7 +7,6 @@ id	open	close	type	description	rev	user
 298	11/12/19		bug	MDI tab control sometimes disappears after opening or closing document; hard to reproduce		
 303	12/03/19		bug	playback lags behind UI by one tick (0.5 seconds) at tempo of 1 with GS Synth (see phase test)		
 304	12/10/19		bug	steps aren't drawn when track's quant is very large (e.g. 30720) and step view is zoomed in		
-312	02/18/20		bug	song CSV export omits tempo map, because CMidiFile::ReadTracks doesn't support tempo map		
 319	03/04/20		bug	in step view, very long tracks aren't displayed when zoomed in; caused by scroll view's 32-bit limitations		
 348	04/07/20		bug	stopping sequencer occasionally causes MIDI error 65 (still playing); happens every time in Mac Wine		
 349	04/07/20		bug	attempting to open MIDI device that's already open gives misleading out of memory error message		
@@ -19,6 +18,7 @@ id	open	close	type	description	rev	user
 470	11/07/21		bug	app still flickers on startup due to duplicate view update; move main frame show/update to OnDelayedCreate		
 471	11/08/21		bug	if main frame creation fails, app crashes, due to erroneous deletion of main frame pointer in InitInstance		
 472	11/08/21		bug	graph sometimes clips rightmost objects, in GraphViz versions 2.44 and above; add option to render with Cairo		
+478	11/14/21		bug	phase bar's image sequence export doesn't support tempo change		
 1	03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 2	03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 3	03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -391,6 +391,14 @@ id	open	close	type	description	rev	user
 454	06/27/21	11/12/21	done	graph should allow filtering for multiple modulation types, via a check list dialog	1.0.02.000	
 474	11/09/21	11/12/21	done	graph should optionally limit recursion depth to a specified number of levels	1.0.02.000	
 475	11/12/21	11/13/21	done	graph should optionally include a legend, mapping edge colors to modulation types	1.0.02.000	
+479	11/15/21	11/15/21	done	MIDI file reader may return incorrect master tempo if file has a tempo map; return first tempo, not last one	1.0.03.000	
+312	02/18/20	11/16/21	done	song CSV export omits tempo map, because CMidiFile::ReadTracks doesn't support tempo map	1.0.03.000	
+481	11/16/21	11/16/21	done	phase bar should optionally draw elliptical orbits, using window's aspect ratio	1.0.03.000	
+480	11/16/21	11/16/21	done	record dialog's frame rate should persist	1.0.03.000	
+482	11/14/21	11/17/21	done	phase bar should optionally draw 3D planets, simulated via radial gradient	1.0.03.000	
+485	11/24/21	11/24/21	done	add night sky and crosshairs options to phase bar	1.0.03.000	
+484	11/24/21	11/24/21	done	move phase bar's Direct2D enable to OnShowChanged, potentially saving 60 ms during startup	1.0.03.000	
+486	11/24/21	11/27/21	done	phase bar should optionally show labels containing each orbit's period in ticks	1.0.03.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -475,4 +483,5 @@ id	open	close	type	description	rev	user
 294	05/30/19		punt	modulation list is empty regardless of track selection; can't reproduce it, brain fire?		
 301	11/12/19		punt	popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful		
 468	10/30/21		punt	at refresh rate of 60 Hz or above, song view cursor flickers during playback if track count is five or less		
-476	11/13/21		todo	optionally render phase diagram in 3D, with options for lighting and texture and rotation of orbital plane		
+476	11/13/21		punt	render phase diagram in 3D, with variable lighting, texture and rotation of orbital plane; simulated 3D is enough		
+483	11/16/21		punt	docking windows submenu doesn't support selection via mnemonics; framework issue, BuildPanesMenu		

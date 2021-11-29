@@ -1283,13 +1283,25 @@ If you hover the pointer over an orbit, after a short delay, a tooltip is shown 
 
 @item Exporting phase video\Exporting video
 
-The phase visualization can be exported as a series of frames in sequentially numbered PNG files. The resulting image sequence can then be converted to a video using <a href="http://ffmpeg.org">ffmpeg</a> or an equivalent program. To start exporting, select @{cmd}Export Video@} from the phase bar's context menu. This command is only available while playback of the document is @[play\stopped].
+The phase visualization can be exported as a series of frames in sequentially numbered PNG files. The resulting image sequence can then be converted to a video using <a href="http://ffmpeg.org">ffmpeg</a> or an equivalent program. To start exporting, select @{cmd}Export Video@} from the phase bar's @[phase bar context menu\context menu]. This command is only available while playback of the document is @[play\stopped].
 
 The command first displays a folder dialog, prompting you to select a destination folder for the image sequence. The export typically creates many files, so it's advisable to store them in their own folder. The dialog permits you to create a new folder if needed. Press OK to continue.
 
 The command then displays a record dialog that lets you specify the duration of the recording, the frame rate and the frame size. The duration can be specified in either hh:mm:ss time or in frames. Press OK to start exporting frames. During the export, a progress bar is displayed.
 
 This command can potentially consume a large amount of disk space. You're responsible for ensuring that sufficient space exists. If the destination folder already contains an image sequence from a previous run of this export, you'll be warned. If you proceed anyway, the previous image sequence is overwritten.
+
+@item Phase bar context menu\Context menu
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Item</th><th>Description</th></tr>
+<tr><td>Export Video</td><td>Exports video of the animated graph as an image sequence; see @[Exporting phase video\above].</td></tr>
+<tr><td>Circular Orbits</td><td>If checked, the orbits are circular, otherwise the orbits are elliptical with the same aspect ratio as the window.</td></tr>
+<tr><td>3D Planets</td><td>If checked, the planets are drawn in 3D instead of 2D.</td></tr>
+<tr><td>Night Sky</td><td>If checked, the background is dark instead of light.</td></tr>
+<tr><td>Crosshairs</td><td>If checked, the graph includes crosshairs.</td></tr>
+<tr><td>Periods</td><td>If checked, the graph includes labels that specify each orbit's @[period] in @[ticks]. This option increases overhead.</td></tr>
+</table>
 
 @topic Step Values bar\Step Values
 

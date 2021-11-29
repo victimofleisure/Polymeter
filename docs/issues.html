@@ -111,15 +111,6 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>312</TD>
-<TD>02/18/20</TD>
-<TD>&nbsp;</TD>
-<TD>bug</TD>
-<TD>song CSV export omits tempo map, because CMidiFile::ReadTracks doesn't support tempo map</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>319</TD>
 <TD>03/04/20</TD>
 <TD>&nbsp;</TD>
@@ -215,6 +206,15 @@
 <TD>&nbsp;</TD>
 <TD>bug</TD>
 <TD>graph sometimes clips rightmost objects, in GraphViz versions 2.44 and above; add option to render with Cairo</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>478</TD>
+<TD>11/14/21</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>phase bar's image sequence export doesn't support tempo change</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -3567,6 +3567,78 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>479</TD>
+<TD>11/15/21</TD>
+<TD>11/15/21</TD>
+<TD>done</TD>
+<TD>MIDI file reader may return incorrect master tempo if file has a tempo map; return first tempo, not last one</TD>
+<TD>1.0.03.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>312</TD>
+<TD>02/18/20</TD>
+<TD>11/16/21</TD>
+<TD>done</TD>
+<TD>song CSV export omits tempo map, because CMidiFile::ReadTracks doesn't support tempo map</TD>
+<TD>1.0.03.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>481</TD>
+<TD>11/16/21</TD>
+<TD>11/16/21</TD>
+<TD>done</TD>
+<TD>phase bar should optionally draw elliptical orbits, using window's aspect ratio</TD>
+<TD>1.0.03.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>480</TD>
+<TD>11/16/21</TD>
+<TD>11/16/21</TD>
+<TD>done</TD>
+<TD>record dialog's frame rate should persist</TD>
+<TD>1.0.03.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>482</TD>
+<TD>11/14/21</TD>
+<TD>11/17/21</TD>
+<TD>done</TD>
+<TD>phase bar should optionally draw 3D planets, simulated via radial gradient</TD>
+<TD>1.0.03.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>485</TD>
+<TD>11/24/21</TD>
+<TD>11/24/21</TD>
+<TD>done</TD>
+<TD>add night sky and crosshairs options to phase bar</TD>
+<TD>1.0.03.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>484</TD>
+<TD>11/24/21</TD>
+<TD>11/24/21</TD>
+<TD>done</TD>
+<TD>move phase bar's Direct2D enable to OnShowChanged, potentially saving 60 ms during startup</TD>
+<TD>1.0.03.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>486</TD>
+<TD>11/24/21</TD>
+<TD>11/27/21</TD>
+<TD>done</TD>
+<TD>phase bar should optionally show labels containing each orbit's period in ticks</TD>
+<TD>1.0.03.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>18</TD>
 <TD>03/22/18</TD>
 <TD>&nbsp;</TD>
@@ -4326,8 +4398,17 @@
 <TD>476</TD>
 <TD>11/13/21</TD>
 <TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>optionally render phase diagram in 3D, with options for lighting and texture and rotation of orbital plane</TD>
+<TD>punt</TD>
+<TD>render phase diagram in 3D, with variable lighting, texture and rotation of orbital plane; simulated 3D is enough</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>483</TD>
+<TD>11/16/21</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>docking windows submenu doesn't support selection via mnemonics; framework issue, BuildPanesMenu</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
