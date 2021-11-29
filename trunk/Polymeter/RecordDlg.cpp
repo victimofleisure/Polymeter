@@ -11,6 +11,7 @@
 		01		02apr20	remove project-specific items
 		02		07jun21	rename rounding functions
 		03		23aug21	refactor time/frame methods
+		04		16nov21	make frame rate persistent
 
 */
 
@@ -20,6 +21,7 @@
 #include "stdafx.h"
 #include "Polymeter.h"
 #include "RecordDlg.h"
+#include "Persist.h"
 
 // CRecordDlg dialog
 
@@ -31,6 +33,7 @@ IMPLEMENT_DYNAMIC(CRecordDlg, CDialog)
 #define RK_DURATION_UNIT _T("DurationUnit")
 #define RK_DURATION_SECONDS _T("DurationSeconds")
 #define RK_DURATION_FRAMES _T("DurationFrames")
+#define RK_FRAME_RATE _T("FrameRate")
 
 const SIZE CRecordDlg::m_szFramePreset[] = {
 	#define FRAMESIZEDEF(width, height) {width, height},
@@ -45,7 +48,7 @@ CRecordDlg::CRecordDlg(CWnd* pParent /*=NULL*/)
 	m_iDurationUnit = theApp.GetProfileInt(RK_RECORD, RK_DURATION_UNIT, DU_SECONDS);
 	m_nDurationSeconds = theApp.GetProfileInt(RK_RECORD, RK_DURATION_SECONDS, 30);
 	m_nDurationFrames = theApp.GetProfileInt(RK_RECORD, RK_DURATION_FRAMES, 900);
-	m_fFrameRate = 30;
+	m_fFrameRate = CPersist::GetDouble(RK_RECORD, RK_FRAME_RATE, 30);
 	m_iFrameSize = 0;
 	m_nCurDurationSeconds = 0;
 	m_nCurDurationFrames = 0;
@@ -194,6 +197,7 @@ void CRecordDlg::OnOK()
 	theApp.WriteProfileInt(RK_RECORD, RK_DURATION_UNIT, m_iDurationUnit);
 	theApp.WriteProfileInt(RK_RECORD, RK_DURATION_SECONDS, m_nDurationSeconds);
 	theApp.WriteProfileInt(RK_RECORD, RK_DURATION_FRAMES, m_nDurationFrames);
+	CPersist::WriteDouble(RK_RECORD, RK_FRAME_RATE, m_fFrameRate);
 }
 
 LRESULT CRecordDlg::OnKickIdle(WPARAM, LPARAM)

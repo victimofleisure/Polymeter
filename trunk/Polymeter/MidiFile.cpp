@@ -16,6 +16,9 @@
 		06		09sep19	add duration and tempo map to write
 		07		07jun21	rename rounding functions
 		08		08jun21	fix local name reuse warning
+		09		15nov21	in read, merge track name case with preceding switch
+		10		15nov21	in read, set master tempo from first tempo event only
+		11		15nov21	add tempo map to read
 
 		MIDI file I/O
  
@@ -220,14 +223,19 @@ void CMidiFile::WriteTrack(const CMidiEventArray& arrEvent, LPCTSTR pszName)
 	EndTrack(StartPos);	// finish track and fix header
 }
 
-void CMidiFile::ReadTracks(CMidiTrackArray& arrTrack, CStringArrayEx& arrTrackName, USHORT& nPPQ, UINT *pnTempo, TIME_SIGNATURE* pTimeSig, KEY_SIGNATURE* pKeySig)
+void CMidiFile::ReadTracks(CMidiTrackArray& arrTrack, CStringArrayEx& arrTrackName, USHORT& nPPQ, UINT *pnTempo, TIME_SIGNATURE* pTimeSig, KEY_SIGNATURE* pKeySig, CMidiEventArray* parrTempoMap)
 {
+	bool	bGotTempo = false;
+	bool	bGotTimeSig = false;
+	bool	bGotKeySig = false;
 	if (pnTempo != NULL)	// if tempo requested
 		*pnTempo = 0;	// init destination before anything throws
 	if (pTimeSig != NULL)	// if time signature requested
 		ZeroMemory(pTimeSig, sizeof(TIME_SIGNATURE));
 	if (pKeySig != NULL)	// if key signature requested
 		ZeroMemory(pKeySig, sizeof(KEY_SIGNATURE));
+	if (parrTempoMap != NULL)
+		parrTempoMap->RemoveAll();
 	UINT	nChunkID;
 	ReadCheck(&nChunkID, sizeof(nChunkID));	// read chunk ID
 	if (nChunkID != m_nHeaderChunkID)	// if not header chunk
@@ -274,19 +282,29 @@ void CMidiFile::ReadTracks(CMidiTrackArray& arrTrack, CStringArrayEx& arrTrackNa
 					}
 					switch (nEventType) {
 					case ME_SET_TEMPO:
-						if (pnTempo != NULL)	// if tempo requested
+						if (!bGotTempo && pnTempo != NULL) {	// if tempo unread and requested
 							Reverse(pnTempo, arrByte.GetData(), TEMPO_LEN);	// convert tempo to little endian
+							bGotTempo = true;	// mark tempo read
+						}
+						if (parrTempoMap != NULL) {	// if tempo map requested
+							// tempo conversion only sets three bytes, so we must zero high byte
+							MIDI_EVENT	evt = {nDeltaT};	// also initializes Msg member to zero
+							Reverse(&evt.Msg, arrByte.GetData(), TEMPO_LEN);	// convert tempo to little endian
+							parrTempoMap->Add(evt);	// add event to caller's tempo map
+						}
 						break;
 					case ME_TIME_SIGNATURE:
-						if (pTimeSig != NULL)	// if time signature requested
+						if (!bGotTimeSig && pTimeSig != NULL) {	// if time signature unread and requested
 							*pTimeSig = *reinterpret_cast<TIME_SIGNATURE*>(arrByte.GetData());
+							bGotTimeSig = true;	// mark time signature read
+						}
 						break;
 					case ME_KEY_SIGNATURE:
-						if (pKeySig != NULL)	// if key signature requested
+						if (!bGotKeySig && pKeySig != NULL) {	// if key signature unread and requested
 							*pKeySig = *reinterpret_cast<KEY_SIGNATURE*>(arrByte.GetData());
+							bGotKeySig = true;	// mark key signature read
+						}
 						break;
-					}
-					switch (nEventType) {
 					case ME_TRACK_NAME:
 						arrTrackName[iTrack] = CString(reinterpret_cast<char *>(arrByte.GetData()), nEventLen);
 						break;

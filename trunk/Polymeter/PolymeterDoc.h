@@ -41,6 +41,7 @@
 		31		07jun21	rename rounding functions
 		32		25oct21 in sort mappings, add optional sort direction
 		33		30oct21	move song duration method from sequencer to here
+		34		23nov21	add method to export tempo map
 
 */
 
@@ -283,7 +284,10 @@ public:
 	int		GotoNextDub(bool bReverse = false, int iTargetTrack = 0);
 	int		CalcSongTimeShift() const;
 	void	OnMidiOutputCaptureChange();
+	bool	ExportMidi(int nDuration, bool bSongMode, USHORT& nPPQ, UINT& nTempo, CMidiFile::CMidiTrackArray& arrTrack, 
+					   CStringArrayEx& arrTrackName, CMidiFile::CMidiEventArray *parrTempoMap = NULL);
 	bool	ExportSongAsCSV(LPCTSTR pszDestPath, int nDuration, bool bSongMode);
+	bool	ExportTempoMap(CMidiFile::CMidiEventArray& arrTempoMap);
 	void	CopyMappings(const CIntArrayEx& arrSelection);
 	void	DeleteMappings(const CIntArrayEx& arrSelection, bool bIsCut);
 	void	InsertMappings(int iInsert, const CMappingArray& arrMapping, bool bIsPaste);

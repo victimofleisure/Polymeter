@@ -15,6 +15,10 @@
 		05		31jul20	fix multi-track length or quant change
 		06		07jun21	rename rounding functions
 		07		19jul21	disable export while playing to avoid glitches
+		08		17nov21	add options for elliptical orbits and 3D planets
+		09		23nov21	add tempo map support
+		10		24nov21	enable D2D in OnShowChanged to expedite startup
+		11		27nov21	add options for crosshairs and period labels
 		
 */
 
@@ -45,20 +49,49 @@ static char THIS_FILE[]=__FILE__;
 IMPLEMENT_DYNAMIC(CPhaseBar, CMyDockablePane)
 
 #define RK_EXPORT_FOLDER _T("ExportFolder")
+#define RK_DRAW_STYLE _T("DrawStyle")
 
 #define LIMIT_FIND_CONVERGENCE_TO_32_BITS
 
-CPhaseBar::CPhaseBar()
+const D2D1::ColorF	CPhaseBar::m_clrBkgndLight(1, 1, 1);
+const D2D1::ColorF	CPhaseBar::m_clrOrbitNormal(D2D1::ColorF::DimGray);
+const D2D1::ColorF	CPhaseBar::m_clrOrbitSelected(D2D1::ColorF::SkyBlue);
+const D2D1::ColorF	CPhaseBar::m_clrPlanetNormal(0, 0, 0);
+const D2D1::ColorF	CPhaseBar::m_clrPlanetMuted(D2D1::ColorF::Red);
+const D2D1::ColorF	CPhaseBar::m_clrHighlight(1, 1, 1);
+
+const D2D1_GRADIENT_STOP	CPhaseBar::m_stopNormal[2] = {
+	0.0f, m_clrHighlight, 1.0f, m_clrPlanetNormal
+};
+const D2D1_GRADIENT_STOP	CPhaseBar::m_stopMuted[2] =  {
+	0.0f, m_clrHighlight, 1.0f, m_clrPlanetMuted
+};
+const D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES	CPhaseBar::m_propsRadGradBr;
+const double	CPhaseBar::m_fHighlightOffset = 1.0 / 3.0;
+
+CPhaseBar::CPhaseBar() :
+	m_clrBkgnd(m_clrBkgndLight),
+	m_brOrbitNormal(NULL, m_clrOrbitNormal),	// postpone brush creation to CreateResources
+	m_brOrbitSelected(NULL, m_clrOrbitSelected),
+	m_brPlanetNormal(NULL, m_clrPlanetNormal),
+	m_brPlanetMuted(NULL, m_clrPlanetMuted),
+	m_brPlanet3DNormal(NULL, m_stopNormal, _countof(m_stopNormal), m_propsRadGradBr),
+	m_brPlanet3DMuted(NULL, m_stopMuted, _countof(m_stopMuted), m_propsRadGradBr)
 {
 	m_nSongPos = 0;
 	m_iTipOrbit = -1;
 	m_iAnchorOrbit = -1;
 	m_bUsingD2D = false;
+	m_bIsD2DInitDone = false;
 	m_nMaxPlanetWidth = MAX_PLANET_WIDTH;
+	m_nDrawStyle = theApp.GetProfileInt(RK_PhaseBar, RK_DRAW_STYLE, DSB_CIRCULAR_ORBITS);
+	m_fGradientRadius = 0;
+	m_fGradientOffset = 0;
 }
 
 CPhaseBar::~CPhaseBar()
 {
+	theApp.WriteProfileInt(RK_PhaseBar, RK_DRAW_STYLE, m_nDrawStyle);
 }
 
 void CPhaseBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
@@ -196,8 +229,20 @@ void CPhaseBar::OnTrackMuteChange()
 
 void CPhaseBar::OnShowChanged(bool bShow)
 {
-	if (bShow)	// if showing
+	if (bShow) {	// if showing
+		if (!m_bIsD2DInitDone) {	// if initialization not done
+			m_bIsD2DInitDone = true;
+			EnableD2DSupport();	// enable Direct2D for this window; takes around 60ms
+			m_bUsingD2D = IsD2DSupportEnabled() != 0;	// cache to avoid performance hit
+			if (m_bUsingD2D) {	// if using Direct2D
+				if (m_nDrawStyle & DSB_NIGHT_SKY)	// if night sky style
+					SetNightSky(true, false);	// enable night sky, but don't recreate resources
+				CreateResources(GetRenderTarget());	// create resources
+				ShowDataTip(true);
+			}
+		}
 		Update();	// assume document changed while hidden
+	}
 }
 
 void CPhaseBar::ShowDataTip(bool bShow)
@@ -250,6 +295,52 @@ void CPhaseBar::SelectTracksByPeriod(const CIntArrayEx& arrPeriod) const
 	}
 }
 
+inline double CPhaseBar::CTempoMapIter::PositionToSeconds(int nPos) const
+{
+	return static_cast<double>(nPos) / m_nTimebase / m_fCurTempo * 60;
+}
+
+inline int CPhaseBar::CTempoMapIter::SecondsToPosition(double fSecs) const
+{
+	return Round(fSecs / 60 * m_fCurTempo * m_nTimebase);
+}
+
+CPhaseBar::CTempoMapIter::CTempoMapIter(const CMidiFile::CMidiEventArray& arrTempoMap, int nTimebase, double fInitTempo) :
+	m_arrTempoMap(arrTempoMap)
+{
+	m_nTimebase = nTimebase;
+	m_fInitTempo = fInitTempo;
+	Reset();
+}
+
+void CPhaseBar::CTempoMapIter::Reset()
+{
+	m_fStartTime = 0;
+	m_fEndTime = 0;
+	m_fCurTempo = m_fInitTempo;
+	m_nStartPos = 0;
+	m_iTempo = 0;
+	if (m_arrTempoMap.GetSize()) {
+		m_fEndTime = PositionToSeconds(m_arrTempoMap[0].DeltaT);
+	}
+}
+
+int CPhaseBar::CTempoMapIter::GetPosition(double fTime)	// input times must be in ascending order
+{
+	while (fTime >= m_fEndTime && m_iTempo < m_arrTempoMap.GetSize()) {	// if end of span and spans remain
+		m_fStartTime = m_fEndTime;
+		m_nStartPos += m_arrTempoMap[m_iTempo].DeltaT;
+		m_fCurTempo = static_cast<double>(CMidiFile::MICROS_PER_MINUTE) / m_arrTempoMap[m_iTempo].Msg;
+		m_iTempo++;
+		if (m_iTempo < m_arrTempoMap.GetSize())	// if spans remain
+			m_fEndTime += PositionToSeconds(m_arrTempoMap[m_iTempo].DeltaT);
+		else	// out of spans
+			m_fEndTime = INT_MAX;
+	}
+	ASSERT(fTime >= m_fStartTime);	// input time can't precede start of current span
+	return m_nStartPos + SecondsToPosition(fTime - m_fStartTime);
+}
+
 bool CPhaseBar::ExportVideo(LPCTSTR pszFolderPath, CSize szFrame, double fFrameRate, int nDurationFrames)
 {
 	ASSERT(fFrameRate > 0);
@@ -257,12 +348,21 @@ bool CPhaseBar::ExportVideo(LPCTSTR pszFolderPath, CSize szFrame, double fFrameR
 	ASSERT(pDoc != NULL);
 	if (pDoc == NULL)
 		return false;
+	ASSERT(!pDoc->m_Seq.IsPlaying());	// our use of SetPosition would garble playback
+	CMidiFile::CMidiEventArray	arrTempoMap;
+	if (pDoc->m_Seq.GetTracks().FindType(CTrack::TT_TEMPO) >= 0) {	// if we have tempo tracks
+		if (!pDoc->ExportTempoMap(arrTempoMap)) {
+			ASSERT(0);	// can't get tempo map
+			return false;
+		}
+	}
 	CSaveObj<int>	saveMaxPlanetWidth(m_nMaxPlanetWidth, INT_MAX);
 	CSaveObj<LONGLONG>	saveSongPos(m_nSongPos, 0);
 	CD2DImageWriter	imgWriter;
 	if (!imgWriter.Create(szFrame))	// create image writer
 		return false;
-	double	fFrameDelta = (1 / fFrameRate) / 60 * pDoc->m_fTempo * pDoc->GetTimeDivisionTicks();
+	double	fFramePeriod = (1 / fFrameRate);
+	double	fFrameDelta = fFramePeriod / 60 * pDoc->m_fTempo * pDoc->GetTimeDivisionTicks();
 	CPathStr	sFolderPath(pszFolderPath);
 	sFolderPath.Append(_T("\\img"));
 	CString	sFileExt(_T(".png"));
@@ -276,11 +376,20 @@ bool CPhaseBar::ExportVideo(LPCTSTR pszFolderPath, CSize szFrame, double fFrameR
 	if (!dlg.Create(theApp.GetMainFrame()))	// create progress dialog
 		return false;
 	dlg.SetRange(0, nDurationFrames);
+	CPostExportVideo	postExport(*this);	// ensures resources get restored
+	DestroyResources();	// destroy our resources
+	CreateResources(&imgWriter.m_rt);	// create image writer's resources
+	SetRedraw(false);	// can't draw our window until we get resources back
+	CTempoMapIter	mapTempo(arrTempoMap, pDoc->GetTimeDivisionTicks(), pDoc->m_fTempo);
 	for (int iFrame = 0; iFrame < nDurationFrames; iFrame++) {	// for each frame
 		dlg.SetPos(iFrame);
 		if (dlg.Canceled())	// if user canceled
 			return false;
-		m_nSongPos = pDoc->m_nStartPos + Round(iFrame * fFrameDelta);
+		if (arrTempoMap.GetSize()) {	// if tempo map exists
+			m_nSongPos = pDoc->m_nStartPos + mapTempo.GetPosition(iFrame * fFramePeriod);
+		} else {	// no tempo map
+			m_nSongPos = pDoc->m_nStartPos + Round(iFrame * fFrameDelta);
+		}
 		pDoc->SetPosition(static_cast<int>(m_nSongPos));
 		imgWriter.m_rt.BeginDraw();
 		OnDrawD2D(0, reinterpret_cast<LPARAM>(&imgWriter.m_rt));
@@ -291,6 +400,13 @@ bool CPhaseBar::ExportVideo(LPCTSTR pszFolderPath, CSize szFrame, double fFrameR
 			return false;
 	}
 	return true;
+}
+
+void CPhaseBar::PostExportVideo()
+{
+	DestroyResources();	// destroy image writer's resources
+	CreateResources(GetRenderTarget());	// recreate our resources
+	SetRedraw(true);	// re-enable drawing our window
 }
 
 LONGLONG CPhaseBar::FindNextConvergence(const CLongLongArray& arrMod, LONGLONG nStartPos, INT_PTR nConvSize)
@@ -429,6 +545,61 @@ LONGLONG CPhaseBar::FindNextConvergence(bool bReverse)
 	}
 }
 
+void CPhaseBar::RecreateResource(CRenderTarget *pRenderTarget, CD2DResource& res)
+{
+	res.Destroy();
+	VERIFY(SUCCEEDED(res.Create(pRenderTarget)));
+}
+
+void CPhaseBar::CreateResources(CRenderTarget *pRenderTarget)
+{
+	VERIFY(SUCCEEDED(m_brOrbitNormal.Create(pRenderTarget)));
+	VERIFY(SUCCEEDED(m_brOrbitSelected.Create(pRenderTarget)));
+	VERIFY(SUCCEEDED(m_brPlanetNormal.Create(pRenderTarget)));
+	VERIFY(SUCCEEDED(m_brPlanetMuted.Create(pRenderTarget)));
+	if (m_nDrawStyle & DSB_3D_PLANETS)	// if gradient brushes needed
+		CreateGradientBrushes(pRenderTarget);	// slow compared to solid brushes
+}
+
+void CPhaseBar::CreateGradientBrushes(CRenderTarget *pRenderTarget)
+{
+	VERIFY(SUCCEEDED(m_brPlanet3DNormal.Create(pRenderTarget)));
+	VERIFY(SUCCEEDED(m_brPlanet3DMuted.Create(pRenderTarget)));
+}
+
+void CPhaseBar::DestroyResources()
+{
+	m_brOrbitNormal.Destroy();
+	m_brOrbitSelected.Destroy();
+	m_brPlanetNormal.Destroy();
+	m_brPlanetMuted.Destroy();
+	m_brPlanet3DMuted.Destroy();
+	m_brPlanet3DNormal.Destroy();
+}
+
+void CPhaseBar::SetNightSky(bool bEnable, bool bRecreate)
+{
+	D2D1_COLOR_F	clrPlanetNormal, clrOrbitSelected;
+	if (bEnable) {	// if night sky
+		clrPlanetNormal = D2D1::ColorF(D2D1::ColorF::Green);
+		clrOrbitSelected = D2D1::ColorF(D2D1::ColorF::MediumBlue);
+		m_clrBkgnd = D2D1::ColorF(0, 0, 0);
+	} else {	// day sky
+		clrPlanetNormal = m_clrPlanetNormal;
+		clrOrbitSelected = m_clrOrbitSelected;
+		m_clrBkgnd = m_clrBkgndLight;
+	}
+	m_brPlanetNormal.SetColor(clrPlanetNormal);
+	m_brOrbitSelected.SetColor(clrOrbitSelected);
+	m_brPlanet3DNormal.SetStopColor(1, clrPlanetNormal);
+	if (bRecreate) {	// if recreating resources
+		CRenderTarget *pRenderTarget = GetRenderTarget();
+		RecreateResource(pRenderTarget, m_brPlanetNormal);
+		RecreateResource(pRenderTarget, m_brOrbitSelected);
+		RecreateResource(pRenderTarget, m_brPlanet3DNormal);
+	}
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CPhaseBar message map
 
@@ -440,9 +611,12 @@ BEGIN_MESSAGE_MAP(CPhaseBar, CMyDockablePane)
 	ON_WM_PAINT()
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONDOWN()
+	ON_WM_LBUTTONDBLCLK()
 	ON_WM_CONTEXTMENU()
 	ON_COMMAND(ID_PHASE_EXPORT_VIDEO, OnExportVideo)
 	ON_UPDATE_COMMAND_UI(ID_PHASE_EXPORT_VIDEO, OnUpdateExportVideo)
+	ON_COMMAND_RANGE(ID_DRAW_STYLE_FIRST, ID_DRAW_STYLE_LAST, OnDrawStyle)
+	ON_UPDATE_COMMAND_UI_RANGE(ID_DRAW_STYLE_FIRST, ID_DRAW_STYLE_LAST, OnUpdateDrawStyle)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -452,9 +626,6 @@ int CPhaseBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CMyDockablePane::OnCreate(lpCreateStruct) == -1)
 		return -1;
-	EnableD2DSupport();	// enable Direct2D for this window
-	m_bUsingD2D = IsD2DSupportEnabled() != 0;	// cache to avoid performance hit
-	ShowDataTip(true);
 	return 0;
 }
 
@@ -488,71 +659,122 @@ void CPhaseBar::OnPaint()
 
 LRESULT CPhaseBar::OnDrawD2D(WPARAM wParam, LPARAM lParam)
 {
-	static const D2D1::ColorF	clrBkgnd(D2D1::ColorF::White);
-	static const D2D1::ColorF	clrOrbitNormal(D2D1::ColorF::DimGray);
-	static const D2D1::ColorF	clrPlanetNormal(D2D1::ColorF::Black);
-	static const D2D1::ColorF	clrPlanetMuted(D2D1::ColorF::Red);
-	static const D2D1::ColorF	clrOrbitSelected(D2D1::ColorF::SkyBlue);
 	UNREFERENCED_PARAMETER(wParam);
 	CRenderTarget* pRenderTarget = reinterpret_cast<CRenderTarget*>(lParam);
 	ASSERT_VALID(pRenderTarget);
 	if (pRenderTarget->IsValid()) {	// if valid render target
-		CD2DSolidColorBrush	brOrbitNormal(pRenderTarget, clrOrbitNormal);	// create brushes
-		CD2DSolidColorBrush	brPlanetNormal(pRenderTarget, clrPlanetNormal);
-		CD2DSolidColorBrush	brPlanetMuted(pRenderTarget, clrPlanetMuted);
-		CD2DSolidColorBrush	brOrbitSelected(pRenderTarget, clrOrbitSelected);
 		D2D1_SIZE_F szRender = pRenderTarget->GetSize();	// get target size in DIPs
 		m_szDPI = pRenderTarget->GetDpi();	// store DPI for mouse coordinate scaling
-		pRenderTarget->Clear(clrBkgnd);	// erase background
+		pRenderTarget->Clear(m_clrBkgnd);	// erase background
 		CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 		if (pDoc != NULL) {	// if active document exists
 			int	nOrbits = m_arrOrbit.GetSize();
-			if (nOrbits) {	// if at least one orbit
-				double	fOrbitWidth = min(szRender.width, szRender.height) / (nOrbits * 2);
-				fOrbitWidth = min(fOrbitWidth, m_nMaxPlanetWidth);
+			if (nOrbits && szRender.height) {	// if at least one orbit, and height is non-zero
+				double	fAspect;
+				if (m_nDrawStyle & DSB_CIRCULAR_ORBITS)	// if circular orbits
+					fAspect = 1;	// aspect ratio is constant
+				else	// elliptical orbits
+					fAspect = double(szRender.width) / szRender.height;	// use window's aspect ratio
+				double	fOrbitWidth = min(szRender.width, szRender.height * fAspect) / (nOrbits * 2);
+				fOrbitWidth = min(fOrbitWidth / fAspect, m_nMaxPlanetWidth);
 				D2D1_POINT_2F	ptOrigin = {szRender.width / 2, szRender.height / 2};
-				int	iPrevOrbit = -1;
-				int	iOrbit;
-				for (iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
-					const COrbit&	orbit = m_arrOrbit[iOrbit];
-					if (iPrevOrbit >= 0) {	// if accumulating run of contiguous selected orbits
-						if (!orbit.m_bSelected) {	// if orbit not selected, end of run
-							int	nSelOrbits = iOrbit - iPrevOrbit;	// number of selected orbits in this run
-							float	fOrbitRadius = float((iOrbit - nSelOrbits / 2.0) * fOrbitWidth);
-							pRenderTarget->DrawEllipse(	// draw selection
-								D2D1::Ellipse(ptOrigin, fOrbitRadius, fOrbitRadius), 
-								&brOrbitSelected, float(fOrbitWidth * nSelOrbits));
-							iPrevOrbit = -1;	// reset accumulating state
+				double	fPlanetRadius = fOrbitWidth / 2;
+				if (m_nDrawStyle & DSB_CIRCULAR_ORBITS) {	// if circular orbits
+					// runs of contiguous selected orbits are drawn in a single operation to avoid gaps
+					int	iPrevOrbit = -1;
+					for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
+						const COrbit&	orbit = m_arrOrbit[iOrbit];
+						if (iPrevOrbit >= 0) {	// if accumulating run of contiguous selected orbits
+							if (!orbit.m_bSelected) {	// if orbit not selected, end of run
+								int	nSelOrbits = iOrbit - iPrevOrbit;	// number of selected orbits in this run
+								double	fOrbitRadius = float((iOrbit - nSelOrbits / 2.0) * fOrbitWidth);
+								pRenderTarget->DrawEllipse(	// draw accumulated selection
+									D2D1::Ellipse(ptOrigin, float(fOrbitRadius), float(fOrbitRadius)), 
+									&m_brOrbitSelected, float(fOrbitWidth * nSelOrbits));
+								iPrevOrbit = -1;	// reset accumulating state
+							}
+						} else {	// not accumulating
+							if (orbit.m_bSelected)	// if orbit selected, start of run
+								iPrevOrbit = iOrbit;	// start accumulating; store starting orbit index
 						}
-					} else {	// not accumulating
-						if (orbit.m_bSelected)	// if orbit selected, start of run
-							iPrevOrbit = iOrbit;	// start accumulating; store starting orbit index
+					}
+					if (iPrevOrbit >= 0) {	// // if accumulating run of contiguous selected orbits
+						int	nSelOrbits = nOrbits - iPrevOrbit;	// number of selected orbits in this run
+						double	fOrbitRadius = float((nOrbits - nSelOrbits / 2.0) * fOrbitWidth);
+						pRenderTarget->DrawEllipse(	// draw selection
+							D2D1::Ellipse(ptOrigin, float(fOrbitRadius), float(fOrbitRadius)), 
+							&m_brOrbitSelected, float(fOrbitWidth * nSelOrbits));
+					}
+				} else {	// elliptical orbits; draw each selected orbit individually
+					if (fAspect < 1)	// if height exceeds width
+						fPlanetRadius *= fAspect;	// reduce planet size proportionally
+					double	fSelectionWidth = fPlanetRadius * 2;
+					for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
+						const COrbit&	orbit = m_arrOrbit[iOrbit];
+						if (orbit.m_bSelected) {	// if orbit selected
+							double	fOrbitRadius = (iOrbit + 0.5) * fOrbitWidth;
+							pRenderTarget->DrawEllipse(	// draw selection
+								D2D1::Ellipse(ptOrigin, float(fOrbitRadius * fAspect), float(fOrbitRadius)), 
+								&m_brOrbitSelected, float(fSelectionWidth));
+						}
 					}
 				}
-				if (iPrevOrbit >= 0) {	// // if accumulating run of contiguous selected orbits
-					int	nSelOrbits = iOrbit - iPrevOrbit;	// number of selected orbits in this run
-					float	fOrbitRadius = float((iOrbit - nSelOrbits / 2.0) * fOrbitWidth);
-					pRenderTarget->DrawEllipse(	// draw selection
-						D2D1::Ellipse(ptOrigin, fOrbitRadius, fOrbitRadius), 
-						&brOrbitSelected, float(fOrbitWidth * nSelOrbits));
+				if (m_nDrawStyle & DSB_CROSSHAIRS) {	// if showing crosshairs
+					pRenderTarget->DrawLine(CD2DPointF(ptOrigin.x, 0), CD2DPointF(ptOrigin.x, szRender.height), &m_brOrbitNormal);
+					pRenderTarget->DrawLine(CD2DPointF(0, ptOrigin.y), CD2DPointF(szRender.width, ptOrigin.y), &m_brOrbitNormal);
 				}
-				float	fPlanetRadius = float(fOrbitWidth / 2.0);
-				for (iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
+				if (m_nDrawStyle & DSB_PERIODS) {	// if showing periods
+					CD2DTextFormat	fmtText(pRenderTarget, _T("Verdana"), float(fOrbitWidth / 2));
+					float	x1 = ptOrigin.x + 2;
+					float	x2 = ptOrigin.x + 256;
+					double	oy = ptOrigin.y + fOrbitWidth / 2;
+					CString	sLabel;
+					for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
+						sLabel.Format(_T("%d"),  m_arrOrbit[iOrbit].m_nPeriod);
+						float	y = float(iOrbit * fOrbitWidth + oy);
+						pRenderTarget->DrawText(sLabel, CD2DRectF(x1, y, x2, y), &m_brOrbitNormal, &fmtText);
+					}
+				}
+				CD2DBrush	*arrPlanetBrush[2];
+				if (m_nDrawStyle & DSB_3D_PLANETS) {	// if showing 3D planets
+					float	fGradientRadius = float(fPlanetRadius);
+					if (fGradientRadius != m_fGradientRadius) {	// if gradient radius changed
+						m_fGradientRadius = fGradientRadius;	// update shadow member
+						m_brPlanet3DNormal.SetRadiusX(fGradientRadius);
+						m_brPlanet3DNormal.SetRadiusY(fGradientRadius);
+						m_brPlanet3DMuted.SetRadiusX(fGradientRadius);
+						m_brPlanet3DMuted.SetRadiusY(fGradientRadius);
+						m_fGradientOffset = float(fPlanetRadius * m_fHighlightOffset);	// convert to DIPs
+					}
+					arrPlanetBrush[0] = &m_brPlanet3DNormal;
+					arrPlanetBrush[1] = &m_brPlanet3DMuted;
+				} else {	// showing 2D planets
+					arrPlanetBrush[0] = &m_brPlanetNormal;
+					arrPlanetBrush[1] = &m_brPlanetMuted;
+				}
+				for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
 					const COrbit&	orbit = m_arrOrbit[iOrbit];
-					float	fOrbitRadius = float((iOrbit + 0.5) * fOrbitWidth);
+					double	fOrbitRadius = (iOrbit + 0.5) * fOrbitWidth;
 					pRenderTarget->DrawEllipse(	// draw orbit
-						D2D1::Ellipse(ptOrigin, fOrbitRadius, fOrbitRadius), 
-						&brOrbitNormal);
+						D2D1::Ellipse(ptOrigin, float(fOrbitRadius * fAspect), float(fOrbitRadius)), 
+						&m_brOrbitNormal);
 					int	nModTicks = m_nSongPos % orbit.m_nPeriod;
 					double	fOrbitPhase = double(nModTicks) / orbit.m_nPeriod;
 					double	fTheta = fOrbitPhase * (M_PI * 2);
 					D2D1_POINT_2F	ptPlanet = {
-						float(sin(fTheta) * fOrbitRadius + ptOrigin.x),
+						float(sin(fTheta) * fOrbitRadius * fAspect + ptOrigin.x),
 						float(ptOrigin.y - cos(fTheta) * fOrbitRadius)	// flip y-axis
 					};
+					if (m_nDrawStyle & DSB_3D_PLANETS) {	// if showing 3D planets
+						D2D1_POINT_2F	ptCenter = {ptPlanet.x + m_fGradientOffset, ptPlanet.y - m_fGradientOffset};
+						if (orbit.m_bMuted)	// if muted orbit
+							m_brPlanet3DMuted.SetCenter(ptCenter);	// reposition center of gradient
+						else	// normal orbit
+							m_brPlanet3DNormal.SetCenter(ptCenter);
+					}
 					pRenderTarget->FillEllipse(	// fill planet
-						D2D1::Ellipse(ptPlanet, fPlanetRadius, fPlanetRadius), 
-						orbit.m_bMuted ? &brPlanetMuted : &brPlanetNormal);
+						D2D1::Ellipse(ptPlanet, float(fPlanetRadius), float(fPlanetRadius)), 
+						arrPlanetBrush[orbit.m_bMuted]);
 				}
 			}
 		}
@@ -564,17 +786,25 @@ int CPhaseBar::OrbitHitTest(CPoint point) const
 {
 	int	nOrbits = m_arrOrbit.GetSize();
 	if (nOrbits) {	// if at least one orbit
-		CRect	rc;
-		GetClientRect(rc);
-		CPoint	ptOrigin(rc.CenterPoint());
+		CRect	rClient;
+		GetClientRect(rClient);
+		CSize	szClient = rClient.Size();
+		CPoint	ptOrigin(rClient.CenterPoint());
 		CPoint	ptDelta = point - ptOrigin;
 		// convert from GDI physical pixels to Direct2D device-independent pixels
 		double	fDPIScaleX = m_szDPI.width ? 96.0 / m_szDPI.width : 0;
 		double	fDPIScaleY = m_szDPI.height ? 96.0 / m_szDPI.height : 0;
+		if (!(m_nDrawStyle & DSB_CIRCULAR_ORBITS)) {	// if elliptical orbits
+			double	fAspect = szClient.cy ? double(szClient.cx) / szClient.cy : 0;
+			if (fAspect > 1)	// if width exceeds height
+				fDPIScaleX /= fAspect;
+			else	// height exceeds width
+				fDPIScaleY *= fAspect;
+		}
 		double	fA = ptDelta.x * fDPIScaleX;
 		double	fB = ptDelta.y * fDPIScaleY;
 		double	fC = sqrt(fA * fA + fB * fB);	// hypotenuse is orbit radius
-		double	fTotalSize = min(rc.Width() * fDPIScaleX, rc.Height() * fDPIScaleY);
+		double	fTotalSize = min(szClient.cx * fDPIScaleX, szClient.cy * fDPIScaleY);
 		double	fOrbitWidth = fTotalSize / (nOrbits * 2);
 		fOrbitWidth = min(fOrbitWidth, MAX_PLANET_WIDTH);
 		int	iOrbit = Trunc(fC / fOrbitWidth);	// convert radius to orbit index
@@ -652,8 +882,18 @@ void CPhaseBar::OnLButtonDown(UINT nFlags, CPoint point)
 				}
 			}
 		}
+	} else {	// cursor in non-client area
+		CMyDockablePane::OnLButtonDown(nFlags, point);	// base class handles docking
 	}
-	CMyDockablePane::OnLButtonDown(nFlags, point);
+}
+
+void CPhaseBar::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+	CRect	rClient;
+	GetClientRect(rClient);
+	if (!rClient.PtInRect(point)) {	// if cursor in non-client area
+		CMyDockablePane::OnLButtonDblClk(nFlags, point);	// base class handles docking
+	}
 }
 
 void CPhaseBar::OnContextMenu(CWnd* pWnd, CPoint point)
@@ -691,4 +931,28 @@ void CPhaseBar::OnUpdateExportVideo(CCmdUI *pCmdUI)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	pCmdUI->Enable(pDoc != NULL && !pDoc->m_Seq.IsPlaying());
+}
+
+void CPhaseBar::OnDrawStyle(UINT nID)
+{
+	int iStyle = nID - ID_DRAW_STYLE_FIRST;
+	ASSERT(iStyle >= 0 && iStyle < DRAW_STYLES);
+	m_nDrawStyle ^= (1 << iStyle);	// toggle corresponding bit in draw style mask
+	switch (iStyle) {
+	case DRAW_STYLE_3D_PLANETS:
+		if (!m_brPlanet3DNormal.IsValid())	// if gradient brushes not created
+			CreateGradientBrushes(GetRenderTarget());
+		break;
+	case DRAW_STYLE_NIGHT_SKY:
+		SetNightSky((m_nDrawStyle & DSB_NIGHT_SKY) != 0);
+		break;
+	}
+	Invalidate();
+}
+
+void CPhaseBar::OnUpdateDrawStyle(CCmdUI *pCmdUI)
+{
+	int	iStyle = pCmdUI->m_nID - ID_DRAW_STYLE_FIRST;
+	ASSERT(iStyle >= 0 && iStyle < DRAW_STYLES);
+	pCmdUI->SetCheck((m_nDrawStyle & (1 << iStyle)) != 0);
 }

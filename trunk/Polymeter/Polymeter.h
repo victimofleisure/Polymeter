@@ -20,6 +20,7 @@
 		10		03jun20	add global recording state
 		11		17jun20	add tracking help handler
 		12		23oct21	add resource versioning
+		13		19nov21	remove unused header
 
 */
 
@@ -37,7 +38,6 @@
 #include "Track.h"
 #include "MidiWrap.h"
 #include "MidiDevices.h"
-#include "MidiFile.h"
 #include "AppRegKey.h"
 #include "Mapping.h"
 

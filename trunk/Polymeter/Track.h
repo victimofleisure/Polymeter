@@ -35,6 +35,7 @@
 		25		16dec20	add loop range class
 		26		08jun21	add cast in MIDI stream event operator to fix warning
         27		11nov21	refactor modulation crawler to support levels
+		28		19nov21	in track array, add find type
 
 */
 
@@ -632,6 +633,7 @@ public:
 	void	ImportTracks(LPCTSTR pszPath);
 	void	ExportTracks(const CIntArrayEx *parrSelection, LPCTSTR pszPath) const;
 	int		FindName(const CString& sName, int iStart = 0, UINT nFlags = 0) const;
+	int		FindType(int iType, int iStart = 0) const;
 	void	GetModulationTargets(CTrack::CModulationArrayArray& arrTarget) const;
 	void	GetLinkedTracks(const CIntArrayEx& arrSelection, CTrack::CPackedModulationArray& arrMod, UINT nLinkFlags = MODLINKF_SOURCE, int nLevels = 1) const;
 

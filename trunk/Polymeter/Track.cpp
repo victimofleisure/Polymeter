@@ -38,6 +38,7 @@
 		28		08jun21	fix warning for CString as variadic argument
 		29		13aug21	in Resample, wrap second index instead of clamping
         30		11nov21	refactor modulation crawler to support levels
+		31		19nov21	in track array, add find type
 
 */
 
@@ -1035,6 +1036,16 @@ int CTrackArray::FindName(const CString& sName, int iStart, UINT nFlags) const
 			}
 		}
 		iStart++;
+	}
+	return -1;
+}
+
+int CTrackArray::FindType(int iType, int iStart) const
+{
+	int	nTracks = GetSize();
+	for (int iTrack = iStart; iTrack < nTracks; iTrack++) {	// for each track
+		if (GetAt(iTrack).m_iType == iType)
+			return iTrack;
 	}
 	return -1;
 }

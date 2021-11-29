@@ -76,6 +76,8 @@
 		66		30oct21	in time shift calc, handle positive case also
 		67		30oct21	song duration method must account for start position
 		68		31oct21	suppress view type notification when opening document
+		69		15nov21	add tempo map to export song as CSV
+		70		23nov21	add method to export tempo map
 
 */
 
@@ -105,7 +107,6 @@
 #include <math.h>
 #include "FillDlg.h"
 #include "VelocityView.h"	// for waveforms in TrackFill
-#include "MidiFile.h"
 #include "VelocityDlg.h"
 #include "ModulationDlg.h"
 
@@ -3673,9 +3674,9 @@ bool CPolymeterDoc::PromptForExportParams(bool bSongMode, int& nDuration)
 	return true;
 }
 
-bool CPolymeterDoc::ExportSongAsCSV(LPCTSTR pszDestPath, int nDuration, bool bSongMode)
+bool CPolymeterDoc::ExportMidi(int nDuration, bool bSongMode, USHORT& nPPQ, UINT& nTempo, CMidiFile::CMidiTrackArray& arrTrack, 
+						       CStringArrayEx& arrTrackName, CMidiFile::CMidiEventArray *parrTempoMap)
 {
-	CWaitCursor	wc;	// show wait cursor; export can take time
 	UpdateChannelEvents();	// queue channel events to be output at start of playback
 	CString	sTempMidiFilePath;
 	if (!theApp.GetTempFileName(sTempMidiFilePath, _T("plm"))) {
@@ -3687,18 +3688,37 @@ bool CPolymeterDoc::ExportSongAsCSV(LPCTSTR pszDestPath, int nDuration, bool bSo
 		AfxMessageBox(IDS_EXPORT_ERROR);
 		return false;
 	}
-	CStringArrayEx	arrChanStatNick;
-	CMidiEventBar::GetChannelStatusNicknames(arrChanStatNick);
 	CMidiFile	mf(sTempMidiFilePath, CFile::modeRead);	// open temp MIDI file
+	mf.ReadTracks(arrTrack, arrTrackName, nPPQ, &nTempo, NULL, NULL, parrTempoMap);	// read MIDI file's tracks into arrays
+	return true;
+}
+
+bool CPolymeterDoc::ExportSongAsCSV(LPCTSTR pszDestPath, int nDuration, bool bSongMode)
+{
+	CWaitCursor	wc;	// show wait cursor; export can take time
+	USHORT	nPPQ;
+	UINT	nTempo;
 	CMidiFile::CMidiTrackArray	arrTrack;
 	CStringArrayEx	arrTrackName;
-	USHORT	nPPQ;
-	UINT	nTempo;	// tempo in microseconds per quarter note
-	mf.ReadTracks(arrTrack, arrTrackName, nPPQ, &nTempo);	// read MIDI file's tracks into arrays
+	CMidiFile::CMidiEventArray	arrTempoMap;
+	if (!ExportMidi(nDuration, bSongMode, nPPQ, nTempo, arrTrack, arrTrackName, &arrTempoMap))
+		return false;
 	double	fTempo = nTempo ? double(CMidiFile::MICROS_PER_MINUTE) / nTempo : 0;	// convert tempo to BPM; avoid divide by zero
 	CStdioFile	fOut(pszDestPath, CFile::modeCreate | CFile::modeWrite);	// create output CSV file
 	int	nTracks = arrTrack.GetSize();
 	_ftprintf(fOut.m_pStream, _T("MIDIFile,%d,%u,%g,%u\n"), nTracks, nPPQ, fTempo, nTempo);
+	if (arrTempoMap.GetSize()) {
+		_ftprintf(fOut.m_pStream, _T("TempoMap,%d\n"), arrTempoMap.GetSize());
+		UINT	nEvtTime = 0;
+		for (int iEvt = 0; iEvt < arrTempoMap.GetSize(); iEvt++)  {
+			const CMidiFile::MIDI_EVENT& evt = arrTempoMap[iEvt];
+			nEvtTime += evt.DeltaT;	// add event's delta time to cumulative time
+			_ftprintf(fOut.m_pStream, _T("%d,%u,%g\n"), 
+				nEvtTime, evt.Msg, CMidiFile::MICROS_PER_MINUTE / double(evt.Msg)); 
+		}
+	}
+	CStringArrayEx	arrChanStatNick;
+	CMidiEventBar::GetChannelStatusNicknames(arrChanStatNick);
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each of MIDI file's tracks
 		const CMidiFile::CMidiEventArray&	arrEvent = arrTrack[iTrack];
 		arrTrackName[iTrack].Replace(_T("\""), _T("\"\""));	// escape double quotes
@@ -3714,6 +3734,17 @@ bool CPolymeterDoc::ExportSongAsCSV(LPCTSTR pszDestPath, int nDuration, bool bSo
 		}
 	}
 	return true;
+}
+
+bool CPolymeterDoc::ExportTempoMap(CMidiFile::CMidiEventArray& arrTempoMap)
+{
+	CWaitCursor	wc;	// show wait cursor; export can take time
+	USHORT	nPPQ;
+	UINT	nTempo;
+	CMidiFile::CMidiTrackArray  arrTrack;
+	CStringArrayEx	arrTrackName;
+	bool	bSongMode = m_Seq.HasDubs();
+	return ExportMidi(m_nSongLength, bSongMode, nPPQ, nTempo, arrTrack, arrTrackName, &arrTempoMap);
 }
 
 void CPolymeterDoc::SetChannelProperty(int iChan, int iProp, int nVal, CView *pSender)
