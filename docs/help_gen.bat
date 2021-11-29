@@ -14,7 +14,7 @@ rem copy C:\Chris\MyProjects\Polymeter\Help\images\*.* images
 rem if errorlevel 1 goto err
 copy ..\helptopic.css content.css
 if errorlevel 1 goto err
-C:\Chris\tools\navgen C:\Chris\MyProjects\Polymeter\Help\template.txt .
+C:\Chris\tools\navgen C:\Chris\MyProjects\Polymeter\Help\template_web.txt .
 if errorlevel 1 goto err
 copy ..\helpheader.txt x
 if errorlevel 1 goto err
