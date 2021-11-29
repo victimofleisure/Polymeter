@@ -15,10 +15,7 @@ id	open	close	type	description	rev	user
 376	06/20/20		bug	undoing modulation edit doesn't restore modulation selection; can't without also restoring track selection and Show Differences state		
 392	07/10/20		bug	Alt key commands don't work mode while cursor is hovering over MDI tab; affects stock VS2012 app too		
 458	07/22/21		bug	song position and loop to/from don't report formatting errors; song length reports errors but doesn't retry		
-470	11/07/21		bug	app still flickers on startup due to duplicate view update; move main frame show/update to OnDelayedCreate		
-471	11/08/21		bug	if main frame creation fails, app crashes, due to erroneous deletion of main frame pointer in InitInstance		
 472	11/08/21		bug	graph sometimes clips rightmost objects, in GraphViz versions 2.44 and above; add option to render with Cairo		
-478	11/14/21		bug	phase bar's image sequence export doesn't support tempo change		
 1	03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 2	03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 3	03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -387,6 +384,8 @@ id	open	close	type	description	rev	user
 467	10/25/21	10/25/21	done	in track view, fix status hint and command help for grid control's context menu	1.0.00.000	
 285	02/28/19	10/30/21	done	song export length doesn't account for non-zero start position; similar issue with song view size	1.0.01.000	
 469	10/31/21	10/31/21	done	application flickers on startup; set base class flag to defer showing main window	1.0.01.000	
+470	11/07/21	11/07/21	done	app still flickers on startup due to duplicate view update; move main frame show/update to OnDelayedCreate	1.0.02.000	
+471	11/08/21	11/08/21	done	if main frame creation fails, app crashes, due to erroneous deletion of main frame pointer in InitInstance	1.0.02.000	
 473	11/09/21	11/11/21	done	graph should optionally crawl only sources, only targets, or both (bidirectional)	1.0.02.000	
 454	06/27/21	11/12/21	done	graph should allow filtering for multiple modulation types, via a check list dialog	1.0.02.000	
 474	11/09/21	11/12/21	done	graph should optionally limit recursion depth to a specified number of levels	1.0.02.000	
@@ -396,6 +395,7 @@ id	open	close	type	description	rev	user
 481	11/16/21	11/16/21	done	phase bar should optionally draw elliptical orbits, using window's aspect ratio	1.0.03.000	
 480	11/16/21	11/16/21	done	record dialog's frame rate should persist	1.0.03.000	
 482	11/14/21	11/17/21	done	phase bar should optionally draw 3D planets, simulated via radial gradient	1.0.03.000	
+478	11/14/21	11/23/21	done	phase bar's image sequence export doesn't support tempo change	1.0.03.000	
 485	11/24/21	11/24/21	done	add night sky and crosshairs options to phase bar	1.0.03.000	
 484	11/24/21	11/24/21	done	move phase bar's Direct2D enable to OnShowChanged, potentially saving 60 ms during startup	1.0.03.000	
 486	11/24/21	11/27/21	done	phase bar should optionally show labels containing each orbit's period in ticks	1.0.03.000	
