@@ -19,6 +19,7 @@
 		09		09jul21	dock mapping bar on bottom
 		10		18jul21	adjust default bar sizes
 		11		27nov21	add phase bar draw styles
+		12		20dec21	add phase bar convergence style
 		
 */
 
@@ -68,5 +69,6 @@ PHASEBARDEF_DRAWSTYLE(01, 3D_PLANETS)
 PHASEBARDEF_DRAWSTYLE(02, NIGHT_SKY)
 PHASEBARDEF_DRAWSTYLE(03, CROSSHAIRS)
 PHASEBARDEF_DRAWSTYLE(04, PERIODS)
+PHASEBARDEF_DRAWSTYLE(05, CONVERGENCES)
 #endif
 #undef PHASEBARDEF_DRAWSTYLE

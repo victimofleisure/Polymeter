@@ -19,7 +19,8 @@
 		09		23nov21	add tempo map support
 		10		24nov21	enable D2D in OnShowChanged to expedite startup
 		11		27nov21	add options for crosshairs and period labels
-		
+		12		20dec21	add convergences option and full screen mode
+
 */
 
 #include "stdafx.h"
@@ -277,8 +278,29 @@ void CPhaseBar::GetSelectedPeriods(CIntArrayEx& arrPeriod) const
 	int	nOrbits = m_arrOrbit.GetSize();
 	for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
 		if (m_arrOrbit[iOrbit].m_bSelected)	// if orbit is selected
-			arrPeriod.Add(m_arrOrbit[iOrbit].m_nPeriod);	// add orbit to destination array
+			arrPeriod.Add(m_arrOrbit[iOrbit].m_nPeriod);	// add orbit's period to destination array
 	}
+}
+
+void CPhaseBar::GetSelectedOrbits(CIntArrayEx& arrSelection) const
+{
+	arrSelection.FastRemoveAll();
+	int	nOrbits = m_arrOrbit.GetSize();
+	for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
+		if (m_arrOrbit[iOrbit].m_bSelected)	// if orbit is selected
+			arrSelection.Add(iOrbit);	// add orbit's index to destination array
+	}
+}
+
+int CPhaseBar::GetSelectedOrbitCount() const
+{
+	int	nOrbits = m_arrOrbit.GetSize();
+	int	nSelOrbits = 0;
+	for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
+		if (m_arrOrbit[iOrbit].m_bSelected)	// if orbit is selected
+			nSelOrbits++;
+	}
+	return nSelOrbits;
 }
 
 void CPhaseBar::SelectTracksByPeriod(const CIntArrayEx& arrPeriod) const
@@ -293,6 +315,23 @@ void CPhaseBar::SelectTracksByPeriod(const CIntArrayEx& arrPeriod) const
 		}
 		pDoc->Select(arrSelection);	// select matching tracks
 	}
+}
+
+bool CPhaseBar::IsConvergence(LONGLONG nSongPos, int nConvergenceSize, int nSelectedOrbits) const
+{
+	int	nOrbits = m_arrOrbit.GetSize();
+	int	nConvs = 0;
+	for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
+		const COrbit& orbit = m_arrOrbit[iOrbit];
+		if (!nSelectedOrbits || orbit.m_bSelected) {	// if no selections, or orbit is selected
+			if (!(nSongPos % orbit.m_nPeriod)) {	// if orbit converges
+				nConvs++;
+				if (nConvs >= nConvergenceSize)	// if desired number of convergences reached
+					return true;	// no need to look further
+			}
+		}
+	}
+	return false;
 }
 
 inline double CPhaseBar::CTempoMapIter::PositionToSeconds(int nPos) const
@@ -443,7 +482,7 @@ LONGLONG CPhaseBar::FindNextConvergence(const CLongLongArray& arrMod, LONGLONG n
 		INT_PTR	nMatches = 0;
 		for (INT_PTR iMod = 0; iMod < nMods; iMod++) {	// for each modulo
 			if (arrPos[iMod] == nNearestPos) {	// if current position matches target
-				nMatches++;
+				nMatches++;	// increment match count
 				if (nMatches >= nConvSize) {	// if requisite number of matches reached
 					return nNearestPos;
 				}
@@ -496,7 +535,7 @@ LONGLONG CPhaseBar::FindPrevConvergence(const CLongLongArray& arrMod, LONGLONG n
 		INT_PTR	nMatches = 0;
 		for (INT_PTR iMod = 0; iMod < nMods; iMod++) {	// for each modulo
 			if (arrPos[iMod] == nNearestPos) {	// if current position matches target
-				nMatches++;
+				nMatches++;	// increment match count
 				if (nMatches >= nConvSize) {	// if requisite number of matches reached
 					return nNearestPos;
 				}
@@ -513,6 +552,29 @@ LONGLONG CPhaseBar::FindPrevConvergence(const CLongLongArray& arrMod, LONGLONG n
 #endif
 		nNearestPos = nNextNearestPos;
 	}
+}
+
+LONGLONG CPhaseBar::FindNextConvergenceSlow(const CLongLongArray& arrMod, LONGLONG nStartPos, INT_PTR nConvSize, bool bReverse)
+{
+	// brute force method (tick by tick) is simple but slow; useful for validating other methods
+	LONGLONG	nTick = nStartPos;
+	int	nMods = arrMod.GetSize();
+	nConvSize = min(nConvSize, nMods);	// else infinite loop
+	while (1) {
+		if (bReverse)
+			nTick--;	// previous tick
+		else
+			nTick++;	// next tick
+		INT_PTR	nMatches = 0;
+		for (INT_PTR iMod = 0; iMod < nMods; iMod++) {	// for each modulo
+			if (!(nTick % arrMod[iMod])) {	// if modulo converges at this tick
+				nMatches++;	// increment match count
+				if (nMatches >= nConvSize)	// if requisite number of matches reached
+					return nTick;
+			}
+		}
+	}
+	ASSERT(0);	// should never get here
 }
 
 LONGLONG CPhaseBar::FindNextConvergence(bool bReverse)
@@ -617,6 +679,8 @@ BEGIN_MESSAGE_MAP(CPhaseBar, CMyDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_PHASE_EXPORT_VIDEO, OnUpdateExportVideo)
 	ON_COMMAND_RANGE(ID_DRAW_STYLE_FIRST, ID_DRAW_STYLE_LAST, OnDrawStyle)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_DRAW_STYLE_FIRST, ID_DRAW_STYLE_LAST, OnUpdateDrawStyle)
+	ON_COMMAND(ID_PHASE_FULL_SCREEN, OnFullScreen)
+	ON_UPDATE_COMMAND_UI(ID_PHASE_FULL_SCREEN, OnUpdateFullScreen)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -752,15 +816,55 @@ LRESULT CPhaseBar::OnDrawD2D(WPARAM wParam, LPARAM lParam)
 					arrPlanetBrush[0] = &m_brPlanetNormal;
 					arrPlanetBrush[1] = &m_brPlanetMuted;
 				}
+				int	nConvergenceSize, nSelectedOrbits;
+				if (m_nDrawStyle & DSB_CONVERGENCES) {	// if showing convergences
+					nSelectedOrbits = GetSelectedOrbitCount();
+					int	nMaxConvs;
+					if (nSelectedOrbits)	// if orbits are selected
+						nMaxConvs = nSelectedOrbits;	// limit convergence size to selected orbit count
+					else	// no orbit selection
+						nMaxConvs = nOrbits;	// limit convergence size to total orbit count
+					nConvergenceSize = min(theApp.GetMainFrame()->GetConvergenceSize(), nMaxConvs);
+				}
 				for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
 					const COrbit&	orbit = m_arrOrbit[iOrbit];
-					double	fOrbitRadius = (iOrbit + 0.5) * fOrbitWidth;
-					pRenderTarget->DrawEllipse(	// draw orbit
-						D2D1::Ellipse(ptOrigin, float(fOrbitRadius * fAspect), float(fOrbitRadius)), 
-						&m_brOrbitNormal);
 					int	nModTicks = m_nSongPos % orbit.m_nPeriod;
+					if (nModTicks < 0)
+						nModTicks += orbit.m_nPeriod;
 					double	fOrbitPhase = double(nModTicks) / orbit.m_nPeriod;
 					double	fTheta = fOrbitPhase * (M_PI * 2);
+					double	fOrbitRadius = (iOrbit + 0.5) * fOrbitWidth;
+					float	fOrbitWidth;
+					if (m_nDrawStyle & DSB_CONVERGENCES) {	// if showing convergences
+						bool	bIsConverging = false;
+						const double	fConvMargin = 0.15;	// half width of convergence zone, as a normalized angle
+						if (fOrbitPhase <= fConvMargin || fOrbitPhase >= (1 - fConvMargin)) {	// if planet within convergence zone
+							if (!nSelectedOrbits || orbit.m_bSelected) {	// if no selections, or orbit is selected
+								LONGLONG	nConvTick = m_nSongPos - nModTicks;	// previous potential convergence
+								if (fOrbitPhase > fConvMargin)	// if phase is before noon
+									nConvTick += orbit.m_nPeriod;	// use next potential convergence instead
+								if (IsConvergence(nConvTick, nConvergenceSize, nSelectedOrbits))
+									bIsConverging = true;
+							}
+						}
+						if (bIsConverging) {	// if orbit is converging
+							double	fOrbitWidthNorm;
+							if (fOrbitPhase <= fConvMargin)	// if convergence is approaching
+								fOrbitWidthNorm = 1 - fOrbitPhase / fConvMargin;
+							else	// convergence is receding
+								fOrbitWidthNorm = (fOrbitPhase - (1 - fConvMargin)) / fConvMargin;
+							fOrbitWidth = float(1 + (fPlanetRadius * 2 - 1) * fOrbitWidthNorm);
+							m_brOrbitNormal.SetColor(D2D1::ColorF(1, float(fOrbitWidthNorm), 0));
+						} else {	// orbit isn't converging
+							fOrbitWidth = 1;
+							m_brOrbitNormal.SetColor(m_clrOrbitNormal);	// restore brush color
+						}
+					} else {	// not showing convergences
+						fOrbitWidth = 1;
+					}
+					pRenderTarget->DrawEllipse(	// draw orbit
+						D2D1::Ellipse(ptOrigin, float(fOrbitRadius * fAspect), float(fOrbitRadius)), 
+						&m_brOrbitNormal, fOrbitWidth);
 					D2D1_POINT_2F	ptPlanet = {
 						float(sin(fTheta) * fOrbitRadius * fAspect + ptOrigin.x),
 						float(ptOrigin.y - cos(fTheta) * fOrbitRadius)	// flip y-axis
@@ -775,6 +879,9 @@ LRESULT CPhaseBar::OnDrawD2D(WPARAM wParam, LPARAM lParam)
 					pRenderTarget->FillEllipse(	// fill planet
 						D2D1::Ellipse(ptPlanet, float(fPlanetRadius), float(fPlanetRadius)), 
 						arrPlanetBrush[orbit.m_bMuted]);
+				}
+				if (m_nDrawStyle & DSB_CONVERGENCES) {	// if showing convergences
+					m_brOrbitNormal.SetColor(m_clrOrbitNormal);	// restore brush color
 				}
 			}
 		}
@@ -955,4 +1062,15 @@ void CPhaseBar::OnUpdateDrawStyle(CCmdUI *pCmdUI)
 	int	iStyle = pCmdUI->m_nID - ID_DRAW_STYLE_FIRST;
 	ASSERT(iStyle >= 0 && iStyle < DRAW_STYLES);
 	pCmdUI->SetCheck((m_nDrawStyle & (1 << iStyle)) != 0);
+}
+
+void CPhaseBar::OnFullScreen()
+{
+	SetFullScreen(!m_bIsFullScreen);
+}
+
+void CPhaseBar::OnUpdateFullScreen(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bIsFullScreen);
+	pCmdUI->Enable(!IsTabbed());
 }

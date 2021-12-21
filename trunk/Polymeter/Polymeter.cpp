@@ -30,6 +30,7 @@
 		20		08nov21	don't delete main frame pointer if load frame fails
 		21		11nov21	bump resource version
 		22		17nov21	bump resource version
+		23		20dec21	bump resource version
 
 */
 
@@ -67,7 +68,7 @@
 #define RK_TIE_NOTES _T("bTieNotes")
 #define RK_RESOURCE_VERSION _T("nResourceVersion")
 
-const int CPolymeterApp::m_nNewResourceVersion = 4;	// update if resource change breaks customization
+const int CPolymeterApp::m_nNewResourceVersion = 5;	// update if resource change breaks customization
 
 #include "HelpIDs.h"	// help IDs generated automatically by doc2web
 const CPolymeterApp::HELP_RES_MAP CPolymeterApp::m_HelpResMap[] = {

@@ -13,6 +13,7 @@
 		03		18nov20	add maximize/restore to docking context menu
 		04		19nov20	use visible style to determine pane visibility
 		05		01nov21	add toggle show pane method
+		06		17dec21	add full screen mode
 
 */
 
@@ -36,6 +37,7 @@ CMyDockablePane::CMyDockablePane()
 {
 	m_bIsShowPending = false;
 	m_bFastIsVisible = false;
+	m_bIsFullScreen = false;
 }
 
 CMyDockablePane::~CMyDockablePane()
@@ -92,6 +94,64 @@ void CMyDockablePane::ToggleShowPane()
 		SetFocus();	// ShowPane's activate flag is unreliable
 }
 
+class CMyPaneFrameWnd : public CPaneFrameWnd
+{
+	friend class CMyDockablePane;	// allow access to m_nCaptionHeight
+};
+
+void CMyDockablePane::SetFullScreen(bool bEnable)
+{
+	if (bEnable == m_bIsFullScreen)	// if already in requested state
+		return;	// nothing to do
+	if (bEnable) {	// if entering full screen mode
+		if (!m_bFastIsVisible)
+			return;
+		if (!IsFloating()) {
+			if (IsTabbed())
+				return;	// not supported, floating tab is too gnarly
+			FloatPane(m_recentDockInfo.m_rectRecentFloatingRect, DM_SHOW);
+		}
+		CPaneFrameWnd *pFrame = GetParentMiniFrame();
+		ASSERT(pFrame != NULL);
+		if (pFrame == NULL)	// float failed or logic error
+			return;
+		static_cast<CMyPaneFrameWnd *>(pFrame)->m_nCaptionHeight = 0;
+		// get monitor size; this code cribbed from CFullScreenImpl
+		CRect rectFrame, rcScreen;
+		pFrame->GetWindowRect(&rectFrame);
+		MONITORINFO mi;
+		mi.cbSize = sizeof(MONITORINFO);
+		if (GetMonitorInfo(MonitorFromPoint(rectFrame.TopLeft(), MONITOR_DEFAULTTONEAREST), &mi))
+		{
+			rcScreen = mi.rcMonitor;
+		}
+		else
+		{
+			::SystemParametersInfo(SPI_GETWORKAREA, 0, &rcScreen, 0);
+		}
+		// account for hard-coded border in CPaneFrameWnd::CalcBorderSize by 
+		// slighly oversizing screen rectangle; a flaw of this workaround is
+		// if the desktop is extended over multiple monitors, our mini frame
+		// window border will intrude onto the edges of neighboring monitors
+		CRect	rBorder;
+		pFrame->CalcBorderSize(rBorder);	// get amount of inflation needed
+		rcScreen.InflateRect(rBorder.left, rBorder.top);	// apply inflation
+		pFrame->ShowWindow(SW_MAXIMIZE);	// makes it easy to restore window size
+		pFrame->MoveWindow(rcScreen);	// go full screen
+	} else {	// exiting full screen mode
+		CPaneFrameWnd	*pFrame = GetParentMiniFrame();
+		ASSERT(pFrame != NULL);
+		if (pFrame != NULL) {	// just in case
+			static_cast<CMyPaneFrameWnd *>(pFrame)->RecalcCaptionHeight();
+			if (pFrame->IsWindowVisible() && pFrame->IsZoomed())	// if visible and maximized
+				pFrame->ShowWindow(SW_RESTORE);
+			else
+				pFrame->MoveWindow(m_recentDockInfo.m_rectRecentFloatingRect);
+		}
+	}
+	m_bIsFullScreen = bEnable;	// update state
+}
+
 ////////////////////////////////////////////////////////////////////////////
 // CMyDockablePane message map
 
@@ -101,6 +161,8 @@ BEGIN_MESSAGE_MAP(CMyDockablePane, CDockablePane)
 	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 	ON_WM_SHOWWINDOW()
 	ON_MESSAGE(UWM_SHOW_CHANGING, OnShowChanging)
+	ON_WM_GETDLGCODE()
+	ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -145,6 +207,8 @@ LRESULT CMyDockablePane::OnShowChanging(WPARAM wParam, LPARAM lParam)
 	m_bIsShowPending = false;	// reset pending flag
 	bool	bShow = (GetStyle() & WS_VISIBLE) != 0;	// simple window visibility
 	if (bShow != m_bFastIsVisible) {	// if show state actually changed
+		if (m_bIsFullScreen)	// if full screen
+			SetFullScreen(false);	// exit full screen mode
 		m_bFastIsVisible = bShow;	// update cached show state before notifying
 		OnShowChanged(bShow);	// notify derived class of debounced show change
 	}
@@ -191,4 +255,18 @@ BOOL CMyDockablePane::OnBeforeDock(CBasePane** ppDockBar, LPCRECT lpRect, AFX_DO
 		}
 	}
 	return CDockablePane::OnBeforeDock(ppDockBar, lpRect, dockMethod);
+}
+
+UINT CMyDockablePane::OnGetDlgCode()
+{
+	if (m_bIsFullScreen)	// if full screen
+		return DLGC_WANTALLKEYS;	// so we get escape key
+	return CDockablePane::OnGetDlgCode();
+}
+
+void CMyDockablePane::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	if (m_bIsFullScreen && nChar == VK_ESCAPE)	// if full screen and escape was hit
+		SetFullScreen(false);	// exit full screen mode
+	CDockablePane::OnKeyDown(nChar, nRepCnt, nFlags);
 }

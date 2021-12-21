@@ -12,6 +12,7 @@
 		02		13jun20	add find convergence
 		03		17nov21	add options for elliptical orbits and 3D planets
 		04		23nov21	add tempo map support
+		05		20dec21	add convergences option and full screen mode
 
 */
 
@@ -52,6 +53,7 @@ public:
 	void	ShowDataTip(bool bShow);
 	static	LONGLONG	FindNextConvergence(const CLongLongArray& arrMod, LONGLONG nStartPos, INT_PTR nConvSize);
 	static	LONGLONG	FindPrevConvergence(const CLongLongArray& arrMod, LONGLONG nStartPos, INT_PTR nConvSize);
+	static	LONGLONG	FindNextConvergenceSlow(const CLongLongArray& arrMod, LONGLONG nStartPos, INT_PTR nConvSize, bool bReverse = false);
 	LONGLONG	FindNextConvergence(bool bReverse = false);
 
 // Overrides
@@ -148,6 +150,9 @@ protected:
 	int		OrbitHitTest(CPoint point) const;
 	static	int		FindPeriod(const CSeqTrackArray& arrTrack, int nPeriod);
 	void	GetSelectedPeriods(CIntArrayEx& arrPeriod) const;
+	void	GetSelectedOrbits(CIntArrayEx& arrSelection) const;
+	int		GetSelectedOrbitCount() const;
+	bool	IsConvergence(LONGLONG nSongPos, int nConvergenceSize, int nSelectedOrbits = 0) const;
 	void	SelectTracksByPeriod(const CIntArrayEx& arrPeriod) const;
 	bool	IsValidOrbit(int iOrbit) const;
 	void	OnTrackSelectionChange();
@@ -175,6 +180,8 @@ protected:
 	afx_msg void OnUpdateExportVideo(CCmdUI *pCmdUI);
 	afx_msg void OnDrawStyle(UINT nID);
 	afx_msg void OnUpdateDrawStyle(CCmdUI *pCmdUI);
+	afx_msg void OnFullScreen();
+	afx_msg void OnUpdateFullScreen(CCmdUI *pCmdUI);
 };
 
 inline bool CPhaseBar::HaveDataTip() const
@@ -191,3 +198,4 @@ inline const CPhaseBar::COrbitArray& CPhaseBar::GetOrbitArray() const
 {
 	return m_arrOrbit;
 }
+

@@ -622,6 +622,9 @@ BEGIN
         MENUITEM "&Night Sky",                  ID_PHASE_STYLE_02_NIGHT_SKY
         MENUITEM "C&rosshairs",                 ID_PHASE_STYLE_03_CROSSHAIRS
         MENUITEM "&Periods",                    ID_PHASE_STYLE_04_PERIODS
+        MENUITEM "C&onvergences",               ID_PHASE_STYLE_05_CONVERGENCES
+        MENUITEM SEPARATOR
+        MENUITEM "&Full Screen",                ID_PHASE_FULL_SCREEN
     END
 END
 
@@ -1647,19 +1650,21 @@ BEGIN
     ID_PARTS_SORT_BY_NAME   "Sort parts by name"
     ID_PARTS_SORT_BY_TRACK  "Sort parts by first track"
     ID_PHASE_EXPORT_VIDEO   "Export video as image sequence\nExport Video"
-    ID_PHASE_STYLE_00_CIRCULAR_ORBITS "Show circular orbits"
+    ID_PHASE_FULL_SCREEN    "Toggle full screen mode for this pane"
+    ID_PHASE_STYLE_00_CIRCULAR_ORBITS "Make orbits circular"
     ID_PHASE_STYLE_01_3D_PLANETS "Show planets in 3D"
     ID_PHASE_STYLE_02_NIGHT_SKY "Show dark background"
     ID_PHASE_STYLE_03_CROSSHAIRS "Show crosshairs"
-    ID_PHASE_STYLE_04_PERIODS "Show orbital period labels"
+    ID_PHASE_STYLE_04_PERIODS "Show period labels"
+    ID_PHASE_STYLE_05_CONVERGENCES "Show convergences"
     ID_PIANO_COLOR_VELOCITY "Color keys to show note velocities"
     ID_PIANO_INSERT_TRACK   "Insert track for selected note"
-    ID_PIANO_ROTATE_LABELS  "Rotate key labels sideways"
-    ID_PIANO_SHOW_KEY_LABELS "Show note names on piano keys"
 END
 
 STRINGTABLE
 BEGIN
+    ID_PIANO_ROTATE_LABELS  "Rotate key labels sideways"
+    ID_PIANO_SHOW_KEY_LABELS "Show note names on piano keys"
     ID_STEP_VALUES_DELIMIT_COMMA "Export comma delimited values"
     ID_STEP_VALUES_DELIMIT_TAB "Export tab delimited values"
     ID_STEP_VALUES_EXPORT_COPY 
@@ -1678,12 +1683,12 @@ BEGIN
     ID_TOOLS_EXPORT_MODULATIONS 
                             "Export modulations to a CSV file\nExport Modulations"
     ID_TOOLS_EXPORT_SONG    "Export song MIDI data to a CSV file\nExport Song"
-    ID_TOOLS_EXPORT_STEPS   "Export steps from selected tracks to a CSV file\nExport Steps"
-    ID_TOOLS_EXPORT_TRACKS  "Export selected tracks to a CSV file\nExport Tracks"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TOOLS_EXPORT_STEPS   "Export steps from selected tracks to a CSV file\nExport Steps"
+    ID_TOOLS_EXPORT_TRACKS  "Export selected tracks to a CSV file\nExport Tracks"
     ID_TOOLS_IMPORT_MODULATIONS 
                             "Import modulations from a CSV file\nImport Modulations"
     ID_TOOLS_IMPORT_STEPS   "Import steps from a CSV file\nImport Steps"
@@ -1699,12 +1704,12 @@ BEGIN
     ID_TRACK_GROUP          "Group the selected tracks into a part\nCreate Group"
     ID_TRACK_INVERT         "Invert the selected tracks or steps\nInvert"
     ID_TRACK_LENGTH         "Set the length of one or more tracks\nLength"
-    ID_TRACK_MODULATION     "Create a modulation that targets the selected tracks\nCreate Modulation"
-    ID_TRACK_MUTE           "Mute or unmute the selected tracks\nMute"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_MODULATION     "Create a modulation that targets the selected tracks\nCreate Modulation"
+    ID_TRACK_MUTE           "Mute or unmute the selected tracks\nMute"
     ID_TRACK_OFFSET         "Offset the selected tracks by a given number of ticks\nOffset Tracks"
     ID_TRACK_PART_CREATE    "Create a new part from the selected tracks\nCreate Part"
     ID_TRACK_PART_UPDATE    "Update the selected part from the selected tracks\nUpdate Part"
@@ -1719,12 +1724,12 @@ BEGIN
     ID_TRACK_SHIFT_RIGHT    "Shift the selected tracks or steps right\nShift Right"
     ID_TRACK_SHIFT_STEPS    "Shift the selection left or right a given number of steps\nShift Steps"
     ID_TRACK_SOLO           "Solo the selected tracks\nSolo"
-    ID_TRACK_SORT           "Sort the selected tracks\nSort"
-    ID_TRACK_STRETCH        "Stretch or shrink the selected tracks\nStretch"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_SORT           "Sort the selected tracks\nSort"
+    ID_TRACK_STRETCH        "Stretch or shrink the selected tracks\nStretch"
     ID_TRACK_TIE_NOTES      "Toggle tie notes mode; if on, new notes are tied\nTie Notes"
     ID_TRACK_TRANSPOSE      "Transpose the selected tracks\nTranspose"
     ID_TRACK_VELOCITY       "Transform the velocities of the selected tracks or steps\nVelocity"
@@ -1753,12 +1758,12 @@ BEGIN
     ID_VIEW_BAR_Mapping     "Show or hide the mapping bar\nShow Mapping"
     ID_VIEW_BAR_MidiInput   "Show or hide the MIDI input bar\nShow MIDI Input"
     ID_VIEW_BAR_MidiOutput  "Show or hide the MIDI output bar\nShow MIDI Output"
-    ID_VIEW_BAR_Modulations "Show or hide the modulations bar\nShow Modulations"
-    ID_VIEW_BAR_Parts       "Show or hide the parts bar\nShow Parts"
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_BAR_Modulations "Show or hide the modulations bar\nShow Modulations"
+    ID_VIEW_BAR_Parts       "Show or hide the parts bar\nShow Parts"
     ID_VIEW_BAR_Phase       "Show or hide the phase bar\nShow Phase"
     ID_VIEW_BAR_Piano       "Show or hide the piano bar\nShow Piano"
     ID_VIEW_BAR_Presets     "Show or hide the presets bar\nShow Presets"
@@ -1773,13 +1778,13 @@ BEGIN
     ID_VIEW_ZOOM_OUT        "Zoom out\nZoom Out"
     ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
-    ID_WINDOW_MANAGER       "Manage child windows\nWindows"
-    ID_WINDOW_NEW_HORZ_TAB_GROUP 
-                            "Create a new horizontal tab group\nNew Horizontal Tab Group"
 END
 
 STRINGTABLE
 BEGIN
+    ID_WINDOW_MANAGER       "Manage child windows\nWindows"
+    ID_WINDOW_NEW_HORZ_TAB_GROUP 
+                            "Create a new horizontal tab group\nNew Horizontal Tab Group"
     ID_WINDOW_NEW_VERT_TAB_GROUP 
                             "Create a new horizontal tab group \nNew Vertical Tab Group"
     ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"
