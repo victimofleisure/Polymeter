@@ -3422,4 +3422,39 @@ CMDIFrameWndEx::LoadFrame: 190
 Looks like startup overhead is roughly proportional to the number of docking panes,
 so consider carefully before adding more docking panes; they're expensive.
 
+12/8/21 test next/prev convergence finding (pass!)
+
+#include "RandList.h"
+void CPhaseBar::TestConvergenceFinding()
+{
+	int	nPasses = 10000;
+	srand(GetTickCount());	// random seed
+	for (int iPass = 0; iPass < nPasses; iPass++) {
+		int	nMaxMods = 40;
+		int	nMods = CRandList::Rand(nMaxMods) + 1;
+		CRandList	list(nMods);
+		CLongLongArray	arrMod;
+		arrMod.SetSize(nMods);
+		for (int iMod = 0; iMod < nMods; iMod++) {
+			arrMod[iMod] = list.GetNext() + 2;
+		}
+		LONGLONG	nStartPos = rand();
+		if (rand() & 1)
+			nStartPos = -nStartPos;
+		LONGLONG	a, b;
+		int	nConvSize = nMods / 2 + 1;
+		a = FindNextConvergence(arrMod, nStartPos, nConvSize);
+		b = FindNextConvergenceSlow(arrMod, nStartPos, nConvSize, false);
+		if (a != b) {
+			printf("FindNextConvergence FAIL\n");
+			ASSERT(0);
+		}
+		a = FindPrevConvergence(arrMod, nStartPos, nConvSize);
+		b = FindNextConvergenceSlow(arrMod, nStartPos, nConvSize, true);
+		if (a != b) {
+			printf("FindPrevConvergence FAIL\n");
+			ASSERT(0);
+		}
+	}
+}
 

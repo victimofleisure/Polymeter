@@ -399,6 +399,8 @@ id	open	close	type	description	rev	user
 485	11/24/21	11/24/21	done	add night sky and crosshairs options to phase bar	1.0.03.000	
 484	11/24/21	11/24/21	done	move phase bar's Direct2D enable to OnShowChanged, potentially saving 60 ms during startup	1.0.03.000	
 486	11/24/21	11/27/21	done	phase bar should optionally show labels containing each orbit's period in ticks	1.0.03.000	
+487	12/01/21	12/20/21	done	add full screen mode for phase bar	1.0.04.000	
+488	12/01/21	12/20/21	done	show convergences in phase bar	1.0.04.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		

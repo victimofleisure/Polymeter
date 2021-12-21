@@ -1531,6 +1531,8 @@
 <tr><td>Night Sky</td><td>If checked, the background is dark instead of light.</td></tr>
 <tr><td>Crosshairs</td><td>If checked, the diagram includes crosshairs.</td></tr>
 <tr><td>Periods</td><td>If checked, the diagram includes labels that specify each orbit's <a href="#Period">period</a> in <a href="#Ticks">ticks</a>. This option increases overhead.</td></tr>
+<tr><td>Convergences</td><td>If checked, the diagram indicates <a href="#Convergences">convergences</a> slightly before and after they occur. The participating orbits are increasingly highlighted as the convergence approaches, and gradually return to normal as the convergence recedes. To specify the minimum number of orbits that must participate in a convergence, use the <a href="#Convergence_Size">Convergence Size</a> options on the Transport menu. To skip lesser convergences, increase the size. If orbits are selected, only those orbits participate in convergences.</td></tr>
+<tr><td>Full Screen</td><td>Makes the Phase bar enter full screen mode, or if it's already full screen, restores it to its previous size and position. In full screen mode, the diagram is shown without borders and fills the entire monitor. To make the bar fill a secondary monitor, drag the bar onto that monitor before making it full-screen. You can also exit full screen mode by pressing the <span class="key">Escape</span> key, but you may need to left-click the diagram first to give it input focus.</td></tr>
 </table>
 
 <a name="Step_Values_bar"><h2>Step Values</h2></a>
@@ -2388,6 +2390,8 @@
 <p>This submenu lets you choose a convergence size for the <a href="#Next_Convergence">Next Convergence</a> and <a href="#Previous_Convergence">Previous Convergence</a> commands. Convergence size is the minimum number of unique loop lengths that must reach their start point simultaneously for it to count as a <a href="#Convergences">convergence</a>. The size lets you filter the convergences by significance, finding only those where at least the specified number of different lengths converge, while skipping over the lesser ones. At the default size of two, the commands find every convergence. To find only three-way or higher convergences, set the convergence size to three. To find only full convergences, set the convergence size to All, but note that doing so may slow down the search if many large, <a href="#Primes">relatively prime</a> lengths are in use.
 
 <p>If the desired size isn't listed in the submenu, select Custom to display a dialog that lets you enter other sizes. The size can be set as low as one, in which case the next/previous convergence commands find every time when a loop starts, regardless of whether other loops also start at that time. To display a list of convergences, use the <a href="#Convergences_Calculator">Convergences</a> command.
+
+<p>The convergence size also affects the <a href="#Phase_bar">Phase bar</a>'s optional Convergences feature, which indicates convergences slightly before and after they occur.
 
 <a name="Record_Tracks"><h3>Record Tracks</h3></a>
 
