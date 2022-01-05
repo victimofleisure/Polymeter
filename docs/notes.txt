@@ -3283,6 +3283,9 @@ video must start at -6 frames (start pos = -1:000, skip 66 frames)
 Ibaramu: master version starts at 116.265ms
 Reason version starts at 428.397ms; 312ms offset, video must skip 19 frames
 
+Atunwi: master starts at 202.665ms; initial full convergence at frame 2430
+or 40.5 seconds
+
 11/16/21 elliptical orbits
 
 Benchmarked pretty carefully and it's definitely not slower, despite
@@ -3457,4 +3460,87 @@ void CPhaseBar::TestConvergenceFinding()
 		}
 	}
 }
+
+12/30/21 archive project: lists of polymeter files used on albums
+
+Akoko Ajeji 
+C:\Chris\MyProjects\Polymeter\docs\Manmade
+Ala Aye rec A B A B fine tune spread.plm
+Asiri rec1e lead B dub spread lead string.plm
+Bones rec fine tune cvt for PM 0.0.15 Mike.plm
+Buy Me ending Mike double finger.plm
+Buy Now double bass finger Mike.plm
+Dek Sep Bluso jam breaks Mike closed and pedal hat +10.plm
+Fazo Kanto B mix kick +15 Mike 3dB less ride.plm
+Iyika rec A B take1 scale up volumes spread.plm
+Stencil lower bass spread strings mike.plm
+Vizyon rec02 edit etc scale up volumes Mike.plm
+
+Polymeter
+C:\Chris\MyProjects\Polymeter\docs\test
+Algo Rag Reason.plm
+Atunwi rec1b ajust velo for Reason Rad Piano.plm
+dark dim (Oju Inu) B rest.plm
+Ilopo Ferese rec1 edit2.plm
+Itumo shorter.plm
+ominira head.plm
+ominira rec1.plm
+Omioto.plm
+Sipeli rec1.plm
+tristate (Ona Lile) rec1 edit.plm
+
+Apologize to the Future:
+Apologize full verse2 cycle skip static.plm
+changing climate rec4c no open hat.plm
+exit game panning.plm
+oily rock shorter chorus.plm
+Overshoot 1e mix.plm
+singularity 3 AAB.plm
+
+Passion For Numbers:
+C:\Chris\MyProjects\Polymeter\docs\test
+Ero Ayo ABC2.plm
+fun ife 03 still more.plm
+Irubo cresc.plm
+Mo Bulu 2 rec1.plm
+Ninu Meta (334 343 433) rec1e B2 run.plm
+Roro shorter ritard.plm
+two triads combine 2222 rec2b.plm
+Yipo 04 merge B.plm
+
+More Than Four:
+Broke strings.plm
+Charlie's Big Break mix2c.plm
+Heard a Moon more space.plm
+Interago pos mod.plm
+Kahelo fast intro.plm
+kasita mondo rec take2.plm
+LCM drums.plm
+Lodidi 2b mix.plm
+Moonchego 06 area 51.plm
+more than four 02b rec 1b.plm
+Pleasant Mistake rec5 chorus less.plm
+Shelter in Bass 005d vamp rec1 edit.plm
+Ticking 2021b rec1b2c.plm
+virtue signal rec C break edit.plm
+
+1/1/22 Proposal to suppress second note off for zero-velocity notes
+
+For note tracks, if the velocity is zero, skip queuing a note off. The reasoning:
+a note off was already queued at the start of the note, so queuing a second note 
+off at the end of the note is superfluous and unexpected, and also potentially 
+interferes with using note off tracks to implement exclusion groups (choking).
+
+All album tracks were checked for impact, using an automated script that exported
+MIDI files with and without the fix and compared them. A few files differed:
+Asiri
+Stencil
+Overshoot
+
+The above cases were investigated. In every case, the MIDI file with the fix 
+differs from the original in the technical sense of flunking a binary compare,
+but no audible change occurs, because for all zero-velocity notes, the note 
+being released a second time is already off. To further verify this, both the
+fixed and original MIDI files were imported into Reason and then re-exported 
+as MIDI, and the Reason-exported MIDI files were found to be identical.
 

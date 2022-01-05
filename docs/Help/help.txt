@@ -510,7 +510,7 @@ In velocity @[modulations\modulation], a track's note @[track velocity\velocitie
 
 It's interesting to combine velocity modulations that operate on different time scales, for example a longer modulator that applies a gradual crescendo could be combined with a shorter modulator that applies "ripple" to the velocities.
 
-Velocity modulation can also be applied to a @[controller tracks\controller track], in which case it offsets the controller value instead of the note velocity. In this case, the lower limit is zero instead of one.
+Velocity modulation can also be applied to a @[controller tracks\controller track], in which case it offsets the controller value instead of the note velocity.
 
 @topic Duration modulation
 
