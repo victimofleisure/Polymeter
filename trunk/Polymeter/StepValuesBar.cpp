@@ -22,6 +22,7 @@
 		12		27jan21	use control key instead of shift
 		13		30may21	in GetDispInfo handler, set empty string if needed
 		14		20jun21	remove dispatch edit keys
+		15		27dec21	add clamp step to range
 		
 */
 
@@ -322,6 +323,16 @@ bool CStepValuesBar::ScanStep(LPCTSTR pszText, int& nStep) const
 	return true;
 }
 
+inline void CStepValuesBar::ClampStep(int& nStep) const
+{
+	int	nMaxVal;
+	if (m_nStepFormat & STF_TIES)	// if showing ties
+		nMaxVal = SB_TIE | SB_VELOCITY;	// use full range
+	else	// use velocity range
+		nMaxVal = SB_VELOCITY;
+	nStep = CLAMP(nStep, 0, nMaxVal);
+}
+
 bool CStepValuesBar::SpinEdit(CEdit *pEdit, bool bUp)
 {
 	ASSERT(pEdit != NULL);
@@ -334,12 +345,7 @@ bool CStepValuesBar::SpinEdit(CEdit *pEdit, bool bUp)
 		nStep++;
 	else
 		nStep--;
-	int	nMaxVal;
-	if (m_nStepFormat & STF_TIES)
-		nMaxVal = BYTE_MAX;
-	else
-		nMaxVal = MIDI_NOTE_MAX;
-	nStep = CLAMP(nStep, 0, nMaxVal);
+	ClampStep(nStep);
 	TCHAR	szText[10];
 	FormatStep(szText, _countof(szText), nStep);
 	pEdit->SetWindowText(szText);
@@ -366,15 +372,16 @@ void CStepValuesBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 			int	iStep = m_iEditRow;
 			if (iStep < pDoc->m_Seq.GetLength(iTrack)) {	// if step in range
 				CStepValuesBar	*pBar = STATIC_DOWNCAST(CStepValuesBar, GetParent());
-				int	nStepVal = 0;
-				pBar->ScanStep(pszText, nStepVal);
-				STEP	nStep = static_cast<STEP>(nStepVal);
 				CIntArrayEx	arrSelection;
 				GetSelection(arrSelection);
 				int	iFirstItem, nItems;
 				GetSelectionRange(arrSelection, iStep, iFirstItem, nItems);
 				UINT	nFormat = pBar->m_nStepFormat;
 				bool	bVelocityOnly = !(nFormat & STF_TIES);	// if not showing ties, process velocity only
+				int	nStepVal = 0;
+				pBar->ScanStep(pszText, nStepVal);	// convert text to step value
+				pBar->ClampStep(nStepVal);	// enforce range before casting to step type
+				STEP	nStep = static_cast<STEP>(nStepVal);	// cast to step type
 				bool	bChanged;
 				if (nItems > 1) {	// if edit is within a selection range of at least two items
 					int	iEndItem = iFirstItem + nItems;

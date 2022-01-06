@@ -46,6 +46,7 @@
 		36		07jun21	rename rounding functions
 		37		08jun21	fix local name reuse warning
 		38		30oct21	remove song duration method
+		39		03jan22	for zero-velocity notes, suppress duplicate note off
 
 */
 
@@ -731,17 +732,19 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 							}
 							m_arrEvent.FastInsertSorted(evt);	// add note to sorted array for output
 lblNoteScheduled:;
-							int	nDuration = nDurSteps * nQuant + trk.m_nDuration + arrMod[MT_Duration];	// add duration offset
-							if (nDurSteps & 1) {	// if odd duration
-								if (bIsOdd)	// if odd step
-									nDuration -= nSwing;	// subtract swing from duration
-								else	// even step
-									nDuration += nSwing;	// add swing to duration
+							if (nVel) {	// if non-zero velocity, queue note off
+								int	nDuration = nDurSteps * nQuant + trk.m_nDuration + arrMod[MT_Duration];	// add duration offset
+								if (nDurSteps & 1) {	// if odd duration
+									if (bIsOdd)	// if odd step
+										nDuration -= nSwing;	// subtract swing from duration
+									else	// even step
+										nDuration += nSwing;	// add swing to duration
+								}
+								nDuration = max(nDuration, 1);	// keep duration above zero
+								evt.m_nTime = nAbsEvtTime + nDuration;	// absolute time
+								evt.m_dwEvent &= ~0xff0000;	// zero note's velocity
+								m_arrNoteOff.FastInsertSorted(evt);	// add pending note off to array
 							}
-							nDuration = max(nDuration, 1);	// keep duration above zero
-							evt.m_nTime = nAbsEvtTime + nDuration;	// absolute time
-							evt.m_dwEvent &= ~0xff0000;	// zero note's velocity
-							m_arrNoteOff.FastInsertSorted(evt);	// add pending note off to array
 						}
 					}
 				} else if (trk.m_iType == TT_TEMPO) {	// if track type is tempo

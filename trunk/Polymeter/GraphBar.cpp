@@ -29,6 +29,7 @@
         19		11nov21	add graph depth attribute
 		20		12nov21	add modulation type dialog for multiple filters
 		21		13nov21	add optional legend to graph
+		22		03jan22	add full screen mode
 
 */
 
@@ -615,6 +616,13 @@ BOOL CGraphBar::PreTranslateMessage(MSG* pMsg)
 				SetZoomLevel(0);
 				return true;
 			}
+			break;
+		case VK_F11:
+			if (bIsCtrl)
+				SetFullScreen(!IsFullScreen());
+			break;
+		case VK_ESCAPE:
+			SetFullScreen(false);
 			break;
 		}
 	}

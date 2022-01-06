@@ -15,6 +15,7 @@
 		05		17nov20	add spin edit
 		06		24jan21	add left button handler to derived grid control
 		07		20jun21	add list accessor
+		08		27dec21	add clamp step to range
 
 */
 
@@ -96,6 +97,7 @@ protected:
 	bool	HasSelection() const;
 	void	FormatStep(LPTSTR pszText, int cchTextMax, int nStep, int nKeySig = 0) const;
 	bool	ScanStep(LPCTSTR pszText, int& nStep) const;
+	void	ClampStep(int& nStep) const;
 	bool	SpinEdit(CEdit *pEdit, bool bUp);
 	static	int		GetSelectedTrackCount(CPolymeterDoc *pDoc);
 	static	void	GetSelectionRange(CIntArrayEx& arrSelection, int iItem, int& iFirstItem, int& nItems);

@@ -19,6 +19,7 @@
 		09		01apr20	standardize context menu handling
 		10		18jun20	add command help to handle channel filter string reuse
 		11		18nov20	enable auto-hide and attach
+		12		05jan22	in AddEvents, fix test to keep reference count positive
 
 */
 
@@ -110,13 +111,13 @@ void CPianoBar::AddEvents(const CMidiEventArray& arrEvent)
 					m_arrNoteRefs[nNote]++;	// increment note's reference count
 				}
 			} else {	// note off
-				if (nCmd == NOTE_OFF)	// if actual note off command (instead of note on commnad with zero velocity)
+				if (nCmd == NOTE_OFF)	// if actual note off command (instead of note on command with zero velocity)
 					dwNote = (dwNote & ~0xf0) | NOTE_ON;	// replace note off with note on; velocity already zeroed above
 				INT_PTR	iNote = m_arrNoteOn.BinarySearch(dwNote);	// find note in active list
 				if (iNote >= 0) {	// if note found in active list
 					m_arrNoteOn.RemoveAt(iNote);	// remove note from active list
 					if (bFilterPass) {	// if not filtering or note passes filter
-						if (m_arrNoteRefs[nNote] >= 0) {	// keep reference count positive
+						if (m_arrNoteRefs[nNote] > 0) {	// keep reference count positive
 							m_arrNoteRefs[nNote]--;	// decrement note's reference count
 							if (!m_arrNoteRefs[nNote])	// if note has zero references
 								bNotePressChanged = true;	// press state changed

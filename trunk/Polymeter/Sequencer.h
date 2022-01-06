@@ -26,6 +26,7 @@
 		16		16dec20	add looping of playback
 		17		07jun21	rename rounding functions
 		18		30oct21	remove song duration method
+		19		30dec21	remove unused function prototype
 
 */
 
@@ -218,7 +219,6 @@ protected:
 	static	void	CALLBACK MidiOutProc(HMIDIOUT hMidiOut, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2);
 	int		GetNoteDuration(const CStepArray& arrStep, int nSteps, int iCurStep) const;
 	bool	RecurseModulations(int iTrack, int nAbsEvtTime, int& nPosMod);
-	void	MakeEvent(const CTrack& trk, DWORD dwTime, int nVal, CEvent& evt);
 	void	AddTrackEvents(int iTrack, int nCBStart);
 	void	AddNoteOffs(int nCBStart, int nCBEnd);
 	bool	IsRecordedEventPlayback() const;

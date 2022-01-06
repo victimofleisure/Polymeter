@@ -15,6 +15,7 @@
 		05		07sep20	add apply preset and part messages
 		06		15feb21	add mapped command message
 		07		08jun21	fix LDS macro warning
+		08		30dec21	replace AfxGetApp with faster method
 
 		global definitions and inlines
 
@@ -85,6 +86,16 @@ template<typename T> inline bool SafeCreateObject(CRuntimeClass *pRuntimeClass, 
 	return pObject != NULL;	// can be null if class name not found or insufficient memory
 }
 
+// replace AfxGetApp with faster method
+class CPolymeterApp;
+extern CPolymeterApp theApp;
+inline CWinApp *FastGetApp()
+{
+	return reinterpret_cast<CWinApp*>(&theApp);
+}
+#define AfxGetApp FastGetApp
+
+// define benchmarking macros
 #define BENCH_START CBenchmark b;
 #define BENCH_STOP printf("%f\n", b.Elapsed());
 

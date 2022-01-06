@@ -20,6 +20,7 @@
 		10		24nov21	enable D2D in OnShowChanged to expedite startup
 		11		27nov21	add options for crosshairs and period labels
 		12		20dec21	add convergences option and full screen mode
+		13		03jan22	add shortcut key for full screen mode
 
 */
 
@@ -926,6 +927,14 @@ BOOL CPhaseBar::PreTranslateMessage(MSG* pMsg)
 	if (pMsg->message >= WM_MOUSEFIRST && pMsg->message <= WM_MOUSELAST) {	// if mouse message
 		if (HaveDataTip())	// if tooltip exists
 			m_DataTip.RelayEvent(pMsg);	// relay message to tooltip
+	} else if (pMsg->message == WM_KEYDOWN) {
+		bool	bIsCtrl = (GetKeyState(VK_CONTROL) & GKS_DOWN) != 0;
+		switch (pMsg->wParam) {
+		case VK_F11:
+			if (bIsCtrl)
+				SetFullScreen(!IsFullScreen());
+			break;
+		}
 	}
 	return CMyDockablePane::PreTranslateMessage(pMsg);
 }

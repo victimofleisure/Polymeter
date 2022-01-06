@@ -174,7 +174,6 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>winmm.lib;version.lib;htmlhelp.lib</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <GenerateMapFile>true</GenerateMapFile>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
