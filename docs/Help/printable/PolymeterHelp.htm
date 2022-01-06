@@ -649,6 +649,14 @@
 
 <p><a href="#Tied_notes">Tied notes</a> are more likely to be useful with melodic or chordal parts, because the instruments associated with such parts are typically sensitive to note duration. Tied notes may be irrelevant when triggering drums, because drum sounds commonly play their entire sample, regardless of the triggering note's duration. Many hardware and software drum machines ignore note duration, including the drum channel (channel ten) of a General MIDI synth, such as the GS Wavetable Synth that ships with Windows. If you're writing drum parts for a device that ignores note duration, you may find it convenient to use only untied steps, so that setting consecutive steps always retriggers the sample.
 
+<a name="Note_off"><h3>Note off</h3></a>
+
+<p>It's sometimes desirable to cut off an existing instance of a note, for example in order to "choke" a high-hat or cymbal. This can be done by creating a note with a velocity of zero, which sends a <em>note off</em> command, as explained below. The note off command instructs the <a href="#Output_Device">output device</a> to release the specified note. This technique can be used to create more complex mutual exclusion groups, and can be applied to pitched instruments as well as percussion.
+
+<p>A normal note with a velocity greater than zero starts by sending a note on command, and ends by sending a corresponding note off command, after the note's duration expires. However if a note's velocity is zero, the note off command is sent at the start of the note, and no action is taken at the end of the note, hence the note's duration is irrelevant in this case.
+
+<p>There's a trick to creating a note with velocity of zero. The <a href="#Velocities_Pane">velocities pane</a> doesn't let you drag a note's velocity below one, but you can work around this by using a negative <a href="#Track_Velocity">track velocity</a> to offset the note's <em>net</em> velocity down to zero. The method with the least impact is to set the track's velocity offset to &minus;1; this causes notes with velocities of one to send note off commands, while notes with higher velocities behave normally. If you want a track to <em>always</em> send note off commands, regardless of its note velocities, set its velocity offset to &minus;127. Negative <a href="#Velocity_modulation">velocity modulation</a> can similarly offset note velocities down to zero.
+
 <a name="Controller_tracks"><h2>Controller tracks</h2></a>
 
 <p>Controller tracks are a group of <a href="#Track_types">track types</a> that output a control value instead of a note. The group includes the following track types:
@@ -739,11 +747,11 @@
 
 <a name="Velocity_modulation"><h2>Velocity modulation</h2></a>
 
-<p>In velocity <a href="#Modulations">modulation</a>, a track's note <a href="#Track_Velocity">velocities</a> are altered by one or more modulator tracks. A velocity modulator track is interpreted as an array of <a href="#Unsigned_versus_signed_steps">signed</a> offsets, which are added to the note velocities. If a target track has multiple velocity modulators, they're summed. If the offset becomes too large or too small the velocity <a href="#Clipping">clips</a>, but otherwise the target's original dynamics are preserved.
+<p>In velocity <a href="#Modulations">modulation</a>, a track's note <a href="#Track_Velocity">velocities</a> are altered by one or more modulator tracks. A velocity modulator track is interpreted as an array of <a href="#Unsigned_versus_signed_steps">signed</a> offsets, which are added to the note velocities. If a target track has multiple velocity modulators, they're summed. If the offset becomes too large or too small the velocity <a href="#Clipping">clips</a>, but otherwise the target's original dynamics are preserved. If negative velocity modulation causes a note's net velocity to be zero, a <a href="#Note_off">note off</a> is output.
 
 <p>It's interesting to combine velocity modulations that operate on different time scales, for example a longer modulator that applies a gradual crescendo could be combined with a shorter modulator that applies "ripple" to the velocities.
 
-<p>Velocity modulation can also be applied to a <a href="#Controller_tracks">controller track</a>, in which case it offsets the controller value instead of the note velocity. In this case, the lower limit is zero instead of one.
+<p>Velocity modulation can also be applied to a <a href="#Controller_tracks">controller track</a>, in which case it offsets the controller value instead of the note velocity.
 
 <a name="Duration_modulation"><h2>Duration modulation</h2></a>
 
@@ -997,7 +1005,7 @@
 
 <a name="Track_Velocity"><h4>Velocity</h4></a>
 
-<p>This is the track's velocity offset. It's a signed value that's added to the velocity values obtained from the track steps. The result is clamped so that it can't exceed the valid range of MIDI data, which can potentially result in <a href="#Clipping">clipping</a>. Velocity affects all <a href="#Track_types">track types</a> except Tempo and Modulator. The velocity can also be altered via <a href="#Velocity_modulation">velocity modulation</a>.
+<p>This is the track's velocity offset. It's a signed value that's added to the velocity values obtained from the track steps. The result is clamped so that it can't exceed the valid range of MIDI data, which can potentially result in <a href="#Clipping">clipping</a>. Velocity affects all <a href="#Track_types">track types</a> except Tempo and Modulator. The velocity can also be altered via <a href="#Velocity_modulation">velocity modulation</a>. If a note's net velocity is zero, a <a href="#Note_off">note off</a> command is sent.
 
 <a name="Track_Duration"><h4>Duration</h4></a>
 
@@ -1103,6 +1111,8 @@
 <p>The pane also features tool tips that show step values. To learn a bar's exact value, hover the cursor (hold it stationary) over the bar for at least half a second, and its value will appear in a tool tip. The tool tip is also shown continuously while dragging is in progress.
 
 <p>The tool tip can show either <a href="#Unsigned_versus_signed_steps">signed or unsigned</a> step values. To switch between the two, left-click the small button on the left border of the velocities pane. The button indicates the step value at the vertical center of the pane. If it shows 64, unsigned tooltips are selected, whereas if it shows 0, signed tooltips are selected.
+
+<p>The minimum height of a velocity bar is one for <a href="#Note_tracks">note tracks</a>, and zero for all other <a href="#Track_types">track types</a>. Even though note velocity bars can't be dragged below one, you can still create notes with velocities of zero, by using a negative <a href="#Track_Velocity">track velocity</a> offset to shift the note velocities down. For example, within a note track, you could create a <a href="#Note_off">note off</a> by setting a note's velocity to one, and also setting the track's velocity offset to &minus;1.
 
 
 <a name="Song_View"><h2>Song View</h2></a>
@@ -1472,7 +1482,7 @@
 <tr><td>Highlight</td><td>This item enables or disables highlighting of the selected tracks in the graph. When this option is enabled, the selected tracks are indicated by drawing the corresponding graph nodes with a different background color.</td></tr>
 <tr><td>Labels</td><td>This item enables or disables edge labels. When this option is enabled, a label appears next to every connecting line in the graph, identifying the corresponding modulation type. This is only recommended for simple graphs, because otherwise the graph is hard to read.</td></tr>
 <tr><td>Legend</td><td>This item enables or disables showing a legend that maps the <a href="#Graph_edge_colors">edge colors</a> in use to their corresponding modulation types.</td></tr>
-<tr><td>Save As</td><td>This item saves the current graph to a file. Currently the only supported format is SVG.</td></tr>
+<tr><td>Save As</td><td>This item saves the current graph to a file. Currently the only supported format is SVG, which is vector-based and scalable. The output file will have the same aspect ratio as the graph window.</td></tr>
 <tr><td>Reload</td><td>This item redraws the graph.</td></tr>
 </table>
 
@@ -1493,6 +1503,10 @@
 <tr><td>Orange</td><td><a href="#Voicing_modulation">Voicing</a></td></tr>
 <tr><td>Turquoise</td><td><a href="#Offset_modulation">Offset</a></td></tr>
 </table>
+
+<a name="Graph_full_screen"><h3>Full screen mode</h3></a>
+
+<p>The Graph bar can be displayed in full screen mode, in which case the graph is shown without borders and fills the entire monitor. To make the bar fill a secondary monitor, drag the bar onto that monitor before making it full-screen. The shortcut key to enter or exit full screen mode is <span class="key">Ctrl+F11</span>. You can also exit full screen mode by pressing the <span class="key">Escape</span> key. To use either key, you may need to give the Graph bar the input focus first, by left-clicking within the graph.
 
 <a name="Phase_bar"><h2>Phase</h2></a>
 
@@ -1532,7 +1546,7 @@
 <tr><td>Crosshairs</td><td>If checked, the diagram includes crosshairs.</td></tr>
 <tr><td>Periods</td><td>If checked, the diagram includes labels that specify each orbit's <a href="#Period">period</a> in <a href="#Ticks">ticks</a>. This option increases overhead.</td></tr>
 <tr><td>Convergences</td><td>If checked, the diagram indicates <a href="#Convergences">convergences</a> slightly before and after they occur. The participating orbits are increasingly highlighted as the convergence approaches, and gradually return to normal as the convergence recedes. To specify the minimum number of orbits that must participate in a convergence, use the <a href="#Convergence_Size">Convergence Size</a> options on the Transport menu. To skip lesser convergences, increase the size. If orbits are selected, only those orbits participate in convergences.</td></tr>
-<tr><td>Full Screen</td><td>Makes the Phase bar enter full screen mode, or if it's already full screen, restores it to its previous size and position. In full screen mode, the diagram is shown without borders and fills the entire monitor. To make the bar fill a secondary monitor, drag the bar onto that monitor before making it full-screen. You can also exit full screen mode by pressing the <span class="key">Escape</span> key, but you may need to left-click the diagram first to give it input focus.</td></tr>
+<tr><td>Full Screen</td><td>Makes the Phase bar enter full screen mode, or if it's already full screen, restores it to its previous size and position. In full screen mode, the diagram is shown without borders and fills the entire monitor. To make the bar fill a secondary monitor, drag the bar onto that monitor before making it full-screen. The shortcut key to enter or exit full screen mode is <span class="key">Ctrl+F11</span>. You can also exit full screen mode by pressing the <span class="key">Escape</span> key. To use either key, you may need to give the Phase bar the input focus first, by left-clicking the diagram's background.</td></tr>
 </table>
 
 <a name="Step_Values_bar"><h2>Step Values</h2></a>

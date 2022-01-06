@@ -13,11 +13,11 @@
 
 <h3>Velocity modulation</h3>
 
-<p>In velocity <a href="../Concepts/Modulations.htm">modulation</a>, a track's note <a href="../Views/Track_View/Track_Grid.htm#Track_Velocity">velocities</a> are altered by one or more modulator tracks. A velocity modulator track is interpreted as an array of <a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">signed</a> offsets, which are added to the note velocities. If a target track has multiple velocity modulators, they're summed. If the offset becomes too large or too small the velocity <a href="../Loose_Ends/Clipping.htm">clips</a>, but otherwise the target's original dynamics are preserved.
+<p>In velocity <a href="../Concepts/Modulations.htm">modulation</a>, a track's note <a href="../Views/Track_View/Track_Grid.htm#Track_Velocity">velocities</a> are altered by one or more modulator tracks. A velocity modulator track is interpreted as an array of <a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">signed</a> offsets, which are added to the note velocities. If a target track has multiple velocity modulators, they're summed. If the offset becomes too large or too small the velocity <a href="../Loose_Ends/Clipping.htm">clips</a>, but otherwise the target's original dynamics are preserved. If negative velocity modulation causes a note's net velocity to be zero, a <a href="../Tracks/Note_tracks.htm#Note_off">note off</a> is output.
 
 <p>It's interesting to combine velocity modulations that operate on different time scales, for example a longer modulator that applies a gradual crescendo could be combined with a shorter modulator that applies "ripple" to the velocities.
 
-<p>Velocity modulation can also be applied to a <a href="../Tracks/Controller_tracks.htm">controller track</a>, in which case it offsets the controller value instead of the note velocity. In this case, the lower limit is zero instead of one.
+<p>Velocity modulation can also be applied to a <a href="../Tracks/Controller_tracks.htm">controller track</a>, in which case it offsets the controller value instead of the note velocity.
 
 <!--  content stops HERE  -->
 			

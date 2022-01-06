@@ -415,6 +415,14 @@ At least one of a note track's steps must be either empty or untied, otherwise t
 
 @[Tied notes] are more likely to be useful with melodic or chordal parts, because the instruments associated with such parts are typically sensitive to note duration. Tied notes may be irrelevant when triggering drums, because drum sounds commonly play their entire sample, regardless of the triggering note's duration. Many hardware and software drum machines ignore note duration, including the drum channel (channel ten) of a General MIDI synth, such as the GS Wavetable Synth that ships with Windows. If you're writing drum parts for a device that ignores note duration, you may find it convenient to use only untied steps, so that setting consecutive steps always retriggers the sample.
 
+@item Note off
+
+It's sometimes desirable to cut off an existing instance of a note, for example in order to "choke" a high-hat or cymbal. This can be done by creating a note with a velocity of zero, which sends a <em>note off</em> command, as explained below. The note off command instructs the @[output device] to release the specified note. This technique can be used to create more complex mutual exclusion groups, and can be applied to pitched instruments as well as percussion.
+
+A normal note with a velocity greater than zero starts by sending a note on command, and ends by sending a corresponding note off command, after the note's duration expires. However if a note's velocity is zero, the note off command is sent at the start of the note, and no action is taken at the end of the note, hence the note's duration is irrelevant in this case.
+
+There's a trick to creating a note with velocity of zero. The @[velocities pane] doesn't let you drag a note's velocity below one, but you can work around this by using a negative @[track velocity] to offset the note's <em>net</em> velocity down to zero. The method with the least impact is to set the track's velocity offset to &minus;1; this causes notes with velocities of one to send note off commands, while notes with higher velocities behave normally. If you want a track to <em>always</em> send note off commands, regardless of its note velocities, set its velocity offset to &minus;127. Negative @[velocity modulation] can similarly offset note velocities down to zero.
+
 @topic Controller tracks
 
 Controller tracks are a group of @[track types] that output a control value instead of a note. The group includes the following track types:
@@ -506,7 +514,7 @@ Note modulation usually targets @[note tracks], but it can also target @[scale m
 
 @topic Velocity modulation
 
-In velocity @[modulations\modulation], a track's note @[track velocity\velocities] are altered by one or more modulator tracks. A velocity modulator track is interpreted as an array of @[unsigned versus signed steps\signed] offsets, which are added to the note velocities. If a target track has multiple velocity modulators, they're summed. If the offset becomes too large or too small the velocity @[clipping\clips], but otherwise the target's original dynamics are preserved.
+In velocity @[modulations\modulation], a track's note @[track velocity\velocities] are altered by one or more modulator tracks. A velocity modulator track is interpreted as an array of @[unsigned versus signed steps\signed] offsets, which are added to the note velocities. If a target track has multiple velocity modulators, they're summed. If the offset becomes too large or too small the velocity @[clipping\clips], but otherwise the target's original dynamics are preserved. If negative velocity modulation causes a note's net velocity to be zero, a @[note off] is output.
 
 It's interesting to combine velocity modulations that operate on different time scales, for example a longer modulator that applies a gradual crescendo could be combined with a shorter modulator that applies "ripple" to the velocities.
 
@@ -765,7 +773,7 @@ This is the track's amount of swing, in @[ticks]. Swing is a time offset that's 
 
 @item Track Velocity\Velocity
 
-This is the track's velocity offset. It's a signed value that's added to the velocity values obtained from the track steps. The result is clamped so that it can't exceed the valid range of MIDI data, which can potentially result in @[clipping]. Velocity affects all @[track types] except Tempo and Modulator. The velocity can also be altered via @[velocity modulation].
+This is the track's velocity offset. It's a signed value that's added to the velocity values obtained from the track steps. The result is clamped so that it can't exceed the valid range of MIDI data, which can potentially result in @[clipping]. Velocity affects all @[track types] except Tempo and Modulator. The velocity can also be altered via @[velocity modulation]. If a note's net velocity is zero, a @[note off] command is sent.
 
 @item Track Duration\Duration
 
@@ -871,6 +879,8 @@ When using the triangle or sine functions, visualize a rectangle that contains t
 The pane also features tool tips that show step values. To learn a bar's exact value, hover the cursor (hold it stationary) over the bar for at least half a second, and its value will appear in a tool tip. The tool tip is also shown continuously while dragging is in progress.
 
 The tool tip can show either @[unsigned versus signed steps\signed or unsigned] step values. To switch between the two, left-click the small button on the left border of the velocities pane. The button indicates the step value at the vertical center of the pane. If it shows 64, unsigned tooltips are selected, whereas if it shows 0, signed tooltips are selected.
+
+The minimum height of a velocity bar is one for @[note tracks], and zero for all other @[track types]. Even though note velocity bars can't be dragged below one, you can still create notes with velocities of zero, by using a negative @[track velocity] offset to shift the note velocities down. For example, within a note track, you could create a @[note off] by setting a note's velocity to one, and also setting the track's velocity offset to &minus;1.
 
 @endchapter
 
@@ -1242,7 +1252,7 @@ Various graph layouts are supported, including dot (for hierarchical graphs) and
 <tr><td>Highlight</td><td>This item enables or disables highlighting of the selected tracks in the graph. When this option is enabled, the selected tracks are indicated by drawing the corresponding graph nodes with a different background color.</td></tr>
 <tr><td>Labels</td><td>This item enables or disables edge labels. When this option is enabled, a label appears next to every connecting line in the graph, identifying the corresponding modulation type. This is only recommended for simple graphs, because otherwise the graph is hard to read.</td></tr>
 <tr><td>Legend</td><td>This item enables or disables showing a legend that maps the @[graph edge colors\edge colors] in use to their corresponding modulation types.</td></tr>
-<tr><td>Save As</td><td>This item saves the current graph to a file. Currently the only supported format is SVG.</td></tr>
+<tr><td>Save As</td><td>This item saves the current graph to a file. Currently the only supported format is SVG, which is vector-based and scalable. The output file will have the same aspect ratio as the graph window.</td></tr>
 <tr><td>Reload</td><td>This item redraws the graph.</td></tr>
 </table>
 
@@ -1263,6 +1273,10 @@ Various graph layouts are supported, including dot (for hierarchical graphs) and
 <tr><td>Orange</td><td>@[voicing modulation\Voicing]</td></tr>
 <tr><td>Turquoise</td><td>@[offset modulation\Offset]</td></tr>
 </table>
+
+@item Graph full screen\Full screen mode
+
+The Graph bar can be displayed in full screen mode, in which case the graph is shown without borders and fills the entire monitor. To make the bar fill a secondary monitor, drag the bar onto that monitor before making it full-screen. The shortcut key to enter or exit full screen mode is @{key}Ctrl+F11@}. You can also exit full screen mode by pressing the @{key}Escape@} key. To use either key, you may need to give the Graph bar the input focus first, by left-clicking within the graph.
 
 @topic Phase bar\Phase
 
@@ -1302,7 +1316,7 @@ This command can potentially consume a large amount of disk space. You're respon
 <tr><td>Crosshairs</td><td>If checked, the diagram includes crosshairs.</td></tr>
 <tr><td>Periods</td><td>If checked, the diagram includes labels that specify each orbit's @[period] in @[ticks]. This option increases overhead.</td></tr>
 <tr><td>Convergences</td><td>If checked, the diagram indicates @[convergences] slightly before and after they occur. The participating orbits are increasingly highlighted as the convergence approaches, and gradually return to normal as the convergence recedes. To specify the minimum number of orbits that must participate in a convergence, use the @[Convergence Size] options on the Transport menu. To skip lesser convergences, increase the size. If orbits are selected, only those orbits participate in convergences.</td></tr>
-<tr><td>Full Screen</td><td>Makes the Phase bar enter full screen mode, or if it's already full screen, restores it to its previous size and position. In full screen mode, the diagram is shown without borders and fills the entire monitor. To make the bar fill a secondary monitor, drag the bar onto that monitor before making it full-screen. You can also exit full screen mode by pressing the @{key}Escape@} key, but you may need to left-click the diagram first to give it input focus.</td></tr>
+<tr><td>Full Screen</td><td>Makes the Phase bar enter full screen mode, or if it's already full screen, restores it to its previous size and position. In full screen mode, the diagram is shown without borders and fills the entire monitor. To make the bar fill a secondary monitor, drag the bar onto that monitor before making it full-screen. The shortcut key to enter or exit full screen mode is @{key}Ctrl+F11@}. You can also exit full screen mode by pressing the @{key}Escape@} key. To use either key, you may need to give the Phase bar the input focus first, by left-clicking the diagram's background.</td></tr>
 </table>
 
 @topic Step Values bar\Step Values

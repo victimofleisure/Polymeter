@@ -401,6 +401,11 @@ id	open	close	type	description	rev	user
 486	11/24/21	11/27/21	done	phase bar should optionally show labels containing each orbit's period in ticks	1.0.03.000	
 487	12/01/21	12/20/21	done	add full screen mode for phase bar	1.0.04.000	
 488	12/01/21	12/20/21	done	show convergences in phase bar	1.0.04.000	
+489	12/27/21	12/27/21	done	in Step Values bar, clamp out-of-range values instead of wrapping them	1.0.05.000	
+490	12/30/21	12/30/21	done	remove unused MakeEvent prototype from Sequencer.h	1.0.05.000	
+491	12/30/21	12/30/21	done	replace AfxGetApp with faster method	1.0.05.000	
+492	01/01/22	01/03/22	done	note with zero velocity sends two note offs, one at note's start and one at its end; suppress second note off	1.0.05.000	
+493	01/01/22	01/03/22	done	add full screen mode for graph bar	1.0.05.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		

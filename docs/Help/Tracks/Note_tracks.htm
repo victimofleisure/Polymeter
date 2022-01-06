@@ -48,6 +48,13 @@
 <a name="Triggering_samples"><p><b>Triggering samples</b></a>
 <p><a href="../Tracks/Note_tracks.htm#Tied_notes">Tied notes</a> are more likely to be useful with melodic or chordal parts, because the instruments associated with such parts are typically sensitive to note duration. Tied notes may be irrelevant when triggering drums, because drum sounds commonly play their entire sample, regardless of the triggering note's duration. Many hardware and software drum machines ignore note duration, including the drum channel (channel ten) of a General MIDI synth, such as the GS Wavetable Synth that ships with Windows. If you're writing drum parts for a device that ignores note duration, you may find it convenient to use only untied steps, so that setting consecutive steps always retriggers the sample.
 
+<a name="Note_off"><p><b>Note off</b></a>
+<p>It's sometimes desirable to cut off an existing instance of a note, for example in order to "choke" a high-hat or cymbal. This can be done by creating a note with a velocity of zero, which sends a <em>note off</em> command, as explained below. The note off command instructs the <a href="../Options/MIDI/Output_Device.htm">output device</a> to release the specified note. This technique can be used to create more complex mutual exclusion groups, and can be applied to pitched instruments as well as percussion.
+
+<p>A normal note with a velocity greater than zero starts by sending a note on command, and ends by sending a corresponding note off command, after the note's duration expires. However if a note's velocity is zero, the note off command is sent at the start of the note, and no action is taken at the end of the note, hence the note's duration is irrelevant in this case.
+
+<p>There's a trick to creating a note with velocity of zero. The <a href="../Views/Track_View/Velocities_Pane.htm">velocities pane</a> doesn't let you drag a note's velocity below one, but you can work around this by using a negative <a href="../Views/Track_View/Track_Grid.htm#Track_Velocity">track velocity</a> to offset the note's <em>net</em> velocity down to zero. The method with the least impact is to set the track's velocity offset to &minus;1; this causes notes with velocities of one to send note off commands, while notes with higher velocities behave normally. If you want a track to <em>always</em> send note off commands, regardless of its note velocities, set its velocity offset to &minus;127. Negative <a href="../Modulation/Velocity_modulation.htm">velocity modulation</a> can similarly offset note velocities down to zero.
+
 <!--  content stops HERE  -->
 			
 </body>
