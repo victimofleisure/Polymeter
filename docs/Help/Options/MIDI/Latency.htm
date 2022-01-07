@@ -22,7 +22,7 @@
 </table>
 
 <a name="Underruns"><p><b>Underruns</b></a>
-<p>During <a href="../../Menus/Transport/Play.htm">playback</a>, the MIDI sequence is prepared ahead of time in chunks. The length of the chunks is determined by the <a href="../../Options/MIDI/Latency.htm">Latency</a> setting. Ideally the application prepares the next chunk while the previous chunk is being played, and thus stays ahead of demand. However if a chunk takes too long to prepare, the previous chunk may run out before the next chunk can be delivered. This situation is called an <em>underrun</em>.
+<p>During <a href="../../Menus/Transport/Play.htm">playback</a>, the MIDI sequence is prepared ahead of time in chunks. The length of the chunks is determined by the <a href="../../Options/MIDI/Latency.htm">Latency</a> setting. Ideally the application prepares the next chunk while the previous chunk is being played, and thus stays ahead of demand. But if a chunk takes too long to prepare, the previous chunk may run out before the next chunk can be delivered. This situation is called an <em>underrun</em>.
 
 <p>An underrun means that the sequencer took too long and failed to keep up. It can occur because the sequence is too dense, or the latency is too short, or CPU power is lacking, or the output device is too slow, or any combination of these. An underrun can affect the timing of the output MIDI messages, and in extreme cases may cause an audible gap in the sequence. If it's the first underrun since playback started, an error message is displayed. Subsequent underruns are <a href="../../Menus/Tools/Statistics.htm">counted</a>, but the error message is suppressed. To solve underrun errors, do one or more of the following:
 <ul>

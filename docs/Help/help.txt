@@ -419,7 +419,7 @@ At least one of a note track's steps must be either empty or untied, otherwise t
 
 It's sometimes desirable to cut off an existing instance of a note, for example in order to "choke" a high-hat or cymbal. This can be done by creating a note with a velocity of zero, which sends a <em>note off</em> command, as explained below. The note off command instructs the @[output device] to release the specified note. This technique can be used to create more complex mutual exclusion groups, and can be applied to pitched instruments as well as percussion.
 
-A normal note with a velocity greater than zero starts by sending a note on command, and ends by sending a corresponding note off command, after the note's duration expires. However if a note's velocity is zero, the note off command is sent at the start of the note, and no action is taken at the end of the note, hence the note's duration is irrelevant in this case.
+A normal note with a velocity greater than zero starts by sending a note on command, and ends by sending a corresponding note off command, after the note's duration expires. But if a note's velocity is zero, the note off command is sent at the start of the note, and no action is taken at the end of the note, hence the note's duration is irrelevant in this case.
 
 There's a trick to creating a note with velocity of zero. The @[velocities pane] doesn't let you drag a note's velocity below one, but you can work around this by using a negative @[track velocity] to offset the note's <em>net</em> velocity down to zero. The method with the least impact is to set the track's velocity offset to &minus;1; this causes notes with velocities of one to send note off commands, while notes with higher velocities behave normally. If you want a track to <em>always</em> send note off commands, regardless of its note velocities, set its velocity offset to &minus;127. Negative @[velocity modulation] can similarly offset note velocities down to zero.
 
@@ -1476,7 +1476,7 @@ Since @[polymeter] is the use of multiple meters at once, it might seem pointles
 
 A song position is a location within the output MIDI sequence. Song positions are maintained internally in @[ticks], but they're displayed either as beats and ticks, or as measures, beats and ticks (also known as MBT), depending on the @[Meter] property. Ticks are zero-based, whereas both beats and measures are one-based, hence a song position of zero ticks is displayed as 1:000 if meter is one, or 1:1:000 if meter is greater than one.
 
-Song positions are unaffected by the @[tempo]. However if a song position is converted to a time, the resulting time does depend on the tempo. The @[status bar] shows the current position in both measures, beats, and ticks on the left, and time on the right.
+Song positions are unaffected by the @[tempo]. But if a song position is converted to a time, the resulting time does depend on the tempo. The @[status bar] shows the current position in both measures, beats, and ticks on the left, and time on the right.
 
 The following table shows the effect of some common meters on various positions in ticks, assuming the default @[timebase] of 120 ticks per beat. The asymmetry in how negative positions are displayed is due to measures and beats being one-based.
 
@@ -1575,7 +1575,7 @@ This is the desired MIDI latency during @[play\playback], in milliseconds. The s
 
 @item Underruns
 
-During @[play\playback], the MIDI sequence is prepared ahead of time in chunks. The length of the chunks is determined by the @[Latency] setting. Ideally the application prepares the next chunk while the previous chunk is being played, and thus stays ahead of demand. However if a chunk takes too long to prepare, the previous chunk may run out before the next chunk can be delivered. This situation is called an <em>underrun</em>.
+During @[play\playback], the MIDI sequence is prepared ahead of time in chunks. The length of the chunks is determined by the @[Latency] setting. Ideally the application prepares the next chunk while the previous chunk is being played, and thus stays ahead of demand. But if a chunk takes too long to prepare, the previous chunk may run out before the next chunk can be delivered. This situation is called an <em>underrun</em>.
 
 An underrun means that the sequencer took too long and failed to keep up. It can occur because the sequence is too dense, or the latency is too short, or CPU power is lacking, or the output device is too slow, or any combination of these. An underrun can affect the timing of the output MIDI messages, and in extreme cases may cause an audible gap in the sequence. If it's the first underrun since playback started, an error message is displayed. Subsequent underruns are @[statistics\counted], but the error message is suppressed. To solve underrun errors, do one or more of the following:
 <ul>
@@ -2028,7 +2028,7 @@ If a @[step selection] exists, it takes priority. In this case only the selected
 
 @topic Tie Notes
 
-This command toggles a variable that determines whether the @[steps] of a @[note tracks\note track] are initially @[tied notes\tied] or untied. When you left-click on an empty step, you may prefer the newly created note to be tied or untied, depending on the situation. If you're writing for an instrument that ignores note durations, as many drum machines do, you'll probably prefer notes to be untied by default. However if you're writing for a melodic instrument that respects note durations, you'll probably prefer notes to be tied by default. In either case you can achieve the opposite result by holding down the @{key}Shift@} key while left-clicking, as the following table shows:
+This command toggles a variable that determines whether the @[steps] of a @[note tracks\note track] are initially @[tied notes\tied] or untied. When you left-click on an empty step, you may prefer the newly created note to be tied or untied, depending on the situation. If you're writing for an instrument that ignores note durations, as many drum machines do, you'll probably prefer notes to be untied by default. But if you're writing for a melodic instrument that respects note durations, you'll probably prefer notes to be tied by default. In either case you can achieve the opposite result by holding down the @{key}Shift@} key while left-clicking, as the following table shows:
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>&nbsp;</th><th>Tie Notes OFF</th><th>Tie Notes ON</th></tr>
