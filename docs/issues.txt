@@ -16,6 +16,7 @@ id	open	close	type	description	rev	user
 392	07/10/20		bug	Alt key commands don't work mode while cursor is hovering over MDI tab; affects stock VS2012 app too		
 458	07/22/21		bug	song position and loop to/from don't report formatting errors; song length reports errors but doesn't retry		
 472	11/08/21		bug	graph sometimes clips rightmost objects, in GraphViz versions 2.44 and above; add option to render with Cairo		
+497	01/21/22		bug	tempo modulation makes UI slip out of sync with playback; MIDI API reports incorrect positions		
 1	03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 2	03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 3	03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -406,6 +407,7 @@ id	open	close	type	description	rev	user
 491	12/30/21	12/30/21	done	replace AfxGetApp with faster method	1.0.05.000	
 492	01/01/22	01/03/22	done	note with zero velocity sends two note offs, one at note's start and one at its end; suppress second note off	1.0.05.000	
 493	01/01/22	01/03/22	done	add full screen mode for graph bar	1.0.05.000	
+495	01/20/22	01/21/22	done	add per-channel note overlap method; optionally merge overlapping notes into one long note instead of splitting	1.0.06.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -475,6 +477,8 @@ id	open	close	type	description	rev	user
 452	06/24/21		hold	optional file information; author, comments		
 462	08/31/21		hold	dialog that allows song dubs to be edited directly; complex because each track stores its own dubs		
 477	11/13/21		hold	modulation types filter dialog should be modeless or at least have a preview option		
+494	01/18/22		hold	insert modulators command; create appropriately initialized modulator track(s) of specified type		
+496	01/21/22		hold	display actual tempo while playing; query MIDI stream's tempo property, could impact performance		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
@@ -492,3 +496,4 @@ id	open	close	type	description	rev	user
 468	10/30/21		punt	at refresh rate of 60 Hz or above, song view cursor flickers during playback if track count is five or less		
 476	11/13/21		punt	render phase diagram in 3D, with variable lighting, texture and rotation of orbital plane; simulated 3D is enough		
 483	11/16/21		punt	docking windows submenu doesn't support selection via mnemonics; framework issue, BuildPanesMenu		
+498	01/21/22		todo	make tempo a mapping target		

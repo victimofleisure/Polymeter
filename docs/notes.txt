@@ -3544,3 +3544,32 @@ being released a second time is already off. To further verify this, both the
 fixed and original MIDI files were imported into Reason and then re-exported 
 as MIDI, and the Reason-exported MIDI files were found to be identical.
 
+1/21/22 tempo modulation makes UI slip out of sync with playback
+
+DWORD	dwTempo;
+MMTIME	time;
+if (pPlayingDoc->m_Seq.GetPosition(time, TIME_MS) 
+&& pPlayingDoc->m_Seq.GetCurrentTempo(dwTempo))
+	printf("%d %d %d %g\n", nPos, time.u.ms, 
+	pPlayingDoc->m_Seq.ConvertMillisecondsToPosition(time.u.ms), 
+	CMidiFile::MICROS_PER_MINUTE / double(dwTempo));
+
+Hypothesis: the MIDI API doesn't compensate the position for tempo changes. 
+Querying the position in milliseconds and then converting it to ticks causes 
+even worse splippage, but that's because you can't convert milliseconds to 
+ticks without compensating for tempo changes. Experiment: Try building a 
+tempo map, and then use it to correct the tick position returned by the 
+MIDI API. If that stays in sync, we can conclude that the MIDI API doesn't
+compensate position for tempo changes. If that doesn't stay in sync, then 
+the question remains open.
+
+But even if compensating does fix the sync, a practical solution would
+take more work. The sequencer would have to model the actual tempo, and
+keep the model up to date. This is probably possible, but challenging.
+
+One big problem with the above hypothesis is it doesn't explain why the
+UI doesn't appear to lose sync when tempo is changed manually during 
+playback, via the tempo edit box up/down buttons.
+
+
+
