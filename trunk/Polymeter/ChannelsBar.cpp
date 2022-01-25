@@ -13,6 +13,7 @@
 		03		01apr20	standardize context menu handling
 		04		19nov20	add update and show changed handlers
 		05		19nov20	move set channel property methods to document
+		06		21jan22	add property for note overlap method
 		
 */
 
@@ -46,6 +47,13 @@ const LPCTSTR CChannelsBar::m_arrGMPatchName[MIDI_NOTES] = {
 	#define MIDI_GM_PATCH_DEF(name) _T(name),
 	#include "MidiCtrlrDef.h"	// generate array of General MIDI patch names
 };
+
+const int CChannelsBar::m_arrOverlapStringID[CTrack::CHAN_NOTE_OVERLAP_METHODS] = {
+	IDS_CHAN_NOTE_OVERLAP_SPLIT,
+	IDS_CHAN_NOTE_OVERLAP_MERGE,
+};
+
+CString	CChannelsBar::m_arrOverlapString[CTrack::CHAN_NOTE_OVERLAP_METHODS];
 
 #define RK_COL_ORDER _T("ColOrder")
 #define RK_COL_WIDTH _T("ColWidth")
@@ -156,6 +164,20 @@ CWnd *CChannelsBar::CChannelsGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwS
 			}
 			int	iSel = pDoc->m_arrChannel[iChan].m_nPatch + 1;	// offset for none item
 			m_varPreEdit = iSel;	// save pre-edit value to allow preview
+			pCombo->SetCurSel(iSel);
+			pCombo->ShowDropDown();
+			return pCombo;
+		}
+		break;
+	case COL_Overlaps:
+		{
+			CPopupCombo	*pCombo = CPopupCombo::Factory(0, rect, this, 0, 100);
+			if (pCombo == NULL)
+				return NULL;
+			for (int iMethod = 0; iMethod < CTrack::CHAN_NOTE_OVERLAP_METHODS; iMethod++) {	// for each note overlap method
+				pCombo->AddString(m_arrOverlapString[iMethod]);
+			}
+			int	iSel = pDoc->m_arrChannel[iChan].m_nOverlaps;
 			pCombo->SetCurSel(iSel);
 			pCombo->ShowDropDown();
 			return pCombo;
@@ -310,6 +332,9 @@ int CChannelsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_grid.SetItemCountEx(MIDI_CHANNELS);
 	m_grid.LoadColumnOrder(RK_ChannelsBar, RK_COL_ORDER);
 	m_grid.LoadColumnWidths(RK_ChannelsBar, RK_COL_WIDTH);
+	for (int iMethod = 0; iMethod < CTrack::CHAN_NOTE_OVERLAP_METHODS; iMethod++) {	// for each note overlap method
+		m_arrOverlapString[iMethod] = LDS(m_arrOverlapStringID[iMethod]);
+	}
 	return 0;
 }
 
@@ -361,6 +386,13 @@ void CChannelsBar::OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 					_tcscpy_s(item.pszText, item.cchTextMax, LDS(IDS_NONE));
 			} else	// show patches as integers
 				goto DefaultDisplayItem;	// don't rely on falling through
+			break;
+		case COL_Overlaps:
+			{
+				int iMethod = pChan->m_nOverlaps;
+				ASSERT(iMethod >= 0 && iMethod < CTrack::CHAN_NOTE_OVERLAP_METHODS);
+				_tcscpy_s(item.pszText, item.cchTextMax, m_arrOverlapString[iMethod]);
+			}
 			break;
 		default:
 DefaultDisplayItem:

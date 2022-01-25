@@ -47,6 +47,8 @@
 		37		08jun21	fix local name reuse warning
 		38		30oct21	remove song duration method
 		39		03jan22	for zero-velocity notes, suppress duplicate note off
+		40		21jan22	add per-channel note overlap methods
+		41		21jan22	fix tempo modulation causing position slippage
 
 */
 
@@ -65,6 +67,7 @@ CSequencer::CSequencer()
 	m_hStrm = 0;
 	ZeroMemory(&m_arrMsgHdr, sizeof(m_arrMsgHdr));
 	m_fTempo = SEQ_INIT_TEMPO;
+	m_fTempoScaling = 1;
 	m_nAltTempo = 0;
 	m_iOutputDevice = 0;
 	m_nTimeDiv = SEQ_INIT_TIME_DIV;
@@ -93,6 +96,7 @@ CSequencer::CSequencer()
 	ZeroMemory(&m_stats, sizeof(m_stats));
 	m_fLatencySecs = 0;
 	m_rngLoop = CLoopRange(0, 0);
+	m_nNoteOverlapMethods = 0;
 }
 
 CSequencer::~CSequencer()
@@ -178,6 +182,15 @@ void CSequencer::SetTempo(double fTempo)
 	} else {	// stopped
 		m_fTempo = fTempo;
 	}
+}
+
+bool CSequencer::GetCurrentTempo(DWORD& dwTempo)
+{
+	MIDIPROPTEMPO	propTempo;
+	propTempo.cbStruct = sizeof(propTempo);
+	CHECK(midiStreamProperty(m_hStrm, reinterpret_cast<LPBYTE>(&propTempo), MIDIPROP_GET | MIDIPROP_TEMPO));
+	dwTempo = propTempo.dwTempo;
+	return true;
 }
 
 bool CSequencer::SetTimeDivision(int nTimeDiv)
@@ -278,6 +291,7 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 		UpdateCallbackLength();
 		ResetCachedParameters();
 		m_nAltTempo = 0;
+		m_fTempoScaling = 1;
 		m_nCBTime = m_nStartPos;
 		m_nPosOffset = m_nStartPos;
 		m_iBuffer = 0;
@@ -320,7 +334,7 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 			arrEvt[nEvents] = CMidiEvent(0, nStartCmd);	// add start or continue message to output buffer
 			nEvents++;
 		}
-		arrEvt[nEvents] = CMidiEvent(m_nCBLen, MEVT_NOP << 24);	// pad time to start of next callback
+		arrEvt[nEvents] = CMidiEvent(m_nCBLen, SEVT_NOP);	// pad time to start of next callback
 		nEvents++;
 #if SEQ_DUMP_EVENTS
 		m_arrDumpEvent.RemoveAll();
@@ -597,7 +611,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 				}
 			}
 			if (!trk.m_bMute && trk.m_iType != TT_MODULATOR) {	// if track isn't muted and isn't a modulator
-				double	fTempoMod = 1;
+				double	fTempoModulation = 1;
 				int	arrMod[MODULATION_TYPES] = {0};	// initialize modulations to zero
 				m_arrScale.FastRemoveAll();
 				m_arrChord.FastRemoveAll();
@@ -628,7 +642,7 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 							{
 								// duration is repurposed as tempo change percentage
 								double	fValNorm = double(nStepVal - MIDI_NOTES / 2) / (MIDI_NOTES / 2);
-								fTempoMod *= pow(2, fValNorm * trkModSource.m_nDuration / 100.0);
+								fTempoModulation *= pow(2, fValNorm * trkModSource.m_nDuration / 100.0);
 							}
 							break;
 						case MT_Scale:
@@ -750,11 +764,13 @@ lblNoteScheduled:;
 				} else if (trk.m_iType == TT_TEMPO) {	// if track type is tempo
 					int	nVal = trk.m_arrStep[iModStep] & SB_VELOCITY;
 					double	fValNorm = double(nVal - MIDI_NOTES / 2) / (MIDI_NOTES / 2);
-					double	fTempoOut = m_fTempo * pow(2, fValNorm * trk.m_nDuration / 100.0) * fTempoMod;
-					int	iTempo = Round(CMidiFile::MICROS_PER_MINUTE / fTempoOut);
-					if (iTempo != m_nAltTempo) {	// if altered tempo actually changed
-						m_nAltTempo = iTempo;	// update shadow
-						CMidiEvent	evtTempo(nEvtTime, (MEVT_TEMPO << 24) | iTempo);
+					double	fTempoScaling = pow(2, fValNorm * trk.m_nDuration / 100.0) * fTempoModulation;
+					double	fNewTempo = m_fTempo * fTempoScaling;
+					int	nTempo = Round(CMidiFile::MICROS_PER_MINUTE / fNewTempo);
+					if (nTempo != m_nAltTempo) {	// if altered tempo actually changed
+						m_nAltTempo = nTempo;	// update shadow
+						m_fTempoScaling = fTempoScaling;	// save tempo scaling factor
+						CMidiEvent	evtTempo(nEvtTime, SEVT_TEMPO | nTempo);
 						m_arrTempoEvent.FastAdd(evtTempo);	// add tempo event
 					}
 				} else {	// track type is control event
@@ -835,9 +851,9 @@ bool CSequencer::OutputMidiBuffer()
 		// handle tempo change first to improve responsiveness
 		if (m_bIsTempoChange) {	// if tempo changed
 			m_bIsTempoChange = false;	// reset signal
-			int	iTempo = Round(CMidiFile::MICROS_PER_MINUTE / m_fTempo);
-			CMidiEvent	evtTempo(0, (MEVT_TEMPO << 24) | iTempo);	// at callback start time
-			m_arrEvent.FastAdd(evtTempo);	// add tempo event
+			int	nTempo = Round(CMidiFile::MICROS_PER_MINUTE / (m_fTempo * m_fTempoScaling));
+			CMidiEvent	evtTempo(0, SEVT_TEMPO | nTempo);	// at callback start time
+			m_arrTempoEvent.FastAdd(evtTempo);	// add tempo event
 		}
 		// if position changed, turn off any active notes before adding new events
 		if (m_bIsPositionChange) {	// if position changed
@@ -880,20 +896,19 @@ bool CSequencer::OutputMidiBuffer()
 	m_iBuffer ^= 1;	// swap playback buffers
 	// fill MIDI output buffer with events created above
 	CMidiEventStream&	arrEvt = m_arrMidiEvent[m_iBuffer];
-	int	nEvents = m_arrEvent.GetSize();
+	int	nEvents;
 	int	nTempoEvts = m_arrTempoEvent.GetSize();
-	if (nEvents || nTempoEvts) {	// if any events to output
+	if (m_arrEvent.GetSize() || nTempoEvts) {	// if any events to output
 		if (m_bPreventNoteOverlap) {	// if preventing note overlap
 			FixNoteOverlaps();
-			nEvents = m_arrEvent.GetSize();	// fixing may resize event array
 		}
 		// add tempo events after note processing, which can't handle meta-events
 		for (int iTempoEvt = 0; iTempoEvt < nTempoEvts; iTempoEvt++) {	// for each tempo event
 			m_arrEvent.FastInsertSorted(m_arrTempoEvent[iTempoEvt]);	// insert into event array
 		}
-		CMidiEvent	evtNOP(m_nCBLen, MEVT_NOP << 24);
+		CMidiEvent	evtNOP(m_nCBLen, SEVT_NOP);
 		m_arrEvent.FastAdd(evtNOP);	// pad time to start of next callback
-		nEvents++;
+		nEvents = m_arrEvent.GetSize();	// final event count, after all insertions and deletions
 		if (nEvents >= arrEvt.GetSize()) {	// if events exceed output buffer size
 			OnMidiError(SEQERR_BUFFER_OVERRUN);
 			return false;
@@ -913,7 +928,7 @@ bool CSequencer::OutputMidiBuffer()
 			return false;
 		}
 		arrEvt[0].dwDeltaTime = m_nCBLen;
-		arrEvt[0].dwEvent = MEVT_NOP << 24;
+		arrEvt[0].dwEvent = SEVT_NOP;
 	}
 #if SEQ_DUMP_EVENTS
 	AddDumpEvent(arrEvt, nEvents);
@@ -943,8 +958,10 @@ void CSequencer::FixNoteOverlaps()
 {
 	int	nEvents = m_arrEvent.GetSize();
 	int	iEvent = 0;
+	UINT	nNoteOverlapMethods = m_nNoteOverlapMethods;	// cache per-channel bitmask
 	while (iEvent < nEvents) {	// for each event
 		DWORD	dwEvent = m_arrEvent[iEvent].m_dwEvent;
+		ASSERT(MIDI_IS_SHORT_MSG(dwEvent));	// short MIDI messages only
 		if (MIDI_CMD(dwEvent) == NOTE_ON) {	// if note on event
 			int	iChan = MIDI_CHAN(dwEvent);
 			int	iNote = MIDI_P1(dwEvent);
@@ -960,6 +977,12 @@ void CSequencer::FixNoteOverlaps()
 							nEvents--;	// one less event
 							goto lblFixNoteOverlaps;	// skip incrementing index to account for deletion
 						}
+					}
+					UINT	nEvtChanMask = 1 << MIDI_CHAN(m_arrEvent[iEvent].m_dwEvent);
+					if (nNoteOverlapMethods & nEvtChanMask) {	// if this channel wants note overlaps merged
+						m_arrEvent.FastRemoveAt(iEvent);	// delete note on event
+						nEvents--;	// one less event
+						goto lblFixNoteOverlaps;	// skip incrementing index to account for deletion
 					}
 					CMidiEvent	evt(m_arrEvent[iEvent]);
 					evt.m_dwEvent &= ~0xff0000;	// convert to note off (zero note's velocity)
@@ -1014,7 +1037,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 	int	nInitEvents = m_arrInitMidiEvent.GetSize();
 	for (int iEvt = 0; iEvt < nInitEvents; iEvt++) {	// for each initial event
 		int	iChan = MIDI_CHAN(m_arrInitMidiEvent[iEvt]);
-		CMidiFile::MIDI_EVENT	evt = { static_cast<DWORD>(m_nStartPos), m_arrInitMidiEvent[iEvt]};
+		CMidiFile::MIDI_EVENT	evt = {static_cast<DWORD>(m_nStartPos), m_arrInitMidiEvent[iEvt]};
 		arrMidiEvent[iChan].FastAdd(evt);	// add initial event to per-channel array
 	}
 	CMidiEventArray arrSongTempoEvent;
@@ -1106,6 +1129,7 @@ CSequencerReader::CSequencerReader(CSequencer& seq)
 	m_bPreventNoteOverlap = seq.m_bPreventNoteOverlap;
 	m_arrRecordEvent.Attach(seq.m_arrRecordEvent.GetData(), seq.m_arrRecordEvent.GetSize());
 	m_mapping.SetArray(seq.m_mapping.GetArray());
+	m_nNoteOverlapMethods = seq.m_nNoteOverlapMethods;
 }
 
 CSequencerReader::~CSequencerReader()
@@ -1413,14 +1437,15 @@ void CSequencer::DumpEvents(LPCTSTR pszPath)
 			const MIDI_STREAM_EVENT& evt = arrEvt[iEvent];
 			sLine.Format(_T("\t%d\t%x\n"), evt.dwDeltaTime, evt.dwEvent);
 			fOut.WriteString(sLine);
-			if (MIDI_CMD(evt.dwEvent) == NOTE_ON) {
+			if (MIDI_SHORT_MSG_CMD(evt.dwEvent) == NOTE_ON) {
 				int	iChan = MIDI_CHAN(evt.dwEvent);
 				int	iNote = MIDI_P1(evt.dwEvent);
 				BYTE	nVel = MIDI_P2(evt.dwEvent);
 				bool	bIsNoteOn = nVel != 0;
 				bool	bIsPrevNoteOn = bNote[iChan][iNote] != 0;
 				if (!(bIsNoteOn ^ bIsPrevNoteOn)) {
-					fOut.WriteString(_T("ERROR collision\n"));
+					sLine.Format(_T("ERROR collision %d %d\n"), iChan, iNote);
+					fOut.WriteString(sLine);
 					nErrors++;
 				}
 				bNote[iChan][iNote] = nVel;
@@ -1428,7 +1453,7 @@ void CSequencer::DumpEvents(LPCTSTR pszPath)
 			nSum += evt.dwDeltaTime;
 		}
 		if (nSum != m_nCBLen) {
-			sLine.Format(_T("ERROR %d != %d\n"), nSum, m_nCBLen);
+			sLine.Format(_T("ERROR duration %d != %d\n"), nSum, m_nCBLen);
 			fOut.WriteString(sLine);
 			nErrors++;
 		}

@@ -27,6 +27,7 @@
 		17		10feb21	overload set track property, add set unique names
 		18		07jun21	rename rounding functions
         19		11nov21	rename packed modulation members
+        20		22jan22	add set tracks methods
 
 */
 
@@ -52,6 +53,18 @@ void CSeqTrackArray::SetTrackCount(int nTracks)
 			AssignID(iTrack);
 		}
 	}
+}
+
+void CSeqTrackArray::SetTracks(const CTrackArray& arrTrack)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	Copy(arrTrack);
+}
+
+void CSeqTrackArray::SetTracks(int iFirstTrack, const CTrackArray& arrTrack)
+{
+	WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
+	SetRange(iFirstTrack, arrTrack);
 }
 
 void CSeqTrackArray::SetTracks(const CIntArrayEx& arrSelection, const CTrackArray& arrTrack)

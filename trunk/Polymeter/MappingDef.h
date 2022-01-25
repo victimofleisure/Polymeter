@@ -10,6 +10,7 @@
 		00		20mar20	initial version
 		01		07sep20	add special output events
 		02		15feb21	add mapping targets for transport commands
+		03		21jan22	add tempo mapping target
  
 		mapping column and member definitions
 
@@ -45,6 +46,7 @@ MAPPINGDEF_SPECIAL_TARGET(Play,		IDS_TRANSPORT_PLAY)
 MAPPINGDEF_SPECIAL_TARGET(Pause,	IDS_TRANSPORT_PAUSE)
 MAPPINGDEF_SPECIAL_TARGET(Record,	IDS_TRANSPORT_RECORD)
 MAPPINGDEF_SPECIAL_TARGET(Loop,		IDS_TRANSPORT_LOOP)
+MAPPINGDEF_SPECIAL_TARGET(Tempo,	IDS_TRK_Tempo)
 
 #undef MAPPINGDEF_SPECIAL_TARGET
 

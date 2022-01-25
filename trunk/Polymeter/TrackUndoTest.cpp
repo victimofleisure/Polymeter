@@ -21,6 +21,7 @@
 		11		19nov20	use set channel property methods
 		12		19nov20	add randomized docking bar visibility
 		13		21jun21	route track editing commands directly to document
+		14		22jan22	limit channel tests to event properties
 
 		automated undo test for patch editing
  
@@ -496,7 +497,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 	case UCODE_CHANNEL_PROP:
 		{
 			int	iChan = Random(MIDI_CHANNELS);
-			int	iProp = Random(CChannel::PROPERTIES);
+			int	iProp = Random(CChannel::EVENT_PROPERTIES);
 			int	nVal = Random(MIDI_NOTES + 1) - 1;
 			m_pDoc->SetChannelProperty(iChan, iProp, nVal);
 			PRINTF(_T("%s %d %d\n"), sUndoTitle, iChan, iProp);
@@ -507,7 +508,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			CIntArrayEx	arrSelection;
 			if (!MakeRandomSelection(MIDI_CHANNELS, arrSelection))
 				return(DISABLED);
-			int	iProp = Random(CChannel::PROPERTIES);
+			int	iProp = Random(CChannel::EVENT_PROPERTIES);
 			int	nVal = Random(MIDI_NOTES + 1) - 1;
 			m_pDoc->SetMultiChannelProperty(arrSelection, iProp, nVal);
 			PRINTF(_T("%s %d %s\n"), sUndoTitle, iProp, PrintSelection(arrSelection));

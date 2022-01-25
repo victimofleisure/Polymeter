@@ -27,6 +27,7 @@
 		17		07jun21	rename rounding functions
 		18		30oct21	remove song duration method
 		19		30dec21	remove unused function prototype
+		20		21jan22	add per-channel note overlap methods
 
 */
 
@@ -35,8 +36,6 @@
 #include "mmsystem.h"
 #include "SeqTrackArray.h"
 #include "Mapping.h"
-
-#define SEQ_DUMP_EVENTS 0
 
 class CSequencer : public CSeqTrackArray {
 public:
@@ -79,6 +78,7 @@ public:
 	int		GetCallbackLength() const;
 	double	GetTempo() const;
 	void	SetTempo(double fTempo);
+	bool	GetCurrentTempo(DWORD& dwTempo);
 	int		GetTimeDivision() const;
 	bool	SetTimeDivision(int nTimeDiv);
 	int		GetMeter() const;
@@ -108,6 +108,9 @@ public:
 	void	SetLooping(bool bEnable);
 	void	GetLoopRange(CLoopRange& rngTicks) const;
 	void	SetLoopRange(CLoopRange rngTicks);
+	USHORT	GetNoteOverlapMethods() const;
+	void	SetNoteOverlapMethods(USHORT nMask);
+	void	SetNoteOverlapMethod(int iChannel, bool bIsMerge);
 
 // Operations
 	bool	Play(bool bEnable, bool bRecord = false);
@@ -158,12 +161,15 @@ protected:
 		DEF_BUFFER_SIZE = 4096,		// default buffer size, in events
 		MOD_MAX_RECURSIONS = 32,	// maximum number of modulation recursions
 		OCTAVE = 12,				// size of an octave in semitones
+		SEVT_NOP = MEVT_NOP << 24,	// pads buffer to callback duration
+		SEVT_TEMPO = MEVT_TEMPO << 24,	// new tempo in microseconds per quarter note
 	};
 
 // Member data
 	HMIDISTRM	m_hStrm;			// MIDI stream handle
 	MIDIHDR	m_arrMsgHdr[BUFFERS];	// array of MIDI message headers
 	double	m_fTempo;				// tempo, in beats per minute
+	double	m_fTempoScaling;		// tempo scaling factor
 	int		m_nAltTempo;			// altered tempo, in microseconds per quarter note
 	int		m_iOutputDevice;		// index of output MIDI device
 	int		m_nTimeDiv;				// time division, in ticks per quarter note
@@ -207,6 +213,7 @@ protected:
 	CIntArrayEx	m_arrVoicing;		// array of voices to drop an octave, as one-origin indices from top
 	CDWordArrayEx	m_arrMappedEvent;	// array of translated MIDI events from mapping
 	CLoopRange	m_rngLoop;			// loop range in ticks
+	USHORT	m_nNoteOverlapMethods;	// for each MIDI channel, non-zero bit if merging overlapped notes
 
 #if SEQ_DUMP_EVENTS
 	CArrayEx<CMidiEventStream, CMidiEventStream&>	m_arrDumpEvent;	// for debug only
@@ -437,4 +444,23 @@ inline void CSequencer::SetLooping(bool bEnable)
 inline void CSequencer::GetLoopRange(CLoopRange& rngTicks) const
 {
 	rngTicks = m_rngLoop;
+}
+
+inline USHORT CSequencer::GetNoteOverlapMethods() const
+{
+	return m_nNoteOverlapMethods;
+}
+
+inline void CSequencer::SetNoteOverlapMethods(USHORT nMask)
+{
+	m_nNoteOverlapMethods = nMask;
+}
+
+inline void CSequencer::SetNoteOverlapMethod(int iChannel, bool bIsMerge)
+{
+	USHORT	nChannelMask = static_cast<USHORT>(1 << iChannel);
+	if (bIsMerge)
+		m_nNoteOverlapMethods |= nChannelMask;
+	else
+		m_nNoteOverlapMethods &= ~nChannelMask;
 }

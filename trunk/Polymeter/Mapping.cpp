@@ -16,6 +16,7 @@
 		06		07jun21	rename rounding functions
 		07		30jun21	move step mapping range checks into critical section
 		08		25oct21	add optional sort direction
+		09		21jan22	add tempo mapping target
 
 */
 
@@ -25,6 +26,7 @@
 #include "MainFrm.h"
 #include "PolymeterDoc.h"
 #include "Persist.h"
+#include <math.h>
 
 #define RK_MAPPING_COUNT _T("Count")	// registry keys
 #define RK_MAPPING_SECTION _T("Mapping")
@@ -186,7 +188,8 @@ bool CMappingArray::MapMidiEvent(DWORD dwInEvent, CDWordArrayEx& arrOutEvent) co
 			else	// input message lacks a control parameter
 				nDataVal = MIDI_P1(dwInEvent);	// get data value from input message P1
 			int	nDeltaRange = map.m_nRangeEnd - map.m_nRangeStart;	// can be negative if start > end
-			nDataVal = Round(nDataVal / 127.0 * nDeltaRange) + map.m_nRangeStart;	// apply range
+			double	fDataVal = nDataVal / 127.0 * nDeltaRange;	// apply scaling; save intermediate result
+			nDataVal = Round(fDataVal) + map.m_nRangeStart;	// round and offset by start of range
 			if (map.m_nOutEvent < MIDI_CHANNEL_VOICE_MESSAGES) {	// if output event is a channel voice message
 				nDataVal = CLAMP(nDataVal, 0, MIDI_NOTE_MAX);	// clamp result to valid MIDI data range
 				int	nP1, nP2;
@@ -240,6 +243,14 @@ bool CMappingArray::MapMidiEvent(DWORD dwInEvent, CDWordArrayEx& arrOutEvent) co
 						break;
 					case CMapping::OUT_Loop:
 						theApp.GetMainFrame()->PostMessage(UWM_MAPPED_COMMAND, ID_TRANSPORT_LOOP, nDataVal);
+						break;
+					case CMapping::OUT_Tempo:
+						{
+							// use unrounded intermediate result (scaled data value) for increased precision
+							double	fExponent = (fDataVal + map.m_nRangeStart) / 127.0;	// offset and normalize
+							double	fScaledTempo = pDoc->m_fTempo * pow(2, fExponent);	// scale base tempo
+							pDoc->m_Seq.SetTempo(fScaledTempo);
+						}
 						break;
 					default:
 						int	iTrack = map.m_nTrack;

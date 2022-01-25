@@ -24,6 +24,7 @@
 		14		04dec20	refactor find next dub time to return track index
 		15		16dec20	define initial tempo and time division
 		16		10feb21	overload set track property, add set unique names
+        17		22jan22	add set tracks methods
 
 */
 
@@ -43,7 +44,9 @@ public:
 	int		GetTrackCount() const;
 	void	SetTrackCount(int nTracks);
 	const CTrackArray&	GetTracks() const;
+	void	SetTracks(const CTrackArray& arrTrack);
 	void	GetTracks(int iFirstTrack, int nTracks, CTrackArray& arrTrack) const;
+	void	SetTracks(int iFirstTrack, const CTrackArray& arrTrack);
 	void	GetTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const;
 	void	SetTracks(const CIntArrayEx& arrSelection, const CTrackArray& arrTrack);
 	const CTrack&	GetTrack(int iTrack) const;

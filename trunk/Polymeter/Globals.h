@@ -126,6 +126,9 @@ enum {	// application-wide user window messages, based on WP_APP
 	UWM_MAPPED_COMMAND,			// wParam: command ID, lParam: varies
 };
 
+// sequencer dump should always be zero in a shipping version
+#define SEQ_DUMP_EVENTS	0	// set non-zero to enable sequencer dump
+
 // undo natter should always be zero in a shipping version
 #define UNDO_NATTER 0	// set non-zero to enable undo natter
 

@@ -36,6 +36,7 @@
 		26		08jun21	add cast in MIDI stream event operator to fix warning
         27		11nov21	refactor modulation crawler to support levels
 		28		19nov21	in track array, add find type
+		29		21jan22	add per-channel note overlap methods
 
 */
 
@@ -91,6 +92,11 @@ public:
 	enum {	// used track flags, for GetUsedTracks and GetUsedTrackCount
 		UT_NO_MUTE		= 0x01,		// exclude muted tracks
 		UT_NO_MODULATOR	= 0x02,		// exclude modulator tracks
+	};
+	enum {	// per-channel note overlap methods
+		CHAN_NOTE_OVERLAP_SPLIT,	// split overlapping notes into shorter notes
+		CHAN_NOTE_OVERLAP_MERGE,	// merge overlapping notes into one long note
+		CHAN_NOTE_OVERLAP_METHODS,
 	};
 
 // Types

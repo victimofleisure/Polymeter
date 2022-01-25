@@ -36,6 +36,7 @@
 		26		08aug21	override get message string
 		27		01nov21	generate message handlers for showing docking bars
 		28		11nov21	move static menu methods to app class
+		29		22jan22	add tempo pane to status bar
 
 */
 
@@ -91,6 +92,7 @@ public:
 		SBP_HINT,
 		SBP_SONG_POS,
 		SBP_SONG_TIME,
+		SBP_TEMPO,
 		STATUS_BAR_PANES
 	};
 	enum {	// enumerate docking bars
@@ -108,6 +110,7 @@ public:
 	bool	PropertiesBarHasFocus() const;
 	CString	GetSongPositionString() const;
 	CString	GetSongTimeString() const;
+	CString	GetTempoString() const;
 	int		GetConvergenceSize() const;
 
 // Public data
@@ -146,13 +149,14 @@ protected:  // control bar embedded members
 // Constants
 	static const UINT m_arrIndicatorID[];	// array of status bar indicator IDs
 	static const COLORREF m_arrTrackColor[];	// palette of track colors
-	enum {
+	enum {	// convergence size submenu definitions
 		CONVERGENCE_SIZE_MIN = 1,
 		CONVERGENCE_SIZE_MAX = 10,
 		CONVERGENCE_SIZE_DEFAULT = 2,
 		CONVERGENCE_SIZES = CONVERGENCE_SIZE_MAX - CONVERGENCE_SIZE_MIN + 1,
 		ID_CONVERGENCE_SIZE_START = ID_APP_DYNAMIC_SUBMENU_BASE,
 		ID_CONVERGENCE_SIZE_END = ID_CONVERGENCE_SIZE_START + CONVERGENCE_SIZES - 1,
+		CONVERGENCE_SIZE_INITIAL_ITEM_COUNT = 2,	// All and Custom
 	};
 	static const UINT m_arrDockingBarNameID[DOCKING_BARS];	// array of docking bar name IDs
 
@@ -161,6 +165,7 @@ protected:  // control bar embedded members
 	CChildFrame	*m_pActiveChildFrame;	// pointer to active child frame, or NULL if none
 	CString	m_sSongPos;					// song position string
 	CString	m_sSongTime;				// song time string
+	CString	m_sTempo;					// tempo string
 	CFindReplaceDialog	*m_pFindDlg;	// pointer to find dialog
 	CString	m_sFindText;				// find text
 	CString	m_sReplaceText;				// replace text
@@ -169,6 +174,8 @@ protected:  // control bar embedded members
 	CSequencer::CMidiEventArray m_arrMIDIOutputEvent;	// array of MIDI output events
 	CAutoPtr<CMFCColorMenuButton>	m_pbtnTrackColor;	// pointer to track color menu button
 	int		m_nConvergenceSize;			// minimum number of modulos in a convergence
+	DWORD	m_dwCachedTempo;			// cached tempo in microseconds per quarter note
+	int		m_arrStatusPaneTextLength[STATUS_BAR_PANES];	// used for FastSetPaneText
 
 // Helpers
 	BOOL	CreateDockingWindows();
@@ -179,6 +186,7 @@ protected:  // control bar embedded members
 	void	SetViewTimer(bool bEnable);
 	void	CreateFindReplaceDlg(bool bReplace);
 	bool	DoFindReplace();
+	static	bool	FastSetPaneText(CMFCStatusBar& bar, int nIndex, const CString& sText, int& nCurTextLength);
 
 // Generated message map functions
 protected:
@@ -191,7 +199,7 @@ protected:
 	afx_msg void OnApplicationLook(UINT id);
 	afx_msg void OnUpdateApplicationLook(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateIndicatorSongPos(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateIndicatorSongTime(CCmdUI* pCmdUI);
+	afx_msg void OnUpdateIndicatorTempo(CCmdUI* pCmdUI);
 	afx_msg LRESULT OnAfterTaskbarActivate(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT	OnHandleDlgKey(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPropertyChange(WPARAM wParam, LPARAM lParam);
@@ -273,6 +281,11 @@ inline CString CMainFrame::GetSongPositionString() const
 inline CString CMainFrame::GetSongTimeString() const
 {
 	return m_sSongTime;
+}
+
+inline CString CMainFrame::GetTempoString() const
+{
+	return m_sTempo;
 }
 
 inline int CMainFrame::GetConvergenceSize() const

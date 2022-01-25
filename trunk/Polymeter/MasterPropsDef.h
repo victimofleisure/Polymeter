@@ -11,6 +11,7 @@
 		01		20feb19	add note overlap property
 		02		02mar20	add record offset
 		03		16dec20	add loop range
+		04		22jan22	increase minimum tempo to avoid invalid period
 		
 */
 
@@ -24,7 +25,7 @@ GROUPDEF(	Master	)
 #ifdef PROPDEF
 
 //			group		subgroup	proptype	type		name				initval			minval		maxval		itemname	items
-PROPDEF(	Master,		NONE,		VAR,		double,		fTempo,				SEQ_INIT_TEMPO,	1.0,		500.0,		NULL,		0)
+PROPDEF(	Master,		NONE,		VAR,		double,		fTempo,				SEQ_INIT_TEMPO,	4.0,		500.0,		NULL,		0)
 PROPDEF(	Master,		NONE,		ENUM,		int,		nTimeDiv,			TIME_DIV_120,	0,			0,			m_oiTimeDiv,	_countof(m_oiTimeDiv))
 PROPDEF(	Master,		NONE,		VAR,		int,		nMeter,				1,				1,			INT_MAX,	NULL,		0)
 PROPDEF(	Master,		NONE,		ENUM,		int,		nKeySig,			0,				0,			0,			m_oiKeySig,	_countof(m_oiKeySig))

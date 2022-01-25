@@ -13,6 +13,7 @@
 		03		28mar18	add inline functions
 		04		19mar20	add channel voice command to index macro
 		05		19mar20	add channel voice and system status messages
+		06		21jan22	add stream buffer event macros
 
 		midi types and constants
 
@@ -77,6 +78,10 @@ enum {	// MIDI controllers
 #define CHAN_MODE_MSG(ctrl)	(ctrl >= 120)
 #define MIDI_CLOCK_PPQ		24
 #define MIDI_BEAT_CLOCKS	6
+
+// stream buffer events have event type in high byte
+#define MIDI_IS_SHORT_MSG(msg)	(!(msg & 0xff000000))
+#define MIDI_SHORT_MSG_CMD(msg)	(msg & 0xff0000f0)
 
 union MIDI_MSG {
 	struct {

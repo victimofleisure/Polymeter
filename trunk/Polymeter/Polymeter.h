@@ -59,6 +59,7 @@ public:
 	CMainFrame	*GetMainFrame() const;
 	bool	IsMidiInputDeviceOpen() const;
 	bool	IsRecordingMidiInput() const;
+	bool	IsDocPlaying() const;
 
 // Operations
 	bool	HandleDlgKeyMsg(MSG* pMsg);
@@ -177,4 +178,9 @@ inline bool CPolymeterApp::IsMidiInputDeviceOpen() const
 inline bool CPolymeterApp::IsRecordingMidiInput() const
 {
 	return m_bIsRecordMidiIn;
+}
+
+inline bool CPolymeterApp::IsDocPlaying() const
+{
+	return m_pPlayingDoc != NULL;
 }

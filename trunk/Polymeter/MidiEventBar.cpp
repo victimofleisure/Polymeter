@@ -17,6 +17,7 @@
 		07		07apr20	only output bar should enable output capture
 		08		18nov20	enable auto-hide and attach
 		09		08jun21	fix warning for CString as variadic argument
+		10		21jan22	use macro to test for short message
 
 */
 
@@ -127,7 +128,7 @@ void CMidiEventBar::AddEvents(const CMidiEventArray& arrEvent)
 	for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each new event
 		const CMidiEvent&	evtIn = arrEvent[iEvent];
 		m_nEventTime += evtIn.m_nTime;	// order matters; update current time first
-		if (!(evtIn.m_dwEvent & 0xff000000)) {	// if event is a short MIDI message
+		if (MIDI_IS_SHORT_MSG(evtIn.m_dwEvent)) {	// if event is a short MIDI message
 			CMidiEvent	evtOut(m_nEventTime, evtIn.m_dwEvent);	// use current time, not delta
 			m_arrEvent.Add(evtOut);	// add event to array
 			if (m_bIsFiltering) {	// if filtering input
@@ -143,7 +144,7 @@ void CMidiEventBar::AddEvents(const CMidiEventArray& arrEvent)
 
 void CMidiEventBar::AddEvent(CMidiEvent& evt)
 {
-	if (!(evt.m_dwEvent & 0xff000000)) {	// if event is a short MIDI message
+	if (MIDI_IS_SHORT_MSG(evt.m_dwEvent)) {	// if event is a short MIDI message
 		int	nOldListItems = GetListItemCount();
 		m_arrEvent.Add(evt);	// add event to array
 		if (m_bIsFiltering) {	// if filtering input
@@ -295,7 +296,7 @@ void CMidiEventBar::OnShowChanged(bool bShow)
 	UNREFERENCED_PARAMETER(bShow);
 	RemoveAllEvents();
 	if (m_bIsOutputBar) {	// if we're the output bar
-		if (theApp.m_pPlayingDoc != NULL)	// if document is playing
+		if (theApp.IsDocPlaying())	// if document is playing
 			theApp.m_pPlayingDoc->OnMidiOutputCaptureChange();	// enable output capture
 	}
 }

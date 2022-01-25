@@ -78,6 +78,7 @@
 		68		31oct21	suppress view type notification when opening document
 		69		15nov21	add tempo map to export song as CSV
 		70		23nov21	add method to export tempo map
+		71		21jan22	add note overlap method and bump file version
 
 */
 
@@ -119,7 +120,7 @@
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 #define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	18
+#define	FILE_VERSION	19
 
 #define RK_FILE_ID		_T("FileID")
 #define RK_FILE_VERSION	_T("FileVersion")
@@ -2872,8 +2873,9 @@ int CPolymeterDoc::TimeToSecs(LPCTSTR pszTime)
 void CPolymeterDoc::UpdateChannelEvents()
 {
 	CDWordArrayEx	arrMidiEvent;
-	m_arrChannel.GetMidiEvents(arrMidiEvent);
+	USHORT	nMethods = m_arrChannel.GetMidiEvents(arrMidiEvent);
 	m_Seq.SetInitialMidiEvents(arrMidiEvent);
+	m_Seq.SetNoteOverlapMethods(nMethods);
 }
 
 void CPolymeterDoc::OutputChannelEvent(int iChan, int iProp)
@@ -2897,6 +2899,10 @@ void CPolymeterDoc::OutputChannelEvent(int iChan, int iProp)
 					m_Seq.OutputLiveEvent(dwEvent);	// also output patch
 				break;
 			}
+		} else {	// event not specified
+			if (iProp == CChannel::PROP_Overlaps) {	// if property is note overlap method
+				m_Seq.SetNoteOverlapMethod(iChan, m_arrChannel[iChan].m_nOverlaps != CHAN_NOTE_OVERLAP_SPLIT);
+			}
 		}
 	}
 }
@@ -2918,7 +2924,7 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 			if (AfxMessageBox(IDS_MIDI_INCOMPATIBLE_SONG_POSITION, MB_OKCANCEL | MB_ICONINFORMATION) != IDOK)
 				return false;	// user canceled; otherwise sequencer quantizes song position
 		}
-		if (theApp.m_pPlayingDoc != NULL) {	// if a document is playing
+		if (theApp.IsDocPlaying()) {	// if a document is playing
 			theApp.m_pPlayingDoc->StopPlayback();	// do post-play processing
 		}
 		if (bRecord) {	// if recording
@@ -2943,6 +2949,7 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 		}
 		m_Seq.SetRecordOffset(m_nRecordOffset);
 		m_Seq.SetSendMidiClock(theApp.m_Options.m_Midi_bSendMidiClock);
+		m_Seq.SetTempo(m_fTempo);	// in case tempo mapping changed it
 	} else {	// stopping playback
 		StopPlayback();
 	}
@@ -4634,7 +4641,7 @@ void CPolymeterDoc::OnToolsTimeToRepeat()
 		sVal.Format(_T("%d"), nTicks);
 		sMsg += _T(" + ") + sVal + ' ' + LDS(IDS_TIME_TO_REPEAT_TICKS);
 	}
-	double	fSeconds = double(nLCMTicks) / nTimeDiv / (m_Seq.GetTempo() / 60);
+	double	fSeconds = double(nLCMTicks) / nTimeDiv / (m_fTempo / 60);
 	CTimeSpan	ts = Round64(fSeconds);	// convert beats to time in seconds
 	CString	sTime(ts.Format(_T("%H:%M:%S")));	// convert time in seconds to string
 	LONGLONG	nDays = ts.GetDays();
@@ -4707,7 +4714,7 @@ void CPolymeterDoc::OnToolsImportSteps()
 {
 	CString	sFilter(LPCTSTR(IDS_CSV_FILE_FILTER));
 	CFileDialog	fd(TRUE, _T(".csv"), NULL, OFN_HIDEREADONLY, sFilter);
-	CString	sDlgTitle(LPCTSTR(IDS_IMPORT));
+	CString	sDlgTitle(LPCTSTR(IDS_IMPORT_STEPS));
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
 		CTrackArray	arrTrack;
@@ -4721,7 +4728,7 @@ void CPolymeterDoc::OnToolsExportSteps()
 {
 	CString	sFilter(LPCTSTR(IDS_CSV_FILE_FILTER));
 	CFileDialog	fd(FALSE, _T(".csv"), NULL, OFN_OVERWRITEPROMPT, sFilter);
-	CString	sDlgTitle(LPCTSTR(IDS_EXPORT));
+	CString	sDlgTitle(LPCTSTR(IDS_EXPORT_STEPS));
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
 		const CIntArrayEx	*parrTrackSel;
@@ -4737,7 +4744,7 @@ void CPolymeterDoc::OnToolsImportModulations()
 {
 	CString	sFilter(LPCTSTR(IDS_CSV_FILE_FILTER));
 	CFileDialog	fd(TRUE, _T(".csv"), NULL, OFN_HIDEREADONLY, sFilter);
-	CString	sDlgTitle(LPCTSTR(IDS_IMPORT));
+	CString	sDlgTitle(LPCTSTR(IDS_IMPORT_MODULATIONS));
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
 		CPackedModulationArray	arrMod;
@@ -4758,7 +4765,7 @@ void CPolymeterDoc::OnToolsExportModulations()
 {
 	CString	sFilter(LPCTSTR(IDS_CSV_FILE_FILTER));
 	CFileDialog	fd(FALSE, _T(".csv"), NULL, OFN_OVERWRITEPROMPT, sFilter);
-	CString	sDlgTitle(LPCTSTR(IDS_EXPORT));
+	CString	sDlgTitle(LPCTSTR(IDS_EXPORT_MODULATIONS));
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
 		CPackedModulationArray	arrMod;
@@ -4771,7 +4778,7 @@ void CPolymeterDoc::OnToolsImportTracks()
 {
 	CString	sFilter(LPCTSTR(IDS_CSV_FILE_FILTER));
 	CFileDialog	fd(TRUE, _T(".csv"), NULL, OFN_HIDEREADONLY, sFilter);
-	CString	sDlgTitle(LPCTSTR(IDS_IMPORT));
+	CString	sDlgTitle(LPCTSTR(IDS_IMPORT_TRACKS));
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
 		CTrackArray	arrTrack;
@@ -4786,7 +4793,7 @@ void CPolymeterDoc::OnToolsExportTracks()
 	CPathStr	sFileName(GetTitle());
 	sFileName.RemoveExtension();
 	CFileDialog	fd(FALSE, _T(".csv"), sFileName, OFN_OVERWRITEPROMPT, sFilter);
-	CString	sDlgTitle(LPCTSTR(IDS_EXPORT));
+	CString	sDlgTitle(LPCTSTR(IDS_EXPORT_TRACKS));
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
 		const CIntArrayEx	*parrTrackSel;
@@ -4804,7 +4811,7 @@ void CPolymeterDoc::OnToolsExportSong()
 	CPathStr	sFileName(GetTitle());
 	sFileName.RemoveExtension();
 	CFileDialog	fd(FALSE, _T(".csv"), sFileName, OFN_OVERWRITEPROMPT, sFilter);
-	CString	sDlgTitle(LPCTSTR(IDS_EXPORT));
+	CString	sDlgTitle(LPCTSTR(IDS_EXPORT_SONG));
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
 		bool	bSongMode = m_Seq.HasDubs();

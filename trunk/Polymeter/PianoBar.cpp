@@ -20,6 +20,7 @@
 		10		18jun20	add command help to handle channel filter string reuse
 		11		18nov20	enable auto-hide and attach
 		12		05jan22	in AddEvents, fix test to keep reference count positive
+		13		21jan22	use macro to test for short message
 
 */
 
@@ -93,7 +94,7 @@ void CPianoBar::AddEvents(const CMidiEventArray& arrEvent)
 	int	nEvents = arrEvent.GetSize();
 	for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each new event
 		const CMidiEvent&	evt = arrEvent[iEvent];
-		if (evt.m_dwEvent & 0xff000000)	// if event isn't a short MIDI message
+		if (!MIDI_IS_SHORT_MSG(evt.m_dwEvent))	// if event isn't a short MIDI message
 			continue;	// ignore other event types
 		UINT	nCmd = MIDI_CMD(evt.m_dwEvent);
 		if (nCmd == NOTE_ON || nCmd == NOTE_OFF) {	// if event is a note
@@ -235,7 +236,7 @@ void CPianoBar::OnShowChanged(bool bShow)
 {
 	UNREFERENCED_PARAMETER(bShow);
 	RemoveAllEvents();
-	if (theApp.m_pPlayingDoc != NULL)	// if document is playing
+	if (theApp.IsDocPlaying())	// if document is playing
 		theApp.m_pPlayingDoc->OnMidiOutputCaptureChange();
 	if (bShow && m_bKeyLabelsDirty) {	// if showing and key labels need updating
 		UpdateKeyLabels();	// update key labels

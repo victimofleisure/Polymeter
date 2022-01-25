@@ -58,6 +58,7 @@
 		48		01nov21	generate message handlers for showing docking bars
 		49		07nov21	move initial show/update to delayed create handler
 		50		11nov21	move static menu methods to app class
+		51		22jan22	add tempo pane to status bar
 
 */
 
@@ -98,6 +99,7 @@ const UINT CMainFrame::m_arrIndicatorID[] =
 	ID_SEPARATOR,           // status line indicator
 	ID_INDICATOR_SONG_POS,
 	ID_INDICATOR_SONG_TIME,
+	ID_INDICATOR_TEMPO,
 	ID_INDICATOR_CAPS,
 	ID_INDICATOR_NUM,
 	ID_INDICATOR_SCRL,
@@ -149,6 +151,8 @@ CMainFrame::CMainFrame() : m_wndMidiInputBar(false), m_wndMidiOutputBar(true)
 	m_bFindMatchCase = false;
 	m_bIsViewTimerSet = false;
 	m_nConvergenceSize = theApp.GetProfileInt(REG_SETTINGS, RK_CONVERGENCE_SIZE, CONVERGENCE_SIZE_DEFAULT);
+	m_dwCachedTempo = 0;
+	ZeroMemory(m_arrStatusPaneTextLength, sizeof(m_arrStatusPaneTextLength));
 }
 
 CMainFrame::~CMainFrame()
@@ -209,6 +213,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;      // fail to create
 	}
 	m_wndStatusBar.SetIndicators(m_arrIndicatorID, _countof(m_arrIndicatorID));
+	m_wndStatusBar.SetPaneText(SBP_TEMPO, _T(""), FALSE);	// don't update; avoids flicker
 
 	// Delete these five lines if you don't want the toolbar and menubar to be dockable
 	m_wndMenuBar.EnableDocking(CBRS_ALIGN_ANY);
@@ -363,7 +368,7 @@ void CMainFrame::ApplyOptions(const COptions *pPrevOptions)
 	if (pDoc != NULL) {
 		if (pPrevOptions != NULL) {
 			if (theApp.m_Options.m_View_fUpdateFreq != pPrevOptions->m_View_fUpdateFreq) {
-				if (theApp.m_pPlayingDoc != NULL) {	// if document is playing
+				if (theApp.IsDocPlaying()) {	// if document is playing
 					m_bIsViewTimerSet = false;	// spoof no-op test
 					SetViewTimer(true);
 				}
@@ -479,10 +484,13 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			// assume song position and time strings were already updated
 			UpdateSongPositionDisplay();	// update song position and time in status bar
 			break;
+		case CPolymeterDoc::HINT_PLAY:
+			m_dwCachedTempo = 0;	// force status bar tempo pane to update when playback starts
+			break;
 		}
 		bool	bIsPlaying = pDoc->m_Seq.IsPlaying();
 		m_wndPropertiesBar.Enable(CMasterProps::PROP_nTimeDiv, !bIsPlaying);
-		SetViewTimer(theApp.m_pPlayingDoc != NULL);	// run view timer if any document is playing, not just this one
+		SetViewTimer(theApp.IsDocPlaying());	// run view timer if any document is playing, not just this one
 	} else {	// no active document
 		CMasterProps	props;	// default properties
 		m_wndPropertiesBar.SetProperties(props);	// update properties bar
@@ -523,8 +531,45 @@ void CMainFrame::UpdateSongPositionStrings(const CPolymeterDoc *pDoc)
 
 void CMainFrame::UpdateSongPositionDisplay()
 {
-	m_wndStatusBar.SetPaneText(SBP_SONG_POS, m_sSongPos);	// update song position in status bar
-	m_wndStatusBar.SetPaneText(SBP_SONG_TIME, m_sSongTime);	// update song time in status bar
+	// update song position and song time in status bar
+	FastSetPaneText(m_wndStatusBar, SBP_SONG_POS, m_sSongPos, m_arrStatusPaneTextLength[SBP_SONG_POS]);
+	FastSetPaneText(m_wndStatusBar, SBP_SONG_TIME, m_sSongTime, m_arrStatusPaneTextLength[SBP_SONG_TIME]);
+}
+
+bool CMainFrame::FastSetPaneText(CMFCStatusBar& bar, int nIndex, const CString& sText, int& nCurTextLength)
+{
+	// derived from SetPaneText, but doesn't reallocate pane's text
+	// buffer unless text gets bigger, and doesn't call UpdateWindow
+	ASSERT(nIndex < bar.m_nCount);
+	CMFCStatusBarPaneInfo* pSBP = ((CMFCStatusBarPaneInfo*)bar.m_pData) + nIndex;
+	int	nNewLen = sText.GetLength();
+	if (pSBP->lpszText != NULL) {	// if text buffer allocated
+		if (_tcscmp(pSBP->lpszText, sText) == 0) {	// if text unchanged
+			return true;	// nothing to do
+		}
+		if (nNewLen > nCurTextLength) {	// if text got bigger
+			free((LPVOID)pSBP->lpszText);	// free text buffer
+			pSBP->lpszText = (LPCTSTR)malloc((nNewLen + 1) * sizeof(TCHAR));
+			if (pSBP->lpszText == NULL)
+				return false;	// allocation failed
+			nCurTextLength = nNewLen;	// update pane's current text length
+		}
+	} else {	// text buffer not allocated
+		pSBP->lpszText = (LPCTSTR)malloc((nNewLen + 1) * sizeof(TCHAR));
+		if (pSBP->lpszText == NULL)
+			return false;	// allocation failed
+		nCurTextLength = nNewLen;	// update pane's current text length
+	}
+	// copy new text to pane's text buffer
+	_tcscpy_s(const_cast<LPTSTR>(pSBP->lpszText), nNewLen + 1, sText);
+	CRect rect = pSBP->rect;
+	if (!(pSBP->nStyle & SBPS_NOBORDERS))
+		rect.InflateRect(-AFX_CX_BORDER, -AFX_CY_BORDER);
+	else
+		rect.top -= AFX_CY_BORDER;  // base line adjustment
+	bar.InvalidateRect(rect, FALSE);	// invalidate pane
+	// caller is responsible for calling UpdateWindow if desired
+	return true;
 }
 
 #ifdef _WIN64
@@ -733,6 +778,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_VIEW_APPLOOK_FIRST, ID_VIEW_APPLOOK_LAST, OnUpdateApplicationLook)
 	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SONG_POS, OnUpdateIndicatorSongPos)
 	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SONG_TIME, OnUpdateIndicatorSongPos)
+	ON_UPDATE_COMMAND_UI(ID_INDICATOR_TEMPO, OnUpdateIndicatorTempo)
 #if _MSC_VER >= 1700	// if Visual Studio 2012 or later
 	ON_REGISTERED_MESSAGE(AFX_WM_AFTER_TASKBAR_ACTIVATE, OnAfterTaskbarActivate)
 #endif
@@ -949,6 +995,14 @@ void CMainFrame::OnUpdateIndicatorSongPos(CCmdUI* pCmdUI)
 	pCmdUI->Enable(m_pActiveDoc != NULL);
 }
 
+void CMainFrame::OnUpdateIndicatorTempo(CCmdUI* pCmdUI)
+{
+	bool	bIsPlaying = theApp.IsDocPlaying();
+	pCmdUI->Enable(bIsPlaying);
+	if (!bIsPlaying)	// if stopped
+		pCmdUI->SetText(_T(""));	// tempo is only available while playing
+}
+
 LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(lParam);
@@ -1021,6 +1075,15 @@ void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 				UpdateSongPositionStrings(pPlayingDoc);	// views are updated before main frame
 				pPlayingDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_SONG_POS);
 			}
+			DWORD	dwTempo;
+			if (pPlayingDoc->m_Seq.GetCurrentTempo(dwTempo)) {	// if valid current tempo
+				if (dwTempo != m_dwCachedTempo) {	// if tempo changed
+					m_dwCachedTempo = dwTempo;	// update cached value
+					m_sTempo.Format(_T("%.3f"), CMidiFile::MICROS_PER_MINUTE / double(dwTempo));
+					FastSetPaneText(m_wndStatusBar, SBP_TEMPO, m_sTempo, m_arrStatusPaneTextLength[SBP_TEMPO]);
+				}
+			}
+			m_wndStatusBar.UpdateWindow();	// one update for all panes; saves time
 			bool	bShowingMidiOutputBar = m_wndMidiOutputBar.FastIsVisible();
 			bool	bShowingPianoBar = m_wndPianoBar.FastIsVisible();
 			if (bShowingMidiOutputBar || bShowingPianoBar) {
@@ -1305,9 +1368,20 @@ void CMainFrame::OnUpdateTrackColor(CCmdUI *pCmdUI)
 void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
 {
 	CMDIFrameWndEx::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
-	if (!bSysMenu && pPopupMenu->GetMenuItemCount() == 2) {	// menu initially contains items for All and Custom
-		VERIFY(theApp.InsertNumericMenuItems(pPopupMenu, ID_TRANSPORT_CONVERGENCE_SIZE_ALL, 
-			ID_CONVERGENCE_SIZE_START, CONVERGENCE_SIZE_MIN, CONVERGENCE_SIZES));
+	if (!bSysMenu) {	// if not control menu
+		int	nItemCount = pPopupMenu->GetMenuItemCount();
+		// if the submenu's item count matches the convergence size submenu's initial item count
+		if (nItemCount == CONVERGENCE_SIZE_INITIAL_ITEM_COUNT) {
+#ifdef _DEBUG
+			// avoid a spurious assertion if some other submenu has the same item count
+			if (theApp.FindMenuItem(pPopupMenu, ID_TRANSPORT_CONVERGENCE_SIZE_ALL) >= 0) {
+#else
+			{	// release version doesn't need the above check
+#endif
+				VERIFY(theApp.InsertNumericMenuItems(pPopupMenu, ID_TRANSPORT_CONVERGENCE_SIZE_ALL, 
+					ID_CONVERGENCE_SIZE_START, CONVERGENCE_SIZE_MIN, CONVERGENCE_SIZES));
+			}
+		}
 	}
 }
 

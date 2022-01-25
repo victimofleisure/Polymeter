@@ -11,6 +11,7 @@
 		01		01apr20	add generic context menu method
 		02		06apr20	in FormatNumberCommas, emulate GetNumberFormatEx
 		03		08jun21	add cast to fix narrowing conversion warning
+
 */
 
 // stdafx.cpp : source file that includes just the standard includes

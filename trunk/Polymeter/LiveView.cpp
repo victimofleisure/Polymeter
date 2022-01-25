@@ -24,6 +24,7 @@
 		14		07jun21	rename rounding functions
 		15		20jun21	move focus edit handling to child frame
 		16		31oct21	add view type change method; call it on initial update
+		17		22jan22	show document tempo; sequencer tempo can differ
 
 */
 
@@ -613,7 +614,7 @@ void CLiveView::OnDraw(CDC* pDC)
 		pDC->FillSolidRect(rStatus, clrStatusBkgnd);
 		HGDIOBJ	hPrevFont = pDC->SelectObject(m_fontList);
 		CString	sTempo;
-		sTempo.Format(_T("%g"), pDoc->m_Seq.GetTempo());
+		sTempo.Format(_T("%g"), pDoc->m_fTempo);
 		CString	sMeter;
 		sMeter.Format(_T("%d/4"), pDoc->m_nMeter);
 		CString	sStatus(sTempo + pszSeparator + CNote(pDoc->m_nKeySig).Name() + pszSeparator + sMeter);

@@ -9,6 +9,7 @@
 		rev		date	comments
         00      15apr18	initial version
 		01		10feb19	in channel array, add method to get MIDI event array
+		02		21jan22	add property for note overlap method
 
 */
 
@@ -26,6 +27,7 @@ void CChannel::SetDefaults()
 {
 	#define CHANNELDEF(name, align, width) m_n##name = -1;
 	#include "ChannelDef.h"	// generate member initialization
+	m_nOverlaps = 0;
 }
 
 bool CChannel::operator==(const CChannel& chan) const
@@ -90,22 +92,28 @@ DWORD CChannelArray::GetMidiEvent(int iChan, int iProp) const
 		if (chan.m_nPan >= 0)
 			return MakeMidiMsg(CONTROL, iChan, PAN, chan.m_nPan);
 		break;
+	case CChannel::PROP_Overlaps:
+		return 0;	// property doesn't map to a MIDI event
 	default:
 		NODEFAULTCASE;
 	}
 	return 0;
 }
 
-void CChannelArray::GetMidiEvents(CDWordArrayEx& arrMidiEvent) const
+USHORT CChannelArray::GetMidiEvents(CDWordArrayEx& arrMidiEvent) const
 {
 	ASSERT(arrMidiEvent.IsEmpty());
+	USHORT	nNoteOverlapMethodMask = 0;
 	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each channel
-		for (int iProp = 0; iProp < CChannel::PROPERTIES; iProp++) {	// for each channel property
+		for (int iProp = 0; iProp < CChannel::EVENT_PROPERTIES; iProp++) {	// for each event-based channel property
 			DWORD	dwEvent = GetMidiEvent(iChan, iProp);	// get property's MIDI event
 			if (dwEvent)	// if property is specified
 				arrMidiEvent.Add(dwEvent);	// add MIDI event to destination array
 		}
+		if ((*this)[iChan].m_nOverlaps)	// if this channel wants note overlaps merged
+			nNoteOverlapMethodMask |= static_cast<USHORT>(1 << iChan);
 	}
+	return nNoteOverlapMethodMask;
 }
 
 void CChannelArray::Read()
