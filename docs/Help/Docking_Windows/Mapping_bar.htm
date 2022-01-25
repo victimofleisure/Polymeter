@@ -66,6 +66,7 @@
 <tr><td><a href="../Menus/Transport/Pause.htm">Pause</a></td><td>N/A</td><td>N/A</td><td>Non-zero to pause</td></tr>
 <tr><td><a href="../Menus/Transport/Record.htm">Record</a></td><td>N/A</td><td>N/A</td><td>Non-zero to record</td></tr>
 <tr><td><a href="../Menus/Transport/Loop.htm">Loop</a></td><td>N/A</td><td>N/A</td><td>Non-zero to loop</td></tr>
+<tr><td><a href="../Properties/Tempo.htm">Tempo</a></td><td>N/A</td><td>N/A</td><td>Tempo change; see <a href="../Docking_Windows/Mapping_bar.htm#Tempo_mapping">tempo mapping</a>.</td></tr>
 </table>
 
 <a name="Learning_mappings"><p><b>Learning mappings</b></a>
@@ -82,6 +83,21 @@
 <tr><td>Learn</td><td>Toggles MIDI Learn mode</td></tr>
 <tr><td>Map Tracks</td><td>Creates mappings for the selected <a href="../Concepts/Tracks.htm">tracks</a></td></tr>
 </table>
+
+<a name="Tempo_mapping"><p><b>Tempo mapping</b></a>
+<p>Controlling <a href="../Properties/Tempo.htm">tempo</a> is a special case, because unlike other <a href="../Concepts/Mappings.htm">mapping</a> targets, tempo is exponential rather than linear. For example, suppose the normal tempo is 100, in which case half-time is 50 and double-time is 200. The values 50, 100, and 200 are clearly not linearly spaced. Tempo mapping handles this complication for you, so that your control behaves as if tempo is linear, even though it isn't. A pitch bend wheel works similarly.
+
+<p>To specify the range of tempo change your control covers, adjust the mapping's Range Start and Range End properties. Some useful tempo mapping setups are given below.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Range Start</th><th>Range End</th><th>Tempo Range</th><th>Comment</th></tr>
+<tr><td>0</td><td>127</td><td>100% to 200%</td><td>Normal to double-time, the default setup</td></tr>
+<tr><td>&minus;127</td><td>0</td><td>50% to 100%</td><td>Half-time to normal</td></tr>
+<tr><td>&minus;127</td><td>127</td><td>50% to 200%</td><td>Half-time to double-time</td></tr>
+<tr><td>&minus;63</td><td>63</td><td>71% to 141%</td><td>Approximately half the previous range, from the square root of &frac12; to the square root of 2</td></tr>
+</table>
+
+<p>During <a href="../Menus/Transport/Play.htm">playback</a>, the net tempo is shown in the <a href="../Menus/View/Status_Bar.htm">status bar</a>.
 
 
 

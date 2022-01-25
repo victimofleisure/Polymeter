@@ -708,6 +708,8 @@
 
 <p>Only one tempo track can be active (unmuted) at a time. If you have multiple tempo tracks unmuted at once, they will compete, which probably isn't what you want. To get second-order change (tempo changing in multiple ways at once), use <a href="#Tempo_modulation">tempo modulation</a>.
 
+<p>During <a href="#Play">playback</a>, the net tempo is shown in the <a href="#Status_Bar">status bar</a>.
+
 <a name="Modulator_tracks"><h2>Modulator tracks</h2></a>
 
 <p>A modulator track is simply a track that alters the behavior of another track, in a process called <a href="#Modulations">modulation</a>. To make a modulator track operational, you must connect it to one or more target tracks, via the <a href="#Modulations_bar">Modulations bar</a> or the Track menu's <a href="#Create_Modulation">Create Modulation</a> command. In most cases, you'll want to prevent a modulator track from outputting MIDI messages, which you can do by changing its <a href="#Track_types">track type</a> to "Modulator." A modulator track's <a href="#Steps">steps</a> typically contain values that only make sense in the context of a particular <a href="#Modulation_types">modulation type</a>, in which case also interpreting those same step values as note velocities or controllers would be unhelpful. One possible exception is a <a href="#Note_tracks">note track</a> gating another note track via <a href="#Mute_modulation">mute modulation</a>, in order to prevent collisions between them. But in general, creating separate "Modulator" type tracks is the most flexible method of setting up modulation sources.
@@ -776,6 +778,8 @@
 <a name="Tempo_modulation"><h2>Tempo modulation</h2></a>
 
 <p>Tempo <a href="#Modulations">modulation</a> is when a <a href="#Tempo_tracks">tempo track</a> is modulated by one or more modulator tracks having a modulation type of Tempo. The modulator tracks also must have non-zero Duration, in other words each modulator has its own range of tempo scaling. Initially you can just set them all to 100. Like the tempo track, a tempo modulator can have any function in its steps. The actual tempo at any time is the product of the base tempo, the tempo track, and all of its unmuted tempo modulators. The idea is that tempo can change in <a href="#Polymeter">polymeter</a>, for example changing slowly in one meter, while changing faster in some other meter.
+
+<p>During <a href="#Play">playback</a>, the net tempo is shown in the <a href="#Status_Bar">status bar</a>.
 
 <a name="Scale_modulation"><h2>Scale modulation</h2></a>
 
@@ -1324,6 +1328,7 @@
 <tr><td>Pan</td><td>The channel's panning, or &minus;1 for none</td></tr>
 <tr><td>Bank LSB</td><td>The Least Significant Byte of the channel's bank, or &minus;1 for none</td></tr>
 <tr><td>Bank MSB</td><td>The Most Significant Byte of the channel's bank, or &minus;1 for none</td></tr>
+<tr><td>Overlaps</td><td>Selects a method of preventing <a href="#Note_Overlap">note overlaps</a> for this channel. This option is only meaningful if the Note Overlap <a href="#Master_properties">master property</a> is set to Prevent.</td></tr>
 </table>
 
 <a name="Presets_bar"><h2>Presets</h2></a>
@@ -1631,6 +1636,7 @@
 <tr><td><a href="#Pause">Pause</a></td><td>N/A</td><td>N/A</td><td>Non-zero to pause</td></tr>
 <tr><td><a href="#Record">Record</a></td><td>N/A</td><td>N/A</td><td>Non-zero to record</td></tr>
 <tr><td><a href="#Loop">Loop</a></td><td>N/A</td><td>N/A</td><td>Non-zero to loop</td></tr>
+<tr><td><a href="#Tempo">Tempo</a></td><td>N/A</td><td>N/A</td><td>Tempo change; see <a href="#Tempo_mapping">tempo mapping</a>.</td></tr>
 </table>
 
 <a name="Learning_mappings"><h3>Learning mappings</h3></a>
@@ -1650,6 +1656,22 @@
 <tr><td>Map Tracks</td><td>Creates mappings for the selected <a href="#Tracks">tracks</a></td></tr>
 </table>
 
+<a name="Tempo_mapping"><h3>Tempo mapping</h3></a>
+
+<p>Controlling <a href="#Tempo">tempo</a> is a special case, because unlike other <a href="#Mappings">mapping</a> targets, tempo is exponential rather than linear. For example, suppose the normal tempo is 100, in which case half-time is 50 and double-time is 200. The values 50, 100, and 200 are clearly not linearly spaced. Tempo mapping handles this complication for you, so that your control behaves as if tempo is linear, even though it isn't. A pitch bend wheel works similarly.
+
+<p>To specify the range of tempo change your control covers, adjust the mapping's Range Start and Range End properties. Some useful tempo mapping setups are given below.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Range Start</th><th>Range End</th><th>Tempo Range</th><th>Comment</th></tr>
+<tr><td>0</td><td>127</td><td>100% to 200%</td><td>Normal to double-time, the default setup</td></tr>
+<tr><td>&minus;127</td><td>0</td><td>50% to 100%</td><td>Half-time to normal</td></tr>
+<tr><td>&minus;127</td><td>127</td><td>50% to 200%</td><td>Half-time to double-time</td></tr>
+<tr><td>&minus;63</td><td>63</td><td>71% to 141%</td><td>Approximately half the previous range, from the square root of &frac12; to the square root of 2</td></tr>
+</table>
+
+<p>During <a href="#Play">playback</a>, the net tempo is shown in the <a href="#Status_Bar">status bar</a>.
+
 
 <h1>Properties</h1>
 
@@ -1658,6 +1680,8 @@
 <p>This is the playback tempo, in beats per minute. The document is <a href="#Play">played</a> at this tempo, unless this base tempo is modified by a <a href="#Tempo_tracks">tempo track</a>. The tempo can be changed at any time, including during playback. Changing the tempo may change the current time shown in the <a href="#Status_Bar">status bar</a>. To change the tempo, left-click it, edit the value or type a new one, and press <span class="key">Enter</span> or <span class="key">Tab</span>, or left-click elsewhere. To increment or decrement the tempo, use the arrow buttons that appear when you left-click the tempo. For more information on editing, see the <a href="#Properties_bar">Properties bar</a>. Fractional tempos are permitted.
 
 <p>Tempo is normally expressed as a frequency, but it can also be expressed as a <a href="#Period">period</a>, in other words how long each beat takes in seconds. To compute the period, divide 60 by the tempo. For example, at 120 beats per minute, each beat takes half a second, because 60 / 120 = &frac12;.
+
+<p>Tempo can remotely controlled; see <a href="#Tempo_mapping">tempo mapping</a>. During <a href="#Play">playback</a>, the net tempo is shown in the <a href="#Status_Bar">status bar</a>.
 
 <a name="Timebase"><h2>Timebase</h2></a>
 
@@ -1741,24 +1765,77 @@
 
 <p>This property specifies how to handle overlapping instances of the same note on the same MIDI channel. If overlapping instances are allowed, the output device may release the later note prematurely, or the overlapped portion may exhibit acoustic artifacts such as flanging. To prevent overlapping instances, set this property to "Prevent". Preventing note overlaps is strongly recommended if <a href="#Position_modulation">position modulation</a> or <a href="#Offset_modulation">offset modulation</a> are used.
 
-<p>For example, suppose overlapping instances of the same note on the same channel occur as follows:
+<p>For example, suppose two overlapping instances of the same note on the same channel occur as follows:
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Time</th><th>Event</th></tr>
-<tr><td>1:000</td><td>first instance on</td></tr>
-<tr><td>2:000</td><td>second instance on</td></tr>
-<tr><td>3:000</td><td>first instance off</td></tr>
-<tr><td>4:000</td><td>second instance off</td></tr>
+<tr><td>1:000</td><td>first note on</td></tr>
+<tr><td>2:000</td><td>second note on</td></tr>
+<tr><td>3:000</td><td>first note off</td></tr>
+<tr><td>4:000</td><td>second note off</td></tr>
 </table>
 
-<p>In this case, the note will likely be cut off at 3:000, in other words the second instance is aborted. Preventing note overlaps results in the following output:
+<p>In this case, the note will likely be cut off at 3:000, in other words the second instance is aborted by the first instance's note off command. Preventing note overlaps results in the following output:
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Time</th><th>Event</th></tr>
-<tr><td>1:000</td><td>note on</td></tr>
-<tr><td>2:000</td><td>note off, note on again</td></tr>
-<tr><td>4:000</td><td>note off</td></tr>
+<tr><td>1:000</td><td>first note on</td></tr>
+<tr><td>2:000</td><td>first note off, second note on</td></tr>
+<tr><td>4:000</td><td>second note off</td></tr>
 </table>
+
+<p>Instead of the default method shown above, you also have the option to merge the overlapping instances into a single note. In this case the result would be as follows:
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Time</th><th>Event</th></tr>
+<tr><td>1:000</td><td>first note on</td></tr>
+<tr><td>4:000</td><td>first note off</td></tr>
+</table>
+
+<p>The merge option is selectable on a per-channel basis, using the Overlaps column in the <a href="#Channels_bar">Channels bar</a>. The following diagram shows different types of note overlap and possible solutions.
+
+<p>
+<table cellspacing=1 style="text-align:center">
+<tr><td colspan=3>Partial Overlap</td></tr>
+<tr><td colspan=2 style="color:white;background-color:black">1</td><td>&nbsp;</td><tr>
+<tr style="color:white"><td>&nbsp;</td><td colspan=2 style="color:white;background-color:gray">2</td><tr>
+<tr style="color:white"><td>00000</td><td>00000</td><td>00000</td></tr>
+</table>
+
+<table cellspacing=1 style="text-align:center">
+<tr><td colspan=3>Full Overlap</td></tr>
+<tr><td colspan=3 style="color:white;background-color:black">1</td><tr>
+<tr style="color:white"><td>&nbsp;</td><td style="color:white;background-color:gray">2</td><td>&nbsp;</td><tr>
+<tr style="color:white"><td>00000</td><td>00000</td><td>00000</td></tr>
+</table>
+
+<table cellspacing=1 style="text-align:center">
+<tr><td colspan=3>Uncorrected</td></tr>
+<tr><td style="color:white;background-color:black">1</td><td style="color:white;background-color:gray">2</td><td>&nbsp;</td><tr>
+<tr style="color:white"><td>00000</td><td>00000</td><td>00000</td></tr>
+</table>
+
+<table cellspacing=1 style="text-align:center">
+<tr><td colspan=3>Split</td></tr>
+<tr><td style="color:white;background-color:black">1</td><td colspan=2 style="color:white;background-color:gray">2</td><tr>
+<tr style="color:white"><td>00000</td><td>00000</td><td>00000</td></tr>
+</table>
+
+<table cellspacing=1 style="text-align:center">
+<tr><td colspan=3>Merge</td></tr>
+<tr><td colspan=3 style="color:white;background-color:black">1</td><tr>
+<tr style="color:white"><td>00000</td><td>00000</td><td>00000</td></tr>
+</table>
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th colspan=2>Note Overlap Methods</th></tr>
+<tr><th>Split</th><td>Preserves the overlapping notes. Note messages are added or removed as necessary to ensure that the overlapping notes don't cut each other off.</td></tr>
+<tr><th>Merge</th><td>Eliminates all but the first note. The overlapping notes are merged into a single note that spans all of them, and gets its velocity from the first note.</td></tr>
+</table>
+
+<p>Selecting a note overlap method is only meaningful if overlap correction is enabled, by setting the Note Overlap <a href="#Master_properties">master property</a> to <b>Prevent</b>. If Note Overlap is set to <b>Allow</b>, overlap correction is disabled and Split versus Merge is irrelevant. The Note Overlap master property enables overlap correction <em>as a whole</em>, whereas the Overlaps column in the Channels bar determines which correction method (Split or Merge) is used for each channel.
+
+<p>Merge has uses beyond overlap correction. It can also be used to concatenate adjacent instances of the same note, so that they become one long note. To do this, you must force the adjacent notes to overlap, typically by slightly increasing their durations, using the <a href="#Track_Duration">track duration</a> property or via <a href="#Duration_modulation">duration modulation</a>.
 
 <a name="Record_Offset"><h2>Record Offset</h2></a>
 
@@ -2036,6 +2113,8 @@
 <a name="Status_Bar"><h3>Status Bar</h3></a>
 
 <p>The status bar displays hints for the menus, and other status information, including the current <a href="#Song_position">position</a> and time.
+
+<p>During <a href="#Play">playback</a>, the status bar also shows the <em>net tempo</em>, which accounts for <a href="#Tempo_tracks">tempo tracks</a>, <a href="#Tempo_modulation">tempo modulation</a>, and <a href="#Tempo_mapping">tempo mapping</a>.
 
 <a name="Application_Look"><h3>Application Look</h3></a>
 

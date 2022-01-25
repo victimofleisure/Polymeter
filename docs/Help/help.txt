@@ -474,6 +474,8 @@ In actuality the tempo can't quite reach double time, because the maximum @[unsi
 
 Only one tempo track can be active (unmuted) at a time. If you have multiple tempo tracks unmuted at once, they will compete, which probably isn't what you want. To get second-order change (tempo changing in multiple ways at once), use @[tempo modulation].
 
+During @[play\playback], the net tempo is shown in the @[status bar].
+
 @topic Modulator tracks
 
 A modulator track is simply a track that alters the behavior of another track, in a process called @[modulations\modulation]. To make a modulator track operational, you must connect it to one or more target tracks, via the @[Modulations bar] or the Track menu's @[Create Modulation] command. In most cases, you'll want to prevent a modulator track from outputting MIDI messages, which you can do by changing its @[track types\track type] to "Modulator." A modulator track's @[steps] typically contain values that only make sense in the context of a particular @[modulation types\modulation type], in which case also interpreting those same step values as note velocities or controllers would be unhelpful. One possible exception is a @[note tracks\note track] gating another note track via @[mute modulation], in order to prevent collisions between them. But in general, creating separate "Modulator" type tracks is the most flexible method of setting up modulation sources.
@@ -543,6 +545,8 @@ Position modulation is a powerful technique for generating variations. It has a 
 @topic Tempo modulation
 
 Tempo @[modulations\modulation] is when a @[tempo tracks\tempo track] is modulated by one or more modulator tracks having a modulation type of Tempo. The modulator tracks also must have non-zero Duration, in other words each modulator has its own range of tempo scaling. Initially you can just set them all to 100. Like the tempo track, a tempo modulator can have any function in its steps. The actual tempo at any time is the product of the base tempo, the tempo track, and all of its unmuted tempo modulators. The idea is that tempo can change in @[polymeter], for example changing slowly in one meter, while changing faster in some other meter.
+
+During @[play\playback], the net tempo is shown in the @[status bar].
 
 @topic Scale modulation
 
@@ -1094,6 +1098,7 @@ This @[docking windows\docking window] lets you edit the setup for each MIDI cha
 <tr><td>Pan</td><td>The channel's panning, or &minus;1 for none</td></tr>
 <tr><td>Bank LSB</td><td>The Least Significant Byte of the channel's bank, or &minus;1 for none</td></tr>
 <tr><td>Bank MSB</td><td>The Most Significant Byte of the channel's bank, or &minus;1 for none</td></tr>
+<tr><td>Overlaps</td><td>Selects a method of preventing @[note overlap\note overlaps] for this channel. This option is only meaningful if the Note Overlap @[master properties\master property] is set to Prevent.</td></tr>
 </table>
 
 @topic Presets bar\Presets
@@ -1401,6 +1406,7 @@ The output range (start value and end value) allow the input MIDI data to be shi
 <tr><td>@[Pause]</td><td>N/A</td><td>N/A</td><td>Non-zero to pause</td></tr>
 <tr><td>@[Record]</td><td>N/A</td><td>N/A</td><td>Non-zero to record</td></tr>
 <tr><td>@[Loop]</td><td>N/A</td><td>N/A</td><td>Non-zero to loop</td></tr>
+<tr><td>@[Tempo]</td><td>N/A</td><td>N/A</td><td>Tempo change; see @[tempo mapping].</td></tr>
 </table>
 
 @item Learning mappings
@@ -1420,6 +1426,22 @@ The application also supports @[MIDI learn] mode, i.e. the input messages can be
 <tr><td>Map Tracks</td><td>Creates mappings for the selected @[tracks]</td></tr>
 </table>
 
+@item Tempo mapping
+
+Controlling @[tempo] is a special case, because unlike other @[mappings\mapping] targets, tempo is exponential rather than linear. For example, suppose the normal tempo is 100, in which case half-time is 50 and double-time is 200. The values 50, 100, and 200 are clearly not linearly spaced. Tempo mapping handles this complication for you, so that your control behaves as if tempo is linear, even though it isn't. A pitch bend wheel works similarly.
+
+To specify the range of tempo change your control covers, adjust the mapping's Range Start and Range End properties. Some useful tempo mapping setups are given below.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Range Start</th><th>Range End</th><th>Tempo Range</th><th>Comment</th></tr>
+<tr><td>0</td><td>127</td><td>100% to 200%</td><td>Normal to double-time, the default setup</td></tr>
+<tr><td>&minus;127</td><td>0</td><td>50% to 100%</td><td>Half-time to normal</td></tr>
+<tr><td>&minus;127</td><td>127</td><td>50% to 200%</td><td>Half-time to double-time</td></tr>
+<tr><td>&minus;63</td><td>63</td><td>71% to 141%</td><td>Approximately half the previous range, from the square root of &frac12; to the square root of 2</td></tr>
+</table>
+
+During @[play\playback], the net tempo is shown in the @[status bar].
+
 @endchapter
 
 @chapter Properties
@@ -1429,6 +1451,8 @@ The application also supports @[MIDI learn] mode, i.e. the input messages can be
 This is the playback tempo, in beats per minute. The document is @[play\played] at this tempo, unless this base tempo is modified by a @[tempo tracks\tempo track]. The tempo can be changed at any time, including during playback. Changing the tempo may change the current time shown in the @[status bar]. To change the tempo, left-click it, edit the value or type a new one, and press @{key}Enter@} or @{key}Tab@}, or left-click elsewhere. To increment or decrement the tempo, use the arrow buttons that appear when you left-click the tempo. For more information on editing, see the @[Properties bar]. Fractional tempos are permitted.
 
 Tempo is normally expressed as a frequency, but it can also be expressed as a @[period], in other words how long each beat takes in seconds. To compute the period, divide 60 by the tempo. For example, at 120 beats per minute, each beat takes half a second, because 60 / 120 = &frac12;.
+
+Tempo can remotely controlled; see @[tempo mapping]. During @[play\playback], the net tempo is shown in the @[status bar].
 
 @topic Timebase
 
@@ -1512,24 +1536,77 @@ Negative start positions are allowed, and this may be useful because a full @[co
 
 This property specifies how to handle overlapping instances of the same note on the same MIDI channel. If overlapping instances are allowed, the output device may release the later note prematurely, or the overlapped portion may exhibit acoustic artifacts such as flanging. To prevent overlapping instances, set this property to "Prevent". Preventing note overlaps is strongly recommended if @[position modulation] or @[offset modulation] are used.
 
-For example, suppose overlapping instances of the same note on the same channel occur as follows:
+For example, suppose two overlapping instances of the same note on the same channel occur as follows:
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Time</th><th>Event</th></tr>
-<tr><td>1:000</td><td>first instance on</td></tr>
-<tr><td>2:000</td><td>second instance on</td></tr>
-<tr><td>3:000</td><td>first instance off</td></tr>
-<tr><td>4:000</td><td>second instance off</td></tr>
+<tr><td>1:000</td><td>first note on</td></tr>
+<tr><td>2:000</td><td>second note on</td></tr>
+<tr><td>3:000</td><td>first note off</td></tr>
+<tr><td>4:000</td><td>second note off</td></tr>
 </table>
 
-In this case, the note will likely be cut off at 3:000, in other words the second instance is aborted. Preventing note overlaps results in the following output:
+In this case, the note will likely be cut off at 3:000, in other words the second instance is aborted by the first instance's note off command. Preventing note overlaps results in the following output:
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Time</th><th>Event</th></tr>
-<tr><td>1:000</td><td>note on</td></tr>
-<tr><td>2:000</td><td>note off, note on again</td></tr>
-<tr><td>4:000</td><td>note off</td></tr>
+<tr><td>1:000</td><td>first note on</td></tr>
+<tr><td>2:000</td><td>first note off, second note on</td></tr>
+<tr><td>4:000</td><td>second note off</td></tr>
 </table>
+
+Instead of the default method shown above, you also have the option to merge the overlapping instances into a single note. In this case the result would be as follows:
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Time</th><th>Event</th></tr>
+<tr><td>1:000</td><td>first note on</td></tr>
+<tr><td>4:000</td><td>first note off</td></tr>
+</table>
+
+The merge option is selectable on a per-channel basis, using the Overlaps column in the @[Channels bar]. The following diagram shows different types of note overlap and possible solutions.
+
+<p>
+<table cellspacing=1 style="text-align:center">
+<tr><td colspan=3>Partial Overlap</td></tr>
+<tr><td colspan=2 style="color:white;background-color:black">1</td><td>&nbsp;</td><tr>
+<tr style="color:white"><td>&nbsp;</td><td colspan=2 style="color:white;background-color:gray">2</td><tr>
+<tr style="color:white"><td>00000</td><td>00000</td><td>00000</td></tr>
+</table>
+
+<table cellspacing=1 style="text-align:center">
+<tr><td colspan=3>Full Overlap</td></tr>
+<tr><td colspan=3 style="color:white;background-color:black">1</td><tr>
+<tr style="color:white"><td>&nbsp;</td><td style="color:white;background-color:gray">2</td><td>&nbsp;</td><tr>
+<tr style="color:white"><td>00000</td><td>00000</td><td>00000</td></tr>
+</table>
+
+<table cellspacing=1 style="text-align:center">
+<tr><td colspan=3>Uncorrected</td></tr>
+<tr><td style="color:white;background-color:black">1</td><td style="color:white;background-color:gray">2</td><td>&nbsp;</td><tr>
+<tr style="color:white"><td>00000</td><td>00000</td><td>00000</td></tr>
+</table>
+
+<table cellspacing=1 style="text-align:center">
+<tr><td colspan=3>Split</td></tr>
+<tr><td style="color:white;background-color:black">1</td><td colspan=2 style="color:white;background-color:gray">2</td><tr>
+<tr style="color:white"><td>00000</td><td>00000</td><td>00000</td></tr>
+</table>
+
+<table cellspacing=1 style="text-align:center">
+<tr><td colspan=3>Merge</td></tr>
+<tr><td colspan=3 style="color:white;background-color:black">1</td><tr>
+<tr style="color:white"><td>00000</td><td>00000</td><td>00000</td></tr>
+</table>
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th colspan=2>Note Overlap Methods</th></tr>
+<tr><th>Split</th><td>Preserves the overlapping notes. Note messages are added or removed as necessary to ensure that the overlapping notes don't cut each other off.</td></tr>
+<tr><th>Merge</th><td>Eliminates all but the first note. The overlapping notes are merged into a single note that spans all of them, and gets its velocity from the first note.</td></tr>
+</table>
+
+Selecting a note overlap method is only meaningful if overlap correction is enabled, by setting the Note Overlap @[master properties\master property] to <b>Prevent</b>. If Note Overlap is set to <b>Allow</b>, overlap correction is disabled and Split versus Merge is irrelevant. The Note Overlap master property enables overlap correction <em>as a whole</em>, whereas the Overlaps column in the Channels bar determines which correction method (Split or Merge) is used for each channel.
+
+Merge has uses beyond overlap correction. It can also be used to concatenate adjacent instances of the same note, so that they become one long note. To do this, you must force the adjacent notes to overlap, typically by slightly increasing their durations, using the @[track duration] property or via @[duration modulation].
 
 @topic Record Offset
 
@@ -1814,6 +1891,8 @@ This submenu lets you show or hide any of the @[Docking windows\docking windows]
 @topic Status Bar
 
 The status bar displays hints for the menus, and other status information, including the current @[song position\position] and time.
+
+During @[play\playback], the status bar also shows the <em>net tempo</em>, which accounts for @[tempo tracks], @[tempo modulation], and @[tempo mapping].
 
 @topic Application Look
 

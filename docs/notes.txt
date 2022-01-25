@@ -3546,6 +3546,11 @@ as MIDI, and the Reason-exported MIDI files were found to be identical.
 
 1/21/22 tempo modulation makes UI slip out of sync with playback
 
+This bug has been around for months, and it's been blamed on the Windows
+MIDI API, but the fact that manually changing the tempo, even continuously,
+doesn't also cause the bug is extremely suspicious. How do the two cases
+differ? It suggests a logic error.
+
 DWORD	dwTempo;
 MMTIME	time;
 if (pPlayingDoc->m_Seq.GetPosition(time, TIME_MS) 
@@ -3557,11 +3562,12 @@ if (pPlayingDoc->m_Seq.GetPosition(time, TIME_MS)
 Hypothesis: the MIDI API doesn't compensate the position for tempo changes. 
 Querying the position in milliseconds and then converting it to ticks causes 
 even worse splippage, but that's because you can't convert milliseconds to 
-ticks without compensating for tempo changes. Experiment: Try building a 
-tempo map, and then use it to correct the tick position returned by the 
-MIDI API. If that stays in sync, we can conclude that the MIDI API doesn't
-compensate position for tempo changes. If that doesn't stay in sync, then 
-the question remains open.
+ticks without compensating for tempo changes. FALSE!
+
+Experiment: Try building a tempo map, and then use it to correct the tick 
+position returned by the MIDI API. If that stays in sync, we can conclude 
+that the MIDI API doesn't compensate position for tempo changes. If 
+that doesn't stay in sync, then the question remains open. MOOT!
 
 But even if compensating does fix the sync, a practical solution would
 take more work. The sequencer would have to model the actual tempo, and
@@ -3569,7 +3575,85 @@ keep the model up to date. This is probably possible, but challenging.
 
 One big problem with the above hypothesis is it doesn't explain why the
 UI doesn't appear to lose sync when tempo is changed manually during 
-playback, via the tempo edit box up/down buttons.
+playback, via the tempo edit box up/down buttons, or even rapidly and
+continuously via tempo MIDI mapping. This is really puzzling.
 
+What are the differences between the two code paths? SetTempo adds only
+a single tempo change message at the start of the output event buffer.
+But emulating this behavior in the tempo modulation case doesn't help.
 
+SetTempo also changes the callback length, and this is suspicious, because
+callback length is used in GetPosition. But removing callback length from
+the GetPosition calculation also doesn't help. And, if the bug was caused
+by callback length, you'd think it would drift out of sync as tempo
+speeded up, but then catch up again as it returned to baseline.
+
+It looks like some kind of order dependency. Something is different
+about adding a tempo event at the start of OutputMidiBuffer, and
+adding one after AddEvents, and all that other stuff. A lot happens
+between those two points, and any of it could be causing the bug.
+
+Experiment: Try not setting callback length in SetTempo, and see
+if the bug appears for mapped tempo change. NO!
+
+Experiment: Try moving the signaled tempo change code to the end of
+OutputMidiBuffer, and see if the bug appears. YES!
+
+Moving the set tempo check to the same place where we output events
+to the MIDI buffer causes the bug to appear. Continuously moving the
+tempo knob makes the UI slip, and the splippage worsens over time.
+
+Is it the track critical section? No, entering the critical section
+before checking for set tempo doesn't help.
+
+Found it! Tempo events weren't being added to the event count, which
+was being maintained separately from the event array size, in nEvents.
+Adding tempo events caused that same number of events to be skipped
+at the end of the event buffer, including the final NOP event that 
+pads the MIDI buffer out to the callback length. The absence of the
+padding NOP caused the position slippage. It looked like the UI was
+slipping behind, but it was actually the output sequence that was 
+slipping ahead, due to missing chunks of time. Moral of the story:
+don't do double bookkeeping. FIXED!
+
+In short, tempo modulation was causing incorrect playback. 
+The export was not affected.
+
+1/22/22 showing current tempo in status bar
+
+// in ctor
+m_dwCachedTempo = 0;
+
+// in OnTempo
+DWORD	dwTempo;
+if (pPlayingDoc->m_Seq.GetCurrentTempo(dwTempo)) {	// if valid current tempo
+	if (dwTempo != m_dwCachedTempo) {	// if tempo actually changed
+		m_dwCachedTempo = dwTempo;
+		m_sTempo.Format(_T("%.3f"), CMidiFile::MICROS_PER_MINUTE / double(dwTempo));
+		m_wndStatusBar.SetPaneText(SBP_TEMPO, m_sTempo);
+	}
+}
+
+This code adds at least 250 microseconds in the case where the status
+pane actually changes. Because OnTimer is in the critical path, 250 
+microseconds is long enough to be scary. Assuming the default refresh
+rate of 20 Hz, if the tempo is changing on every OnTimer call, it's 
+potentially adding 5ms per second, or half a percent. 
+
+Almost all of that 250 microseconds comes from SetPaneText. SetPaneText 
+frees and reallocates its lpszText buffer every time the text changes, 
+regardless of whether the existing buffer is big enough for the new 
+string. That's dumb, but fixing it doesn't help much, because nearly
+all the cost of SetPaneText is InvalidatePaneContent, and the cost
+of that method is all InvalidateRect and UpdateWindow.
+
+UpdateWindow is by far the biggest offender, hence performance can be 
+significantly improved by calling UpdateWindow only once for all three
+dynamic status panes, instead of calling it three times, from within
+SetPaneText. This requires a customized implementation of SetPaneText.
+
+By doing the UpdateWindow only once per OnTimer call instead of three 
+times, we can save enough time to offset the increased overhead from
+showing current tempo. Even better, that overhead is only incurred 
+when the tempo actually changes, otherwise there's no cost.
 
