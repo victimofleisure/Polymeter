@@ -411,6 +411,7 @@ id	open	close	type	description	rev	user
 498	01/21/22	01/21/22	done	make tempo a mapping target	1.0.06.000	
 499	01/22/22	01/21/22	done	tempos below 4 BPM behave unexpectedly due to period in microseconds exceeding 24 bits; limit user input	1.0.06.000	
 496	01/21/22	01/22/22	done	display actual tempo in status bar while playing; query MIDI stream's tempo property	1.0.06.000	
+500	01/27/22	01/27/22	done	channel write shouldn't output overlaps member if it has default value; add special handling for non-events	1.0.06.001	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
