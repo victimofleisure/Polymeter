@@ -10,6 +10,7 @@
         00      15apr18	initial version
 		01		10feb19	in channel array, add method to get MIDI event array
 		02		21jan22	add property for note overlap method
+		03		27jan22	fix Write's default value test to handle note overlap
 
 */
 
@@ -145,7 +146,12 @@ void CChannelArray::Write() const
 			sChan.Format(RK_CHANNEL_SECTION, iUsedChan);
 			WrReg(sChan, RK_CHANNEL_INDEX, iChan);
 			#define CHANNELDEF(name, align, width) if (chan.m_n##name >= 0) WrReg(sChan, _T(#name), chan.m_n##name);
-			#include "ChannelDef.h"	// generate code to write channel properties
+			#define CHANNELDEF_EXCLUDE_NON_EVENTS	// only event properties
+			#include "ChannelDef.h"	// generate code to write channel event properties
+			#define CHANNELDEF(name, align, width) if (chan.m_n##name != CChannel::m_chanDefault.m_n##name) \
+				WrReg(sChan, _T(#name), chan.m_n##name);
+			#define CHANNELDEF_EXCLUDE_EVENTS	// only non-event properties
+			#include "ChannelDef.h"	// generate code to write channel non-event properties
 			iUsedChan++;
 		}
 	}
