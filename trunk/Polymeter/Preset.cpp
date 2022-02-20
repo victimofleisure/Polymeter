@@ -9,12 +9,13 @@
 		rev		date	comments
         00		14jun18	initial version
 		01		08jun21	fix warning for CString as variadic argument
+		02		19feb22	use INI file class directly instead of via profile
 		
 */
 
 #include "stdafx.h"
 #include "Preset.h"
-#include "RegTempl.h"
+#include "IniFile.h"
 
 #define RK_PRESET_SECTION _T("Preset")
 #define RK_PRESET_COUNT _T("Count")
@@ -53,37 +54,37 @@ void CPresetArray::UnpackBools(const CByteArrayEx& arrSrc, CBoolArrayEx& arrDst)
 		arrDst[iBit] = (arrSrc[iBit >> 3] & (1 << (iBit & 7))) != 0;
 }
 
-void CPresetArray::Read(int nTracks)
+void CPresetArray::Read(CIniFile& fIni, int nTracks)
 {
 	int	nPresets = 0;
-	RdReg(RK_PRESET_SECTION, RK_PRESET_COUNT, nPresets);
+	fIni.Get(RK_PRESET_SECTION, RK_PRESET_COUNT, nPresets);
 	CByteArrayEx	arrBit;
 	SetSize(nPresets);
 	CString	sKey;
 	for (int iPreset = 0; iPreset < nPresets; iPreset++) {
 		CPreset& preset = GetAt(iPreset);
 		sKey.Format(_T("%s\\%d"), RK_PRESET_SECTION, iPreset);
-		RdReg(sKey, RK_PRESET_NAME, preset.m_sName);
-		DWORD	nSize = CalcPackedSize(nTracks);
+		fIni.Get(sKey, RK_PRESET_NAME, preset.m_sName);
+		UINT	nSize = CalcPackedSize(nTracks);
 		arrBit.SetSize(nSize);
-		CPersist::GetBinary(sKey, RK_PRESET_MUTE, arrBit.GetData(), &nSize);
+		fIni.GetBinary(sKey, RK_PRESET_MUTE, arrBit.GetData(), nSize);
 		preset.m_arrMute.SetSize(nTracks);
 		UnpackBools(arrBit, preset.m_arrMute);
 	}
 }
 
-void CPresetArray::Write() const
+void CPresetArray::Write(CIniFile& fIni) const
 {
 	int	nPresets = GetSize();
-	WrReg(RK_PRESET_SECTION, RK_PRESET_COUNT, nPresets);
+	fIni.Put(RK_PRESET_SECTION, RK_PRESET_COUNT, nPresets);
 	CByteArrayEx	arrBit;
 	CString	sKey;
 	for (int iPreset = 0; iPreset < nPresets; iPreset++) {
 		const CPreset& preset = GetAt(iPreset);
 		sKey.Format(_T("%s\\%d"), RK_PRESET_SECTION, iPreset);
-		WrReg(sKey, RK_PRESET_NAME, preset.m_sName);
+		fIni.Put(sKey, RK_PRESET_NAME, preset.m_sName);
 		PackBools(preset.m_arrMute, arrBit);
-		CPersist::WriteBinary(sKey, RK_PRESET_MUTE, arrBit.GetData(), arrBit.GetSize());
+		fIni.WriteBinary(sKey, RK_PRESET_MUTE, arrBit.GetData(), arrBit.GetSize());
 	}
 }
 

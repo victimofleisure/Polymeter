@@ -37,8 +37,8 @@ public:
 	int		GetActualDescriptionRows() const;
 
 // Operations
-	void	SaveGroupExpansion(LPCTSTR szRegKey) const;
-	void	RestoreGroupExpansion(LPCTSTR szRegKey) const;
+	void	SaveGroupExpansion(LPCTSTR pszRegKey) const;
+	void	RestoreGroupExpansion(LPCTSTR pszRegKey) const;
 
 protected:
 // Overrides

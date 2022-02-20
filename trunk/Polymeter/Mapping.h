@@ -13,12 +13,15 @@
 		03		07sep20	add preset and part mapping
 		04		13feb21	add string ID to special target macro
 		05		25oct21	add optional sort direction
+		06		19feb22	use INI file class directly instead of via profile
 
 */
 
 #pragma once
 
 #include "Track.h"
+
+class CIniFile;
 
 class CMapping {
 public:
@@ -72,8 +75,8 @@ public:
 
 // Operations
 	void	SetDefaults();
-	void	Read(LPCTSTR pszSection);
-	void	Write(LPCTSTR pszSection) const;
+	void	Read(CIniFile& fIni, LPCTSTR pszSection);
+	void	Write(CIniFile& fIni, LPCTSTR pszSection) const;
 };
 
 inline LPCTSTR CMapping::GetInputEventName(int nInEvent)
@@ -88,8 +91,8 @@ inline int CMapping::FindInputEventName(LPCTSTR pszName)
 
 class CMappingArray : public CArrayEx<CMapping, CMapping&> {
 public:
-	void	Read();
-	void	Write() const;
+	void	Read(CIniFile& fIni);
+	void	Write(CIniFile& fIni) const;
 	bool	MapMidiEvent(DWORD dwInEvent, CDWordArrayEx& arrOutEvent) const;
 };
 

@@ -20,6 +20,7 @@
 		10		22jun20	fix selection after paste, insert, and delete
 		11		19nov20	add show changed handler
 		12		20jun21	remove dispatch edit keys
+		13		29jan22	don't horizontally scroll source column
 
 */
 
@@ -354,6 +355,11 @@ void CModulationsBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 			break;
 		}
 	}
+}
+
+bool CModulationsBar::CModGridCtrl::AllowEnsureHorizontallyVisible(int iCol)
+{
+	return iCol != COL_SOURCE;	// don't horizontally scroll source column, it's too distracting
 }
 
 void CModulationsBar::SortModulations(bool bBySource)

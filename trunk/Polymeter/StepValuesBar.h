@@ -16,6 +16,7 @@
 		06		24jan21	add left button handler to derived grid control
 		07		20jun21	add list accessor
 		08		27dec21	add clamp step to range
+		09		30jan22	fix traversal of columns with different row counts
 
 */
 
@@ -51,6 +52,7 @@ protected:
 	public:
 		virtual	void	OnItemChange(LPCTSTR pszText);
 		virtual	BOOL	CModGridCtrl::PreTranslateMessage(MSG* pMsg);
+		void	GotoStep(int nDeltaRow, int nDeltaCol);
 		DECLARE_MESSAGE_MAP();
 		afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 		afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
@@ -99,6 +101,7 @@ protected:
 	bool	ScanStep(LPCTSTR pszText, int& nStep) const;
 	void	ClampStep(int& nStep) const;
 	bool	SpinEdit(CEdit *pEdit, bool bUp);
+
 	static	int		GetSelectedTrackCount(CPolymeterDoc *pDoc);
 	static	void	GetSelectionRange(CIntArrayEx& arrSelection, int iItem, int& iFirstItem, int& nItems);
 	static	bool	StepCompare(STEP step1, STEP step2, bool bVelocityOnly);

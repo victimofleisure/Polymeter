@@ -11,12 +11,13 @@
 		01		10feb19	in channel array, add method to get MIDI event array
 		02		21jan22	add property for note overlap method
 		03		27jan22	fix Write's default value test to handle note overlap
+		04		19feb22	use INI file class directly instead of via profile
 
 */
 
 #include "stdafx.h"
 #include "Channel.h"
-#include "RegTempl.h"
+#include "IniFile.h"
 
 #define RK_CHANNEL_COUNT _T("Channels")
 #define RK_CHANNEL_INDEX _T("Channel")
@@ -117,39 +118,39 @@ USHORT CChannelArray::GetMidiEvents(CDWordArrayEx& arrMidiEvent) const
 	return nNoteOverlapMethodMask;
 }
 
-void CChannelArray::Read()
+void CChannelArray::Read(CIniFile& fIni)
 {
 	int	nUsedChans = 0;
-	RdReg(RK_CHANNEL_COUNT, nUsedChans);
+	fIni.Get(RK_CHANNEL_COUNT, nUsedChans);
 	for (int iUsedChan = 0; iUsedChan < nUsedChans; iUsedChan++) {	// for each used channel
 		CString	sChan;
 		sChan.Format(RK_CHANNEL_SECTION, iUsedChan);
 		int	iChan = 0;
-		RdReg(sChan, RK_CHANNEL_INDEX, iChan);
+		fIni.Get(sChan, RK_CHANNEL_INDEX, iChan);
 		if (iChan >= 0 && iChan < MIDI_CHANNELS) {	// range check channel index just in case
 			CChannel&	chan = (*this)[iChan];
-			#define CHANNELDEF(name, align, width) RdReg(sChan, _T(#name), chan.m_n##name);
+			#define CHANNELDEF(name, align, width) fIni.Get(sChan, _T(#name), chan.m_n##name);
 			#include "ChannelDef.h"	// generate code to read channel properties
 		}
 	}
 }
 
-void CChannelArray::Write() const
+void CChannelArray::Write(CIniFile& fIni) const
 {
 	int	nUsedChans = GetUsedCount();
-	WrReg(RK_CHANNEL_COUNT, nUsedChans);
+	fIni.Put(RK_CHANNEL_COUNT, nUsedChans);
 	int	iUsedChan = 0;
 	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each channel
 		const CChannel&	chan = (*this)[iChan];
 		if (!chan.IsDefault()) {	// if channel is used
 			CString	sChan;
 			sChan.Format(RK_CHANNEL_SECTION, iUsedChan);
-			WrReg(sChan, RK_CHANNEL_INDEX, iChan);
-			#define CHANNELDEF(name, align, width) if (chan.m_n##name >= 0) WrReg(sChan, _T(#name), chan.m_n##name);
+			fIni.Put(sChan, RK_CHANNEL_INDEX, iChan);
+			#define CHANNELDEF(name, align, width) if (chan.m_n##name >= 0) fIni.Put(sChan, _T(#name), chan.m_n##name);
 			#define CHANNELDEF_EXCLUDE_NON_EVENTS	// only event properties
 			#include "ChannelDef.h"	// generate code to write channel event properties
 			#define CHANNELDEF(name, align, width) if (chan.m_n##name != CChannel::m_chanDefault.m_n##name) \
-				WrReg(sChan, _T(#name), chan.m_n##name);
+				fIni.Put(sChan, _T(#name), chan.m_n##name);
 			#define CHANNELDEF_EXCLUDE_EVENTS	// only non-event properties
 			#include "ChannelDef.h"	// generate code to write channel non-event properties
 			iUsedChan++;

@@ -16,6 +16,7 @@
 		06		04apr20	add chord modulation
 		07		08jun20	add offset modulation
 		08		16nov20	add tick dependencies
+		09		19feb22	add conditional to exclude track name
 
 */
 
@@ -23,7 +24,9 @@
 
 //			proptype	type		prefix	name		defval		minval			maxval			itemname		items
 #ifndef TRACKDEF_INT
+#ifndef TRACKDEF_EXCLUDE_NAME
 TRACKDEF(	VAR,		CString,	s,		Name,		_T(""),		0,				0,				NULL,			0			)	// track name
+#endif
 TRACKDEF(	ENUM,		int,		i,		Type,		0,			0,				0,				m_oiTrackType,	TRACK_TYPES	)	// track type
 #endif
 TRACKDEF(	VAR,		int,		n,		Channel,	9,			0,				MIDI_CHAN_MAX,	NULL,			0			)	// channel index
@@ -46,6 +49,7 @@ TRACKDEF(	VAR,		bool,		b,		Mute,		false,		0,				0,				NULL,			0			)	// true if m
 
 #undef TRACKDEF
 #undef TRACKDEF_INT
+#undef TRACKDEF_EXCLUDE_NAME
 #undef TRACKDEF_EXCLUDE_NOTE
 #undef TRACKDEF_EXCLUDE_LENGTH
 

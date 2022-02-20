@@ -111,9 +111,9 @@ int CProperties::GetSubgroup(int iProp) const
 	return GetPropertyInfo(iProp).iSubgroup;
 }
 
-void CProperties::ExportPropertyInfo(LPCTSTR szPath) const
+void CProperties::ExportPropertyInfo(LPCTSTR pszPath) const
 {
-	CStdioFile	fOut(szPath, CFile::modeCreate | CFile::modeWrite);
+	CStdioFile	fOut(pszPath, CFile::modeCreate | CFile::modeWrite);
 	int	nProps = GetPropertyCount();
 	for (int iProp = 0; iProp < nProps; iProp++) {
 		const PROPERTY_INFO&	info = GetPropertyInfo(iProp);
@@ -143,10 +143,10 @@ void CProperties::SetValue(int iProp, const void *pBuf, int nLen)
 	memcpy(LPBYTE(this) + info.nOffset, pBuf, info.nLen);
 }
 
-int CProperties::FindOption(LPCTSTR szOption, const CProperties::OPTION_INFO *pOption, int nOptions)
+int CProperties::FindOption(LPCTSTR pszOption, const CProperties::OPTION_INFO *pOption, int nOptions)
 {
 	for (int iOption = 0; iOption < nOptions; iOption++) {	// for each option
-		if (!_tcscmp(pOption[iOption].pszName, szOption))	// if option string matches
+		if (!_tcscmp(pOption[iOption].pszName, pszOption))	// if option string matches
 			return iOption;
 	}
 	return -1;	// option string not found

@@ -59,6 +59,8 @@
 		49		07nov21	move initial show/update to delayed create handler
 		50		11nov21	move static menu methods to app class
 		51		22jan22	add tempo pane to status bar
+		52		05feb22	refactor track and step index validation
+		53		15feb22	fix MIDI error handling to avoid endless messages
 
 */
 
@@ -1059,8 +1061,15 @@ LRESULT CMainFrame::OnPropertySelect(WPARAM wParam, LPARAM lParam)
 
 LRESULT	CMainFrame::OnMidiError(WPARAM wParam, LPARAM lParam)
 {
-	UNREFERENCED_PARAMETER(lParam);
-	theApp.OnMidiError(static_cast<MMRESULT>(wParam));
+	MMRESULT	nResult = static_cast<MMRESULT>(wParam);
+	CPolymeterDoc*	pDoc = reinterpret_cast<CPolymeterDoc*>(lParam);
+	ASSERT(pDoc != NULL);
+	theApp.m_pPlayingDoc = NULL;	// prevent OnTimer from querying MIDI stream
+	SetViewTimer(false);	// stop timer ASAP in case an exception gets thrown
+	theApp.OnMidiError(nResult);	// display error message; handler continues
+	if (pDoc != NULL) {	// be extra cautious since pointer was message argument
+		pDoc->StopPlayback();	// could throw an exception, so do this last
+	}
 	return 0;
 }
 
@@ -1143,7 +1152,7 @@ LRESULT CMainFrame::OnTrackPropertyChange(WPARAM wParam, LPARAM lParam)
 	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
 	if (pDoc != NULL) {	// if valid document
 		int	iTrack = static_cast<int>(wParam);
-		if (iTrack >= 0 && iTrack < pDoc->GetTrackCount()) {	// if valid track index
+		if (pDoc->m_Seq.IsTrackIndex(iTrack)) {	// if valid track index
 			int	iProp = static_cast<int>(lParam);
 			CPolymeterDoc::CPropHint	hint(iTrack, iProp);
 			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_TRACK_PROP, &hint);
@@ -1158,9 +1167,9 @@ LRESULT CMainFrame::OnTrackStepChange(WPARAM wParam, LPARAM lParam)
 	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
 	if (pDoc != NULL) {	// if valid document
 		int	iTrack = static_cast<int>(wParam);
-		if (iTrack >= 0 && iTrack < pDoc->GetTrackCount()) {	// if valid track index
+		if (pDoc->m_Seq.IsTrackIndex(iTrack)) {	// if valid track index
 			int	iStep = static_cast<int>(lParam);
-			if (iStep >= 0 && iStep < pDoc->m_Seq.GetLength(iTrack)) {	// if valid step index
+			if (pDoc->m_Seq.IsStepIndex(iTrack, iStep)) {	// if valid step index
 				CPolymeterDoc::CPropHint	hint(iTrack, iStep);
 				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_STEP, &hint);
 			}

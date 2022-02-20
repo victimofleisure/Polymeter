@@ -2649,11 +2649,27 @@ case, if the stopping flag is set, increment a count of done buffers. In the Pla
 function, after stopping the stream, wait for this count to reach the number of
 buffers, while sleeping periodically. Or more properly, in the callback, when the
 done buffer count reaches the desired number, set an event, and in the Play
-function, wait on the event with a timeout.
+function, wait on the event with a timeout. [Note: the number of buffers in
+use at any given time is too uncertain for this plan to be safe.]
 
 If the unprepare is doing it, another possible solution would be to loop on
 unprepare as long as it returns MIDIERR_STILLPLAYING, with a Sleep to avoid
 burning CPU. This is more or less shooting the messenger.
+
+MMRESULT CSequencer::UnprepareHeader(int iBuffer)
+{
+	int	nTries = 100;	// number of tries
+	int	nRetryPause = 10;	// retry pause in milliseconds
+	MMRESULT	nResult = MMSYSERR_NOERROR;
+	for (int iTry = 0; iTry < nTries; iTry++) {	// for each try
+		nResult = midiOutUnprepareHeader(
+			reinterpret_cast<HMIDIOUT>(m_hStrm), &m_arrMsgHdr[iBuffer], sizeof(MIDIHDR));
+		if (MIDI_SUCCEEDED(nResult) || nResult != MIDIERR_STILLPLAYING)	// if success or fatal error
+			break;	// exit loop
+		Sleep(nRetryPause);	// buffer still playing; pause and try again
+	}
+	return nResult;
+}
 
 Without a Mac to test against, there's no way to reproduce the issue, so no way
 to prove the above solution would help. I would tend to think it's a Mac / Wine

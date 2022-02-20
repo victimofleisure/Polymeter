@@ -25,6 +25,8 @@
 		15		16dec20	define initial tempo and time division
 		16		10feb21	overload set track property, add set unique names
         17		22jan22	add set tracks methods
+		18		05feb22	add step tie accessors
+		19		15feb22	don't inherit track base
 
 */
 
@@ -37,7 +39,7 @@
 #define SEQ_INIT_TEMPO 120
 #define SEQ_INIT_TIME_DIV 120
 
-class CSeqTrackArray : protected CTrackArray, public CTrackBase {
+class CSeqTrackArray : protected CTrackArray {	// protect base array for thread safety
 public:
 // Attributes
 	WCritSec&	GetCritSec();
@@ -49,6 +51,7 @@ public:
 	void	SetTracks(int iFirstTrack, const CTrackArray& arrTrack);
 	void	GetTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const;
 	void	SetTracks(const CIntArrayEx& arrSelection, const CTrackArray& arrTrack);
+	bool	IsTrackIndex(int iTrack) const;
 	const CTrack&	GetTrack(int iTrack) const;
 	void	SetTrack(int iTrack, const CTrack& track);
 	UINT	GetID(int iTrack) const;
@@ -86,9 +89,13 @@ public:
 	void	GetMutes(CMuteArray& arrMute) const;
 	void	SetMutes(const CMuteArray& arrMute);
 	void	SetSelectedMutes(const CIntArrayEx& arrSelection, bool bMute);
+	bool	IsStepIndex(int iTrack, int iStep) const;
 	STEP	GetStep(int iTrack, int iStep) const;
 	void	SetStep(int iTrack, int iStep, STEP nStep);
+	int		GetStepVelocity(int iTrack, int iStep) const;
 	void	SetStepVelocity(int iTrack, int iStep, int nVelocity);
+	bool	GetStepTie(int iTrack, int iStep) const;
+	void	SetStepTie(int iTrack, int iStep, bool bTie);
 	void	GetSteps(int iTrack, CStepArray& arrStep) const;
 	void	SetSteps(int iTrack, const CStepArray& arrStep);
 	void	GetSteps(const CRect& rSelection, CStepArrayArray& arrStepArray) const;
@@ -210,6 +217,11 @@ inline void CSeqTrackArray::GetTracks(int iFirstTrack, int nTracks, CTrackArray&
 inline void CSeqTrackArray::GetTracks(const CIntArrayEx& arrSelection, CTrackArray& arrTrack) const
 {
 	GetSelection(arrSelection, arrTrack);
+}
+
+inline bool CSeqTrackArray::IsTrackIndex(int iTrack) const
+{
+	return IsIndex(iTrack);
 }
 
 inline const CTrack& CSeqTrackArray::GetTrack(int iTrack) const
@@ -371,6 +383,11 @@ inline void CSeqTrackArray::ToggleMute(int iTrack)
 	GetAt(iTrack).m_bMute ^= 1;
 }
 
+inline bool CSeqTrackArray::IsStepIndex(int iTrack, int iStep) const
+{
+	return GetAt(iTrack).IsStepIndex(iStep);
+}
+
 inline CTrackBase::STEP CSeqTrackArray::GetStep(int iTrack, int iStep) const
 {
 	return GetAt(iTrack).m_arrStep[iStep];
@@ -381,9 +398,24 @@ inline void CSeqTrackArray::SetStep(int iTrack, int iStep, STEP nStep)
 	GetAt(iTrack).m_arrStep[iStep] = nStep;
 }
 
+inline int CSeqTrackArray::GetStepVelocity(int iTrack, int iStep) const
+{
+	return GetAt(iTrack).GetStepVelocity(iStep);
+}
+
 inline void CSeqTrackArray::SetStepVelocity(int iTrack, int iStep, int nVelocity)
 {
 	GetAt(iTrack).SetStepVelocity(iStep, nVelocity);
+}
+
+inline bool CSeqTrackArray::GetStepTie(int iTrack, int iStep) const
+{
+	return GetAt(iTrack).GetStepTie(iStep);
+}
+
+inline void CSeqTrackArray::SetStepTie(int iTrack, int iStep, bool bTie)
+{
+	GetAt(iTrack).SetStepTie(iStep, bTie);
 }
 
 inline int CSeqTrackArray::GetStepIndex(int iTrack, LONGLONG nPos) const

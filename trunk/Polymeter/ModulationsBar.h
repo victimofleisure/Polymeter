@@ -14,6 +14,7 @@
 		04		15apr20	add insert group command
 		05		19nov20	add show changed handler
 		06		20jun21	add list accessor
+		07		29jan22	don't horizontally scroll source column
 
 */
 
@@ -49,6 +50,7 @@ protected:
 	public:
 		virtual	CWnd*	CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
 		virtual	void	OnItemChange(LPCTSTR pszText);
+		virtual bool	AllowEnsureHorizontallyVisible(int iCol);
 	};
 	typedef CMap<CTrackBase::CModulation, CTrackBase::CModulation&, int, int> CModRefMap;
 

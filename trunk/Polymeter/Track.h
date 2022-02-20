@@ -37,6 +37,9 @@
         27		11nov21	refactor modulation crawler to support levels
 		28		19nov21	in track array, add find type
 		29		21jan22	add per-channel note overlap methods
+		30		05feb22	add step tie accessors
+		31		15feb22	add validate modulations method
+		32		19feb22	use INI file class directly instead of via profile
 
 */
 
@@ -69,6 +72,7 @@ public:
 		SB_TIE			= 0x80,		// if non-zero, note is tied; applies to note tracks only
 		// this flag can be used when toggling multiple steps; applies to note tracks only
 		SB_TOGGLE_TIE	= 0x100,	// if non-zero, toggle note's tie state
+		TIE_BIT_SHIFT	= 7,		// shift this many places to access tie bit
 	};
 	enum {	// mute bitmasks
 		MB_MUTE			= 0x01,		// mute state
@@ -84,6 +88,12 @@ public:
 		#include "TrackDef.h"	// generate modulation type enum
 		MODULATION_TYPES
 	};
+	enum {	// modulation type bitmasks
+		#define MODTYPEDEF(name) MTB_##name = 1 << MT_##name,	// limits us to 32 types
+		#include "TrackDef.h"	// generate modulation type bitmasks
+		// define bitmask for modulation types that fully support recursion
+		RECURSIVE_MOD_TYPE_MASK = MTB_Mute | MTB_Position | MTB_Offset,
+	};
 	enum {
 		#define RANGETYPEDEF(name) RT_##name,
 		#include "TrackDef.h"	// generate range type enum
@@ -97,6 +107,12 @@ public:
 		CHAN_NOTE_OVERLAP_SPLIT,	// split overlapping notes into shorter notes
 		CHAN_NOTE_OVERLAP_MERGE,	// merge overlapping notes into one long note
 		CHAN_NOTE_OVERLAP_METHODS,
+	};
+	enum {	// modulation errors, for CheckModulations
+		MODERR_NO_ERROR,
+		MODERR_UNSUPPORTED_MOD_TYPE,	// modulation type isn't supported
+		MODERR_INFINITE_LOOP,			// infinite modulation loop detected
+		MODULATION_ERRORS
 	};
 
 // Types
@@ -180,6 +196,7 @@ public:
 		CModulation(int iType, int iSource);
 		bool	operator==(const CModulation& mod) const;
 		bool	operator!=(const CModulation& mod) const;
+		bool	IsRecursiveType() const;
 		int		m_iType;	// index of modulation type, enumerated above
 		int		m_iSource;	// index of modulation source in track array, or -1 if none
 	};
@@ -206,6 +223,18 @@ public:
 	public:
 		void	Import(LPCTSTR pszPath, int nTracks);
 		void	Export(LPCTSTR pszPath) const;
+		void	SortByTarget();
+	};
+	class CModulationError : public CPackedModulation {
+	public:
+		CModulationError();
+		CModulationError(int iType, int iSource, int iTarget, int nError);
+		CModulationError(const CPackedModulation& mod, int nError);
+		int		m_nError;	// modulation error code, enumerated above
+	};
+	class CModulationErrorArray : public CArrayEx<CModulationError, CModulationError&> {
+	public:
+		void	SortByTarget();
 	};
 	struct STEP_EVENT {
 		int		nStart;		// event start time, as step index
@@ -246,6 +275,7 @@ public:
 	static	LPCTSTR	GetMidiSystemStatusMsgName(int iMsg);
 	static	int		FindMidiChannelVoiceMsgName(LPCTSTR pszName);
 	static	int		FindMidiSystemStatusMsgName(LPCTSTR pszName);
+	static	CString	GetTrackPrefixString();
 	static	CString	GetTrackNoneString();
 
 // Operations
@@ -260,7 +290,7 @@ protected:
 	static CString m_sTrackTypeName[TRACK_TYPES];
 	static CString m_sModulationTypeName[MODULATION_TYPES];
 	static CString m_sRangeTypeName[RANGE_TYPES];
-	static CString m_sTrack;	// track caption for unnamed tracks
+	static CString m_sTrackPrefix;	// prefix for unnamed tracks
 	static CString m_sTrackNone;	// caption for unspecified track
 	static const LPCTSTR m_arrMidiChannelVoiceMsgName[MIDI_CHANNEL_VOICE_MESSAGES];
 	static const LPCTSTR m_arrMidiSystemStatusMsgName[MIDI_SYSTEM_STATUS_MESSAGES];
@@ -369,6 +399,11 @@ inline int CTrackBase::FindMidiChannelVoiceMsgName(LPCTSTR pszName)
 inline int CTrackBase::FindMidiSystemStatusMsgName(LPCTSTR pszName)
 {
 	return ARRAY_FIND(m_arrMidiSystemStatusMsgName, pszName);
+}
+
+inline CString CTrackBase::GetTrackPrefixString()
+{
+	return m_sTrackPrefix;
 }
 
 inline CString CTrackBase::GetTrackNoneString()
@@ -483,6 +518,11 @@ inline bool CTrackBase::CModulation::operator!=(const CModulation& mod) const
 	return !operator==(mod);
 }
 
+inline bool CTrackBase::CModulation::IsRecursiveType() const
+{
+	return ((1 << m_iType) & CTrackBase::RECURSIVE_MOD_TYPE_MASK) != 0;
+}
+
 inline CTrackBase::CPackedModulation::CPackedModulation()
 {
 }
@@ -492,6 +532,22 @@ inline CTrackBase::CPackedModulation::CPackedModulation(int iType, int iSource, 
 	m_iType = iType;
 	m_iSource = iSource;
 	m_iTarget = iTarget;
+}
+
+inline CTrackBase::CModulationError::CModulationError()
+{
+}
+
+inline CTrackBase::CModulationError::CModulationError(int iType, int iSource, int iTarget, int nError) 
+	: CPackedModulation(iType, iSource, iTarget)
+{
+	m_nError = nError;
+}
+
+inline CTrackBase::CModulationError::CModulationError(const CPackedModulation& mod, int nError) 
+	: CPackedModulation(mod)
+{
+	m_nError = nError;
 }
 
 inline CTrackBase::CLoopRange::CLoopRange()
@@ -536,8 +592,11 @@ public:
 	bool	IsModulated() const;
 	void	GetPropertyValue(int iProp, void *pBuf, int nLen) const;
 	int		GetStepIndex(LONGLONG nPos) const;
+	bool	IsStepIndex(int iStep) const;
 	int		GetStepVelocity(int iStep) const;
 	void	SetStepVelocity(int iStep, int nVelocity);
+	bool	GetStepTie(int iStep) const;
+	void	SetStepTie(int iStep, bool bTie);
 	void	GetTickDepends(CTickDepends& tickDepends) const;
 	void	SetTickDepends(const CTickDepends& tickDepends);
 	void	ScaleTickDepends(double fScale);
@@ -609,6 +668,11 @@ inline bool CTrack::IsModulated() const
 	return m_arrModulator.GetSize() > 0;
 }
 
+inline bool CTrack::IsStepIndex(int iStep) const
+{
+	return m_arrStep.IsIndex(iStep);
+}
+
 inline int CTrack::GetStepVelocity(int iStep) const
 {
 	return m_arrStep[iStep] & SB_VELOCITY;
@@ -620,7 +684,18 @@ inline void CTrack::SetStepVelocity(int iStep, int nVelocity)
 	m_arrStep[iStep] |= nVelocity & SB_VELOCITY;
 }
 
-class CTrackArray : public CArrayEx<CTrack, CTrack&> {
+inline bool CTrack::GetStepTie(int iStep) const
+{
+	return (m_arrStep[iStep] & SB_TIE) != 0;
+}
+
+inline void CTrack::SetStepTie(int iStep, bool bTie)
+{
+	m_arrStep[iStep] &= ~SB_TIE;
+	m_arrStep[iStep] |= bTie << TIE_BIT_SHIFT;
+}
+
+class CTrackArray : public CArrayEx<CTrack, CTrack&>, public CTrackBase {
 public:
 // Constants
 	enum {	// find flags
@@ -640,25 +715,28 @@ public:
 	void	ExportTracks(const CIntArrayEx *parrSelection, LPCTSTR pszPath) const;
 	int		FindName(const CString& sName, int iStart = 0, UINT nFlags = 0) const;
 	int		FindType(int iType, int iStart = 0) const;
-	void	GetModulationTargets(CTrack::CModulationArrayArray& arrTarget) const;
-	void	GetLinkedTracks(const CIntArrayEx& arrSelection, CTrack::CPackedModulationArray& arrMod, UINT nLinkFlags = MODLINKF_SOURCE, int nLevels = 1) const;
+	void	GetModulationTargets(CModulationArrayArray& arrTarget) const;
+	bool	CheckModulations(CModulationErrorArray& arrError) const;
+	void	GetLinkedTracks(const CIntArrayEx& arrSelection, CPackedModulationArray& arrMod, UINT nLinkFlags = MODLINKF_SOURCE, int nLevels = 1) const;
 
 protected:
 // Types
 	class CModulationCrawler {
 	public:
-		CModulationCrawler(const CTrackArray& arrTrack, CTrack::CPackedModulationArray& arrMod, UINT nLinkFlags = MODLINKF_SOURCE, int nLevels = 1);
+		CModulationCrawler(const CTrackArray& arrTrack, CPackedModulationArray& arrMod, UINT nLinkFlags = MODLINKF_SOURCE, int nLevels = 1);
 		void	Crawl(const CIntArrayEx& arrSelection);
+		bool	LoopCheck();
 
 	protected:
 		const CTrackArray&	m_arrTrack;	// reference to parent track array
-		CTrack::CPackedModulationArray&	m_arrMod;	// reference to output array of modulations
+		CPackedModulationArray&	m_arrMod;	// reference to output array of modulations
 		CBoolArrayEx	m_arrIsCrawled;	// for each track, true if track has already been crawled
-		CTrack::CModulationArrayArray	m_arrTarget;	// for each track, array of modulation targets
+		CModulationArrayArray	m_arrTarget;	// for each track, array of modulation targets
 		UINT	m_nLinkFlags;	// modulation linkage flags; see enum above
 		int		m_nLevels;		// maximum number of modulation levels
 		int		m_nDepth;		// current recursion depth of crawl
 		void	Recurse(int iTrack);
+		bool	LoopCheckRecurse(int iTrack);
 	};
 
 // Helpers
@@ -667,7 +745,7 @@ protected:
 
 class CImportTrackArray : public CTrackArray {
 public:
-	bool	ImportMidiFile(LPCTSTR szPath, int nOutTimeDiv, double fQuantization);
+	bool	ImportMidiFile(LPCTSTR pszPath, int nOutTimeDiv, double fQuantization);
 	bool	ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTrack, const CStringArrayEx& arrInTrackName, int nInTimeDiv, int nOutTimeDiv, double fQuantization);
 
 protected:
@@ -685,11 +763,13 @@ public:
 	CIntArrayEx	m_arrTrackIdx;		// array of track indices
 };
 
+class CIniFile;
+
 class CTrackGroupArray : public CArrayEx<CTrackGroup, CTrackGroup&> {
 public:
 	void	OnTrackArrayEdit(const CIntArrayEx& arrTrackMap);
-	void	Read(LPCTSTR pszSection);
-	void	Write(LPCTSTR pszSection) const;
+	void	Read(CIniFile& fIni, LPCTSTR pszSection);
+	void	Write(CIniFile& fIni, LPCTSTR pszSection) const;
 	void	Dump() const;
 	void	GetTrackRefs(CIntArrayEx& arrTrackIdx) const;
 	void	SortByName(CPtrArrayEx *parrSortedPtr = NULL);

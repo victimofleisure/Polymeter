@@ -10,6 +10,7 @@
         00      17apr18	initial version
 		01		27mar20	refresh cache after displaying message box
 		02		08jun21	fix warning for CString as variadic argument
+		03		18feb22	move index validator to array base class
 
 */
 
@@ -47,7 +48,7 @@ bool CMidiDevices::CSelection::operator==(const CSelection& sel) const
 
 void CMidiDevices::CDeviceArray::SetIdx(int iDev)
 {
-	if (IsValid(iDev))
+	if (IsIndex(iDev))
 		m_iDev = iDev;
 	else
 		m_iDev = -1;
@@ -55,7 +56,7 @@ void CMidiDevices::CDeviceArray::SetIdx(int iDev)
 
 CString CMidiDevices::CDeviceArray::GetName(int iDev) const
 {
-	if (IsValid(iDev))
+	if (IsIndex(iDev))
 		return GetAt(iDev).m_sName;
 	else
 		return _T("");
@@ -63,7 +64,7 @@ CString CMidiDevices::CDeviceArray::GetName(int iDev) const
 
 CString	CMidiDevices::CDeviceArray::GetID(int iDev) const
 {
-	if (IsValid(iDev))
+	if (IsIndex(iDev))
 		return GetAt(iDev).m_sID;
 	else
 		return _T("");
@@ -71,7 +72,7 @@ CString	CMidiDevices::CDeviceArray::GetID(int iDev) const
 
 void CMidiDevices::CDeviceArray::GetDevice(int iDev, CDevice& dev) const
 {
-	if (IsValid(iDev))
+	if (IsIndex(iDev))
 		dev = GetAt(iDev);
 	else
 		dev.Empty();

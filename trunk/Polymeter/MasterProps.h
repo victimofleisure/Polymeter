@@ -82,7 +82,7 @@ public:
 // Attributes
 
 // Operations
-	static	int		FindProperty(LPCTSTR szInternalName);
+	static	int		FindProperty(LPCTSTR pszInternalName);
 };
 
 inline int CMasterProps::GetTimeDivisionTicks() const

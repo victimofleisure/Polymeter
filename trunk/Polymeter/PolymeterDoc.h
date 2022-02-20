@@ -42,6 +42,8 @@
 		32		25oct21 in sort mappings, add optional sort direction
 		33		30oct21	move song duration method from sequencer to here
 		34		23nov21	add method to export tempo map
+		35		15feb22	add check modulations command
+		36		19feb22	use INI file class directly instead of via profile
 
 */
 
@@ -59,6 +61,7 @@
 
 class COptions;
 class CVelocityTransform;
+class CIniFile;
 
 class CPolymeterDoc : public CDocument, public CMasterProps, public CUndoable, public CTrackBase
 {
@@ -114,8 +117,10 @@ public:
 // Types
 	typedef CMap<UINT, UINT, int, int> CTrackIDMap;
 	class CMySequencer : public CSequencer {
-	public:
+	protected:
 		virtual void OnMidiError(MMRESULT nResult);
+		CPolymeterDoc	*m_pDocument;	// pointer to parent document
+		friend class CPolymeterDoc;
 	};
 	class CPropHint : public CObject {
 	public:
@@ -201,8 +206,8 @@ public:
 
 // Operations
 public:
-	void	ReadProperties(LPCTSTR szPath);
-	void	WriteProperties(LPCTSTR szPath) const;
+	void	ReadProperties(LPCTSTR pszPath);
+	void	WriteProperties(LPCTSTR pszPath) const;
 	void	ApplyOptions(const COptions *pPrevOptions);
 	static	void	SecsToTime(int nSecs, CString& sTime);
 	static	int		TimeToSecs(LPCTSTR pszTime);
@@ -254,6 +259,7 @@ public:
 	bool	ValidateTrackProperty(int iTrack, int iProp, const CComVariant& val) const;
 	bool	ValidateTrackProperty(const CIntArrayEx& arrSelection, int iProp, const CComVariant& val) const;
 	bool	Play(bool bPlay, bool bRecord = false);
+	void	StopPlayback();
 	void	UpdateSongLength();
 	void	SetDubs(const CRect& rSelection, double fTicksPerCell, bool bMute);
 	void	ToggleDubs(const CRect& rSelection, double fTicksPerCell);
@@ -449,8 +455,8 @@ protected:
 	virtual	void	RestoreUndoState(const CUndoState& State);
 
 // Helpers
-	void	ReadTrackModulations(CString sTrkID, CTrack& trk);
-	void	WriteTrackModulations(CString sTrkID, const CTrack& trk) const;
+	void	ReadTrackModulations(CIniFile& fIni, CString sTrkID, CTrack& trk);
+	void	WriteTrackModulations(CIniFile& fIni, CString sTrkID, const CTrack& trk) const;
 	void	ConvertLegacyFileFormat();
 	static	int TrackSortCompare(const void *pElem1, const void *pElem2);
 	static	void	MakeSelectionRange(CIntArrayEx& arrSelection, int iFirstItem, int nItems);
@@ -463,9 +469,12 @@ protected:
 	int		CellToTime(int iCell, double fTicksPerCell, int nSongTimeShift) const;
 	bool	PromptForExportParams(bool bSongMode, int& nDuration);
 	void	SaveRecordedMidiInput();
-	void	StopPlayback();
 	void	TransformStepVelocity(int iTrack, int iStep, int nSteps, CVelocityTransform &trans);
 	bool	PostTransformStepVelocity(const CVelocityTransform &trans, const CRect *prStepSel);
+	void	ReadEnum(CIniFile& fIni, LPCTSTR pszSection, LPCTSTR pszKey, int& Value, const CProperties::OPTION_INFO *pOption, int nOptions);
+	void	WriteEnum(CIniFile& fIni, LPCTSTR pszSection, LPCTSTR pszKey, const int& Value, const CProperties::OPTION_INFO *pOption, int nOptions) const;
+	template<class T> void ReadEnum(CIniFile&, LPCTSTR, LPCTSTR, T&, const CProperties::OPTION_INFO*, int);
+	template<class T> void WriteEnum(CIniFile&, LPCTSTR, LPCTSTR, const T&, const CProperties::OPTION_INFO*, int) const;
 
 // Undo helpers
 	void	SaveTrackProperty(CUndoState& State) const;
@@ -600,6 +609,7 @@ protected:
 	afx_msg void OnUpdateToolsTimeToRepeat(CCmdUI *pCmdUI);
 	afx_msg void OnToolsPrimeFactors();
 	afx_msg void OnToolsVelocityRange();
+	afx_msg void OnToolsCheckModulations();
 	afx_msg void OnToolsImportSteps();
 	afx_msg void OnToolsExportSteps();
 	afx_msg void OnToolsImportModulations();

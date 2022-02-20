@@ -100,14 +100,19 @@
 <p>For tempo tracks and tempo modulators, Duration is repurposed to be the range of the tempo change, as a percentage; see <a href="../../Tracks/Tempo_tracks.htm">tempo tracks</a>.
 
 <a name="Track_Range_Type"><p><b>Range Type</b></a>
-<p>This is the type of range to be applied to the track. Range only affects note tracks. The Octave type forces the output note to stay within a one-octave range, the bottom of which is determined by the <a href="../../Views/Track_View/Track_Grid.htm#Track_Range_Start">Range Start</a> property. The note is shifted by as many octaves as necessary to keep it within the specified range. For chords and arpeggios, this produces inversions.
+<p>This is the type of range to be applied to the track. Range only affects <a href="../../Tracks/Note_tracks.htm">note tracks</a>. The types are listed below.
 
-<p>The Dual type is similar except that it creates a two-octave range, and assigns the note to the upper or lower octave depending on its pitch. The Range Start property determines the start of the upper octave. If the note is below the Range Start value, it's shifted to the lower octave, otherwise it's shifted to the upper octave.
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Type</th><th>Meaning</th></tr>
+<tr><td>None</td><td>No range is applied, and any range modulators targeting this track have no effect.</td></tr>
+<tr><td>Octave</td><td>The output note is forced to stay within a one-octave range, the bottom of which is determined by the <a href="../../Views/Track_View/Track_Grid.htm#Track_Range_Start">Range Start</a> property. The note is shifted by as many octaves as necessary to keep it within the specified range. For chords and arpeggios, this produces inversions.</td></tr>
+<tr><td>Dual</td><td>Similar to Octave except that it creates a two-octave range, and assigns the note to the upper or lower octave depending on its pitch. The Range Start property determines the start of the upper octave. If the note is below the Range Start value, it's shifted to the lower octave, otherwise it's shifted to the upper octave.</td></tr>
+</table>
 
-<p>Range can be used to limit the width of <a href="../../Modulation/Note_modulation.htm">note modulation</a>. Range behaves differently when <a href="../../Modulation/Scale_modulation.htm">scale modulation</a> and/or <a href="../../Modulation/Chord_modulation.htm">chord modulation</a> are used.
+<p>The range's start note can be altered via <a href="../../Modulation/Range_modulation.htm">range modulation</a>, but only if range type isn't None. Range can be used to limit the width of <a href="../../Modulation/Note_modulation.htm">note modulation</a>. Range behaves differently when <a href="../../Modulation/Scale_modulation.htm">scale modulation</a> and/or <a href="../../Modulation/Chord_modulation.htm">chord modulation</a> are used.
 
 <a name="Track_Range_Start"><p><b>Range Start</b></a>
-<p>This is the starting note of the range to apply to the track. It only affects note tracks, and only has an effect if <a href="../../Views/Track_View/Track_Grid.htm#Track_Range_Type">Range Type</a> isn't None. Range start can be modulated via <a href="../../Modulation/Range_modulation.htm">range modulation</a>.
+<p>This is the starting note of the range to apply to the track. It only affects note tracks, and only has an effect if <a href="../../Views/Track_View/Track_Grid.htm#Track_Range_Type">Range Type</a> isn't None. Range start can be altered via <a href="../../Modulation/Range_modulation.htm">range modulation</a>.
 
 <!--  content stops HERE  -->
 			

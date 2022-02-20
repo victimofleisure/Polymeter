@@ -21,6 +21,7 @@
 		11		04jun18	give popup edit control non-zero ID
 		12		15dec18	only handle tab key if control key is up
 		13		17nov20	in OnLButtonDown, set focus before editing subitem
+		14		29jan22	ensure item to be edited is horizontally visible
 
 		grid control
  
@@ -61,6 +62,8 @@ bool CGridCtrl::EditSubitem(int iRow, int iCol)
 	ASSERT(iCol >= 1 && iCol < GetColumnCount());	// subitems only
 	EndEdit();	// end previous edit if any
 	EnsureVisible(iRow, FALSE);	// make sure specified row is fully visible
+	if (AllowEnsureHorizontallyVisible(iCol))
+		EnsureHorizontallyVisible(iRow, iCol);
 	CRect	rSubitem;
 	GetSubItemRect(iRow, iCol, LVIR_BOUNDS, rSubitem);	// get subitem rect
 	// clip siblings is mandatory, else edit control overwrites header control
@@ -139,6 +142,12 @@ CWnd *CGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect
 void CGridCtrl::OnItemChange(LPCTSTR pszText)
 {
 	SetItemText(m_iEditRow, m_iEditCol, pszText);
+}
+
+bool CGridCtrl::AllowEnsureHorizontallyVisible(int iCol)
+{
+	UNREFERENCED_PARAMETER(iCol);
+	return true;
 }
 
 BEGIN_MESSAGE_MAP(CGridCtrl, CDragVirtualListCtrl)

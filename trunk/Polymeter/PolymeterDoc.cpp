@@ -79,6 +79,9 @@
 		69		15nov21	add tempo map to export song as CSV
 		70		23nov21	add method to export tempo map
 		71		21jan22	add note overlap method and bump file version
+		72		05feb22	bump file version for tie mapping
+		73		15feb22	add check modulations command
+		74		19feb22	use INI file class directly instead of via profile
 
 */
 
@@ -119,25 +122,33 @@
 
 IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
-#define FILE_ID			_T("Polymeter")
-#define	FILE_VERSION	19
+// file versioning
+#define FILE_ID				_T("Polymeter")
+#define	FILE_VERSION		20
 
-#define RK_FILE_ID		_T("FileID")
-#define RK_FILE_VERSION	_T("FileVersion")
+// file format keys
+#define RK_FILE_ID			_T("FileID")
+#define RK_FILE_VERSION		_T("FileVersion")
 
-#define RK_TRACK_COUNT	_T("Tracks")
-#define RK_TRACK_LENGTH	_T("Length")
-#define RK_TRACK_COLOR	_T("Color")
-#define RK_TRACK_STEP	_T("Step")
+// track member keys
+#define RK_TRACK_COUNT		_T("Tracks")
+#define RK_TRACK_IDX		_T("Track%d")
+#define RK_TRACK_LENGTH		_T("Length")
+#define RK_TRACK_COLOR		_T("Color")
+#define RK_TRACK_STEP		_T("Step")
 #define RK_TRACK_DUB_ARRAY	_T("Dub")
 #define RK_TRACK_DUB_COUNT	_T("Dubs")
-#define RK_TRACK_MODULATIONS	_T("Mods")
+#define RK_TRACK_MOD_LIST	_T("Mods")
 
-#define RK_MASTER		_T("Master")
-#define RK_STEP_ZOOM	_T("Zoom")
-#define RK_SONG_ZOOM	_T("Zoom")
-#define RK_VIEW_TYPE	_T("ViewType")
+// other document member keys
+#define RK_MASTER			_T("Master")
+#define RK_STEP_ZOOM		_T("Zoom")
+#define RK_SONG_ZOOM		_T("Zoom")
+#define RK_VIEW_TYPE		_T("ViewType")
+#define RK_PART_SECTION		_T("Part")
+#define RK_RECORD_EVENTS	_T("RecordEvents")
 
+// persistence keys
 #define RK_TRANSPOSE_DLG	REG_SETTINGS _T("\\Transpose")
 #define RK_TRANSPOSE_NOTES	_T("nNotes")
 #define RK_SHIFT_DLG		REG_SETTINGS _T("\\Shift")
@@ -147,10 +158,8 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 #define RK_STRETCH_DLG		REG_SETTINGS _T("\\Stretch")
 #define RK_STRETCH_PERCENT	_T("fPercent")
 #define RK_STRETCH_LERP		_T("bLerp")
-#define RK_PART_SECTION		_T("Part")
 #define RK_OFFSET_DLG		REG_SETTINGS _T("\\Offset")
 #define RK_OFFSET_TICKS		_T("nTicks")
-#define RK_RECORD_EVENTS	_T("RecordEvents")
 #define RK_GO_TO_POS_DLG	REG_SETTINGS _T("\\GoToPos")
 #define RK_GO_TO_POS_FORMAT	_T("nFormat")
 
@@ -191,6 +200,7 @@ CString	CPolymeterDoc::CMyUndoManager::m_sRedoPrefix;
 
 CPolymeterDoc::CPolymeterDoc() 
 {
+	m_Seq.m_pDocument = this;
 	m_nFileVersion = FILE_VERSION;
 	m_UndoMgr.SetRoot(this);
 	SetUndoManager(&m_UndoMgr);
@@ -212,7 +222,7 @@ CPolymeterDoc::~CPolymeterDoc()
 
 void CPolymeterDoc::CMySequencer::OnMidiError(MMRESULT nResult)
 {
-	theApp.GetMainFrame()->PostMessage(UWM_MIDI_ERROR, nResult, LPARAM(this));
+	theApp.GetMainFrame()->PostMessage(UWM_MIDI_ERROR, nResult, LPARAM(m_pDocument));
 	switch (nResult) {
 	case CSequencer::SEQERR_CALLBACK_TOO_LONG:
 		break;	// non-fatal error
@@ -367,29 +377,29 @@ void CPolymeterDoc::Serialize(CArchive& ar)
 	}
 }
 
-void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
+void CPolymeterDoc::ReadProperties(LPCTSTR pszPath)
 {
-	CIniFile	f(szPath, false);	// reading
-	f.Read();	// read INI file
+	CIniFile	fIni(pszPath, false);	// reading
+	fIni.Read();	// read INI file
 	CString	sFileID;
-	RdReg(RK_FILE_ID, sFileID);
+	fIni.Get(RK_FILE_ID, sFileID);
 	if (sFileID != FILE_ID) {	// if unexpected file ID
 		CString	msg;
-		AfxFormatString1(msg, IDS_DOC_BAD_FORMAT, szPath);
+		AfxFormatString1(msg, IDS_DOC_BAD_FORMAT, pszPath);
 		AfxMessageBox(msg);
 		AfxThrowUserException();	// fatal error
 	}
-	RdReg(RK_FILE_VERSION, m_nFileVersion);
-	if (m_nFileVersion > FILE_VERSION) {	// if file is from a later version
+	fIni.Get(RK_FILE_VERSION, m_nFileVersion);
+	if (m_nFileVersion > FILE_VERSION) {	// if file is from a newer version
 		CString	msg;
-		AfxFormatString1(msg, IDS_DOC_NEWER_VERSION, szPath);
+		AfxFormatString1(msg, IDS_DOC_NEWER_VERSION, pszPath);
 		AfxMessageBox(msg);
 	}
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
 		if (PT_##proptype == PT_ENUM) \
-			ReadEnum(RK_MASTER, _T(#name), m_##name, itemname, items); \
+			ReadEnum(fIni, RK_MASTER, _T(#name), m_##name, itemname, items); \
 		else \
-			RdReg(RK_MASTER, _T(#name), m_##name);
+			fIni.Get(RK_MASTER, _T(#name), m_##name);
 	#include "MasterPropsDef.h"	// generate code to read master properties
 	m_Seq.SetTempo(m_fTempo);
 	m_Seq.SetTimeDivision(GetTimeDivisionTicks());
@@ -399,7 +409,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 	m_Seq.SetLoopRange(CLoopRange(m_nLoopFrom, m_nLoopTo));
 	m_nSongPos = m_nStartPos;	// also set our cached song position
 	int	nTracks = 0;
-	RdReg(RK_TRACK_COUNT, nTracks);
+	fIni.Get(RK_TRACK_COUNT, nTracks);
 	ASSERT(!GetTrackCount());	// track array should be empty for proper initialization
 	m_Seq.SetTrackCount(nTracks);
 	LPCTSTR	pszStepKey;
@@ -410,105 +420,105 @@ void CPolymeterDoc::ReadProperties(LPCTSTR szPath)
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		CTrack	trk(true);	// initialize to defaults
 		CString	sTrkID;
-		sTrkID.Format(_T("Track%d"), iTrack);
+		sTrkID.Format(RK_TRACK_IDX, iTrack);
 		#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
 			if (PT_##proptype == PT_ENUM) \
-				ReadEnum(sTrkID, _T(#name), trk.m_##prefix##name, itemopt, items); \
+				ReadEnum(fIni, sTrkID, _T(#name), trk.m_##prefix##name, itemopt, items); \
 			else \
-				RdReg(sTrkID, _T(#name), trk.m_##prefix##name);
-		#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
+				fIni.Get(sTrkID, _T(#name), trk.m_##prefix##name);
+		#define TRACKDEF_EXCLUDE_LENGTH	// exclude track length
 		#include "TrackDef.h"		// generate code to read track properties
-		trk.m_clrCustom = theApp.GetProfileInt(sTrkID, RK_TRACK_COLOR, -1);
-		int	nLength = theApp.GetProfileInt(sTrkID, RK_TRACK_LENGTH, INIT_STEPS);
+		trk.m_clrCustom = fIni.GetInt(sTrkID, RK_TRACK_COLOR, -1);
+		int	nLength = fIni.GetInt(sTrkID, RK_TRACK_LENGTH, INIT_STEPS);
 		trk.m_arrStep.SetSize(nLength);
-		DWORD	nReadSize = nLength;
-		CPersist::GetBinary(sTrkID, pszStepKey, trk.m_arrStep.GetData(), &nReadSize);
-		int	nDubs = theApp.GetProfileInt(sTrkID, RK_TRACK_DUB_COUNT, 0);
+		UINT	nReadSize = nLength;
+		fIni.GetBinary(sTrkID, pszStepKey, trk.m_arrStep.GetData(), nReadSize);
+		int	nDubs = fIni.GetInt(sTrkID, RK_TRACK_DUB_COUNT, 0);
 		if (nDubs) {	// if track has dubs
 			trk.m_arrDub.SetSize(nDubs);
 			nReadSize = nDubs * sizeof(CDub);
-			CPersist::GetBinary(sTrkID, RK_TRACK_DUB_ARRAY, trk.m_arrDub.GetData(), &nReadSize);
+			fIni.GetBinary(sTrkID, RK_TRACK_DUB_ARRAY, trk.m_arrDub.GetData(), nReadSize);
 			if (!trk.m_arrDub[0].m_nTime) {	// if first dub time is zero
 				ASSERT(m_nFileVersion < 10);	// should only occur in older versions
 				trk.m_arrDub[0].m_nTime = MIN_DUB_TIME;	// update to allow negative dub times
 			}
 		}
-		ReadTrackModulations(sTrkID, trk);	// read modulations if any
+		ReadTrackModulations(fIni, sTrkID, trk);	// read modulations if any
 		m_Seq.SetTrack(iTrack, trk);
 	}
 	if (m_nFileVersion < FILE_VERSION)	// if older format
 		ConvertLegacyFileFormat();
-	m_arrChannel.Read();	// read channels
-	m_arrPreset.Read(GetTrackCount());	// read presets
-	m_arrPart.Read(RK_PART_SECTION);		// read parts
-	RdReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
-	RdReg(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
+	m_arrChannel.Read(fIni);	// read channels
+	m_arrPreset.Read(fIni, GetTrackCount());	// read presets
+	m_arrPart.Read(fIni, RK_PART_SECTION);		// read parts
+	fIni.Get(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
+	fIni.Get(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
 	CString	sViewTypeName;
-	RdReg(RK_VIEW_TYPE, sViewTypeName);
+	fIni.Get(RK_VIEW_TYPE, sViewTypeName);
 	LPCTSTR	pszViewTypeName = sViewTypeName;
 	int	nViewType = ARRAY_FIND(m_arrViewTypeName, pszViewTypeName);
 	if (nViewType >= 0)
 		m_nViewType = nViewType;
 	CMidiEventArray	arrRecordEvent;
-	theApp.GetProfileArray(arrRecordEvent, REG_SETTINGS, RK_RECORD_EVENTS);	// read recorded events if any
+	fIni.GetArray(arrRecordEvent, REG_SETTINGS, RK_RECORD_EVENTS);	// read recorded events if any
 	m_Seq.AttachRecordedEvents(arrRecordEvent);	// load recorded events into sequencer
 	CMappingArray	arrMapping;
-	arrMapping.Read();
+	arrMapping.Read(fIni);
 	m_Seq.m_mapping.Attach(arrMapping);
 }
 
-void CPolymeterDoc::WriteProperties(LPCTSTR szPath) const
+void CPolymeterDoc::WriteProperties(LPCTSTR pszPath) const
 {
-	CIniFile	f(szPath, true);	// writing
-	WrReg(RK_FILE_ID, CString(FILE_ID));
-	WrReg(RK_FILE_VERSION, FILE_VERSION);
+	CIniFile	fIni(pszPath, true);	// writing
+	fIni.Put(RK_FILE_ID, CString(FILE_ID));
+	fIni.Put(RK_FILE_VERSION, FILE_VERSION);
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
 		if (PT_##proptype == PT_ENUM) \
-			WriteEnum(RK_MASTER, _T(#name), m_##name, itemname, items); \
+			WriteEnum(fIni, RK_MASTER, _T(#name), m_##name, itemname, items); \
 		else \
-			WrReg(RK_MASTER, _T(#name), m_##name);
+			fIni.Put(RK_MASTER, _T(#name), m_##name);
 	#include "MasterPropsDef.h"	// generate code to write master properties
 	int	nTracks = GetTrackCount();
-	WrReg(RK_TRACK_COUNT, nTracks);
+	fIni.Put(RK_TRACK_COUNT, nTracks);
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		const CTrack&	trk = m_Seq.GetTrack(iTrack);
 		CString	sTrkID;
-		sTrkID.Format(_T("Track%d"), iTrack);
+		sTrkID.Format(RK_TRACK_IDX, iTrack);
 		#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
 			if (PT_##proptype == PT_ENUM) \
-				WriteEnum(sTrkID, _T(#name), trk.m_##prefix##name, itemopt, items); \
+				WriteEnum(fIni, sTrkID, _T(#name), trk.m_##prefix##name, itemopt, items); \
 			else \
-				WrReg(sTrkID, _T(#name), trk.m_##prefix##name);
-		#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
+				fIni.Put(sTrkID, _T(#name), trk.m_##prefix##name);
+		#define TRACKDEF_EXCLUDE_LENGTH	// exclude track length
 		#include "TrackDef.h"		// generate code to write track properties
 		if (static_cast<int>(trk.m_clrCustom) >= 0)	// if track color specified
-			theApp.WriteProfileInt(sTrkID, RK_TRACK_COLOR, trk.m_clrCustom);
-		theApp.WriteProfileInt(sTrkID, RK_TRACK_LENGTH, trk.GetLength());
-		CPersist::WriteBinary(sTrkID, RK_TRACK_STEP, trk.m_arrStep.GetData(), trk.GetUsedStepCount());
+			fIni.WriteInt(sTrkID, RK_TRACK_COLOR, trk.m_clrCustom);
+		fIni.WriteInt(sTrkID, RK_TRACK_LENGTH, trk.GetLength());
+		fIni.WriteBinary(sTrkID, RK_TRACK_STEP, trk.m_arrStep.GetData(), trk.GetUsedStepCount());
 		DWORD	nDubs = trk.m_arrDub.GetSize();
 		if (nDubs) {	// if track has dubs
-			theApp.WriteProfileInt(sTrkID, RK_TRACK_DUB_COUNT, nDubs);
-			CPersist::WriteBinary(sTrkID, RK_TRACK_DUB_ARRAY, trk.m_arrDub.GetData(), nDubs * sizeof(CDub));
+			fIni.WriteInt(sTrkID, RK_TRACK_DUB_COUNT, nDubs);
+			fIni.WriteBinary(sTrkID, RK_TRACK_DUB_ARRAY, trk.m_arrDub.GetData(), nDubs * sizeof(CDub));
 		}
 		if (trk.IsModulated())	// if track has modulations
-			WriteTrackModulations(sTrkID, trk);	// write modulations
+			WriteTrackModulations(fIni, sTrkID, trk);	// write modulations
 	}
-	m_arrChannel.Write();	// write channels
-	m_arrPreset.Write();	// write presets
-	m_arrPart.Write(RK_PART_SECTION);	// write parts
-	WrReg(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
-	WrReg(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
-	WrReg(RK_VIEW_TYPE, CString(m_arrViewTypeName[m_nViewType]));
+	m_arrChannel.Write(fIni);	// write channels
+	m_arrPreset.Write(fIni);	// write presets
+	m_arrPart.Write(fIni, RK_PART_SECTION);	// write parts
+	fIni.Put(RK_STEP_VIEW, RK_STEP_ZOOM, m_fStepZoom);
+	fIni.Put(RK_SONG_VIEW, RK_SONG_ZOOM, m_fSongZoom);
+	fIni.Put(RK_VIEW_TYPE, CString(m_arrViewTypeName[m_nViewType]));
 	if (m_Seq.GetRecordedEventCount())	// if recorded events to write
-		theApp.WriteProfileArray(m_Seq.GetRecordedEvents(), REG_SETTINGS, RK_RECORD_EVENTS);
+		fIni.WriteArray(m_Seq.GetRecordedEvents(), REG_SETTINGS, RK_RECORD_EVENTS);
 	if (m_Seq.m_mapping.GetArray().GetSize())	// if mappings to write
-		m_Seq.m_mapping.GetArray().Write();
-	f.Write();	// write INI file
+		m_Seq.m_mapping.GetArray().Write(fIni);
+	fIni.Write();	// write INI file
 }
 
-__forceinline void CPolymeterDoc::ReadTrackModulations(CString sTrkID, CTrack& trk)
+__forceinline void CPolymeterDoc::ReadTrackModulations(CIniFile& fIni, CString sTrkID, CTrack& trk)
 {
-	CString	sModList(CPersist::GetString(sTrkID, RK_TRACK_MODULATIONS));
+	CString	sModList(fIni.GetString(sTrkID, RK_TRACK_MOD_LIST));
 	if (!sModList.IsEmpty()) {	// if any modulations
 		CString	sMod;
 		int	iToken = 0;
@@ -528,7 +538,7 @@ __forceinline void CPolymeterDoc::ReadTrackModulations(CString sTrkID, CTrack& t
 	}
 }
 
-__forceinline void CPolymeterDoc::WriteTrackModulations(CString sTrkID, const CTrack& trk) const
+__forceinline void CPolymeterDoc::WriteTrackModulations(CIniFile& fIni, CString sTrkID, const CTrack& trk) const
 {
 	CString	sModSource, sModList;
 	int	nMods = trk.m_arrModulator.GetSize();
@@ -542,7 +552,7 @@ __forceinline void CPolymeterDoc::WriteTrackModulations(CString sTrkID, const CT
 			sModList += GetModulationTypeInternalName(mod.m_iType) + sModSource;
 		}
 	}
-	CPersist::WriteString(sTrkID, RK_TRACK_MODULATIONS, sModList);
+	fIni.WriteString(sTrkID, RK_TRACK_MOD_LIST, sModList);
 }
 
 void CPolymeterDoc::ConvertLegacyFileFormat()
@@ -559,6 +569,35 @@ void CPolymeterDoc::ConvertLegacyFileFormat()
 			}
 		}
 	}
+}
+
+inline void CPolymeterDoc::ReadEnum(CIniFile& fIni, LPCTSTR pszSection, LPCTSTR pszKey, int& Value, const CProperties::OPTION_INFO *pOption, int nOptions)
+{
+	ASSERT(pOption != NULL);
+	Value = CProperties::FindOption(fIni.GetString(pszSection, pszKey), pOption, nOptions);
+	if (Value < 0)	// if string not found
+		Value = 0;	// default to zero, not -1; avoids range errors downstream
+	ASSERT(Value < nOptions);
+}
+
+inline void CPolymeterDoc::WriteEnum(CIniFile& fIni, LPCTSTR pszSection, LPCTSTR pszKey, const int& Value, const CProperties::OPTION_INFO *pOption, int nOptions) const
+{
+	UNREFERENCED_PARAMETER(nOptions);
+	ASSERT(pOption != NULL);
+	ASSERT(Value < nOptions);
+	fIni.WriteString(pszSection, pszKey, Value >= 0 ? pOption[Value].pszName : _T(""));
+}
+
+template<class T>
+inline void CPolymeterDoc::ReadEnum(CIniFile&, LPCTSTR, LPCTSTR, T&, const CProperties::OPTION_INFO*, int)
+{
+	ASSERT(0);	// should never be called
+}
+
+template<class T>
+inline void CPolymeterDoc::WriteEnum(CIniFile&, LPCTSTR, LPCTSTR, const T&, const CProperties::OPTION_INFO*, int) const
+{
+	ASSERT(0);	// should never be called
 }
 
 int CPolymeterDoc::GetInsertPos() const
@@ -2913,7 +2952,7 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 		return true;	// nothing to do
 	if (theApp.m_Options.m_General_bAlwaysRecord)	// if always recording
 		bRecord = true;
-	bool	bOutputCapture = false;
+	bool	bRetVal;
 	if (bPlay) {	// if starting playback
 		if (m_Seq.GetOutputDevice() < 0) {	// if no output MIDI device selected
 			AfxMessageBox(IDS_MIDI_NO_OUTPUT_DEVICE);
@@ -2938,6 +2977,7 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 		theApp.m_bIsRecording = bRecord;
 		UpdateChannelEvents();	// queue channel events to be output at start of playback
 		CMidiEventBar&	wndMidiOutput = theApp.GetMainFrame()->m_wndMidiOutputBar;
+		bool	bOutputCapture = false;
 		if (wndMidiOutput.IsVisible()) {	// if MIDI output bar is visible
 			wndMidiOutput.SetKeySignature(m_nKeySig);
 			wndMidiOutput.RemoveAllEvents();
@@ -2950,20 +2990,21 @@ bool CPolymeterDoc::Play(bool bPlay, bool bRecord)
 		m_Seq.SetRecordOffset(m_nRecordOffset);
 		m_Seq.SetSendMidiClock(theApp.m_Options.m_Midi_bSendMidiClock);
 		m_Seq.SetTempo(m_fTempo);	// in case tempo mapping changed it
+		m_Seq.SetMidiOutputCapture(bOutputCapture);
+		bool	bRecordDubs = bRecord && theApp.m_Options.IsRecordDubs();
+		bRetVal = m_Seq.Play(bPlay, bRecordDubs);
+		UpdateAllViews(NULL, HINT_PLAY);
 	} else {	// stopping playback
 		StopPlayback();
+		bRetVal = true;
 	}
-	m_Seq.SetMidiOutputCapture(bOutputCapture);
-	bool	bRetVal;
-	bool	bRecordDubs = bRecord && theApp.m_Options.IsRecordDubs();
-	bRetVal = m_Seq.Play(bPlay, bRecordDubs);
-	UpdateAllViews(NULL, HINT_PLAY);
 	return bRetVal;
 }
 
 void CPolymeterDoc::StopPlayback()
 {
 	m_Seq.Play(false);	// stop playing
+	m_Seq.SetMidiOutputCapture(false);
 	bool	bWasRecording = theApp.m_bIsRecording;
 	theApp.m_pPlayingDoc = NULL;	// reset global state first in case of exceptions
 	theApp.m_bIsRecording = false;
@@ -2986,6 +3027,7 @@ void CPolymeterDoc::StopPlayback()
 	CPianoBar&	wndPiano = theApp.GetMainFrame()->m_wndPianoBar;
 	if (wndPiano.IsVisible())
 		wndPiano.RemoveAllEvents();
+	UpdateAllViews(NULL, HINT_PLAY);
 }
 
 bool CPolymeterDoc::CreateAutoSavePath(CString& sPath) const
@@ -4032,6 +4074,7 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_PRIME_FACTORS, OnUpdateToolsTimeToRepeat)
 	ON_COMMAND(ID_TOOLS_VELOCITY_RANGE, OnToolsVelocityRange)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_VELOCITY_RANGE, OnUpdateTrackReverse)
+	ON_COMMAND(ID_TOOLS_CHECK_MODULATIONS, OnToolsCheckModulations)
 	ON_COMMAND(ID_TOOLS_IMPORT_STEPS, OnToolsImportSteps)
 	ON_COMMAND(ID_TOOLS_EXPORT_STEPS, OnToolsExportSteps)
 	ON_COMMAND(ID_TOOLS_IMPORT_MODULATIONS, OnToolsImportModulations)
@@ -4708,6 +4751,42 @@ void CPolymeterDoc::OnToolsVelocityRange()
 		sMsg += '\n' + LDS(IDS_DOC_CLIP_WARNING);
 	}
 	AfxMessageBox(sMsg, nFlags);
+}
+
+void CPolymeterDoc::OnToolsCheckModulations()
+{
+	static const struct {
+		bool	bIsFatal;	// true if fatal error, else warning
+		int		nStringID;	// error message string resource ID
+	} arrErrorInfo[MODULATION_ERRORS] = {
+		{false,	IDS_NONE},
+		{false, IDS_MODERR_UNSUPPORTED_MOD_TYPE},
+		{true,	IDS_MODERR_INFINITE_LOOP},
+	};
+	CModulationErrorArray	arrError;
+	CString	sMsg;
+	UINT	nMsgStyle;
+	if (m_Seq.GetTracks().CheckModulations(arrError)) {	// if no errors
+		nMsgStyle = MB_ICONINFORMATION;	// show information icon
+		sMsg.LoadString(IDS_CHECK_MODULATIONS_SUCCESS);
+	} else {	// errors found
+		nMsgStyle = MB_ICONWARNING;	// show warning icon
+		arrError.SortByTarget();
+		CString	sBuf;
+		sBuf.Format(_T("%d "), arrError.GetSize());	// error count followed by space
+		sMsg += sBuf + LDS(IDS_CHECK_MODULATIONS_ERRORS);	// caption and column header
+		int	nErrors = arrError.GetSize();
+		for (int iError = 0; iError < nErrors; iError++) {	// for each error
+			const CModulationError& err = arrError[iError];
+			ASSERT(err.m_nError >= 0 && err.m_nError < MODULATION_ERRORS);
+			sBuf.Format(_T("%d\t%d\t"), err.m_iTarget + 1, err.m_iSource + 1);
+			sMsg += sBuf + GetModulationTypeName(err.m_iType) 
+				+ '\t' + LDS(arrErrorInfo[err.m_nError].nStringID) + '\n';
+			if (arrErrorInfo[err.m_nError].bIsFatal)	// if fatal error
+				nMsgStyle = MB_ICONERROR;	// show error icon
+		}
+	}
+	AfxMessageBox(sMsg, nMsgStyle);
 }
 
 void CPolymeterDoc::OnToolsImportSteps()

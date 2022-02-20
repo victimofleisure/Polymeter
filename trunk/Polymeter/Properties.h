@@ -17,6 +17,7 @@
 		07		24sep18	in ReadEnum, move value assertion to after assignment
 		08		27jan19	add methods to load option strings
 		09		19aug21	add time span conversion methods
+		10		19feb22	remove profile methods
 
 */
 
@@ -79,32 +80,10 @@ public:
 	int		GetSubgroup(int iProp) const;
 
 // Operations
-	void	ExportPropertyInfo(LPCTSTR szPath) const;
-	static	int		FindOption(LPCTSTR szOption, const CProperties::OPTION_INFO *pOption, int nOptions);
+	void	ExportPropertyInfo(LPCTSTR pszPath) const;
+	static	int		FindOption(LPCTSTR pszOption, const CProperties::OPTION_INFO *pOption, int nOptions);
 	static	void	LoadOptionStrings(CString *parrStr, const CProperties::OPTION_INFO *pOption, int nOptions);
 	static	void	LoadOptionStrings(CStringArray& arrStr, const CProperties::OPTION_INFO *pOption, int nOptions);
-	static	void	ReadEnum(LPCTSTR szSection, LPCTSTR szKey, int& Value, const CProperties::OPTION_INFO *pOption, int nOptions);
-	static	void	WriteEnum(LPCTSTR szSection, LPCTSTR szKey, const int& Value, const CProperties::OPTION_INFO *pOption, int nOptions);
-	template<class T>
-	void	ReadEnum(LPCTSTR szSection, LPCTSTR szKey, T& Value, const CProperties::OPTION_INFO *pOption, int nOptions) const
-	{
-		UNREFERENCED_PARAMETER(szSection);
-		UNREFERENCED_PARAMETER(szKey);
-		UNREFERENCED_PARAMETER(Value);
-		UNREFERENCED_PARAMETER(pOption);
-		UNREFERENCED_PARAMETER(nOptions);
-		ASSERT(0);	// should never be called
-	}
-	template<class T>
-	void	WriteEnum(LPCTSTR szSection, LPCTSTR szKey, const T& Value, const CProperties::OPTION_INFO *pOption, int nOptions) const
-	{
-		UNREFERENCED_PARAMETER(szSection);
-		UNREFERENCED_PARAMETER(szKey);
-		UNREFERENCED_PARAMETER(Value);
-		UNREFERENCED_PARAMETER(pOption);
-		UNREFERENCED_PARAMETER(nOptions);
-		ASSERT(0);	// should never be called
-	}
 	static	bool	StringToTimeSpan(CString sTime, LONGLONG& nTime);
 	static	CString TimeSpanToString(LONGLONG nTime);
 
@@ -126,20 +105,3 @@ public:
 	virtual	int		GetSubgroupCount(int iGroup) const;
 	virtual	CString	GetSubgroupName(int iGroup, int iSubgroup) const;
 };
-
-inline void CProperties::ReadEnum(LPCTSTR szSection, LPCTSTR szKey, int& Value, const CProperties::OPTION_INFO *pOption, int nOptions)
-{
-	ASSERT(pOption != NULL);
-	Value = FindOption(AfxGetApp()->GetProfileString(szSection, szKey), pOption, nOptions);
-	if (Value < 0)	// if string not found
-		Value = 0;	// default to zero, not -1; avoids range errors downstream
-	ASSERT(Value < nOptions);
-}
-
-inline void CProperties::WriteEnum(LPCTSTR szSection, LPCTSTR szKey, const int& Value, const CProperties::OPTION_INFO *pOption, int nOptions)
-{
-	UNREFERENCED_PARAMETER(nOptions);
-	ASSERT(pOption != NULL);
-	ASSERT(Value < nOptions);
-	AfxGetApp()->WriteProfileString(szSection, szKey, Value >= 0 ? pOption[Value].pszName : _T(""));
-}

@@ -23,6 +23,7 @@
 		13		30may21	in GetDispInfo handler, set empty string if needed
 		14		20jun21	remove dispatch edit keys
 		15		27dec21	add clamp step to range
+		16		30jan22	fix traversal of columns with different row counts
 		
 */
 
@@ -417,16 +418,87 @@ END_MESSAGE_MAP()
 BOOL CStepValuesBar::CModGridCtrl::PreTranslateMessage(MSG* pMsg)
 {
 	if (m_pEditCtrl != NULL) {	// if editing item
-		if (pMsg->message == WM_KEYDOWN && (pMsg->wParam == VK_UP || pMsg->wParam == VK_DOWN)) {
-			if (!(GetKeyState(VK_CONTROL) & GKS_DOWN)) {	// if control key isn't down
-				CStepValuesBar	*pBar = STATIC_DOWNCAST(CStepValuesBar, GetParent());
-				CEdit	*pEdit = STATIC_DOWNCAST(CEdit, m_pEditCtrl);
-				pBar->SpinEdit(pEdit, pMsg->wParam == VK_UP);
-				return true;	// message was handled
+		if (pMsg->message == WM_KEYDOWN) {
+			switch (pMsg->wParam) {
+			case VK_TAB:
+				if (!(GetKeyState(VK_CONTROL) & GKS_DOWN)) {	// if control key up
+					int	nDeltaCol = (GetKeyState(VK_SHIFT) & GKS_DOWN) ? -1 : 1;
+					GotoStep(0, nDeltaCol);
+					return true;	// message was handled
+				}
+				break;
+			case VK_UP:
+			case VK_DOWN:
+				if (GetKeyState(VK_CONTROL) & GKS_DOWN) {	// if control key down
+					int	nDeltaRow = pMsg->wParam == VK_UP ? -1 : 1;
+					GotoStep(nDeltaRow, 0);
+					return true;	// message was handled
+				} else {	// control key is up
+					CStepValuesBar	*pBar = STATIC_DOWNCAST(CStepValuesBar, GetParent());
+					CEdit	*pEdit = STATIC_DOWNCAST(CEdit, m_pEditCtrl);
+					pBar->SpinEdit(pEdit, pMsg->wParam == VK_UP);
+					return true;	// message was handled
+				}
+				break;
 			}
 		}
 	}
 	return CGridCtrl::PreTranslateMessage(pMsg);
+}
+
+void CStepValuesBar::CModGridCtrl::GotoStep(int nDeltaRow, int nDeltaCol)
+{
+	// this implementation replaces CGridCtrl::GotoSubitem in order to handle
+	// columns that have different row counts without editing unused subitems
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	int	iRow = m_iEditRow;
+	int	nRows = GetItemCount();	// total number of rows in grid
+	int	iCol = m_iEditCol - 1;	// skip number column
+	int	nCols = GetColumnCount() - 1;	// skip number column
+	if (pDoc != NULL && iCol >= 0 && iCol < nCols) {	// if valid document and column
+		if (nDeltaRow) {	// if row changing
+			ASSERT(!nDeltaCol);	// only one axis can change at a time
+			int	iTrack = pDoc->m_arrTrackSel[iCol];
+			const CTrack& trk = pDoc->m_Seq.GetTrack(iTrack);
+			if (nDeltaRow > 0) {	// if going to next row
+				iRow++;	// increment row
+				if (iRow >= trk.GetLength())	// if after last step
+					iRow = 0;	// wrap around to first step
+			} else {	// going to previous row
+				iRow--;	// decrement row
+				if (iRow < 0)	// if before first step
+					iRow = trk.GetLength() - 1;	// wrap around to last step
+			}
+			EditSubitem(iRow, iCol + 1);	// edit subitem; skip number column
+		} else {	// column changing
+			ASSERT(!nDeltaRow);	// only one axis can change at a time
+			for (int iPass = 0; iPass < nCols; iPass++) {	// for each column
+				if (nDeltaCol > 0) {	// if going to next column
+					iCol++;	// increment column
+					if (iCol >= nCols) {	// if after last column
+						iCol = 0;	// wrap around to first column
+						iRow++;	// increment row
+						if (iRow >= nRows)	// if after last row
+							iRow = 0;	// wrap around to first row
+					}
+				} else {	// going to previous column
+					iCol--;	// decrement column
+					if (iCol < 0) {	// if before first column
+						iCol = nCols - 1;	// wrap around to last column
+						iRow--;	// decrement row
+						if (iRow < 0)	// if before first row
+							iRow = nRows - 1;	// wrap around to last row
+					}
+				}
+				int	iTrack = pDoc->m_arrTrackSel[iCol];
+				const CTrack& trk = pDoc->m_Seq.GetTrack(iTrack);
+				if (iRow >= 0 && iRow < trk.GetLength()) {	// if step is within track
+					EditSubitem(iRow, iCol + 1);	// edit subitem; skip number column
+					break;	// exit from column loop
+				}
+			}
+		}
+	}
 }
 
 BOOL CStepValuesBar::CModGridCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
@@ -442,30 +514,32 @@ BOOL CStepValuesBar::CModGridCtrl::OnMouseWheel(UINT nFlags, short zDelta, CPoin
 
 void CStepValuesBar::CModGridCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	if (nFlags & MK_CONTROL) {	// if control key down
-		LVHITTESTINFO	hti;
-		hti.pt = point;
-		int	iItem = SubItemHitTest(&hti);
-		if (hti.iSubItem > 0) {	// if track column
-			if (iItem >= 0) {	// if valid item
-				CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-				if (pDoc != NULL) {	// if valid document
-					int	iTrackSel = hti.iSubItem - 1;	// skip index column; remaining columns map to selected tracks
-					if (iTrackSel >= 0 && iTrackSel < pDoc->m_arrTrackSel.GetSize()) {	// if valid track selection
-						int	iTrack = pDoc->m_arrTrackSel[iTrackSel];	// get track index
-						const CTrack& trk = pDoc->m_Seq.GetTrack(iTrack);
-						if (iItem < trk.GetLength()) {	// if item index within track's step array
+	LVHITTESTINFO	hti;
+	hti.pt = point;
+	int	iItem = SubItemHitTest(&hti);
+	if (hti.iSubItem > 0) {	// if track column
+		if (iItem >= 0) {	// if valid item
+			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+			if (pDoc != NULL) {	// if valid document
+				int	iTrackSel = hti.iSubItem - 1;	// skip index column; remaining columns map to selected tracks
+				if (iTrackSel >= 0 && iTrackSel < pDoc->m_arrTrackSel.GetSize()) {	// if valid track selection
+					int	iTrack = pDoc->m_arrTrackSel[iTrackSel];	// get track index
+					const CTrack& trk = pDoc->m_Seq.GetTrack(iTrack);
+					if (iItem < trk.GetLength()) {	// if item index within track's step array
+						if (nFlags & MK_CONTROL) {	// if control key down
 							int	nPos = iItem * trk.m_nQuant + trk.m_nOffset;	// convert step index to ticks
 							pDoc->SetPosition(nPos);	// go to step position
+						} else {	// control key up
+							CGridCtrl::OnLButtonDown(nFlags, point);	// edit step
 						}
+					} else {	// item index beyond track's step array
+						SetFocus();	// end edit
 					}
 				}
 			}
-		} else {	// index column
-			CGridCtrl::OnLButtonDown(nFlags, point);
 		}
-	} else {	// shift key up
-		CGridCtrl::OnLButtonDown(nFlags, point);
+	} else {	// index column
+		CGridCtrl::OnLButtonDown(nFlags, point);	// do item selection
 	}
 }
 

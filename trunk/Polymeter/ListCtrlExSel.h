@@ -20,6 +20,7 @@
 		10		21jun18	add RedrawItem
 		11		17mar20	add method to delete all columns
 		12		01apr20	add ResetColumnHeader
+		13		29jan22	add method to ensure item is horizontally visible
 
 		extended selection list control
  
@@ -85,6 +86,7 @@ public:
 	void	EnableToolTips(BOOL bEnable = TRUE);
 	BOOL	RedrawItem(int iItem);
 	void	RedrawSubItem(int iItem, int iSubItem);
+	void	EnsureHorizontallyVisible(int iItem, int iSubItem);
 	static	bool	LoadArray(LPCTSTR pszSection, LPCTSTR pszKey, CIntArrayEx& arr, int nElems);
 
 // Overrides

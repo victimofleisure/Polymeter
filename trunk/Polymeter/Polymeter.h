@@ -21,6 +21,7 @@
 		11		17jun20	add tracking help handler
 		12		23oct21	add resource versioning
 		13		19nov21	remove unused header
+		14		19feb22	remove profile method overrides
 
 */
 
@@ -86,24 +87,6 @@ public:
 	virtual int ExitInstance();
 	virtual void WinHelp(DWORD_PTR dwData, UINT nCmd = HELP_CONTEXT);
 	virtual void WinHelpInternal(DWORD_PTR dwData, UINT nCmd = HELP_CONTEXT);
-	virtual CString GetProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszDefault = NULL);
-	virtual UINT GetProfileInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nDefault);
-	virtual BOOL WriteProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszValue);
-	virtual BOOL WriteProfileInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nValue);
-
-// Profile array templates
-	template<class TYPE, class ARG_TYPE> void GetProfileArray(CArrayEx<TYPE, ARG_TYPE>& arr, LPCTSTR pszSection, LPCTSTR pszEntry)
-	{
-		LPBYTE	pData;
-		UINT	nDataLen;
-		if (GetProfileBinary(pszSection, pszEntry, &pData, &nDataLen))
-			arr.Attach(reinterpret_cast<TYPE *>(pData), nDataLen / sizeof(TYPE));
-	}
-	template<class TYPE, class ARG_TYPE> void WriteProfileArray(const CArrayEx<TYPE, ARG_TYPE>& arr, LPCTSTR pszSection, LPCTSTR pszEntry)
-	{
-		WriteProfileBinary(pszSection, pszEntry, 
-			const_cast<LPBYTE>(reinterpret_cast<const BYTE *>(arr.GetData())), arr.GetSize() * sizeof(TYPE));
-	}
 
 // Public data
 	UINT  m_nAppLook;

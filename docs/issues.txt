@@ -344,6 +344,8 @@ id	open	close	type	description	rev	user
 351	04/07/20	11/18/20	done	attach and auto-hide are disabled for Piano and MIDI Input/Output bars, due to output capture management	0.0.35.000	
 425	11/18/20	11/18/20	done	pinned (auto-hide) Phase bar doesn't animate when unhidden; simplify visibility test in OnShowChanging	0.0.35.000	
 424	11/18/20	11/18/20	done	add maximize command to dockable pane's context menu; supports unattached floating panes only	0.0.35.000	
+508	06/30/20	11/20/20	done	in Wine, stopping playback always gives MIDI error 65 (media data is still playing); Fixed in Wine 5.22		Wine
+509	06/30/20	11/20/20	done	in Wine, changing list selection color via custom draw (MIDI learn, Live view) doesn't work; Fixed in Wine 5.22		Wine
 426	12/01/20	12/01/20	done	song view's go to next/previous dub finds invisible dubs; must exclude last duplicate dub from search	0.0.35.001	
 427	12/01/20	12/04/20	done	go to next/previous dub should scroll vertically as needed to ensure found dub is visible	0.0.35.001	
 184	08/02/18	12/16/20	done	should be able to loop playback within a specified time range, especially in song view, even approximately	0.0.36.000	
@@ -412,6 +414,10 @@ id	open	close	type	description	rev	user
 499	01/22/22	01/21/22	done	tempos below 4 BPM behave unexpectedly due to period in microseconds exceeding 24 bits; limit user input	1.0.06.000	
 496	01/21/22	01/22/22	done	display actual tempo in status bar while playing; query MIDI stream's tempo property	1.0.06.000	
 500	01/27/22	01/27/22	done	channel write shouldn't output overlaps member if it has default value; add special handling for non-events	1.0.06.001	
+501	01/29/22	01/29/22	done	grid control should automatically scroll horizontally when tabbing to an item that's outside the visible area	1.0.06.002	
+502	01/29/22	01/30/22	done	Step Values grid control shouldn't allow editing of items beyond end of track	1.0.06.002	
+504	02/05/22	02/05/22	done	step mapping unties notes; set step velocity only	1.0.06.002	
+505	02/05/22	02/05/22	done	make tie a mapping target	1.0.06.002	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -482,6 +488,11 @@ id	open	close	type	description	rev	user
 462	08/31/21		hold	dialog that allows song dubs to be edited directly; complex because each track stores its own dubs		
 477	11/13/21		hold	modulation types filter dialog should be modeless or at least have a preview option		
 494	01/18/22		hold	insert modulators command; create appropriately initialized modulator track(s) of specified type		
+503	02/01/22		hold	indicate MIDI input activity in the status bar; per-channel indicators would be helpful too		
+507	02/09/22		hold	sequence modulation; similar to index modulation, but returns next step regardless of song position		
+510	02/13/22		hold	in Wine, Phase bar doesn't work at all, likely due to its use of Direct2D		Wine
+511	02/13/22		hold	in Wine, HTML help's Contents and Index tabs are empty, but Search works and all topics are present		Wine
+512	02/13/22		hold	in Wine, MIDI devices added while app is running don’t appear until the app is exited and restarted		Wine
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
@@ -499,3 +510,4 @@ id	open	close	type	description	rev	user
 468	10/30/21		punt	at refresh rate of 60 Hz or above, song view cursor flickers during playback if track count is five or less		
 476	11/13/21		punt	render phase diagram in 3D, with variable lighting, texture and rotation of orbital plane; simulated 3D is enough		
 483	11/16/21		punt	docking windows submenu doesn't support selection via mnemonics; framework issue, BuildPanesMenu		
+506	02/09/22		todo	new Hold track type; postpone a channel's note offs until Hold state is zero, like damper pedal controller		

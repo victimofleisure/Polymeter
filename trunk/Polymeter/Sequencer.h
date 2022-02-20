@@ -28,6 +28,7 @@
 		18		30oct21	remove song duration method
 		19		30dec21	remove unused function prototype
 		20		21jan22	add per-channel note overlap methods
+		21		13feb22	let RecurseModulations modify event time
 
 */
 
@@ -225,7 +226,7 @@ protected:
 // Helpers
 	static	void	CALLBACK MidiOutProc(HMIDIOUT hMidiOut, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2);
 	int		GetNoteDuration(const CStepArray& arrStep, int nSteps, int iCurStep) const;
-	bool	RecurseModulations(int iTrack, int nAbsEvtTime, int& nPosMod);
+	bool	RecurseModulations(int iTrack, int& nAbsEvtTime, int& nPosMod);
 	void	AddTrackEvents(int iTrack, int nCBStart);
 	void	AddNoteOffs(int nCBStart, int nCBEnd);
 	bool	IsRecordedEventPlayback() const;

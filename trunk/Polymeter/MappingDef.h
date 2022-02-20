@@ -11,6 +11,7 @@
 		01		07sep20	add special output events
 		02		15feb21	add mapping targets for transport commands
 		03		21jan22	add tempo mapping target
+		04		05feb22	add tie mapping target
  
 		mapping column and member definitions
 
@@ -40,6 +41,7 @@ MAPPINGDEF(	TRACK,			LVCFMT_LEFT,	200,	Track,			0,		0)
 #ifdef MAPPINGDEF_SPECIAL_TARGET
 
 MAPPINGDEF_SPECIAL_TARGET(Step,		IDS_TRK_STEP)
+MAPPINGDEF_SPECIAL_TARGET(Tie,		IDS_STEP_TIE)
 MAPPINGDEF_SPECIAL_TARGET(Preset,	IDS_BAR_Presets)
 MAPPINGDEF_SPECIAL_TARGET(Part,		IDS_BAR_Parts)
 MAPPINGDEF_SPECIAL_TARGET(Play,		IDS_TRANSPORT_PLAY)

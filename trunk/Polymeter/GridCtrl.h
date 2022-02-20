@@ -80,6 +80,7 @@ protected:
 // Overrideables
 	virtual	CWnd	*CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
 	virtual	void	OnItemChange(LPCTSTR pszText);
+	virtual bool	AllowEnsureHorizontallyVisible(int iCol);
 
 // Helpers
 	void	GotoSubitem(int nDeltaRow, int nDeltaCol);

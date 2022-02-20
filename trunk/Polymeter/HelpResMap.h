@@ -113,6 +113,7 @@
 {ID_STEP_VALUES_FORMAT_TIES,			IDH_Docking_Windows_Step_Values_bar_Step_values_display_formats},
 {ID_STEP_VALUES_LAYOUT_COLS_STEPS,		IDH_Docking_Windows_Step_Values_bar_Step_values_context_menu},
 {ID_STEP_VALUES_LAYOUT_COLS_TRACKS, 	IDH_Docking_Windows_Step_Values_bar_Step_values_context_menu},
+{ID_TOOLS_CHECK_MODULATIONS,			IDH_Menus_Tools_Check_Modulations},
 {ID_TOOLS_CONVERGENCES, 				IDH_Menus_Tools_Convergences_Calculator},
 {ID_TOOLS_DEVICES,						IDH_Menus_Tools_Devices},
 {ID_TOOLS_EXPORT_MODULATIONS,			IDH_Menus_Tools_Export_Table_Export_Modulations},

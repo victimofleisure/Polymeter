@@ -241,28 +241,28 @@ void CValidPropertyGridCtrl::RestoreSubitemExpansion(CString sRegKey, CMFCProper
 	}
 }
 
-void CValidPropertyGridCtrl::SaveGroupExpansion(LPCTSTR szRegKey) const
+void CValidPropertyGridCtrl::SaveGroupExpansion(LPCTSTR pszRegKey) const
 {
 	CWinApp	*pApp = AfxGetApp();
 	POSITION	pos = m_lstProps.GetHeadPosition();
 	while (pos != NULL) {	// for each top-level property
 		const CMFCPropertyGridProperty	*pProp = m_lstProps.GetNext(pos);
 		if (pProp->IsGroup()) {	// if property is a group
-			VERIFY(pApp->WriteProfileInt(szRegKey, pProp->GetName(), pProp->IsExpanded()));
-			SaveSubitemExpansion(szRegKey, pProp);	// recursively save subitem expansion
+			VERIFY(pApp->WriteProfileInt(pszRegKey, pProp->GetName(), pProp->IsExpanded()));
+			SaveSubitemExpansion(pszRegKey, pProp);	// recursively save subitem expansion
 		}
 	}
 }
 
-void CValidPropertyGridCtrl::RestoreGroupExpansion(LPCTSTR szRegKey) const
+void CValidPropertyGridCtrl::RestoreGroupExpansion(LPCTSTR pszRegKey) const
 {
 	CWinApp	*pApp = AfxGetApp();
 	POSITION	pos = m_lstProps.GetHeadPosition();
 	while (pos != NULL) {	// for each top-level property
 		CMFCPropertyGridProperty	*pProp = m_lstProps.GetNext(pos);
 		if (pProp->IsGroup()) {	// if property is a group
-			pProp->Expand(pApp->GetProfileInt(szRegKey, pProp->GetName(), TRUE));
-			RestoreSubitemExpansion(szRegKey, pProp);	// recursively restore subitem expansion
+			pProp->Expand(pApp->GetProfileInt(pszRegKey, pProp->GetName(), TRUE));
+			RestoreSubitemExpansion(pszRegKey, pProp);	// recursively restore subitem expansion
 		}
 	}
 }

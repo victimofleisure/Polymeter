@@ -281,7 +281,7 @@ CString CSeqTrackArray::GetNameEx(int iTrack) const
 		return GetName(iTrack);	// return track name
 	CString	sTrackNum;
 	sTrackNum.Format(_T("%d"), iTrack + 1);	// default track names are one-origin
-	return m_sTrack + sTrackNum;	// return default track name
+	return m_sTrackPrefix + sTrackNum;	// return default track name
 }
 
 void CSeqTrackArray::GetUsedTracks(CIntArrayEx& arrUsedTrack, UINT nFlags) const

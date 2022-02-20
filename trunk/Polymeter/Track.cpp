@@ -39,14 +39,15 @@
 		29		13aug21	in Resample, wrap second index instead of clamping
         30		11nov21	refactor modulation crawler to support levels
 		31		19nov21	in track array, add find type
+		32		15feb22	add validate modulations method
+		33		19feb22	use INI file class directly instead of via profile
 
 */
 
 #include "stdafx.h"
 #include "resource.h"
 #include "Track.h"
-#include "RegTempl.h"
-#include "Persist.h"
+#include "IniFile.h"
 #include "math.h"	// for Resample
 #include "Midi.h"
 #include "ParseCSV.h"
@@ -88,7 +89,7 @@ const CTrack::PROPERTY_FIELD	CTrack::m_arrPropertyField[PROPERTIES] = {
 CString CTrackBase::m_sTrackTypeName[TRACK_TYPES];
 CString CTrackBase::m_sModulationTypeName[MODULATION_TYPES];
 CString CTrackBase::m_sRangeTypeName[RANGE_TYPES];
-CString CTrackBase::m_sTrack;
+CString CTrackBase::m_sTrackPrefix;
 CString CTrackBase::m_sTrackNone;
 
 const LPCTSTR CTrackBase::m_arrMidiChannelVoiceMsgName[MIDI_CHANNEL_VOICE_MESSAGES] = {
@@ -106,7 +107,7 @@ void CTrackBase::LoadStringResources()
 	CProperties::LoadOptionStrings(m_sTrackTypeName, m_oiTrackType, TRACK_TYPES);
 	CProperties::LoadOptionStrings(m_sModulationTypeName, m_oiModulationType, MODULATION_TYPES);
 	CProperties::LoadOptionStrings(m_sRangeTypeName, m_oiRangeType, RANGE_TYPES);
-	m_sTrack.LoadString(IDS_TYPE_TRACK);
+	m_sTrackPrefix.LoadString(IDS_TYPE_TRACK);
 	m_sTrackNone.LoadString(IDS_NONE);
 }
 
@@ -630,13 +631,13 @@ int CImportTrackArray::ImportSortCmp(const void *arg1, const void *arg2)
 	return retc;
 }
 
-bool CImportTrackArray::ImportMidiFile(LPCTSTR szPath, int nOutTimeDiv, double fQuantization)
+bool CImportTrackArray::ImportMidiFile(LPCTSTR pszPath, int nOutTimeDiv, double fQuantization)
 {
 	CMidiFile::CMidiTrackArray	arrInTrack;
 	CStringArrayEx	arrInTrackName;
 	WORD	nInTimeDiv;
 	{	// read can throw file exception
-		CMidiFile	fMidi(szPath, CFile::modeRead);	// open MIDI file for input
+		CMidiFile	fMidi(pszPath, CFile::modeRead);	// open MIDI file for input
 		fMidi.ReadTracks(arrInTrack, arrInTrackName, nInTimeDiv);	// read tracks into array
 	}	// close input file before proceeding
 	return ImportMidiFile(arrInTrack, arrInTrackName, nInTimeDiv, nOutTimeDiv, fQuantization);
@@ -689,9 +690,9 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 						CTrack&	trk = arrOutTrack[info.iTrack];
 						trk.m_arrStep.SetSize(nEnd);
 						for (int iStep = 0; iStep < nDur; iStep++) {	// for each of note's steps
-							CTrack::STEP	step = static_cast<CTrack::STEP>(info.nVelocity);
+							STEP	step = static_cast<STEP>(info.nVelocity);
 							if (iStep < nDur - 1)	// if not last step
-								step |= CTrack::SB_TIE;	// set tie bit
+								step |= SB_TIE;	// set tie bit
 							trk.m_arrStep[nStart + iStep] = step;	// store step in array
 						}
 						info.nStartTime = -1;	// resume scanning for note
@@ -726,13 +727,13 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 				int	iEvtStep = Round(double(nTime) / nInQuant);
 				CTrack&	trk = arrOutTrack[info.iTrack];
 				trk.m_arrStep.SetSize(iEvtStep + 1);
-				CTrack::STEP	stepCur;
+				STEP	stepCur;
 				if (nCmd <= CONTROL)	// if control or key aftertouch message
 					stepCur = MIDI_P2(nMsg);	// second parameter is value
 				else	// not control message
 					stepCur = MIDI_P1(nMsg);	// first parameter is value
 				trk.m_arrStep[iEvtStep] = stepCur;
-				CTrack::STEP	stepPrev = static_cast<CTrack::STEP>(info.nVelocity);
+				STEP	stepPrev = static_cast<STEP>(info.nVelocity);
 				for (int iStep = info.nStartTime; iStep < iEvtStep; iStep++) {	// for each step since previous event
 					trk.m_arrStep[iStep] = stepPrev;	// repeat previous step value
 				}
@@ -756,7 +757,7 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 		CTrack&	trk = arrOutTrack[iTrack];
 		trk.m_arrStep.SetSize(nMaxSteps);	// make all tracks as long as longest track
 		arrTrackPtr[iTrack] = &trk;	// init track pointer
-		if (trk.m_iType != CTrack::TT_NOTE) {	// if track type isn't note
+		if (trk.m_iType != TT_NOTE) {	// if track type isn't note
 			UINT	nCmd = (trk.m_iType + MIDI_CVM_NOTE_ON + 8) << 4;	// track types start with note on
 			int	nKey = MAKELONG(trk.m_nNote, MAKEWORD(trk.m_nChannel, nCmd));	// note/control, channel, command
 			TRACK_INFO	info;
@@ -766,7 +767,7 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 				int	nSteps = trk.GetLength();
 				// for each step between track's last input event and end of track
 				for (int iStep = info.nStartTime + 1; iStep < nSteps; iStep++) {
-					trk.m_arrStep[iStep] = static_cast<CTrack::STEP>(info.nVelocity);	// repeat last step value
+					trk.m_arrStep[iStep] = static_cast<STEP>(info.nVelocity);	// repeat last step value
 				}
 			}
 		}
@@ -884,7 +885,7 @@ void CTrackArray::ImportTracks(LPCTSTR pszPath)
 	int	iRow = 0;
 	int	nStartID = CSeqTrackArray::GetCurrentID() + 1;	// save current track ID
 	enum {	// define special columns that don't map directly to properties
-		PROP_STEPS = CTrack::PROPERTIES,
+		PROP_STEPS = PROPERTIES,
 		PROP_MODS,
 	};
 	while (fIn.ReadString(sLine)) {	// for each line of input file
@@ -912,7 +913,7 @@ void CTrackArray::ImportTracks(LPCTSTR pszPath)
 					int	iProp = arrCol[iCol];	// get column's property index
 					if (!parser.GetString(sToken))	// if can't get token
 						break;	// technically an error, but just exit column loop
-					if (iProp < CTrack::PROPERTIES) {	// if track property
+					if (iProp < PROPERTIES) {	// if track property
 						if (!trk.StringToProperty(iProp, sToken)) {	// convert token to property
 							OnImportTracksError(IDS_IMPORT_ERR_FORMAT, iRow, iCol);
 						}
@@ -920,7 +921,7 @@ void CTrackArray::ImportTracks(LPCTSTR pszPath)
 							OnImportTracksError(IDS_IMPORT_ERR_RANGE, iRow, iCol);
 						}
 					} else if (iProp == PROP_STEPS) {	// if steps array
-						CTrack::CStepArray	arrStep;
+						CStepArray	arrStep;
 						CString	sStep;
 						int	iStart = 0;
 						while (!(sStep = sToken.Tokenize(_T(","), iStart)).IsEmpty()) {
@@ -937,7 +938,7 @@ void CTrackArray::ImportTracks(LPCTSTR pszPath)
 						CString	sMod;
 						int	iStart = 0;
 						while (!(sMod = sToken.Tokenize(_T(","), iStart)).IsEmpty()) {
-							CTrack::CModulation	mod;
+							CModulation	mod;
 							if (_stscanf_s(sMod, _T("%d:%d"), &mod.m_iType, &mod.m_iSource) == 2) {	// if valid modulation
 								if (mod.m_iSource >= 0)	// if valid modulation source
 									mod.m_iSource += nStartID;	// convert track index to track ID
@@ -997,7 +998,7 @@ void CTrackArray::ExportTracks(const CIntArrayEx *parrSelection, LPCTSTR pszPath
 		if (nMods) {
 			sLine += '\"';
 			for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
-				const CTrack::CModulation&	mod = trk.m_arrModulator[iMod];
+				const CModulation&	mod = trk.m_arrModulator[iMod];
 				if (iMod)	// if not first item
 					sLine += ',';
 				sVal.Format(_T("%d:%d"), mod.m_iType, mod.m_iSource);	// convert to string
@@ -1050,7 +1051,7 @@ int CTrackArray::FindType(int iType, int iStart) const
 	return -1;
 }
 
-void CTrackArray::GetModulationTargets(CTrack::CModulationArrayArray& arrTarget) const
+void CTrackArray::GetModulationTargets(CModulationArrayArray& arrTarget) const
 {
 	arrTarget.RemoveAll();	// reset array just in case
 	int	nTracks = GetSize();
@@ -1059,15 +1060,76 @@ void CTrackArray::GetModulationTargets(CTrack::CModulationArrayArray& arrTarget)
 		const CTrack&	trk = GetAt(iTrack);
 		int	nMods = trk.m_arrModulator.GetSize();
 		for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
-			const CTrack::CModulation&	modulator = trk.m_arrModulator[iMod];
+			const CModulation&	modulator = trk.m_arrModulator[iMod];
 			int	iModSource = modulator.m_iSource;
 			if (iModSource >= 0) {	// if modulator is valid
 				// for targets, m_iSource is redefined to be index of target instead
-				CTrack::CModulation	target(modulator.m_iType, iTrack);
+				CModulation	target(modulator.m_iType, iTrack);
 				arrTarget[iModSource].Add(target);	// add target to destination array
 			}
 		}
 	}
+}
+
+bool CTrackArray::CheckModulations(CModulationErrorArray& arrError) const
+{
+	arrError.RemoveAll();
+	CPackedModulationArray	arrPackedMod;
+	CModulationCrawler	crawler(*this, arrPackedMod);
+	if (!crawler.LoopCheck()) {	// if infinite loop detected
+		CModulationError	error(arrPackedMod[0], MODERR_INFINITE_LOOP);
+		arrError.Add(error);
+	}
+	CModulationArrayArray	arrTarget;
+	GetModulationTargets(arrTarget);	// repurposes m_iSource to hold index of target track
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		int	nMods = arrTarget[iTrack].GetSize();
+		for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulation targets
+			const CModulation& mod = arrTarget[iTrack][iMod];
+			int	iTargetTrack = mod.m_iSource;	// source is actually target; see above
+			const CTrack&	trkTarget = GetAt(iTargetTrack);
+			bool	bIsUnsupportedType = false;	// assume success
+			if (trkTarget.m_iType == TT_MODULATOR) {	// if target track is a modulator
+				if (!mod.IsRecursiveType()) {	// if modulation type doesn't support recursion
+					if (mod.m_iType == CTrackBase::MT_Note) {	// if note modulation
+						// for each of target track's modulation targets (sub-modulations)
+						int	nSubMods = arrTarget[iTargetTrack].GetSize();
+						for (int iSubMod = 0; iSubMod < nSubMods; iSubMod++) {
+							const CModulation& modSub = arrTarget[iTargetTrack][iSubMod];
+							// if sub-modulation type isn't scale or chord
+							if (!(modSub.m_iType == MT_Scale || modSub.m_iType == MT_Chord)) {
+								bIsUnsupportedType = true;	// unsupported type error
+								break;	// no need to keep iterating
+							}
+						}
+					} else {	// modulation type isn't note
+						bIsUnsupportedType = true;	// unsupported type error
+					}
+				}
+			} else {	// target track isn't a modulator
+				int	nModTypeMask;
+				switch (trkTarget.m_iType) {	// target track's type
+				case TT_NOTE:	// note track
+					nModTypeMask = ~MTB_Tempo;	// all modulation types except tempo
+					break;
+				case TT_TEMPO:	// tempo track
+					nModTypeMask = MTB_Mute | MTB_Position | MTB_Tempo;	// only these modulation types
+					break;
+				default:	// controller track
+					nModTypeMask = MTB_Mute | MTB_Position | MTB_Velocity; 	// only these modulation types
+				}
+				int	nModTypeBit = 1 << mod.m_iType;
+				if (!(nModTypeBit & nModTypeMask))	// if modulation type's bit is zero in mask
+					bIsUnsupportedType = true;	// unsupported type error
+			}
+			if (bIsUnsupportedType) {	// if unsupported type found
+				CModulationError	error(mod.m_iType, iTrack, iTargetTrack, MODERR_UNSUPPORTED_MOD_TYPE);
+				arrError.Add(error);	// add error to caller's array
+			}
+		}
+	}
+	return arrError.IsEmpty() != 0;	// true if no errors found
 }
 
 int CTrackBase::CPackedModulation::SortCompare(const void *p1, const void *p2)
@@ -1085,14 +1147,24 @@ int CTrackBase::CPackedModulation::SortCompare(const void *p1, const void *p2)
 	return retc;
 }
 
-void CTrackArray::GetLinkedTracks(const CIntArrayEx& arrSelection, CTrack::CPackedModulationArray& arrMod, UINT nLinkFlags, int nLevels) const
+void CTrackBase::CPackedModulationArray::SortByTarget()
+{
+	qsort(GetData(), GetSize(), sizeof(CPackedModulation), CPackedModulation::SortCompare);
+}
+
+void CTrackBase::CModulationErrorArray::SortByTarget()
+{
+	qsort(GetData(), GetSize(), sizeof(CModulationError), CPackedModulation::SortCompare);
+}
+
+void CTrackArray::GetLinkedTracks(const CIntArrayEx& arrSelection, CPackedModulationArray& arrMod, UINT nLinkFlags, int nLevels) const
 {
 	CModulationCrawler	crawler(*this, arrMod, nLinkFlags, nLevels);
 	crawler.Crawl(arrSelection);
-	qsort(arrMod.GetData(), arrMod.GetSize(), sizeof(CTrack::CPackedModulation), CTrack::CPackedModulation::SortCompare);
+	arrMod.SortByTarget();
 }
 
-CTrackArray::CModulationCrawler::CModulationCrawler(const CTrackArray& arrTrack, CTrack::CPackedModulationArray& arrMod, UINT nLinkFlags, int nLevels) 
+CTrackArray::CModulationCrawler::CModulationCrawler(const CTrackArray& arrTrack, CPackedModulationArray& arrMod, UINT nLinkFlags, int nLevels) 
 	: m_arrTrack(arrTrack), m_arrMod(arrMod)
 {
 	m_nLinkFlags = nLinkFlags;
@@ -1105,7 +1177,8 @@ void CTrackArray::CModulationCrawler::Crawl(const CIntArrayEx& arrSelection)
 	m_nDepth = 0;	// init recursion depth
 	int	nTracks = m_arrTrack.GetSize();
 	m_arrTrack.GetModulationTargets(m_arrTarget);	// build target cross-reference
-	m_arrIsCrawled.SetSize(nTracks);	// allocate crawled flags
+	m_arrIsCrawled.RemoveAll();	// empty crawled flags array
+	m_arrIsCrawled.SetSize(nTracks);	// allocate and zero crawled flags
 	int	nSels = arrSelection.GetSize();
 	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 		int	iTrack = arrSelection[iSel];
@@ -1121,14 +1194,14 @@ void CTrackArray::CModulationCrawler::Recurse(int iTrack)
 	if (m_nLinkFlags & MODLINKF_SOURCE) {	// if crawling sources
 		int	nMods = trk.m_arrModulator.GetSize();
 		for (int iMod = 0; iMod < nMods; iMod++) {	// for each source
-			const CTrack::CModulation&	mod = trk.m_arrModulator[iMod];
+			const CModulation&	mod = trk.m_arrModulator[iMod];
 			int	iSource = mod.m_iSource;
 			if (iSource >= 0) {	// if source is a valid track index
-				CTrack::CModulation	modTarget(mod.m_iType, iTrack);
+				CModulation	modTarget(mod.m_iType, iTrack);
 				INT_PTR	iPos = m_arrTarget[iSource].Find(modTarget);
 				if (iPos >= 0) {	// if modulation found in source track's target array
 					m_arrTarget[iSource][iPos].m_iSource = -1;	// mark modulation used
-					CTrack::CPackedModulation	modPacked(mod.m_iType, iSource, iTrack);
+					CPackedModulation	modPacked(mod.m_iType, iSource, iTrack);
 					m_arrMod.Add(modPacked);	// add modulation to destination array
 				}
 				if (!m_arrIsCrawled[iSource]) {	// if source track hasn't been crawled
@@ -1140,14 +1213,14 @@ void CTrackArray::CModulationCrawler::Recurse(int iTrack)
 		}
 	}
 	if (m_nLinkFlags & MODLINKF_TARGET) {	// if crawling targets
-		CTrack::CModulationArray&	arrTarget = m_arrTarget[iTrack];
+		CModulationArray&	arrTarget = m_arrTarget[iTrack];
 		int	nMods = arrTarget.GetSize();
 		for (int iMod = 0; iMod < nMods; iMod++) {	// for each target
-			CTrack::CModulation&	mod = arrTarget[iMod];
+			CModulation&	mod = arrTarget[iMod];
 			int	iTarget = mod.m_iSource;	// target array redefines source as target
 			if (iTarget >= 0) {	// if target is a valid track index
 				mod.m_iSource = -1;	// mark modulation used
-				CTrack::CPackedModulation	modPacked(mod.m_iType, iTrack, iTarget);
+				CPackedModulation	modPacked(mod.m_iType, iTrack, iTarget);
 				m_arrMod.Add(modPacked);	// add modulation to destination array
 				if (!m_arrIsCrawled[iTarget]) {	// if target track hasn't been crawled
 					m_arrIsCrawled[iTrack] = true;	// mark target track crawled
@@ -1160,43 +1233,82 @@ void CTrackArray::CModulationCrawler::Recurse(int iTrack)
 	m_nDepth--;	// decrement recursion depth
 }
 
+bool CTrackArray::CModulationCrawler::LoopCheck()
+{
+	m_arrMod.RemoveAll();	// empty destination array
+	m_nDepth = 0;	// init recursion depth
+	int	nTracks = m_arrTrack.GetSize();
+	m_arrIsCrawled.RemoveAll();	// empty crawled flags array
+	m_arrIsCrawled.SetSize(nTracks);	// allocate and zero crawled flags
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {
+		if (m_arrTrack[iTrack].m_arrModulator.GetSize()) {
+			if (!LoopCheckRecurse(iTrack)) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+bool CTrackArray::CModulationCrawler::LoopCheckRecurse(int iTrack)
+{
+	m_arrIsCrawled[iTrack] = true;	// mark this track, so we know we're crawling it
+	const CTrack& trk = m_arrTrack[iTrack];
+	int	nMods = trk.m_arrModulator.GetSize();
+	for (int iMod = 0; iMod < nMods; iMod++) {	// for each of this track's modulations
+		const CModulation& mod = trk.m_arrModulator[iMod];
+		if (mod.m_iSource >= 0) {	// if valid modulation source track index
+			if (m_arrIsCrawled[mod.m_iSource]) {	// if source track is being crawled
+				CPackedModulation	mod(mod.m_iType, mod.m_iSource, iTrack);
+				m_arrMod.Add(mod);	// add offending modulation info to caller's array
+				return false;	// infinite loop detected; abort crawl
+			}
+			if (!LoopCheckRecurse(mod.m_iSource)) {	// if source iteration fails
+				return false;	// crawl was aborted
+			}
+		}
+	}
+	m_arrIsCrawled[iTrack] = false;	// we're done crawling this track, so remove mark
+	return true;	// keep crawling
+}
+
 #define RK_GROUP_COUNT _T("Count")
 #define RK_GROUP_NAME _T("Name")
 #define RK_GROUP_TRACK_COUNT _T("Tracks")
 #define RK_GROUP_TRACK_IDX _T("TrackIdx")
 
-void CTrackGroupArray::Read(LPCTSTR pszSection)
+void CTrackGroupArray::Read(CIniFile& fIni, LPCTSTR pszSection)
 {
 	int	nGroups = 0;
-	RdReg(pszSection, RK_GROUP_COUNT, nGroups);
+	fIni.Get(pszSection, RK_GROUP_COUNT, nGroups);
 	SetSize(nGroups);
 	CString	sKey;
 	for (int iGroup = 0; iGroup < nGroups; iGroup++) {
 		CTrackGroup& Group = GetAt(iGroup);
 		sKey.Format(_T("%s\\%d"), pszSection, iGroup);
-		RdReg(sKey, RK_GROUP_NAME, Group.m_sName);
+		fIni.Get(sKey, RK_GROUP_NAME, Group.m_sName);
 		int	nTracks;
-		RdReg(sKey, RK_GROUP_TRACK_COUNT, nTracks);
+		fIni.Get(sKey, RK_GROUP_TRACK_COUNT, nTracks);
 		Group.m_arrTrackIdx.SetSize(nTracks);
 		if (nTracks) {	// if group isn't empty
-			DWORD	nTrackIdxSize = nTracks * sizeof(int);
-			CPersist::GetBinary(sKey, RK_GROUP_TRACK_IDX, Group.m_arrTrackIdx.GetData(), &nTrackIdxSize);
+			UINT	nTrackIdxSize = nTracks * sizeof(int);
+			fIni.GetBinary(sKey, RK_GROUP_TRACK_IDX, Group.m_arrTrackIdx.GetData(), nTrackIdxSize);
 		}
 	}
 }
 
-void CTrackGroupArray::Write(LPCTSTR pszSection) const
+void CTrackGroupArray::Write(CIniFile& fIni, LPCTSTR pszSection) const
 {
 	int	nGroups = GetSize();
-	WrReg(pszSection, RK_GROUP_COUNT, nGroups);
+	fIni.Put(pszSection, RK_GROUP_COUNT, nGroups);
 	CString	sKey;
 	for (int iGroup = 0; iGroup < nGroups; iGroup++) {
 		const CTrackGroup& Group = GetAt(iGroup);
 		sKey.Format(_T("%s\\%d"), pszSection, iGroup);
-		WrReg(sKey, RK_GROUP_NAME, Group.m_sName);
+		fIni.Put(sKey, RK_GROUP_NAME, Group.m_sName);
 		int	nTracks = Group.m_arrTrackIdx.GetSize();
-		WrReg(sKey, RK_GROUP_TRACK_COUNT, nTracks);
-		CPersist::WriteBinary(sKey, RK_GROUP_TRACK_IDX, Group.m_arrTrackIdx.GetData(), nTracks * sizeof(int));
+		fIni.Put(sKey, RK_GROUP_TRACK_COUNT, nTracks);
+		fIni.WriteBinary(sKey, RK_GROUP_TRACK_IDX, Group.m_arrTrackIdx.GetData(), nTracks * sizeof(int));
 	}
 }
 

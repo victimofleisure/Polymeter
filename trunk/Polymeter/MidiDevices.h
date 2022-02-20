@@ -9,6 +9,7 @@
 		rev		date	comments
         00      17apr18	initial version
 		01		27mar20	add device accessors
+		02		18feb22	move index validator to array base class
 
 */
 
@@ -64,7 +65,7 @@ public:
 	CString	GetName(int iType) const;
 	CString	GetID(int iType) const;
 	void	GetDevice(int iType, CDevice& dev) const;
-	bool	IsValid(int iType, int iDev) const;
+	bool	IsDeviceIdx(int iType, int iDev) const;
 	CString	GetName(int iType, int iDev) const;
 	CString	GetID(int iType, int iDev) const;
 	void	GetDevice(int iType, int iDev, CDevice& dev) const;
@@ -90,7 +91,6 @@ protected:
 		CDeviceArray();
 
 	// Attributes
-		bool	IsValid(int iDev) const;
 		int		GetIdx() const;
 		void	SetIdx(int iDev);
 		CString	GetName(int iDev) const;
@@ -152,11 +152,6 @@ inline CMidiDevices::CDeviceArray::CDeviceArray()
 	m_iDev = -1;
 }
 
-inline bool CMidiDevices::CDeviceArray::IsValid(int iDev) const
-{
-	return iDev >= 0 && iDev < GetSize();
-}
-
 inline int CMidiDevices::CDeviceArray::GetIdx() const
 {
 	return m_iDev;
@@ -206,9 +201,9 @@ inline void CMidiDevices::GetDevice(int iType, CDevice& dev) const
 	GetDevice(iType, GetIdx(iType), dev);
 }
 
-inline bool CMidiDevices::IsValid(int iType, int iDev) const
+inline bool CMidiDevices::IsDeviceIdx(int iType, int iDev) const
 {
-	return m_arrDev[iType].IsValid(iDev);
+	return m_arrDev[iType].IsIndex(iDev);
 }
 
 inline CString CMidiDevices::GetName(int iType, int iDev) const

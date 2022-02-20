@@ -415,7 +415,7 @@
 
 <a name="Modulations"><h2>Modulations</h2></a>
 
-<p>Besides juxtaposition, another important method of combining <a href="#Tracks">tracks</a> is <em>modulation</em>, in which a track alters the behavior of another track. The track that does the modulating is called the modulator or <em>source</em>, whereas the track that's being modulated is called the target or <em>sink</em>. There are many types of modulation, and they vary in terms of the targets they support, and how they interpret step values, as shown below.
+<p>Besides juxtaposition, another important method of combining <a href="#Tracks">tracks</a> is <em>modulation</em>, in which a track alters the behavior of another track. The track that does the modulating is called the modulator or <em>source</em>, whereas the track that's being modulated is called the target or <em>sink</em>. Modulations are created via the <a href="#Modulations_bar">modulations bar</a> or the Track menu's <a href="#Create_Modulation">Modulation</a> command. There are many types of modulation, and they vary in terms of the targets they support, and how they interpret step values, as shown below.
 
 <a name="Modulation_types"><h3>Modulation types</h3></a>
 
@@ -712,7 +712,7 @@
 
 <a name="Modulator_tracks"><h2>Modulator tracks</h2></a>
 
-<p>A modulator track is simply a track that alters the behavior of another track, in a process called <a href="#Modulations">modulation</a>. To make a modulator track operational, you must connect it to one or more target tracks, via the <a href="#Modulations_bar">Modulations bar</a> or the Track menu's <a href="#Create_Modulation">Create Modulation</a> command. In most cases, you'll want to prevent a modulator track from outputting MIDI messages, which you can do by changing its <a href="#Track_types">track type</a> to "Modulator." A modulator track's <a href="#Steps">steps</a> typically contain values that only make sense in the context of a particular <a href="#Modulation_types">modulation type</a>, in which case also interpreting those same step values as note velocities or controllers would be unhelpful. One possible exception is a <a href="#Note_tracks">note track</a> gating another note track via <a href="#Mute_modulation">mute modulation</a>, in order to prevent collisions between them. But in general, creating separate "Modulator" type tracks is the most flexible method of setting up modulation sources.
+<p>A modulator track is simply a track that alters the behavior of another track, in a process called <a href="#Modulations">modulation</a>. To make a modulator track operational, you must connect it to one or more target tracks, via the <a href="#Modulations_bar">Modulations bar</a> or the Track menu's <a href="#Create_Modulation">Modulation</a> command. In most cases, you'll want to prevent a modulator track from outputting MIDI messages, which you can do by changing its <a href="#Track_types">track type</a> to "Modulator." A modulator track's <a href="#Steps">steps</a> typically contain values that only make sense in the context of a particular <a href="#Modulation_types">modulation type</a>, in which case also interpreting those same step values as note velocities or controllers would be unhelpful. One possible exception is a <a href="#Note_tracks">note track</a> gating another note track via <a href="#Mute_modulation">mute modulation</a>, in order to prevent collisions between them. But in general, creating separate "Modulator" type tracks is the most flexible method of setting up modulation sources.
 
 <p>It's recommended to give modulator tracks a small negative time <a href="#Track_Offset">offset</a>, so that they're slightly ahead of their targets. This avoids races and track order dependencies.
 
@@ -763,7 +763,9 @@
 
 <a name="Range_modulation"><h2>Range modulation</h2></a>
 
-<p>In range <a href="#Modulations">modulation</a>, a track's notes are transposed by one or more octaves as needed to keep them within a specified <a href="#Track_Range_Type">range</a>. The size of the range is typically one octave, though other sizes are possible. The start note of the range is variable, and can be altered by one or more modulator tracks. A range modulator track is interpreted as an array of <a href="#Unsigned_versus_signed_steps">signed</a> offsets, which are added to the range <a href="#Track_Range_Start">start note</a>. If a target track has multiple range modulators, they're summed.
+<p>In range <a href="#Modulations">modulation</a>, a track's notes are transposed by one or more octaves as needed to keep them within a specified range. The size of the range is typically one octave, though other sizes are possible. For range modulation to be effective, the target track's <a href="#Track_Range_Type">range type</a> must be set to a value other than None.
+
+<p>The range is movable, and its bottom note is specified by the target track's <a href="#Track_Range_Start">Range Start</a> property, which can also be altered by one or more modulator tracks. A range modulator track is interpreted as an array of <a href="#Unsigned_versus_signed_steps">signed</a> offsets in semitones, which are added to the target track's range start note. If a target track has multiple range modulators, they're summed.
 
 <p>Because the transposition is by octaves only, the notes remain in the same scale and key; only their octaves are affected. If several tracks forming a chord are range modulated together, the chord cycles through its possible inversions.
 
@@ -1019,15 +1021,20 @@
 
 <a name="Track_Range_Type"><h4>Range Type</h4></a>
 
-<p>This is the type of range to be applied to the track. Range only affects note tracks. The Octave type forces the output note to stay within a one-octave range, the bottom of which is determined by the <a href="#Track_Range_Start">Range Start</a> property. The note is shifted by as many octaves as necessary to keep it within the specified range. For chords and arpeggios, this produces inversions.
+<p>This is the type of range to be applied to the track. Range only affects <a href="#Note_tracks">note tracks</a>. The types are listed below.
 
-<p>The Dual type is similar except that it creates a two-octave range, and assigns the note to the upper or lower octave depending on its pitch. The Range Start property determines the start of the upper octave. If the note is below the Range Start value, it's shifted to the lower octave, otherwise it's shifted to the upper octave.
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Type</th><th>Meaning</th></tr>
+<tr><td>None</td><td>No range is applied, and any range modulators targeting this track have no effect.</td></tr>
+<tr><td>Octave</td><td>The output note is forced to stay within a one-octave range, the bottom of which is determined by the <a href="#Track_Range_Start">Range Start</a> property. The note is shifted by as many octaves as necessary to keep it within the specified range. For chords and arpeggios, this produces inversions.</td></tr>
+<tr><td>Dual</td><td>Similar to Octave except that it creates a two-octave range, and assigns the note to the upper or lower octave depending on its pitch. The Range Start property determines the start of the upper octave. If the note is below the Range Start value, it's shifted to the lower octave, otherwise it's shifted to the upper octave.</td></tr>
+</table>
 
-<p>Range can be used to limit the width of <a href="#Note_modulation">note modulation</a>. Range behaves differently when <a href="#Scale_modulation">scale modulation</a> and/or <a href="#Chord_modulation">chord modulation</a> are used.
+<p>The range's start note can be altered via <a href="#Range_modulation">range modulation</a>, but only if range type isn't None. Range can be used to limit the width of <a href="#Note_modulation">note modulation</a>. Range behaves differently when <a href="#Scale_modulation">scale modulation</a> and/or <a href="#Chord_modulation">chord modulation</a> are used.
 
 <a name="Track_Range_Start"><h4>Range Start</h4></a>
 
-<p>This is the starting note of the range to apply to the track. It only affects note tracks, and only has an effect if <a href="#Track_Range_Type">Range Type</a> isn't None. Range start can be modulated via <a href="#Range_modulation">range modulation</a>.
+<p>This is the starting note of the range to apply to the track. It only affects note tracks, and only has an effect if <a href="#Track_Range_Type">Range Type</a> isn't None. Range start can be altered via <a href="#Range_modulation">range modulation</a>.
 
 <a name="Track_Mutes"><h3>Track Mutes</h3></a>
 
@@ -1630,13 +1637,14 @@
 <tr><td><a href="#Track_Range_Start">Range Start</a></td><td>N/A</td><td>Required</td><td>In semitones</td></tr>
 <tr><td><a href="#Track_Mutes">Mute</a></td><td>N/A</td><td>Required</td><td>Non-zero to mute track</td></tr>
 <tr><td><a href="#Track_Steps">Step</a></td><td>Step Index</td><td>Required</td><td>Event data is step value</td></tr>
+<tr><td><a href="#Tied_notes">Tie</a></td><td>Step Index</td><td>Required</td><td>Non-zero to tie step</td></tr>
 <tr><td><a href="#Presets_bar">Presets</a></td><td>N/A</td><td>N/A</td><td>Event data is preset index</td></tr>
 <tr><td><a href="#Parts_bar">Parts</a></td><td>Part Index</td><td>N/A</td><td>Non-zero to activate part</td></tr>
 <tr><td><a href="#Play">Play</a></td><td>N/A</td><td>N/A</td><td>Non-zero to play</td></tr>
 <tr><td><a href="#Pause">Pause</a></td><td>N/A</td><td>N/A</td><td>Non-zero to pause</td></tr>
 <tr><td><a href="#Record">Record</a></td><td>N/A</td><td>N/A</td><td>Non-zero to record</td></tr>
 <tr><td><a href="#Loop">Loop</a></td><td>N/A</td><td>N/A</td><td>Non-zero to loop</td></tr>
-<tr><td><a href="#Tempo">Tempo</a></td><td>N/A</td><td>N/A</td><td>Tempo change; see <a href="#Tempo_mapping">tempo mapping</a>.</td></tr>
+<tr><td><a href="#Tempo">Tempo</a></td><td>N/A</td><td>N/A</td><td>See <a href="#Tempo_mapping">tempo mapping</a></td></tr>
 </table>
 
 <a name="Learning_mappings"><h3>Learning mappings</h3></a>
@@ -1672,6 +1680,34 @@
 
 <p>During <a href="#Play">playback</a>, the net tempo is shown in the <a href="#Status_Bar">status bar</a>.
 
+<a name="Position_mapping"><h3>Position mapping</h3></a>
+
+<p>Position mapping lets you control the <a href="#Rotate">rotation</a> of one or more target tracks. Tracks don't have a rotation property, so it's necessary to use a two-stage workaround that consists of <a href="#Position_modulation">position modulation</a> and <a href="#Step_mapping">step mapping</a>. You want to create a one-step position modulator track that targets the track(s) to be rotated, and then create a mapping that targets your position modulator track's one and only step. Do as follows:
+
+<ol>
+<li>Create a new track, change its <a href="#Track_Type">type</a> to Modulator, and change its <a href="#Track_Length">length</a> to one.
+<li>Create a <a href="#Modulations">modulation</a> targeting the track(s) you want to rotate. Change the modulation's <a href="#Modulation_types">type</a> to Position, and its source to the modulator track you created above.
+<li>Create a new mapping, and set its input properties appropriately for your control, or <a href="#MIDI_Learn">learn</a> them.
+<li>Change the mapping's <a href="#Output_event_types">Output Event</a> to Step, its Output Control to zero, and its Track to the modulator track you created above.
+<li>You may also want to adjust the mapping's range so that the possible rotations are spread out evenly across your control's range. To do this, set the mapping's Range Start to 64, and its Range End to 64 plus the length of the track(s) being rotated. The offset of 64 is necessary because position modulation interprets steps as <a href="#Unsigned_versus_signed_steps">signed</a> values.
+</ol>
+
+<p>Rotating multiple tracks with a single control makes more sense if the target tracks are all the same length, but that's not a requirement. If the above procedure isn't working, make sure the mapping's Output Control is zero; it's specifying which step to control, and step indices are zero-based. If you show your position modulator track in the <a href="#Velocities_Pane">velocities pane</a> or the <a href="#Step_Values_bar">step values bar</a>, you should see its step value changing as you move your control. When in doubt, use the <a href="#MIDI_Input_bar">MIDI input bar</a> to verify that you're receiving the expected MIDI message, and if not, check your <a href="#Input_Device">input device</a>.
+
+<a name="Step_mapping"><h3>Step mapping</h3></a>
+
+<p>Step mapping means assigning a MIDI message to control the value of a step within a track. The mapping's Output Event must be Step, and its Track property must specify the target track. In a step mapping, the Output Control property is a zero-based index that specifies which step to access. The valid range of a step index is from zero to the target track's length minus one. For example, if the target track is four steps long, to access its last step, set Output Control to three. If the step index is out of range, the mapping has no effect. Because <a href="#Steps">steps</a> serve many purposes, there are many possible step mapping scenarios, only some of which are presented below.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><td><a href="#Position_mapping">Position mapping</a></td><td>This is already explained above.</td></tr>
+<tr><td>Mapping a single control to the same track property in many tracks</td><td>Normally you must create one mapping for each track you want to control, but this is potentially cumbersome when controlling many tracks. If the track property you want to control has a <a href="#Modulation_types">modulation type</a> associated with it&mdash;as is the case for <a href="#Track_Note">note</a>, <a href="#Track_Offset">offset</a>, <a href="#Track_Velocity">velocity</a>, <a href="#Track_Duration">duration</a>, and <a href="#Track_Range_Start">range start</a>&mdash;it may be easier to modulate the target tracks with a one-step source track, and then create a single mapping that targets your source track's step. This is similar to the position mapping procedure explained above, except you'll select a different modulation type.</td></tr>
+<tr><td>Independently controlling each of the step values in a track</td><td>By mapping a different control to each step of a note track, you can use a control surface to create rhythmic patterns. Your controls determine not only the pattern, but also the note velocities. To emulate the step buttons on a drum machine, use switches instead of knobs or sliders, toggling between 0 and 100 for example. To create melodies, map controls to the steps of a <a href="#Note_modulation">note</a> or <a href="#Index_modulation">index</a> modulator. You can also alter the contents of <a href="#Scale_modulation">scales</a> or <a href="#Chord_modulation">chords</a> by mapping controls to their steps. <a href="#Controller_tracks">Controller tracks</a> can also be interesting step mapping targets.</td></tr>
+</table>
+
+<a name="Tie_mapping"><h3>Tie mapping</h3></a>
+
+<p>Within <a href="#Note_tracks">note tracks</a>, a step can be <a href="#Tied_notes">tied</a>, so that it extends the preceding note instead of triggering a new note. You can assign a MIDI message to control whether a track step is tied or not. Set the mapping's Output Event to Tie, its Track property to the target track, and its Output Control to the zero-based step index. The input control should ideally be a button that toggles between zero and a non-zero value. <a href="#Step_mapping">Step mapping</a> and tie mapping work together to give you complete control of a note track: use step mapping to change the note velocities, and tie mapping to merge adjacent steps into longer notes. Tie mapping is only supported for note tracks and has no effect on other track types.
+
 
 <h1>Properties</h1>
 
@@ -1681,7 +1717,7 @@
 
 <p>Tempo is normally expressed as a frequency, but it can also be expressed as a <a href="#Period">period</a>, in other words how long each beat takes in seconds. To compute the period, divide 60 by the tempo. For example, at 120 beats per minute, each beat takes half a second, because 60 / 120 = &frac12;.
 
-<p>Tempo can remotely controlled; see <a href="#Tempo_mapping">tempo mapping</a>. During <a href="#Play">playback</a>, the net tempo is shown in the <a href="#Status_Bar">status bar</a>.
+<p>Tempo can be remotely controlled; see <a href="#Tempo_mapping">tempo mapping</a>. During <a href="#Play">playback</a>, the net tempo is shown in the <a href="#Status_Bar">status bar</a>.
 
 <a name="Timebase"><h2>Timebase</h2></a>
 

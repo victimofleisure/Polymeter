@@ -14,7 +14,7 @@
 */
 
 #include "stdafx.h"
-#include "Polymeter.h"
+#include "resource.h"
 #include "MasterProps.h"
 #include "VariantHelper.h"
 #include "SeqTrackArray.h"	// for initial tempo
@@ -112,10 +112,10 @@ CString	CMasterProps::GetSubgroupName(int iGroup, int iSubgroup) const
 	return sName;
 }
 
-int CMasterProps::FindProperty(LPCTSTR szInternalName)
+int CMasterProps::FindProperty(LPCTSTR pszInternalName)
 {
 	for (int iProp = 0; iProp < PROPERTIES; iProp++) {
-		if (!_tcscmp(m_Info[iProp].pszName, szInternalName))
+		if (!_tcscmp(m_Info[iProp].pszName, pszInternalName))
 			return iProp;
 	}
 	return -1;

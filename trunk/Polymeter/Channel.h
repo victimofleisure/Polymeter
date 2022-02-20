@@ -10,6 +10,7 @@
         00      15apr18	initial version
 		01		10feb19	in channel array, add method to get MIDI event array
 		02		21jan22	add property for note overlap method
+		03		19feb22	use INI file class directly instead of via profile
 
 */
 
@@ -17,6 +18,8 @@
 
 #include "FixedArray.h"
 #include "Midi.h"
+
+class CIniFile;
 
 class CChannel {
 public:
@@ -77,6 +80,6 @@ public:
 	USHORT	GetMidiEvents(CDWordArrayEx& arrMidiEvent) const;
 
 // Operations
-	void	Read();
-	void	Write() const;
+	void	Read(CIniFile& fIni);
+	void	Write(CIniFile& fIni) const;
 };

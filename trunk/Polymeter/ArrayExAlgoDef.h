@@ -14,6 +14,7 @@
 		04		02dec19	add sort method
 		05		16mar20	add insert sorted descending
 		06		26sep20	add find min/max element
+		07		18feb22	add index validator
 
 */
 
@@ -59,6 +60,11 @@ void SetGrowBy(INT_PTR nGrowBy)
 {
 	ASSERT(nGrowBy >= 0);
 	m_nGrowBy = nGrowBy;
+}
+
+bool IsIndex(int iElem) const
+{
+	return iElem >= 0 && iElem < m_nSize;
 }
 
 void FastRemoveAll()

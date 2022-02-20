@@ -17,6 +17,7 @@
 		07		24apr18	standardize names
 		08		17mar20	add method to delete all columns
 		09		01apr20	fix context menu top left if no selection
+		10		29jan22	add method to ensure item is horizontally visible
 
 		extended selection list control
  
@@ -324,6 +325,33 @@ void CListCtrlExSel::RedrawSubItem(int iItem, int iSubItem)
 	CRect	rItem;
 	GetSubItemRect(iItem, iSubItem, LVIR_BOUNDS, rItem);
 	InvalidateRect(rItem);
+}
+
+void CListCtrlExSel::EnsureHorizontallyVisible(int iItem, int iSubItem)
+{
+	CRect	rClient, rItem;
+	GetClientRect(rClient);
+	GetSubItemRect(iItem, iSubItem, LVIR_BOUNDS, rItem);
+	if (iSubItem == 1) {	// if second column
+		CRect	rFirstItem;
+		GetSubItemRect(iItem, 0, LVIR_BOUNDS, rFirstItem);
+		if (rItem.right - rFirstItem.left <= rClient.Width())	// if first two columns fit
+			rItem.left = rFirstItem.left;	// also ensure first column is visible
+	}
+	int	nScrollDeltaX = rItem.left - rClient.left;	// compute difference between left edges
+	// align item's left edge with client's left edge, unless nScrollDeltaX is changed below
+	if (nScrollDeltaX >= 0) {	// if item's left edge is not left of client's left edge
+		int	nRightDeltaX = rItem.right - rClient.right;	// compute difference between right edges
+		if (nRightDeltaX <= 0) {	// if item's right edge is not right of client's right edge
+			nScrollDeltaX = 0;	// item is within client horizontally, so scrolling isn't needed
+		} else {	// item's right edge is right of client's right edge
+			if (rClient.Width() > rItem.Width())	// if client is wider than item
+				nScrollDeltaX = nRightDeltaX;	// align item's right edge with client's right edge
+		}
+	}
+	if (nScrollDeltaX) {	// if scrolling needed
+		Scroll(CSize(nScrollDeltaX, 0));	// scroll window horizontally by specified amount
+	}	
 }
 
 /////////////////////////////////////////////////////////////////////////////

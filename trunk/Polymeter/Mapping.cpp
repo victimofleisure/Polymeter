@@ -17,6 +17,8 @@
 		07		30jun21	move step mapping range checks into critical section
 		08		25oct21	add optional sort direction
 		09		21jan22	add tempo mapping target
+		10		05feb22	add tie mapping target
+		11		19feb22	use INI file class directly instead of via profile
 
 */
 
@@ -25,7 +27,7 @@
 #include "Mapping.h"
 #include "MainFrm.h"
 #include "PolymeterDoc.h"
-#include "Persist.h"
+#include "IniFile.h"
 #include <math.h>
 
 #define RK_MAPPING_COUNT _T("Count")	// registry keys
@@ -96,15 +98,15 @@ int CMapping::FindOutputEventName(LPCTSTR pszName)
 	return -1;	// unknown name
 }
 
-void CMapping::Read(LPCTSTR pszSection)
+void CMapping::Read(CIniFile& fIni, LPCTSTR pszSection)
 {
 	CString	sName;
-	sName = CPersist::GetString(pszSection, RK_MAPPING_IN_EVENT);
+	sName = fIni.GetString(pszSection, RK_MAPPING_IN_EVENT);
 	m_nInEvent = FindInputEventName(sName);
 	ASSERT(m_nInEvent >= 0);	// check for unknown input event name
 	if (m_nInEvent < 0)	// if unknown input event name
 		m_nInEvent = 0;		// avoid range errors downstream
-	sName = CPersist::GetString(pszSection, RK_MAPPING_OUT_EVENT);
+	sName = fIni.GetString(pszSection, RK_MAPPING_OUT_EVENT);
 	m_nOutEvent = FindOutputEventName(sName);
 	ASSERT(m_nOutEvent >= 0);	// check for unknown output event name
 	if (m_nOutEvent < 0)	// if unknown output event name
@@ -112,29 +114,29 @@ void CMapping::Read(LPCTSTR pszSection)
 	// conditional to exclude events is optimized away in release build
 	#define MAPPINGDEF(name, align, width, member, minval, maxval) \
 		if (PROP_##name != PROP_IN_EVENT && PROP_##name != PROP_OUT_EVENT) \
-			m_n##member = CPersist::GetInt(pszSection, _T(#member), 0);
+			m_n##member = fIni.GetInt(pszSection, _T(#member), 0);
 	#include "MappingDef.h"	// generate profile read for each member, excluding events
 }
 
-void CMapping::Write(LPCTSTR pszSection) const
+void CMapping::Write(CIniFile& fIni, LPCTSTR pszSection) const
 {
-	CPersist::WriteString(pszSection, RK_MAPPING_IN_EVENT, GetInputEventName(m_nInEvent));
-	CPersist::WriteString(pszSection, RK_MAPPING_OUT_EVENT, GetOutputEventName(m_nOutEvent));
+	fIni.WriteString(pszSection, RK_MAPPING_IN_EVENT, GetInputEventName(m_nInEvent));
+	fIni.WriteString(pszSection, RK_MAPPING_OUT_EVENT, GetOutputEventName(m_nOutEvent));
 	// conditional to exclude events is optimized away in release build
 	#define MAPPINGDEF(name, align, width, member, minval, maxval) \
 		if (PROP_##name != PROP_IN_EVENT && PROP_##name != PROP_OUT_EVENT) \
-			CPersist::WriteInt(pszSection, _T(#member), m_n##member);
+			fIni.WriteInt(pszSection, _T(#member), m_n##member);
 	#include "MappingDef.h"	// generate profile write for each member, excluding events
 }
 
-void CMappingArray::Read()
+void CMappingArray::Read(CIniFile& fIni)
 {
 	CString	sSectionIdx;
-	int	nItems = CPersist::GetInt(RK_MAPPING_SECTION, _T("Count"), 0);
+	int	nItems = fIni.GetInt(RK_MAPPING_SECTION, _T("Count"), 0);
 	SetSize(nItems);
 	for (int iItem = 0; iItem < nItems; iItem++) {	// for each mapping
 		sSectionIdx.Format(_T("%d"), iItem);
-		GetAt(iItem).Read(RK_MAPPING_SECTION _T("\\") + sSectionIdx);
+		GetAt(iItem).Read(fIni, RK_MAPPING_SECTION _T("\\") + sSectionIdx);
 	}
 }
 
@@ -153,14 +155,14 @@ void CMapping::SetInputMidiMsg(DWORD nInMidiMsg)
 	m_nInControl = MIDI_P1(nInMidiMsg);
 }
 
-void CMappingArray::Write() const
+void CMappingArray::Write(CIniFile& fIni) const
 {
 	CString	sSectionIdx;
 	int	nItems = GetSize();
-	CPersist::WriteInt(RK_MAPPING_SECTION, _T("Count"), nItems);
+	fIni.WriteInt(RK_MAPPING_SECTION, _T("Count"), nItems);
 	for (int iItem = 0; iItem < nItems; iItem++) {	// for each mapping
 		sSectionIdx.Format(_T("%d"), iItem);
-		GetAt(iItem).Write(RK_MAPPING_SECTION _T("\\") + sSectionIdx);
+		GetAt(iItem).Write(fIni, RK_MAPPING_SECTION _T("\\") + sSectionIdx);
 	}
 }
 
@@ -215,9 +217,27 @@ bool CMappingArray::MapMidiEvent(DWORD dwInEvent, CDWordArrayEx& arrOutEvent) co
 									WCritSec::Lock	lock(pDoc->m_Seq.GetCritSec());	// serialize access to track array
 									// check index ranges within critical section to avoid races
 									if (iTrack < pDoc->GetTrackCount()	// if valid track index
-									&& map.m_nOutControl < pDoc->m_Seq.GetLength(iTrack)) {	// and valid step index
-										pDoc->m_Seq.SetStep(iTrack, map.m_nOutControl, 
+									&& pDoc->m_Seq.IsStepIndex(iTrack, map.m_nOutControl)) {	// and valid step index
+										pDoc->m_Seq.SetStepVelocity(iTrack, map.m_nOutControl, 
 											static_cast<CTrackBase::STEP>(nDataVal));
+									}
+								}	// unlock track critical section ASAP
+								// recipient should check track and step indices to make sure they're valid
+								theApp.GetMainFrame()->PostMessage(UWM_TRACK_STEP_CHANGE,	// post message to update UI
+									iTrack, map.m_nOutControl);
+							}
+						}
+						break;
+					case CMapping::OUT_Tie:	// same as step case except sets tie bit instead of velocity
+						{
+							int	iTrack = map.m_nTrack;
+							if (iTrack >= 0) {	// if track index specified
+								{	// lock track critical section
+									WCritSec::Lock	lock(pDoc->m_Seq.GetCritSec());	// serialize access to track array
+									// check index ranges within critical section to avoid races
+									if (iTrack < pDoc->GetTrackCount()	// if valid track index
+									&& pDoc->m_Seq.IsStepIndex(iTrack, map.m_nOutControl)) {	// and valid step index
+										pDoc->m_Seq.SetStepTie(iTrack, map.m_nOutControl, nDataVal != 0);
 									}
 								}	// unlock track critical section ASAP
 								// recipient should check track and step indices to make sure they're valid

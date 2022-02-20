@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00		14jun18	initial version
+		01		19feb22	use INI file class directly instead of via profile
 		
 */
 
@@ -43,14 +44,16 @@ protected:
 // Helpers
 };
 
+class CIniFile;
+
 class CPresetArray : public CArrayEx<CPreset, CPreset&> {
 public:
 // Operations
 	static	void	PackBools(const CBoolArrayEx& arrSrc, CByteArrayEx& arrDst);
 	static	void	UnpackBools(const CByteArrayEx& arrSrc, CBoolArrayEx& arrDst);
 	static	int		CalcPackedSize(UINT nBits);
-	void	Read(int nTracks);
-	void	Write() const;
+	void	Read(CIniFile& fIni, int nTracks);
+	void	Write(CIniFile& fIni) const;
 	void	OnTrackArrayEdit(const CIntArrayEx& arrTrackMap, int nNewTracks);
 	void	Dump() const;
 	int		Find(const CBoolArrayEx& arrMute) const;

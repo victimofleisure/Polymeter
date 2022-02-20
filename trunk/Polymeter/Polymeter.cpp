@@ -32,6 +32,8 @@
 		22		17nov21	bump resource version
 		23		20dec21	bump resource version
 		24		21jan22	bump resource version
+		25		05feb22	bump resource version
+		26		19feb22	remove profile method overrides
 
 */
 
@@ -69,7 +71,7 @@
 #define RK_TIE_NOTES _T("bTieNotes")
 #define RK_RESOURCE_VERSION _T("nResourceVersion")
 
-const int CPolymeterApp::m_nNewResourceVersion = 6;	// update if resource change breaks customization
+const int CPolymeterApp::m_nNewResourceVersion = 7;	// update if resource change breaks customization
 
 #include "HelpIDs.h"	// help IDs generated automatically by doc2web
 const CPolymeterApp::HELP_RES_MAP CPolymeterApp::m_HelpResMap[] = {
@@ -608,48 +610,6 @@ void CPolymeterApp::LoadCustomState()
 
 void CPolymeterApp::SaveCustomState()
 {
-}
-
-CString CPolymeterApp::GetProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszDefault)
-{
-	CIniFile	*pIniFile = CIniFile::GetThis();
-	if (pIniFile != NULL) {
-		return pIniFile->GetString(lpszSection, lpszEntry, lpszDefault);
-	} else {
-		return CWinApp::GetProfileString(lpszSection, lpszEntry, lpszDefault);
-	}
-}
-
-UINT CPolymeterApp::GetProfileInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nDefault)
-{
-	CIniFile	*pIniFile = CIniFile::GetThis();
-	if (pIniFile != NULL) {
-		return pIniFile->GetInt(lpszSection, lpszEntry, nDefault);
-	} else {
-		return CWinApp::GetProfileInt(lpszSection, lpszEntry, nDefault);
-	}
-}
-
-BOOL CPolymeterApp::WriteProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszValue)
-{
-	CIniFile	*pIniFile = CIniFile::GetThis();
-	if (pIniFile != NULL) {
-		pIniFile->WriteString(lpszSection, lpszEntry, lpszValue);
-		return TRUE;
-	} else {
-		return CWinApp::WriteProfileString(lpszSection, lpszEntry, lpszValue);
-	}
-}
-
-BOOL CPolymeterApp::WriteProfileInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nValue)
-{
-	CIniFile	*pIniFile = CIniFile::GetThis();
-	if (pIniFile != NULL) {
-		pIniFile->WriteInt(lpszSection, lpszEntry, nValue);
-		return TRUE;
-	} else {
-		return CWinApp::WriteProfileInt(lpszSection, lpszEntry, nValue);
-	}
 }
 
 void CPolymeterApp::OnMidiError(MMRESULT nResult)
