@@ -3778,7 +3778,7 @@
 <TD>01/29/22</TD>
 <TD>done</TD>
 <TD>grid control should automatically scroll horizontally when tabbing to an item that's outside the visible area</TD>
-<TD>1.0.06.002</TD>
+<TD>1.0.07.000</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
@@ -3787,7 +3787,7 @@
 <TD>01/30/22</TD>
 <TD>done</TD>
 <TD>Step Values grid control shouldn't allow editing of items beyond end of track</TD>
-<TD>1.0.06.002</TD>
+<TD>1.0.07.000</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
@@ -3796,7 +3796,7 @@
 <TD>02/05/22</TD>
 <TD>done</TD>
 <TD>step mapping unties notes; set step velocity only</TD>
-<TD>1.0.06.002</TD>
+<TD>1.0.07.000</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
@@ -3805,7 +3805,25 @@
 <TD>02/05/22</TD>
 <TD>done</TD>
 <TD>make tie a mapping target</TD>
-<TD>1.0.06.002</TD>
+<TD>1.0.07.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>513</TD>
+<TD>02/13/22</TD>
+<TD>02/13/22</TD>
+<TD>done</TD>
+<TD>support offset modulation of modulator tracks</TD>
+<TD>1.0.07.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TD>514</TD>
+<TD>02/15/22</TD>
+<TD>02/15/22</TD>
+<TD>done</TD>
+<TD>if MIDI error occurs during playback, app locks up due to endless message boxes reporting MIDI error 5</TD>
+<TD>1.0.07.000</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
@@ -4160,15 +4178,6 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TD>269</TD>
-<TD>01/19/19</TD>
-<TD>&nbsp;</TD>
-<TD>hold</TD>
-<TD>document I/O doesn't support Unicode track names; initialize INI file with UTF-16 LE BOM (doubles file size)</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
 <TD>289</TD>
 <TD>03/25/19</TD>
 <TD>&nbsp;</TD>
@@ -4407,7 +4416,7 @@
 <TD>06/24/21</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>optional file information; author, comments</TD>
+<TD>optional song information; title, author, website, email, license, comments</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -4457,6 +4466,15 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>506</TD>
+<TD>02/09/22</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>add Hold track type; postpone a channel's note offs until Hold state is zero, like damper pedal controller</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>510</TD>
 <TD>02/13/22</TD>
 <TD>&nbsp;</TD>
@@ -4479,7 +4497,7 @@
 <TD>02/13/22</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>in Wine, MIDI devices added while app is running don’t appear until the app is exited and restarted</TD>
+<TD>in Wine, MIDI devices added while app is running don?t appear until the app is exited and restarted</TD>
 <TD>&nbsp;</TD>
 <TD>Wine</TD>
 </TR>
@@ -4583,6 +4601,15 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TD>269</TD>
+<TD>01/19/19</TD>
+<TD>&nbsp;</TD>
+<TD>punt</TD>
+<TD>support Unicode characters in track names; bad idea because MIDI file format doesn't support Unicode</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TD>286</TD>
 <TD>02/28/19</TD>
 <TD>&nbsp;</TD>
@@ -4633,15 +4660,6 @@
 <TD>&nbsp;</TD>
 <TD>punt</TD>
 <TD>docking windows submenu doesn't support selection via mnemonics; framework issue, BuildPanesMenu</TD>
-<TD>&nbsp;</TD>
-<TD>&nbsp;</TD>
-</TR>
-<TR VALIGN=TOP>
-<TD>506</TD>
-<TD>02/09/22</TD>
-<TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>new Hold track type; postpone a channel's note offs until Hold state is zero, like damper pedal controller</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>

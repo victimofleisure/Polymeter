@@ -198,6 +198,7 @@
 <dd><a href="#Time_To_Repeat">Time To Repeat</a>
 <dd><a href="#Prime_Factors">Prime Factors</a>
 <dd><a href="#Velocity_Range">Velocity Range</a>
+<dd><a href="#Check_Modulations">Check Modulations</a>
 <dd><a href="#Devices">Devices</a>
 <dd><a href="#Options">Options</a>
 <dd><a href="#Import_Table">Import Table</a>
@@ -432,7 +433,7 @@
 <tr><td><a href="#Chord_modulation">Chord</a></td><td>Note tracks only</td><td>Adds scale tone to current chord</td><td>Signed zero-based scale tone index</td></tr>
 <tr><td><a href="#Index_modulation">Index</a></td><td>Note tracks only</td><td>Picks a scale or chord tone</td><td>Signed zero-based scale or chord tone index</td></tr>
 <tr><td><a href="#Voicing_modulation">Voicing</a></td><td>Note tracks only</td><td>Drops or raises a scale or chord tone</td><td>Signed one-based voice index</td></tr>
-<tr><td><a href="#Offset_modulation">Offset</a></td><td>Note tracks only</td><td>Offsets playback timing</td><td>Unsigned offset in ticks</td></tr>
+<tr><td><a href="#Offset_modulation">Offset</a></td><td>Note or Modulator tracks only</td><td>Offsets playback timing</td><td>Offset in ticks; unsigned for Note, signed for Modulator</td></tr>
 </table>
 
 <a name="Modulation_relationships"><h3>Modulation relationships</h3></a>
@@ -449,11 +450,23 @@
 
 <p>In the above relationships, the modulations don't necessarily have to be all of the same type. For example a note track could have its mute state modulated by one source track, and its note modulated by a different source track.
 
-<p>Recursive relationships are also possible, in other words a modulator can modulate a modulator. There are some limits on this, which are explained below. The only thing that's definitely not allowed is a track modulating itself, either directly, or indirectly via a loop, as this would lead to infinite recursion. The user interface tries to prevent self-modulation, but if it occurs you'll get the error message "Modulation exceeded the maximum number of recursions."
+<a name="Nested_modulation"><h3>Nested modulation</h3></a>
 
-<p>The maximum recursion depth is 32 levels, however only <a href="#Mute_modulation">mute modulation</a> and <a href="#Position_modulation">position modulation</a> fully support recursion. A first level modulator&mdash;one that directly targets a <a href="#Note_tracks">note track</a> or <a href="#Controller_tracks">controller track</a>&mdash;can have any <a href="#Modulation_types">modulation type</a>, but deeper levels can only be mute or position modulators. For example, a note modulator can't be the target of another note modulator, but it can be the target of a mute or position modulator.
+<p>Nested relationships are also possible, in other words a modulator can modulate a modulator, though there are limits on this, as explained below. The only thing that's definitely not allowed is a track modulating itself, either directly, or indirectly via a loop, as this would lead to infinite recursion. The user interface tries to prevent self-modulation, but if it occurs you'll get the error message "Modulation exceeded the maximum number of recursions." The maximum modulation depth is 32 levels, however only <a href="#Mute_modulation">mute modulation</a>, <a href="#Position_modulation">position modulation</a>, and <a href="#Offset_modulation">offset modulation</a> fully support nesting. The modulation types that fully support nesting can form chains, for example:
 
-<p>There's one important exception to the above recursion rules: a <a href="#Scale_modulation">scale modulator</a> or <a href="#Chord_modulation">chord modulator</a> can be targeted by one or more note modulators.
+<p>mute modulator &rarr; position modulator &rarr; note modulator &rarr; note track
+
+<a name="Modulation_rules"><h3>Modulation rules</h3></a>
+
+<p>The table below summarizes the supported modulation behavior. For each track type, it tells you what types of modulation the track can be targeted by. Use the <a href="#Check_Modulations">Check Modulations</a> command to verify that your modulations comply with these rules.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Target track type</th><th>Supported modulation types</th></tr>
+<tr><td>Note</td><td>All except Tempo</td></tr>
+<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel</td><td>Mute, Position, Velocity</td></tr>
+<tr><td>Tempo</td><td>Mute, Position, Tempo</td></tr>
+<tr><td>Modulator</td><td>Mute, Position, Offset; also Note but only if target is a Scale or Chord modulator</td></tr>
+</table>
 
 <a name="Dubs"><h2>Dubs</h2></a>
 
@@ -804,7 +817,7 @@
 
 <p>The target track can still be <a href="#Note_modulation">note modulated</a>. In this case the note shift is added to all of the scale tones, before range modulation and indexing. This is useful for transposition.
 
-<p>Scale modulators can also have note modulators. These are applied first as the current scale is being built. Scales can also be affected by <a href="#Chord_modulation">chords</a> and <a href="#Voicing_modulation">voicings</a>.
+<p>Scale modulators can also have note modulators, which is useful for periodically altering one or more scale tones. Note modulators are signed offsets in semitones, and they're applied first as the current scale is being built. Scales can also be affected by <a href="#Chord_modulation">chords</a> and <a href="#Voicing_modulation">voicings</a>.
 
 <a name="Chord_modulation"><h2>Chord modulation</h2></a>
 
@@ -867,9 +880,11 @@
 
 <a name="Offset_modulation"><h2>Offset modulation</h2></a>
 
-<p>Offset <a href="#Modulations">modulation</a> changes the time offset of a target note track. An offset modulator's steps are interpreted as <a href="#Unsigned_versus_signed_steps">unsigned</a> delays in MIDI <a href="#Ticks">ticks</a>. By default, notes can only be made later, not earlier, but you can work around this by setting the target track's <a href="#Track_Offset">offset</a> to a negative value. For example if the target track's offset is &minus;64, that gives its offset modulation an effective range of &minus;64 to +63, in other words from 64 ticks early to 63 ticks late.
+<p>Offset <a href="#Modulations">modulation</a> changes the time offset of a target track. The supported target types are <a href="#Note_tracks">note tracks</a> and modulator tracks. For note tracks, an offset modulator's steps are interpreted as <a href="#Unsigned_versus_signed_steps">unsigned</a> delays in MIDI <a href="#Ticks">ticks</a>. By default, notes can only be made later, not earlier, but you can work around this by setting the target track's <a href="#Track_Offset">offset</a> to a negative value. For example if the target track's offset is &minus;64, that gives its offset modulation an effective range of &minus;64 to +63, in other words from 64 ticks early to 63 ticks late.
 
-<p>Offset modulation changes the rhythmic feel of the target track, periodically speeding it up and slowing it down relative to the beat. It can be used to create rolls on drums, or to emulate the feel changes of a live performer. For best results, use a smooth function such as a ramp, triangle or sine wave. Offset modulation can cause <a href="#Note_Overlap">notes to overlap</a>. Only <a href="#Note_tracks">note tracks</a> support offset modulation.
+<p>Offset modulation changes the rhythmic feel of the target track, periodically speeding it up and slowing it down relative to the beat. It can be used to create rolls on drums, or to emulate the feel changes of a live performer. For best results, use a smooth function such as a ramp, triangle or sine wave. Offset modulation can cause <a href="#Note_Overlap">notes to overlap</a>.
+
+<p>Modulator tracks can also be offset modulated, but in this case the offset modulator's steps are interpreted as signed values, allowing offsets in the range of &minus;64 to +63. Offset modulation is useful for time-shifting a group of modulators that have different <a href="#Track_Quant">quants</a>. Offset modulation is similar to <a href="#Position_modulation">position modulation</a>, except that the shift is specified in ticks instead of steps.
 
 
 <h1>Views</h1>
@@ -1636,15 +1651,15 @@
 <tr><td><a href="#Track_Range_Type">Range Type</a></td><td>N/A</td><td>Required</td><td>Enumeration</td></tr>
 <tr><td><a href="#Track_Range_Start">Range Start</a></td><td>N/A</td><td>Required</td><td>In semitones</td></tr>
 <tr><td><a href="#Track_Mutes">Mute</a></td><td>N/A</td><td>Required</td><td>Non-zero to mute track</td></tr>
-<tr><td><a href="#Track_Steps">Step</a></td><td>Step Index</td><td>Required</td><td>Event data is step value</td></tr>
-<tr><td><a href="#Tied_notes">Tie</a></td><td>Step Index</td><td>Required</td><td>Non-zero to tie step</td></tr>
+<tr><td><a href="#Track_Steps">Step</a></td><td>Step Index</td><td>Required</td><td>Event data is step value; see <a href="#Step_mapping">step mapping</a></td></tr>
+<tr><td><a href="#Tied_notes">Tie</a></td><td>Step Index</td><td>Required</td><td>Non-zero to tie step; see <a href="#Tie_mapping">tie mapping</a></td></tr>
 <tr><td><a href="#Presets_bar">Presets</a></td><td>N/A</td><td>N/A</td><td>Event data is preset index</td></tr>
 <tr><td><a href="#Parts_bar">Parts</a></td><td>Part Index</td><td>N/A</td><td>Non-zero to activate part</td></tr>
 <tr><td><a href="#Play">Play</a></td><td>N/A</td><td>N/A</td><td>Non-zero to play</td></tr>
 <tr><td><a href="#Pause">Pause</a></td><td>N/A</td><td>N/A</td><td>Non-zero to pause</td></tr>
 <tr><td><a href="#Record">Record</a></td><td>N/A</td><td>N/A</td><td>Non-zero to record</td></tr>
 <tr><td><a href="#Loop">Loop</a></td><td>N/A</td><td>N/A</td><td>Non-zero to loop</td></tr>
-<tr><td><a href="#Tempo">Tempo</a></td><td>N/A</td><td>N/A</td><td>See <a href="#Tempo_mapping">tempo mapping</a></td></tr>
+<tr><td><a href="#Tempo">Tempo</a></td><td>N/A</td><td>N/A</td><td>Fractional multiplier; see <a href="#Tempo_mapping">tempo mapping</a></td></tr>
 </table>
 
 <a name="Learning_mappings"><h3>Learning mappings</h3></a>
@@ -1666,7 +1681,7 @@
 
 <a name="Tempo_mapping"><h3>Tempo mapping</h3></a>
 
-<p>Controlling <a href="#Tempo">tempo</a> is a special case, because unlike other <a href="#Mappings">mapping</a> targets, tempo is exponential rather than linear. For example, suppose the normal tempo is 100, in which case half-time is 50 and double-time is 200. The values 50, 100, and 200 are clearly not linearly spaced. Tempo mapping handles this complication for you, so that your control behaves as if tempo is linear, even though it isn't. A pitch bend wheel works similarly.
+<p>Controlling <a href="#Tempo">tempo</a> is a special case, because unlike other <a href="#Mappings">mapping</a> targets, tempo is exponential rather than linear. For example, suppose the normal tempo is 100, in which case half-time is 50 and double-time is 200. The values 50, 100, and 200 are clearly not linearly spaced. Tempo mapping handles this complication for you, so that your control behaves as if tempo were linear, even though it isn't. A pitch bend wheel works similarly.
 
 <p>To specify the range of tempo change your control covers, adjust the mapping's Range Start and Range End properties. Some useful tempo mapping setups are given below.
 
@@ -1678,7 +1693,7 @@
 <tr><td>&minus;63</td><td>63</td><td>71% to 141%</td><td>Approximately half the previous range, from the square root of &frac12; to the square root of 2</td></tr>
 </table>
 
-<p>During <a href="#Play">playback</a>, the net tempo is shown in the <a href="#Status_Bar">status bar</a>.
+<p>Tempo mapping produces a <em>multiplier</em>, which the base tempo is multiplied by. The tempo may also multiplied by a <a href="#Tempo_tracks">tempo track</a> if one exists, along with any <a href="#Tempo_modulation">tempo modulators</a> the tempo track may have. The product of these multiplications is the <em>net tempo</em>. During <a href="#Play">playback</a>, the net tempo is shown in the <a href="#Status_Bar">status bar</a>.
 
 <a name="Position_mapping"><h3>Position mapping</h3></a>
 
@@ -2557,6 +2572,22 @@
 <a name="Velocity_Range"><h3>Velocity Range</h3></a>
 
 <p>This command reports the minimum and maximum step values in the selected <a href="#Tracks">tracks</a> or <a href="#Steps">steps</a>. The command also checks for <a href="#Clipping">clipping</a>, which can be caused by excessive <a href="#Track_Velocity">track velocity</a> or <a href="#Velocity_modulation">velocity modulation</a>. If a <a href="#Step_Selection">step selection</a> exists, it takes priority, and only the selected steps are included. Otherwise all steps of the <a href="#Track_Selection">selected tracks</a> are included. The step values are interpreted as unsigned integers from 0 to 127, regardless of <a href="#Track_types">track type</a>. When applied to <a href="#Note_tracks">note tracks</a>, the command reports velocities, but for other track types, the meaning depends on the context.
+
+<a name="Check_Modulations"><h3>Check Modulations</h3></a>
+
+<p>This command checks your <a href="#Modulations">modulations</a> for errors. All modulations are checked, regardless of <a href="#Track_Selection">track selection</a>. If errors are found, they're reported in a table that contains one row for each erroneous modulation. The columns consist of the target track's number, the source track's number, the modulation type, and the error message. The errors are explained below.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Error</th><th>Severity</th><th>Description</th></tr>
+<tr><td>Unsupported modulation type</td><td>Warning</td><td>The modulation has an inappropriate type for the context in which it's used.</td></tr>
+<tr><td>Infinite loop</td><td>Fatal</td><td>The modulation directly or indirectly modulates itself, causing an infinite loop.</td></tr>
+</table>
+
+<p>An unsupported modulation type indicates a violation of the <a href="#Modulation_rules">modulation rules</a>. For example, the setup shown below reports an error for the velocity modulator, because velocity modulators can't be <a href="#Nested_modulation">nested</a>. The erroneous modulation has no effect on playback, which is why the error is only a warning.
+
+<p>velocity modulator &rarr; mute modulator &rarr; note track
+
+<p>The infinite loop error is fatal because such loops can potentially crash or freeze the application. The playback engine protects itself against infinite recursion, but more complex modulation setups can loop in other ways that are harder to detect. Unlike the playback engine, the Check Modulations command can detect all feedback loops, even if they're currently inactive due to tracks being <a href="#Track_Mutes">muted</a>.
 
 <a name="Devices"><h3>Devices</h3></a>
 

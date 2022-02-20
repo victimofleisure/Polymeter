@@ -29,7 +29,7 @@
 <tr><td><a href="../Modulation/Chord_modulation.htm">Chord</a></td><td>Note tracks only</td><td>Adds scale tone to current chord</td><td>Signed zero-based scale tone index</td></tr>
 <tr><td><a href="../Modulation/Index_modulation.htm">Index</a></td><td>Note tracks only</td><td>Picks a scale or chord tone</td><td>Signed zero-based scale or chord tone index</td></tr>
 <tr><td><a href="../Modulation/Voicing_modulation.htm">Voicing</a></td><td>Note tracks only</td><td>Drops or raises a scale or chord tone</td><td>Signed one-based voice index</td></tr>
-<tr><td><a href="../Modulation/Offset_modulation.htm">Offset</a></td><td>Note tracks only</td><td>Offsets playback timing</td><td>Unsigned offset in ticks</td></tr>
+<tr><td><a href="../Modulation/Offset_modulation.htm">Offset</a></td><td>Note or Modulator tracks only</td><td>Offsets playback timing</td><td>Offset in ticks; unsigned for Note, signed for Modulator</td></tr>
 </table>
 
 <a name="Modulation_relationships"><p><b>Modulation relationships</b></a>
@@ -45,11 +45,21 @@
 
 <p>In the above relationships, the modulations don't necessarily have to be all of the same type. For example a note track could have its mute state modulated by one source track, and its note modulated by a different source track.
 
-<p>Recursive relationships are also possible, in other words a modulator can modulate a modulator. There are some limits on this, which are explained below. The only thing that's definitely not allowed is a track modulating itself, either directly, or indirectly via a loop, as this would lead to infinite recursion. The user interface tries to prevent self-modulation, but if it occurs you'll get the error message "Modulation exceeded the maximum number of recursions."
+<a name="Nested_modulation"><p><b>Nested modulation</b></a>
+<p>Nested relationships are also possible, in other words a modulator can modulate a modulator, though there are limits on this, as explained below. The only thing that's definitely not allowed is a track modulating itself, either directly, or indirectly via a loop, as this would lead to infinite recursion. The user interface tries to prevent self-modulation, but if it occurs you'll get the error message "Modulation exceeded the maximum number of recursions." The maximum modulation depth is 32 levels, however only <a href="../Modulation/Mute_modulation.htm">mute modulation</a>, <a href="../Modulation/Position_modulation.htm">position modulation</a>, and <a href="../Modulation/Offset_modulation.htm">offset modulation</a> fully support nesting. The modulation types that fully support nesting can form chains, for example:
 
-<p>The maximum recursion depth is 32 levels, however only <a href="../Modulation/Mute_modulation.htm">mute modulation</a> and <a href="../Modulation/Position_modulation.htm">position modulation</a> fully support recursion. A first level modulator&mdash;one that directly targets a <a href="../Tracks/Note_tracks.htm">note track</a> or <a href="../Tracks/Controller_tracks.htm">controller track</a>&mdash;can have any <a href="../Concepts/Modulations.htm#Modulation_types">modulation type</a>, but deeper levels can only be mute or position modulators. For example, a note modulator can't be the target of another note modulator, but it can be the target of a mute or position modulator.
+<p>mute modulator &rarr; position modulator &rarr; note modulator &rarr; note track
 
-<p>There's one important exception to the above recursion rules: a <a href="../Modulation/Scale_modulation.htm">scale modulator</a> or <a href="../Modulation/Chord_modulation.htm">chord modulator</a> can be targeted by one or more note modulators.
+<a name="Modulation_rules"><p><b>Modulation rules</b></a>
+<p>The table below summarizes the supported modulation behavior. For each track type, it tells you what types of modulation the track can be targeted by. Use the <a href="../Menus/Tools/Check_Modulations.htm">Check Modulations</a> command to verify that your modulations comply with these rules.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Target track type</th><th>Supported modulation types</th></tr>
+<tr><td>Note</td><td>All except Tempo</td></tr>
+<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel</td><td>Mute, Position, Velocity</td></tr>
+<tr><td>Tempo</td><td>Mute, Position, Tempo</td></tr>
+<tr><td>Modulator</td><td>Mute, Position, Offset; also Note but only if target is a Scale or Chord modulator</td></tr>
+</table>
 
 <!--  content stops HERE  -->
 			

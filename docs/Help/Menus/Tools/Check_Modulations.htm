@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Check Modulations</title>
+<meta name="author" content="Chris Korda">
+<link rel=stylesheet href="../../content.css" type="text/css">
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Check Modulations</h3>
+
+<p>This command checks your <a href="../../Concepts/Modulations.htm">modulations</a> for errors. All modulations are checked, regardless of <a href="../../Views/Track_View/Track_Selection.htm">track selection</a>. If errors are found, they're reported in a table that contains one row for each erroneous modulation. The columns consist of the target track's number, the source track's number, the modulation type, and the error message. The errors are explained below.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Error</th><th>Severity</th><th>Description</th></tr>
+<tr><td>Unsupported modulation type</td><td>Warning</td><td>The modulation has an inappropriate type for the context in which it's used.</td></tr>
+<tr><td>Infinite loop</td><td>Fatal</td><td>The modulation directly or indirectly modulates itself, causing an infinite loop.</td></tr>
+</table>
+
+<p>An unsupported modulation type indicates a violation of the <a href="../../Concepts/Modulations.htm#Modulation_rules">modulation rules</a>. For example, the setup shown below reports an error for the velocity modulator, because velocity modulators can't be <a href="../../Concepts/Modulations.htm#Nested_modulation">nested</a>. The erroneous modulation has no effect on playback, which is why the error is only a warning.
+
+<p>velocity modulator &rarr; mute modulator &rarr; note track
+
+<p>The infinite loop error is fatal because such loops can potentially crash or freeze the application. The playback engine protects itself against infinite recursion, but more complex modulation setups can loop in other ways that are harder to detect. Unlike the playback engine, the Check Modulations command can detect all feedback loops, even if they're currently inactive due to tracks being <a href="../../Views/Track_View/Track_Mutes.htm">muted</a>.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

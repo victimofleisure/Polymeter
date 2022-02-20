@@ -197,7 +197,7 @@ Besides juxtaposition, another important method of combining @[tracks] is <em>mo
 <tr><td>@[chord modulation\Chord]</td><td>Note tracks only</td><td>Adds scale tone to current chord</td><td>Signed zero-based scale tone index</td></tr>
 <tr><td>@[index modulation\Index]</td><td>Note tracks only</td><td>Picks a scale or chord tone</td><td>Signed zero-based scale or chord tone index</td></tr>
 <tr><td>@[voicing modulation\Voicing]</td><td>Note tracks only</td><td>Drops or raises a scale or chord tone</td><td>Signed one-based voice index</td></tr>
-<tr><td>@[offset modulation\Offset]</td><td>Note tracks only</td><td>Offsets playback timing</td><td>Unsigned offset in ticks</td></tr>
+<tr><td>@[offset modulation\Offset]</td><td>Note or Modulator tracks only</td><td>Offsets playback timing</td><td>Offset in ticks; unsigned for Note, signed for Modulator</td></tr>
 </table>
 
 @item Modulation relationships
@@ -214,11 +214,23 @@ The relationship between source and target tracks can be any of the following:
 
 In the above relationships, the modulations don't necessarily have to be all of the same type. For example a note track could have its mute state modulated by one source track, and its note modulated by a different source track.
 
-Recursive relationships are also possible, in other words a modulator can modulate a modulator. There are some limits on this, which are explained below. The only thing that's definitely not allowed is a track modulating itself, either directly, or indirectly via a loop, as this would lead to infinite recursion. The user interface tries to prevent self-modulation, but if it occurs you'll get the error message "Modulation exceeded the maximum number of recursions."
+@item Nested modulation
 
-The maximum recursion depth is 32 levels, however only @[mute modulation] and @[position modulation] fully support recursion. A first level modulator&mdash;one that directly targets a @[note tracks\note track] or @[controller tracks\controller track]&mdash;can have any @[modulation types\modulation type], but deeper levels can only be mute or position modulators. For example, a note modulator can't be the target of another note modulator, but it can be the target of a mute or position modulator.
+Nested relationships are also possible, in other words a modulator can modulate a modulator, though there are limits on this, as explained below. The only thing that's definitely not allowed is a track modulating itself, either directly, or indirectly via a loop, as this would lead to infinite recursion. The user interface tries to prevent self-modulation, but if it occurs you'll get the error message "Modulation exceeded the maximum number of recursions." The maximum modulation depth is 32 levels, however only @[mute modulation], @[position modulation], and @[offset modulation] fully support nesting. The modulation types that fully support nesting can form chains, for example:
 
-There's one important exception to the above recursion rules: a @[scale modulation\scale modulator] or @[chord modulation\chord modulator] can be targeted by one or more note modulators.
+mute modulator &rarr; position modulator &rarr; note modulator &rarr; note track 
+
+@item Modulation rules
+
+The table below summarizes the supported modulation behavior. For each track type, it tells you what types of modulation the track can be targeted by. Use the @[Check Modulations] command to verify that your modulations comply with these rules.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Target track type</th><th>Supported modulation types</th></tr>
+<tr><td>Note</td><td>All except Tempo</td></tr>
+<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel</td><td>Mute, Position, Velocity</td></tr>
+<tr><td>Tempo</td><td>Mute, Position, Tempo</td></tr>
+<tr><td>Modulator</td><td>Mute, Position, Offset; also Note but only if target is a Scale or Chord modulator</td></tr>
+</table>
 
 @topic Dubs
 
@@ -571,7 +583,7 @@ The @[track range type\track range] also works differently in this case. The ran
 
 The target track can still be @[note modulation\note modulated]. In this case the note shift is added to all of the scale tones, before range modulation and indexing. This is useful for transposition.
 
-Scale modulators can also have note modulators. These are applied first as the current scale is being built. Scales can also be affected by @[chord modulation\chords] and @[voicing modulation\voicings].
+Scale modulators can also have note modulators, which is useful for periodically altering one or more scale tones. Note modulators are signed offsets in semitones, and they're applied first as the current scale is being built. Scales can also be affected by @[chord modulation\chords] and @[voicing modulation\voicings].
 
 @topic Chord modulation
 
@@ -634,9 +646,11 @@ After the voicing is applied, the tones are sorted again, and only then is a ton
 
 @topic Offset modulation
 
-Offset @[modulations\modulation] changes the time offset of a target note track. An offset modulator's steps are interpreted as @[unsigned versus signed steps\unsigned] delays in MIDI @[ticks]. By default, notes can only be made later, not earlier, but you can work around this by setting the target track's @[track offset\offset] to a negative value. For example if the target track's offset is &minus;64, that gives its offset modulation an effective range of &minus;64 to +63, in other words from 64 ticks early to 63 ticks late.
+Offset @[modulations\modulation] changes the time offset of a target track. The supported target types are @[note tracks] and modulator tracks. For note tracks, an offset modulator's steps are interpreted as @[unsigned versus signed steps\unsigned] delays in MIDI @[ticks]. By default, notes can only be made later, not earlier, but you can work around this by setting the target track's @[track offset\offset] to a negative value. For example if the target track's offset is &minus;64, that gives its offset modulation an effective range of &minus;64 to +63, in other words from 64 ticks early to 63 ticks late.
 
-Offset modulation changes the rhythmic feel of the target track, periodically speeding it up and slowing it down relative to the beat. It can be used to create rolls on drums, or to emulate the feel changes of a live performer. For best results, use a smooth function such as a ramp, triangle or sine wave. Offset modulation can cause @[note overlap\notes to overlap]. Only @[note tracks] support offset modulation.
+Offset modulation changes the rhythmic feel of the target track, periodically speeding it up and slowing it down relative to the beat. It can be used to create rolls on drums, or to emulate the feel changes of a live performer. For best results, use a smooth function such as a ramp, triangle or sine wave. Offset modulation can cause @[note overlap\notes to overlap].
+
+Modulator tracks can also be offset modulated, but in this case the offset modulator's steps are interpreted as signed values, allowing offsets in the range of &minus;64 to +63. Offset modulation is useful for time-shifting a group of modulators that have different @[track quant\quants]. Offset modulation is similar to @[position modulation], except that the shift is specified in ticks instead of steps.
 
 @endchapter
 
@@ -2338,6 +2352,22 @@ This command reports the @[primes\prime factors] of the lengths of the @[track s
 @topic Velocity Range
 
 This command reports the minimum and maximum step values in the selected @[tracks] or @[steps]. The command also checks for @[clipping], which can be caused by excessive @[track velocity] or @[velocity modulation]. If a @[step selection] exists, it takes priority, and only the selected steps are included. Otherwise all steps of the @[track selection\selected tracks] are included. The step values are interpreted as unsigned integers from 0 to 127, regardless of @[track types\track type]. When applied to @[note tracks], the command reports velocities, but for other track types, the meaning depends on the context.
+
+@topic Check Modulations
+
+This command checks your @[modulations] for errors. All modulations are checked, regardless of @[track selection]. If errors are found, they're reported in a table that contains one row for each erroneous modulation. The columns consist of the target track's number, the source track's number, the modulation type, and the error message. The errors are explained below.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Error</th><th>Severity</th><th>Description</th></tr>
+<tr><td>Unsupported modulation type</td><td>Warning</td><td>The modulation has an inappropriate type for the context in which it's used.</td></tr>
+<tr><td>Infinite loop</td><td>Fatal</td><td>The modulation directly or indirectly modulates itself, causing an infinite loop.</td></tr>
+</table>
+
+An unsupported modulation type indicates a violation of the @[modulation rules]. For example, the setup shown below reports an error for the velocity modulator, because velocity modulators can't be @[nested modulation\nested]. The erroneous modulation has no effect on playback, which is why the error is only a warning.
+
+velocity modulator &rarr; mute modulator &rarr; note track
+
+The infinite loop error is fatal because such loops can potentially crash or freeze the application. The playback engine protects itself against infinite recursion, but more complex modulation setups can loop in other ways that are harder to detect. Unlike the playback engine, the Check Modulations command can detect all feedback loops, even if they're currently inactive due to tracks being @[track mutes\muted].
 
 @topic Devices
 

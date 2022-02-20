@@ -414,10 +414,12 @@ id	open	close	type	description	rev	user
 499	01/22/22	01/21/22	done	tempos below 4 BPM behave unexpectedly due to period in microseconds exceeding 24 bits; limit user input	1.0.06.000	
 496	01/21/22	01/22/22	done	display actual tempo in status bar while playing; query MIDI stream's tempo property	1.0.06.000	
 500	01/27/22	01/27/22	done	channel write shouldn't output overlaps member if it has default value; add special handling for non-events	1.0.06.001	
-501	01/29/22	01/29/22	done	grid control should automatically scroll horizontally when tabbing to an item that's outside the visible area	1.0.06.002	
-502	01/29/22	01/30/22	done	Step Values grid control shouldn't allow editing of items beyond end of track	1.0.06.002	
-504	02/05/22	02/05/22	done	step mapping unties notes; set step velocity only	1.0.06.002	
-505	02/05/22	02/05/22	done	make tie a mapping target	1.0.06.002	
+501	01/29/22	01/29/22	done	grid control should automatically scroll horizontally when tabbing to an item that's outside the visible area	1.0.07.000	
+502	01/29/22	01/30/22	done	Step Values grid control shouldn't allow editing of items beyond end of track	1.0.07.000	
+504	02/05/22	02/05/22	done	step mapping unties notes; set step velocity only	1.0.07.000	
+505	02/05/22	02/05/22	done	make tie a mapping target	1.0.07.000	
+513	02/13/22	02/13/22	done	support offset modulation of modulator tracks	1.0.07.000	
+514	02/15/22	02/15/22	done	if MIDI error occurs during playback, app locks up due to endless message boxes reporting MIDI error 5	1.0.07.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -457,7 +459,6 @@ id	open	close	type	description	rev	user
 236	11/19/18		hold	length modulation; cool idea but hard to implement		Benoit
 257	12/09/18		hold	add hide/unhide column commands to track list header's context menu; where to store previous width?		
 259	12/12/18		hold	grid control's header should display tooltip for truncated column names; must subclass header control?		
-269	01/19/19		hold	document I/O doesn't support Unicode track names; initialize INI file with UTF-16 LE BOM (doubles file size)		
 289	03/25/19		hold	piano bar should be able to show channels separately via multiple keyboards; messy problem		
 296	06/12/19		hold	option for space bar to start/stop playback without needing to also press Ctrl key; causes many UI conflicts		
 318	03/02/20		hold	separate window for viewing/editing recorded MIDI input		
@@ -484,15 +485,16 @@ id	open	close	type	description	rev	user
 434	01/19/21		hold	graph should optionally indicate track type		
 433	01/19/21		hold	track should be a potential mapping source, so tracks can automate parameters; inject MIDI event?		
 437	01/20/21		hold	add harmonizer and harmonic anticipation, adapted from ChordEase		
-452	06/24/21		hold	optional file information; author, comments		
+452	06/24/21		hold	optional song information; title, author, website, email, license, comments		
 462	08/31/21		hold	dialog that allows song dubs to be edited directly; complex because each track stores its own dubs		
 477	11/13/21		hold	modulation types filter dialog should be modeless or at least have a preview option		
 494	01/18/22		hold	insert modulators command; create appropriately initialized modulator track(s) of specified type		
 503	02/01/22		hold	indicate MIDI input activity in the status bar; per-channel indicators would be helpful too		
 507	02/09/22		hold	sequence modulation; similar to index modulation, but returns next step regardless of song position		
+506	02/09/22		hold	add Hold track type; postpone a channel's note offs until Hold state is zero, like damper pedal controller		
 510	02/13/22		hold	in Wine, Phase bar doesn't work at all, likely due to its use of Direct2D		Wine
 511	02/13/22		hold	in Wine, HTML help's Contents and Index tabs are empty, but Search works and all topics are present		Wine
-512	02/13/22		hold	in Wine, MIDI devices added while app is running don’t appear until the app is exited and restarted		Wine
+512	02/13/22		hold	in Wine, MIDI devices added while app is running don?t appear until the app is exited and restarted		Wine
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
@@ -504,10 +506,10 @@ id	open	close	type	description	rev	user
 239	11/19/18		punt	sort on note name without octave; not sure why this is useful		Benoit
 240	11/21/18		punt	while drawing velocities in velocity pane, dragging left/right of window should scroll view; tried it, too confusing		
 264	01/11/19		punt	in Piano view, if multiple instances of a note overlap, velocity color may be inaccurate; unavoidable		
+269	01/19/19		punt	support Unicode characters in track names; bad idea because MIDI file format doesn't support Unicode		
 286	02/28/19		punt	song playback doesn't always match live output when modulator tracks have big quants; dub granularity issue		
 294	05/30/19		punt	modulation list is empty regardless of track selection; can't reproduce it, brain fire?		
 301	11/12/19		punt	popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful		
 468	10/30/21		punt	at refresh rate of 60 Hz or above, song view cursor flickers during playback if track count is five or less		
 476	11/13/21		punt	render phase diagram in 3D, with variable lighting, texture and rotation of orbital plane; simulated 3D is enough		
 483	11/16/21		punt	docking windows submenu doesn't support selection via mnemonics; framework issue, BuildPanesMenu		
-506	02/09/22		todo	new Hold track type; postpone a channel's note offs until Hold state is zero, like damper pedal controller		

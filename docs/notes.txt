@@ -3673,3 +3673,74 @@ times, we can save enough time to offset the increased overhead from
 showing current tempo. Even better, that overhead is only incurred 
 when the tempo actually changes, otherwise there's no cost.
 
+2/16/22 modulation errors
+
+The following snippet checks for errors and outputs them to the console.
+
+CTrack::CModulationErrorArray	arrError;
+if (!doc.m_Seq.GetTracks().ValidateModulations(arrError)) {
+	for (int iError = 0; iError < arrError.GetSize(); iError++) {
+		const CTrack::CModulationError& err = arrError[iError];
+		_tprintf(_T("%d\t%d\t%s\t%d\n"), err.m_iTarget + 1, err.m_iSource + 1, 
+			CTrack::GetModulationTypeInternalName(err.m_iType), err.m_nError);
+	}
+}
+
+2/19/22 Unicode in track names
+
+After much research and experimentation, the conclusion: Unicode in track 
+names is a bad idea, primarily because the MIDI file format only supports 
+8-bit characters in track names, and 7-bit characters are preferable for 
+maximum compatibility.
+
+"[Text in MIDI files should be] printable ASCII characters for maximum 
+interchange. However, other character codes using the high-order bit may 
+be used for interchange of files between different programs on the same 
+computer which supports an extended character set."
+(Schulich School of Music, McGill University, StandardMIDIfileformat.html)
+
+Other factors include limitations of the INI and CSV file formats and the
+APIs employed to read and them.
+
+It's possible to open a text file in Unicode and then attach it to the
+CStdioFile instance using this code:
+
+BOOL CIniFile::CFastStdioFile::Open(LPCTSTR pszFilePath, UINT nOpenFlags, CFileException *pException)
+{
+	static const LPCTSTR szMode[] = {
+		_T("rt,ccs=UNICODE"),	// can be UTF-8 instead
+		_T("wt,ccs=UNICODE"),
+	};
+	int	bIsWrite = nOpenFlags & modeWrite;
+	FILE	*fStream;
+	errno_t	nErr =_tfopen_s(&fStream, pszFilePath, szMode[bIsWrite]);
+	if (nErr != 0)
+		return false;
+	CommonBaseInit(fStream, NULL);
+	m_bCloseOnDelete = true;
+	return true;
+}
+
+This seems to work for reading and writing, but it uses UTF-16 LE, which
+makes the files twice as large. It does seem to support the entire Unicode
+range, judging from tests with Chinese lorem ipsum characters.
+
+It appears that the file size issue could be solved by using ccs=UTF-8 
+instead, but it would still break backwards compatibility, because older
+versions of the application would read the UTF-8 BOM as part of the first
+string, causing the file format check to fail. One workaround would be to
+only create UTF-8 if it's necessary, which means Write would have to check
+the track names (and song info!) for non-ASCII characters, and if none are
+found, use ANSI instead of UTF-8.
+
+Adding the following test code to OnNewDocument results in a PLM file with 
+its first 14 track names set to the entire 8-bit character range:
+
+	for (int i = 0; i < 14; i++) {
+		TCHAR	szName[17];
+		for (int j = 0; j < 16; j++) {
+			szName[j] = static_cast<TCHAR>((i + 2) * 16 + j);
+		}
+		szName[16] = 0;
+		m_Seq.SetName(i, szName);
+	}

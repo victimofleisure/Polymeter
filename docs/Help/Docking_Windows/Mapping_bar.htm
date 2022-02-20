@@ -59,15 +59,15 @@
 <tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Range_Type">Range Type</a></td><td>N/A</td><td>Required</td><td>Enumeration</td></tr>
 <tr><td><a href="../Views/Track_View/Track_Grid.htm#Track_Range_Start">Range Start</a></td><td>N/A</td><td>Required</td><td>In semitones</td></tr>
 <tr><td><a href="../Views/Track_View/Track_Mutes.htm">Mute</a></td><td>N/A</td><td>Required</td><td>Non-zero to mute track</td></tr>
-<tr><td><a href="../Views/Track_View/Track_Steps.htm">Step</a></td><td>Step Index</td><td>Required</td><td>Event data is step value</td></tr>
-<tr><td><a href="../Tracks/Note_tracks.htm#Tied_notes">Tie</a></td><td>Step Index</td><td>Required</td><td>Non-zero to tie step</td></tr>
+<tr><td><a href="../Views/Track_View/Track_Steps.htm">Step</a></td><td>Step Index</td><td>Required</td><td>Event data is step value; see <a href="../Docking_Windows/Mapping_bar.htm#Step_mapping">step mapping</a></td></tr>
+<tr><td><a href="../Tracks/Note_tracks.htm#Tied_notes">Tie</a></td><td>Step Index</td><td>Required</td><td>Non-zero to tie step; see <a href="../Docking_Windows/Mapping_bar.htm#Tie_mapping">tie mapping</a></td></tr>
 <tr><td><a href="../Docking_Windows/Presets_bar.htm">Presets</a></td><td>N/A</td><td>N/A</td><td>Event data is preset index</td></tr>
 <tr><td><a href="../Docking_Windows/Parts_bar.htm">Parts</a></td><td>Part Index</td><td>N/A</td><td>Non-zero to activate part</td></tr>
 <tr><td><a href="../Menus/Transport/Play.htm">Play</a></td><td>N/A</td><td>N/A</td><td>Non-zero to play</td></tr>
 <tr><td><a href="../Menus/Transport/Pause.htm">Pause</a></td><td>N/A</td><td>N/A</td><td>Non-zero to pause</td></tr>
 <tr><td><a href="../Menus/Transport/Record.htm">Record</a></td><td>N/A</td><td>N/A</td><td>Non-zero to record</td></tr>
 <tr><td><a href="../Menus/Transport/Loop.htm">Loop</a></td><td>N/A</td><td>N/A</td><td>Non-zero to loop</td></tr>
-<tr><td><a href="../Properties/Tempo.htm">Tempo</a></td><td>N/A</td><td>N/A</td><td>See <a href="../Docking_Windows/Mapping_bar.htm#Tempo_mapping">tempo mapping</a></td></tr>
+<tr><td><a href="../Properties/Tempo.htm">Tempo</a></td><td>N/A</td><td>N/A</td><td>Fractional multiplier; see <a href="../Docking_Windows/Mapping_bar.htm#Tempo_mapping">tempo mapping</a></td></tr>
 </table>
 
 <a name="Learning_mappings"><p><b>Learning mappings</b></a>
@@ -86,7 +86,7 @@
 </table>
 
 <a name="Tempo_mapping"><p><b>Tempo mapping</b></a>
-<p>Controlling <a href="../Properties/Tempo.htm">tempo</a> is a special case, because unlike other <a href="../Concepts/Mappings.htm">mapping</a> targets, tempo is exponential rather than linear. For example, suppose the normal tempo is 100, in which case half-time is 50 and double-time is 200. The values 50, 100, and 200 are clearly not linearly spaced. Tempo mapping handles this complication for you, so that your control behaves as if tempo is linear, even though it isn't. A pitch bend wheel works similarly.
+<p>Controlling <a href="../Properties/Tempo.htm">tempo</a> is a special case, because unlike other <a href="../Concepts/Mappings.htm">mapping</a> targets, tempo is exponential rather than linear. For example, suppose the normal tempo is 100, in which case half-time is 50 and double-time is 200. The values 50, 100, and 200 are clearly not linearly spaced. Tempo mapping handles this complication for you, so that your control behaves as if tempo were linear, even though it isn't. A pitch bend wheel works similarly.
 
 <p>To specify the range of tempo change your control covers, adjust the mapping's Range Start and Range End properties. Some useful tempo mapping setups are given below.
 
@@ -98,7 +98,7 @@
 <tr><td>&minus;63</td><td>63</td><td>71% to 141%</td><td>Approximately half the previous range, from the square root of &frac12; to the square root of 2</td></tr>
 </table>
 
-<p>During <a href="../Menus/Transport/Play.htm">playback</a>, the net tempo is shown in the <a href="../Menus/View/Status_Bar.htm">status bar</a>.
+<p>Tempo mapping produces a <em>multiplier</em>, which the base tempo is multiplied by. The tempo may also multiplied by a <a href="../Tracks/Tempo_tracks.htm">tempo track</a> if one exists, along with any <a href="../Modulation/Tempo_modulation.htm">tempo modulators</a> the tempo track may have. The product of these multiplications is the <em>net tempo</em>. During <a href="../Menus/Transport/Play.htm">playback</a>, the net tempo is shown in the <a href="../Menus/View/Status_Bar.htm">status bar</a>.
 
 <a name="Position_mapping"><p><b>Position mapping</b></a>
 <p>Position mapping lets you control the <a href="../Menus/Track/Rotate.htm">rotation</a> of one or more target tracks. Tracks don't have a rotation property, so it's necessary to use a two-stage workaround that consists of <a href="../Modulation/Position_modulation.htm">position modulation</a> and <a href="../Docking_Windows/Mapping_bar.htm#Step_mapping">step mapping</a>. You want to create a one-step position modulator track that targets the track(s) to be rotated, and then create a mapping that targets your position modulator track's one and only step. Do as follows:
