@@ -1912,6 +1912,7 @@ Roro		5/17/20 6:13 pm
 
 (DO NOT USE Roro bass boost)
 (CORRECTION Roro Reason file is Roro shorter ritards 8/6/20) 
+NOTE that the Mo Bulu Reason file is 120 BPM, not 125 BPM. This was unintentional, alas.
 
 Misc:
 Stella By Starlight 3:34
@@ -3302,6 +3303,30 @@ Reason version starts at 428.397ms; 312ms offset, video must skip 19 frames
 Atunwi: master starts at 202.665ms; initial full convergence at frame 2430
 or 40.5 seconds
 
+Irubo: master starts at 132.672ms; original Reason file starts at 0.
+Change start pos to 0:000 (gaining .666 seconds or 40 frames at 60 FPS), 
+export, and skip the first 32 frames (133 / 16.6 = 8, 40 - 8 = 32)
+
+Ninu Meta: master starts at 098.752ms; video starts at 1:000, start
+at 0:000 instead (-666.666ms); skip 567.914ms or 34 frames
+
+Roro: master starts at 109.346ms; video starts at 1:000, start
+at 0:000 instead (-500ms); skip 390ms or 23 frames
+
+Yipo: master starts at 120.921ms, Reason starts at 168.704ms;
+difference of 47.783ms, skip 3 frames
+
+Mo Bulu: Note that Polymeter file is 125 BPM but master is 120 BPM!
+master starts at 96.521ms, video starts at 1:000, start
+at 0:000 instead (-480ms); skip 383.479ms or 23 frames
+
+
+NOTE: phase videos are made with Convergence Size set to 4.
+
+ffmpeg -framerate 60 -i [PATH]\img%%05d.png -i [PATH].wav -c:v libx265 -movflags 
++faststart -vf format=yuv420p -preset veryslow -crf 23 -acodec alac -shortest [PATH].mp4
+(for greater compatibility replace -acodec alac with -b:a 320k)
+
 11/16/21 elliptical orbits
 
 Benchmarked pretty carefully and it's definitely not slower, despite
@@ -3744,3 +3769,32 @@ its first 14 track names set to the entire 8-bit character range:
 		szName[16] = 0;
 		m_Seq.SetName(i, szName);
 	}
+
+
+2/21/22 CLOC
+
+-----------------------------------------------------------------------------------
+Language                         files          blank        comment           code
+-----------------------------------------------------------------------------------
+C++                                 97           3273           2727          32418
+C/C++ Header                       141           2494           3279          12929
+Windows Resource File                1            135             61           1753
+-----------------------------------------------------------------------------------
+SUM:                               239           5902           6067          47100
+-----------------------------------------------------------------------------------
+
+PolymeterCL is only 9447 LOC (5367 code + 4080 header)
+
+2/27/22
+
+D-7 D-6 E-7b5 A7b9
+D-7 D-6 F#-7b5 B7b9
+E-7 E-6 A-7b5 D7b9
+D-7b5 G7b9 C-7 D7b9
+
+2. D-7b5 G7b9 G-7b C7b9
+
+F-7 F-7 C-7b5 F7b9
+Bb-7 Bb-6 F-7b5 Bb7b9
+Eb-7 Eb-6 C#-7b5 F#7b9
+F#-7b5 B#7b9 B-7b5 E7b9
