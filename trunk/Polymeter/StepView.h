@@ -12,6 +12,7 @@
 		02		16dec20	add command to set loop from step selection
 		03		07jun21	rename rounding functions
 		04		19jul21	add command help handler
+		05		19may22	add ruler selection
 
 */
 
@@ -169,6 +170,7 @@ protected:
 	void	UpdateSelection(CPoint point);
 	void	UpdateSelection();
 	bool	HaveEitherSelection() const;
+	void	UpdateRulerSelection(bool bRedraw = true);
 	void	SetCurStep(int iTrack, int iStep);
 	void	UpdateSongPositionNoRedraw(int iTrack);
 	void	UpdateSongPositionNoRedraw(const CIntArrayEx& arrSelection);

@@ -15,6 +15,7 @@
 		05		09may18	add value offset and reticle color
 		06		09may18	standardize names
 		07		20sep18	add MIDI unit
+		08		19may22	add selection
 
 		ruler control
 
@@ -77,6 +78,7 @@ public:
 	bool	IsVertical() const;
 	int		GetUnit() const;
 	void	SetUnit(int nUnit);
+	void	SetUnitFast(int nUnit);	// only sets member var
 	double	GetZoom() const;
 	void	SetZoom(double fZoom);
 	void	SetZoom(int nPos, double fZoom);
@@ -99,8 +101,12 @@ public:
 	void	SetValueOffset(double fOffset);
 	COLORREF	GetReticleColor() const;
 	void	SetReticleColor(COLORREF clr);
+	COLORREF	GetSelectionColor() const;
+	void	SetSelectionColor(COLORREF clr);
 	void	GetMidiParams(int& nTimeDiv, int& nMeter) const;
 	void	SetMidiParams(int nTimeDiv, int nMeter);
+	void	GetSelection(double& fStart, double& fEnd) const;
+	void	SetSelection(double fStart, double fEnd, bool bRedraw = true);
 
 // Operations
 public:
@@ -183,8 +189,11 @@ protected:
 	CSize	m_szClient;			// size of client area
 	double	m_fValOffset;		// numeric value offset
 	COLORREF	m_clrReticle;	// reticle color, or -1 to use text color
+	COLORREF	m_clrSelection;	// selection color
 	int		m_nMidiTimeDiv;		// time division for MIDI format
 	int		m_nMidiMeter;		// meter numerator for MIDI format
+	double	m_fSelectionStart;	// start of selection, in current unit
+	double	m_fSelectionEnd;	// end of selection, in current unit
 
 // Overridables
 	virtual	void	OnDraw(CDC& dc);
@@ -204,6 +213,11 @@ inline bool CRulerCtrl::IsVertical() const
 inline int CRulerCtrl::GetUnit() const
 {
 	return(m_nUnit);
+}
+
+inline void CRulerCtrl::SetUnitFast(int nUnit)
+{
+	m_nUnit = nUnit;
 }
 
 inline double CRulerCtrl::GetZoom() const
@@ -305,6 +319,16 @@ inline void CRulerCtrl::SetReticleColor(COLORREF clr)
 	m_clrReticle = clr;
 }
 
+inline COLORREF CRulerCtrl::GetSelectionColor() const
+{
+	return(m_clrSelection);
+}
+
+inline void CRulerCtrl::SetSelectionColor(COLORREF clr)
+{
+	m_clrSelection = clr;
+}
+
 inline void CRulerCtrl::GetMidiParams(int& nTimeDiv, int& nMeter) const
 {
 	nTimeDiv = m_nMidiTimeDiv;
@@ -315,6 +339,12 @@ inline void CRulerCtrl::SetMidiParams(int nTimeDiv, int nMeter)
 {
 	m_nMidiTimeDiv = nTimeDiv;
 	m_nMidiMeter = nMeter;
+}
+
+inline void CRulerCtrl::GetSelection(double& fStart, double& fEnd) const
+{
+	fStart = m_fSelectionStart;
+	fEnd = m_fSelectionEnd;
 }
 
 /////////////////////////////////////////////////////////////////////////////

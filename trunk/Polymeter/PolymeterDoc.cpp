@@ -82,6 +82,7 @@
 		72		05feb22	bump file version for tie mapping
 		73		15feb22	add check modulations command
 		74		19feb22	use INI file class directly instead of via profile
+		75		19may22	add loop ruler selection attribute
 
 */
 
@@ -3995,6 +3996,18 @@ void CPolymeterDoc::OnLoopRangeChange()
 	if (!IsLoopRangeValid())	// if loop range is invalid
 		m_Seq.SetLooping(false);	// stop looping before updating sequencer, to avoid race
 	m_Seq.SetLoopRange(CLoopRange(m_nLoopFrom, m_nLoopTo));	// update sequencer's loop range
+}
+
+void CPolymeterDoc::GetLoopRulerSelection(double& fSelStart, double& fSelEnd) const
+{
+	if (m_nLoopFrom < m_nLoopTo) {
+		double	fTimeDiv = m_Seq.GetTimeDivision();
+		fSelStart = m_nLoopFrom / fTimeDiv;
+		fSelEnd = m_nLoopTo / fTimeDiv;
+	} else {
+		fSelStart = 0;
+		fSelEnd = 0;
+	}
 }
 
 // CPolymeterDoc diagnostics

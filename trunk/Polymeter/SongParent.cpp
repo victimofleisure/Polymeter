@@ -11,6 +11,7 @@
 		01		08dec18	add origin shift to handle negative times
 		02		17jun20	in command help handler, try tracking help first
 		03		09jul20	add pointer to parent frame
+		04		19may22	use faster version of set unit
 
 */
 
@@ -231,7 +232,7 @@ BOOL CSongParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 		return false;
 	int	nTrackHeight = m_pSongView->GetTrackHeight();
 	m_pSongTrackView->SetTrackHeight(nTrackHeight);
-	m_wndRuler.SetUnit(CRulerCtrl::UNIT_MIDI);
+	m_wndRuler.SetUnitFast(CRulerCtrl::UNIT_MIDI);	// assume SetZoom will update spacing
 	m_wndRuler.SendMessage(WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)));
 	m_wndRuler.SetTickLengths(4, 0);
 	m_wndRuler.SetMinMajorTickGap(m_pSongView->GetBeatWidth() - 1);

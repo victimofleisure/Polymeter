@@ -10,6 +10,7 @@
         00      09may18	initial version
 		01		09jul20	add pointer to parent frame
 		02		19jul21	enumerate pane IDs and make them public
+		03		19may22	add ruler selection attribute
 
 */
 
@@ -55,6 +56,7 @@ public:
 	int		GetTrackHeight() const;
 	void	SetTrackHeight(int nHeight);
 	bool	IsVelocitySigned() const;
+	void	SetRulerSelection(double fStart, double fEnd, bool bRedraw = true);
 
 // Public data
 	CTrackView	*m_pTrackView;		// pointer to track view
@@ -157,3 +159,7 @@ inline bool CStepParent::IsVelocitySigned() const
 	return m_bIsVeloSigned;
 }
 
+inline void CStepParent::SetRulerSelection(double fStart, double fEnd, bool bRedraw)
+{
+	m_wndRuler.SetSelection(fStart, fEnd, bRedraw);
+}

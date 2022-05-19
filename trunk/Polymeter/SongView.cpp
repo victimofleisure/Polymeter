@@ -30,6 +30,8 @@
 		20		20jun21	move focus edit handling to child frame
 		21		22oct21	Ctrl + left click now mutes in all cases
 		22		31oct21	set song position in initial update
+		23		19may22	loop on cell selection must account for start position
+		24		19may22	add ruler selection
 
 */
 
@@ -126,6 +128,7 @@ void CSongView::OnInitialUpdate()
 	CScrollView::OnInitialUpdate();
 	UpdateViewSize();
 	UpdateSongPos(pDoc->m_nSongPos);	// OpenDocument no longer sends view type update
+	UpdateRulerSelection(false);	// don't redraw, already invalidated
 }
 
 void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
@@ -160,6 +163,10 @@ void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				m_nSongTimeShift = GetDocument()->CalcSongTimeShift();
 				Invalidate();
 				m_pParent->OnSongScroll(CSize(1, 0));	// horizontal scroll
+				break;
+			case CMasterProps::PROP_nLoopFrom:
+			case CMasterProps::PROP_nLoopTo:
+				UpdateRulerSelection();
 				break;
 			}
 		}
@@ -473,6 +480,13 @@ void CSongView::UpdateSelection()
 	GetCursorPos(&point);
 	ScreenToClient(&point);
 	UpdateSelection(point);
+}
+
+void CSongView::UpdateRulerSelection(bool bRedraw)
+{
+	double	fSelStart, fSelEnd;
+	GetDocument()->GetLoopRulerSelection(fSelStart, fSelEnd);
+	m_pParent->SetRulerSelection(fSelStart, fSelEnd, bRedraw);
 }
 
 void CSongView::CenterCurrentPosition(double fMarginWidth)
@@ -973,6 +987,7 @@ void CSongView::OnTransportLoop()
 	if (HaveSelection()) {	// if cell selection exists
 		double	fQuant = GetTicksPerCell();
 		CTrackBase::CLoopRange	rngLoop(Round(m_rCellSel.left * fQuant), Round(m_rCellSel.right * fQuant));
+		rngLoop.Offset(pDoc->m_nStartPos);	// account for start position; cell position is always positive
 		pDoc->SetLoopRange(rngLoop);
 		pDoc->m_Seq.SetLooping(true);
 		ResetSelection();

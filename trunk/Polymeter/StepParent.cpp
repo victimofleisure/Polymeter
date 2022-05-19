@@ -14,6 +14,7 @@
 		04		14jul20	add mute view vertical scrolling
 		05		07jun21	rename rounding functions
 		06		19jul21	enumerate pane IDs and make them public
+		07		19may22	use faster version of set unit
 
 */
 
@@ -320,7 +321,7 @@ BOOL CStepParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 	if (m_bIsVeloSigned)
 		m_btnVeloOrigin.SetWindowText(m_pszVeloOrigin[true]);
 	m_nMuteWidth = m_pMuteView->GetViewWidth();
-	m_wndRuler.SetUnit(CRulerCtrl::UNIT_MIDI);
+	m_wndRuler.SetUnitFast(CRulerCtrl::UNIT_MIDI);	// assume SetZoom will update spacing
 	m_wndRuler.SendMessage(WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)));
 	m_wndRuler.SetTickLengths(4, 0);
 	m_wndRuler.SetMinMajorTickGap(m_pStepView->GetBeatWidth() - 1);

@@ -19,6 +19,7 @@
 		09		20sep18	add MIDI unit
 		10		07jun21	rename rounding functions
 		11		08jun21	fix local name reuse warning
+		12		19may22	add selection
 
 		ruler control
 
@@ -94,8 +95,11 @@ CRulerCtrl::CRulerCtrl()
 	m_szClient = CPoint(0, 0);
 	m_fValOffset = 0;
 	m_clrReticle = UINT_MAX;
+	m_clrSelection = RGB(192, 224, 255);
 	m_nMidiTimeDiv = 120;
 	m_nMidiMeter = 4;
+	m_fSelectionStart = 0;
+	m_fSelectionEnd = 0;
 }
 
 CRulerCtrl::~CRulerCtrl()
@@ -379,6 +383,14 @@ int CRulerCtrl::CalcMinHeight()
 	return(szExt.cy);
 }
 
+void CRulerCtrl::SetSelection(double fStart, double fEnd, bool bRedraw)
+{
+	m_fSelectionStart = fStart;
+	m_fSelectionEnd = fEnd;
+	if (bRedraw)
+		Invalidate();
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CRulerCtrl drawing
 
@@ -658,7 +670,28 @@ void CRulerCtrl::OnDraw(CDC& dc)
 //printf("CRulerCtrl::OnPaint %d %d %d %d\n", cb.left, cb.top, cb.Width(), cb.Height());
 	HBRUSH	hBkBrush = (HBRUSH)GetParent()->SendMessage(WM_CTLCOLORSTATIC,
 		WPARAM(dc.m_hDC), LPARAM(m_hWnd));	// get background brush from parent
+	if (m_fSelectionStart < m_fSelectionEnd) {	// if selection exists
+		int	nStart = Round(m_fSelectionStart / m_fZoom - m_fScrollPos);
+		int	nEnd = Round(m_fSelectionEnd / m_fZoom - m_fScrollPos);
+		CRect	rSelect;
+		if (IsVertical()) {	// if vertical
+			rSelect = CRect(0, nStart, m_szClient.cx, nEnd);
+		} else {	// horizontal
+			rSelect = CRect(nStart, 0, nEnd, m_szClient.cy);
+		}
+		if (rSelect.IntersectRect(rSelect, cb)) {	// if selection intersects clip box
+			CBrush	brSelect(m_clrSelection);
+			FillRect(dc.m_hDC, rSelect, brSelect);	// fill clipped selection
+			ExcludeClipRect(dc.m_hDC, rSelect.left, rSelect.top, rSelect.right, rSelect.bottom);
+			FillRect(dc.m_hDC, cb, hBkBrush);	// fill remainder with background brush
+			CRgn	rgnPrev;
+			rgnPrev.CreateRectRgn(cb.left, cb.top, cb.right, cb.bottom);
+			SelectClipRgn(dc.m_hDC, rgnPrev);	// restore clipping region from clip box
+			goto OnDrawBkgndFilled;	// skip normal background fill
+		}
+	}
 	FillRect(dc.m_hDC, cb, hBkBrush);	// fill with background brush
+OnDrawBkgndFilled:
 	dc.SetBkMode(TRANSPARENT);
 	CRect	rc;
 	GetClientRect(rc);

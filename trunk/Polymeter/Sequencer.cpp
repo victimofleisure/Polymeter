@@ -51,6 +51,7 @@
 		41		21jan22	fix tempo modulation causing position slippage
 		42		05feb22 in SumModulations, step value was missing velocity mask
 		43		13feb22	support offset modulation of modulator tracks
+		44		19may22	set position offset in SetPosition stopped case
 
 */
 
@@ -168,6 +169,7 @@ void CSequencer::SetPosition(int nTicks)
 		if (m_bIsSongMode)	// if song playback
 			ChaseDubs(nTicks);	// reset dub indices
 	} else {	// stopped
+		m_nPosOffset = nTicks;
 		m_nCBTime = nTicks;
 		m_nStartPos = nTicks;
 		if (m_bIsSongMode)	// if song playback

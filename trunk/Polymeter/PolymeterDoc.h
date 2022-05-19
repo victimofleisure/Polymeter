@@ -44,6 +44,7 @@
 		34		23nov21	add method to export tempo map
 		35		15feb22	add check modulations command
 		36		19feb22	use INI file class directly instead of via profile
+		37		19may22	add loop ruler selection attribute
 
 */
 
@@ -203,6 +204,7 @@ public:
 	void	SetMappingProperty(int iMapping, int iProp, int nVal, CView *pSender = NULL);
 	void	SetMultiMappingProperty(const CIntArrayEx& arrSelection, int iProp, int nVal, CView* pSender = NULL);
 	bool	IsLoopRangeValid() const;
+	void	GetLoopRulerSelection(double& fSelStart, double& fSelEnd) const;
 
 // Operations
 public:

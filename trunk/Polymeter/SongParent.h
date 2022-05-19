@@ -9,6 +9,7 @@
 		rev		date	comments
         00      30may18	initial version
 		01		09jul20	add pointer to parent frame
+		02		19may22	add ruler selection attribute
 
 */
 
@@ -64,6 +65,7 @@ public:
 	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
 
 // Attributes
+	void	SetRulerSelection(double fStart, double fEnd, bool bRedraw = true);
 
 // Operations
 	void	OnSongScroll(CSize szScroll);
@@ -115,4 +117,9 @@ inline CPolymeterDoc* CSongParent::GetDocument() const
 inline void CSongParent::SetRulerHeight(int nHeight)
 {
 	m_nRulerHeight = nHeight;
+}
+
+inline void CSongParent::SetRulerSelection(double fStart, double fEnd, bool bRedraw)
+{
+	m_wndRuler.SetSelection(fStart, fEnd, bRedraw);
 }

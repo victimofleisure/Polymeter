@@ -16,6 +16,7 @@
 		06		16dec20	add command to set loop from cell selection
 		07		16mar21	add accessor for track or cell selection
 		08		07jun21	rename rounding functions
+		09		19may22	add ruler selection
 
 */
 
@@ -154,6 +155,7 @@ protected:
 	void	DispatchToDocument();
 	void	UpdateSelection(CPoint point);
 	void	UpdateSelection();
+	void	UpdateRulerSelection(bool bRedraw = true);
 
 // Overrides
 	virtual void OnInitialUpdate();

@@ -15,6 +15,7 @@
 		05		12feb21	add Shift + right click to extend existing selection
 		06		07jun21	rename rounding functions
 		07		19jul21	add command help handler
+		08		19may22	add ruler selection
 
 */
 
@@ -116,6 +117,7 @@ void CStepView::OnInitialUpdate()
 	m_fZoom = fDocZoom;
 	m_fZoomDelta = fZoomDelta;
 	CScrollView::OnInitialUpdate();
+	UpdateRulerSelection(false);	// don't redraw, already invalidated
 }
 
 void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
@@ -194,6 +196,10 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			case CMasterProps::PROP_nTimeDiv:
 				UpdateViewSize();
 				Invalidate();
+				break;
+			case CMasterProps::PROP_nLoopFrom:
+			case CMasterProps::PROP_nLoopTo:
+				UpdateRulerSelection();
 				break;
 			}
 		}
@@ -984,6 +990,13 @@ void CStepView::UpdateSelection()
 	GetCursorPos(&point);
 	ScreenToClient(&point);
 	UpdateSelection(point);
+}
+
+void CStepView::UpdateRulerSelection(bool bRedraw)
+{
+	double	fSelStart, fSelEnd;
+	GetDocument()->GetLoopRulerSelection(fSelStart, fSelEnd);
+	m_pParent->SetRulerSelection(fSelStart, fSelEnd, bRedraw);
 }
 
 void CStepView::DispatchToDocument()

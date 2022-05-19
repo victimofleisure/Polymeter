@@ -40,6 +40,7 @@
 		30		05feb22	add step tie accessors
 		31		15feb22	add validate modulations method
 		32		19feb22	use INI file class directly instead of via profile
+		33		19may22	add offset method to loop range class
 
 */
 
@@ -254,6 +255,7 @@ public:
 		CLoopRange();
 		CLoopRange(int nFrom, int nTo);
 		bool	IsValid() const;
+		void	Offset(int nOffset);
 		int		m_nFrom;	// start position of loop, in ticks
 		int		m_nTo;		// end position of loop, in ticks
 	};
@@ -563,6 +565,12 @@ inline CTrackBase::CLoopRange::CLoopRange(int nFrom, int nTo)
 inline bool CTrackBase::CLoopRange::IsValid() const
 {
 	return m_nFrom < m_nTo;
+}
+
+inline void CTrackBase::CLoopRange::Offset(int nOffset)
+{
+	m_nFrom += nOffset;
+	m_nTo += nOffset;
 }
 
 class CTrack : public CTrackBase {
