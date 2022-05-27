@@ -49,6 +49,10 @@ public:
 		bool	bIsMinor;	// true if minor tick, otherwise major tick
 	};
 	typedef CArrayEx<TICK, TICK&> CTickArray;
+	struct NMRULER : NMHDR {
+		POINT	ptCursor;	// cursor position in client coords
+	};
+	typedef NMRULER *LPNMRULER;
 
 // Constants
 	enum {	// ruler styles
@@ -71,6 +75,15 @@ public:
 		NF_EXPONENT,
 		NF_GENERIC,
 		NUMERIC_FORMATS
+	};
+	enum {	// selection hit test codes
+		SHTC_NONE,
+		SHTC_START,
+		SHTC_END,
+	};
+	enum {	// notification codes
+		RN_CLICKED = 1,
+		RN_SELECTION_CHANGED
 	};
 
 // Attributes
@@ -105,8 +118,11 @@ public:
 	void	SetSelectionColor(COLORREF clr);
 	void	GetMidiParams(int& nTimeDiv, int& nMeter) const;
 	void	SetMidiParams(int nTimeDiv, int nMeter);
+	bool	HaveSelection() const;
+	bool	IsDraggingSelection() const;
 	void	GetSelection(double& fStart, double& fEnd) const;
 	void	SetSelection(double fStart, double fEnd, bool bRedraw = true);
+	void	GetClientSelection(int& nStart, int& nEnd) const;
 
 // Operations
 public:
@@ -120,6 +136,10 @@ public:
 	static	CString	FormatTime(double TimeSecs);
 	void	FormatMidi(double fPos, CString& sResult) const;
 	static	int		TrimTrailingZeros(CString& Str);
+	int		PositionToClient(double fPos) const;
+	double	ClientToPosition(double nPos) const;
+	int		SelectionHitTest(CPoint ptCursor);
+	void	NotifyParent(int nNotifyCode, CPoint ptCursor);
 
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -138,6 +158,10 @@ protected:
 	afx_msg LRESULT OnSetFont(WPARAM wParam, LPARAM lParam);
     afx_msg LRESULT OnGetFont(WPARAM wParam, LPARAM lParam);
 	afx_msg int OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message);
+	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);	
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
@@ -194,6 +218,7 @@ protected:
 	int		m_nMidiMeter;		// meter numerator for MIDI format
 	double	m_fSelectionStart;	// start of selection, in current unit
 	double	m_fSelectionEnd;	// end of selection, in current unit
+	int		m_nSelectionDrag;	// selection drag state; see selection hit test enum
 
 // Overridables
 	virtual	void	OnDraw(CDC& dc);
@@ -341,10 +366,36 @@ inline void CRulerCtrl::SetMidiParams(int nTimeDiv, int nMeter)
 	m_nMidiMeter = nMeter;
 }
 
+inline int CRulerCtrl::PositionToClient(double fPos) const
+{
+	return Round(fPos / m_fZoom - m_fScrollPos);
+}
+
+inline double CRulerCtrl::ClientToPosition(double nPos) const
+{
+	return (nPos + m_fScrollPos) * m_fZoom;
+}
+
+inline bool CRulerCtrl::HaveSelection() const
+{
+	return m_fSelectionStart < m_fSelectionEnd;
+}
+
+inline bool CRulerCtrl::IsDraggingSelection() const
+{
+	return m_nSelectionDrag > SHTC_NONE;
+}
+
 inline void CRulerCtrl::GetSelection(double& fStart, double& fEnd) const
 {
 	fStart = m_fSelectionStart;
 	fEnd = m_fSelectionEnd;
+}
+
+inline void CRulerCtrl::GetClientSelection(int& nStart, int& nEnd) const
+{
+	nStart = PositionToClient(m_fSelectionStart);
+	nEnd = PositionToClient(m_fSelectionEnd);
 }
 
 /////////////////////////////////////////////////////////////////////////////

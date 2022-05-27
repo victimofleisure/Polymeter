@@ -12,6 +12,7 @@
 		02		17jun20	in command help handler, try tracking help first
 		03		09jul20	add pointer to parent frame
 		04		19may22	use faster version of set unit
+		05		27may22	add handler for ruler selection change
 
 */
 
@@ -202,6 +203,8 @@ BEGIN_MESSAGE_MAP(CSongParent, CSplitView)
 	ON_WM_MOUSEWHEEL()
 	ON_WM_MOUSEMOVE()
 	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
+	ON_NOTIFY(CRulerCtrl::RN_CLICKED, PANE_ID(PANE_RULER), OnRulerClicked)
+	ON_NOTIFY(CRulerCtrl::RN_SELECTION_CHANGED, PANE_ID(PANE_RULER), OnRulerSelectionChanged)
 END_MESSAGE_MAP()
 
 // CSongParent message handlers
@@ -273,18 +276,7 @@ void CSongParent::OnParentNotify(UINT message, LPARAM lParam)
 	CSplitView::OnParentNotify(message, lParam);
 	switch (message) {
 	case WM_LBUTTONDOWN:
-		{
-			CPoint	ptCursor(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-			if (PtInRuler(ptCursor)) {	// if clicked within ruler
-				MapWindowPoints(m_pSongView, &ptCursor, 1);	// map cursor position to song view's coords
-				int	x = ptCursor.x + m_pSongView->GetScrollPosition().x;	// account for scrolling
-				int	nPos = m_pSongView->ConvertXToSongPos(x);	// convert to song position
-				// MDI child activation updates song mode, but parent notification happens first
-				GetDocument()->m_Seq.SetSongMode(true);	// set song mode before setting song position
-				GetDocument()->SetPosition(nPos);	// set song position
-				m_pSongView->SetFocus();	// focus song view
-			}
-		}
+		m_pSongView->SetFocus();	// focus song view
 		break;
 	case WM_RBUTTONDOWN:
 		{
@@ -315,4 +307,24 @@ void CSongParent::OnMouseMove(UINT nFlags, CPoint point)
 		m_nNameWidth = x - m_nSplitBarWidth / 2;
 		RecalcLayout(sz.cx, sz.cy);
 	}
+}
+
+void CSongParent::OnRulerClicked(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	UNREFERENCED_PARAMETER(pResult);
+	CRulerCtrl::LPNMRULER	pNMRuler = static_cast<CRulerCtrl::LPNMRULER>(pNMHDR);
+	CPoint	ptCursor(pNMRuler->ptCursor);
+	m_wndRuler.MapWindowPoints(m_pSongView, &ptCursor, 1);	// map cursor position to song view's coords
+	int	x = ptCursor.x + m_pSongView->GetScrollPosition().x;	// account for scrolling
+	int	nPos = m_pSongView->ConvertXToSongPos(x);	// convert to song position
+	GetDocument()->SetPosition(nPos);	// set song position
+}
+
+void CSongParent::OnRulerSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	UNREFERENCED_PARAMETER(pNMHDR);
+	UNREFERENCED_PARAMETER(pResult);
+	double	fSelStart, fSelEnd;
+	m_wndRuler.GetSelection(fSelStart, fSelEnd);
+	GetDocument()->SetLoopRulerSelection(fSelStart, fSelEnd);
 }

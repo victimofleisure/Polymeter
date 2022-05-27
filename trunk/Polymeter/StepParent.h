@@ -11,6 +11,7 @@
 		01		09jul20	add pointer to parent frame
 		02		19jul21	enumerate pane IDs and make them public
 		03		19may22	add ruler selection attribute
+		04		27may22	add handler for ruler selection change
 
 */
 
@@ -142,6 +143,8 @@ protected:
 	afx_msg void OnUpdateViewVelocities(CCmdUI *pCmdUI);
 	afx_msg void OnVelocityCloseBtnClicked();
 	afx_msg void OnVelocityOriginBtnClicked();
+	afx_msg void OnRulerClicked(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnRulerSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 inline CPolymeterDoc* CStepParent::GetDocument() const

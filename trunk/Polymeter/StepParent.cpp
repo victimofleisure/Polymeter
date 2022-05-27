@@ -15,6 +15,7 @@
 		05		07jun21	rename rounding functions
 		06		19jul21	enumerate pane IDs and make them public
 		07		19may22	use faster version of set unit
+		08		27may22	add handler for ruler selection change
 
 */
 
@@ -273,6 +274,8 @@ BEGIN_MESSAGE_MAP(CStepParent, CSplitView)
 	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 	ON_BN_CLICKED(VELO_CLOSE_BTN_ID, OnVelocityCloseBtnClicked)
 	ON_BN_CLICKED(VELO_ORIGIN_BTN_ID, OnVelocityOriginBtnClicked)
+	ON_NOTIFY(CRulerCtrl::RN_CLICKED, PANE_ID_RULER, OnRulerClicked)
+	ON_NOTIFY(CRulerCtrl::RN_SELECTION_CHANGED, PANE_ID_RULER, OnRulerSelectionChanged)
 END_MESSAGE_MAP()
 
 // CStepParent message handlers
@@ -363,18 +366,7 @@ void CStepParent::OnParentNotify(UINT message, LPARAM lParam)
 	CSplitView::OnParentNotify(message, lParam);
 	switch (message) {
 	case WM_LBUTTONDOWN:
-		{
-			CPoint	ptCursor(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-			if (PtInRuler(ptCursor)) {	// if clicked within ruler
-				MapWindowPoints(m_pStepView, &ptCursor, 1);	// map cursor position to song view's coords
-				int	x = ptCursor.x + m_pStepView->GetScrollPosition().x;	// account for scrolling
-				int	nPos = m_pStepView->ConvertXToSongPos(x);	// convert to song position
-				// MDI child activation updates song mode, but parent notification happens first
-				GetDocument()->m_Seq.SetSongMode(false);	// reset song mode before setting song position
-				GetDocument()->SetPosition(nPos);	// set song position
-			}
-			m_pStepView->SetFocus();	// focus step view
-		}
+		m_pStepView->SetFocus();	// focus step view
 		break;
 	case WM_RBUTTONDOWN:
 		{
@@ -444,4 +436,24 @@ void CStepParent::OnVelocityOriginBtnClicked()
 	m_btnVeloOrigin.SetWindowText(m_pszVeloOrigin[m_bIsVeloSigned]);
 	m_bGlobIsVeloSigned = m_bIsVeloSigned;
 	RecalcLayout();
+}
+
+void CStepParent::OnRulerClicked(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	UNREFERENCED_PARAMETER(pResult);
+	CRulerCtrl::LPNMRULER	pNMRuler = static_cast<CRulerCtrl::LPNMRULER>(pNMHDR);
+	CPoint	ptCursor(pNMRuler->ptCursor);
+	m_wndRuler.MapWindowPoints(m_pStepView, &ptCursor, 1);	// map cursor position to step view's coords
+	int	x = ptCursor.x + m_pStepView->GetScrollPosition().x;	// account for scrolling
+	int	nPos = m_pStepView->ConvertXToSongPos(x);	// convert to song position
+	GetDocument()->SetPosition(nPos);	// set song position
+}
+
+void CStepParent::OnRulerSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	UNREFERENCED_PARAMETER(pNMHDR);
+	UNREFERENCED_PARAMETER(pResult);
+	double	fSelStart, fSelEnd;
+	m_wndRuler.GetSelection(fSelStart, fSelEnd);
+	GetDocument()->SetLoopRulerSelection(fSelStart, fSelEnd);
 }

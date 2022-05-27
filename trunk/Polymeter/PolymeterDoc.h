@@ -205,6 +205,7 @@ public:
 	void	SetMultiMappingProperty(const CIntArrayEx& arrSelection, int iProp, int nVal, CView* pSender = NULL);
 	bool	IsLoopRangeValid() const;
 	void	GetLoopRulerSelection(double& fSelStart, double& fSelEnd) const;
+	void	SetLoopRulerSelection(double fSelStart, double fSelEnd);
 
 // Operations
 public:

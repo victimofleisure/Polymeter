@@ -100,6 +100,7 @@ CRulerCtrl::CRulerCtrl()
 	m_nMidiMeter = 4;
 	m_fSelectionStart = 0;
 	m_fSelectionEnd = 0;
+	m_nSelectionDrag = SHTC_NONE;
 }
 
 CRulerCtrl::~CRulerCtrl()
@@ -391,6 +392,42 @@ void CRulerCtrl::SetSelection(double fStart, double fEnd, bool bRedraw)
 		Invalidate();
 }
 
+int CRulerCtrl::SelectionHitTest(CPoint ptCursor)
+{
+	if (!HaveSelection())	// if no selection
+		return SHTC_NONE;
+	int nStart, nEnd;
+	GetClientSelection(nStart, nEnd);
+	bool	bIsVertical = IsVertical();
+	int	nSysMetric;
+	if (bIsVertical)
+		nSysMetric = SM_CYDRAG;
+	else
+		nSysMetric = SM_CXDRAG;
+	int	nMargin = GetSystemMetrics(nSysMetric);
+	int	nHitCode = SHTC_NONE;
+	int	nCursorPos;
+	if (bIsVertical)
+		nCursorPos = ptCursor.y;
+	else
+		nCursorPos = ptCursor.x;
+	if (abs(nCursorPos - nStart) < nMargin)	// if over selection start
+		nHitCode = SHTC_START;
+	else if (abs(nCursorPos - nEnd) < nMargin)	// if over selection end
+		nHitCode = SHTC_END;
+	return nHitCode;
+}
+
+void CRulerCtrl::NotifyParent(int nNotifyCode, CPoint ptCursor)
+{
+	NMRULER	nm;
+	nm.hwndFrom = m_hWnd;
+	nm.idFrom = GetDlgCtrlID();
+	nm.code = nNotifyCode;
+	nm.ptCursor = ptCursor;
+	GetParent()->SendMessage(WM_NOTIFY, nm.idFrom, reinterpret_cast<LPARAM>(&nm));
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CRulerCtrl drawing
 
@@ -670,9 +707,9 @@ void CRulerCtrl::OnDraw(CDC& dc)
 //printf("CRulerCtrl::OnPaint %d %d %d %d\n", cb.left, cb.top, cb.Width(), cb.Height());
 	HBRUSH	hBkBrush = (HBRUSH)GetParent()->SendMessage(WM_CTLCOLORSTATIC,
 		WPARAM(dc.m_hDC), LPARAM(m_hWnd));	// get background brush from parent
-	if (m_fSelectionStart < m_fSelectionEnd) {	// if selection exists
-		int	nStart = Round(m_fSelectionStart / m_fZoom - m_fScrollPos);
-		int	nEnd = Round(m_fSelectionEnd / m_fZoom - m_fScrollPos);
+	if (HaveSelection()) {	// if selection exists
+		int	nStart, nEnd;
+		GetClientSelection(nStart, nEnd);
 		CRect	rSelect;
 		if (IsVertical()) {	// if vertical
 			rSelect = CRect(0, nStart, m_szClient.cx, nEnd);
@@ -710,6 +747,10 @@ BEGIN_MESSAGE_MAP(CRulerCtrl, CWnd)
 	//}}AFX_MSG_MAP
 	ON_WM_ACTIVATE()
 	ON_WM_MOUSEACTIVATE()
+	ON_WM_SETCURSOR()
+	ON_WM_LBUTTONDOWN()
+	ON_WM_LBUTTONUP()
+	ON_WM_MOUSEMOVE()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -764,4 +805,79 @@ int CRulerCtrl::OnMouseActivate(CWnd* pDesktopWnd, UINT nHitTest, UINT message)
 	if (GetStyle() & NO_ACTIVATE)
 		return MA_NOACTIVATE;
 	return CWnd::OnMouseActivate(pDesktopWnd, nHitTest, message);
+}
+
+BOOL CRulerCtrl::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
+{
+	if (HaveSelection()) {	// if selection exists
+		CPoint	ptCursor;
+		GetCursorPos(&ptCursor);
+		ScreenToClient(&ptCursor);
+		int	nHitCode = SelectionHitTest(ptCursor);
+		if (nHitCode > SHTC_NONE) {
+			LPCTSTR	lpszCursorName;
+			if (IsVertical())
+				lpszCursorName = IDC_SIZENS;
+			else
+				lpszCursorName = IDC_SIZEWE;
+			HCURSOR	hCursor = LoadCursor(NULL, lpszCursorName);
+			ASSERT(hCursor != NULL);
+			SetCursor(hCursor);
+			return true;
+		}
+	}
+	return CWnd::OnSetCursor(pWnd, nHitTest, message);
+}
+
+void CRulerCtrl::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	UNREFERENCED_PARAMETER(nFlags);
+	int	nHitCode = SelectionHitTest(point);
+	if (nHitCode > SHTC_NONE) {	// if clicked on selection edge
+		m_nSelectionDrag = nHitCode;	// enter drag mode
+		SetCapture();
+	} else {	// clicked elsewhere
+		NotifyParent(RN_CLICKED, point);
+	}
+}
+
+void CRulerCtrl::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	UNREFERENCED_PARAMETER(nFlags);
+	UNREFERENCED_PARAMETER(point);
+	if (IsDraggingSelection()) {	// if dragging selection
+		ReleaseCapture();
+		m_nSelectionDrag = SHTC_NONE;	// reset drag mode
+		NotifyParent(RN_SELECTION_CHANGED, point);
+	}
+}
+
+void CRulerCtrl::OnMouseMove(UINT nFlags, CPoint point)
+{
+	UNREFERENCED_PARAMETER(nFlags);
+	if (IsDraggingSelection()) {	// if dragging selection
+		int	nCursorPos;
+		bool	bIsVertical = IsVertical();
+		if (bIsVertical)
+			nCursorPos = point.y;
+		else
+			nCursorPos = point.x;
+		double	fNewSelPos = ClientToPosition(nCursorPos);
+		double	fOldSelPos;
+		if (m_nSelectionDrag == SHTC_START) {	// if dragging start
+			fOldSelPos = m_fSelectionStart;
+			m_fSelectionStart = fNewSelPos;
+		} else {	// dragging end
+			fOldSelPos = m_fSelectionEnd;
+			m_fSelectionEnd = fNewSelPos;
+		}
+		int	nOldSelPos = PositionToClient(fOldSelPos);
+		int	nNewSelPos = PositionToClient(fNewSelPos);
+		CRect	rInvalid;
+		if (bIsVertical)
+			rInvalid = CRect(0, nOldSelPos, m_szClient.cx, nNewSelPos);
+		else
+			rInvalid = CRect(nOldSelPos, 0, nNewSelPos, m_szClient.cy);
+		InvalidateRect(rInvalid);
+	}
 }

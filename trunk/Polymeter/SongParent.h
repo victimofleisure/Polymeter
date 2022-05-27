@@ -10,6 +10,7 @@
         00      30may18	initial version
 		01		09jul20	add pointer to parent frame
 		02		19may22	add ruler selection attribute
+		03		27may22	add handler for ruler selection change
 
 */
 
@@ -107,6 +108,8 @@ protected:
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnRulerClicked(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnRulerSelectionChanged(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 inline CPolymeterDoc* CSongParent::GetDocument() const

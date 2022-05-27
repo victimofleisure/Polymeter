@@ -4010,6 +4010,13 @@ void CPolymeterDoc::GetLoopRulerSelection(double& fSelStart, double& fSelEnd) co
 	}
 }
 
+void CPolymeterDoc::SetLoopRulerSelection(double fSelStart, double fSelEnd)
+{
+	int	nTimeDiv = m_Seq.GetTimeDivision();
+	CLoopRange	rngLoop(Round(fSelStart * nTimeDiv), Round(fSelEnd * nTimeDiv));
+	SetLoopRange(rngLoop);
+}
+
 // CPolymeterDoc diagnostics
 
 #ifdef _DEBUG
