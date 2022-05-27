@@ -3318,7 +3318,7 @@ difference of 47.783ms, skip 3 frames
 
 Mo Bulu: Note that Polymeter file is 125 BPM but master is 120 BPM!
 master starts at 96.521ms, video starts at 1:000, start
-at 0:000 instead (-480ms); skip 383.479ms or 23 frames
+at 0:000 instead (-500ms); skip 403.479ms or 24 frames
 
 
 NOTE: phase videos are made with Convergence Size set to 4.
@@ -3798,3 +3798,13 @@ F-7 F-7 C-7b5 F7b9
 Bb-7 Bb-6 F-7b5 Bb7b9
 Eb-7 Eb-6 C#-7b5 F#7b9
 F#-7b5 B#7b9 B-7b5 E7b9
+
+4/11/22 MIDI Visualizer
+
+Ibaramu:
+relative to original file, snippet starts at: 0:01:27.545684
+-35:00 is the MIDI offset; -240:0 is start of file; difference of 205:00 beats
+87.85714285714286 seconds at 140 BPM; start at 5271 frames 
+first three notes better be: F C Bb
+add 60 frames (1 second) of pre-roll (probably a setting in MIDI visualizer)
+5271 + 60 + 1 = 5332 frames is exactly right

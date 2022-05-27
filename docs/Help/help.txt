@@ -1666,7 +1666,9 @@ This offset is added to the times of recorded MIDI events during playback. It's 
 
 If playback is @[loop\looped], this is the starting position of the loop. It's displayed either in beats and @[ticks], or in measures, beats and ticks, depending on the @[Meter] property. The ending position is given by the @[Loop To] property. The starting position must be less than the ending position, otherwise no looping occurs.
 
-Instead of entering the loop positions numerically, you can alternatively create a @[step selection] before using the Loop command. In that case the step selection's first and last steps determine the loop's starting and ending positions respectively.
+Instead of entering the loop positions numerically, you can alternatively create a @[step selection] before using the Loop command. In that case the step selection's first and last steps determine the loop's starting and ending positions respectively. In the @[song grid], a loop can similarly be specified by selecting a range of cells and then using the Loop command.
+
+If a valid loop exists, it's indicated by a highlighted area in the rulers at the top of the @[track steps] and song grid. The loop's range can be modified by horizontally dragging the left or right edge of this highlighted area.
 
 @topic Loop To
 
