@@ -15,7 +15,6 @@ id	open	close	type	description	rev	user
 376	06/20/20		bug	undoing modulation edit doesn't restore modulation selection; can't without also restoring track selection and Show Differences state		
 392	07/10/20		bug	Alt key commands don't work mode while cursor is hovering over MDI tab; affects stock VS2012 app too		
 458	07/22/21		bug	song position and loop to/from don't report formatting errors; song length reports errors but doesn't retry		
-472	11/08/21		bug	graph sometimes clips rightmost objects, in GraphViz versions 2.44 and above; add option to render with Cairo		
 515	04/04/22		bug	changing track length via mapped control can cause undo/redo of step array edits to fail		
 1	03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 2	03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
@@ -421,9 +420,10 @@ id	open	close	type	description	rev	user
 505	02/05/22	02/05/22	done	make tie a mapping target	1.0.07.000	
 513	02/13/22	02/13/22	done	support offset modulation of modulator tracks	1.0.07.000	
 514	02/15/22	02/15/22	done	if MIDI error occurs during playback, app locks up due to endless message boxes reporting MIDI error 5	1.0.07.000	
+472	11/08/21	02/26/22	done	graph sometimes clips rightmost objects, in GraphViz versions 2.44 and above; fixed in GraphViz 3.0		GraphViz
 516	05/18/22	05/19/22	done	specifying loop via cell selection in Song view gives incorrect results if master start time is non-default	1.0.08.000	
-517	05/19/22	05/19/22	done	indicate loop range on Track and Song view rulers; support dragging of loop start/end	1.0.08.000	
 518	05/18/22	05/19/22	done	if loop exists, starting playback from position past end of loop causes incorrect looping	1.0.08.000	
+517	05/19/22	05/19/22	done	indicate loop range on Track and Song view rulers; support dragging of loop start/end	1.0.08.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
