@@ -498,7 +498,8 @@ id	open	close	type	description	rev	user
 506	02/09/22		hold	add Hold track type; postpone a channel's note offs until Hold state is zero, like damper pedal controller		
 510	02/13/22		hold	in Wine, Phase bar doesn't work at all, likely due to its use of Direct2D		Wine
 511	02/13/22		hold	in Wine, HTML help's Contents and Index tabs are empty, but Search works and all topics are present		Wine
-512	02/13/22		hold	in Wine, MIDI devices added while app is running don’t appear until the app is exited and restarted		Wine
+512	02/13/22		hold	in Wine, MIDI devices added while app is running don't appear until the app is exited and restarted		Wine
+519	06/07/22		hold	optionally group tracks by MIDI channel in Live view, with each group in its own list and group muting		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
