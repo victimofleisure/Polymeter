@@ -3808,3 +3808,71 @@ relative to original file, snippet starts at: 0:01:27.545684
 first three notes better be: F C Bb
 add 60 frames (1 second) of pre-roll (probably a setting in MIDI visualizer)
 5271 + 60 + 1 = 5332 frames is exactly right
+
+6/15/22 Ring in the Odd shorter version
+
+current duration is 12 cycles
+cycle length is 61:30 (245 1/16th note steps)
+total length is 2940 steps (735 beats)
+starts slowing after 10 cycles at 613:60
+
+cut duration in half to 6 cycles:
+remove from 246:0 to 613:60
+minor bob and range mod need adjusting
+offset both -44100 ticks (61.25 * 6 * 120)
+total length is 1470 steps (367.5 beats)
+
+Seems too short now!
+
+cut duration by a third to 8 cycles:
+remove from 368:60 to 613:60
+minor bob and range mod need adjusting
+offset both -29400 ticks (61.25 * 4 * 120)
+total length is 1960 steps (490 beats)
+
+differences between intro and main section:
+	intro	main
+Fader	0	+3.01
+VelRH	33%	0%
+VelRL	33%	100%
+Ambie	34%	25%
+SResL	+0.5	0
+
+6/18/22 show selection in status bar; works fine but questionably useful
+
+	m_szCachedSelection = CSize(0, 0);	// in ctor
+
+	m_wndStatusBar.SetPaneText(SBP_SELECTION, _T(""), FALSE);	// don't update; avoids flicker
+
+	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SELECTION, OnUpdateIndicatorSelection)
+
+void CMainFrame::OnUpdateIndicatorSelection(CCmdUI* pCmdUI)
+{
+	CSize	szSel;
+	if (m_pActiveChildFrame != NULL) {	// if active child frame exists
+		// if focus window is child of song parent
+		if (m_pActiveChildFrame->IsSongView()) {	// if showing song view
+			CRect	rSel;
+			m_pActiveChildFrame->m_pSongParent->m_pSongView->GetSelection(rSel); // should return const reference instead!
+			szSel = rSel.Size();
+		} else {	// not showing song view
+			szSel = m_pActiveChildFrame->m_pStepParent->m_pStepView->GetStepSelection().Size();
+		}
+	} else {	// no active document
+		szSel = CSize(0, 0);
+	}
+	if (szSel != m_szCachedSelection) {	// if selection size changed
+		m_szCachedSelection = szSel;
+		if (szSel.cx) {	// if selection isn't empty
+			CString	s;
+			if (szSel.cx == INT_MAX)	// song view reserves this value for select all
+				s = _T("*");
+			else
+				s.Format(_T("%d x %d"), szSel.cx, szSel.cy);
+			pCmdUI->SetText(s);
+		} else {
+			pCmdUI->SetText(_T(""));
+		}
+	}
+	pCmdUI->Enable(true);
+}
