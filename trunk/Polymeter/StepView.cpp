@@ -16,6 +16,7 @@
 		06		07jun21	rename rounding functions
 		07		19jul21	add command help handler
 		08		19may22	add ruler selection
+		09		16jun22	don't delay initial zoom, move to OnInitialUpdate
 
 */
 
@@ -118,6 +119,7 @@ void CStepView::OnInitialUpdate()
 	m_fZoomDelta = fZoomDelta;
 	CScrollView::OnInitialUpdate();
 	UpdateRulerSelection(false);	// don't redraw, already invalidated
+	m_pParent->OnStepZoom();	// initial zoom
 }
 
 void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
@@ -1011,7 +1013,6 @@ void CStepView::DispatchToDocument()
 BEGIN_MESSAGE_MAP(CStepView, CScrollView)
 	ON_WM_CREATE()
 	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
-	ON_MESSAGE(UWM_DELAYED_CREATE, OnDelayedCreate)
 	ON_WM_SIZE()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
@@ -1038,7 +1039,6 @@ int CStepView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CScrollView::OnCreate(lpCreateStruct) == -1)
 		return -1;
 	SetScrollSizes(MM_TEXT, CSize(0, 0));	// set mapping mode
-	PostMessage(UWM_DELAYED_CREATE);
 	return 0;
 }
 
@@ -1071,14 +1071,6 @@ void CStepView::OnSize(UINT nType, int cx, int cy)
 {
 	CScrollView::OnSize(nType, cx, cy);
 	m_pParent->OnStepScroll(CSize(1, 1));	// both axes potentially scroll
-}
-
-LRESULT	CStepView::OnDelayedCreate(WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
-	m_pParent->OnStepZoom();
-	return(0);
 }
 
 void CStepView::OnLButtonDown(UINT nFlags, CPoint point)

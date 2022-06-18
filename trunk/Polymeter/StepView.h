@@ -13,6 +13,7 @@
 		03		07jun21	rename rounding functions
 		04		19jul21	add command help handler
 		05		19may22	add ruler selection
+		06		16jun22	remove delayed create handler
 
 */
 
@@ -200,7 +201,6 @@ protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT	OnDelayedCreate(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnViewZoomIn();

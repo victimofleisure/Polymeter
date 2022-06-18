@@ -17,6 +17,7 @@
 		07		16mar21	add accessor for track or cell selection
 		08		07jun21	rename rounding functions
 		09		19may22	add ruler selection
+		10		16jun22	remove delayed create handler
 
 */
 
@@ -170,7 +171,6 @@ public:
 protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg LRESULT	OnDelayedCreate(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnViewZoomIn();
 	afx_msg void OnUpdateViewZoomIn(CCmdUI *pCmdUI);
 	afx_msg void OnViewZoomOut();

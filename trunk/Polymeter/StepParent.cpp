@@ -16,6 +16,8 @@
 		06		19jul21	enumerate pane IDs and make them public
 		07		19may22	use faster version of set unit
 		08		27may22	add handler for ruler selection change
+		09		16jun22	remove needless message map entry for create
+		10		16jun22	postpone setting of ruler's major tick spacing
 
 */
 
@@ -224,6 +226,14 @@ inline void CStepParent::UpdateRulerNumbers()
 	m_wndRuler.SetMidiParams(pDoc->GetTimeDivisionTicks(), pDoc->m_nMeter);
 }
 
+void CStepParent::OnInitialUpdate()
+{
+	CSplitView::OnInitialUpdate();
+	// ruler's tick gap can't be set in our Create method because step view's beat width 
+	// depends on track height, which child frame's OnCreateClient sets after creating us
+	m_wndRuler.SetMinMajorTickGap(m_pStepView->GetBeatWidth() - 1);
+}
+
 void CStepParent::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
 	UNREFERENCED_PARAMETER(pSender);
@@ -261,7 +271,6 @@ void CStepParent::OnDraw(CDC* pDC)
 // CStepParent message map
 
 BEGIN_MESSAGE_MAP(CStepParent, CSplitView)
-	ON_WM_CREATE()
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
 	ON_WM_PARENTNOTIFY()
@@ -327,7 +336,6 @@ BOOL CStepParent::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 	m_wndRuler.SetUnitFast(CRulerCtrl::UNIT_MIDI);	// assume SetZoom will update spacing
 	m_wndRuler.SendMessage(WM_SETFONT, reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)));
 	m_wndRuler.SetTickLengths(4, 0);
-	m_wndRuler.SetMinMajorTickGap(m_pStepView->GetBeatWidth() - 1);
 	m_wndRuler.SetReticleColor(m_pStepView->GetBeatLineColor());
 	m_bIsScrolling = false;
 	return true;

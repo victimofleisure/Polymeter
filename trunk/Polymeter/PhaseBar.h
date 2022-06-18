@@ -13,6 +13,7 @@
 		03		17nov21	add options for elliptical orbits and 3D planets
 		04		23nov21	add tempo map support
 		05		20dec21	add convergences option and full screen mode
+		06		16jun22	make tempo map iterator public
 
 */
 
@@ -40,6 +41,23 @@ public:
 	};
 	typedef CArrayEx<COrbit, COrbit&> COrbitArray;
 	typedef CArrayEx<LONGLONG, LONGLONG> CLongLongArray;
+	class CTempoMapIter {
+	public:
+		CTempoMapIter(const CMidiFile::CMidiEventArray& arrTempoMap, int nTimebase, double fInitTempo);
+		void	Reset();
+		int		GetPosition(double fTime);
+	protected:
+		const CMidiFile::CMidiEventArray&	m_arrTempoMap;	// reference to array of tempo spans
+		double	m_fStartTime;	// starting time of current span, in seconds
+		double	m_fEndTime;		// ending time of current span, in seconds
+		double	m_fCurTempo;	// tempo of current span, in beats per minute
+		double	m_fInitTempo;	// song's initial tempo, in beats per minute
+		int		m_nTimebase;	// song's timebase, in ticks per quarter note
+		int		m_nStartPos;	// starting position of current span, in ticks
+		int		m_iTempo;		// index of current span within tempo map
+		double	PositionToSeconds(int nPos) const;
+		int		SecondsToPosition(double fSecs) const;
+	};
 
 // Attributes
 public:
@@ -75,23 +93,6 @@ protected:
 		CPostExportVideo(CPhaseBar& bar) { m_pPhaseBar = &bar; }
 		~CPostExportVideo() { m_pPhaseBar->PostExportVideo(); }
 		CPhaseBar	*m_pPhaseBar;
-	};
-	class CTempoMapIter {
-	public:
-		CTempoMapIter(const CMidiFile::CMidiEventArray& arrTempoMap, int nTimebase, double fInitTempo);
-		void	Reset();
-		int		GetPosition(double fTime);
-	protected:
-		const CMidiFile::CMidiEventArray&	m_arrTempoMap;	// reference to array of tempo spans
-		double	m_fStartTime;	// starting time of current span, in seconds
-		double	m_fEndTime;		// ending time of current span, in seconds
-		double	m_fCurTempo;	// tempo of current span, in beats per minute
-		double	m_fInitTempo;	// song's initial tempo, in beats per minute
-		int		m_nTimebase;	// song's timebase, in ticks per quarter note
-		int		m_nStartPos;	// starting position of current span, in ticks
-		int		m_iTempo;		// index of current span within tempo map
-		double	PositionToSeconds(int nPos) const;
-		int		SecondsToPosition(double fSecs) const;
 	};
 
 // Constants

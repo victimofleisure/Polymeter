@@ -13,6 +13,7 @@
 		03		09jul20	add pointer to parent frame
 		04		19may22	use faster version of set unit
 		05		27may22	add handler for ruler selection change
+		06		16jun22	remove needless message map entry for create
 
 */
 
@@ -196,7 +197,6 @@ void CSongParent::OnDraw(CDC* pDC)
 // CSongParent message map
 
 BEGIN_MESSAGE_MAP(CSongParent, CSplitView)
-	ON_WM_CREATE()
 	ON_WM_SIZE()
 	ON_WM_SETFOCUS()
 	ON_WM_PARENTNOTIFY()

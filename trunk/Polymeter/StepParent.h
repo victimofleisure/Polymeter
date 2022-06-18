@@ -12,6 +12,7 @@
 		02		19jul21	enumerate pane IDs and make them public
 		03		19may22	add ruler selection attribute
 		04		27may22	add handler for ruler selection change
+		05		16jun22	override OnInitialUpdate
 
 */
 
@@ -127,6 +128,7 @@ protected:
 // Overrides
 	virtual	void GetSplitRect(CRect& rSplit) const;
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
+	virtual	void OnInitialUpdate();
 	virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
 
 // Generated message map functionsq

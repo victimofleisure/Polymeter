@@ -32,6 +32,7 @@
 		22		31oct21	set song position in initial update
 		23		19may22	loop on cell selection must account for start position
 		24		19may22	add ruler selection
+		25		16jun22	don't delay initial zoom, move to OnInitialUpdate
 
 */
 
@@ -129,6 +130,7 @@ void CSongView::OnInitialUpdate()
 	UpdateViewSize();
 	UpdateSongPos(pDoc->m_nSongPos);	// OpenDocument no longer sends view type update
 	UpdateRulerSelection(false);	// don't redraw, already invalidated
+	m_pParent->OnSongZoom();	// initial zoom
 }
 
 void CSongView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
@@ -651,7 +653,6 @@ void CSongView::OnDraw(CDC* pDC)
 
 BEGIN_MESSAGE_MAP(CSongView, CScrollView)
 	ON_WM_CREATE()
-	ON_MESSAGE(UWM_DELAYED_CREATE, OnDelayedCreate)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_MOUSEWHEEL()
 	ON_COMMAND(ID_VIEW_ZOOM_IN, OnViewZoomIn)
@@ -687,16 +688,7 @@ int CSongView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CScrollView::OnCreate(lpCreateStruct) == -1)
 		return -1;
 	SetScrollSizes(MM_TEXT, CSize(0, 0));	// set mapping mode
-	PostMessage(UWM_DELAYED_CREATE);
 	return 0;
-}
-
-LRESULT	CSongView::OnDelayedCreate(WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(wParam);
-	UNREFERENCED_PARAMETER(lParam);
-	m_pParent->OnSongZoom();
-	return(0);
 }
 
 BOOL CSongView::PreTranslateMessage(MSG* pMsg)
