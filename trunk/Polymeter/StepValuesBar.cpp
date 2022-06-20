@@ -24,6 +24,7 @@
 		14		20jun21	remove dispatch edit keys
 		15		27dec21	add clamp step to range
 		16		30jan22	fix traversal of columns with different row counts
+		17		20jun22	fix cut command; ID is in low word
 		
 */
 
@@ -955,7 +956,9 @@ void CStepValuesBar::OnUpdateEditInsert(CCmdUI *pCmdUI)
 
 void CStepValuesBar::OnEditDelete()
 {
-	bool	bCopyToClipboard = GetCurrentMessage()->wParam == ID_EDIT_CUT;
+	const MSG	*pMsg = GetCurrentMessage();
+	ASSERT(pMsg != NULL);
+	bool	bCopyToClipboard = LOWORD(pMsg->wParam) == ID_EDIT_CUT;	// low word is command ID
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL) {
 		CRect	rSel;
