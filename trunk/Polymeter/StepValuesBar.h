@@ -17,6 +17,7 @@
 		07		20jun21	add list accessor
 		08		27dec21	add clamp step to range
 		09		30jan22	fix traversal of columns with different row counts
+		10		22jun22	add step colors bitmasks
 
 */
 
@@ -75,7 +76,11 @@ protected:
 		STF_COLS_TRACKS	= 0x20,		// in export, columns are tracks and rows are steps
 		STF_DELIMIT_TAB	= 0x40,		// in export, delimit values with tabs instead of commas
 	};
-	static const COLORREF	m_arrStepColor[];	// step colors
+	enum {	// step color bitmasks
+		SCBM_MUTED		= 0x01,		// track is muted
+		SCBM_SELECTED	= 0x02,		// item is selected
+	};
+	static const COLORREF	m_arrStepColor[];	// array of step colors
 
 // Member data
 	CModGridCtrl	m_grid;		// grid control

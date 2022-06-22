@@ -25,6 +25,7 @@
 		15		27dec21	add clamp step to range
 		16		30jan22	fix traversal of columns with different row counts
 		17		20jun22	fix cut command; ID is in low word
+		18		22jun22	add more step colors to indicate selection
 		
 */
 
@@ -49,8 +50,10 @@ IMPLEMENT_DYNAMIC(CStepValuesBar, CMyDockablePane)
 #define RK_FORMAT_MASK _T("FormatMask")
 
 const COLORREF CStepValuesBar::m_arrStepColor[] = {
-	RGB(192, 255, 192),		// unmuted track
-	RGB(255, 192, 192),		// muted track
+	RGB(192, 255, 192),	// unselected, unmuted
+	RGB(255, 192, 192),	// unselected, muted
+	RGB(0, 192, 0),		// selected, unmuted
+	RGB(192, 0, 0),		// selected, muted
 };
 
 CStepValuesBar::CStepValuesBar()
@@ -803,11 +806,22 @@ void CStepValuesBar::OnListCustomdraw(NMHDR* pNMHDR, LRESULT* pResult)
 			COLORREF	clrItem;
 			int	iSel = pLVCD->iSubItem - 1;
 			if (iSel >= 0 && iSel < m_arrCurPos.GetSize()) {	// extra cautious
-				if (m_arrCurPos[iSel] == static_cast<int>(pLVCD->nmcd.dwItemSpec)) {	// if item at current position
+				int	iItem = static_cast<int>(pLVCD->nmcd.dwItemSpec);
+				if (iItem == m_arrCurPos[iSel]) {	// if item at current position
 					CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 					if (pDoc != NULL && iSel < pDoc->GetSelectedCount()) {
+						// CDIS_SELECTED doesn't work with LVS_SHOWSELALWAYS style; see uItemState in NMCUSTOMDRAW doc
+						UINT	nSelected = (ListView_GetItemState(m_grid.m_hWnd, iItem, LVIS_SELECTED) & LVIS_SELECTED);
 						int	iTrack = pDoc->m_arrTrackSel[iSel];
-						clrItem = m_arrStepColor[pDoc->m_Seq.GetMute(iTrack)];	// highlight item
+						UINT	iStepColor = pDoc->m_Seq.GetMute(iTrack);
+						if (nSelected) {	// if item is selected
+							iStepColor |= SCBM_SELECTED;	// set selected bit in step color index
+							// trick system into using our custom color instead of selection color
+							pLVCD->nmcd.uItemState &= ~CDIS_SELECTED;	// clear item's selected flag
+							pLVCD->clrText = RGB(255, 255, 255);	// customize text color
+						}
+						ASSERT(iStepColor < _countof(m_arrStepColor));	// check range just in case
+						clrItem = m_arrStepColor[iStepColor];	// highlight item
 					} else	// can't get selection
 						clrItem = m_clrBkgnd;	// default background
 				} else	// item not at current position
