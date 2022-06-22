@@ -1347,9 +1347,13 @@ This command can potentially consume a large amount of disk space. You're respon
 
 @topic Step Values bar\Step Values
 
-This @[docking windows\docking window] lets you edit step values numerically, using a @[grid controls\grid control]. In some cases this may be more convenient than dragging velocity bars in the @[Velocities pane]. It's particularly useful for editing @[note modulation\note modulator] tracks and similar cases.
+This @[docking windows\docking window] lets you edit @[steps\step] values numerically, using a @[grid controls\grid control]. In some cases this may be more convenient than dragging velocity bars in the @[Velocities pane]. It's particularly useful for editing @[note modulation\note modulator] tracks and similar cases.
 
 Step values are shown for the @[track selection\selected tracks] only. Note that selecting a large number of tracks at once may cause the Step Values window to perform poorly. It's recommended to hide the Step Values window when it's not needed.
+
+This bar supports the @[standard editing commands], allowing selected rows to be copied, cut, pasted, deleted and inserted. Selected rows can also be moved by left-clicking and dragging them. Note however that these commands are only supported if the selection is @[step selection\rectangular], meaning its rows are contiguous and all contain the same number of steps. This may not be the case if the selected tracks have different lengths. Although the @[track steps] area also supports the standard editing commands, editing may be easier in the Step Values bar because it shows the contents of the steps.
+
+For each selected track, the step value corresponding to the current @[song position] is highlighted in red or green depending on whether the track is @[track mutes\muted]. To move the song position to a particular step within a selected track, left-click the step value while pressing the @{key}Ctrl@} key.
 
 @item Step values display formats\Display formats
 

@@ -3876,3 +3876,4 @@ void CMainFrame::OnUpdateIndicatorSelection(CCmdUI* pCmdUI)
 	}
 	pCmdUI->Enable(true);
 }
+

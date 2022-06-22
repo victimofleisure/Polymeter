@@ -1578,9 +1578,13 @@
 
 <a name="Step_Values_bar"><h2>Step Values</h2></a>
 
-<p>This <a href="#Docking_windows">docking window</a> lets you edit step values numerically, using a <a href="#Grid_controls">grid control</a>. In some cases this may be more convenient than dragging velocity bars in the <a href="#Velocities_Pane">Velocities pane</a>. It's particularly useful for editing <a href="#Note_modulation">note modulator</a> tracks and similar cases.
+<p>This <a href="#Docking_windows">docking window</a> lets you edit <a href="#Steps">step</a> values numerically, using a <a href="#Grid_controls">grid control</a>. In some cases this may be more convenient than dragging velocity bars in the <a href="#Velocities_Pane">Velocities pane</a>. It's particularly useful for editing <a href="#Note_modulation">note modulator</a> tracks and similar cases.
 
 <p>Step values are shown for the <a href="#Track_Selection">selected tracks</a> only. Note that selecting a large number of tracks at once may cause the Step Values window to perform poorly. It's recommended to hide the Step Values window when it's not needed.
+
+<p>This bar supports the <a href="#Standard_editing_commands">standard editing commands</a>, allowing selected rows to be copied, cut, pasted, deleted and inserted. Selected rows can also be moved by left-clicking and dragging them. Note however that these commands are only supported if the selection is <a href="#Step_Selection">rectangular</a>, meaning its rows are contiguous and all contain the same number of steps. This may not be the case if the selected tracks have different lengths. Although the <a href="#Track_Steps">track steps</a> area also supports the standard editing commands, editing may be easier in the Step Values bar because it shows the contents of the steps.
+
+<p>For each selected track, the step value corresponding to the current <a href="#Song_position">song position</a> is highlighted in red or green depending on whether the track is <a href="#Track_Mutes">muted</a>. To move the song position to a particular step within a selected track, left-click the step value while pressing the <span class="key">Ctrl</span> key.
 
 <a name="Step_values_display_formats"><h3>Display formats</h3></a>
 

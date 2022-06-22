@@ -427,6 +427,7 @@ id	open	close	type	description	rev	user
 520	06/16/22	06/16/22	done	step view ruler shows half as many numbers as it should	1.0.08.001	
 521	06/16/22	06/16/22	done	fix initial ruler flicker in step and song views; set zoom in OnInitialUpdate instead of OnDelayedCreate	1.0.08.001	
 523	06/20/22	06/20/22	done	in Step Values bar, Ctrl+X deletes instead of cutting; use only low word of wParam for command ID	1.0.08.002	
+524	06/21/22	06/22/22	done	Step Values bar doesn't indicate song position for selected items; use more colors	1.0.08.003	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -504,6 +505,7 @@ id	open	close	type	description	rev	user
 512	02/13/22		hold	in Wine, MIDI devices added while app is running don't appear until the app is exited and restarted		Wine
 519	06/07/22		hold	optionally group tracks by MIDI channel in Live view, with each group in its own list and group muting		
 522	06/17/22		hold	indicate step or cell selection in status bar, depending on which view has focus		
+525	06/21/22		hold	Step view and Step Values bar should mirror each other's selection if possible		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
