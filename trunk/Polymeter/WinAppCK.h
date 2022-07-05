@@ -24,6 +24,7 @@
 		14		10feb19	add temp file path wrapper
 		15		13jun20	add conditional wait cursor wrapper
 		16		11nov21	add FindMenuItem and InsertNumericMenuItems
+		17		05jul22	add wrapper class to save and restore focus 
 
         enhanced application
  
@@ -136,4 +137,22 @@ inline void CWaitCursorEx::Restore()
 {
 	if (m_bShow)
 		AfxGetApp()->RestoreWaitCursor();
+}
+
+class CSaveRestoreFocus {
+public:
+	CSaveRestoreFocus();
+	~CSaveRestoreFocus();
+	HWND	m_hFocusWnd;
+};
+
+inline CSaveRestoreFocus::CSaveRestoreFocus()
+{
+	m_hFocusWnd = GetFocus();
+}
+
+inline CSaveRestoreFocus::~CSaveRestoreFocus()
+{
+	if (m_hFocusWnd)
+		SetFocus(m_hFocusWnd);
 }

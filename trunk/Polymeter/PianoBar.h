@@ -16,6 +16,7 @@
 		06		29feb20	add handler for MIDI event message
 		07		18jun20	add command help to handle channel filter string reuse
 		08		18nov20	enable auto-hide and attach
+		09		05jul22	add multiple pianos feature
 
 */
 
@@ -39,6 +40,9 @@ public:
 	void	SetKeySignature(int nKeySig);
 	int		GetOutputChannel() const;
 	void	SetOutputChannel(int iChannel);
+	int		GetPianoCount() const;
+	bool	SetPianoCount(int nPianos);
+	void	SetChannelFilter(int iChannel, USHORT nChannelMask = 0);
 	
 // Operations
 public:
@@ -58,14 +62,65 @@ public:
 protected:
 // Types
 	struct PIANO_RANGE {
-		int		StartNote;	// MIDI note number of keyboard's first note
-		int		KeyCount;	// total number of keys on keyboard
+		int		nStartNote;	// MIDI note number of keyboard's first note
+		int		nKeyCount;	// total number of keys on keyboard
+	};
+	class CPiano {
+	public:
+		CPianoCtrl	m_pno;	// piano control
+		int		m_arrNoteRefs[MIDI_NOTES];	// array of note reference counts
+	};
+	class CPianoArray : public CArrayEx<CPiano, CPiano&> {
+	public:
+		void	SetStyle(DWORD dwStyle, bool bEnable);
+		void	SetRange(int nStartNote, int nKeys);
+		void	SetKeyLabels(const CStringArrayEx& arrLabel);
+		void	RemoveAllEvents();
+		void	RemoveKeyLabels();
+		void	RemoveKeyColors();
+		void	DestroyAllControls();
+	};
+	class CNoteMsg {
+	public:
+		union {
+			DWORD	dw;	// MIDI note message
+			struct {
+				USHORT	wLow;	// low byte is status, high byte is note number
+				USHORT	wHigh;	// low byte is velocity, high byte is unused
+			};
+		};
+		// ignore velocity in comparisons, so notes sort by note number, then status
+		bool	operator==(const CNoteMsg& note) const { return wLow == note.wLow; }
+		bool	operator!=(const CNoteMsg& note) const { return wLow != note.wLow; }
+		bool	operator<(const CNoteMsg& note) const { return wLow < note.wLow; }
+		bool	operator>(const CNoteMsg& note) const { return wLow > note.wLow; }
+		bool	operator<=(const CNoteMsg& note) const { return wLow <= note.wLow; }
+		bool	operator>=(const CNoteMsg& note) const { return wLow >= note.wLow; }
+	};
+	typedef CArrayEx<CNoteMsg, CNoteMsg&> CNoteMsgArray;
+	typedef CFixedArray<BYTE, MIDI_CHANNELS> CChannelIdxArray;	// one 8-bit index for each MIDI channel
+	class CSelectChannelsDlg : public CDialog {
+	public:
+		CSelectChannelsDlg(CWnd* pParentWnd = NULL);
+		USHORT	m_nChannelMask;		// channel bitmask
+
+	protected:
+		virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+		virtual BOOL OnInitDialog();
+		virtual void OnOK();
+		enum { IDD = IDD_SELECT_CHANNELS };
+		DECLARE_MESSAGE_MAP()
+		CCheckListBox	m_list;		// check list box control
+		afx_msg void OnClickedAll();
+		afx_msg void OnClickedNone();
+		afx_msg void OnClickedUsed();
 	};
 
 // Constants
 	enum {
 		IDC_PIANO = 1865,
 		EVENT_BLOCK_SIZE = 1024,
+		PIANO_LABEL_MARGIN = 4,		// margin around piano labels, in client coords
 	};
 	enum {	// piano sizes
 		#define PIANOSIZEDEF(StartNote, KeyCount) PS_##KeyCount,
@@ -81,7 +136,7 @@ protected:
 	static const PIANO_RANGE	m_arrPianoRange[PIANO_SIZES];	// range for each piano size
 	enum {	// submenu command ID ranges
 		SMID_FILTER_CHANNEL_FIRST = ID_APP_DYNAMIC_SUBMENU_BASE,
-		SMID_FILTER_CHANNEL_LAST = SMID_FILTER_CHANNEL_FIRST + MIDI_CHANNELS,
+		SMID_FILTER_CHANNEL_LAST = SMID_FILTER_CHANNEL_FIRST + MIDI_CHANNELS + 1,	// one extra for multi
 		SMID_OUTPUT_CHANNEL_FIRST = SMID_FILTER_CHANNEL_LAST + 1,
 		SMID_OUTPUT_CHANNEL_LAST = SMID_OUTPUT_CHANNEL_FIRST + MIDI_CHANNELS,
 		SMID_PIANO_SIZE_FIRST = SMID_OUTPUT_CHANNEL_LAST + 1,
@@ -90,23 +145,32 @@ protected:
 	static const COLORREF	m_arrVelocityPalette[MIDI_NOTES];
 
 // Member data
-	CPianoCtrl	m_pno;				// piano control
-	CDWordArrayEx	m_arrNoteOn;	// array of active notes
-	int		m_arrNoteRefs[MIDI_NOTES];	// array of note reference counts
-	int		m_iFilterChannel;		// channel to filter for, or -1 for all channels
-	int		m_iOutputChannel;		// channel to send output notes on, or -1 for none
+	CPianoArray	m_arrPiano;			// array of pianos
+	CNoteMsgArray	m_arrNoteOn;	// array of active notes; kept sorted by note number, then status
+	int		m_iFilterChannel;		// index of channel to filter for, or -1 for all channels,
+									// or MIDI_CHANNELS if filter bitmask specifies channels
+	int		m_iOutputChannel;		// index of channel to send output notes on, or -1 for none
 	int		m_iPianoSize;			// index of selected piano size preset
 	int		m_nKeySig;				// key signature in which notes are displayed
+	PIANO_RANGE	m_rngPiano;			// piano start note and key count
 	bool	m_bShowKeyLabels;		// if true, show note names on keys
 	bool	m_bRotateLabels;		// if true, rotate labels sideways (when horizontally docked)
 	bool	m_bColorVelocity;		// if true, custom color keys to show note velocities
 	bool	m_bKeyLabelsDirty;		// if true, key labels need updating next time we're shown
 	CPoint	m_ptContextMenu;		// where context menu was invoked, in screen coords
 	CMidiEventArray	m_arrAddEvent;	// for repacking single event into array argument
+	USHORT	m_nFilterChannelMask;	// bitmask specifying multiple channels to filter for
+	CChannelIdxArray	m_arrChannelPiano;	// for each channel, index of corresponding piano
+	CSize	m_szPianoLabel;			// size of piano label, in client coords
 
 // Helpers
+	bool	SafeIsHorizontal() const;
+	bool	EventPassesChannelFilter(DWORD dwEvent, int& iPiano) const;
 	void	OnFilterChange();
 	static	const PIANO_RANGE&	GetPianoRange(int iPianoSize);
+	void	LayoutPianos(int cx, int cy);
+	void	GetPianoChannels(CChannelIdxArray& arrChannelIdx) const;
+	bool	PromptForChannelSelection(USHORT& nChannelMask);
 
 // Overrides
 	virtual	void OnShowChanged(bool bShow);
@@ -115,6 +179,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnPaint();
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu);
 	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
@@ -155,4 +220,9 @@ inline void CPianoBar::AddEvent(DWORD dwEvent)
 {
 	m_arrAddEvent[0].m_dwEvent = dwEvent;
 	AddEvents(m_arrAddEvent);
+}
+
+inline int CPianoBar::GetPianoCount() const
+{
+	return m_arrPiano.GetSize();
 }

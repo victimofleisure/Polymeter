@@ -30,6 +30,7 @@
 		20		12nov21	add modulation type dialog for multiple filters
 		21		13nov21	add optional legend to graph
 		22		03jan22	add full screen mode
+		23		05jul22	add parent window to modulation type dialog ctor
 
 */
 
@@ -915,7 +916,7 @@ bool CGraphBar::CFileFindDlg::CMyRecursiveFileFind::OnFile(const CFileFind& find
 	return false;	// stop iterating, we're good
 }
 
-CGraphBar::CModulationTypeDlg::CModulationTypeDlg() : CDialog(IDD)
+CGraphBar::CModulationTypeDlg::CModulationTypeDlg(CWnd* pParentWnd) : CDialog(IDD, pParentWnd)
 {
 }
 
@@ -1123,7 +1124,8 @@ void CGraphBar::OnGraphFilter(UINT nID)
 	ASSERT(iGraphFilter >= 0 && iGraphFilter < GRAPH_FILTERS);
 	iGraphFilter--;	// account for wildcard
 	if (iGraphFilter == GRAPH_FILTER_MULTI) {	// if multiple filters
-		CModulationTypeDlg	dlg;	// show modulation type dialog
+		CSaveRestoreFocus	focus;	// restore focus after modal dialog
+		CModulationTypeDlg	dlg(this);	// show modulation type dialog
 		dlg.m_nModTypeMask = m_nGraphFilterMask;	// init dialog's bitmask
 		if (dlg.DoModal() != IDOK)	// if user canceled or error
 			return;	// bail out

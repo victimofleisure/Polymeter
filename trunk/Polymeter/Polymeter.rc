@@ -962,6 +962,19 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,75,159,50,14
 END
 
+IDD_SELECT_CHANNELS DIALOGEX 0, 0, 123, 226
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Select Channels"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LISTBOX         IDC_SELECT_CHANNELS_LIST,7,7,109,172,LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,7,185,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,66,185,50,14
+    PUSHBUTTON      "&All",IDC_SELECT_CHANNELS_BTN_ALL,7,205,32,14
+    PUSHBUTTON      "&None",IDC_SELECT_CHANNELS_BTN_NONE,46,205,32,14
+    PUSHBUTTON      "&Used",IDC_SELECT_CHANNELS_BTN_USED,84,205,32,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1102,6 +1115,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 173
     END
+
+    IDD_SELECT_CHANNELS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 116
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 219
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -1200,12 +1221,13 @@ BEGIN
     IDS_CHANNEL_COL_Pan     "Pan"
     IDS_CHANNEL_COL_Patch   "Patch"
     IDS_CHANNEL_COL_Volume  "Volume"
+    IDS_CHANNEL_FILTER_MULTI "&Multiple..."
     IDS_CHAN_NOTE_OVERLAP_MERGE "Merge"
-    IDS_CHAN_NOTE_OVERLAP_SPLIT "Split"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_CHAN_NOTE_OVERLAP_SPLIT "Split"
     IDS_CHECK_MODULATIONS_ERRORS 
                             "modulation errors found:\n\nTarget\tSource\tType\tError\n"
     IDS_CHECK_MODULATIONS_SUCCESS "Modulations look good."
@@ -1223,11 +1245,11 @@ BEGIN
                             "Can't set song length shorter than the recording."
     IDS_DOC_CLIP_WARNING    "Clipping may occur."
     IDS_DOC_CONVERGENCE_OUT_OF_RANGE "Convergence is out of range."
-    IDS_DOC_GROUP_OVERLAP   "One or more of the selected tracks already belong to a group, and will be reassigned."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_DOC_GROUP_OVERLAP   "One or more of the selected tracks already belong to a group, and will be reassigned."
     IDS_DOC_NEWER_VERSION   "'%1' is from a newer document version. Some of its features may not be supported."
     IDS_DOC_SEARCH_TEXT_NOT_FOUND "Search text not found."
     IDS_DOC_TRACK_TOO_LONG  "Track too long."
@@ -1243,11 +1265,11 @@ BEGIN
     IDS_EDIT_DELETE_PARTS   "Delete Parts"
     IDS_EDIT_DELETE_PRESETS "Delete Presets"
     IDS_EDIT_DELETE_STEPS   "Delete Steps"
-    IDS_EDIT_DELETE_TRACKS  "Delete Tracks"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_DELETE_TRACKS  "Delete Tracks"
     IDS_EDIT_DUB            "Dub"
     IDS_EDIT_FILL_STEPS     "Fill Steps"
     IDS_EDIT_INSERT_MAPPING "Insert Mapping"
@@ -1263,11 +1285,11 @@ BEGIN
     IDS_EDIT_MOVE_MAPPINGS  "Move Mappings"
     IDS_EDIT_MOVE_PARTS     "Move Parts"
     IDS_EDIT_MOVE_PRESETS   "Move Presets"
-    IDS_EDIT_MOVE_STEPS     "Move Steps"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_MOVE_STEPS     "Move Steps"
     IDS_EDIT_MOVE_TRACKS    "Move Tracks"
     IDS_EDIT_MULTI_STEP_RECT "Multiple Steps"
     IDS_EDIT_PASTE_MAPPINGS "Paste Mapping"
@@ -1283,11 +1305,11 @@ BEGIN
     IDS_EDIT_SOLO           "Solo"
     IDS_EDIT_SORT_MAPPINGS  "Sort Mappings"
     IDS_EDIT_SORT_PARTS     "Sort Parts"
-    IDS_EDIT_TIME_DIVISION  "Time Division"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EDIT_TIME_DIVISION  "Time Division"
     IDS_EDIT_TRACK_SORT     "Track Sort"
     IDS_EDIT_TRANSPOSE      "Transpose"
     IDS_EDIT_UNDO_PREFIX    "&Undo"
@@ -1304,11 +1326,11 @@ BEGIN
     IDS_EXPORT_MODULATIONS  "Export Modulations"
     IDS_EXPORT_SONG         "Export Song"
     IDS_EXPORT_STEPS        "Export Steps"
-    IDS_EXPORT_TRACKS       "Export Tracks"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_EXPORT_TRACKS       "Export Tracks"
     IDS_FILTER_ALL          "All"
     IDS_GRAPHVIZ_BROWSE_TITLE "Where is Graphviz?"
     IDS_GRAPHVIZ_DOWNLOAD_IT 
@@ -1328,11 +1350,11 @@ BEGIN
     IDS_GRAPH_SCOPE_BIDIRECTIONAL "Bidirectional"
     IDS_GRAPH_SCOPE_SOURCES "Sources"
     IDS_GRAPH_SCOPE_TARGETS "Targets"
-    IDS_GRID_ERR_BAD_TIME_FORMAT "Enter time in hh:mm:ss format."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_GRID_ERR_BAD_TIME_FORMAT "Enter time in hh:mm:ss format."
     IDS_HINT_APPLOOK_SELECT "Select this application theme"
     IDS_HINT_GRAPH_DEPTH    "Limit recursion depth to this number of levels"
     IDS_HINT_GRAPH_DEPTH_MAX "Allow unlimited recursion depth"
@@ -1352,11 +1374,11 @@ BEGIN
     IDS_HLINK_CANT_LAUNCH   "Can't launch browser."
     IDS_IMPORT              "Import"
     IDS_IMPORT_ERR_FORMAT   "Format error."
-    IDS_IMPORT_ERR_LOCATION "Row %d, Column %d"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_IMPORT_ERR_LOCATION "Row %d, Column %d"
     IDS_IMPORT_ERR_PROPERTY "Undefined property name."
     IDS_IMPORT_ERR_RANGE    "Range error."
     IDS_IMPORT_MODULATIONS  "Import Modulations"
@@ -1372,11 +1394,11 @@ BEGIN
     IDS_MAPPING_COL_OUT_CONTROL "Out Control"
     IDS_MAPPING_COL_OUT_EVENT "Out Event"
     IDS_MAPPING_COL_RANGE_END "Range End"
-    IDS_MAPPING_COL_RANGE_START "Range Start"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MAPPING_COL_RANGE_START "Range Start"
     IDS_MAPPING_COL_TRACK   "Track"
     IDS_MIDIEVT_COL_CHANNEL "Channel"
     IDS_MIDIEVT_COL_MESSAGE "Message"
@@ -1393,11 +1415,11 @@ BEGIN
     IDS_MIDI_OUTPUT         "Output"
     IDS_MIDI_SYS_STAT_ACTIVE_SENSING "Active Sensing"
     IDS_MIDI_SYS_STAT_CLOCK "Clock"
-    IDS_MIDI_SYS_STAT_CONTINUE "Continue"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDI_SYS_STAT_CONTINUE "Continue"
     IDS_MIDI_SYS_STAT_EOX   "EOX"
     IDS_MIDI_SYS_STAT_MTC_QTR_FRAME "MTC Qtr Frame"
     IDS_MIDI_SYS_STAT_SONG_POSITION "Song Position"
@@ -1413,11 +1435,11 @@ BEGIN
     IDS_MOD_SOURCE          "Source"
     IDS_NONE                "<None>"
     IDS_NOTE_OVERLAP_Allow  "Allow"
-    IDS_NOTE_OVERLAP_Prevent "Prevent"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_NOTE_OVERLAP_Prevent "Prevent"
     IDS_OFFSET_NOTES        "Semitones:"
     IDS_OFFSET_STEPS        "Steps:"
     IDS_OFFSET_TICKS        "Ticks:"
@@ -1440,12 +1462,12 @@ BEGIN
     IDS_OPT_DESC_Midi_nLatency "Desired MIDI latency, in milliseconds"
     IDS_OPT_DESC_Midi_nRecordInput 
                             "Type of data captured by the Record command"
-    IDS_OPT_DESC_View_bShowCurPos 
-                            "Indicate current position within each track"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_View_bShowCurPos 
+                            "Indicate current position within each track"
     IDS_OPT_DESC_View_bShowGMNames 
                             "Display General MIDI patch and drum names instead of numbers"
     IDS_OPT_DESC_View_bShowNoteNames 
@@ -1466,11 +1488,11 @@ BEGIN
     IDS_OPT_NAME_General_bPropertyDescrips "Show Property Descriptions"
     IDS_OPT_NAME_Midi_bSendMidiClock "Send MIDI Clock"
     IDS_OPT_NAME_Midi_bThru "Thru"
-    IDS_OPT_NAME_Midi_iInputDevice "Input Device"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_Midi_iInputDevice "Input Device"
     IDS_OPT_NAME_Midi_iInputQuant "Input Quantization"
     IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
     IDS_OPT_NAME_Midi_nBufferSize "Buffer Size"
@@ -1486,12 +1508,12 @@ BEGIN
     IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
     IDS_OPT_NAME_View_nLiveFontHeight "Live View Font Height"
     IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
-    IDS_PDR_DESC_iNoteOverlap 
-                            "How to handle overlapping instances of the same note on a channel"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_DESC_iNoteOverlap 
+                            "How to handle overlapping instances of the same note on a channel"
     IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
     IDS_PDR_DESC_nLoopFrom  "Starting position of loop, in beats and ticks"
     IDS_PDR_DESC_nLoopTo    "Ending position of loop, in beats and ticks"
@@ -1508,11 +1530,11 @@ BEGIN
     IDS_PDR_NAME_nLoopFrom  "Loop From"
     IDS_PDR_NAME_nLoopTo    "Loop To"
     IDS_PDR_NAME_nMeter     "Meter"
-    IDS_PDR_NAME_nRecordOffset "Record Offset"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_NAME_nRecordOffset "Record Offset"
     IDS_PDR_NAME_nSongLength "Song Length"
     IDS_PDR_NAME_nStartPos  "Start Position"
     IDS_PDR_NAME_nTimeDiv   "Timebase"
@@ -1529,17 +1551,18 @@ BEGIN
     IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
     IDS_SC_MAXIMIZE         "&Maximize"
     IDS_SC_RESTORE          "&Restore"
-    IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format."
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
     IDS_SEQERR_CALLBACK_TOO_LONG "Sequencer callback took too long."
     IDS_SEQERR_TOO_MANY_RECURSIONS 
                             "Modulation exceeded the maximum number of recursions."
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
     IDS_SM_FILTER_CHANNEL_ALL "Show all channels"
+    IDS_HINT_PIANO_CHANNEL_MULTI "Choose multiple channels to show"
     IDS_SM_FILTER_CHANNEL_SELECT "Show selected channel only"
     IDS_SM_FILTER_MESSAGE_ALL "Show all messages"
     IDS_SM_FILTER_MESSAGE_SELECT "Show selected message only"
@@ -1549,12 +1572,12 @@ BEGIN
     IDS_SORT_DIR_ASCENDING  "Ascending"
     IDS_SORT_DIR_DESCENDING "Descending"
     IDS_STATUS_PANE1        "Pane 1"
-    IDS_STATUS_PANE2        "Pane 2"
-    IDS_STEP_TIE            "Tie"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_STATUS_PANE2        "Pane 2"
+    IDS_STEP_TIE            "Tie"
     IDS_SVG_FILE_FILTER     "SVG Files (*.svg)|*.svg|All Files (*.*)|*.*||"
     IDS_TIME_TO_REPEAT_BEATS "beats"
     IDS_TIME_TO_REPEAT_DAYS "days"
@@ -1569,12 +1592,12 @@ BEGIN
     IDS_TRACK_TYPE_NOTE     "Note"
     IDS_TRACK_TYPE_PATCH    "Patch"
     IDS_TRACK_TYPE_TEMPO    "Tempo"
-    IDS_TRACK_TYPE_WHEEL    "Wheel"
-    IDS_TRANSPORT_LOOP      "Loop"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRACK_TYPE_WHEEL    "Wheel"
+    IDS_TRANSPORT_LOOP      "Loop"
     IDS_TRANSPORT_PAUSE     "Pause"
     IDS_TRANSPORT_PLAY      "Play"
     IDS_TRANSPORT_RECORD    "Record"
@@ -1589,12 +1612,12 @@ BEGIN
     IDS_TRK_Number          "#"
     IDS_TRK_Offset          "Offset"
     IDS_TRK_Position        "Position"
-    IDS_TRK_Quant           "Quant"
-    IDS_TRK_Range           "Range"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_Quant           "Quant"
+    IDS_TRK_Range           "Range"
     IDS_TRK_RangeStart      "Range Start"
     IDS_TRK_RangeType       "Range Type"
     IDS_TRK_STEP            "Step"

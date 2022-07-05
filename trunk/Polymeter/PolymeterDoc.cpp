@@ -83,6 +83,7 @@
 		73		15feb22	add check modulations command
 		74		19feb22	use INI file class directly instead of via profile
 		75		19may22	add loop ruler selection attribute
+		76		05jul22	use wrapper class to save and restore focus
 
 */
 
@@ -3943,7 +3944,7 @@ void CPolymeterDoc::LearnMappings(const CIntArrayEx& arrSelection, DWORD nInMidi
 void CPolymeterDoc::CreateModulation(int iSelItem)
 {
 	ASSERT(GetSelectedCount());
-	HWND	hFocusWnd = GetFocus();
+	CSaveRestoreFocus	focus;	// restore focus after modal dialog
 	CModulationDlg	dlg(this);
 	if (dlg.DoModal() == IDOK) {
 		ASSERT(dlg.m_arrMod.GetSize());	// at least one modulator
@@ -3959,8 +3960,6 @@ void CPolymeterDoc::CreateModulation(int iSelItem)
 		SetModifiedFlag();
 		UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
 	}
-	if (hFocusWnd != NULL)
-		SetFocus(hFocusWnd);	// restore focus after modal dialog
 }
 
 void CPolymeterDoc::ChangeTimeDivision(int nNewTimeDivTicks)

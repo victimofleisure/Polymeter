@@ -258,6 +258,7 @@
 {IDS_HINT_GRAPH_SCOPE_TARGETS,			IDH_Docking_Windows_Graph_bar_Graph_context_menu},
 {IDS_HINT_MAIN_CONVERGENCE_SIZE,		IDH_Menus_Transport_Convergence_Size},
 {IDS_HINT_PIANO_FILTER_CHANNEL,			IDH_Docking_Windows_Piano_bar_Piano_context_menu},
+{IDS_HINT_PIANO_CHANNEL_MULTI,			IDH_Docking_Windows_Piano_bar_Piano_context_menu},
 {IDS_SM_FILTER_CHANNEL_ALL,				IDH_Docking_Windows_MIDI_Input_bar_MIDI_IO_context_menu},
 {IDS_SM_FILTER_CHANNEL_SELECT,			IDH_Docking_Windows_MIDI_Input_bar_MIDI_IO_context_menu},
 {IDS_SM_FILTER_MESSAGE_ALL,				IDH_Docking_Windows_MIDI_Input_bar_MIDI_IO_context_menu},

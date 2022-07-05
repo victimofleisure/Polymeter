@@ -14,6 +14,7 @@
         04		11nov21	add graph depth attribute
 		05		12nov21	add modulation type dialog for multiple filters
 		06		13nov21	add optional legend to graph
+		07		05jul22	add parent window to modulation type dialog ctor
 		
 */
 
@@ -88,7 +89,7 @@ protected:
 	typedef UINT MOD_TYPE_MASK;	// modulation type mask; allows maximum of 32 types
 	class CModulationTypeDlg : public CDialog {
 	public:
-		CModulationTypeDlg();
+		CModulationTypeDlg(CWnd* pParentWnd = NULL);
 		MOD_TYPE_MASK	m_nModTypeMask;		// modulation type bitmask
 
 	protected:
