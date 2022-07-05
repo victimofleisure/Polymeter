@@ -161,7 +161,7 @@ protected:
 	CMidiEventArray	m_arrAddEvent;	// for repacking single event into array argument
 	USHORT	m_nFilterChannelMask;	// bitmask specifying multiple channels to filter for
 	CChannelIdxArray	m_arrChannelPiano;	// for each channel, index of corresponding piano
-	CSize	m_szPianoLabel;			// size of piano label, in client coords
+	CSize	m_szPianoLabel;			// maximum size of piano label text, in client coords
 
 // Helpers
 	bool	SafeIsHorizontal() const;
@@ -171,6 +171,7 @@ protected:
 	void	LayoutPianos(int cx, int cy);
 	void	GetPianoChannels(CChannelIdxArray& arrChannelIdx) const;
 	bool	PromptForChannelSelection(USHORT& nChannelMask);
+	template<class T> static int CountSetBits(T nVal);
 
 // Overrides
 	virtual	void OnShowChanged(bool bShow);

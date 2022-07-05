@@ -375,6 +375,19 @@ bool CPianoBar::SetPianoCount(int nPianos)
 	return true;
 }
 
+template<class T> inline int CPianoBar::CountSetBits(T nVal)
+{
+	int	nBits = sizeof(nVal) * 8;
+	int	nSet = 0;
+	T	nMask = 1;
+	for (int iBit = 0; iBit < nBits; iBit++) {	// for each bit
+		if (nVal & nMask)	// if bit is set
+			nSet++;	// bump count
+		nMask <<= 1;
+	}
+	return nSet;
+}
+
 void CPianoBar::SetChannelFilter(int iChannel, USHORT nChannelMask)
 {
 	// If nChannelMask is zero, iChannel is either the zero-based index of the
@@ -389,15 +402,14 @@ void CPianoBar::SetChannelFilter(int iChannel, USHORT nChannelMask)
 	USHORT	nNewChannelMask = 0;
 	int	nPianos = 1;	// default to a single piano
 	if (nChannelMask) {	// if channel mask is non-zero
-		int	nSetBits = __popcnt16(nChannelMask);	// count set bits in mask
+		int	nSetBits = CountSetBits(nChannelMask);
 		if (nSetBits > 1) {	// if multiple channels are selected
 			iChannel = MIDI_CHANNELS;	// indicate filtering for multiple channels
 			nNewChannelMask = nChannelMask;
 			nPianos = nSetBits;	// show multiple pianos, one for each selected channel
 			int	iPiano = 0;
 			for (int iChannel = 0; iChannel < MIDI_CHANNELS; iChannel++) {	// for each channel
-				USHORT	nChannelBit = MAKE_CHANNEL_MASK(iChannel);
-				if (nChannelMask & nChannelBit) {	// if channel is selected
+				if (nChannelMask & MAKE_CHANNEL_MASK(iChannel)) {	// if channel is selected
 					m_arrChannelPiano[iChannel] = static_cast<BYTE>(iPiano);	// map channel to its piano
 					iPiano++;
 				}
@@ -414,11 +426,14 @@ void CPianoBar::SetChannelFilter(int iChannel, USHORT nChannelMask)
 	if (iChannel != m_iFilterChannel || nNewChannelMask != m_nFilterChannelMask) {	// if filter changed
 		m_iFilterChannel = iChannel;
 		m_nFilterChannelMask = nNewChannelMask;
-		if (nPianos != GetPianoCount()) {	// if piano count has changed
+		if (nPianos != GetPianoCount()) {	// if piano count changed
 			SetPianoCount(nPianos);	// instantiate desired number of pianos
 			CRect	rClient;
 			GetClientRect(rClient);
 			LayoutPianos(rClient.Width(), rClient.Height());	// update piano layout
+		} else {	// piano count didn't change
+			if (nPianos > 1)	// if multiple pianos
+				Invalidate();	// update piano labels
 		}
 		OnFilterChange();
 		UpdateKeyLabels();
