@@ -2,7 +2,6 @@ id	open	close	type	description	rev	user
 189	09/07/18		bug	song edits sometimes leave fragments, especially if zoom is changed while editing		
 272	01/26/19		bug	resizing docked pane via mouse drag leaves artifacts in Windows 10; affects stock VS2012 app too		
 273	01/26/19		bug	resizing docked pane via mouse drag leaves gap between scroll bar and pane, when two or more documents exist; affects stock VS2012 app too		
-290	03/31/19		bug	in piano bar, notes that are active when velocity color is enabled have incorrect key colors		
 297	11/04/19		bug	GraphViz times out if modulation is too complicated; introduce variable timeout option?		
 298	11/12/19		bug	MDI tab control sometimes disappears after opening or closing document; hard to reproduce		
 303	12/03/19		bug	playback lags behind UI by one tick (0.5 seconds) at tempo of 1 with GS Synth (see phase test)		
@@ -428,6 +427,9 @@ id	open	close	type	description	rev	user
 521	06/16/22	06/16/22	done	fix initial ruler flicker in step and song views; set zoom in OnInitialUpdate instead of OnDelayedCreate	1.0.08.001	
 523	06/20/22	06/20/22	done	in Step Values bar, Ctrl+X deletes instead of cutting; use only low word of wParam for command ID	1.0.08.002	
 524	06/21/22	06/22/22	done	Step Values bar doesn't indicate song position for selected items; use more colors	1.0.08.003	
+289	03/25/19	07/05/22	done	piano bar should be able to show channels separately via multiple keyboards	1.0.09.000	
+290	03/31/19	07/05/22	done	in piano bar, notes that are active when velocity color is enabled have incorrect key colors	1.0.09.000	
+526	07/04/22	07/05/22	done	if piano bar is docked vertically, floating it by double-clicking its caption causes piano to be drawn incorrectly	1.0.09.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -467,7 +469,6 @@ id	open	close	type	description	rev	user
 236	11/19/18		hold	length modulation; cool idea but hard to implement		Benoit
 257	12/09/18		hold	add hide/unhide column commands to track list header's context menu; where to store previous width?		
 259	12/12/18		hold	grid control's header should display tooltip for truncated column names; must subclass header control?		
-289	03/25/19		hold	piano bar should be able to show channels separately via multiple keyboards; messy problem		
 296	06/12/19		hold	option for space bar to start/stop playback without needing to also press Ctrl key; causes many UI conflicts		
 318	03/02/20		hold	separate window for viewing/editing recorded MIDI input		
 340	04/04/20		hold	scale modulation often repeats same work for each track that uses the scale; but not always!		

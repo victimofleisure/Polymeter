@@ -1236,17 +1236,28 @@ This @[docking windows\docking window] displays output MIDI events in real time,
 
 This @[docking windows\docking window] dynamically displays the output notes on a virtual piano keyboard. The piano keyboard's orientation can be horizontal or vertical, depending on whether the window is docked horizontally or vertically. To monitor MIDI output messages other than notes, e.g. controllers, use the @[MIDI Output bar] instead.
 
-By default, output notes are displayed for all MIDI channels. To show only a particular channel, use the @{cmd}Channel Filter@} submenu of the window's @[Piano context menu\context menu]. The context menu also lets you change the size of the piano keyboard, show or hide the key labels, and rotate the key labels. The window can optionally send MIDI notes when the corresponding keys are left-clicked. To enable this feature, use the context menu's @{cmd}Output Channel@} submenu to select the desired MIDI channel.
+By default, output notes are displayed for all MIDI channels. To show only a particular channel, use the @{cmd}Channel Filter@} submenu of the window's @[Piano context menu\context menu]. This submenu also lets you choose @[multiple keyboards\multiple channels], in which case each channel is shown on its own keyboard. The context menu also lets you change the size of the piano keyboard, show or hide the key labels, and rotate the key labels. The window can optionally send MIDI notes when the corresponding keys are left-clicked. To enable this feature, use the context menu's @{cmd}Output Channel@} submenu to select the desired MIDI channel.
 
 @item Piano context menu\Context menu
 
 <p><table border=1 cellpadding=2 cellspacing=0>
-<tr><td>Channel Filter</td><td>To only show notes on a particular MIDI channel, select the corresponding submenu item, or select "All" to show notes from all channels.</td></tr>
+<tr><td>Channel Filter</td><td>To only show notes for a particular MIDI channel, select the corresponding submenu item, or select "All" to show notes for all channels. You can also select "Multiple" to choose @[multiple keyboards\multiple channels].</td></tr>
 <tr><td>Output Channel</td><td>In this submenu, select the MIDI channel on which left-clicked piano keys should send the corresponding notes, or select "None" to disable this feature.</td></tr>
 <tr><td>Piano Size</td><td>To resize the keyboard, select a standard piano size from the submenu.</td></tr>
 <tr><td>Key Labels</td><td>Check this item to show labels on the piano keys that identify the corresponding MIDI notes.</td></tr>
 <tr><td>Rotate Labels</td><td>Check this item to rotate the key labels 90&deg; counterclockwise, so that they're vertical instead of horizontal. This may allow the labels to use a larger font. This option is only supported when the window is docked horizontally.</td></tr>
 <tr><td>Color Velocities</td><td>Check this item to color the piano keys according to the velocities of the output notes. The colors range spectrally from blue (softest) to red (loudest).</td></tr>
+</table>
+
+@item Multiple keyboards
+
+The piano bar can display up to sixteen keyboards, each of which only shows notes for a specific MIDI channel. This is useful when the same notes are being played on multiple instruments; with a single keyboard, the instruments mingle, making it hard to distinguish them. The keyboards have labels indicating which channels they correspond to. To configure multiple keyboards, select "Multiple" in the @[Piano context menu\context menu]'s @{cmd}Channel Filter@} submenu. This displays the Select Channels dialog, which has a checkbox for each channel. Check the desired channels, and then press OK to proceed. The dialog provides additional selection features, explained below.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Button</th><th>Action</th></tr>
+<tr><td>All</td><td>Checks all channels.</td></tr>
+<tr><td>None</td><td>Unchecks all channels.</td></tr>
+<tr><td>Used</td><td>Checks all channels that are used by the current document.</td></tr>
 </table>
 
 @topic Graph bar\Graph

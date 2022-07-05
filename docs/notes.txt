@@ -3736,7 +3736,7 @@ BOOL CIniFile::CFastStdioFile::Open(LPCTSTR pszFilePath, UINT nOpenFlags, CFileE
 		_T("rt,ccs=UNICODE"),	// can be UTF-8 instead
 		_T("wt,ccs=UNICODE"),
 	};
-	int	bIsWrite = nOpenFlags & modeWrite;
+	bool	bIsWrite = (nOpenFlags & modeWrite) != 0;
 	FILE	*fStream;
 	errno_t	nErr =_tfopen_s(&fStream, pszFilePath, szMode[bIsWrite]);
 	if (nErr != 0)
@@ -3771,7 +3771,7 @@ its first 14 track names set to the entire 8-bit character range:
 	}
 
 
-2/21/22 CLOC
+2/21/22 CLOC (Count Lines of Code)
 
 -----------------------------------------------------------------------------------
 Language                         files          blank        comment           code
