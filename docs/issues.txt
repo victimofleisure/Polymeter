@@ -430,6 +430,7 @@ id	open	close	type	description	rev	user
 289	03/25/19	07/05/22	done	piano bar should be able to show channels separately via multiple keyboards	1.0.09.000	
 290	03/31/19	07/05/22	done	in piano bar, notes that are active when velocity color is enabled have incorrect key colors	1.0.09.000	
 526	07/04/22	07/05/22	done	if piano bar is docked vertically, floating it by double-clicking its caption causes piano to be drawn incorrectly	1.0.09.000	
+527	07/06/22	07/06/22	done	a few dialog IDs are missing from help map	1.0.09.001	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
