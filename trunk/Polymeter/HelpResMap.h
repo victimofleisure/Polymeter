@@ -203,14 +203,17 @@
 {IDD_FILL,								IDH_Menus_Track_Fill},
 {IDD_GO_TO_POSITION,					IDH_Menus_Transport_Go_To_Position},
 {IDD_MODULATION,						IDH_Menus_Track_Create_Modulation},
+{IDD_MODULATION_TYPE,					IDH_Docking_Windows_Graph_bar_Graph_context_menu},
 {IDD_OFFSET,							IDH_Menus_Track_Rotate_Offset_Tracks},
 {IDD_OPTIONS,							IDH_Menus_Tools_Options},
 {IDD_PROCESSING,						0},
 {IDD_PROGRESS,							0},
 {IDD_RECORD,							IDH_Menus_Transport_Record},
+{IDD_SELECT_CHANNELS,					IDH_Docking_Windows_Piano_bar_Multiple_keyboards},
 {IDD_STRETCH,							IDH_Menus_Track_Stretch},
 {IDD_TRACK_SORT,						IDH_Menus_Track_Sort},
 {IDD_VELOCITY_OFFSET,					IDH_Menus_Track_Velocity},
+{IDD_VELOCITY_REPLACE,					IDH_Menus_Track_Velocity},
 {IDD_VELOCITY_SCALE,					IDH_Menus_Track_Velocity},
 
 // string IDs
