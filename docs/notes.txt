@@ -3877,3 +3877,137 @@ void CMainFrame::OnUpdateIndicatorSelection(CCmdUI* pCmdUI)
 	pCmdUI->Enable(true);
 }
 
+7/17/22 Center song position
+
+CPolymeterDocument::SetPosition currently calls UpdateAllViews a second time to implement
+centering, which is inefficient. Centering is a parameter, and parameters should normally
+be implemented via the pHint argument. If the bCenterSongPos argument is true, pass this 
+to UpdateAllViews, otherwise pass NULL. In CSongView::OnUpdate, after updating the song 
+position, if pHint is non-NULL, call CenterCurrentPosition.
+
+HINT_SONG_POS // song position change; pHint is non-NULL if centering song position
+
+7/17/22 Exclude muted tracks from graph
+
+Filtering is the easy part:
+// if excluding muted tracks and modulation's source or target is muted
+if (!m_bShowMuted && (pDoc->m_Seq.GetMute(mod.m_iSource) || pDoc->m_Seq.GetMute(mod.m_iTarget)))
+	continue;	// skip this modulation
+
+Cases must be added to OnUpdate. Solo, Track Prop / Mute, and Multi Track Prop / Mute
+all must start a deferred update if m_bShowMuted is false. Other cases? Ideally these
+cases should also rebuild the mute cache to avoid needless graph updates (see below).
+Updating the graph automatically during song playback requires adding a song position
+case to OnUpdate, as follows. This code takes about 1 microsecond in a typical case.
+
+case CPolymeterDoc::HINT_SONG_POS:
+	if (!m_bShowMuted) {	// if excluding muted tracks
+		CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+		if (pDoc != NULL) {
+			int	nTracks = pDoc->GetTrackCount();
+			if (nTracks != m_arrMute.GetSize()) {	// if track count differs from cache size
+				RebuildMuteCache();	// cache is stale, so rebuild it
+			} else {	// track count matches; assume cache is valid
+				bool	bMuteChanged = false;
+				for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+					bool	bIsMuted = pDoc->m_Seq.GetMute(iTrack);
+					if (bIsMuted != m_arrMute[iTrack]) {	// if track mute differs from cache
+						m_arrMute[iTrack] = bIsMuted;	// update cache
+						bMuteChanged = true;	// set change flag
+					}
+				}
+				if (bMuteChanged)	// if one or more track mutes changed state
+					StartDeferredUpdate();
+			}
+		}
+	}
+	break;
+}
+
+void CGraphBar::RebuildMuteCache()
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL) {
+		int	nTracks = pDoc->GetTrackCount();
+		m_arrMute.FastSetSize(nTracks);
+		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+			m_arrMute[iTrack] = pDoc->m_Seq.GetMute(iTrack);	// cache mute state 
+		}
+	} else {
+		m_arrMute.RemoveAll();
+	}
+}
+
+7/19/22 Adding docking bar context menu command IDs to Customize dialog
+
+	struct DOCK_BAR_MENU {
+		int		nMenuID; 	// context menu's ID
+		LPCTSTR	pszMenuName;		// context menu's name
+		CMyDockablePane	CMainFrame::*pPane;	// pointer to dockable pane member
+	};
+
+const CMainFrame::DOCK_BAR_MENU CMainFrame::m_arrDockBarMenu[] = {
+	{IDR_GRAPH_CTX,			_T("Graph"),		reinterpret_cast<CMyDockablePane CMainFrame::*>(&CMainFrame::m_wndGraphBar)},
+	{IDR_MODULATION_CTX,	_T("Modulation"),	reinterpret_cast<CMyDockablePane CMainFrame::*>(&CMainFrame::m_wndModulationsBar)},
+	{IDR_MAPPING_CTX,		_T("Mapping"),		reinterpret_cast<CMyDockablePane CMainFrame::*>(&CMainFrame::m_wndMappingBar)},
+	{IDR_PIANO_CTX,			_T("Piano"),		reinterpret_cast<CMyDockablePane CMainFrame::*>(&CMainFrame::m_wndPianoBar)},
+	{IDR_PARTS_CTX,			_T("Parts"),		reinterpret_cast<CMyDockablePane CMainFrame::*>(&CMainFrame::m_wndPartsBar)},
+	{IDR_PRESETS_CTX,		_T("Presets"),		reinterpret_cast<CMyDockablePane CMainFrame::*>(&CMainFrame::m_wndPresetsBar)},
+	{IDR_PHASE_CTX,			_T("Phase"),		reinterpret_cast<CMyDockablePane CMainFrame::*>(&CMainFrame::m_wndPhaseBar)},
+	{IDR_STEP_VALUES_CTX,	_T("StepValues"),	reinterpret_cast<CMyDockablePane CMainFrame::*>(&CMainFrame::m_wndStepValuesBar)},
+};
+
+void CMainFrame::AddDockBarMenuCommands(CMFCToolBarsCustomizeDialog *pDlgCust, int nMenuID, LPCTSTR pszTitle)
+{
+	CMenu menu;
+	menu.LoadMenu(nMenuID);
+	CMenu	*pSubMenu = menu.GetSubMenu(0);
+	int	nItems = pSubMenu->GetMenuItemCount();
+	for (int iItem = nItems - 1; iItem >= 0; iItem--) {
+		int	nID = pSubMenu->GetMenuItemID(iItem);
+		if (nID >= ID_FILE_NEW || nID == ID_EDIT_INSERT || nID == ID_EDIT_DELETE || nID == ID_EDIT_RENAME) {
+			pSubMenu->DeleteMenu(iItem, MF_BYPOSITION);
+			nItems--;
+		}
+	}
+	pDlgCust->AddMenuCommands(&menu, FALSE, pszTitle);
+}
+
+in CMainFrame::OnViewCustomize:
+
+	for (int iBarMenu = 0; iBarMenu < _countof(m_arrDockBarMenu); iBarMenu++) {
+		AddDockBarMenuCommands(pDlgCust, m_arrDockBarMenu[iBarMenu].nMenuID, m_arrDockBarMenu[iBarMenu].pszMenuName);
+	}
+
+This could also be done in CPolymeterApp::PreLoadState. The advantage is that the
+context menus would show up in the Context page of the Customize dialog as expected,
+but the disadvantage is more work at startup time instead of doing it on Customize.
+Also menu items added via GetContextMenuManager()->AddMenu can't be assigned keyboard 
+accelerators, which kind of defeats the purpose of this whole exercise.
+
+The above code works fine. The remaining problem is adding the docking windows to 
+the command routing. That presumably must be done by overriding CMainFrame::OnCmdMsg.
+Iterating the frame's child windows wouldn't work reliably due to docking complexities.
+Iterating the docking manager's pane list would work, but it's inefficient. Note that
+CN_UPDATE_COMMAND_UI must also be handled so that commands are checked or disabled.
+
+BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
+{
+	if (CMDIFrameWndEx::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
+		return true;
+	if ((nCode == CN_COMMAND || nCode == CN_UPDATE_COMMAND_UI) && nID < ID_FILE_NEW) {	// if custom command
+		for (int iPane = 0; iPane < _countof(m_arrDockBarMenu); iPane++) {	// for each pane
+			CMyDockablePane	*pPane = &(this->*m_arrDockBarMenu[iPane].pPane);	// pointer to member syntax
+			// if pane is visible, give it a try
+			if (pPane->FastIsVisible() && pPane->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
+				return true;
+		}
+	}
+	return false;
+}
+
+7/20/22 OnCmdMsg benchmarks
+
+Average pass uses one or two microseconds. Occasionally spikes as high as 200 micros.
+Usage as percentage of available CPU time is normally a tiny fraction of a percent,
+and only spikes during continuous mouse movement, in which case it reaches 5% - 10%.
