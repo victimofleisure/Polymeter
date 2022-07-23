@@ -15,6 +15,7 @@
 		05		12nov21	add modulation type dialog for multiple filters
 		06		13nov21	add optional legend to graph
 		07		05jul22	add parent window to modulation type dialog ctor
+		08		23jul22	add option to exclude muted tracks
 		
 */
 
@@ -38,6 +39,7 @@ public:
 // Attributes
 public:
 	void	SetZoomLevel(int iZoom);
+	bool	IsThreadBusy() const;
 
 // Operations
 public:
@@ -180,8 +182,10 @@ protected:
 	bool	m_bEdgeLabels;		// true if showing edge labels
 	bool	m_bShowLegend;		// true if showing legend
 	bool	m_bGraphvizFound;	// true if graphviz binaries were located
+	bool	m_bShowMuted;		// true if including muted tracks in graph
 	CTempFilePath	m_tfpData;	// temp file path of graph input data (in DOT syntax)
 	CTempFilePath	m_tfpGraph;	// temp file path of graph output image
+	CBoolArrayEx	m_arrMute;	// array of cached track mute states
 	static	CString	m_sGraphvizPath;	// path to folder containing Graphviz binaries
 	static	bool	m_bUseCairo;	// true if rendering via Cairo; Graphviz bug #1855
 
@@ -197,6 +201,9 @@ protected:
 	static	UINT	GraphThread(LPVOID pParam);
 	static	int		SplitLabel(const CString& str);
 	bool	FindGraphviz();
+	void	RebuildMuteCache();
+	void	RebuildMuteCacheIfNeeded();
+	void	OnTrackMuteChange();
 	static	bool	FindGraphvizExes(CString sFolderPath);
 	static	bool	FindGraphvizExesFlexible(CPathStr& sFolderPath);
 	static	bool	FindGraphvizFast(CString& sGraphvizPath);
@@ -231,4 +238,11 @@ protected:
 	afx_msg void OnUpdateGraphEdgeLabels(CCmdUI *pCmdUI);
 	afx_msg void OnGraphLegend();
 	afx_msg void OnUpdateGraphLegend(CCmdUI *pCmdUI);
+	afx_msg void OnGraphShowMuted();
+	afx_msg void OnUpdateGraphShowMuted(CCmdUI *pCmdUI);
 };
+
+inline bool CGraphBar::IsThreadBusy() const
+{
+	return m_iGraphState != GTS_IDLE;
+}

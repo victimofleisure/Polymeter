@@ -70,6 +70,7 @@
 {ID_GRAPH_LEGEND,						IDH_Docking_Windows_Graph_bar_Graph_context_menu},
 {ID_GRAPH_RELOAD,						IDH_Docking_Windows_Graph_bar_Graph_context_menu},
 {ID_GRAPH_SAVEAS,						IDH_Docking_Windows_Graph_bar_Graph_context_menu},
+{ID_GRAPH_SHOW_MUTED,					IDH_Docking_Windows_Graph_bar_Graph_context_menu},
 {ID_GRAPH_ZOOM_IN,						IDH_Docking_Windows_Graph_bar_Graph_context_menu},
 {ID_GRAPH_ZOOM_OUT, 					IDH_Docking_Windows_Graph_bar_Graph_context_menu},
 {ID_GRAPH_ZOOM_RESET,					IDH_Docking_Windows_Graph_bar_Graph_context_menu},

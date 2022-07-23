@@ -556,6 +556,7 @@ BEGIN
         MENUITEM "&Highlight",                  ID_GRAPH_HIGHLIGHT_SELECT
         MENUITEM "Lab&els",                     ID_GRAPH_EDGE_LABELS
         MENUITEM "Lege&nd",                     ID_GRAPH_LEGEND
+        MENUITEM "&Muted",                      ID_GRAPH_SHOW_MUTED
         MENUITEM SEPARATOR
         MENUITEM "Save &As...",                 ID_GRAPH_SAVEAS
         MENUITEM "&Reload",                     ID_GRAPH_RELOAD
@@ -1371,13 +1372,14 @@ BEGIN
     IDS_HINT_GRAPH_SCOPE_TARGETS "Show targets of selected tracks"
     IDS_HINT_MAIN_CONVERGENCE_SIZE 
                             "Require at least this many modulos to coincide"
+    IDS_HINT_PIANO_CHANNEL_MULTI "Choose multiple channels to show"
     IDS_HLINK_CANT_LAUNCH   "Can't launch browser."
     IDS_IMPORT              "Import"
-    IDS_IMPORT_ERR_FORMAT   "Format error."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_IMPORT_ERR_FORMAT   "Format error."
     IDS_IMPORT_ERR_LOCATION "Row %d, Column %d"
     IDS_IMPORT_ERR_PROPERTY "Undefined property name."
     IDS_IMPORT_ERR_RANGE    "Range error."
@@ -1393,11 +1395,11 @@ BEGIN
     IDS_MAPPING_COL_OUT_CHANNEL "Out Channel"
     IDS_MAPPING_COL_OUT_CONTROL "Out Control"
     IDS_MAPPING_COL_OUT_EVENT "Out Event"
-    IDS_MAPPING_COL_RANGE_END "Range End"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MAPPING_COL_RANGE_END "Range End"
     IDS_MAPPING_COL_RANGE_START "Range Start"
     IDS_MAPPING_COL_TRACK   "Track"
     IDS_MIDIEVT_COL_CHANNEL "Channel"
@@ -1414,11 +1416,11 @@ BEGIN
     IDS_MIDI_NO_OUTPUT_DEVICE "No MIDI output device is selected."
     IDS_MIDI_OUTPUT         "Output"
     IDS_MIDI_SYS_STAT_ACTIVE_SENSING "Active Sensing"
-    IDS_MIDI_SYS_STAT_CLOCK "Clock"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MIDI_SYS_STAT_CLOCK "Clock"
     IDS_MIDI_SYS_STAT_CONTINUE "Continue"
     IDS_MIDI_SYS_STAT_EOX   "EOX"
     IDS_MIDI_SYS_STAT_MTC_QTR_FRAME "MTC Qtr Frame"
@@ -1434,11 +1436,11 @@ BEGIN
     IDS_MOD_DIFFERENCES     "<Differences>"
     IDS_MOD_SOURCE          "Source"
     IDS_NONE                "<None>"
-    IDS_NOTE_OVERLAP_Allow  "Allow"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_NOTE_OVERLAP_Allow  "Allow"
     IDS_NOTE_OVERLAP_Prevent "Prevent"
     IDS_OFFSET_NOTES        "Semitones:"
     IDS_OFFSET_STEPS        "Steps:"
@@ -1460,12 +1462,12 @@ BEGIN
     IDS_OPT_DESC_Midi_nDefaultVelocity 
                             "Default note velocity or controller value for new steps"
     IDS_OPT_DESC_Midi_nLatency "Desired MIDI latency, in milliseconds"
-    IDS_OPT_DESC_Midi_nRecordInput 
-                            "Type of data captured by the Record command"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_Midi_nRecordInput 
+                            "Type of data captured by the Record command"
     IDS_OPT_DESC_View_bShowCurPos 
                             "Indicate current position within each track"
     IDS_OPT_DESC_View_bShowGMNames 
@@ -1487,11 +1489,11 @@ BEGIN
     IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
     IDS_OPT_NAME_General_bPropertyDescrips "Show Property Descriptions"
     IDS_OPT_NAME_Midi_bSendMidiClock "Send MIDI Clock"
-    IDS_OPT_NAME_Midi_bThru "Thru"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_Midi_bThru "Thru"
     IDS_OPT_NAME_Midi_iInputDevice "Input Device"
     IDS_OPT_NAME_Midi_iInputQuant "Input Quantization"
     IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
@@ -1507,11 +1509,11 @@ BEGIN
     IDS_OPT_NAME_View_fUpdateFreq "Update Frequency"
     IDS_OPT_NAME_View_fZoomDelta "Zoom Step"
     IDS_OPT_NAME_View_nLiveFontHeight "Live View Font Height"
-    IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_DESC_fTempo     "Tempo, in beats per minute"
     IDS_PDR_DESC_iNoteOverlap 
                             "How to handle overlapping instances of the same note on a channel"
     IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
@@ -1529,11 +1531,11 @@ BEGIN
     IDS_PDR_NAME_nKeySig    "Key Signature"
     IDS_PDR_NAME_nLoopFrom  "Loop From"
     IDS_PDR_NAME_nLoopTo    "Loop To"
-    IDS_PDR_NAME_nMeter     "Meter"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_NAME_nMeter     "Meter"
     IDS_PDR_NAME_nRecordOffset "Record Offset"
     IDS_PDR_NAME_nSongLength "Song Length"
     IDS_PDR_NAME_nStartPos  "Start Position"
@@ -1550,11 +1552,11 @@ BEGIN
     IDS_RECORD_INPUT_OPT_MidiOnly "MIDI Only"
     IDS_RESET_ALL_OPTIONS   "Reset all options to default values?"
     IDS_SC_MAXIMIZE         "&Maximize"
-    IDS_SC_RESTORE          "&Restore"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_SC_RESTORE          "&Restore"
     IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format."
     IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
     IDS_SEQERR_CALLBACK_TOO_LONG "Sequencer callback took too long."
@@ -1562,7 +1564,6 @@ BEGIN
                             "Modulation exceeded the maximum number of recursions."
     IDS_SEQ_MIDI_ERROR      "MIDI error %d."
     IDS_SM_FILTER_CHANNEL_ALL "Show all channels"
-    IDS_HINT_PIANO_CHANNEL_MULTI "Choose multiple channels to show"
     IDS_SM_FILTER_CHANNEL_SELECT "Show selected channel only"
     IDS_SM_FILTER_MESSAGE_ALL "Show all messages"
     IDS_SM_FILTER_MESSAGE_SELECT "Show selected message only"
@@ -1835,6 +1836,7 @@ BEGIN
     ID_WINDOW_NEW_VERT_TAB_GROUP 
                             "Create a new horizontal tab group \nNew Vertical Tab Group"
     ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"
+    ID_GRAPH_SHOW_MUTED     "Include muted tracks"
 END
 
 STRINGTABLE

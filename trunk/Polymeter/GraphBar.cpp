@@ -31,6 +31,7 @@
 		21		13nov21	add optional legend to graph
 		22		03jan22	add full screen mode
 		23		05jul22	add parent window to modulation type dialog ctor
+		24		23jul22	add option to exclude muted tracks
 
 */
 
@@ -110,6 +111,7 @@ const LPCTSTR CGraphBar::m_arrGraphFindExeName[] = {
 #define RK_SHOW_LEGEND _T("Legend")
 #define RK_HIGHLIGHT_SELECT _T("HighlightSelect")
 #define RK_GRAPHVIZ_PATH _T("GraphvizPath")
+#define RK_SHOW_MUTED _T("ShowMuted")
 
 CString	CGraphBar::m_sGraphvizPath;
 
@@ -137,6 +139,7 @@ CGraphBar::CGraphBar()
 	m_bEdgeLabels = false;
 	m_bShowLegend = false;
 	m_bGraphvizFound = false;
+	m_bShowMuted = true;
 	// read graph scope string from registry and try to map it to index
 	CString	sScope(theApp.GetProfileString(RK_GraphBar, RK_GRAPH_SCOPE));
 	int iScope = ARRAY_FIND(m_arrGraphScopeInternalName, sScope);
@@ -153,6 +156,7 @@ CGraphBar::CGraphBar()
 	RdReg(RK_GraphBar, RK_SHOW_LEGEND, m_bShowLegend);
 	RdReg(RK_GraphBar, RK_GRAPHVIZ_PATH, m_sGraphvizPath);
 	RdReg(RK_GraphBar, RK_USE_CAIRO, m_bUseCairo);	// fix for GraphViz bug #1855, see above
+	RdReg(RK_GraphBar, RK_SHOW_MUTED, m_bShowMuted);
 }
 
 CGraphBar::~CGraphBar()
@@ -164,6 +168,7 @@ CGraphBar::~CGraphBar()
 	WrReg(RK_GraphBar, RK_EDGE_LABELS, m_bEdgeLabels);
 	WrReg(RK_GraphBar, RK_SHOW_LEGEND, m_bShowLegend);
 	WrReg(RK_GraphBar, RK_GRAPHVIZ_PATH, m_sGraphvizPath);
+	WrReg(RK_GraphBar, RK_SHOW_MUTED, m_bShowMuted);
 }
 
 bool CGraphBar::CreateBrowser()
@@ -405,6 +410,9 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes) const
 	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
 		const CTrackBase::CPackedModulation&	mod = arrMod[iMod];
 		if (mod.m_iSource >= 0) {	// if valid modulation source track index
+			// if excluding muted tracks and modulation's source or target is muted
+			if (!m_bShowMuted && (pDoc->m_Seq.GetMute(mod.m_iSource) || pDoc->m_Seq.GetMute(mod.m_iTarget)))
+				continue;	// skip this modulation
 			MOD_TYPE_MASK	nModTypeBit = MAKE_MOD_TYPE_MASK(mod.m_iType);	// make bitmask for this type
 			if (nModTypeFilterMask & nModTypeBit) {	// if modulation's type passes filter
 				nModTypeUsedMask |= nModTypeBit;	// set corresponding bit in mask of types used in graph
@@ -506,6 +514,20 @@ void CGraphBar::StartDeferredUpdate()
 	}
 }
 
+__forceinline void CGraphBar::RebuildMuteCacheIfNeeded()
+{
+	if (!m_bShowMuted)	// if excluding muted tracks
+		RebuildMuteCache();
+}
+
+__forceinline void CGraphBar::OnTrackMuteChange()
+{
+	if (!m_bShowMuted) {	// if excluding muted tracks
+		StartDeferredUpdate();
+		RebuildMuteCache();
+	}
+}
+
 void CGraphBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
 //	printf("CGraphBar::OnUpdate %p %d %p\n", pSender, lHint, pHint);
@@ -515,32 +537,85 @@ void CGraphBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_TRACK_ARRAY:
 	case CPolymeterDoc::HINT_MODULATION:
 		StartDeferredUpdate();
+		RebuildMuteCacheIfNeeded();
 		break;
 	case CPolymeterDoc::HINT_TRACK_PROP:
 		{
 			const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
 			int	iProp = pPropHint->m_iProp;
-			if (iProp == CTrack::PROP_Name)	// if track name update
+			switch (iProp) {
+			case CTrack::PROP_Name:	// if track name update
 				StartDeferredUpdate();
+				break;
+			case CTrack::PROP_Mute:
+				OnTrackMuteChange();
+				break;
+			}
 		}
 		break;
 	case CPolymeterDoc::HINT_MULTI_TRACK_PROP:
 		{
 			const CPolymeterDoc::CMultiItemPropHint	*pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
-			if (pPropHint->m_iProp == CTrack::PROP_Name)	// if multi-track name change
+			switch (pPropHint->m_iProp) {
+			case CTrack::PROP_Name:	// if multi-track name change
 				StartDeferredUpdate();
+				break;
+			case CTrack::PROP_Mute:
+				OnTrackMuteChange();
+				break;
+			}
 		}
 		break;
 	case CPolymeterDoc::HINT_TRACK_SELECTION:
 		if (m_iGraphScope != GS_ALL)	// if selection matters
 			StartDeferredUpdate();
 		break;
+	case CPolymeterDoc::HINT_SOLO:
+		OnTrackMuteChange();
+		break;
+	case CPolymeterDoc::HINT_SONG_POS:
+		if (!m_bShowMuted) {	// if excluding muted tracks
+			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+			if (pDoc != NULL) {
+				int	nTracks = pDoc->GetTrackCount();
+				if (nTracks != m_arrMute.GetSize()) {	// if track count differs from cache size
+					RebuildMuteCache();	// cache is stale, so rebuild it
+				} else {	// track count matches; assume cache is valid
+					bool	bMuteChanged = false;
+					for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+						bool	bIsMuted = pDoc->m_Seq.GetMute(iTrack);
+						if (bIsMuted != m_arrMute[iTrack]) {	// if track mute differs from cache
+							m_arrMute[iTrack] = bIsMuted;	// update cache
+							bMuteChanged = true;	// set change flag
+						}
+					}
+					if (bMuteChanged)	// if one or more track mutes changed state
+						StartDeferredUpdate();
+				}
+			}
+		}
+		break;
+	}
+}
+
+void CGraphBar::RebuildMuteCache()
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	if (pDoc != NULL) {
+		int	nTracks = pDoc->GetTrackCount();
+		m_arrMute.FastSetSize(nTracks);
+		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+			m_arrMute[iTrack] = pDoc->m_Seq.GetMute(iTrack);	// cache mute state 
+		}
+	} else {	// no document
+		m_arrMute.RemoveAll();
 	}
 }
 
 void CGraphBar::OnShowChanged(bool bShow)
 {
 	if (bShow) {	// if showing
+		RebuildMuteCacheIfNeeded();
 		UpdateGraph();	// assume graph is stale
 	}
 }
@@ -994,6 +1069,8 @@ BEGIN_MESSAGE_MAP(CGraphBar, CMyDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_GRAPH_EDGE_LABELS, OnUpdateGraphEdgeLabels)
 	ON_COMMAND(ID_GRAPH_LEGEND, OnGraphLegend)
 	ON_UPDATE_COMMAND_UI(ID_GRAPH_LEGEND, OnUpdateGraphLegend)
+	ON_COMMAND(ID_GRAPH_SHOW_MUTED, OnGraphShowMuted)
+	ON_UPDATE_COMMAND_UI(ID_GRAPH_SHOW_MUTED, OnUpdateGraphShowMuted)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1175,7 +1252,7 @@ void CGraphBar::OnGraphReload()
 
 void CGraphBar::OnGraphHighlightSelect()
 {
-	m_bHighlightSelect ^= 1;
+	m_bHighlightSelect ^= 1;	// toggle state
 	UpdateGraph();
 }
 
@@ -1186,7 +1263,7 @@ void CGraphBar::OnUpdateGraphHighlightSelect(CCmdUI *pCmdUI)
 
 void CGraphBar::OnGraphEdgeLabels()
 {
-	m_bEdgeLabels ^= 1;
+	m_bEdgeLabels ^= 1;	// toggle state
 	UpdateGraph();
 }
 
@@ -1197,11 +1274,23 @@ void CGraphBar::OnUpdateGraphEdgeLabels(CCmdUI *pCmdUI)
 
 void CGraphBar::OnGraphLegend()
 {
-	m_bShowLegend ^= 1;
+	m_bShowLegend ^= 1;	// toggle state
 	UpdateGraph();
 }
 
 void CGraphBar::OnUpdateGraphLegend(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bShowLegend);
+}
+
+void CGraphBar::OnGraphShowMuted()
+{
+	m_bShowMuted ^= 1;	// toggle state
+	RebuildMuteCacheIfNeeded();
+	UpdateGraph();
+}
+
+void CGraphBar::OnUpdateGraphShowMuted(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bShowMuted);
 }
