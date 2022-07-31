@@ -4011,3 +4011,28 @@ BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO*
 Average pass uses one or two microseconds. Occasionally spikes as high as 200 micros.
 Usage as percentage of available CPU time is normally a tiny fraction of a percent,
 and only spikes during continuous mouse movement, in which case it reaches 5% - 10%.
+
+7/26/22 IWebBrowser2 event sink
+
+It's easier than it looks. There's no need to implement DWebBrowserEvents2. But it doesn't 
+solve the problem, because receiving NavigateComplete2 apparently doesn't guarantee that 
+the browser's window has been painted. This implementation is copied from viewhtml.cpp.
+
+In .h:
+	DECLARE_EVENTSINK_MAP()
+	virtual void NavigateComplete2(LPDISPATCH /* pDisp */, VARIANT* URL);
+
+In .cpp:
+#include <exdispid.h> // needed for browser event IDs
+
+BEGIN_EVENTSINK_MAP(CGraphBar, CMyDockablePane)
+	ON_EVENT(CGraphBar, AFX_IDW_PANE_FIRST, DISPID_NAVIGATECOMPLETE2, NavigateComplete2, VTS_DISPATCH VTS_PVARIANT)
+END_EVENTSINK_MAP()
+
+void CGraphBar::NavigateComplete2(LPDISPATCH pDisp, VARIANT* URL)
+{
+	UNREFERENCED_PARAMETER(pDisp);
+	ASSERT(V_VT(URL) == VT_BSTR);
+	CString str(V_BSTR(URL));
+	_tprintf(_T("%s"), str); // print URL to console
+}
