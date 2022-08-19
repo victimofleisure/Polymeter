@@ -1139,7 +1139,7 @@ This @[docking windows\docking window] lets you edit your @[presets]. When you c
 
 @topic Parts bar\Parts
 
-This @[docking windows\docking window] lets you edit your @[parts]. When you create a preset, it has the same name as its first member @[tracks\track], but you're free to rename it. For item selection methods, see @[list controls].
+This @[docking windows\docking window] lets you edit your @[parts]. When you create a part, it has the same name as its first member @[tracks\track], but you're free to rename it. For item selection methods, see @[list controls].
 
 @item Parts context menu\Context menu
 
