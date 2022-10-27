@@ -4036,3 +4036,20 @@ void CGraphBar::NavigateComplete2(LPDISPATCH pDisp, VARIANT* URL)
 	CString str(V_BSTR(URL));
 	_tprintf(_T("%s"), str); // print URL to console
 }
+
+9/5/22 modulation bar's label tooltip shows stale data if track selection changes
+
+The problem is general. When updating a virtual list control, calling SetItemCountEx
+isn't enough; you must also call DeleteAllItems first, otherwise the label tooltip is 
+potentially stale. DeleteAllItems adds a few extra milliseconds, needlessly except
+for the tooltip issue. This is apparently a known bug, for example see:
+http://computer-programming-forum.com/82-mfc/7e5e14a6aaf75079.htm
+
+"My virtual list control, with style LVS_EX_INFOTIP in large icon mode has a
+problem. It seems that the control caches the tooltip text for an item and
+doesn't requery that text until the cursor floats over a new item.
+That is, if the cursor hovers over item 0 and the control gets the tooltip
+text from me, then I delete the item from the list and add several new items
+and hover over item 0 again, I get the old tooltip text. If I then hover
+over item 1 and back to 0 I get the correct text because the control resends
+the LVN_GETINFOTIP for item 0."
