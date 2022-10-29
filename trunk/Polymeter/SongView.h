@@ -18,6 +18,7 @@
 		08		07jun21	rename rounding functions
 		09		19may22	add ruler selection
 		10		16jun22	remove delayed create handler
+		11		24oct22	add method to set track height
 
 */
 
@@ -84,6 +85,7 @@ public:
 	CPoint	GetMaxScrollPos() const;
 	int		GetBeatWidth() const;
 	int		GetTrackHeight() const;
+	void	SetTrackHeight(int nHeight);
 	int		GetCenterTrack() const;
 
 // Operations
@@ -216,6 +218,11 @@ inline double CSongView::GetZoomDelta() const
 inline int CSongView::GetTrackHeight() const
 {
 	return m_nTrackHeight;
+}
+
+inline void CSongView::SetTrackHeight(int nHeight)
+{
+	m_nTrackHeight = nHeight;
 }
 
 inline bool CSongView::HaveSelection() const

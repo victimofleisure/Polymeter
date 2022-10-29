@@ -12,6 +12,7 @@
 		02		03aug20	fix next/previous pane handling
 		03		20jun21	move focus edit handling here
 		04		13aug21	in next/previous pane handler, set focus to track view
+		05		24oct22	set song view ruler and track heights to match track view
 
 */
 
@@ -247,8 +248,10 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 	m_pStepParent->m_pParentFrame = this;
 	m_pStepParent->m_pStepView->m_pParentFrame = this;
 	m_pStepParent->m_pMuteView->m_pParentFrame = this;
-	m_pStepParent->SetRulerHeight(m_pTrackView->GetHeaderHeight());
-	m_pStepParent->SetTrackHeight(m_pTrackView->GetItemHeight());
+	int	nTrackHeaderHeight = m_pTrackView->GetHeaderHeight();
+	int	nTrackItemHeight = m_pTrackView->GetItemHeight();
+	m_pStepParent->SetRulerHeight(nTrackHeaderHeight);
+	m_pStepParent->SetTrackHeight(nTrackItemHeight);
 	if (!SafeCreateObject(RUNTIME_CLASS(CSongParent), m_pSongParent))
 		return false;
 	m_pSongParent->m_pParentFrame = this;
@@ -257,6 +260,9 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 		return false;
 	ASSERT(m_pStepParent->m_pStepView != NULL);
 	m_pSongParent->m_pSongView->m_pStepView = m_pStepParent->m_pStepView;
+	int	nSplitterBorder = m_wndSplitter.GetHorzBorder();
+	m_pSongParent->SetRulerHeight(nTrackHeaderHeight + nSplitterBorder);
+	m_pSongParent->SetTrackHeight(nTrackItemHeight);
 	if (!SafeCreateObject(RUNTIME_CLASS(CLiveView), m_pLiveView))
 		return false;
 	DWORD	dwLiveStyle = WS_CHILD;

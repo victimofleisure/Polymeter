@@ -84,6 +84,7 @@
 		74		19feb22	use INI file class directly instead of via profile
 		75		19may22	add loop ruler selection attribute
 		76		05jul22	use wrapper class to save and restore focus
+		77		25oct22	add command to select all unmuted tracks
 
 */
 
@@ -4101,6 +4102,7 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_COMMAND(ID_TOOLS_IMPORT_TRACKS, OnToolsImportTracks)
 	ON_COMMAND(ID_TOOLS_EXPORT_TRACKS, OnToolsExportTracks)
 	ON_COMMAND(ID_TOOLS_EXPORT_SONG, OnToolsExportSong)
+	ON_COMMAND(ID_TOOLS_SELECT_UNMUTED, OnToolsSelectUnmuted)
 	ON_COMMAND(ID_TRACK_TRANSPOSE, OnTrackTranspose)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_TRANSPOSE, OnUpdateTrackTranspose)
 	ON_COMMAND(ID_TRACK_VELOCITY, OnTrackVelocity)
@@ -4918,4 +4920,11 @@ void CPolymeterDoc::OnToolsExportSong()
 			ExportSongAsCSV(fd.GetPathName(), nDuration, bSongMode);
 		}
 	}
+}
+
+void CPolymeterDoc::OnToolsSelectUnmuted()
+{
+	CIntArrayEx	arrSelection;
+	m_Seq.GetMutedTracks(arrSelection, false);
+	Select(arrSelection);
 }

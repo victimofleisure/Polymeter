@@ -45,6 +45,7 @@
 		35		15feb22	add check modulations command
 		36		19feb22	use INI file class directly instead of via profile
 		37		19may22	add loop ruler selection attribute
+		38		25oct22	add command to select all unmuted tracks
 
 */
 
@@ -620,6 +621,7 @@ protected:
 	afx_msg void OnToolsImportTracks();
 	afx_msg void OnToolsExportTracks();
 	afx_msg void OnToolsExportSong();
+	afx_msg void OnToolsSelectUnmuted();
 	afx_msg void OnTrackShiftLeft();
 	afx_msg void OnTrackShiftRight();
 	afx_msg void OnTrackShiftSteps();

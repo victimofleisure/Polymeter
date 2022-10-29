@@ -29,6 +29,7 @@
 		19		30dec21	remove unused function prototype
 		20		21jan22	add per-channel note overlap methods
 		21		13feb22	let RecurseModulations modify event time
+		22		20oct22	refactor control event helper for offset modulation
 
 */
 
@@ -238,7 +239,7 @@ protected:
 	void	UpdateCallbackLength();
 	bool	ExportImpl(LPCTSTR pszPath, int nDuration);
 	void	ResetCachedParameters();
-	void	OutputControlEvent(const CTrack& track, int nTime, int nVal);
+	bool	MakeControlEvent(const CTrack& track, int nTime, int nVal, CMidiEvent& evt);
 	static	int		ApplyNoteRange(int nNote, int nRangeStart, int iRangeType);
 	void	QueueOutputEvents(int nEvents);
 	void	FixNoteOverlaps();

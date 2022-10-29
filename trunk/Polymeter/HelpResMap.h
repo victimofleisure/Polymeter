@@ -127,6 +127,7 @@
 {ID_TOOLS_MIDI_LEARN,					IDH_Menus_Tools_MIDI_Learn},
 {ID_TOOLS_OPTIONS,						IDH_Menus_Tools_Options},
 {ID_TOOLS_PRIME_FACTORS,				IDH_Menus_Tools_Prime_Factors},
+{ID_TOOLS_SELECT_UNMUTED,				IDH_Menus_Tools_Select_Unmuted},
 {ID_TOOLS_STATISTICS,					IDH_Menus_Tools_Statistics},
 {ID_TOOLS_TIME_TO_REPEAT,				IDH_Menus_Tools_Time_To_Repeat},
 {ID_TOOLS_VELOCITY_RANGE,				IDH_Menus_Tools_Velocity_Range},

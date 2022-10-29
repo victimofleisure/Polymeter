@@ -52,6 +52,7 @@
 		42		05feb22 in SumModulations, step value was missing velocity mask
 		43		13feb22	support offset modulation of modulator tracks
 		44		19may22	set position offset in SetPosition stopped case
+		45		20oct22	support offset modulation of controller tracks
 
 */
 
@@ -469,40 +470,39 @@ __forceinline int CSequencer::GetNoteDuration(const CStepArray& arrStep, int nSt
 	return nSteps;	// degenerate case
 }
 
-__forceinline void CSequencer::OutputControlEvent(const CTrack& trk, int nTime, int nVal)
+__forceinline bool CSequencer::MakeControlEvent(const CTrack& trk, int nTime, int nVal, CMidiEvent& evt)
 {
-	CMidiEvent	evt;
 	int	nChannel = trk.m_nChannel;
 	int	nNote = trk.m_nNote;
 	char	cVal = static_cast<char>(nVal);
 	switch (trk.m_iType) {
 	case TT_KEY_AFT:
 		if (cVal == m_MidiCache.arrKeyAft[nChannel][nNote])	// if value unchanged
-			return;	// no operation
+			return false;	// no operation
 		m_MidiCache.arrKeyAft[nChannel][nNote] = cVal;	// update cache
 		evt.m_dwEvent = MakeMidiMsg(KEY_AFT, nChannel, nNote, nVal);
 		break;
 	case TT_CONTROL:
 		if (cVal == m_MidiCache.arrControl[nChannel][nNote])	// if value unchanged
-			return;	// no operation
+			return false;	// no operation
 		m_MidiCache.arrControl[nChannel][nNote] = cVal;	// update cache
 		evt.m_dwEvent = MakeMidiMsg(CONTROL, nChannel, nNote, nVal);
 		break;
 	case TT_PATCH:
 		if (cVal == m_MidiCache.arrPatch[nChannel])	// if value unchanged
-			return;	// no operation
+			return false;	// no operation
 		m_MidiCache.arrPatch[nChannel] = cVal;	// update cache
 		evt.m_dwEvent = MakeMidiMsg(PATCH, nChannel, nVal, 0);
 		break;
 	case TT_CHAN_AFT:
 		if (cVal == m_MidiCache.arrChanAft[nChannel])	// if value unchanged
-			return;	// no operation
+			return false;	// no operation
 		m_MidiCache.arrChanAft[nChannel] = cVal;	// update cache
 		evt.m_dwEvent = MakeMidiMsg(CHAN_AFT, nChannel, nVal, 0);
 		break;
 	case TT_WHEEL:
 		if (cVal == m_MidiCache.arrWheel[nChannel])	// if value unchanged
-			return;	// no operation
+			return false;	// no operation
 		m_MidiCache.arrWheel[nChannel] = cVal;	// update cache
 		// if above midpoint (zero in signed 7-bit), set LSB so bend upper limit is exact
 		evt.m_dwEvent = MakeMidiMsg(WHEEL, nChannel, nVal > 0x40 ? 0x7f : 0, nVal);	// LSB, MSB
@@ -511,7 +511,7 @@ __forceinline void CSequencer::OutputControlEvent(const CTrack& trk, int nTime, 
 		NODEFAULTCASE;
 	}
 	evt.m_nTime = nTime;
-	m_arrEvent.FastInsertSorted(evt);	// add event to sorted array for output
+	return true;
 }
 
 bool CSequencer::RecurseModulations(int iTrack, int& nAbsEvtTime, int& nPosMod)
@@ -791,7 +791,19 @@ lblNoteScheduled:;
 				} else {	// track type is control event
 					int	nVal = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
 					nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
-					OutputControlEvent(trk, nEvtTime, nVal);
+					CMidiEvent	evt;
+					if (MakeControlEvent(trk, nEvtTime, nVal, evt)) {	// if event state changed
+						if (arrMod[MT_Offset] > 0) {	// if offset modulation is active, delay event
+							evt.m_nTime += arrMod[MT_Offset];	// add offset modulation to event time
+							if (evt.m_nTime >= m_nCBLen) {	// if delayed event starts after this callback
+								evt.m_nTime += nCBStart;	// make event time absolute instead of callback-relative
+								m_arrNoteOff.FastInsertSorted(evt);	// schedule delayed event via note off array
+								goto lblControlScheduled;
+							}
+						}
+						m_arrEvent.FastInsertSorted(evt);	// add event to sorted array for output
+					}
+lblControlScheduled:;
 				}
 			}
 		}

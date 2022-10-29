@@ -11,6 +11,7 @@
 		01		09jul20	add pointer to parent frame
 		02		19may22	add ruler selection attribute
 		03		27may22	add handler for ruler selection change
+		04		24oct22	add method to set track height
 
 */
 
@@ -44,6 +45,7 @@ protected: // create from serialization only
 public:
 	CPolymeterDoc* GetDocument() const;
 	void	SetRulerHeight(int nHeight);
+	void	SetTrackHeight(int nHeight);
 
 // Public data
 	CSongView	*m_pSongView;		// pointer to song view

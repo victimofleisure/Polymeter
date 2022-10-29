@@ -374,6 +374,7 @@ BEGIN
         END
         MENUITEM SEPARATOR
         MENUITEM "&Convergences...",            ID_TOOLS_CONVERGENCES
+        MENUITEM "Select &Unmuted",             ID_TOOLS_SELECT_UNMUTED
         MENUITEM SEPARATOR
         MENUITEM "&MIDI Learn",                 ID_TOOLS_MIDI_LEARN
     END
@@ -667,6 +668,7 @@ BEGIN
     "H",            ID_EDIT_REPLACE,        VIRTKEY, CONTROL, NOINVERT
     "A",            ID_EDIT_SELECT_ALL,     VIRTKEY, CONTROL, NOINVERT
     "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL, NOINVERT
+    VK_BACK,        ID_EDIT_UNDO,           VIRTKEY, ALT, NOINVERT
     "E",            ID_FILE_EXPORT,         VIRTKEY, CONTROL, NOINVERT
     "I",            ID_FILE_IMPORT,         VIRTKEY, CONTROL, NOINVERT
     "N",            ID_FILE_NEW,            VIRTKEY, CONTROL, NOINVERT
@@ -721,7 +723,7 @@ BEGIN
     VK_OEM_MINUS,   ID_VIEW_ZOOM_OUT,       VIRTKEY, CONTROL, NOINVERT
     "0",            ID_VIEW_ZOOM_RESET,     VIRTKEY, CONTROL, NOINVERT
     VK_F11,         ID_WINDOW_FULL_SCREEN,  VIRTKEY, NOINVERT
-    VK_BACK,        ID_EDIT_UNDO,           VIRTKEY, ALT, NOINVERT
+    "U",            ID_TOOLS_SELECT_UNMUTED, VIRTKEY, CONTROL, NOINVERT
 END
 
 
@@ -1665,6 +1667,7 @@ END
 STRINGTABLE
 BEGIN
     ID_GRAPH_SAVEAS         "Save current graph to a file"
+    ID_GRAPH_SHOW_MUTED     "Include muted tracks"
     ID_GRAPH_ZOOM_IN        "Zoom in a level"
     ID_GRAPH_ZOOM_OUT       "Zoom out a level"
     ID_GRAPH_ZOOM_RESET     "Reset zoom to default"
@@ -1681,11 +1684,11 @@ BEGIN
                             "Remove all filters so all events are displayed"
     ID_MIDI_EVENT_SHOW_CONTROLLER_NAMES "Show continuous controller names"
     ID_MIDI_EVENT_SHOW_NOTE_NAMES "Show note names in note events"
-    ID_MIDI_EVENT_SHOW_SYSTEM_MESSAGES "Show system messages if checked"
 END
 
 STRINGTABLE
 BEGIN
+    ID_MIDI_EVENT_SHOW_SYSTEM_MESSAGES "Show system messages if checked"
     ID_MODULATION_INSERT_GROUP 
                             "Insert a group of modulators\nInsert Modulation Group"
     ID_MODULATION_SHOW_DIFFERENCES 
@@ -1703,11 +1706,11 @@ BEGIN
     ID_PHASE_STYLE_03_CROSSHAIRS "Show crosshairs"
     ID_PHASE_STYLE_04_PERIODS "Show period labels"
     ID_PHASE_STYLE_05_CONVERGENCES "Show convergences"
-    ID_PIANO_COLOR_VELOCITY "Color keys to show note velocities"
 END
 
 STRINGTABLE
 BEGIN
+    ID_PIANO_COLOR_VELOCITY "Color keys to show note velocities"
     ID_PIANO_INSERT_TRACK   "Insert track for selected note"
     ID_PIANO_ROTATE_LABELS  "Rotate key labels sideways"
     ID_PIANO_SHOW_KEY_LABELS "Show note names on piano keys"
@@ -1727,11 +1730,11 @@ BEGIN
     ID_TOOLS_CHECK_MODULATIONS 
                             "Check modulations for errors\nCheck Modulations"
     ID_TOOLS_CONVERGENCES   "Show convergences calculator\nConvergences"
-    ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TOOLS_DEVICES        "List MIDI devices\nDevices"
     ID_TOOLS_EXPORT_MODULATIONS 
                             "Export modulations to a CSV file\nExport Modulations"
     ID_TOOLS_EXPORT_SONG    "Export song MIDI data to a CSV file\nExport Song"
@@ -1749,11 +1752,11 @@ BEGIN
     ID_TOOLS_VELOCITY_RANGE "Report the velocity range of the selected tracks or steps\nVelocity Range "
     ID_TRACK_COLOR          "Assign color to selected tracks\nTrack Color"
     ID_TRACK_FILL           "Fill selected tracks or steps with a range of values\nFill"
-    ID_TRACK_GROUP          "Group the selected tracks into a part\nCreate Group"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_GROUP          "Group the selected tracks into a part\nCreate Group"
     ID_TRACK_INVERT         "Invert the selected tracks or steps\nInvert"
     ID_TRACK_LENGTH         "Set the length of one or more tracks\nLength"
     ID_TRACK_MODULATION     "Create a modulation that targets the selected tracks\nCreate Modulation"
@@ -1769,11 +1772,11 @@ BEGIN
     ID_TRACK_ROTATE_RIGHT   "Rotate the selected tracks or steps right\nRotate Right"
     ID_TRACK_ROTATE_STEPS   "Rotate the selection left or right a given number of steps\nRotate Steps"
     ID_TRACK_SHIFT_LEFT     "Shift the selected tracks or steps left\nShift Left"
-    ID_TRACK_SHIFT_RIGHT    "Shift the selected tracks or steps right\nShift Right"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_SHIFT_RIGHT    "Shift the selected tracks or steps right\nShift Right"
     ID_TRACK_SHIFT_STEPS    "Shift the selection left or right a given number of steps\nShift Steps"
     ID_TRACK_SOLO           "Solo the selected tracks\nSolo"
     ID_TRACK_SORT           "Sort the selected tracks\nSort"
@@ -1793,21 +1796,21 @@ BEGIN
     ID_TRANSPORT_LOOP       "Loop playback\nLoop"
     ID_TRANSPORT_PAUSE      "Pause or continue playback\nPause"
     ID_TRANSPORT_PLAY       "Start or stop playback\nPlay"
-    ID_TRANSPORT_RECORD     "Start or stop recording\nRecord"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRANSPORT_RECORD     "Start or stop recording\nRecord"
     ID_TRANSPORT_RECORD_TRACKS 
                             "Start or stop recording MIDI input to tracks\nRecord Tracks"
     ID_TRANSPORT_REWIND     "Rewind to start of song\nRewind"
     ID_VIEW_BAR_Channels    "Show or hide the channels bar\nShow Channels"
     ID_VIEW_BAR_Graph       "Show or hide the graph bar\nShow Graph"
-    ID_VIEW_BAR_Mapping     "Show or hide the mapping bar\nShow Mapping"
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_BAR_Mapping     "Show or hide the mapping bar\nShow Mapping"
     ID_VIEW_BAR_MidiInput   "Show or hide the MIDI input bar\nShow MIDI Input"
     ID_VIEW_BAR_MidiOutput  "Show or hide the MIDI output bar\nShow MIDI Output"
     ID_VIEW_BAR_Modulations "Show or hide the modulations bar\nShow Modulations"
@@ -1823,11 +1826,11 @@ BEGIN
     ID_VIEW_TYPE_TRACK      "Show the track view\nTrack View"
     ID_VIEW_VELOCITIES      "Show or hide the track view's velocities pane\nShow Velocities"
     ID_VIEW_ZOOM_IN         "Zoom in\nZoom In"
-    ID_VIEW_ZOOM_OUT        "Zoom out\nZoom Out"
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_ZOOM_OUT        "Zoom out\nZoom Out"
     ID_VIEW_ZOOM_RESET      "Reset zoom\nZoom Reset"
     ID_WINDOW_FULL_SCREEN   "Enter or exit full screen mode\nFull Screen"
     ID_WINDOW_MANAGER       "Manage child windows\nWindows"
@@ -1836,7 +1839,7 @@ BEGIN
     ID_WINDOW_NEW_VERT_TAB_GROUP 
                             "Create a new horizontal tab group \nNew Vertical Tab Group"
     ID_WINDOW_RESET_LAYOUT  "Reset window layout to defaults\nReset Layout"
-    ID_GRAPH_SHOW_MUTED     "Include muted tracks"
+    ID_TOOLS_SELECT_UNMUTED "Select all unmuted tracks\nSelect Unmuted"
 END
 
 STRINGTABLE

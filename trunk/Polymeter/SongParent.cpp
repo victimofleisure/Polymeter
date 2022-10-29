@@ -14,6 +14,7 @@
 		04		19may22	use faster version of set unit
 		05		27may22	add handler for ruler selection change
 		06		16jun22	remove needless message map entry for create
+		07		24oct22	add method to set track height
 
 */
 
@@ -92,6 +93,12 @@ void CSongParent::LoadPersistentState()
 void CSongParent::SavePersistentState()
 {
 	theApp.WriteProfileInt(RK_SONG_VIEW, RK_NAME_WIDTH, m_nGlobNameWidth);
+}
+
+void CSongParent::SetTrackHeight(int nHeight)
+{
+	m_pSongView->SetTrackHeight(nHeight);
+	m_pSongTrackView->SetTrackHeight(nHeight);
 }
 
 void CSongParent::GetSplitRect(CRect& rSplit) const

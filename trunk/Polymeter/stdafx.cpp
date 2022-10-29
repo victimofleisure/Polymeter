@@ -11,6 +11,7 @@
 		01		01apr20	add generic context menu method
 		02		06apr20	in FormatNumberCommas, emulate GetNumberFormatEx
 		03		08jun21	add cast to fix narrowing conversion warning
+		04		29oct22	FormatMessage call must specify ignore inserts
 
 */
 
@@ -42,7 +43,7 @@ CString FormatSystemError(DWORD ErrorCode)
 {
 	LPTSTR	lpszTemp;
 	DWORD	bRet = FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL, ErrorCode, 0, (LPTSTR)&lpszTemp, 0, NULL);	// default language
 	CString	sError;	
 	if (bRet) {	// if format succeeded

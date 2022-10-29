@@ -10,6 +10,7 @@
         00      23mar18	initial version
 		01		09jul20	move view type handling from document to child frame
 		02		13aug21	add current view accessor
+		03		24oct22	add accessor for splitter border width
 
 */
 
@@ -86,6 +87,7 @@ protected:
 	class CMySplitterWnd : public CSplitterWndEx {
 	public:
 		virtual void StopTracking(BOOL bAccept);
+		int GetHorzBorder() const { return m_cxBorder; }
 	};
 
 // Constants

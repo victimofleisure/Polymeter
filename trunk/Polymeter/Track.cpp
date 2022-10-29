@@ -41,6 +41,7 @@
 		31		19nov21	in track array, add find type
 		32		15feb22	add validate modulations method
 		33		19feb22	use INI file class directly instead of via profile
+		34		20oct22	support offset modulation of controller tracks
 
 */
 
@@ -1117,7 +1118,7 @@ bool CTrackArray::CheckModulations(CModulationErrorArray& arrError) const
 					nModTypeMask = MTB_Mute | MTB_Position | MTB_Tempo;	// only these modulation types
 					break;
 				default:	// controller track
-					nModTypeMask = MTB_Mute | MTB_Position | MTB_Velocity; 	// only these modulation types
+					nModTypeMask = MTB_Mute | MTB_Position | MTB_Velocity | MTB_Offset; 	// only these modulation types
 				}
 				int	nModTypeBit = 1 << mod.m_iType;
 				if (!(nModTypeBit & nModTypeMask))	// if modulation type's bit is zero in mask
