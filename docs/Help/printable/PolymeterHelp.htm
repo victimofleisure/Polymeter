@@ -204,6 +204,7 @@
 <dd><a href="#Import_Table">Import Table</a>
 <dd><a href="#Export_Table">Export Table</a>
 <dd><a href="#Convergences_Calculator">Convergences</a>
+<dd><a href="#Select_Unmuted">Select Unmuted</a>
 <dd><a href="#MIDI_Learn">MIDI Learn</a>
 </dl>
 <dd><dl>
@@ -433,7 +434,7 @@
 <tr><td><a href="#Chord_modulation">Chord</a></td><td>Note tracks only</td><td>Adds scale tone to current chord</td><td>Signed zero-based scale tone index</td></tr>
 <tr><td><a href="#Index_modulation">Index</a></td><td>Note tracks only</td><td>Picks a scale or chord tone</td><td>Signed zero-based scale or chord tone index</td></tr>
 <tr><td><a href="#Voicing_modulation">Voicing</a></td><td>Note tracks only</td><td>Drops or raises a scale or chord tone</td><td>Signed one-based voice index</td></tr>
-<tr><td><a href="#Offset_modulation">Offset</a></td><td>Note or Modulator tracks only</td><td>Offsets playback timing</td><td>Offset in ticks; unsigned for Note, signed for Modulator</td></tr>
+<tr><td><a href="#Offset_modulation">Offset</a></td><td>All track types except Tempo</td><td>Offsets playback timing</td><td>Offset in ticks; unsigned for Note or Controller, signed for Modulator</td></tr>
 </table>
 
 <a name="Modulation_relationships"><h3>Modulation relationships</h3></a>
@@ -463,7 +464,7 @@
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Target track type</th><th>Supported modulation types</th></tr>
 <tr><td>Note</td><td>All except Tempo</td></tr>
-<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel</td><td>Mute, Position, Velocity</td></tr>
+<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel</td><td>Mute, Position, Velocity, Offset</td></tr>
 <tr><td>Tempo</td><td>Mute, Position, Tempo</td></tr>
 <tr><td>Modulator</td><td>Mute, Position, Offset; also Note but only if target is a Scale or Chord modulator</td></tr>
 </table>
@@ -880,9 +881,9 @@
 
 <a name="Offset_modulation"><h2>Offset modulation</h2></a>
 
-<p>Offset <a href="#Modulations">modulation</a> changes the time offset of a target track. The supported target types are <a href="#Note_tracks">note tracks</a> and modulator tracks. For note tracks, an offset modulator's steps are interpreted as <a href="#Unsigned_versus_signed_steps">unsigned</a> delays in MIDI <a href="#Ticks">ticks</a>. By default, notes can only be made later, not earlier, but you can work around this by setting the target track's <a href="#Track_Offset">offset</a> to a negative value. For example if the target track's offset is &minus;64, that gives its offset modulation an effective range of &minus;64 to +63, in other words from 64 ticks early to 63 ticks late.
+<p>Offset <a href="#Modulations">modulation</a> changes the time offset of a target track. The supported target types are <a href="#Note_tracks">note tracks</a>, <a href="#Controller_tracks">controller tracks</a> and modulator tracks. For note and controller tracks, an offset modulator's steps are interpreted as <a href="#Unsigned_versus_signed_steps">unsigned</a> delays in MIDI <a href="#Ticks">ticks</a>. By default, events can only be made later, not earlier, but you can work around this by setting the target track's <a href="#Track_Offset">offset</a> to a negative value. For example if the target track's offset is &minus;64, that gives its offset modulation an effective range of &minus;64 to +63, in other words from 64 ticks early to 63 ticks late.
 
-<p>Offset modulation changes the rhythmic feel of the target track, periodically speeding it up and slowing it down relative to the beat. It can be used to create rolls on drums, or to emulate the feel changes of a live performer. For best results, use a smooth function such as a ramp, triangle or sine wave. Offset modulation can cause <a href="#Note_Overlap">notes to overlap</a>.
+<p>Offset modulation changes the rhythmic feel of the target track, periodically speeding it up and slowing it down relative to the beat. It can be used to create rolls on drums, or to emulate the feel changes of a live performer. For best results, use a smooth function such as a triangle or sine wave. Sharp changes in offset modulation may alter the order of events. Offset modulation can cause <a href="#Note_Overlap">notes to overlap</a>.
 
 <p>Modulator tracks can also be offset modulated, but in this case the offset modulator's steps are interpreted as signed values, allowing offsets in the range of &minus;64 to +63. Offset modulation is useful for time-shifting a group of modulators that have different <a href="#Track_Quant">quants</a>. Offset modulation is similar to <a href="#Position_modulation">position modulation</a>, except that the shift is specified in ticks instead of steps.
 
@@ -1087,7 +1088,7 @@
 
 <a name="Track_Selection"><h3>Track Selection</h3></a>
 
-<p>Many commands operate on selected <a href="#Tracks">tracks</a>. You can select tracks in one of two ways: by selecting rows in the <a href="#Track_Grid">track grid</a>, or by right-clicking <a href="#Track_Mutes">track mute</a> buttons.
+<p>Many commands operate on selected <a href="#Tracks">tracks</a>. You can select tracks by selecting rows in the <a href="#Track_Grid">track grid</a>, or by right-clicking <a href="#Track_Mutes">track mute</a> buttons. You can also use one of the <a href="#Track_Selection_Commands">track selection commands</a>.
 
 <p>To use the first method, left-click in the track number column, which has a number sign (#) in the list header. This is usually the grid's leftmost column, unless you've reordered the columns. You can also select multiple rows, and select via the keyboard; for more help with selecting, see <a href="#List_controls">list controls</a>.
 
@@ -1100,6 +1101,14 @@
 </ul>
 
 <p>Some commands can operate on either a track selection or a <a href="#Step_Selection">step selection</a>. For such commands, if a step selection exists, it has priority over the track selection, meaning the track selection is ignored in that case.
+
+<a name="Track_Selection_Commands"><h4>Track Selection Commands</h4></a>
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><td><a href="#Select_All">Select All</a></td><td>Select all tracks</td></tr>
+<tr><td><a href="#Deselect">Deselect</a></td><td>Deselect all tracks</td></tr>
+<tr><td><a href="#Select_Unmuted">Select Unmuted</a></td><td>Select all <a href="#Track_Mutes">unmuted</a> tracks</td></tr>
+</table>
 
 <a name="Step_Selection"><h3>Step Selection</h3></a>
 
@@ -2675,6 +2684,10 @@
 
 <p>The calculator only shows the <em>first</em> convergence for each unique subset of the input numbers. The subsequent convergences can be determined via multiplication. To step through convergences one by one, use the <a href="#Next_Convergence">Next Convergence</a> and <a href="#Previous_Convergence">Previous Convergence</a> commands.
 
+<a name="Select_Unmuted"><h3>Select Unmuted</h3></a>
+
+<p>This command <a href="#Track_Selection">selects</a> all <a href="#Track_Mutes">unmuted</a> tracks. This can be useful in preparation for various commands that operate on selected tracks, such as <a href="#Time_To_Repeat">Time to Repeat</a>, <a href="#Prime_Factors">Prime Factors</a> and <a href="#Convergences_Calculator">Convergences</a>.
+
 <a name="MIDI_Learn"><h3>MIDI Learn</h3></a>
 
 <p>This command enables or disables MIDI learn mode. Learn mode makes it easier to set up <a href="#Mappings">mappings</a> so that properties can be remotely controlled, typically via a MIDI control surface. Learn mode is only effective if the <a href="#Mapping_bar">Mapping bar</a> is visible and at least one mapping is selected. While learn mode is enabled, any mappings selected in the Mapping bar are highlighted in green.
@@ -2936,6 +2949,7 @@
 <tr><td>Ctrl+Alt+S</td><td><a href="#Sort">Sort</a></td><td>Sort the selected tracks</td></tr>
 <tr><td>Ctrl+T</td><td><a href="#Tie_Notes">Tie Notes</a></td><td>Toggle tie notes mode; if on, new notes are tied</td></tr>
 <tr><td>Ctrl+Shift+T</td><td><a href="#Transpose">Transpose</a></td><td>Transpose the selected tracks</td></tr>
+<tr><td>Ctrl+U</td><td><a href="#Select_Unmuted">Select Unmuted</a></td><td>Select all unmuted tracks</td></tr>
 <tr><td>Ctrl+V</td><td><a href="#Paste">Paste</a></td><td>Insert Clipboard contents</td></tr>
 <tr><td>Ctrl+Shift+V</td><td><a href="#Velocity">Velocity</a></td><td>Transform the velocities of the selected tracks or steps</td></tr>
 <tr><td>Ctrl+W</td><td><a href="#Rewind">Rewind</a></td><td>Rewind to start of song</td></tr>

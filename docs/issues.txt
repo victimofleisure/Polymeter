@@ -15,6 +15,7 @@ id	open	close	type	description	rev	user
 392	07/10/20		bug	Alt key commands don't work mode while cursor is hovering over MDI tab; affects stock VS2012 app too		
 458	07/22/21		bug	song position and loop to/from don't report formatting errors; song length reports errors but doesn't retry		
 515	04/04/22		bug	changing track length via mapped control can cause undo/redo of step array edits to fail		
+532	08/01/22		bug	modulation bar's label tooltip shows stale data if track selection changes		
 1	03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 2	03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 3	03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -432,6 +433,10 @@ id	open	close	type	description	rev	user
 526	07/04/22	07/05/22	done	if piano bar is docked vertically, floating it by double-clicking its caption causes piano to be drawn incorrectly	1.0.09.000	
 527	07/06/22	07/06/22	done	a few dialog IDs are missing from help map	1.0.09.001	
 528	07/17/22	07/23/22	done	optionally exclude muted tracks from graph	1.0.10.000	
+535	10/20/22	10/20/22	done	support offset modulation of controller tracks	1.0.11.000	
+530	07/27/22	10/24/22	done	song view should line up with track view when they're side by side; use track grid's header and item height	1.0.11.000	
+531	08/01/22	10/25/22	done	add command to select all unmuted tracks	1.0.11.000	
+534	09/22/22	10/29/22	done	FormatMessage call must specify ignore inserts	1.0.11.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -481,7 +486,6 @@ id	open	close	type	description	rev	user
 355	04/11/20		hold	window that shows current song time in huge font; excessive?		
 370	05/27/20		hold	force MIDI thru to a specified channel; useful for controllers that lack channel setting, but complicates MidiInProc		
 372	06/08/20		hold	song view should show loop lengths and their covergences graphically, possibly in a separate timeline pane		
-373	06/13/20		hold	in phase bar, optionally hide muted tracks; affects find convergence due to orbit array reuse		
 383	07/01/20		hold	add more input quants; possibly useful with larger time divisions		
 393	07/17/20		hold	switching to song view should set all mutes to match song's current dub state (chase); must be synchronous		
 395	07/22/20		hold	optionally show Phase diagram or other visualization in Live view; menu bar is hidden in full screen mode		
@@ -510,6 +514,7 @@ id	open	close	type	description	rev	user
 522	06/17/22		hold	indicate step or cell selection in status bar, depending on which view has focus		
 525	06/21/22		hold	Step view and Step Values bar should mirror each other's selection if possible		
 529	07/22/22		hold	docking bar context menu commands should be available in Customize dialog		
+533	09/05/22		hold	overlay preset; save mute states of selected tracks only, and affect only those tracks when preset is applied		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
@@ -525,6 +530,7 @@ id	open	close	type	description	rev	user
 286	02/28/19		punt	song playback doesn't always match live output when modulator tracks have big quants; dub granularity issue		
 294	05/30/19		punt	modulation list is empty regardless of track selection; can't reproduce it, brain fire?		
 301	11/12/19		punt	popup edit of step's velocity value, via Ctrl + right click on step; tried it, step grid view would be more useful		
+373	06/13/20		punt	in phase bar, optionally hide muted tracks; affects find convergence due to orbit array reuse, also confusing		
 468	10/30/21		punt	at refresh rate of 60 Hz or above, song view cursor flickers during playback if track count is five or less		
 476	11/13/21		punt	render phase diagram in 3D, with variable lighting, texture and rotation of orbital plane; simulated 3D is enough		
 483	11/16/21		punt	docking windows submenu doesn't support selection via mnemonics; framework issue, BuildPanesMenu		

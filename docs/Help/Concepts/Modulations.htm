@@ -29,7 +29,7 @@
 <tr><td><a href="../Modulation/Chord_modulation.htm">Chord</a></td><td>Note tracks only</td><td>Adds scale tone to current chord</td><td>Signed zero-based scale tone index</td></tr>
 <tr><td><a href="../Modulation/Index_modulation.htm">Index</a></td><td>Note tracks only</td><td>Picks a scale or chord tone</td><td>Signed zero-based scale or chord tone index</td></tr>
 <tr><td><a href="../Modulation/Voicing_modulation.htm">Voicing</a></td><td>Note tracks only</td><td>Drops or raises a scale or chord tone</td><td>Signed one-based voice index</td></tr>
-<tr><td><a href="../Modulation/Offset_modulation.htm">Offset</a></td><td>Note or Modulator tracks only</td><td>Offsets playback timing</td><td>Offset in ticks; unsigned for Note, signed for Modulator</td></tr>
+<tr><td><a href="../Modulation/Offset_modulation.htm">Offset</a></td><td>All track types except Tempo</td><td>Offsets playback timing</td><td>Offset in ticks; unsigned for Note or Controller, signed for Modulator</td></tr>
 </table>
 
 <a name="Modulation_relationships"><p><b>Modulation relationships</b></a>
@@ -56,7 +56,7 @@
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Target track type</th><th>Supported modulation types</th></tr>
 <tr><td>Note</td><td>All except Tempo</td></tr>
-<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel</td><td>Mute, Position, Velocity</td></tr>
+<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel</td><td>Mute, Position, Velocity, Offset</td></tr>
 <tr><td>Tempo</td><td>Mute, Position, Tempo</td></tr>
 <tr><td>Modulator</td><td>Mute, Position, Offset; also Note but only if target is a Scale or Chord modulator</td></tr>
 </table>

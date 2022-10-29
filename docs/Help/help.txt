@@ -854,7 +854,7 @@ The steps area can be zoomed horizontally, using the @[Zoom In], @[Zoom Out], an
 
 @topic Track Selection
 
-Many commands operate on selected @[tracks]. You can select tracks in one of two ways: by selecting rows in the @[track grid], or by right-clicking @[track mutes\track mute] buttons.
+Many commands operate on selected @[tracks]. You can select tracks by selecting rows in the @[track grid], or by right-clicking @[track mutes\track mute] buttons. You can also use one of the @[track selection commands].
 
 To use the first method, left-click in the track number column, which has a number sign (#) in the list header. This is usually the grid's leftmost column, unless you've reordered the columns. You can also select multiple rows, and select via the keyboard; for more help with selecting, see @[list controls].
 
@@ -867,6 +867,14 @@ You can also select tracks via their mute buttons, which are located immediately
 </ul>
 
 Some commands can operate on either a track selection or a @[step selection]. For such commands, if a step selection exists, it has priority over the track selection, meaning the track selection is ignored in that case.
+
+@item Track Selection Commands
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><td>@[Select All]</td><td>Select all tracks</td></tr>
+<tr><td>@[Deselect]</td><td>Deselect all tracks</td></tr>
+<tr><td>@[Select Unmuted]</td><td>Select all @[track mutes\unmuted] tracks</td></tr>
+</table>
 
 @topic Step Selection
 
