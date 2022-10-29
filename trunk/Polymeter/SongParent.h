@@ -12,6 +12,7 @@
 		02		19may22	add ruler selection attribute
 		03		27may22	add handler for ruler selection change
 		04		24oct22	add method to set track height
+		05		29oct22	override initial update handler 
 
 */
 
@@ -99,6 +100,7 @@ protected:
 
 // Overrides
 	virtual	void GetSplitRect(CRect& rSplit) const;
+	virtual	void OnInitialUpdate();
 	virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
 
 // Generated message map functionsq

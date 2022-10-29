@@ -15,6 +15,7 @@
 		05		27may22	add handler for ruler selection change
 		06		16jun22	remove needless message map entry for create
 		07		24oct22	add method to set track height
+		08		29oct22	move setting ruler tick gap out of create
 
 */
 
@@ -171,6 +172,14 @@ inline void CSongParent::UpdateRulerNumbers()
 {
 	CPolymeterDoc	*pDoc = GetDocument();
 	m_wndRuler.SetMidiParams(pDoc->GetTimeDivisionTicks(), pDoc->m_nMeter);
+}
+
+void CSongParent::OnInitialUpdate()
+{
+	CSplitView::OnInitialUpdate();
+	// ruler's tick gap can't be set in our Create method because song view's cell width 
+	// depends on track height, which child frame's OnCreateClient sets after creating us
+	m_wndRuler.SetMinMajorTickGap(m_pSongView->GetBeatWidth() - 1);
 }
 
 void CSongParent::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)

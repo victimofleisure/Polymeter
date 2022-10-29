@@ -19,6 +19,7 @@
 		09		19may22	add ruler selection
 		10		16jun22	remove delayed create handler
 		11		24oct22	add method to set track height
+		12		29oct22	keep cell width same as track height
 
 */
 
@@ -223,6 +224,7 @@ inline int CSongView::GetTrackHeight() const
 inline void CSongView::SetTrackHeight(int nHeight)
 {
 	m_nTrackHeight = nHeight;
+	m_nCellWidth = nHeight;	// keep cells square
 }
 
 inline bool CSongView::HaveSelection() const
