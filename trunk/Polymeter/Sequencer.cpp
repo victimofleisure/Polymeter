@@ -53,6 +53,7 @@
 		43		13feb22	support offset modulation of modulator tracks
 		44		19may22	set position offset in SetPosition stopped case
 		45		20oct22	support offset modulation of controller tracks
+		46		12nov22	flip sign in recursive offset modulation case
 
 */
 
@@ -553,7 +554,7 @@ bool CSequencer::RecurseModulations(int iTrack, int& nAbsEvtTime, int& nPosMod)
 					if (iModType == MT_Position)	// if position modulation
 						nPosMod += nStepVal;	// add step value to caller's position
 					else	// assume offset modulation
-						nAbsEvtTime += nStepVal;	// add step value to caller's event time
+						nAbsEvtTime -= nStepVal;	// subtract step value from caller's event time
 				}
 			}
 		}
