@@ -433,11 +433,14 @@ id	open	close	type	description	rev	user
 526	07/04/22	07/05/22	done	if piano bar is docked vertically, floating it by double-clicking its caption causes piano to be drawn incorrectly	1.0.09.000	
 527	07/06/22	07/06/22	done	a few dialog IDs are missing from help map	1.0.09.001	
 528	07/17/22	07/23/22	done	optionally exclude muted tracks from graph	1.0.10.001	
-535	10/20/22	10/20/22	done	support offset modulation of controller tracks	1.0.10.001	
-530	07/27/22	10/24/22	done	song view should line up with track view when they're side by side; use track grid's header and item height	1.0.10.001	
-531	08/01/22	10/25/22	done	add command to select all unmuted tracks	1.0.10.001	
-534	09/22/22	10/29/22	done	FormatMessage call must specify ignore inserts	1.0.10.001	
-536	11/12/22	11/13/22	done	offset modulation of modulator implements sign backwards; negative value should hasten target	1.0.10.002	
+535	10/20/22	10/20/22	done	support offset modulation of controller tracks	1.0.11.001	
+530	07/27/22	10/24/22	done	song view should line up with track view when they're side by side; use track grid's header and item height	1.0.11.001	
+531	08/01/22	10/25/22	done	add command to select all unmuted tracks	1.0.11.001	
+534	09/22/22	10/29/22	done	FormatMessage call must specify ignore inserts	1.0.11.001	
+536	11/12/22	11/13/22	done	offset modulation of modulator implements sign backwards; negative value should hasten target	1.0.11.002	
+547	11/30/22	12/01/22	done	floating piano bar should use vertical orientation if bar's height exceeds its width	1.0.12.000	
+550	12/04/22	12/05/22	done	phase bar's period text should be centered unless crosshairs are shown	1.0.12.000	
+549	12/01/22	12/13/22	done	graph should export other formats besides SVG: BMP, PNG, TIF, GIF, PDF	1.0.12.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -535,3 +538,5 @@ id	open	close	type	description	rev	user
 468	10/30/21		punt	at refresh rate of 60 Hz or above, song view cursor flickers during playback if track count is five or less		
 476	11/13/21		punt	render phase diagram in 3D, with variable lighting, texture and rotation of orbital plane; simulated 3D is enough		
 483	11/16/21		punt	docking windows submenu doesn't support selection via mnemonics; framework issue, BuildPanesMenu		
+548	11/30/22		todo	in phase bar, periods in ticks are often too big to be useful; add option to divide them by specified value		
+551	12/07/22		todo	optionally display track quants as fractions; also allow entry as fractions, and add drop list with common values		

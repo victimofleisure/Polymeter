@@ -4053,3 +4053,39 @@ text from me, then I delete the item from the list and add several new items
 and hover over item 0 again, I get the old tooltip text. If I then hover
 over item 1 and back to 0 I get the correct text because the control resends
 the LVN_GETINFOTIP for item 0."
+
+12/5/22 video that shows only phase diagram and piano
+
+This is a customization of the "Polymeter vid cap" sub-project. In CMainFrame::ExportVideo:
+
+Force exporting MIDI flag true, because we will show piano bar:
+	bool	bIsExportingMidi = true;//@@@m_wndPianoBar.IsVisible() || m_wndMidiOutputBar.IsVisible();
+
+And after full screen initiated and screen recorder created:
+	//@@@
+	CSize	szScr(1920, 1080);
+	int	nPianoHeight = szScr.cy / 10;
+	CWnd	*pPianoParent = m_wndPianoBar.GetParent();
+	CWnd	*pPhaseParent = m_wndPhaseBar.GetParent();
+	m_wndPianoBar.ShowPane(true, 0, 0);
+	m_wndPhaseBar.ShowPane(true, 0, 0);
+	m_wndPhaseBar.FloatPane(CRect(0, 0, 100, 200));
+	m_wndPianoBar.FloatPane(CRect(0, 0, 100, 100));
+	m_wndPhaseBar.SetParent(GetDesktopWindow());
+	m_wndPhaseBar.ModifyStyle(WS_CHILD, WS_POPUP);
+	m_wndPhaseBar.SetWindowPos(&CWnd::wndTopMost, 0, 0, szScr.cx, szScr.cy - nPianoHeight, SWP_FRAMECHANGED | SWP_NOCOPYBITS | SWP_SHOWWINDOW);
+	m_wndPianoBar.SetParent(GetDesktopWindow());
+	m_wndPianoBar.ModifyStyle(WS_CHILD, WS_POPUP);
+	m_wndPianoBar.SetWindowPos(&CWnd::wndTopMost, 0, szScr.cy - nPianoHeight, szScr.cx, nPianoHeight, SWP_FRAMECHANGED | SWP_NOCOPYBITS | SWP_SHOWWINDOW);
+
+And at end, try to clean up:
+	//@@@
+	m_wndPianoBar.ModifyStyle(WS_POPUP, WS_CHILD);
+	m_wndPianoBar.SetParent(pPianoParent);
+	m_wndPhaseBar.ModifyStyle(WS_POPUP, WS_CHILD);
+	m_wndPhaseBar.SetParent(pPhaseParent);
+
+Also in PhaseBar.cpp, disable upper limit on planet size:
+ 	m_nMaxPlanetWidth = INT_MAX;//@@@MAX_PLANET_WIDTH;
+
+None of this is even close to foolproof but it gets the job done.
