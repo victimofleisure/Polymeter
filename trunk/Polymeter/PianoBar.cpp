@@ -22,6 +22,8 @@
 		12		05jan22	in AddEvents, fix test to keep reference count positive
 		13		21jan22	use macro to test for short message
 		14		05jul22	add multiple pianos feature
+		15		01dec22	vary orientation with aspect ratio when floating
+		16		17dec22	use lParam macros in parent notify handler
 
 */
 
@@ -94,11 +96,24 @@ CPianoBar::~CPianoBar()
 	WrReg(RK_PianoBar, RK_KEY_COLORS, m_bColorVelocity);
 }
 
+__forceinline bool CPianoBar::SafeIsHorizontal(int cx, int cy) const
+{
+	if (IsFloating()) {
+		return cx > cy;
+	} else {
+		return IsHorizontal() != 0;
+	}
+}
+
 __forceinline bool CPianoBar::SafeIsHorizontal() const
 {
-	// if pane is docked vertically, floating it by double-clicking on its caption
-	// can cause IsHorizontal to return a false negative, so check IsFloating too
-	return IsHorizontal() || IsFloating();
+	if (IsFloating()) {
+		CRect	rClient;
+		GetClientRect(rClient);
+		return rClient.Width() > rClient.Height();
+	} else {
+		return IsHorizontal() != 0;
+	}
 }
 
 __forceinline bool CPianoBar::EventPassesChannelFilter(DWORD dwEvent, int& iPiano) const
@@ -445,7 +460,7 @@ void CPianoBar::LayoutPianos(int cx, int cy)
 	int	nPianos = GetPianoCount();
 	if (nPianos > 1) {	// if multiple pianos
 		int	nAvailLength;
-		bool	bIsHorz = SafeIsHorizontal();
+		bool	bIsHorz = SafeIsHorizontal(cx, cy);
 		if (bIsHorz)	// if horizontally oriented
 			nAvailLength = cy;	// length is height
 		else	// vertically oriented
@@ -780,8 +795,7 @@ void CPianoBar::OnParentNotify(UINT message, LPARAM lParam)
 	case WM_LBUTTONDOWN:
 		SetFocus();
 		if (GetKeyState(VK_CONTROL) & GKS_DOWN) {	// if control key down
-			CPoint	pt;
-			POINTSTOPOINT(pt, lParam);
+			CPoint	pt(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 			InsertTrackFromPoint(pt);
 		}
 		break;

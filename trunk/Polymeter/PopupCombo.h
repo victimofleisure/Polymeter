@@ -11,6 +11,7 @@
 		01		31may14	add class factory
 		02		16mar15	add ending edit flag to avoid reentrance
 		03		04jun18	define user messages in PopupEdit.h only
+		04		16dec22	add support for drop down with edit control
 
 		popup combo box control
 
@@ -56,6 +57,7 @@ protected:
 	//{{AFX_MSG(CPopupCombo)
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	afx_msg void OnCloseup();
+	afx_msg void OnReflectKillFocus();
 	//}}AFX_MSG
 	afx_msg LRESULT OnEndEdit(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()

@@ -10,6 +10,7 @@
         00      30aug05	initial version
 		01		10aug07	add template resource ID to ctor
 		02		27dec09	add ShowPercent
+		03		12dec22	add marquee mode; make pump messages public
 
         progress dialog
  
@@ -37,6 +38,11 @@ public:
 	void	SetRange(int Lower, int Upper);
 	bool	Canceled() const;
 	void	ShowPercent(bool Enable);
+	void	SetMarquee(bool bEnable = true, int nInterval = 0);
+
+// Operations
+	void	PumpMessages();
+	static	void	PumpMessages(HWND hWnd);
 
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -74,7 +80,6 @@ protected:
 
 // Helpers
 	void	ReenableParent();
-	void	PumpMessages();
 };
 
 inline bool CProgressDlg::Canceled() const
@@ -85,6 +90,11 @@ inline bool CProgressDlg::Canceled() const
 inline void CProgressDlg::ShowPercent(bool Enable)
 {
 	m_ShowPercent = Enable;
+}
+
+inline void CProgressDlg::PumpMessages()
+{
+	PumpMessages(m_hWnd);
 }
 
 //{{AFX_INSERT_LOCATION}}

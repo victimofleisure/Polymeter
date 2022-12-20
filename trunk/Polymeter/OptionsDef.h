@@ -16,6 +16,7 @@
 		06		03jun20	add record input options
 		07		10feb21	add unique track names option
 		08		24oct21	increase maximum view update frequency
+		09		14dec22	add show quant as fraction option
 
 */
 
@@ -46,6 +47,7 @@ PROPDEF(	View,		NONE,		VAR,		float,		fUpdateFreq,		20.0f,		1.0f,		250.0f,		NULL,
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowCurPos,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowNoteNames,		1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowGMNames,		1,			0,			0,			NULL,		0)
+PROPDEF(	View,		NONE,		VAR,		bool,		bShowQuantAsFrac,	1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bShowTrackColors,	0,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bUniqueTrackNames,	1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		float,		fZoomDelta,			100.0f,		1.0f,		100.0f,		NULL,		0)

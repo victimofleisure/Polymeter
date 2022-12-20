@@ -10,6 +10,7 @@
 		00		23sep13	initial version
 		01		31may14	in Create, add vertical scroll to default style
 		02		16mar15	send end edit message instead of posting it
+		03		16dec22	add support for drop down with edit control
 
 		popup combo box control
 
@@ -85,8 +86,9 @@ BEGIN_MESSAGE_MAP(CPopupCombo, CComboBox)
 	//{{AFX_MSG_MAP(CPopupCombo)
 	ON_WM_KILLFOCUS()
 	ON_CONTROL_REFLECT(CBN_CLOSEUP, OnCloseup)
-	//}}AFX_MSG_MAP
+	ON_CONTROL_REFLECT(CBN_KILLFOCUS, OnReflectKillFocus)
 	ON_MESSAGE(CPopupEdit::UWM_END_EDIT, OnEndEdit)
+	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -95,8 +97,17 @@ END_MESSAGE_MAP()
 void CPopupCombo::OnKillFocus(CWnd* pNewWnd) 
 {
 	CComboBox::OnKillFocus(pNewWnd);
-	if (!m_bEndingEdit)	// if not ending edit already
-		SendMessage(CPopupEdit::UWM_END_EDIT);
+	if (!IsChild(pNewWnd)) {	// if window gaining focus isn't our child
+		if (!m_bEndingEdit)	// if not ending edit already
+			SendMessage(CPopupEdit::UWM_END_EDIT);
+	}
+}
+
+void CPopupCombo::OnReflectKillFocus()
+{
+	// this message is only relevant if we have a child edit control
+	if ((GetStyle() & CBS_DROPDOWNLIST) != CBS_DROPDOWNLIST)	// if not drop list style
+		EndEdit();
 }
 
 BOOL CPopupCombo::PreTranslateMessage(MSG* pMsg) 

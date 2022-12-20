@@ -22,6 +22,7 @@
 		12		15dec18	only handle tab key if control key is up
 		13		17nov20	in OnLButtonDown, set focus before editing subitem
 		14		29jan22	ensure item to be edited is horizontally visible
+		15		17dec22	in OnParentNotify, get cursor position from current message
 
 		grid control
  
@@ -243,17 +244,18 @@ void CGridCtrl::OnParentNotify(UINT message, LPARAM lParam)
 		switch (LOWORD(message)) {	// high word may contain child window ID
 		case WM_LBUTTONDOWN:
 			{
-				CPoint	pt;
-				POINTSTOPOINT(pt, lParam);
 				CRect	rEdit;
 				if (m_pEditCtrl->IsKindOf(RUNTIME_CLASS(CEdit))) {	// if editing control is CEdit-derived
 					// use subitem rect because it includes spin button control if any
 					GetSubItemRect(m_iEditRow, m_iEditCol, LVIR_BOUNDS, rEdit);
+					ClientToScreen(rEdit);	// for testing cursor position in screen coords
 				} else {	// not an edit control; control may be bigger than subitem, e.g. combo box
 					m_pEditCtrl->GetWindowRect(rEdit);	// use child control's rect
-					ScreenToClient(rEdit);
 				}
-				if (!rEdit.PtInRect(pt))	// if clicked outside of edit control
+				// don't rely on the lParam position, because we can't be sure which parent
+				// window it's relative to; for a combo, it could be relative to either the
+				// combo's parent (us), or the combo itself if its edit control was clicked
+				if (!rEdit.PtInRect(GetCurrentMessage()->pt))	// if clicked outside of edit control
 					EndEdit();
 			}
 			break;

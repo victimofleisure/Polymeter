@@ -20,6 +20,8 @@
 		10		09jul20	add pointer to parent frame
 		11		10feb21	add option to keep track names unique
 		12		25oct21	add menu select and exit menu handlers
+		13		14dec22	add support for quant fractions
+		14		16dec22	add quant fraction drop down menu
 
 */
 
@@ -67,6 +69,8 @@ const LPCTSTR CTrackView::m_arrGMDrumName[] = {
 	#define MIDI_GM_DRUM_DEF(name) _T(name),
 	#include "MidiCtrlrDef.h"	// generate array of General MIDI drum names
 };
+
+#define bShowQuantDropList theApp.m_Options.m_View_bShowQuantAsFrac	// could be separate option
 
 CTrackView::CTrackView()
 {
@@ -173,6 +177,8 @@ void CTrackView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				UpdateNotes();
 			if (theApp.m_Options.m_View_bShowTrackColors != pPropHint->m_pPrevOptions->m_View_bShowTrackColors)
 				m_grid.Invalidate();
+			if (theApp.m_Options.m_View_bShowQuantAsFrac != pPropHint->m_pPrevOptions->m_View_bShowQuantAsFrac)
+				UpdateColumn(COL_Quant);
 		}
 		break;
 	case CPolymeterDoc::HINT_MASTER_PROP:
@@ -205,10 +211,20 @@ void CTrackView::UpdateNotes()
 {
 	CPolymeterDoc	*pDoc = GetDocument();
 	int	iStartTrack = m_grid.GetTopIndex();
-	int	iEndTrack = min(iStartTrack + m_grid.GetCountPerPage(), pDoc->m_Seq.GetTrackCount());
+	int	iEndTrack = min(iStartTrack + m_grid.GetCountPerPage() + 1, pDoc->m_Seq.GetTrackCount());	// account for partial item
 	for (int iTrack = iStartTrack; iTrack < iEndTrack; iTrack++) {	// for each visible track
 		if (pDoc->m_Seq.IsNote(iTrack))	// if track type is note
 			m_grid.RedrawSubItem(iTrack, COL_Note);	// redraw note
+	}
+}
+
+void CTrackView::UpdateColumn(int iCol)
+{
+	CPolymeterDoc	*pDoc = GetDocument();
+	int	iStartTrack = m_grid.GetTopIndex();
+	int	iEndTrack = min(iStartTrack + m_grid.GetCountPerPage() + 1, pDoc->m_Seq.GetTrackCount());	// account for partial item
+	for (int iTrack = iStartTrack; iTrack < iEndTrack; iTrack++) {	// for each visible track
+		m_grid.RedrawSubItem(iTrack, iCol);	// redraw note
 	}
 }
 
@@ -318,6 +334,36 @@ CWnd *CTrackView::CTrackGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle,
 		} else	// default note handling
 			goto DefaultCreateEditCtrl;	// don't rely on falling through
 		break;
+	case COL_Quant:
+		if (bShowQuantDropList) {	// if showing quant drop list
+			DWORD	nStyle = WS_CHILD | WS_VISIBLE | WS_VSCROLL | CBS_DROPDOWN;	// drop down with edit control
+			CPopupCombo	*pCombo = CPopupCombo::Factory(nStyle, rect, this, 0, 200);
+			if (pCombo == NULL)
+				return NULL;
+			int	nWholeNote = pDoc->GetTimeDivisionTicks() * 4;	// timebase is in quarter notes
+			GetQuantFractions(nWholeNote, m_arrQuant);	// get array of quants corresponding to note fractions
+			int	nTrackQuant = pDoc->m_Seq.GetQuant(iTrack);
+			CString	sFrac;
+			int	nFracs = m_arrQuant.GetSize();
+			int	iSel = -1;
+			for (int iFrac = 0; iFrac < nFracs; iFrac++) {
+				int	nFracQuant = m_arrQuant[iFrac];
+				int	nDenominator = nWholeNote / nFracQuant;
+				sFrac.Format(_T("1/%d"), nDenominator);	// create note fraction string
+				pCombo->AddString(sFrac);	// add fraction to drop list
+				if (nFracQuant == nTrackQuant)	// if fraction matches track's current quant
+					iSel = iFrac;	// set drop list selection
+			}
+			// make pre-edit quant negative so it can be distinguished from drop list selection index
+			m_varPreEdit = -nTrackQuant;	// save pre-edit quant to allow preview
+			pCombo->SetCurSel(iSel);	// select list item
+			pCombo->SetWindowText(pDoc->QuantToString(nTrackQuant));	// set edit control text
+			pCombo->SetEditSel(0, -1);	// select all text in edit control
+			pCombo->ShowDropDown();
+			return pCombo;
+		} else	// default quant handling
+			goto DefaultCreateEditCtrl;	// don't rely on falling through
+		break;
 	case COL_RangeType:
 		{
 			CPopupCombo	*pCombo = CPopupCombo::Factory(0, rect, this, 0, 100);
@@ -363,6 +409,18 @@ DefaultCreateEditCtrl:
 		case COL_Length:
 			pDoc->m_Seq.GetSteps(iTrack, m_arrStep);	// save track's step array
 			break;
+		case COL_Quant:
+			{
+				UINT	nFormat;
+				if (bShowQuantDropList)	// if showing drop list
+					nFormat = CNumEdit::DF_INT | CNumEdit::DF_FRACTION;	// combo box, no spin control
+				else	// showing quant as number of ticks
+					nFormat = CNumEdit::DF_INT | CNumEdit::DF_FRACTION | CNumEdit::DF_SPIN;
+				pEdit->SetFormat(nFormat);
+				pEdit->SetFractionScale(pDoc->GetTimeDivisionTicks() * 4);	// whole note
+				bIsCustomType = true;	// prevent default integer conversion
+			}
+			break;
 		}
 		if (!bIsCustomType)	// if ordinary integer
 			m_varPreEdit = _ttoi(pszText);	// convert item text to integer and set pre-edit value
@@ -386,6 +444,16 @@ void CTrackView::CTrackGridCtrl::OnItemChange(LPCTSTR pszText)
 	CComVariant	valNew;
 	GetVarFromPopupCtrl(valNew, pszText);
 	int	iProp = m_iEditCol - 1;	// skip number column
+	if (iProp == PROP_Quant) {	// if quant property
+		if (bShowQuantDropList) {	// if showing quant drop list
+			int	nQuant;
+			if (valNew.intVal >= 0 && valNew.intVal < m_arrQuant.GetSize())
+				nQuant = m_arrQuant[valNew.intVal];
+			else
+				nQuant = pDoc->StringToQuant(pszText);
+			valNew.intVal = nQuant;
+		}
+	}
 	if (GetSelectedCount() > 1 && GetSelected(iTrack)) {	//  if multiple selection and editing within selection
 		const CIntArrayEx&	arrSelection = pDoc->m_arrTrackSel;
 		int	nSels = arrSelection.GetSize();
@@ -437,6 +505,14 @@ void CTrackView::CTrackGridCtrl::UpdateTarget(const CComVariant& var, UINT nFlag
 	case CTrack::PROP_Length:
 		if (nFlags & UT_RESTORE_VALUE)
 			pDoc->m_Seq.SetSteps(iTrack, m_arrStep);	// restore track's steps
+		break;
+	case CTrack::PROP_Quant:
+		if (nVal < 0)	// if value is negative
+			nVal = -nVal;	// assume value is negated pre-edit quant; see COL_Quant in CreateEditCtrl
+		else {	// value is positive
+			if (nVal < m_arrQuant.GetSize())	// if value is within range of quant array
+				nVal = m_arrQuant[nVal];	// assume value is index of selected quant
+		}
 		break;
 	}
 	pDoc->m_Seq.SetTrackProperty(iTrack, iProp, nVal);	// set property
@@ -621,6 +697,57 @@ void CTrackView::OnSetFocus(CWnd* pOldWnd)
 	m_grid.SetFocus();	// delegate focus to child control
 }
 
+void CTrackView::GetQuantFractions(int nWholeNote, CIntArrayEx& arrDenominator)
+{
+	arrDenominator.SetSize(MAX_QUANT_LEVELS * 2 + 1);	// allocate for worst case
+	arrDenominator[0] = nWholeNote;
+	int	nElems = 1;
+	int	nDiv2 = nWholeNote / 2;	// two-based divisor
+	int	nDiv3 = nWholeNote / 3;	// three-based divisor
+	for (int iLevel = 0; iLevel < MAX_QUANT_LEVELS; iLevel++) {	// for each level
+		arrDenominator[nElems++] = nDiv2;
+		if (nDiv2 & 1)	// if divisor is odd
+			iLevel = MAX_QUANT_LEVELS;	// last level
+		else	// divisor is even
+			nDiv2 /= 2;	// halve divisor
+		arrDenominator[nElems++] = nDiv3;
+		if (nDiv3 & 1)	// if divisor is odd
+			break;	// we're done
+		else	// divisor is even
+			nDiv3 /= 2;	// halve divisor
+	}
+	arrDenominator.SetSize(nElems);	// resize for actual number of elements
+}
+
+int CTrackView::GetQuantFraction(int nQuant, int nWholeNote, int& nDenominator)
+{
+	if (!(nQuant % nWholeNote)) {	// if divisible by whole notes
+		nDenominator = 1;	// special case
+		return nQuant / nWholeNote;	// return numerator
+	}
+	int	nDiv2 = nWholeNote / 2;	// two-based divisor
+	int	nDiv3 = nWholeNote / 3;	// three-based divisor
+	for (int iLevel = 0; iLevel < MAX_QUANT_LEVELS; iLevel++) {	// for each level
+		if (!(nQuant % nDiv2)) {
+			nDenominator = nWholeNote / nDiv2;
+			return nQuant / nDiv2;	// return numerator
+		}
+		if (nDiv2 & 1)	// if divisor is odd
+			iLevel = MAX_QUANT_LEVELS;	// last level
+		else	// divisor is even
+			nDiv2 /= 2;	// halve divisor
+		if (!(nQuant % nDiv3)) {
+			nDenominator = nWholeNote / nDiv3;
+			return nQuant / nDiv3;	// return numerator
+		}
+		if (nDiv3 & 1)	// if divisor is odd
+			break;	// we're done
+		else	// divisor is even
+			nDiv3 /= 2;	// halve divisor
+	}
+	return 0;	// failure
+}
+
 void CTrackView::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	UNREFERENCED_PARAMETER(pResult);
@@ -653,6 +780,13 @@ void CTrackView::OnListGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 			break;
 		case COL_RangeType:
 			_tcscpy_s(item.pszText, item.cchTextMax, GetRangeTypeName(pDoc->m_Seq.GetRangeType(iTrack)));
+			break;
+		case COL_Quant:
+			if (theApp.m_Options.m_View_bShowQuantAsFrac) {	// if showing quant as fraction
+				int	nQuant = pDoc->m_Seq.GetQuant(iTrack);
+				pDoc->QuantToString(nQuant, item.pszText, item.cchTextMax);
+			} else	// default quant handling
+				goto DefaultDisplayItem;	// don't rely on falling through
 			break;
 		default:
 DefaultDisplayItem:

@@ -17,6 +17,7 @@
 		07		18jun20	add command help to handle channel filter string reuse
 		08		18nov20	enable auto-hide and attach
 		09		05jul22	add multiple pianos feature
+		10		01dec22	vary orientation with aspect ratio when floating
 
 */
 
@@ -164,6 +165,7 @@ protected:
 	CSize	m_szPianoLabel;			// maximum size of piano label text, in client coords
 
 // Helpers
+	bool	SafeIsHorizontal(int cx, int cy) const;
 	bool	SafeIsHorizontal() const;
 	bool	EventPassesChannelFilter(DWORD dwEvent, int& iPiano) const;
 	void	OnFilterChange();

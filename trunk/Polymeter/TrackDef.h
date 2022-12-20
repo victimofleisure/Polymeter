@@ -36,7 +36,7 @@ TRACKDEF(	VAR,		int,		n,		Note,		64,			0,				MIDI_NOTE_MAX,	NULL,			0			)	// not
 #ifndef TRACKDEF_EXCLUDE_LENGTH
 TRACKDEF(	VAR,		int,		n,		Length,		INIT_STEPS,	1,				INT_MAX,		NULL,			0			)	// loop length in steps
 #endif
-TRACKDEF(	VAR,		int,		n,		Quant,		30,			1,				SHRT_MAX,		NULL,			0			)	// length of a step in ticks
+TRACKDEF(	VAR,		int,		n,		Quant,		30,			1,				MAX_QUANT,		NULL,			0			)	// length of a step in ticks
 TRACKDEF(	VAR,		int,		n,		Offset,		0,			0,				0,				NULL,			0			)	// track offset in ticks
 TRACKDEF(	VAR,		int,		n,		Swing,		0,			0,				0,				NULL,			0			)	// swing in ticks
 TRACKDEF(	VAR,		int,		n,		Velocity,	0,			-MIDI_NOTE_MAX,	MIDI_NOTE_MAX,	NULL,			0			)	// note velocity offset

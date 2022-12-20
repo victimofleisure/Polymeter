@@ -11,6 +11,7 @@
 		01		10aug07	add template resource ID to ctor
 		02		27dec09	add ShowPercent
 		03		07jun21	rename rounding functions
+		04		12dec22	add marquee mode; make pump messages public
 
         progress dialog
  
@@ -104,16 +105,30 @@ void CProgressDlg::SetRange(int Lower, int Upper)
 	m_Upper = Upper;
 }
 
-void CProgressDlg::PumpMessages()
+void CProgressDlg::PumpMessages(HWND hWnd)
 {
-	ASSERT(m_hWnd != NULL);
+	ASSERT(hWnd != NULL);
 	MSG msg;
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-		if (!IsDialogMessage(&msg)) {
+		if (!::IsDialogMessage(hWnd, &msg)) {
 	        TranslateMessage(&msg);
 		    DispatchMessage(&msg);
 		}
 	}
+}
+
+void CProgressDlg::SetMarquee(bool bEnable, int nInterval)
+{
+	m_Progress.SetMarquee(bEnable, nInterval);
+	DWORD	dwRemove, dwAdd;
+	if (bEnable) {
+		dwRemove = 0;
+		dwAdd = PBS_MARQUEE;
+	} else {
+		dwRemove = PBS_MARQUEE;
+		dwAdd = 0;
+	}
+	m_Progress.ModifyStyle(dwRemove, dwAdd);
 }
 
 void CProgressDlg::DoDataExchange(CDataExchange* pDX)

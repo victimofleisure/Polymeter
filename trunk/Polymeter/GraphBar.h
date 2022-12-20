@@ -16,6 +16,7 @@
 		06		13nov21	add optional legend to graph
 		07		05jul22	add parent window to modulation type dialog ctor
 		08		23jul22	add option to exclude muted tracks
+		09		13dec22	add export of formats other than SVG
 		
 */
 
@@ -102,6 +103,26 @@ protected:
 		DECLARE_MESSAGE_MAP()
 		afx_msg void OnCheckChangeList();
 		CCheckListBox	m_list;		// check list box control
+	};
+	class CImageExportDlg : public CDialog {
+	public:
+		CImageExportDlg(CWnd *pParentWnd = NULL);
+		CSize	m_szImg;			// desired image size in pixels
+
+	protected:
+		enum {	// size modes
+			SM_SAME_SIZE_AS_WINDOW,
+			SM_CUSTOM_SIZE,
+			SIZE_MODES
+		};
+		int		m_nSizeMode;		// image size mode; see enum above
+		int		m_nCurSizeMode;		// current state of image size mode
+		void	UpdateUI(int nSizeMode);
+		virtual BOOL OnInitDialog();
+		virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+		DECLARE_MESSAGE_MAP()
+		afx_msg void OnClickedSizeMode(UINT nID);
+		afx_msg void OnDestroy();
 	};
 
 // Constants
@@ -196,7 +217,8 @@ protected:
 	bool	GetBrowserZoom(int& nZoomPct);
 	bool	SetBrowserZoom(int nZoomPct);
 	bool	GetBrowserZoomRange(int& nZoomMin, int& nZoomMax);
-	bool	WriteGraph(LPCTSTR pszPath, int& nNodes) const;
+	bool	WriteGraph(LPCTSTR pszPath, int& nNodes, const CSize& szGraph, bool bIsExporting = false) const;
+	bool	ExportGraph(CString sOutFormat, CString sOutPath, const CSize& szGraph);
 	void	DoContextMenu(CWnd* pWnd, CPoint point);
 	static	UINT	GraphThread(LPVOID pParam);
 	static	int		SplitLabel(const CString& str);

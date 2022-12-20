@@ -19,6 +19,7 @@
 		09		19apr18	move spin control creation to helper
 		10		24apr18	standardize names
 		11		02jun18	in Notify, fix x64 crash due to casting pointer to long
+		12		14dec22	add fraction format
 
         numeric edit control
  
@@ -55,6 +56,7 @@ CNumEdit::CNumEdit()
 	m_fMaxVal = 0;
 	m_bHaveRange = FALSE;
 	m_nFormat = DF_REAL;
+	m_nFracScale = 0;
 	m_pSpin = NULL;
 }
 
@@ -103,7 +105,14 @@ void CNumEdit::AddSpin(double fDelta)
 
 void CNumEdit::StrToVal(LPCTSTR Str)
 {
-	double	r = _tstof(Str) * m_fScale;
+	double	r;
+	int	nNumerator, nDenominator;
+	if ((m_nFormat & DF_FRACTION)	// if fractions are enabled
+	&& _stscanf_s(Str, _T("%d/%d"), &nNumerator, &nDenominator) == 2	// and both values scanned
+	&& nDenominator != 0)	// and denominator is non-zero
+		r = nNumerator / double(nDenominator) * m_nFracScale;
+	else
+		r = _tstof(Str) * m_fScale;
 	if (m_fLogBase)
 		r = log(r) / log(m_fLogBase);
 	m_fVal = r;
@@ -132,6 +141,8 @@ bool CNumEdit::IsValidChar(int nChar)
 		if (m_nFormat & DF_INT)
 			return(FALSE);
 		break;
+	case '/':
+		return (m_nFormat & DF_FRACTION) != 0;
 	default:
 		if (!(isdigit(nChar) || iscntrl(nChar)))
 			return(FALSE);

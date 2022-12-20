@@ -14,6 +14,7 @@
 		04		23nov21	add tempo map support
 		05		20dec21	add convergences option and full screen mode
 		06		16jun22	make tempo map iterator public
+		07		06dec22	add period unit
 
 */
 
@@ -63,6 +64,10 @@ public:
 public:
 	bool	HaveDataTip() const;
 	const COrbitArray& GetOrbitArray() const;
+	UINT	GetDrawStyle() const;
+	void	SetDrawStyle(UINT nStyle);
+	int		GetPeriodUnit() const;
+	void	SetPeriodUnit(int nUnit);
 
 // Operations
 public:
@@ -132,9 +137,10 @@ protected:
 	bool	m_bUsingD2D;			// true if using Direct2D
 	bool	m_bIsD2DInitDone;		// true Direct2D initialization was done
 	int		m_nMaxPlanetWidth;		// maximum planet width, in D2D device-independent pixels (DIPs)
-	int		m_nDrawStyle;			// see draw styles enum above
+	UINT	m_nDrawStyle;			// see draw styles enum above
 	float	m_fGradientRadius;		// current gradient radius for change detection, in DIPs
 	float	m_fGradientOffset;		// gradient offset from center of ellipse, in DIPs
+	int		m_nPeriodUnit;			// if non-zero, period labels are divided by this value in ticks
 	D2D1::ColorF	m_clrBkgnd;		// background color
 	CD2DSolidColorBrush	m_brOrbitNormal;	// solid brush for normal orbit
 	CD2DSolidColorBrush	m_brOrbitSelected;	// solid brush for selected orbit
@@ -183,6 +189,7 @@ protected:
 	afx_msg void OnUpdateDrawStyle(CCmdUI *pCmdUI);
 	afx_msg void OnFullScreen();
 	afx_msg void OnUpdateFullScreen(CCmdUI *pCmdUI);
+	afx_msg void OnPeriodUnit();
 };
 
 inline bool CPhaseBar::HaveDataTip() const
@@ -200,3 +207,12 @@ inline const CPhaseBar::COrbitArray& CPhaseBar::GetOrbitArray() const
 	return m_arrOrbit;
 }
 
+inline UINT CPhaseBar::GetDrawStyle() const
+{
+	return m_nDrawStyle;
+}
+
+inline int CPhaseBar::GetPeriodUnit() const
+{
+	return m_nPeriodUnit;
+}

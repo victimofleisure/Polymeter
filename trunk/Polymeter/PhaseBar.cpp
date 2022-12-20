@@ -21,6 +21,8 @@
 		11		27nov21	add options for crosshairs and period labels
 		12		20dec21	add convergences option and full screen mode
 		13		03jan22	add shortcut key for full screen mode
+		14		05dec22	center period text unless crosshairs are shown
+		15		06dec22	add period unit
 
 */
 
@@ -38,6 +40,7 @@
 #include "FolderDialog.h"
 #include "RecordDlg.h"
 #include "ChildFrm.h"
+#include "OffsetDlg.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -52,6 +55,7 @@ IMPLEMENT_DYNAMIC(CPhaseBar, CMyDockablePane)
 
 #define RK_EXPORT_FOLDER _T("ExportFolder")
 #define RK_DRAW_STYLE _T("DrawStyle")
+#define RK_PERIOD_UNIT _T("PeriodUnit")
 
 #define LIMIT_FIND_CONVERGENCE_TO_32_BITS
 
@@ -89,11 +93,13 @@ CPhaseBar::CPhaseBar() :
 	m_nDrawStyle = theApp.GetProfileInt(RK_PhaseBar, RK_DRAW_STYLE, DSB_CIRCULAR_ORBITS);
 	m_fGradientRadius = 0;
 	m_fGradientOffset = 0;
+	m_nPeriodUnit = theApp.GetProfileInt(RK_PhaseBar, RK_PERIOD_UNIT, 0);
 }
 
 CPhaseBar::~CPhaseBar()
 {
 	theApp.WriteProfileInt(RK_PhaseBar, RK_DRAW_STYLE, m_nDrawStyle);
+	theApp.WriteProfileInt(RK_PhaseBar, RK_PERIOD_UNIT, m_nPeriodUnit);
 }
 
 void CPhaseBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
@@ -663,6 +669,33 @@ void CPhaseBar::SetNightSky(bool bEnable, bool bRecreate)
 	}
 }
 
+void CPhaseBar::SetDrawStyle(UINT nStyle)
+{
+	if (nStyle == m_nDrawStyle)	// if style unchanged
+		return;	// nothing to do
+	UINT	nChanged = m_nDrawStyle ^ nStyle;	// determine which style bits changed
+	m_nDrawStyle = nStyle;	// update style member variable
+	if (nChanged & DSB_3D_PLANETS) {	// if 3D planets style changed
+		if (nStyle & DSB_3D_PLANETS) {	// if 3D planets style enabled
+			if (!m_brPlanet3DNormal.IsValid())	// if gradient brushes not created
+				CreateGradientBrushes(GetRenderTarget());
+		}
+	}
+	if (nChanged & DSB_NIGHT_SKY) {	// if night sky style changed
+		SetNightSky((nStyle & DSB_NIGHT_SKY) != 0);
+	}
+	Invalidate();
+}
+
+void CPhaseBar::SetPeriodUnit(int nUnit)
+{
+	if (nUnit == m_nPeriodUnit)	// if value unchanged
+		return;	// nothing to do
+	m_nPeriodUnit = nUnit;
+	if (m_nDrawStyle & DSB_PERIODS)
+		Update();
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CPhaseBar message map
 
@@ -682,6 +715,7 @@ BEGIN_MESSAGE_MAP(CPhaseBar, CMyDockablePane)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_DRAW_STYLE_FIRST, ID_DRAW_STYLE_LAST, OnUpdateDrawStyle)
 	ON_COMMAND(ID_PHASE_FULL_SCREEN, OnFullScreen)
 	ON_UPDATE_COMMAND_UI(ID_PHASE_FULL_SCREEN, OnUpdateFullScreen)
+	ON_COMMAND(ID_PHASE_PERIOD_UNIT, OnPeriodUnit)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -789,13 +823,26 @@ LRESULT CPhaseBar::OnDrawD2D(WPARAM wParam, LPARAM lParam)
 					pRenderTarget->DrawLine(CD2DPointF(0, ptOrigin.y), CD2DPointF(szRender.width, ptOrigin.y), &m_brOrbitNormal);
 				}
 				if (m_nDrawStyle & DSB_PERIODS) {	// if showing periods
+					const int nTextOffset = 2;
+					const int nTextMaxWidth = 256;
 					CD2DTextFormat	fmtText(pRenderTarget, _T("Verdana"), float(fOrbitWidth / 2));
-					float	x1 = ptOrigin.x + 2;
-					float	x2 = ptOrigin.x + 256;
+					float	x1, x2;
+					if (m_nDrawStyle & DSB_CROSSHAIRS) {	// if showing crosshairs
+						x1 = ptOrigin.x + nTextOffset;	// left-align text to right of vertical axis
+						x2 = ptOrigin.x + nTextOffset + nTextMaxWidth;
+					} else {	// not showing crosshairs
+						fmtText.Get()->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);	// center text
+						x1 = ptOrigin.x - nTextMaxWidth / 2;
+						x2 = ptOrigin.x + nTextMaxWidth / 2;
+					}
 					double	oy = ptOrigin.y + fOrbitWidth / 2;
 					CString	sLabel;
 					for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
-						sLabel.Format(_T("%d"),  m_arrOrbit[iOrbit].m_nPeriod);
+						if (m_nPeriodUnit > 0) {	// if period unit is specified
+							sLabel.Format(_T("%g"),  m_arrOrbit[iOrbit].m_nPeriod / double(m_nPeriodUnit));
+						} else {	// no period unit; display periods in ticks
+							sLabel.Format(_T("%d"),  m_arrOrbit[iOrbit].m_nPeriod);
+						}
 						float	y = float(iOrbit * fOrbitWidth + oy);
 						pRenderTarget->DrawText(sLabel, CD2DRectF(x1, y, x2, y), &m_brOrbitNormal, &fmtText);
 					}
@@ -1052,18 +1099,9 @@ void CPhaseBar::OnUpdateExportVideo(CCmdUI *pCmdUI)
 void CPhaseBar::OnDrawStyle(UINT nID)
 {
 	int iStyle = nID - ID_DRAW_STYLE_FIRST;
-	ASSERT(iStyle >= 0 && iStyle < DRAW_STYLES);
-	m_nDrawStyle ^= (1 << iStyle);	// toggle corresponding bit in draw style mask
-	switch (iStyle) {
-	case DRAW_STYLE_3D_PLANETS:
-		if (!m_brPlanet3DNormal.IsValid())	// if gradient brushes not created
-			CreateGradientBrushes(GetRenderTarget());
-		break;
-	case DRAW_STYLE_NIGHT_SKY:
-		SetNightSky((m_nDrawStyle & DSB_NIGHT_SKY) != 0);
-		break;
-	}
-	Invalidate();
+	ASSERT(iStyle >= 0 && iStyle < DRAW_STYLES);	// check style index for valid range
+	UINT	nStyle = m_nDrawStyle ^ (1 << iStyle);	// toggle corresponding bit in draw style mask
+	SetDrawStyle(nStyle);
 }
 
 void CPhaseBar::OnUpdateDrawStyle(CCmdUI *pCmdUI)
@@ -1082,4 +1120,16 @@ void CPhaseBar::OnUpdateFullScreen(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bIsFullScreen);
 	pCmdUI->Enable(!IsTabbed());
+}
+
+void CPhaseBar::OnPeriodUnit()
+{
+	COffsetDlg	dlg;
+	dlg.m_nOffset = m_nPeriodUnit;
+	dlg.m_rngOffset = CRange<int>(0, INT_MAX);
+	dlg.m_nDlgCaptionID = IDS_PHASE_PERIOD_UNIT;
+	dlg.m_nEditCaptionID = IDS_PHASE_PERIOD_UNIT_TICKS;
+	if (dlg.DoModal() == IDOK) {
+		SetPeriodUnit(dlg.m_nOffset);
+	}
 }

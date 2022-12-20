@@ -32,6 +32,7 @@
 		22		03jan22	add full screen mode
 		23		05jul22	add parent window to modulation type dialog ctor
 		24		23jul22	add option to exclude muted tracks
+		25		13dec22	add export of formats other than SVG
 
 */
 
@@ -44,6 +45,7 @@
 #include <math.h>
 #include "RegTempl.h"
 #include "FolderDialog.h"
+#include "ProgressDlg.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -112,6 +114,9 @@ const LPCTSTR CGraphBar::m_arrGraphFindExeName[] = {
 #define RK_HIGHLIGHT_SELECT _T("HighlightSelect")
 #define RK_GRAPHVIZ_PATH _T("GraphvizPath")
 #define RK_SHOW_MUTED _T("ShowMuted")
+#define RK_EXPORT_SIZE_MODE _T("ExportSizeMode")
+#define RK_EXPORT_WIDTH _T("ExportWidth")
+#define RK_EXPORT_HEIGHT _T("ExportHeight")
 
 CString	CGraphBar::m_sGraphvizPath;
 
@@ -270,7 +275,10 @@ bool CGraphBar::UpdateGraph()
 		return false;
 	m_tfpData.SetPath(sDataPath);
 	int	nNodes;
-	if (!WriteGraph(sDataPath, nNodes) || !nNodes) {	// if can't write graph or graph is empty
+	CRect	rc;
+	GetClientRect(rc);
+	CSize	szGraph(rc.Size());
+	if (!WriteGraph(sDataPath, nNodes, szGraph) || !nNodes) {	// if can't write graph or graph is empty
 		m_tfpData.Empty();
 		m_tfpGraph.Empty();
 		Navigate(_T("about:blank"));
@@ -299,7 +307,6 @@ UINT CGraphBar::GraphThread(LPVOID pParam)
 	CString	sDataPath(params.m_sDataPath);
 	CPathStr	sGraphPath(sDataPath);
 	sGraphPath.RenameExtension(_T(".svg"));	// same as data path except extension
-	CString	sCmdLine;
 	LPCTSTR	pszLayout = m_arrGraphLayout[params.m_iGraphLayout];
 	CPathStr	sExePath(m_sGraphvizPath);
 	sExePath.Append(m_arrGraphExeName);
@@ -308,12 +315,13 @@ UINT CGraphBar::GraphThread(LPVOID pParam)
 		pszRender = _T(":cairo");	// fix for GraphViz bug #1855; see above
 	else	// default render
 		pszRender = _T("");
+	CString	sCmdLine;
 	sCmdLine.Format(_T("%s -K%s -Tsvg%s -o\"%s\" \"%s\""), 
 		sExePath.GetString(), pszLayout, pszRender, sGraphPath.GetString(), sDataPath.GetString());
 	TCHAR	*pCmdLine = sCmdLine.GetBuffer(0);
 	STARTUPINFO	si;
 	GetStartupInfo(&si);
-	PROCESS_INFORMATION	pi;
+	CProcessInformation	pi;	// dtor closes handles
 	UINT	dwFlags = CREATE_NO_WINDOW;	// avoid flashing console window
 	DWORD	dwExitMsg = UWM_GRAPH_ERROR;	// assume failure
 	DWORD	dwExitParam = 0;
@@ -333,8 +341,6 @@ UINT CGraphBar::GraphThread(LPVOID pParam)
 		default:
 			dwExitParam = GetLastError();
 		}
-		CloseHandle(pi.hProcess);	// close both handles to avoid handle leak
-		CloseHandle(pi.hThread);
 	} else {	// create process error
 		dwExitParam = GetLastError();
 	}
@@ -346,7 +352,58 @@ UINT CGraphBar::GraphThread(LPVOID pParam)
 	return 0;
 }
 
-bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes) const
+bool CGraphBar::ExportGraph(CString sOutFormat, CString sOutPath, const CSize& szGraph)
+{
+	CString	sDataPath;	// don't touch member files, create our own
+	if (!theApp.GetTempFileName(sDataPath, _T("plm")))
+		return false;
+	CTempFilePath	tfpData(sDataPath);
+	int	nNodes;
+	if (!WriteGraph(sDataPath, nNodes, szGraph, true) || !nNodes)
+		return false;
+	LPCTSTR	pszLayout = m_arrGraphLayout[m_iGraphLayout];
+	CPathStr	sExePath(m_sGraphvizPath);
+	sExePath.Append(m_arrGraphExeName);
+	LPCTSTR	pszRender;
+	if (m_bUseCairo)
+		pszRender = _T(":cairo");	// fix for GraphViz bug #1855; see above
+	else	// default render
+		pszRender = _T("");
+	CString	sCmdLine;
+	sCmdLine.Format(_T("%s -K%s -T%s%s -o\"%s\" \"%s\""), // similar to GraphThread except output format is variable
+		sExePath.GetString(), pszLayout, sOutFormat.GetString(), pszRender, sOutPath.GetString(), sDataPath.GetString());
+	TCHAR	*pCmdLine = sCmdLine.GetBuffer(0);
+	STARTUPINFO	si;
+	GetStartupInfo(&si);
+	CProcessInformation	pi;	// dtor closes handles
+	UINT	dwFlags = CREATE_NO_WINDOW;	// avoid flashing console window
+	DWORD	dwError = ERROR_SUCCESS;	// assume success
+	if (CreateProcess(NULL, pCmdLine, NULL, NULL, FALSE, dwFlags, NULL, NULL, &si, &pi)) {
+		CProgressDlg	dlg;
+		dlg.Create(this);	// show progress bar
+		dlg.SetMarquee();	// process doesn't notify us of its progress, so set marquee mode
+		const DWORD	nTimeout = 100;	// polling period in milliseconds
+		DWORD	nWaitStatus;
+		do {	// poll thread handle until Graphviz process exits
+			dlg.PumpMessages();	// keep UI responsive
+			nWaitStatus = WaitForSingleObject(pi.hThread, nTimeout);
+		} while (nWaitStatus == WAIT_TIMEOUT);
+		if (nWaitStatus == WAIT_OBJECT_0) {	// if thread handle signaled
+			if (!PathFileExists(sOutPath))	// if output file doesn't exist
+				dwError = ERROR_FILE_NOT_FOUND;
+		} else {	// wait failed
+			dwError = GetLastError();
+		}
+	} else {	// create process error
+		dwError = GetLastError();
+	}
+	if (dwError != ERROR_SUCCESS) {
+		AfxMessageBox(FormatSystemError(dwError));
+	}
+	return dwError == ERROR_SUCCESS;
+}
+
+bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes, const CSize& szGraph, bool bIsExporting) const
 {
 	nNodes = 0;
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
@@ -356,12 +413,14 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes) const
 	// breaks the SVG export (it outputs an incorrect view size). The solution is to use
 	// the default Graphviz DPI instead of the system DPI when calculating the page size.
 	// A small correction is added to the DPI to avoid spurious scroll bars in some cases.
-	double	fGraphvizDPI = 96.1;	// this dubious kludge helps avoid scroll bars
-	CRect	rc;
-	GetClientRect(rc);
-	CSize	sz(rc.Size());
-	double	fWidth = sz.cx / fGraphvizDPI;	// width in inches
-	double	fHeight = sz.cy / fGraphvizDPI;	// height in inches
+	double	fGraphvizDPI;
+	if (bIsExporting) {	// if exporting graph to file
+		fGraphvizDPI = 96;
+	} else {	// displaying graph in browser control
+		fGraphvizDPI = 96.1;	// this dubious kludge helps avoid scroll bars
+	}
+	double	fWidth = szGraph.cx / fGraphvizDPI;	// width in inches
+	double	fHeight = szGraph.cy / fGraphvizDPI;	// height in inches
 	CStdioFile	fout(pszPath, CFile::modeCreate | CFile::modeWrite);
 	_fputts(_T("digraph {\n"), fout.m_pStream);
 	_ftprintf(fout.m_pStream, _T("graph[size=\"%g,%g\",ratio=fill];\n"), fWidth, fHeight);
@@ -859,6 +918,9 @@ bool CGraphBar::FindGraphviz()
 	return false;
 }
 
+/////////////////////////////////////////////////////////////////////////////
+// CFileFindDlg
+
 CGraphBar::CFileFindDlg::CFileFindDlg(CWnd *pParentWnd) : CDialog(IDD_PROCESSING, pParentWnd)
 {
 	m_pWorkerThread = NULL;
@@ -999,6 +1061,9 @@ BEGIN_MESSAGE_MAP(CGraphBar::CModulationTypeDlg, CDialog)
 	ON_CLBN_CHKCHANGE(IDC_MOD_TYPE_LIST, OnCheckChangeList)
 END_MESSAGE_MAP()
 
+/////////////////////////////////////////////////////////////////////////////
+// CModulationTypeDlg
+
 void CGraphBar::CModulationTypeDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
@@ -1039,6 +1104,86 @@ void CGraphBar::CModulationTypeDlg::OnCheckChangeList()
 	}
 	GetDlgItem(IDOK)->EnableWindow(bGotChecks);
 }
+
+/////////////////////////////////////////////////////////////////////////////
+// CImageExportDlg
+
+CGraphBar::CImageExportDlg::CImageExportDlg(CWnd *pParentWnd) 
+	: CDialog(IDD_IMAGE_EXPORT, pParentWnd)
+{
+	m_nSizeMode = 0;
+	m_nCurSizeMode = 0;
+	m_szImg = CSize(0, 0);
+}
+
+BOOL CGraphBar::CImageExportDlg::OnInitDialog()
+{
+	m_nSizeMode = theApp.GetProfileInt(RK_GraphBar, RK_EXPORT_SIZE_MODE, SM_SAME_SIZE_AS_WINDOW);
+	m_szImg.cx = theApp.GetProfileInt(RK_GraphBar, RK_EXPORT_WIDTH, 1024);
+	m_szImg.cy = theApp.GetProfileInt(RK_GraphBar, RK_EXPORT_HEIGHT, 768);
+	CDialog::OnInitDialog();
+	m_nCurSizeMode = -1;	// spoof no-op test
+	UpdateUI(m_nSizeMode);
+	return TRUE;  // return TRUE unless you set the focus to a control
+}
+
+void CGraphBar::CImageExportDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialog::DoDataExchange(pDX);
+	DDX_Radio(pDX, IDC_IMAGE_EXPORT_SIZE_MODE_1, m_nSizeMode);
+	DDX_Text(pDX, IDC_IMAGE_EXPORT_WIDTH_EDIT, m_szImg.cx);
+	DDV_MinMaxInt(pDX, m_szImg.cx, 1, INT_MAX);
+	DDX_Text(pDX, IDC_IMAGE_EXPORT_HEIGHT_EDIT, m_szImg.cy);
+	DDV_MinMaxInt(pDX, m_szImg.cy, 1, INT_MAX);
+}
+
+void CGraphBar::CImageExportDlg::UpdateUI(int nSizeMode)
+{
+	if (nSizeMode == m_nCurSizeMode)	// if state unchanged
+		return;	// nothing to do; handles duplicate notifications
+	m_nCurSizeMode = nSizeMode;	// update shadow of size mode
+	CWnd	*pWidthCtrl = GetDlgItem(IDC_IMAGE_EXPORT_WIDTH_EDIT);
+	CWnd	*pHeightCtrl = GetDlgItem(IDC_IMAGE_EXPORT_HEIGHT_EDIT);
+	ASSERT(pWidthCtrl != NULL && pHeightCtrl != NULL);	// controls must exist
+	pWidthCtrl->EnableWindow(nSizeMode == SM_CUSTOM_SIZE);
+	pHeightCtrl->EnableWindow(nSizeMode == SM_CUSTOM_SIZE);
+	if (nSizeMode == SM_SAME_SIZE_AS_WINDOW) {
+		CWnd	*pParentWnd = GetParent();	// use parent window's client size
+		ASSERT(pParentWnd != NULL);
+		if (pParentWnd != NULL) {
+			CRect	rClient;
+			pParentWnd->GetClientRect(rClient);
+			m_szImg = rClient.Size();
+			CString	sVal;
+			sVal.Format(_T("%d"), m_szImg.cx);
+			pWidthCtrl->SetWindowText(sVal);
+			sVal.Format(_T("%d"), m_szImg.cy);
+			pHeightCtrl->SetWindowText(sVal);
+		}
+	}
+}
+
+void CGraphBar::CImageExportDlg::OnClickedSizeMode(UINT nID)
+{
+	int	nSizeMode = nID - IDC_IMAGE_EXPORT_SIZE_MODE_1;
+	ASSERT(nSizeMode >= 0 && nSizeMode < SIZE_MODES);
+	UpdateUI(nSizeMode);
+}
+
+void CGraphBar::CImageExportDlg::OnDestroy()
+{
+	CDialog::OnDestroy();
+	if (m_nModalResult == IDOK) {	// if user clicked OK, save state
+		theApp.WriteProfileInt(RK_GraphBar, RK_EXPORT_SIZE_MODE, m_nSizeMode);
+		theApp.WriteProfileInt(RK_GraphBar, RK_EXPORT_WIDTH, m_szImg.cx);
+		theApp.WriteProfileInt(RK_GraphBar, RK_EXPORT_HEIGHT, m_szImg.cy);
+	}
+}
+
+BEGIN_MESSAGE_MAP(CGraphBar::CImageExportDlg, CDialog)
+	ON_CONTROL_RANGE(BN_CLICKED, IDC_IMAGE_EXPORT_SIZE_MODE_1, IDC_IMAGE_EXPORT_SIZE_MODE_2, OnClickedSizeMode)
+	ON_WM_DESTROY()
+END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // CGraphBar message map
@@ -1214,14 +1359,19 @@ void CGraphBar::OnGraphFilter(UINT nID)
 
 void CGraphBar::OnGraphSaveAs()
 {
-	CString	sFilter(LPCTSTR(IDS_SVG_FILE_FILTER));
+	CString	sFilter(LPCTSTR(IDS_GRAPH_SAVE_AS_FILE_FILTER));
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	CPathStr	sDefName(pDoc->GetTitle());
 	sDefName.RemoveExtension();
 	CFileDialog	fd(FALSE, _T(".svg"), sDefName, OFN_OVERWRITEPROMPT, sFilter);
 	if (fd.DoModal() == IDOK) {
-		if (!CopyFile(m_tfpGraph.GetPath(), fd.GetPathName(), FALSE))
-			AfxMessageBox(GetLastErrorString());
+		// assume supported file extensions match Graphviz output formats
+		CString	sOutFormat(fd.GetFileExt());
+		sOutFormat.MakeLower();	// Graphviz output formats are lower case
+		CImageExportDlg	dlg;
+		if (dlg.DoModal() == IDOK) {
+			ExportGraph(sOutFormat, fd.GetPathName(), dlg.m_szImg);
+		}
 	}
 }
 

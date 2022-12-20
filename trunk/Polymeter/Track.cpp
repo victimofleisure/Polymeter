@@ -42,6 +42,7 @@
 		32		15feb22	add validate modulations method
 		33		19feb22	use INI file class directly instead of via profile
 		34		20oct22	support offset modulation of controller tracks
+		35		18dec22	in tick dependency scaling, clamp quant to its range
 
 */
 
@@ -1455,6 +1456,7 @@ void CTrack::ScaleTickDepends(double fScale)
 {
 	#define TICKDEPENDSDEF(x) x = Round(x * fScale);
 	#include "TrackDef.h"	// generate code to scale tick-dependent members
+	m_nQuant = CLAMP(m_nQuant, 1, MAX_QUANT);	// clamp quant to its range
 	int	nDubs = m_arrDub.GetSize();
 	for (int iDub = 0; iDub < nDubs; iDub++) {	// for each dub
 		m_arrDub[iDub].m_nTime = Round(m_arrDub[iDub].m_nTime * fScale);

@@ -65,6 +65,7 @@ public:
 	enum {
 		INIT_STEPS = 32,			// initial number of steps
 		MIN_DUB_TIME = INT_MIN,		// minimum dub time
+		MAX_QUANT = SHRT_MAX,		// maximum quant in ticks
 	};
 	enum {	// step bitmasks; these define the layout of a sequencer step
 		// for track types other than note, the velocity carries the event's

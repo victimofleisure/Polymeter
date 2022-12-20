@@ -85,6 +85,7 @@
 		75		19may22	add loop ruler selection attribute
 		76		05jul22	use wrapper class to save and restore focus
 		77		25oct22	add command to select all unmuted tracks
+		78		16dec22	add quant string conversions that support fractions
 
 */
 
@@ -4015,6 +4016,47 @@ void CPolymeterDoc::SetLoopRulerSelection(double fSelStart, double fSelEnd)
 	int	nTimeDiv = m_Seq.GetTimeDivision();
 	CLoopRange	rngLoop(Round(fSelStart * nTimeDiv), Round(fSelEnd * nTimeDiv));
 	SetLoopRange(rngLoop);
+}
+
+CString	CPolymeterDoc::QuantToString(int nQuant) const
+{
+	CString	sQuant;
+	if (theApp.m_Options.m_View_bShowQuantAsFrac) {	// if showing quant as fraction
+		int	nWholeNote = GetTimeDivisionTicks() * 4;	// timebase is in quarter notes
+		int	nDenominator;
+		int	nNumerator = CTrackView::GetQuantFraction(nQuant, nWholeNote, nDenominator);
+		if (nNumerator) {	// if quant successfully converted to fraction
+			sQuant.Format(_T("%d/%d"), nNumerator, nDenominator);
+			return sQuant;
+		}
+	}
+	sQuant.Format(_T("%d"), nQuant);	// show quant as number of ticks
+	return sQuant;
+}
+
+void CPolymeterDoc::QuantToString(int nQuant, LPTSTR pszText, int nTextMax) const
+{
+	if (theApp.m_Options.m_View_bShowQuantAsFrac) {	// if showing quant as fraction
+		int	nWholeNote = GetTimeDivisionTicks() * 4;	// timebase is in quarter notes
+		int	nDenominator;
+		int	nNumerator = CTrackView::GetQuantFraction(nQuant, nWholeNote, nDenominator);
+		if (nNumerator) {	// if quant successfully converted to fraction
+			_stprintf_s(pszText, nTextMax, _T("%d/%d"), nNumerator, nDenominator);
+			return;
+		}
+	}
+	_stprintf_s(pszText, nTextMax, _T("%d"), nQuant);	// show quant as number of ticks
+}
+
+int CPolymeterDoc::StringToQuant(LPCTSTR pszQuant) const
+{
+	int	nNumerator, nDenominator, nQuant;
+	if (_stscanf_s(pszQuant, _T("%d/%d"), &nNumerator, &nDenominator) == 2 && nDenominator != 0) {
+		int	nWholeNote = GetTimeDivisionTicks() * 4;	// timebase is in quarter notes
+		nQuant = Round(nNumerator / double(nDenominator) * nWholeNote);
+	} else	// string isn't a valid fraction
+		nQuant = _ttoi(pszQuant);	// assume value in ticks
+	return CLAMP(nQuant, 1, MAX_QUANT);	// apply quant range
 }
 
 // CPolymeterDoc diagnostics

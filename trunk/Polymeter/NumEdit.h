@@ -16,6 +16,7 @@
 		06		24apr18	standardize names
 		07		28apr18	make AddSpin virtual
 		08		07jun21	rename rounding functions
+		09		14dec22	add fraction format
 
         numeric edit control
  
@@ -51,6 +52,7 @@ public:
 		DF_REAL		= 0x00,
 		DF_INT		= 0x01,
 		DF_SPIN		= 0x02,
+		DF_FRACTION	= 0x04,
 	};
 
 // Attributes
@@ -65,6 +67,7 @@ public:
 	void	SetAuxNotify(CWnd *pWnd);
 	void	SetRange(double fMinVal, double fMaxVal);
 	void	SetFormat(int nType);
+	void	SetFractionScale(int nScale);
 
 // Operations
 public:
@@ -102,6 +105,7 @@ protected:
 	double	m_fMaxVal;		// value's upper limit
 	bool	m_bHaveRange;	// true if value should be limited
 	BYTE	m_nFormat;		// value's data format; see enum above
+	int		m_nFracScale;	// fraction scaling factor
 	CNumSpin	*m_pSpin;	// associated spin control if any
 
 // Helpers
@@ -147,6 +151,11 @@ inline void CNumEdit::SetAuxNotify(CWnd *pWnd)
 inline void CNumEdit::SetFormat(int Format)
 {
 	m_nFormat = static_cast<BYTE>(Format);
+}
+
+inline void CNumEdit::SetFractionScale(int nScale)
+{
+	m_nFracScale = nScale;
 }
 
 /////////////////////////////////////////////////////////////////////////////

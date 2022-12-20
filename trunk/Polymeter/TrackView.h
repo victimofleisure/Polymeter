@@ -14,6 +14,8 @@
 		04		09jul20	add pointer to parent frame
 		05		20jan21	add ensure visible method
 		06		25oct21	add menu select and exit menu handlers
+		07		14dec22	add support for quant fractions
+		08		16dec22	add quant fraction drop down menu
 
 */
 
@@ -61,6 +63,8 @@ public:
 	static	void	SavePersistentState();
 	void	UpdatePersistentState(bool bNoRedraw = false);
 	void	EnsureVisible(int iTrack);
+	static	void	GetQuantFractions(int nWholeNote, CIntArrayEx& arrDenominator);
+	static	int		GetQuantFraction(int nQuant, int nWholeNote, int& nDenominator);
 
 // Public data
 	CChildFrame	*m_pParentFrame;	// pointer to parent frame
@@ -73,6 +77,7 @@ protected:
 		virtual	void	OnItemChange(LPCTSTR pszText);
 		virtual void	UpdateTarget(const CComVariant& var, UINT nFlags);
 		CStepArray	m_arrStep;		// array of track steps, for restoring track length
+		CIntArrayEx	m_arrQuant;		// array of quants corresponding to fractions in drop down list
 	};
 	class CListColumnState {
 	public:
@@ -97,6 +102,7 @@ protected:
 	};
 	enum {
 		IDC_TRACK_GRID = 1963,
+		MAX_QUANT_LEVELS = 8,	// limit quant fraction denominators to 1/256 and 1/384
 	};
 	static const CGridCtrl::COL_INFO	m_arrColInfo[COLUMNS];
 	static const LPCTSTR	m_arrGMDrumName[];
@@ -120,6 +126,7 @@ protected:
 // Helpers
 	void	UpdateDependencies(int iTrack, int iProp); 	
 	void	UpdateNotes();
+	void	UpdateColumn(int iCol);
 	int		CalcHeaderHeight() const;
 	int		CalcItemHeight();
 

@@ -25,6 +25,7 @@
 		15		13jun20	add conditional wait cursor wrapper
 		16		11nov21	add FindMenuItem and InsertNumericMenuItems
 		17		05jul22	add wrapper class to save and restore focus 
+		18		13dec22	add process information wrapper
 
         enhanced application
  
@@ -155,4 +156,24 @@ inline CSaveRestoreFocus::~CSaveRestoreFocus()
 {
 	if (m_hFocusWnd)
 		SetFocus(m_hFocusWnd);
+}
+
+class CProcessInformation : public PROCESS_INFORMATION {
+public:
+	CProcessInformation();
+	~CProcessInformation();
+};
+
+inline CProcessInformation::CProcessInformation()
+{
+	hProcess = NULL; 
+	hThread = NULL; 
+	dwProcessId = 0;
+	dwThreadId = 0;
+}
+
+inline CProcessInformation::~CProcessInformation() 
+{
+	CloseHandle(hProcess);
+	CloseHandle(hThread); 
 }
