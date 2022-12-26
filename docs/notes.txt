@@ -4089,3 +4089,30 @@ Also in PhaseBar.cpp, disable upper limit on planet size:
  	m_nMaxPlanetWidth = INT_MAX;//@@@MAX_PLANET_WIDTH;
 
 None of this is even close to foolproof but it gets the job done.
+
+12/13/22 quant as fraction
+
+Something like this partially works:
+
+NumEdit.h:
+		DF_FRACTION	= 0x04,
+
+CNumEdit::StrToVal:
+	int	nNumerator, nDenominator;
+	if ((m_nFormat & DF_FRACTION)	// if fractions are enabled
+	&& _stscanf_s(Str, _T("%d/%d"), &nNumerator, &nDenominator) == 2	// and both values scanned
+	&& nDenominator != 0)	// and denominator is non-zero
+		r = nNumerator / double(nDenominator) * m_fScale;
+	else
+		r = _tstof(Str) * m_fScale;
+
+CTrackView::CTrackGridCtrl::CreateEditCtrl:
+		case COL_Quant:
+			nDataFormat |= CNumEdit::DF_FRACTION;	// let user enter a fraction
+			pEdit->SetScale(pDoc->GetTimeDivisionTicks() * 4);
+			break;
+
+But the SetScale breaks the spin control delta. This could be fixed by adding a 
+special integer multiplier to CNumEdit that's only used in the fraction case.
+
+

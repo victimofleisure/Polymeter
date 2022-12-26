@@ -102,6 +102,7 @@
 <dd><a href="#Show_Current_Position">Show Current Position</a>
 <dd><a href="#Show_Note_Names">Show Note Names</a>
 <dd><a href="#Show_General_MIDI_Names">Show General MIDI Names</a>
+<dd><a href="#Show_Quant_as_Fraction">Show Quant as Fraction</a>
 <dd><a href="#Show_Track_Colors">Show Track Colors</a>
 <dd><a href="#Unique_Track_Names">Unique Track Names</a>
 <dd><a href="#Zoom_Step">Zoom Step</a>
@@ -980,10 +981,11 @@
 
 <a name="Track_Quant"><h4>Quant</h4></a>
 
-<p>This is the duration of each track step, in <a href="#Ticks">ticks</a>. The table below gives common Quant values for the default <a href="#Timebase">timebase</a> (120 ticks per quarter note).
+<p>This is the duration of each track step, in <a href="#Ticks">ticks</a>. If ticks are inconvenient, you can alternatively specify the duration as a fraction of a whole note, for example you can type 1/16 for a sixteenth note and this is automatically converted to the equivalent number of ticks. Quant values can also optionally be <a href="#Show_Quant_as_Fraction">shown as fractions</a>. The table below gives common Quant values for the default <a href="#Timebase">timebase</a> (120 ticks per quarter note).
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Fraction</th><th>Ticks</th></tr>
+<tr><td>1/1</td><td>480</td></tr>
 <tr><td>1/2</td><td>240</td></tr>
 <tr><td>1/3</td><td>160</td></tr>
 <tr><td>1/4</td><td>120</td></tr>
@@ -1530,7 +1532,7 @@
 <tr><td>Labels</td><td>This item enables or disables edge labels. When this option is enabled, a label appears next to every connecting line in the graph, identifying the corresponding modulation type. This is only recommended for simple graphs, because otherwise the graph is hard to read.</td></tr>
 <tr><td>Legend</td><td>This item enables or disables showing a legend that maps the <a href="#Graph_edge_colors">edge colors</a> in use to their corresponding modulation types.</td></tr>
 <tr><td>Muted</td><td>This item determines whether the graph includes <a href="#Track_Mutes">muted tracks</a>. If this item is checked (the default), muted tracks are included, and the graph is unaffected by muting or unmuting tracks. Uncheck this item to exclude muted tracks. Excluding muted tracks can simplify the graph, but the graph also changes more often, because it updates whenever track mutes change. To match the <a href="#Modulations_bar">Modulations bar</a>, check this item; to match what you're hearing, uncheck it.</td></tr>
-<tr><td>Save As</td><td>This item saves the current graph to a file. Currently the only supported format is SVG, which is vector-based and scalable. The output file will have the same aspect ratio as the graph window.</td></tr>
+<tr><td>Save As</td><td>This item saves the current graph to a file. The default output format is SVG, which is vector-based and scalable. Other supported formats include PNG, BMP, and PDF. The command displays a file dialog, which lets you specify the name and location of the output file. To change the output format, use the "Save as type" drop list near the bottom of the file dialog. The command also displays an Image Export dialog, which lets you specify the output image size. If "Same size as window" is selected, the output image will have the same size as the graph window. To specify a different size, select "Custom size" and enter the desired width and height in pixels.</td></tr>
 <tr><td>Reload</td><td>This item redraws the graph.</td></tr>
 </table>
 
@@ -1592,9 +1594,10 @@
 <tr><td>3D Planets</td><td>If checked, the planets are drawn in 3D instead of 2D.</td></tr>
 <tr><td>Night Sky</td><td>If checked, the background is dark instead of light.</td></tr>
 <tr><td>Crosshairs</td><td>If checked, the diagram includes crosshairs.</td></tr>
-<tr><td>Periods</td><td>If checked, the diagram includes labels that specify each orbit's <a href="#Period">period</a> in <a href="#Ticks">ticks</a>. This option increases overhead.</td></tr>
+<tr><td>Periods</td><td>If checked, the diagram includes labels that specify each orbit's <a href="#Period">period</a>. The periods are displayed in <a href="#Ticks">ticks</a> by default, but you can optionally convert them to another unit via division; see Period Unit below. Showing labels increases overhead.</td></tr>
 <tr><td>Convergences</td><td>If checked, the diagram indicates <a href="#Convergences">convergences</a> slightly before and after they occur. The participating orbits are increasingly highlighted as the convergence approaches, and gradually return to normal as the convergence recedes. To specify the minimum number of orbits that must participate in a convergence, use the <a href="#Convergence_Size">Convergence Size</a> options on the Transport menu. To skip lesser convergences, increase the size. If orbits are selected, only those orbits participate in convergences.</td></tr>
 <tr><td>Full Screen</td><td>Makes the Phase bar enter full screen mode, or if it's already full screen, restores it to its previous size and position. In full screen mode, the diagram is shown without borders and fills the entire monitor. To make the bar fill a secondary monitor, drag the bar onto that monitor before making it full-screen. The shortcut key to enter or exit full screen mode is <span class="key">Ctrl+F11</span>. You can also exit full screen mode by pressing the <span class="key">Escape</span> key. To use either key, you may need to give the Phase bar the input focus first, by left-clicking the diagram's background.</td></tr>
+<tr><td>Period Unit</td><td>This command lets you convert the period labels to a unit other than ticks, via division. It's only meaningful if you include period labels on the graph, by checking the Periods option as explained above. The command displays the Period Unit dialog; enter the desired unit in ticks, and click OK. All periods are divided by the specified unit before being displayed. For example, if the <a href="#Timebase">timebase</a> is 120, specifying 30 will cause periods to be displayed in sixteenth notes. To revert to displaying periods in ticks, repeat this command and set the unit to zero.</td></tr>
 </table>
 
 <a name="Step_Values_bar"><h2>Step Values</h2></a>
@@ -2020,6 +2023,14 @@
 <a name="Show_General_MIDI_Names"><h3>Show General MIDI Names</h3></a>
 
 <p>If true, General MIDI patch and drum names are displayed instead of numbers. Patch names are shown in the <a href="#Channels_bar">Channels bar</a>. Drum names are shown in the <a href="#Track_Note">note</a> column of the <a href="#Track_View">Track View</a>, but only for tracks that output on channel 10.
+
+<a name="Show_Quant_as_Fraction"><h3>Show Quant as Fraction</h3></a>
+
+<p>If true, <a href="#Track_Quant">Quants</a> are shown as fractions of a whole note; otherwise, quants are shown in <a href="#Ticks">ticks</a>. For example using the default <a href="#Timebase">timebase</a> of 120, a quant of 120 is shown as 1/4 (a quarter note), 60 is shown as 1/8, and so on. If you're using common quants, fractions are easier to work with than ticks, because the numbers are smaller and the application does the tick arithmetic for you. You can always <em>enter</em> a quant as a fraction, regardless of this option; this option only controls how quants are <em>shown</em>.
+
+<p>Some quants may still be shown in ticks even when this option is enabled. If a quant can be converted to a fraction having a denominator that's either a power of two, or three times a power of two, and the denominator is reasonably small, the quant is shown as a fraction, otherwise it's shown in ticks. For example you may enter the fraction 1/5, but it will be shown in ticks, because the denominator is non-conforming.
+
+<p>If this option is enabled when you edit a quant in the <a href="#Track_Grid">track grid</a>, a dropdown list containing common quant fractions is displayed next to the edit box. To select a fraction from the list, either left-click it, or use the up and down arrow keys to scroll to the desired fraction, and then <a href="#Grid_controls">end the edit</a>. If the desired fraction isn't in the list, type the fraction in the edit box, as two integers separated by a slash. You can alternatively type a single integer, in which case it's interpreted as a value in ticks. Fractions are reduced automatically, for example if you type 6/8 it will be shown as 3/4. If a given fraction can't be exactly converted to ticks, the closest value is substituted.
 
 <a name="Show_Track_Colors"><h3>Show Track Colors</h3></a>
 
@@ -2885,6 +2896,7 @@
 <tr><td><a href="#Show_Current_Position">Show Current Position</a></td><td>Indicate current position within each track</td></tr>
 <tr><td><a href="#Show_Note_Names">Show Note Names</a></td><td>Display notes as names instead of numbers</td></tr>
 <tr><td><a href="#Show_General_MIDI_Names">Show General MIDI Names</a></td><td>Display General MIDI patch and drum names instead of numbers</td></tr>
+<tr><td><a href="#Show_Quant_as_Fraction">Show Quant as Fraction</a></td><td>Show quant as a fraction instead of in ticks</td></tr>
 <tr><td><a href="#Show_Track_Colors">Show Track Colors</a></td><td>Allow tracks to be assigned custom colors</td></tr>
 <tr><td><a href="#Unique_Track_Names">Unique Track Names</a></td><td>When renaming multiple tracks, append number to keep names unique</td></tr>
 <tr><td><a href="#Zoom_Step">Zoom Step</a></td><td>Zoom step size, as a percentage</td></tr>

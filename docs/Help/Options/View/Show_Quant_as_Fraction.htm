@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Show Quant as Fraction</title>
+<meta name="author" content="Chris Korda">
+<link rel=stylesheet href="../../content.css" type="text/css">
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Show Quant as Fraction</h3>
+
+<p>If true, <a href="../../Views/Track_View/Track_Grid.htm#Track_Quant">Quants</a> are shown as fractions of a whole note; otherwise, quants are shown in <a href="../../Concepts/Steps.htm#Ticks">ticks</a>. For example using the default <a href="../../Properties/Timebase.htm">timebase</a> of 120, a quant of 120 is shown as 1/4 (a quarter note), 60 is shown as 1/8, and so on. If you're using common quants, fractions are easier to work with than ticks, because the numbers are smaller and the application does the tick arithmetic for you. You can always <em>enter</em> a quant as a fraction, regardless of this option; this option only controls how quants are <em>shown</em>.
+
+<p>Some quants may still be shown in ticks even when this option is enabled. If a quant can be converted to a fraction having a denominator that's either a power of two, or three times a power of two, and the denominator is reasonably small, the quant is shown as a fraction, otherwise it's shown in ticks. For example you may enter the fraction 1/5, but it will be shown in ticks, because the denominator is non-conforming.
+
+<p>If this option is enabled when you edit a quant in the <a href="../../Views/Track_View/Track_Grid.htm">track grid</a>, a dropdown list containing common quant fractions is displayed next to the edit box. To select a fraction from the list, either left-click it, or use the up and down arrow keys to scroll to the desired fraction, and then <a href="../../Concepts/Grid_controls.htm">end the edit</a>. If the desired fraction isn't in the list, type the fraction in the edit box, as two integers separated by a slash. You can alternatively type a single integer, in which case it's interpreted as a value in ticks. Fractions are reduced automatically, for example if you type 6/8 it will be shown as 3/4. If a given fraction can't be exactly converted to ticks, the closest value is substituted.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>
