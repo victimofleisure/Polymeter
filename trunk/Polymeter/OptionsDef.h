@@ -17,6 +17,7 @@
 		07		10feb21	add unique track names option
 		08		24oct21	increase maximum view update frequency
 		09		14dec22	add show quant as fraction option
+		10		16feb23	add graph unicode option
 
 */
 
@@ -55,6 +56,7 @@ PROPDEF(	View,		NONE,		VAR,		int,		nLiveFontHeight,	30,			10,			100,		NULL,		0)
 PROPDEF(	General,	NONE,		VAR,		bool,		bPropertyDescrips,	1,			0,			0,			NULL,		0)
 PROPDEF(	General,	NONE,		VAR,		bool,		bCheckForUpdates,	1,			0,			0,			NULL,		0)
 PROPDEF(	General,	NONE,		VAR,		bool,		bAlwaysRecord,		0,			0,			0,			NULL,		0)
+PROPDEF(	General,	NONE,		VAR,		bool,		bGraphUnicode,		0,			0,			0,			NULL,		0)
 
 #undef PROPDEF
 #undef OPTS_EXCLUDE_MIDI_DEVICES

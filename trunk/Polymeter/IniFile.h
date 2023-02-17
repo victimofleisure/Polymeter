@@ -10,6 +10,7 @@
 		00		12sep13	initial version
 		01		24feb20	implement read/write
 		02		19feb22	refactor to fully emulate profile methods
+		03		16feb23	add Unicode string methods
  
 		INI file wrapper
 
@@ -35,6 +36,9 @@ public:
 	void	WriteInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nValue = 0);
 	bool	GetBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry, void *pData, UINT& nBytes);
 	void	WriteBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry, const void *pData, UINT nBytes);
+	void	GetUnicodeString(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString& sValue);
+	void	WriteUnicodeString(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString sValue = _T(""));
+	static	bool	IsPrintableASCII(LPCTSTR pszIn);
 
 // Templates for default section
 	template<class T>
@@ -155,3 +159,15 @@ protected:
 	void	UnencodeBinary(CString str, void *pData, UINT nBytes);
 	static	UINT	GetOpenFlags(bool bWrite);
 };
+
+inline bool CIniFile::IsPrintableASCII(LPCTSTR pszIn)
+{
+	ASSERT(pszIn != NULL);
+	while (*pszIn) {	// while characters remain
+		if (*pszIn < 0x20 || *pszIn > 0x7e) {	// if character isn't printable ASCII
+			return false;	// failure and early out
+		}
+		pszIn++;	// next character
+	}
+	return true;	// string is printable ASCII
+}

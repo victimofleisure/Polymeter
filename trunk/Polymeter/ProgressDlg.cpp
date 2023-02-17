@@ -119,7 +119,7 @@ void CProgressDlg::PumpMessages(HWND hWnd)
 
 void CProgressDlg::SetMarquee(bool bEnable, int nInterval)
 {
-	m_Progress.SetMarquee(bEnable, nInterval);
+	m_Progress.SetMarquee(bEnable, nInterval);	// requires UNICODE
 	DWORD	dwRemove, dwAdd;
 	if (bEnable) {
 		dwRemove = 0;

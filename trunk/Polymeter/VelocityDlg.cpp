@@ -10,6 +10,7 @@
         00      21may18	initial version
 		01		15nov19	add option for signed velocity scaling
 		02		06nov20	add replace page; add load/store state
+		03		17feb23	add replace range to velocity transform
 
 */
 
@@ -39,12 +40,12 @@ BOOL CVelocityOffsetPage::OnInitDialog()
 {
 	if (m_pSheet->m_bHaveStepSelection)
 		m_pSheet->m_nTarget = CVelocityTransform::TARGET_STEPS;
-	BOOL	bRetVel = CPropertyPage::OnInitDialog();
+	BOOL	bRetVal = CPropertyPage::OnInitDialog();
 	if (m_pSheet->m_bHaveStepSelection) {
 		GetDlgItem(IDC_VELOCITY_OFFSET_TARGET)->EnableWindow(FALSE);
 		GetDlgItem(IDC_VELOCITY_OFFSET_TARGET2)->EnableWindow(FALSE);
 	}
-	return bRetVel;
+	return bRetVal;
 }
 
 void CVelocityOffsetPage::DoDataExchange(CDataExchange* pDX)
@@ -88,10 +89,18 @@ CVelocityReplacePage::CVelocityReplacePage()
 {
 	m_psp.dwFlags &= ~PSP_HASHELP;
 	m_pSheet = NULL;
+	m_bIsRangeMode = false;
 }
 
 CVelocityReplacePage::~CVelocityReplacePage()
 {
+}
+
+BOOL CVelocityReplacePage::OnInitDialog()
+{
+	BOOL	bRetVal = CPropertyPage::OnInitDialog();
+	SetRangeMode(m_pSheet->m_bIsFindRange);
+	return bRetVal;
 }
 
 void CVelocityReplacePage::DoDataExchange(CDataExchange* pDX)
@@ -103,14 +112,80 @@ void CVelocityReplacePage::DoDataExchange(CDataExchange* pDX)
 		rngValLimit = CRange<int>(-MIDI_NOTES / 2, MIDI_NOTES / 2 - 1);
 	else
 		rngValLimit = CRange<int>(0, MIDI_NOTE_MAX);
-	DDX_Text(pDX, IDC_VELOCITY_REPLACE_WHAT, m_pSheet->m_nFindWhat);
+	DDX_Text(pDX, IDC_VELOCITY_REPLACE_WHAT_EDIT, m_pSheet->m_nFindWhat);
 	DDV_MinMaxInt(pDX, m_pSheet->m_nFindWhat, rngValLimit.Start, rngValLimit.End);
-	DDX_Text(pDX, IDC_VELOCITY_REPLACE_WITH, m_pSheet->m_nReplaceWith);
+	DDX_Text(pDX, IDC_VELOCITY_REPLACE_WITH_EDIT, m_pSheet->m_nReplaceWith);
 	DDV_MinMaxInt(pDX, m_pSheet->m_nReplaceWith, rngValLimit.Start, rngValLimit.End);
+	BOOL	bIsFindRange = m_pSheet->m_bIsFindRange;	// DDX doesn't handle bool
+	DDX_Check(pDX, IDC_VELOCITY_REPLACE_RANGE_CHK, bIsFindRange);
+	m_pSheet->m_bIsFindRange = bIsFindRange != 0;
+	DDX_Text(pDX, IDC_VELOCITY_REPLACE_END_EDIT, m_pSheet->m_nFindEnd);
+	if (GetDlgItem(IDC_VELOCITY_REPLACE_END_EDIT)->IsWindowVisible())	// if end value is shown
+		DDV_MinMaxInt(pDX, m_pSheet->m_nFindEnd, rngValLimit.Start, rngValLimit.End);
 }
 
 BEGIN_MESSAGE_MAP(CVelocityReplacePage, CPropertyPage)
+	ON_BN_CLICKED(IDC_VELOCITY_REPLACE_RANGE_CHK, &OnReplaceRange)
 END_MESSAGE_MAP()
+
+void CVelocityReplacePage::SwapCtrlPositions(int nID1, int nID2)
+{
+	CWnd	*pWnd1 = GetDlgItem(nID1);
+	CWnd	*pWnd2 = GetDlgItem(nID2);
+	CRect	rWnd1, rWnd2;
+	pWnd1->GetWindowRect(rWnd1);
+	pWnd2->GetWindowRect(rWnd2);
+	ScreenToClient(rWnd1);
+	ScreenToClient(rWnd2);
+	pWnd1->SetWindowPos(NULL, rWnd2.left, rWnd2.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	pWnd2->SetWindowPos(NULL, rWnd1.left, rWnd1.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+}
+
+void CVelocityReplacePage::SetRangeMode(bool bEnable)
+{
+	// In range mode, we hide the "Find what" caption, show the "Find start" caption,
+	// and also show the "Find End" edit control and its caption. We also move the
+	// "Find End" between "Find start" and "Replace With" by swapping the positions
+	// of the "Replace With" and "Find End" edit controls and their captions.
+	// Correct navigation depends on the following tricky tab order:
+	//
+	// #	control ID						range mode
+	// 1	IDC_VELOCITY_REPLACE_WHAT_CAP	hide
+	// 2	IDC_VELOCITY_REPLACE_START_CAP	show
+	// 3	IDC_VELOCITY_REPLACE_WHAT_EDIT
+	// 4	IDC_VELOCITY_REPLACE_END_CAP	show
+	// 5	IDC_VELOCITY_REPLACE_END_EDIT	show
+	// 6	IDC_VELOCITY_REPLACE_WITH_CAP
+	// 7	IDC_VELOCITY_REPLACE_WITH_EDIT
+	// 8	IDC_VELOCITY_SCALE_UNSIGNED
+	// 9	IDC_VELOCITY_SCALE_SIGNED
+	// 10	IDC_VELOCITY_REPLACE_RANGE_CHK
+	//
+	if (bEnable != m_bIsRangeMode) {	// if range mode changed
+		m_bIsRangeMode = bEnable;	// update shadow
+		// swap positions of with and end edit controls and their captions
+		SwapCtrlPositions(IDC_VELOCITY_REPLACE_WITH_EDIT, IDC_VELOCITY_REPLACE_END_EDIT);
+		SwapCtrlPositions(IDC_VELOCITY_REPLACE_WITH_CAP, IDC_VELOCITY_REPLACE_END_CAP);
+		// move start caption to same position as what caption
+		CRect	rCapWhat;
+		GetDlgItem(IDC_VELOCITY_REPLACE_WHAT_CAP)->GetWindowRect(rCapWhat);
+		ScreenToClient(rCapWhat);
+		GetDlgItem(IDC_VELOCITY_REPLACE_START_CAP)->SetWindowPos(
+			NULL, rCapWhat.left, rCapWhat.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+	}
+	int	nShow = bEnable ? SW_SHOW : SW_HIDE;
+	int	nInvShow = bEnable ? SW_HIDE : SW_SHOW;
+	GetDlgItem(IDC_VELOCITY_REPLACE_WHAT_CAP)->ShowWindow(nInvShow);
+	GetDlgItem(IDC_VELOCITY_REPLACE_START_CAP)->ShowWindow(nShow);
+	GetDlgItem(IDC_VELOCITY_REPLACE_END_CAP)->ShowWindow(nShow);
+	GetDlgItem(IDC_VELOCITY_REPLACE_END_EDIT)->ShowWindow(nShow);
+}
+
+void CVelocityReplacePage::OnReplaceRange()
+{
+	m_pSheet->m_bIsFindRange = IsDlgButtonChecked(IDC_VELOCITY_REPLACE_RANGE_CHK) != 0;
+	SetRangeMode(m_pSheet->m_bIsFindRange);
+}
 
 CVelocityTransform::CVelocityTransform()
 {
@@ -121,8 +196,10 @@ CVelocityTransform::CVelocityTransform()
 	m_bSigned = 0;
 	m_nFindWhat = 0;
 	m_nReplaceWith = 0;
+	m_nFindEnd = 0;
 	m_nMatches = 0;
 	m_bHaveStepSelection = false;
+	m_bIsFindRange = false;
 }
 
 bool CVelocityTransform::IsIdentity() const
@@ -137,8 +214,13 @@ bool CVelocityTransform::IsIdentity() const
 			return true;
 		break;
 	case CVelocityTransform::TYPE_REPLACE:
-		if (m_nFindWhat == m_nReplaceWith)
-			return true;
+		if (m_bIsFindRange) {	// if finding range
+			if (m_nFindWhat == m_nReplaceWith && m_nFindEnd == m_nReplaceWith)
+				return true;
+		} else {	// finding single value
+			if (m_nFindWhat == m_nReplaceWith)
+				return true;
+		}
 		break;
 	default:
 		NODEFAULTCASE;
@@ -154,6 +236,8 @@ bool CVelocityTransform::IsIdentity() const
 #define RK_VELOCITY_FIND	_T("nFind")
 #define RK_VELOCITY_REPLACE	_T("nReplace")
 #define RK_VELOCITY_TARGET	_T("nTarget")
+#define RK_VELOCITY_FIND_END	_T("nFindEnd")
+#define RK_VELOCITY_FIND_RANGE	_T("bFindRange")
 
 IMPLEMENT_DYNAMIC(CVelocitySheet, CPropertySheet)
 
@@ -184,6 +268,8 @@ void CVelocitySheet::LoadState()
 	RdReg(RK_VELOCITY_DLG, RK_VELOCITY_SIGNED, m_bSigned);
 	RdReg(RK_VELOCITY_DLG, RK_VELOCITY_FIND, m_nFindWhat);
 	RdReg(RK_VELOCITY_DLG, RK_VELOCITY_REPLACE, m_nReplaceWith);
+	RdReg(RK_VELOCITY_DLG, RK_VELOCITY_FIND_END, m_nFindEnd);
+	RdReg(RK_VELOCITY_DLG, RK_VELOCITY_FIND_RANGE, m_bIsFindRange);
 }
 
 void CVelocitySheet::StoreState()
@@ -196,6 +282,8 @@ void CVelocitySheet::StoreState()
 	WrReg(RK_VELOCITY_DLG, RK_VELOCITY_SIGNED, m_bSigned);
 	WrReg(RK_VELOCITY_DLG, RK_VELOCITY_FIND, m_nFindWhat);
 	WrReg(RK_VELOCITY_DLG, RK_VELOCITY_REPLACE, m_nReplaceWith);
+	WrReg(RK_VELOCITY_DLG, RK_VELOCITY_FIND_END, m_nFindEnd);
+	WrReg(RK_VELOCITY_DLG, RK_VELOCITY_FIND_RANGE, m_bIsFindRange);
 }
 
 BEGIN_MESSAGE_MAP(CVelocitySheet, CPropertySheet)

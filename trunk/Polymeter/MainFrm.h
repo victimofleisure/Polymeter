@@ -37,6 +37,7 @@
 		27		01nov21	generate message handlers for showing docking bars
 		28		11nov21	move static menu methods to app class
 		29		22jan22	add tempo pane to status bar
+		30		25jan23	add method to show panes menu
 
 */
 
@@ -128,6 +129,7 @@ public:
 	void	UpdateSongPositionStrings(const CPolymeterDoc *pDoc);
 	void	UpdateSongPositionDisplay();
 	void	FullScreen(bool bEnable);
+	void	ShowPanesMenu(CPoint point);
 
 // Overrides
 public:

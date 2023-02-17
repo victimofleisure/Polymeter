@@ -28,6 +28,7 @@
 		18		07jun21	rename rounding functions
         19		11nov21	rename packed modulation members
         20		22jan22	add set tracks methods
+		21		25jan23	add replace steps range
 
 */
 
@@ -870,6 +871,27 @@ int CSeqTrackArray::ReplaceSteps(int iTrack, int iStep, int nSteps, STEP nFind, 
 	for (int iPos = 0; iPos < nSteps; iPos++) {	// for each step in range
 		STEP&	step = trk.m_arrStep[iStep + iPos]; 
 		if ((step & SB_VELOCITY) == nFind) {	// if velocity matches
+			step &= ~SB_VELOCITY;	// zero velocity, preserving tie bit
+			step |= nReplace;	// set new velocity
+			nMatches++;
+		}
+	}
+	return nMatches;
+}
+
+int CSeqTrackArray::ReplaceStepsRange(int iTrack, int iStep, int nSteps, STEP nFindStart, STEP nFindEnd, STEP nReplace)
+{
+	CTrack&	trk = GetAt(iTrack);
+	nFindStart &= SB_VELOCITY;
+	nFindEnd &= SB_VELOCITY;
+	nReplace &= SB_VELOCITY;
+	if (nFindStart > nFindEnd)
+		Swap(nFindStart, nFindEnd);
+	int	nMatches = 0;
+	for (int iPos = 0; iPos < nSteps; iPos++) {	// for each step in range
+		STEP&	step = trk.m_arrStep[iStep + iPos];
+		STEP	nVel = step & SB_VELOCITY;
+		if (nVel >= nFindStart && nVel <= nFindEnd) {	// if velocity within specified range
 			step &= ~SB_VELOCITY;	// zero velocity, preserving tie bit
 			step |= nReplace;	// set new velocity
 			nMatches++;

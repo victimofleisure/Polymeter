@@ -10,6 +10,7 @@
         00		14jun18	initial version
 		01		08jun21	fix warning for CString as variadic argument
 		02		19feb22	use INI file class directly instead of via profile
+		03		16feb23	add special handling for non-ASCII characters
 		
 */
 
@@ -64,7 +65,7 @@ void CPresetArray::Read(CIniFile& fIni, int nTracks)
 	for (int iPreset = 0; iPreset < nPresets; iPreset++) {
 		CPreset& preset = GetAt(iPreset);
 		sKey.Format(_T("%s\\%d"), RK_PRESET_SECTION, iPreset);
-		fIni.Get(sKey, RK_PRESET_NAME, preset.m_sName);
+		fIni.GetUnicodeString(sKey, RK_PRESET_NAME, preset.m_sName);
 		UINT	nSize = CalcPackedSize(nTracks);
 		arrBit.SetSize(nSize);
 		fIni.GetBinary(sKey, RK_PRESET_MUTE, arrBit.GetData(), nSize);
@@ -82,7 +83,7 @@ void CPresetArray::Write(CIniFile& fIni) const
 	for (int iPreset = 0; iPreset < nPresets; iPreset++) {
 		const CPreset& preset = GetAt(iPreset);
 		sKey.Format(_T("%s\\%d"), RK_PRESET_SECTION, iPreset);
-		fIni.Put(sKey, RK_PRESET_NAME, preset.m_sName);
+		fIni.WriteUnicodeString(sKey, RK_PRESET_NAME, preset.m_sName);
 		PackBools(preset.m_arrMute, arrBit);
 		fIni.WriteBinary(sKey, RK_PRESET_MUTE, arrBit.GetData(), arrBit.GetSize());
 	}

@@ -27,6 +27,7 @@
         17		22jan22	add set tracks methods
 		18		05feb22	add step tie accessors
 		19		15feb22	don't inherit track base
+		20		25jan23	add replace steps range
 
 */
 
@@ -151,6 +152,7 @@ public:
 	void	OffsetSteps(int iTrack, int iStep, int nSteps, int nOffset);
 	void	ScaleSteps(int iTrack, int iStep, int nSteps, double fScale, bool bSigned);
 	int		ReplaceSteps(int iTrack, int iStep, int nSteps, STEP nFind, STEP nReplace);
+	int		ReplaceStepsRange(int iTrack, int iStep, int nSteps, STEP nFindStart, STEP nFindEnd, STEP nReplace);
 	void	OnRecordStart(int nStartTime);
 	void	OnRecordStop(int nEndTime);
 	void	AddDub(int iTrack, int nTime);

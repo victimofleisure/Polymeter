@@ -37,6 +37,7 @@
 		27		23jul22	bump resource version
 		28		29oct22	bump resource version
 		29		16dec22	bump resource version
+		30		17feb23	bump resource version
 
 */
 
@@ -74,7 +75,7 @@
 #define RK_TIE_NOTES _T("bTieNotes")
 #define RK_RESOURCE_VERSION _T("nResourceVersion")
 
-const int CPolymeterApp::m_nNewResourceVersion = 10;	// update if resource change breaks customization
+const int CPolymeterApp::m_nNewResourceVersion = 11;	// update if resource change breaks customization
 
 #include "HelpIDs.h"	// help IDs generated automatically by doc2web
 const CPolymeterApp::HELP_RES_MAP CPolymeterApp::m_HelpResMap[] = {

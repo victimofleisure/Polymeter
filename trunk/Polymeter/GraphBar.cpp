@@ -33,6 +33,7 @@
 		23		05jul22	add parent window to modulation type dialog ctor
 		24		23jul22	add option to exclude muted tracks
 		25		13dec22	add export of formats other than SVG
+		26		16feb23	add special handling for non-ASCII characters
 
 */
 
@@ -421,7 +422,11 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes, const CSize& szGraph, b
 	}
 	double	fWidth = szGraph.cx / fGraphvizDPI;	// width in inches
 	double	fHeight = szGraph.cy / fGraphvizDPI;	// height in inches
-	CStdioFile	fout(pszPath, CFile::modeCreate | CFile::modeWrite);
+	// Unicode is optional because UTF-8 slows down writing by an order of magnitude
+	CStdioFileEx	fout(pszPath, CFile::modeCreate | CFile::modeWrite, theApp.m_Options.m_General_bGraphUnicode);
+	if (theApp.m_Options.m_General_bGraphUnicode) {	// if writing UTF-8
+		fout.SeekToBegin();	// CStdioFileEx writes BOM, but GraphViz expects UTF-8 without BOM, so overwrite BOM
+	}
 	_fputts(_T("digraph {\n"), fout.m_pStream);
 	_ftprintf(fout.m_pStream, _T("graph[size=\"%g,%g\",ratio=fill];\n"), fWidth, fHeight);
 	_fputts(_T("overlap=false;\nsplines=true;\n"), fout.m_pStream);
@@ -651,6 +656,15 @@ void CGraphBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 					if (bMuteChanged)	// if one or more track mutes changed state
 						StartDeferredUpdate();
 				}
+			}
+		}
+		break;
+	case CPolymeterDoc::HINT_OPTIONS:
+		{
+			const CPolymeterDoc::COptionsPropHint	*pPropHint = static_cast<CPolymeterDoc::COptionsPropHint *>(pHint);
+			// if Graph Unicode option changed, redraw graph
+			if (theApp.m_Options.m_General_bGraphUnicode != pPropHint->m_pPrevOptions->m_General_bGraphUnicode) {
+				StartDeferredUpdate();
 			}
 		}
 		break;

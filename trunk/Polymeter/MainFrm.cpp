@@ -61,6 +61,7 @@
 		51		22jan22	add tempo pane to status bar
 		52		05feb22	refactor track and step index validation
 		53		15feb22	fix MIDI error handling to avoid endless messages
+		54		25jan23	add method to show panes menu
 
 */
 
@@ -752,6 +753,14 @@ bool CMainFrame::DoFindReplace()
 		}
 	}
 	return true;	// success: one or more matches were found
+}
+
+void CMainFrame::ShowPanesMenu(CPoint point)
+{
+	CMenu	menu;
+	VERIFY(menu.CreatePopupMenu());
+	m_dockManager.BuildPanesMenu(menu, false);
+	m_dockManager.OnPaneContextMenu(point);	// in screen coordinates
 }
 
 // CMainFrame diagnostics

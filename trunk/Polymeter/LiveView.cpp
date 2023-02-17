@@ -25,6 +25,7 @@
 		15		20jun21	move focus edit handling to child frame
 		16		31oct21	add view type change method; call it on initial update
 		17		22jan22	show document tempo; sequencer tempo can differ
+		18		25jan23	add context menu option to show panes menu
 
 */
 
@@ -837,6 +838,13 @@ void CLiveView::OnContextMenu(CWnd* pWnd, CPoint point)
 	int	iList = ListHitTest(point);
 	if (iList >= 0)
 		CPolymeterApp::ShowListColumnHeaderMenu(this, m_list[iList], point);
+	else {
+		if (point.x == -1 && point.y == -1) {	// if menu triggered via keyboard
+			CPoint	ptCursor;
+			GetCursorPos(&ptCursor);
+			theApp.GetMainFrame()->ShowPanesMenu(ptCursor);	//  show panes menu at cursor position
+		}
+	}
 }
 
 void CLiveView::OnLButtonDown(UINT nFlags, CPoint point)

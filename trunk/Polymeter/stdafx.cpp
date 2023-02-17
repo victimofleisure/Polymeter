@@ -12,6 +12,8 @@
 		02		06apr20	in FormatNumberCommas, emulate GetNumberFormatEx
 		03		08jun21	add cast to fix narrowing conversion warning
 		04		29oct22	FormatMessage call must specify ignore inserts
+		05		17feb23	fix error in FormatNumberCommas when MBCS enabled
+		06		17feb23	add stream file with UTF-8 support
 
 */
 
@@ -194,14 +196,15 @@ bool FormatNumberCommas(LPCTSTR pszSrc, CString& sDst, int nPrecision)
 		sBuf.ReleaseBuffer();
 		sDst = sBuf;
 	} else {	// emulate the basics of GetNumberFormatEx
+		USES_CONVERSION;
 		sDst = pszSrc;
 		int	nLen = sDst.GetLength();
 		if (nPrecision > 0 && nPrecision < nLen) {	// if precision specified and applicable
 			nLen -= nPrecision;
-			sDst.Insert(nLen, szDecimal);	// insert decimal separator
+			sDst.Insert(nLen, W2CT(szDecimal));	// insert decimal separator
 		}
 		for (int iChar = nLen - 3; iChar > 0; iChar -= 3) {	// for each thousands group
-			sDst.Insert(iChar, szThousand);	// insert thousands separator
+			sDst.Insert(iChar, W2CT(szThousand));	// insert thousands separator
 		}
 	}
 	return true;
@@ -228,4 +231,23 @@ int StringReplaceNoCase(CString& str, LPCTSTR pszOld, LPCTSTR pszNew)
 		str.Insert(arrSub[iSub], pszNew);	// insert new string
 	}
 	return nSubs;	// return number of substitutions
+}
+
+CStdioFileEx::CStdioFileEx(LPCTSTR lpszFileName, UINT nOpenFlags, bool bUTF8)
+{
+	if (bUTF8) {	// if UTF-8 character encoding is enabled
+		static const LPCTSTR arrModeStr[] = {
+			_T("rt,ccs=UTF-8"),	// read text mode
+			_T("wt,ccs=UTF-8"),	// write text mode
+		};
+		FILE	*fStream;
+		errno_t	nErr =_tfopen_s(&fStream, lpszFileName, arrModeStr[(nOpenFlags & modeWrite) != 0]);
+		if (nErr != 0) {	// if open error
+			AfxThrowFileException(CFileException::OsErrorToException(nErr), nErr, lpszFileName);
+		}
+		CommonBaseInit(fStream, NULL);
+		m_bCloseOnDelete = true;
+	} else {	// default behavior
+		CommonInit(lpszFileName, nOpenFlags, NULL);
+	}
 }

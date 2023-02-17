@@ -58,7 +58,7 @@ bool CD2DImageWriter::Write(LPCTSTR pszPath)
 	CComPtr<IWICBitmapEncoder> pEncoder;
 	CComPtr<IWICBitmapFrameEncode> pFrameEncode;
 	CHECK(m_pWICFactory->CreateStream(&pWICStream));
-	CHECK(pWICStream->InitializeFromFilename(pszPath, GENERIC_WRITE));
+	CHECK(pWICStream->InitializeFromFilename(pszPath, GENERIC_WRITE));	// requires UNICODE
     CHECK(m_pWICFactory->CreateEncoder(GUID_ContainerFormatPng, NULL, &pEncoder));
     CHECK(pEncoder->Initialize(pWICStream, WICBitmapEncoderNoCache));
     CHECK(pEncoder->CreateNewFrame(&pFrameEncode, NULL));

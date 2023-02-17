@@ -86,6 +86,8 @@
 		76		05jul22	use wrapper class to save and restore focus
 		77		25oct22	add command to select all unmuted tracks
 		78		16dec22	add quant string conversions that support fractions
+		79		16feb23	add special handling for non-ASCII characters
+		80		17feb23	add replace range to velocity transform
 
 */
 
@@ -425,12 +427,14 @@ void CPolymeterDoc::ReadProperties(LPCTSTR pszPath)
 		CTrack	trk(true);	// initialize to defaults
 		CString	sTrkID;
 		sTrkID.Format(RK_TRACK_IDX, iTrack);
+		fIni.GetUnicodeString(sTrkID, _T("Name"), trk.m_sName);
 		#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
 			if (PT_##proptype == PT_ENUM) \
 				ReadEnum(fIni, sTrkID, _T(#name), trk.m_##prefix##name, itemopt, items); \
 			else \
 				fIni.Get(sTrkID, _T(#name), trk.m_##prefix##name);
 		#define TRACKDEF_EXCLUDE_LENGTH	// exclude track length
+		#define TRACKDEF_EXCLUDE_NAME	// exclude track name
 		#include "TrackDef.h"		// generate code to read track properties
 		trk.m_clrCustom = fIni.GetInt(sTrkID, RK_TRACK_COLOR, -1);
 		int	nLength = fIni.GetInt(sTrkID, RK_TRACK_LENGTH, INIT_STEPS);
@@ -488,12 +492,14 @@ void CPolymeterDoc::WriteProperties(LPCTSTR pszPath) const
 		const CTrack&	trk = m_Seq.GetTrack(iTrack);
 		CString	sTrkID;
 		sTrkID.Format(RK_TRACK_IDX, iTrack);
+		fIni.WriteUnicodeString(sTrkID, _T("Name"), trk.m_sName);
 		#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) \
 			if (PT_##proptype == PT_ENUM) \
 				WriteEnum(fIni, sTrkID, _T(#name), trk.m_##prefix##name, itemopt, items); \
 			else \
 				fIni.Put(sTrkID, _T(#name), trk.m_##prefix##name);
 		#define TRACKDEF_EXCLUDE_LENGTH	// exclude track length
+		#define TRACKDEF_EXCLUDE_NAME	// exclude track name
 		#include "TrackDef.h"		// generate code to write track properties
 		if (static_cast<int>(trk.m_clrCustom) >= 0)	// if track color specified
 			fIni.WriteInt(sTrkID, RK_TRACK_COLOR, trk.m_clrCustom);
@@ -1339,8 +1345,13 @@ void CPolymeterDoc::TransformStepVelocity(int iTrack, int iStep, int nSteps, CVe
 		m_Seq.ScaleSteps(iTrack, iStep, nSteps, trans.m_fScale, trans.m_bSigned != 0);
 		break;
 	case CVelocityTransform::TYPE_REPLACE:
-		trans.m_nMatches += m_Seq.ReplaceSteps(iTrack, iStep, nSteps, 
-			static_cast<STEP>(trans.m_nFindWhat), static_cast<STEP>(trans.m_nReplaceWith));
+		if (trans.m_bIsFindRange) {
+			trans.m_nMatches += m_Seq.ReplaceStepsRange(iTrack, iStep, nSteps, 
+				static_cast<STEP>(trans.m_nFindWhat), static_cast<STEP>(trans.m_nFindEnd), static_cast<STEP>(trans.m_nReplaceWith));
+		} else {
+			trans.m_nMatches += m_Seq.ReplaceSteps(iTrack, iStep, nSteps, 
+				static_cast<STEP>(trans.m_nFindWhat), static_cast<STEP>(trans.m_nReplaceWith));
+		}
 		break;
 	default:
 		NODEFAULTCASE;
@@ -4514,6 +4525,7 @@ void CPolymeterDoc::OnTrackVelocity()
 			if (dlg.m_bSigned) {	// if signed
 				dlg.m_nFindWhat += MIDI_NOTES / 2;	// replace transform expects unsigned parameters
 				dlg.m_nReplaceWith += MIDI_NOTES / 2;
+				dlg.m_nFindEnd += MIDI_NOTES / 2;
 			}
 			break;	// check for velocity clipping post-transform
 		default:

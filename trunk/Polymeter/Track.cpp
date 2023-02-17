@@ -43,6 +43,7 @@
 		33		19feb22	use INI file class directly instead of via profile
 		34		20oct22	support offset modulation of controller tracks
 		35		18dec22	in tick dependency scaling, clamp quant to its range
+		36		16feb23	add special handling for non-ASCII characters
 
 */
 
@@ -881,7 +882,11 @@ void CTrackArray::OnImportTracksError(int nErrMsgFormatID, int iRow, int iCol)
 void CTrackArray::ImportTracks(LPCTSTR pszPath)
 {
 	ASSERT(IsEmpty());	// array must be empty
+#ifdef UNICODE
+	CStdioFileEx	fIn(pszPath, CFile::modeRead);	// supports UTF-8 with BOM
+#else	// not UNICODE
 	CStdioFile	fIn(pszPath, CFile::modeRead);
+#endif
 	CString	sLine, sToken;
 	CIntArrayEx	arrCol;
 	int	iRow = 0;
@@ -960,7 +965,17 @@ void CTrackArray::ImportTracks(LPCTSTR pszPath)
 
 void CTrackArray::ExportTracks(const CIntArrayEx *parrSelection, LPCTSTR pszPath) const
 {
+#ifdef UNICODE
+	bool	bUTF8;	// true if file should use UTF-8 encoding
+	if (parrSelection != NULL) {	// if track selection specified
+		bUTF8 = !TrackNamesAreASCII(*parrSelection);
+	} else {	// all tracks
+		bUTF8 = !TrackNamesAreASCII();
+	}
+	CStdioFileEx	fOut(pszPath, CFile::modeCreate | CFile::modeWrite, bUTF8);	// only write UTF-8 if necessary
+#else	// not UNICODE
 	CStdioFile	fOut(pszPath, CFile::modeCreate | CFile::modeWrite);
+#endif
 	int	nSels;
 	if (parrSelection != NULL)	// if selection exists
 		nSels = parrSelection->GetSize();	// export selected tracks
@@ -1134,6 +1149,27 @@ bool CTrackArray::CheckModulations(CModulationErrorArray& arrError) const
 	return arrError.IsEmpty() != 0;	// true if no errors found
 }
 
+bool CTrackArray::TrackNamesAreASCII() const
+{
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		if (!CIniFile::IsPrintableASCII(GetAt(iTrack).m_sName))
+			return false;
+	}
+	return true;
+}
+
+bool CTrackArray::TrackNamesAreASCII(const CIntArrayEx& arrSelection) const
+{
+	int	nSels = arrSelection.GetSize();
+	for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
+		int	iTrack = arrSelection[iSel];
+		if (!CIniFile::IsPrintableASCII(GetAt(iTrack).m_sName))
+			return false;
+	}
+	return true;
+}
+
 int CTrackBase::CPackedModulation::SortCompare(const void *p1, const void *p2)
 {
 	CTrack::CPackedModulation *pMod1 = (CTrack::CPackedModulation *)p1;
@@ -1288,7 +1324,7 @@ void CTrackGroupArray::Read(CIniFile& fIni, LPCTSTR pszSection)
 	for (int iGroup = 0; iGroup < nGroups; iGroup++) {
 		CTrackGroup& Group = GetAt(iGroup);
 		sKey.Format(_T("%s\\%d"), pszSection, iGroup);
-		fIni.Get(sKey, RK_GROUP_NAME, Group.m_sName);
+		fIni.GetUnicodeString(sKey, RK_GROUP_NAME, Group.m_sName);
 		int	nTracks;
 		fIni.Get(sKey, RK_GROUP_TRACK_COUNT, nTracks);
 		Group.m_arrTrackIdx.SetSize(nTracks);
@@ -1307,7 +1343,7 @@ void CTrackGroupArray::Write(CIniFile& fIni, LPCTSTR pszSection) const
 	for (int iGroup = 0; iGroup < nGroups; iGroup++) {
 		const CTrackGroup& Group = GetAt(iGroup);
 		sKey.Format(_T("%s\\%d"), pszSection, iGroup);
-		fIni.Put(sKey, RK_GROUP_NAME, Group.m_sName);
+		fIni.WriteUnicodeString(sKey, RK_GROUP_NAME, Group.m_sName);
 		int	nTracks = Group.m_arrTrackIdx.GetSize();
 		fIni.Put(sKey, RK_GROUP_TRACK_COUNT, nTracks);
 		fIni.WriteBinary(sKey, RK_GROUP_TRACK_IDX, Group.m_arrTrackIdx.GetData(), nTracks * sizeof(int));

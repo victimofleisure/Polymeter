@@ -10,6 +10,7 @@
         00      21may18	initial version
 		01		15nov19	add option for signed velocity scaling
 		02		06nov20	add replace page; add load/store state
+		03		17feb23	add replace range to velocity transform
 
 */
 
@@ -72,9 +73,14 @@ public:
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual	BOOL OnInitDialog();
+	void	SetRangeMode(bool bEnable);
+
+	bool	m_bIsRangeMode;		// true if controls are in range mode
+	void	SwapCtrlPositions(int nID1, int nID2);
 
 	DECLARE_MESSAGE_MAP()
-public:
+	afx_msg void OnReplaceRange();
 };
 
 class CVelocityTransform {
@@ -97,10 +103,12 @@ public:
 	int		m_nTarget;				// target entities; see enum above
 	double	m_fScale;				// velocity multiplier 
 	int		m_bSigned;				// if non-zero, treat velocities as signed values
-	int		m_nFindWhat;			// velocity value to find
+	int		m_nFindWhat;			// velocity value to find, or starting value if range enabled
 	int		m_nReplaceWith;			// replacement velocity value
+	int		m_nFindEnd;				// if range enabled, ending velocity value to find
 	int		m_nMatches;				// match count for find/replace
 	bool	m_bHaveStepSelection;	// if true, disable target selection
+	bool	m_bIsFindRange;			// if true, find range of velocities
 };
 
 class CVelocitySheet : public CPropertySheet, public CVelocityTransform

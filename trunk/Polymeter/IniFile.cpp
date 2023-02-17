@@ -11,6 +11,7 @@
 		01		24feb20	implement read/write
 		02		08jun21	define ATL string length methods if earlier than VS2012
 		03		19feb22	refactor to fully emulate profile methods
+		04		16feb23	add Unicode string methods
  
 		INI file wrapper
 
@@ -241,4 +242,39 @@ void CIniFile::WriteBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry, const void *p
 	}
 	str.ReleaseBuffer(nBytes * 2);
 	WriteString(lpszSection, lpszEntry, str);
+}
+
+void CIniFile::GetUnicodeString(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString& sValue)
+{
+#ifdef UNICODE
+	if (!GetStringEx(lpszSection, lpszEntry, sValue)) {	// if regular string read fails
+		CString	sEntry(lpszEntry);	// try Unicode string read
+		sEntry += '#';
+		CString	str;
+		if (GetStringEx(lpszSection, sEntry, str)) {	// if value found
+			UINT	nOutBytes = str.GetLength() / 2;	// output length in bytes
+			UINT	nOutChars = nOutBytes / sizeof(TCHAR);	// output length in characters
+			BYTE	*pOutBuf = reinterpret_cast<BYTE *>(sValue.GetBuffer(nOutChars));
+			UnencodeBinary(str, pOutBuf, nOutBytes);
+			sValue.ReleaseBuffer(nOutChars);
+		}
+	}
+#else	// not UNICODE
+	GetStringEx(lpszSection, lpszEntry, sValue);
+#endif
+}
+
+void CIniFile::WriteUnicodeString(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString sValue)
+{
+#ifdef UNICODE
+	if (IsPrintableASCII(sValue)) {	// if string is printable ASCII
+		WriteString(lpszSection, lpszEntry, sValue);	// do regular string write
+	} else {	// string isn't printable ASCII
+		CString	sEntry(lpszEntry);
+		sEntry += '#';	// tag entry name and write string as binary
+		WriteBinary(lpszSection, sEntry, sValue, sValue.GetLength() * sizeof(TCHAR));
+	}
+#else	// not UNICODE
+	WriteString(lpszSection, lpszEntry, sValue);
+#endif
 }
