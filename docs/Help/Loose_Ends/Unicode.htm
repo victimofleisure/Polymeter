@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unicode</title>
+<meta name="author" content="Chris Korda">
+<link rel=stylesheet href="../content.css" type="text/css">
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Unicode</h3>
+
+<p>The application generally supports Unicode, which means non-ASCII characters are allowed in <a href="../Views/Track_View/Track_Grid.htm#Track_Name">track names</a>, as well as <a href="../Concepts/Parts.htm">part</a> and <a href="../Concepts/Presets.htm">preset</a> names. All valid UTF-16 code points are allowed. Note however that in <a href="../Menus/File/Export.htm">exported</a> MIDI files, non-ASCII characters will be replaced by question marks, because the MIDI file format only supports ASCII track names. This limitation also applies to the <a href="../Menus/Tools/Export_Table.htm#Export_Song">Export Song</a> command, because it uses the MIDI export internally.
+
+<p>ASCII here means <em>printable</em> ASCII, excluding control characters, in other words the 7-bit characters ranging from 32 to 126 decimal; characters outside this range are considered non-ASCII.
+
+<p>The <a href="../Docking_Windows/Graph_bar.htm">Graph bar</a> optionally supports Unicode, but the option is disabled by default because it increases overhead. To enable it, set the <a href="../Options/General/Graph_Handles_Unicode.htm">Graph Handles Unicode</a> option to true.
+
+
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

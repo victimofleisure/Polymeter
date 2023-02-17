@@ -113,6 +113,7 @@
 <dd><a href="#Show_Property_Descriptions">Show Property Descriptions</a>
 <dd><a href="#Automatically_Check_for_Updates">Automatically Check for Updates</a>
 <dd><a href="#Always_Record">Always Record</a>
+<dd><a href="#Graph_Handles_Unicode">Graph Handles Unicode</a>
 </dl>
 <dt>Menus
 <dd><dl>
@@ -233,6 +234,7 @@
 <dd><a href="#Primes">Primes</a>
 <dd><a href="#Modular_arithmetic">Modular arithmetic</a>
 <dd><a href="#Clipping">Clipping</a>
+<dd><a href="#Unicode">Unicode</a>
 <dt>Reference
 <dd><a href="#Options_Summary">Options Summary</a>
 <dd><a href="#Shortcuts">Shortcuts</a>
@@ -1489,6 +1491,7 @@
 <tr><td>Key Labels</td><td>Check this item to show labels on the piano keys that identify the corresponding MIDI notes.</td></tr>
 <tr><td>Rotate Labels</td><td>Check this item to rotate the key labels 90&deg; counterclockwise, so that they're vertical instead of horizontal. This may allow the labels to use a larger font. This option is only supported when the window is docked horizontally.</td></tr>
 <tr><td>Color Velocities</td><td>Check this item to color the piano keys according to the velocities of the output notes. The colors range spectrally from blue (softest) to red (loudest).</td></tr>
+<tr><td>Insert Track</td><td>This command inserts a track for the selected note. Position the cursor over the desired note on the piano keyboard before using this command. The new track's <a href="#Track_Note">note</a> property will be set appropriately.</td></tr>
 </table>
 
 <a name="Multiple_keyboards"><h3>Multiple keyboards</h3></a>
@@ -2071,6 +2074,10 @@
 
 <p>C:\Users\foo\AppData\Roaming\Polymeter
 
+<a name="Graph_Handles_Unicode"><h3>Graph Handles Unicode</h3></a>
+
+<p>If true, the <a href="#Graph_bar">Graph bar</a> correctly handles <a href="#Unicode">non-ASCII</a> characters in <a href="#Track_Name">track names</a>. This option is only meaningful if GraphViz is installed. Enabling this option adds overhead due to UTF-8 encoding, hence it's disabled by default. With this option disabled, non-ASCII characters may display as question marks in the graph, and can also cause incomplete or erroneous graphs. If you regularly use non-ASCII characters, enable this option.
+
 
 
 <h1>Menus</h1>
@@ -2445,7 +2452,7 @@
 
 <a name="Replacing_velocities"><h4>Replace</h4></a>
 
-<p>Use this function to replace a particular step value with a different one. If a step selection exists, the replacement only occurs with the selected steps, otherwise it occurs within all steps of the selected tracks. The find and replace operation can operate on <a href="#Unsigned_versus_signed_steps">signed or unsigned steps</a>.
+<p>Use this function to replace a particular step value with a different one. If a step selection exists, the replacement only occurs with the selected steps, otherwise it occurs within all steps of the selected tracks. The find and replace operation can operate on <a href="#Unsigned_versus_signed_steps">signed or unsigned steps</a>. You can also replace a range of velocity values; to do this, first check the "Range" checkbox, in order to reveal the "Find start" and "Find end" edit controls, and then use these controls to specify the desired range.
 
 <a name="Fill"><h3>Fill</h3></a>
 
@@ -2659,7 +2666,7 @@
 
 <a name="Export_Tracks"><h4>Export Tracks</h4></a>
 
-<p>This command exports <a href="#Tracks">track</a> data to a CSV file. If a <a href="#Track_Selection">track selection</a> exists, only the selected tracks are exported, otherwise all tracks are exported. The first output row is a column header specifying the names of the track properties. Each subsequent row corresponds to a track, and contains the data for each of the track's properties. You can also <a href="#Import_Tracks">import tracks</a>, using this same file format.
+<p>This command exports <a href="#Tracks">track</a> data to a CSV file. If a <a href="#Track_Selection">track selection</a> exists, only the selected tracks are exported, otherwise all tracks are exported. The first output row is a column header specifying the names of the track properties. Each subsequent row corresponds to a track, and contains the data for each of the track's properties. You can also <a href="#Import_Tracks">import tracks</a>, using this same file format. If one or more track names contain <a href="#Unicode">non-ASCII</a> characters, the CSV file is encoded as UTF-8 with a BOM (Byte Order Mark).
 
 <a name="Export_Steps"><h4>Export Steps</h4></a>
 
@@ -2875,6 +2882,14 @@
 
 <p>Clipping is potentially an issue for all <a href="#Track_types">track types</a>, but it's a particular concern for <a href="#Note_tracks">note tracks</a> because the range of note velocities determines the dynamic range of the resulting music. Unintentional clipping of note velocities can reduce the subtlety of your composition. One way to detect it is by using the Color Velocities option in the <a href="#Piano_bar">Piano bar</a>. If you see a lot of bright red or dark blue notes, you're probably clipping. Another method is to use the <a href="#Velocity_Range">Velocity Range</a> command on your note tracks: it reports the range of velocities in use, taking all offsets into account, and also reports clipping.
 
+<a name="Unicode"><h2>Unicode</h2></a>
+
+<p>The application generally supports Unicode, which means non-ASCII characters are allowed in <a href="#Track_Name">track names</a>, as well as <a href="#Parts">part</a> and <a href="#Presets">preset</a> names. All valid UTF-16 code points are allowed. Note however that in <a href="#Export">exported</a> MIDI files, non-ASCII characters will be replaced by question marks, because the MIDI file format only supports ASCII track names. This limitation also applies to the <a href="#Export_Song">Export Song</a> command, because it uses the MIDI export internally.
+
+<p>ASCII here means <em>printable</em> ASCII, excluding control characters, in other words the 7-bit characters ranging from 32 to 126 decimal; characters outside this range are considered non-ASCII.
+
+<p>The <a href="#Graph_bar">Graph bar</a> optionally supports Unicode, but the option is disabled by default because it increases overhead. To enable it, set the <a href="#Graph_Handles_Unicode">Graph Handles Unicode</a> option to true.
+
 
 <h1>Reference</h1>
 
@@ -2905,6 +2920,7 @@
 <tr><td><a href="#Show_Property_Descriptions">Show Property Descriptions</a></td><td>If true, show descriptions area in properties bar</td></tr>
 <tr><td><a href="#Automatically_Check_for_Updates">Automatically Check for Updates</a></td><td>Automatically check for newer version of app during startup</td></tr>
 <tr><td><a href="#Always_Record">Always Record</a></td><td>Always record dubs during playback and automatically save the recordings</td></tr>
+<tr><td><a href="#Graph_Handles_Unicode">Graph Handles Unicode</a></td><td>If true, graph handles Unicode characters in track names</td></tr>
 </table>
 
 <a name="Shortcuts"><h2>Shortcuts</h2></a>

@@ -4115,4 +4115,16 @@ CTrackView::CTrackGridCtrl::CreateEditCtrl:
 But the SetScale breaks the spin control delta. This could be fixed by adding a 
 special integer multiplier to CNumEdit that's only used in the fraction case.
 
+1/24/23 Showing pane menu in Live view
 
+void CMainFrame::ShowPanesMenu(CPoint point)
+{
+	CMenu	menu;
+	VERIFY(menu.CreatePopupMenu());
+	m_dockManager.BuildPanesMenu(menu, false);
+	m_dockManager.OnPaneContextMenu(point);
+}
+
+And in CLiveView::OnContextMenu:
+
+	theApp.GetMainFrame()->ShowPanesMenu(point);

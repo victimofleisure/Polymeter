@@ -1256,6 +1256,7 @@ By default, output notes are displayed for all MIDI channels. To show only a par
 <tr><td>Key Labels</td><td>Check this item to show labels on the piano keys that identify the corresponding MIDI notes.</td></tr>
 <tr><td>Rotate Labels</td><td>Check this item to rotate the key labels 90&deg; counterclockwise, so that they're vertical instead of horizontal. This may allow the labels to use a larger font. This option is only supported when the window is docked horizontally.</td></tr>
 <tr><td>Color Velocities</td><td>Check this item to color the piano keys according to the velocities of the output notes. The colors range spectrally from blue (softest) to red (loudest).</td></tr>
+<tr><td>Insert Track</td><td>This command inserts a track for the selected note. Position the cursor over the desired note on the piano keyboard before using this command. The new track's @[track note\note] property will be set appropriately.</td></tr>
 </table>
 
 @item Multiple keyboards
@@ -1842,6 +1843,10 @@ If true, @[dubs] are always recorded during playback, and the resultant recordin
 
 C:\Users\foo\AppData\Roaming\Polymeter
 
+@topic Graph Handles Unicode
+
+If true, the @[Graph bar] correctly handles @[unicode\non-ASCII] characters in @[track name\track names]. This option is only meaningful if GraphViz is installed. Enabling this option adds overhead due to UTF-8 encoding, hence it's disabled by default. With this option disabled, non-ASCII characters may display as question marks in the graph, and can also cause incomplete or erroneous graphs. If you regularly use non-ASCII characters, enable this option.
+
 @endchapter
 
 @endchapter
@@ -2221,7 +2226,7 @@ Use this function to apply scaling, in other words to multiply the velocities by
 
 @item Replacing velocities\Replace
 
-Use this function to replace a particular step value with a different one. If a step selection exists, the replacement only occurs with the selected steps, otherwise it occurs within all steps of the selected tracks. The find and replace operation can operate on @[unsigned versus signed steps\signed or unsigned steps].
+Use this function to replace a particular step value with a different one. If a step selection exists, the replacement only occurs with the selected steps, otherwise it occurs within all steps of the selected tracks. The find and replace operation can operate on @[unsigned versus signed steps\signed or unsigned steps]. You can also replace a range of velocity values; to do this, first check the "Range" checkbox, in order to reveal the "Find start" and "Find end" edit controls, and then use these controls to specify the desired range.
 
 @topic Fill
 
@@ -2437,7 +2442,7 @@ Each of these commands exports data to a Comma-Separated Values (CSV) file. In a
 
 @item Export Tracks
 
-This command exports @[tracks\track] data to a CSV file. If a @[track selection] exists, only the selected tracks are exported, otherwise all tracks are exported. The first output row is a column header specifying the names of the track properties. Each subsequent row corresponds to a track, and contains the data for each of the track's properties. You can also @[import tracks], using this same file format.
+This command exports @[tracks\track] data to a CSV file. If a @[track selection] exists, only the selected tracks are exported, otherwise all tracks are exported. The first output row is a column header specifying the names of the track properties. Each subsequent row corresponds to a track, and contains the data for each of the track's properties. You can also @[import tracks], using this same file format. If one or more track names contain @[unicode\non-ASCII] characters, the CSV file is encoded as UTF-8 with a BOM (Byte Order Mark).
 
 @item Export Steps
 
@@ -2657,6 +2662,14 @@ For example, suppose a track's step values range from 0 to 127. Offsetting the t
 
 Clipping is potentially an issue for all @[track types], but it's a particular concern for @[note tracks] because the range of note velocities determines the dynamic range of the resulting music. Unintentional clipping of note velocities can reduce the subtlety of your composition. One way to detect it is by using the Color Velocities option in the @[Piano bar]. If you see a lot of bright red or dark blue notes, you're probably clipping. Another method is to use the @[Velocity Range] command on your note tracks: it reports the range of velocities in use, taking all offsets into account, and also reports clipping.
 
+@topic Unicode
+
+The application generally supports Unicode, which means non-ASCII characters are allowed in @[track name\track names], as well as @[parts\part] and @[presets\preset] names. All valid UTF-16 code points are allowed. Note however that in @[export\exported] MIDI files, non-ASCII characters will be replaced by question marks, because the MIDI file format only supports ASCII track names. This limitation also applies to the @[Export Song] command, because it uses the MIDI export internally.
+
+ASCII here means <em>printable</em> ASCII, excluding control characters, in other words the 7-bit characters ranging from 32 to 126 decimal; characters outside this range are considered non-ASCII.
+
+The @[Graph bar] optionally supports Unicode, but the option is disabled by default because it increases overhead. To enable it, set the @[Graph Handles Unicode] option to true.
+
 @endchapter
 
 @chapter Reference
@@ -2688,6 +2701,7 @@ Clipping is potentially an issue for all @[track types], but it's a particular c
 <tr><td>@[Show Property Descriptions]</td><td>If true, show descriptions area in properties bar</td></tr>
 <tr><td>@[Automatically Check for Updates]</td><td>Automatically check for newer version of app during startup</td></tr>
 <tr><td>@[Always Record]</td><td>Always record dubs during playback and automatically save the recordings</td></tr>
+<tr><td>@[Graph Handles Unicode]</td><td>If true, graph handles Unicode characters in track names</td></tr>
 </table>
 
 @topic Shortcuts
