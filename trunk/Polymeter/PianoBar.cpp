@@ -24,6 +24,7 @@
 		14		05jul22	add multiple pianos feature
 		15		01dec22	vary orientation with aspect ratio when floating
 		16		17dec22	use lParam macros in parent notify handler
+		17		23feb23	make prompting for channel selection public
 
 */
 
@@ -390,19 +391,6 @@ bool CPianoBar::SetPianoCount(int nPianos)
 	return true;
 }
 
-template<class T> inline int CPianoBar::CountSetBits(T nVal)
-{
-	int	nBits = sizeof(nVal) * 8;
-	int	nSet = 0;
-	T	nMask = 1;
-	for (int iBit = 0; iBit < nBits; iBit++) {	// for each bit
-		if (nVal & nMask)	// if bit is set
-			nSet++;	// bump count
-		nMask <<= 1;
-	}
-	return nSet;
-}
-
 void CPianoBar::SetChannelFilter(int iChannel, USHORT nChannelMask)
 {
 	// If nChannelMask is zero, iChannel is either the zero-based index of the
@@ -416,8 +404,8 @@ void CPianoBar::SetChannelFilter(int iChannel, USHORT nChannelMask)
 	ZeroMemory(m_arrChannelPiano, sizeof(m_arrChannelPiano));	// reset per-channel piano indices
 	USHORT	nNewChannelMask = 0;
 	int	nPianos = 1;	// default to a single piano
-	if (nChannelMask) {	// if channel mask is non-zero
-		int	nSetBits = CountSetBits(nChannelMask);
+	if (nChannelMask) {	// if channel bitmask is non-zero
+		int	nSetBits = theApp.CountSetBits(nChannelMask);	// count number of set bits in bitmask
 		if (nSetBits > 1) {	// if multiple channels are selected
 			iChannel = MIDI_CHANNELS;	// indicate filtering for multiple channels
 			nNewChannelMask = nChannelMask;
@@ -434,7 +422,7 @@ void CPianoBar::SetChannelFilter(int iChannel, USHORT nChannelMask)
 			_BitScanForward(&iFirstSetBit, nChannelMask);	// scan for first set bit
 			iChannel = iFirstSetBit;	// first set bit's index is selected channel
 		}
-	} else {	// channel mask is zero
+	} else {	// channel bitmask is zero
 		if (iChannel >= MIDI_CHANNELS)	// if channel index is out of range
 			iChannel = -1;	// disable channel filtering
 	}
@@ -506,18 +494,24 @@ inline void CPianoBar::GetPianoChannels(CChannelIdxArray& arrChannelIdx) const
 	}
 }
 
-bool CPianoBar::PromptForChannelSelection(USHORT& nChannelMask)
+bool CPianoBar::PromptForChannelSelection(CWnd *pParentWnd, int iFilterChannel, USHORT& nChannelMask)
 {
 	CSaveRestoreFocus	focus;	// restore focus after modal dialog
-	CSelectChannelsDlg	dlg(this);
-	if (m_iFilterChannel >= 0 && m_iFilterChannel < MIDI_CHANNELS)	// if single channel selected
-		dlg.m_nChannelMask = MAKE_CHANNEL_MASK(m_iFilterChannel);	// select that channel in list
+	CSelectChannelsDlg	dlg(pParentWnd);
+	if (iFilterChannel >= 0 && iFilterChannel < MIDI_CHANNELS)	// if single channel selected
+		dlg.m_nChannelMask = MAKE_CHANNEL_MASK(iFilterChannel);	// select that channel in list
 	else	// wildcard or multiple channels selected
-		dlg.m_nChannelMask = m_nFilterChannelMask;
+		dlg.m_nChannelMask = nChannelMask;
 	if (dlg.DoModal() != IDOK)	// if user canceled or error
 		return false;	// bail out
 	nChannelMask = dlg.m_nChannelMask;
 	return true;
+}
+
+inline bool CPianoBar::PromptForChannelSelection(USHORT& nChannelMask)
+{
+	nChannelMask = m_nFilterChannelMask;
+	return PromptForChannelSelection(this, m_iFilterChannel, nChannelMask);
 }
 
 ////////////////////////////////////////////////////////////////////////////

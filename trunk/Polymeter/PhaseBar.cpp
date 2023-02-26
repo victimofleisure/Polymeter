@@ -23,6 +23,7 @@
 		13		03jan22	add shortcut key for full screen mode
 		14		05dec22	center period text unless crosshairs are shown
 		15		06dec22	add period unit
+		16		23feb23	delete previous frame files if any
 
 */
 
@@ -387,6 +388,23 @@ int CPhaseBar::CTempoMapIter::GetPosition(double fTime)	// input times must be i
 	return m_nStartPos + SecondsToPosition(fTime - m_fStartTime);
 }
 
+int CPhaseBar::WildcardDeleteFile(CString sPath)
+{
+	// Note that the destination path is double-null terminated. CString's
+	// get buffer method allocates the specified number of characters plus
+	// one for the null terminator, but we need space for two terminators,
+	// hence we must increment nPathLen.
+	int	nPathLen = sPath.GetLength();
+	LPTSTR	pszPath = sPath.GetBufferSetLength(nPathLen + 1);
+	pszPath[nPathLen + 1] = '\0';	// double-null terminated string
+	SHFILEOPSTRUCT	SHFileOp;
+	ZeroMemory(&SHFileOp, sizeof(SHFileOp));
+	SHFileOp.wFunc = FO_DELETE;
+	SHFileOp.pFrom = pszPath;
+	SHFileOp.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_FILESONLY | FOF_NORECURSION;
+	return SHFileOperation(&SHFileOp);
+}
+
 bool CPhaseBar::ExportVideo(LPCTSTR pszFolderPath, CSize szFrame, double fFrameRate, int nDurationFrames)
 {
 	ASSERT(fFrameRate > 0);
@@ -410,7 +428,7 @@ bool CPhaseBar::ExportVideo(LPCTSTR pszFolderPath, CSize szFrame, double fFrameR
 	double	fFramePeriod = (1 / fFrameRate);
 	double	fFrameDelta = fFramePeriod / 60 * pDoc->m_fTempo * pDoc->GetTimeDivisionTicks();
 	CPathStr	sFolderPath(pszFolderPath);
-	sFolderPath.Append(_T("\\img"));
+	sFolderPath.Append(_T("img"));
 	CString	sFileExt(_T(".png"));
 	CString	sFrameNum;
 	sFrameNum.Format(_T("%05d"), 0);
@@ -418,6 +436,7 @@ bool CPhaseBar::ExportVideo(LPCTSTR pszFolderPath, CSize szFrame, double fFrameR
 		if (AfxMessageBox(IDS_PHASE_EXPORT_OVERWRITE_WARN, MB_YESNO | MB_DEFBUTTON2 | MB_ICONWARNING) != IDYES)
 			return false;
 	}
+	WildcardDeleteFile(sFolderPath + '*' + sFileExt);	// delete previously existing frame files if any
 	CProgressDlg	dlg;
 	if (!dlg.Create(theApp.GetMainFrame()))	// create progress dialog
 		return false;

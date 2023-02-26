@@ -547,6 +547,10 @@ BEGIN
         BEGIN
             MENUITEM SEPARATOR
         END
+        POPUP "&Channel"
+        BEGIN
+            MENUITEM SEPARATOR
+        END
         POPUP "&Zoom"
         BEGIN
             MENUITEM "&In",                         ID_GRAPH_ZOOM_IN
@@ -1482,7 +1486,7 @@ BEGIN
                             "Always record dubs during playback and automatically save the recordings"
     IDS_OPT_DESC_General_bCheckForUpdates 
                             "Automatically check for newer version of app during startup"
-    IDS_OPT_DESC_General_bGraphUnicode 
+    IDS_OPT_DESC_Graph_bGraphUnicode 
                             "If true, graph handles Unicode characters in track names"
     IDS_OPT_DESC_General_bPropertyDescrips 
                             "If true, show descriptions area in properties bar"
@@ -1528,7 +1532,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_OPT_NAME_General_bCheckForUpdates "Automatically Check for Updates"
-    IDS_OPT_NAME_General_bGraphUnicode "Graph Handles Unicode"
+    IDS_OPT_NAME_Graph_bGraphUnicode "Graph Handles Unicode"
     IDS_OPT_NAME_General_bPropertyDescrips "Show Property Descriptions"
     IDS_OPT_NAME_Midi_bSendMidiClock "Send MIDI Clock"
     IDS_OPT_NAME_Midi_bThru "Thru"
@@ -1678,6 +1682,9 @@ BEGIN
     IDS_WINDOW_RESET_LAYOUT_WARN 
                             "Reset all windows to their default layout? This action can't be undone, and the application will restart."
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
+    IDS_OPT_NAME_Graph_sGraphvizFolder "Graphviz Folder"
+    IDS_OPT_DESC_Graph_sGraphvizFolder "Location of Graphviz executable files"
+    IDS_OPT_GROUP_Graph     "Graph"
 END
 
 STRINGTABLE

@@ -26,6 +26,7 @@
 		16		11nov21	add FindMenuItem and InsertNumericMenuItems
 		17		05jul22	add wrapper class to save and restore focus 
 		18		13dec22	add process information wrapper
+		19		24feb23	add template to count set bits
 
         enhanced application
  
@@ -59,6 +60,7 @@ public:
 	static	bool	GetLogicalDriveStringArray(CStringArrayEx& arrDrive);
 	static	int		FindMenuItem(const CMenu *pMenu, UINT nItemID);
 	static	bool	InsertNumericMenuItems(CMenu *pMenu, UINT nPlaceholderID, UINT nStartID, int nStartVal, int nItems, bool bInsertAfter = false);
+	template<class T> static int CountSetBits(T nVal);
 
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -75,6 +77,19 @@ protected:
 
 // Helpers
 };
+
+template<class T> inline int CWinAppCK::CountSetBits(T nVal)
+{
+	int	nBits = sizeof(nVal) * 8;
+	int	nSet = 0;
+	T	nMask = 1;
+	for (int iBit = 0; iBit < nBits; iBit++) {	// for each bit
+		if (nVal & nMask)	// if bit is set
+			nSet++;	// bump count
+		nMask <<= 1;
+	}
+	return nSet;	// return count of set bits
+}
 
 /////////////////////////////////////////////////////////////////////////////
 

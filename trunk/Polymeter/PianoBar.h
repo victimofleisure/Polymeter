@@ -18,6 +18,7 @@
 		08		18nov20	enable auto-hide and attach
 		09		05jul22	add multiple pianos feature
 		10		01dec22	vary orientation with aspect ratio when floating
+		11		23feb23	make prompting for channel selection public
 
 */
 
@@ -53,6 +54,7 @@ public:
 	void	UpdateKeyLabels();
 	void	UpdatePianoSize();
 	void	InsertTrackFromPoint(CPoint pt);
+	static	bool	PromptForChannelSelection(CWnd *pParentWnd, int iFilterChannel, USHORT& nChannelMask);
 
 // Overrides
 
@@ -173,7 +175,6 @@ protected:
 	void	LayoutPianos(int cx, int cy);
 	void	GetPianoChannels(CChannelIdxArray& arrChannelIdx) const;
 	bool	PromptForChannelSelection(USHORT& nChannelMask);
-	template<class T> static int CountSetBits(T nVal);
 
 // Overrides
 	virtual	void OnShowChanged(bool bShow);

@@ -35,6 +35,7 @@
 		25		26feb19	add FastInsertSorted
 		26		01apr19	add FastInsertSortedUnique
 		27		26sep20	add indirect sort
+		28		23feb23	add WORD array
 
 		enhanced array with copy ctor, assignment, and fast const access
  
@@ -61,6 +62,14 @@ public:
 	#define	CArrayEx_TYPE int
 	#define CArrayEx_BASE_TYPE DWORD
 	#define CArrayEx_CLASS CIntArrayEx
+	#include "ArrayExAlgoDef.h"
+};
+
+class CWordArrayEx : public CWordArray
+{
+public:
+	#define	CArrayEx_TYPE WORD
+	#define CArrayEx_CLASS CWordArrayEx
 	#include "ArrayExAlgoDef.h"
 };
 

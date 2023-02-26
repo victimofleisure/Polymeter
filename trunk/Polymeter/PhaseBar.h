@@ -15,6 +15,7 @@
 		05		20dec21	add convergences option and full screen mode
 		06		16jun22	make tempo map iterator public
 		07		06dec22	add period unit
+		08		23feb23	add wildcard delete file method
 
 */
 
@@ -78,6 +79,7 @@ public:
 	static	LONGLONG	FindPrevConvergence(const CLongLongArray& arrMod, LONGLONG nStartPos, INT_PTR nConvSize);
 	static	LONGLONG	FindNextConvergenceSlow(const CLongLongArray& arrMod, LONGLONG nStartPos, INT_PTR nConvSize, bool bReverse = false);
 	LONGLONG	FindNextConvergence(bool bReverse = false);
+	static	int		WildcardDeleteFile(CString sPath);
 
 // Overrides
 

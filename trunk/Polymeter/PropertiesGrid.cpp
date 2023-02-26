@@ -24,6 +24,7 @@
 		14		26sep18	in PreTranslateMessage, add Alt+Down to drop list
 		15		07jun21	rename rounding functions
 		16		19aug21	use custom time span conversion methods
+		17		26feb23	add folder property type
 
 */
 
@@ -784,6 +785,13 @@ void CPropertiesGridCtrl::InitPropList(const CProperties& Props)
 				CMFCPropertyGridFileProperty	*pFileProp = 
 					new CMFCPropertyGridFileProperty(sPropName, TRUE, CString(arrVar[iProp].bstrVal), NULL, 0, NULL, sPropDescrip, iProp);
 				pProp = pFileProp;
+			}
+			break;
+		case CProperties::PT_FOLDER:
+			{
+				CMFCPropertyGridFileProperty	*pFolderProp = 
+					new CMFCPropertyGridFileProperty(sPropName, CString(arrVar[iProp].bstrVal), iProp, sPropDescrip);
+				pProp = pFolderProp;
 			}
 			break;
 		case CProperties::PT_TIME:

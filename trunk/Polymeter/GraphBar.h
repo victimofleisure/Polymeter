@@ -17,6 +17,8 @@
 		07		05jul22	add parent window to modulation type dialog ctor
 		08		23jul22	add option to exclude muted tracks
 		09		13dec22	add export of formats other than SVG
+		10		24feb23	add channel selection
+		11		26feb23	move Graphviz path to app options
 		
 */
 
@@ -151,6 +153,10 @@ protected:
 		GRAPH_FILTERS = CTrack::MODULATION_TYPES + 2,	// extras for all and multiple
 		GRAPH_FILTER_MULTI = GRAPH_FILTERS - 2,	// index reserved for multiple filters
 	};
+	enum {	// graph channels
+		GRAPH_CHANNELS = MIDI_CHANNELS + 2,	// extras for all and multiple
+		GRAPH_CHANNEL_MULTI = GRAPH_CHANNELS - 2,	// index reserved for multiple filters
+	};
 	enum {	// user-defined window messages
 		UWM_GRAPH_DONE = WM_APP + 1689,
 		UWM_GRAPH_ERROR,
@@ -162,6 +168,7 @@ protected:
 		SM_GRAPH_DEPTH,
 		SM_GRAPH_LAYOUT,
 		SM_GRAPH_FILTER,
+		SM_GRAPH_CHANNEL,
 		CONTEXT_SUBMENUS
 	};
 	enum {	// submenu command ID ranges
@@ -173,6 +180,8 @@ protected:
 		SMID_GRAPH_LAYOUT_LAST = SMID_GRAPH_LAYOUT_FIRST + GRAPH_LAYOUTS - 1,
 		SMID_GRAPH_FILTER_FIRST = SMID_GRAPH_LAYOUT_LAST + 1,
 		SMID_GRAPH_FILTER_LAST = SMID_GRAPH_FILTER_FIRST + GRAPH_FILTERS - 1,
+		SMID_GRAPH_CHANNEL_FIRST = SMID_GRAPH_FILTER_LAST + 1,
+		SMID_GRAPH_CHANNEL_LAST = SMID_GRAPH_CHANNEL_FIRST + GRAPH_CHANNELS - 1,
 	};
 	enum {
 		BROWSER_ZOOM_PCT_MIN	= 10,
@@ -196,6 +205,8 @@ protected:
 	int		m_iGraphLayout;		// graph layout engine; see GraphTypeDef.h
 	int		m_iGraphFilter;		// index of modulation type to show, or -1 for all
 	MOD_TYPE_MASK	m_nGraphFilterMask;	// in multi-filter mode, bitmask of modulation types to show
+	int		m_iGraphChannel;	// index of MIDI channel to show, or -1 for all
+	WORD	m_nGraphChannelMask;	// in multi-channel mode, bitmask of MIDI channels to show
 	int		m_iZoomLevel;		// zoom level in signed steps; zero is 100%
 	double	m_fZoomStep;		// zoom step size as fraction
 	bool	m_bUpdatePending;	// true if deferred update is pending
@@ -207,7 +218,6 @@ protected:
 	CTempFilePath	m_tfpData;	// temp file path of graph input data (in DOT syntax)
 	CTempFilePath	m_tfpGraph;	// temp file path of graph output image
 	CBoolArrayEx	m_arrMute;	// array of cached track mute states
-	static	CString	m_sGraphvizPath;	// path to folder containing Graphviz binaries
 	static	bool	m_bUseCairo;	// true if rendering via Cairo; Graphviz bug #1855
 
 // Helpers
@@ -226,6 +236,8 @@ protected:
 	void	RebuildMuteCache();
 	void	RebuildMuteCacheIfNeeded();
 	void	OnTrackMuteChange();
+	void	OnTrackPropertyChange(int iProp);
+	void	ApplyChannelMask(CPolymeterDoc *pDoc, const CTrackBase::CPackedModulationArray& arrMod, CWordArrayEx& arrTrackChannelMask) const;
 	static	bool	FindGraphvizExes(CString sFolderPath);
 	static	bool	FindGraphvizExesFlexible(CPathStr& sFolderPath);
 	static	bool	FindGraphvizFast(CString& sGraphvizPath);
@@ -241,6 +253,7 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu);
+	afx_msg LRESULT OnCommandHelp(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnGraphDone(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnGraphError(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnDeferredUpdate(WPARAM wParam, LPARAM lParam);
@@ -248,6 +261,7 @@ protected:
 	afx_msg void OnGraphDepth(UINT nID);
 	afx_msg void OnGraphLayout(UINT nID);
 	afx_msg void OnGraphFilter(UINT nID);
+	afx_msg void OnGraphChannel(UINT nID);
 	afx_msg void OnGraphSaveAs();
 	afx_msg void OnUpdateGraphSaveAs(CCmdUI *pCmdUI);
 	afx_msg void OnGraphZoomIn();

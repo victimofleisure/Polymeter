@@ -18,6 +18,7 @@
 		08		24oct21	increase maximum view update frequency
 		09		14dec22	add show quant as fraction option
 		10		16feb23	add graph unicode option
+		11		26feb23	add Graphviz path
 
 */
 
@@ -25,6 +26,7 @@
 
 GROUPDEF(	Midi		)
 GROUPDEF(	View		)
+GROUPDEF(	Graph		)
 GROUPDEF(	General		)
 
 #undef GROUPDEF
@@ -53,10 +55,11 @@ PROPDEF(	View,		NONE,		VAR,		bool,		bShowTrackColors,	0,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		bool,		bUniqueTrackNames,	1,			0,			0,			NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		float,		fZoomDelta,			100.0f,		1.0f,		100.0f,		NULL,		0)
 PROPDEF(	View,		NONE,		VAR,		int,		nLiveFontHeight,	30,			10,			100,		NULL,		0)
+PROPDEF(	Graph,		NONE,		FOLDER,		CString,	sGraphvizFolder,	"",			"",			"",			NULL,		0)
+PROPDEF(	Graph,		NONE,		VAR,		bool,		bGraphUnicode,		0,			0,			0,			NULL,		0)
 PROPDEF(	General,	NONE,		VAR,		bool,		bPropertyDescrips,	1,			0,			0,			NULL,		0)
 PROPDEF(	General,	NONE,		VAR,		bool,		bCheckForUpdates,	1,			0,			0,			NULL,		0)
 PROPDEF(	General,	NONE,		VAR,		bool,		bAlwaysRecord,		0,			0,			0,			NULL,		0)
-PROPDEF(	General,	NONE,		VAR,		bool,		bGraphUnicode,		0,			0,			0,			NULL,		0)
 
 #undef PROPDEF
 #undef OPTS_EXCLUDE_MIDI_DEVICES

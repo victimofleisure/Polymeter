@@ -34,6 +34,8 @@
 		24		23jul22	add option to exclude muted tracks
 		25		13dec22	add export of formats other than SVG
 		26		16feb23	add special handling for non-ASCII characters
+		27		24feb23	add channel selection
+		28		26feb23	move Graphviz path to app options
 
 */
 
@@ -101,7 +103,7 @@ const LPCTSTR CGraphBar::m_arrGraphLayout[GRAPH_LAYOUTS] = {
 
 const LPCTSTR CGraphBar::m_arrGraphExeName = _T("dot.exe");
 const LPCTSTR CGraphBar::m_arrGraphFindExeName[] = {
-	// GraphViz folder is identified by the existence of these executables
+	// Graphviz folder is identified by the existence of these executables
 	_T("dot.exe"),
 	_T("gvgen.exe"),
 	_T("gvpack.exe"),
@@ -113,15 +115,12 @@ const LPCTSTR CGraphBar::m_arrGraphFindExeName[] = {
 #define RK_EDGE_LABELS _T("EdgeLabels")
 #define RK_SHOW_LEGEND _T("Legend")
 #define RK_HIGHLIGHT_SELECT _T("HighlightSelect")
-#define RK_GRAPHVIZ_PATH _T("GraphvizPath")
 #define RK_SHOW_MUTED _T("ShowMuted")
 #define RK_EXPORT_SIZE_MODE _T("ExportSizeMode")
 #define RK_EXPORT_WIDTH _T("ExportWidth")
 #define RK_EXPORT_HEIGHT _T("ExportHeight")
 
-CString	CGraphBar::m_sGraphvizPath;
-
-// Since GraphViz 2.38, SVG output can be clipped due to bug #1855; 
+// Since Graphviz 2.38, SVG output can be clipped due to bug #1855; 
 // rendering with Cairo avoids it, at the cost of bloated SVG files
 bool CGraphBar::m_bUseCairo;
 // To render SVG using Cairo, create a DWORD registry value with 
@@ -129,6 +128,7 @@ bool CGraphBar::m_bUseCairo;
 #define RK_USE_CAIRO _T("UseCairo")
 
 #define MAKE_MOD_TYPE_MASK(iType) (static_cast<MOD_TYPE_MASK>(1) << iType)
+#define MAKE_CHANNEL_MASK(iType) (static_cast<USHORT>(1) << iType)
 
 CGraphBar::CGraphBar()
 {
@@ -138,6 +138,8 @@ CGraphBar::CGraphBar()
 	m_iGraphLayout = GL_dot;
 	m_iGraphFilter = -1;
 	m_nGraphFilterMask = 0;
+	m_iGraphChannel = -1;
+	m_nGraphChannelMask = 0;
 	m_iZoomLevel = 0;
 	m_fZoomStep = 1.25;
 	m_bUpdatePending = false;
@@ -160,8 +162,7 @@ CGraphBar::CGraphBar()
 	RdReg(RK_GraphBar, RK_HIGHLIGHT_SELECT, m_bHighlightSelect);
 	RdReg(RK_GraphBar, RK_EDGE_LABELS, m_bEdgeLabels);
 	RdReg(RK_GraphBar, RK_SHOW_LEGEND, m_bShowLegend);
-	RdReg(RK_GraphBar, RK_GRAPHVIZ_PATH, m_sGraphvizPath);
-	RdReg(RK_GraphBar, RK_USE_CAIRO, m_bUseCairo);	// fix for GraphViz bug #1855, see above
+	RdReg(RK_GraphBar, RK_USE_CAIRO, m_bUseCairo);	// fix for Graphviz bug #1855, see above
 	RdReg(RK_GraphBar, RK_SHOW_MUTED, m_bShowMuted);
 }
 
@@ -173,7 +174,6 @@ CGraphBar::~CGraphBar()
 	WrReg(RK_GraphBar, RK_HIGHLIGHT_SELECT, m_bHighlightSelect);
 	WrReg(RK_GraphBar, RK_EDGE_LABELS, m_bEdgeLabels);
 	WrReg(RK_GraphBar, RK_SHOW_LEGEND, m_bShowLegend);
-	WrReg(RK_GraphBar, RK_GRAPHVIZ_PATH, m_sGraphvizPath);
 	WrReg(RK_GraphBar, RK_SHOW_MUTED, m_bShowMuted);
 }
 
@@ -254,7 +254,6 @@ bool CGraphBar::UpdateGraph()
 	if (!m_bGraphvizFound) {	// if graphviz not found yet
 		if (FindGraphviz()) {	// find graphviz; if successful
 			m_bGraphvizFound = true;	// don't find again
-			WrReg(RK_GraphBar, RK_GRAPHVIZ_PATH, m_sGraphvizPath);	// update registry entry immediately
 		} else {	// graphviz not found
 			theApp.GetMainFrame()->m_wndGraphBar.ShowPane(false, false, false);	// hide graph bar
 			return false;	// disable graphing
@@ -309,11 +308,11 @@ UINT CGraphBar::GraphThread(LPVOID pParam)
 	CPathStr	sGraphPath(sDataPath);
 	sGraphPath.RenameExtension(_T(".svg"));	// same as data path except extension
 	LPCTSTR	pszLayout = m_arrGraphLayout[params.m_iGraphLayout];
-	CPathStr	sExePath(m_sGraphvizPath);
+	CPathStr	sExePath(theApp.m_Options.m_Graph_sGraphvizFolder);
 	sExePath.Append(m_arrGraphExeName);
 	LPCTSTR	pszRender;
 	if (m_bUseCairo)
-		pszRender = _T(":cairo");	// fix for GraphViz bug #1855; see above
+		pszRender = _T(":cairo");	// fix for Graphviz bug #1855; see above
 	else	// default render
 		pszRender = _T("");
 	CString	sCmdLine;
@@ -363,11 +362,11 @@ bool CGraphBar::ExportGraph(CString sOutFormat, CString sOutPath, const CSize& s
 	if (!WriteGraph(sDataPath, nNodes, szGraph, true) || !nNodes)
 		return false;
 	LPCTSTR	pszLayout = m_arrGraphLayout[m_iGraphLayout];
-	CPathStr	sExePath(m_sGraphvizPath);
+	CPathStr	sExePath(theApp.m_Options.m_Graph_sGraphvizFolder);
 	sExePath.Append(m_arrGraphExeName);
 	LPCTSTR	pszRender;
 	if (m_bUseCairo)
-		pszRender = _T(":cairo");	// fix for GraphViz bug #1855; see above
+		pszRender = _T(":cairo");	// fix for Graphviz bug #1855; see above
 	else	// default render
 		pszRender = _T("");
 	CString	sCmdLine;
@@ -423,9 +422,9 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes, const CSize& szGraph, b
 	double	fWidth = szGraph.cx / fGraphvizDPI;	// width in inches
 	double	fHeight = szGraph.cy / fGraphvizDPI;	// height in inches
 	// Unicode is optional because UTF-8 slows down writing by an order of magnitude
-	CStdioFileEx	fout(pszPath, CFile::modeCreate | CFile::modeWrite, theApp.m_Options.m_General_bGraphUnicode);
-	if (theApp.m_Options.m_General_bGraphUnicode) {	// if writing UTF-8
-		fout.SeekToBegin();	// CStdioFileEx writes BOM, but GraphViz expects UTF-8 without BOM, so overwrite BOM
+	CStdioFileEx	fout(pszPath, CFile::modeCreate | CFile::modeWrite, theApp.m_Options.m_Graph_bGraphUnicode);
+	if (theApp.m_Options.m_Graph_bGraphUnicode) {	// if writing UTF-8
+		fout.SeekToBegin();	// CStdioFileEx writes BOM, but Graphviz expects UTF-8 without BOM, so overwrite BOM
 	}
 	_fputts(_T("digraph {\n"), fout.m_pStream);
 	_ftprintf(fout.m_pStream, _T("graph[size=\"%g,%g\",ratio=fill];\n"), fWidth, fHeight);
@@ -461,6 +460,11 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes, const CSize& szGraph, b
 			nLevels = INT_MAX;
 		pDoc->m_Seq.GetTracks().GetLinkedTracks(pDoc->m_arrTrackSel, arrMod, nLinkFlags, nLevels);
 	}
+	CWordArrayEx	arrTrackChannelMask;
+	WORD	nChannelMask = m_nGraphChannelMask;
+	if (nChannelMask) {	// if channels specified
+		ApplyChannelMask(pDoc, arrMod, arrTrackChannelMask);
+	}
 	MOD_TYPE_MASK	nModTypeFilterMask;
 	if (m_iGraphFilter >= 0) {	// if modulation type filter index is valid
 		if (m_iGraphFilter >= GRAPH_FILTER_MULTI)	// if multiple filters
@@ -476,6 +480,9 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes, const CSize& szGraph, b
 		if (mod.m_iSource >= 0) {	// if valid modulation source track index
 			// if excluding muted tracks and modulation's source or target is muted
 			if (!m_bShowMuted && (pDoc->m_Seq.GetMute(mod.m_iSource) || pDoc->m_Seq.GetMute(mod.m_iTarget)))
+				continue;	// skip this modulation
+			// if channels specified and modulation targets an excluded channel
+			if (nChannelMask && !arrTrackChannelMask[mod.m_iTarget])
 				continue;	// skip this modulation
 			MOD_TYPE_MASK	nModTypeBit = MAKE_MOD_TYPE_MASK(mod.m_iType);	// make bitmask for this type
 			if (nModTypeFilterMask & nModTypeBit) {	// if modulation's type passes filter
@@ -538,6 +545,63 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes, const CSize& szGraph, b
 	return true;
 }
 
+__forceinline void CGraphBar::ApplyChannelMask(CPolymeterDoc *pDoc, const CTrackBase::CPackedModulationArray& arrMod, CWordArrayEx& arrTrackChannelMask) const
+{
+	// This method determines which of the modulations in arrMod target the
+	// MIDI channels specified by the channel bitmask in m_nGraphChannelMask.
+	// The result is returned via the arrTrackChannelMask array, which has
+	// an element for each track, set non-zero if modulations targeting that
+	// track should be included. The modulations are processed in two stages:
+	//
+	// 1. A modulation passes if it targets a non-modulator track and the bit
+	// corresponding to that track's channel is set in the channel bitmask.
+	//
+	// 2. A modulation passes if it targets a modulator track that directly
+	// or indirectly targets a non-modulator track that passed the filter.
+	//
+	WORD	nChannelMask = m_nGraphChannelMask;	// copy member var
+	int	nTracks = pDoc->GetTrackCount();
+	arrTrackChannelMask.SetSize(nTracks);	// allocate array
+	int	nMods = arrMod.GetSize();
+	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
+		const CTrackBase::CPackedModulation&	mod = arrMod[iMod];
+		const CTrack& trkTarget = pDoc->m_Seq.GetTrack(mod.m_iTarget);
+		if (trkTarget.m_iType != CTrack::TT_MODULATOR) {	// if target track isn't a modulator
+			WORD	nTargetChannelBit = MAKE_CHANNEL_MASK(trkTarget.m_nChannel);
+			if (nChannelMask & nTargetChannelBit) {	// if track's channel matches channel mask
+				if (m_bShowMuted || !pDoc->m_Seq.GetMute(mod.m_iTarget)) {	// if showing muted tracks or target track is unmuted
+					arrTrackChannelMask[mod.m_iTarget] |= nTargetChannelBit;	// add channel to source track's mask
+					arrTrackChannelMask[mod.m_iSource] |= nTargetChannelBit;	// add channel to target track's mask
+				}
+			}
+		}
+	}
+	// A modulator track doesn't output MIDI events, hence its MIDI channel is
+	// meaningless. To determine whether a modulator track passes the channel
+	// filter, we must examine any non-modulator tracks it targets, which may
+	// be multiple hops away. We do this by propagating channel usage outward
+	// from the non-modulator tracks, until further propagation is impossible.
+	//
+	bool	bPassChanged;
+	do {
+		bPassChanged = false;
+		for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
+			const CTrackBase::CPackedModulation&	mod = arrMod[iMod];
+			const CTrack& trkTarget = pDoc->m_Seq.GetTrack(mod.m_iTarget);
+			if (trkTarget.m_iType == CTrack::TT_MODULATOR) {	// if target track is a modulator
+				WORD	nTargetChannelMask = arrTrackChannelMask[mod.m_iTarget];
+				if (nTargetChannelMask) {	// if target track's channel mask is non-zero
+					// if target track's channel mask differs from source track's channel mask
+					if ((arrTrackChannelMask[mod.m_iSource] & nTargetChannelMask) != nTargetChannelMask) {
+						arrTrackChannelMask[mod.m_iSource] |= nTargetChannelMask;	// update source track's channel mask
+						bPassChanged = true;	// pass changed something
+					}
+				}
+			}
+		}
+	} while (bPassChanged);	// loop until a pass makes no changes
+}
+
 int CGraphBar::SplitLabel(const CString& str)
 {
 	int	nLen = str.GetLength();
@@ -592,6 +656,23 @@ __forceinline void CGraphBar::OnTrackMuteChange()
 	}
 }
 
+__forceinline void CGraphBar::OnTrackPropertyChange(int iProp)
+{
+	switch (iProp) {
+	case CTrack::PROP_Name:	// if track name change
+		StartDeferredUpdate();
+		break;
+	case CTrack::PROP_Mute:
+		OnTrackMuteChange();
+		break;
+	case CTrack::PROP_Type:	// if track type change
+	case CTrack::PROP_Channel:	// or channel change
+		if (m_iGraphChannel >= 0)	// if graphing specific channels
+			StartDeferredUpdate();
+		break;
+	}
+}
+
 void CGraphBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
 //	printf("CGraphBar::OnUpdate %p %d %p\n", pSender, lHint, pHint);
@@ -606,28 +687,13 @@ void CGraphBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_TRACK_PROP:
 		{
 			const CPolymeterDoc::CPropHint *pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
-			int	iProp = pPropHint->m_iProp;
-			switch (iProp) {
-			case CTrack::PROP_Name:	// if track name update
-				StartDeferredUpdate();
-				break;
-			case CTrack::PROP_Mute:
-				OnTrackMuteChange();
-				break;
-			}
+			OnTrackPropertyChange(pPropHint->m_iProp);
 		}
 		break;
 	case CPolymeterDoc::HINT_MULTI_TRACK_PROP:
 		{
 			const CPolymeterDoc::CMultiItemPropHint	*pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
-			switch (pPropHint->m_iProp) {
-			case CTrack::PROP_Name:	// if multi-track name change
-				StartDeferredUpdate();
-				break;
-			case CTrack::PROP_Mute:
-				OnTrackMuteChange();
-				break;
-			}
+			OnTrackPropertyChange(pPropHint->m_iProp);
 		}
 		break;
 	case CPolymeterDoc::HINT_TRACK_SELECTION:
@@ -662,8 +728,12 @@ void CGraphBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case CPolymeterDoc::HINT_OPTIONS:
 		{
 			const CPolymeterDoc::COptionsPropHint	*pPropHint = static_cast<CPolymeterDoc::COptionsPropHint *>(pHint);
+			// if Graphviz folder changed, mark graphviz not found
+			if (theApp.m_Options.m_Graph_sGraphvizFolder != pPropHint->m_pPrevOptions->m_Graph_sGraphvizFolder) {
+				m_bGraphvizFound = false;
+			}
 			// if Graph Unicode option changed, redraw graph
-			if (theApp.m_Options.m_General_bGraphUnicode != pPropHint->m_pPrevOptions->m_General_bGraphUnicode) {
+			if (theApp.m_Options.m_Graph_bGraphUnicode != pPropHint->m_pPrevOptions->m_Graph_bGraphUnicode) {
 				StartDeferredUpdate();
 			}
 		}
@@ -729,6 +799,17 @@ void CGraphBar::DoContextMenu(CWnd* pWnd, CPoint point)
 	}
 	arrItemStr[GRAPH_FILTER_MULTI + 1] = LDS(IDS_GRAPH_FILTER_MULTI);
 	theApp.MakePopup(*pSubMenu, SMID_GRAPH_FILTER_FIRST, arrItemStr, m_iGraphFilter + 1);
+	// create graph channel submenu
+	pSubMenu = pPopup->GetSubMenu(SM_GRAPH_CHANNEL);
+	arrItemStr.SetSize(MIDI_CHANNELS + 2);	// two extra items, one for wildcard, one for multi
+	arrItemStr[0] = LDS(IDS_FILTER_ALL);	// wildcard comes first
+	CString	s;
+	for (int iItem = 1; iItem <= MIDI_CHANNELS; iItem++) {	// for each channel
+		s.Format(_T("%d"), iItem);
+		arrItemStr[iItem] = s;
+	}
+	arrItemStr[MIDI_CHANNELS + 1] = LDS(IDS_CHANNEL_FILTER_MULTI);	// multi comes last
+	theApp.MakePopup(*pSubMenu, SMID_GRAPH_CHANNEL_FIRST, arrItemStr, m_iGraphChannel + 1);
 	// create graph depth submenu
 	pSubMenu = pPopup->GetSubMenu(SM_GRAPH_DEPTH);
 	VERIFY(theApp.InsertNumericMenuItems(pSubMenu, ID_GRAPH_DEPTH_MAX, 
@@ -870,10 +951,11 @@ bool CGraphBar::FindGraphvizFast(CString& sGraphvizPath)
 
 bool CGraphBar::FindGraphviz()
 {
+	CString&	sGraphvizPath = theApp.m_Options.m_Graph_sGraphvizFolder;	// alias for brevity
 	// if graphviz path exists, verify needed executables are present at specified location
-	if (!m_sGraphvizPath.IsEmpty() && FindGraphvizExes(m_sGraphvizPath))
+	if (!sGraphvizPath.IsEmpty() && FindGraphvizExes(sGraphvizPath))
 		return true;	// all is good
-	if (FindGraphvizFast(m_sGraphvizPath))	// graphviz is missing: try default location first
+	if (FindGraphvizFast(sGraphvizPath))	// graphviz is missing: try default location first
 		return true;	// all is good
 	// graphviz not found in default location either; must involve user now
 	int	nRet;
@@ -893,7 +975,7 @@ bool CGraphBar::FindGraphviz()
 				CString	sTitle(LPCTSTR(IDS_GRAPHVIZ_BROWSE_TITLE));
 				if (CFolderDialog::BrowseFolder(sTitle, sFolderPath, NULL, nFlags))	{	// browse for folder
 					if (FindGraphvizExesFlexible(sFolderPath)) {	// if executables found in specified folder
-						m_sGraphvizPath = sFolderPath;	// store path of containing folder
+						sGraphvizPath = sFolderPath;	// store path of containing folder
 						AfxMessageBox(IDS_GRAPHVIZ_IS_READY, MB_ICONINFORMATION);
 						return true;	// all is good
 					}
@@ -910,7 +992,7 @@ bool CGraphBar::FindGraphviz()
 					CFileFindDlg	dlg;
 					if (dlg.InitDlg(arrTargetFileName)) {	// if dialog initialized
 						if (dlg.DoModal() == IDOK) {	// if executables found
-							m_sGraphvizPath = dlg.GetContainingFolderPath();	// store path of containing folder
+							sGraphvizPath = dlg.GetContainingFolderPath();	// store path of containing folder
 							AfxMessageBox(IDS_GRAPHVIZ_IS_READY, MB_ICONINFORMATION);
 							return true;	// all is good
 						}
@@ -922,7 +1004,7 @@ bool CGraphBar::FindGraphviz()
 			nRet = AfxMessageBox(IDS_GRAPHVIZ_DOWNLOAD_IT, MB_OKCANCEL);	// wait for user to download graphviz
 			if (nRet == IDCANCEL)
 				return false;	// user canceled
-			if (FindGraphvizFast(m_sGraphvizPath)) {	// try default location first
+			if (FindGraphvizFast(sGraphvizPath)) {	// try default location first
 				AfxMessageBox(IDS_GRAPHVIZ_IS_READY, MB_ICONINFORMATION);
 				return true;	// all is good
 			}
@@ -1208,6 +1290,7 @@ BEGIN_MESSAGE_MAP(CGraphBar, CMyDockablePane)
 	ON_WM_SIZE()
 	ON_WM_CONTEXTMENU()
 	ON_WM_MENUSELECT()
+	ON_MESSAGE(WM_COMMANDHELP, OnCommandHelp)
 	ON_MESSAGE(UWM_GRAPH_DONE, OnGraphDone)
 	ON_MESSAGE(UWM_GRAPH_ERROR, OnGraphError)
 	ON_MESSAGE(UWM_DEFERRED_UPDATE, OnDeferredUpdate)
@@ -1215,6 +1298,7 @@ BEGIN_MESSAGE_MAP(CGraphBar, CMyDockablePane)
 	ON_COMMAND_RANGE(SMID_GRAPH_DEPTH_FIRST, SMID_GRAPH_DEPTH_LAST, OnGraphDepth)
 	ON_COMMAND_RANGE(SMID_GRAPH_LAYOUT_FIRST, SMID_GRAPH_LAYOUT_LAST, OnGraphLayout)
 	ON_COMMAND_RANGE(SMID_GRAPH_FILTER_FIRST, SMID_GRAPH_FILTER_LAST, OnGraphFilter)
+	ON_COMMAND_RANGE(SMID_GRAPH_CHANNEL_FIRST, SMID_GRAPH_CHANNEL_LAST, OnGraphChannel)
 	ON_COMMAND(ID_GRAPH_SAVEAS, OnGraphSaveAs)
 	ON_UPDATE_COMMAND_UI(ID_GRAPH_SAVEAS, OnUpdateGraphSaveAs)
 	ON_COMMAND(ID_GRAPH_ZOOM_IN, OnGraphZoomIn)
@@ -1286,10 +1370,39 @@ void CGraphBar::OnMenuSelect(UINT nItemID, UINT nFlags, HMENU hSysMenu)
 					nItemID = IDS_HINT_GRAPH_FILTER_MOD_TYPE;
 				else
 					nItemID = IDS_HINT_GRAPH_FILTER_MOD_TYPE_MULTI;
+			} else if (nItemID <= SMID_GRAPH_CHANNEL_LAST) {
+				if (nItemID == SMID_GRAPH_CHANNEL_FIRST)
+					nItemID = IDS_SM_FILTER_CHANNEL_ALL;
+				else if (nItemID < SMID_GRAPH_CHANNEL_LAST)
+					nItemID = IDS_SM_FILTER_CHANNEL_SELECT;
+				else
+					nItemID = IDS_HINT_PIANO_CHANNEL_MULTI;
 			}
 		}
 	}
 	CMyDockablePane::OnMenuSelect(nItemID, nFlags, hSysMenu);
+}
+
+LRESULT CGraphBar::OnCommandHelp(WPARAM wParam, LPARAM lParam)
+{
+	// the channel hint strings are borrowed from the MIDI event and piano bars,
+	// hence they must be remapped here to display an appropriate help topic
+	UINT	nTrackingID = theApp.GetMainFrame()->GetTrackingID();
+	UINT	nNewID;
+	switch (nTrackingID) {
+	case IDS_SM_FILTER_CHANNEL_ALL:
+	case IDS_SM_FILTER_CHANNEL_SELECT:
+	case IDS_HINT_PIANO_CHANNEL_MULTI:
+		nNewID = IDS_HINT_GRAPH_CHANNEL;
+		break;
+	default:
+		nNewID = 0;
+	}
+	if (nNewID) {	// if tracking ID was remapped
+		theApp.WinHelp(nNewID);
+		return TRUE;
+	}
+	return CMyDockablePane::OnCommandHelp(wParam, lParam);
 }
 
 LRESULT CGraphBar::OnGraphDone(WPARAM wParam, LPARAM lParam)
@@ -1334,24 +1447,30 @@ void CGraphBar::OnGraphScope(UINT nID)
 {
 	int	iGraphScope = nID - SMID_GRAPH_SCOPE_FIRST;
 	ASSERT(iGraphScope >= 0 && iGraphScope < GRAPH_SCOPES);
-	m_iGraphScope = iGraphScope;
-	UpdateGraph();
+	if (iGraphScope != m_iGraphScope) {	// if state changed
+		m_iGraphScope = iGraphScope;
+		UpdateGraph();
+	}
 }
 
 void CGraphBar::OnGraphDepth(UINT nID)
 {
 	int	nGraphDepth = nID - SMID_GRAPH_DEPTH_FIRST;
 	ASSERT(nGraphDepth >= 0 && nGraphDepth < GRAPH_DEPTHS);
-	m_nGraphDepth = nGraphDepth;
-	UpdateGraph();
+	if (nGraphDepth != m_nGraphDepth) {	// if state changed
+		m_nGraphDepth = nGraphDepth;
+		UpdateGraph();
+	}
 }
 
 void CGraphBar::OnGraphLayout(UINT nID)
 {
 	int	iGraphLayout = nID - SMID_GRAPH_LAYOUT_FIRST;
 	ASSERT(iGraphLayout >= 0 && iGraphLayout < GRAPH_LAYOUTS);
-	m_iGraphLayout = iGraphLayout;
-	UpdateGraph();
+	if (iGraphLayout != m_iGraphLayout) {	// if state changed
+		m_iGraphLayout = iGraphLayout;
+		UpdateGraph();
+	}
 }
 
 void CGraphBar::OnGraphFilter(UINT nID)
@@ -1359,16 +1478,67 @@ void CGraphBar::OnGraphFilter(UINT nID)
 	int	iGraphFilter = nID - SMID_GRAPH_FILTER_FIRST;
 	ASSERT(iGraphFilter >= 0 && iGraphFilter < GRAPH_FILTERS);
 	iGraphFilter--;	// account for wildcard
-	if (iGraphFilter == GRAPH_FILTER_MULTI) {	// if multiple filters
+	MOD_TYPE_MASK	nFilterMask = m_nGraphFilterMask;
+	if (iGraphFilter == GRAPH_FILTER_MULTI) {	// if user selected multiple
 		CSaveRestoreFocus	focus;	// restore focus after modal dialog
 		CModulationTypeDlg	dlg(this);	// show modulation type dialog
-		dlg.m_nModTypeMask = m_nGraphFilterMask;	// init dialog's bitmask
+		dlg.m_nModTypeMask = nFilterMask;	// init dialog's bitmask
 		if (dlg.DoModal() != IDOK)	// if user canceled or error
 			return;	// bail out
-		m_nGraphFilterMask = dlg.m_nModTypeMask;	// update filter bitmask member
+		nFilterMask = dlg.m_nModTypeMask;	// update filter bitmask
+		if (nFilterMask) {	// if any modulation types selected
+			int	nSetBits = theApp.CountSetBits(nFilterMask);	// count number of set bits in bitmask
+			if (nSetBits == 1) {	// if single bit set
+				ULONG	iFirstSetBit;
+				_BitScanForward(&iFirstSetBit, nFilterMask);	// scan for first set bit
+				iGraphFilter = iFirstSetBit;	// first set bit's index is selected type
+			}
+		} else {	// no modulation types selected
+			iGraphFilter = -1;	// select all types
+		}
+	} else {	// user selected single or all
+		if (iGraphFilter >= 0)	// if single
+			nFilterMask = MAKE_MOD_TYPE_MASK(iGraphFilter);	// make mask
+		else	// all
+			nFilterMask = 0;	// reset mask
 	}
-	m_iGraphFilter = iGraphFilter;
-	UpdateGraph();
+	if (iGraphFilter != m_iGraphFilter || nFilterMask != m_nGraphFilterMask) {	// if state changed
+		m_iGraphFilter = iGraphFilter;
+		m_nGraphFilterMask = nFilterMask;
+		UpdateGraph();
+	}
+}
+
+void CGraphBar::OnGraphChannel(UINT nID)
+{
+	int	iGraphChannel = nID - SMID_GRAPH_CHANNEL_FIRST;
+	ASSERT(iGraphChannel >= 0 && iGraphChannel < GRAPH_CHANNELS);
+	iGraphChannel--;	// account for wildcard
+	WORD	nChannelMask = m_nGraphChannelMask;
+	if (iGraphChannel == GRAPH_CHANNEL_MULTI) {	// if user selected multiple
+		if (!CPianoBar::PromptForChannelSelection(this, m_iGraphChannel, nChannelMask))
+			return;
+		if (nChannelMask) {	// if any channels specified
+			int	nSetBits = theApp.CountSetBits(nChannelMask);	// count number of set bits in bitmask
+			if (nSetBits == 1) {	// if single bit set
+				ULONG	iFirstSetBit;
+				_BitScanForward(&iFirstSetBit, nChannelMask);	// scan for first set bit
+				iGraphChannel = iFirstSetBit;	// first set bit's index is selected channel
+			}
+		} else {	// no channels specified
+			iGraphChannel = -1;	// select all channels
+		}
+	} else {	// user selected single or all
+		if (iGraphChannel >= 0)	// if single
+			nChannelMask = MAKE_CHANNEL_MASK(iGraphChannel);	// make channel bitmask
+		else	// all
+			nChannelMask = 0;	// reset channel bitmask
+	}
+	if (iGraphChannel != m_iGraphChannel || nChannelMask != m_nGraphChannelMask) {	// if state changed
+		m_iGraphChannel = iGraphChannel;
+		m_nGraphChannelMask = nChannelMask;
+		UpdateGraph();
+	}
 }
 
 void CGraphBar::OnGraphSaveAs()

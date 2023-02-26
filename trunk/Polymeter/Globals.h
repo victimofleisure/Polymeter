@@ -17,6 +17,7 @@
 		07		08jun21	fix LDS macro warning
 		08		30dec21	replace AfxGetApp with faster method
 		09		16feb23	add stream file with UTF-8 support
+		10		24feb23	add resource ID for graph channel selection
 
 		global definitions and inlines
 
@@ -105,6 +106,7 @@ inline CWinApp *FastGetApp()
 
 enum {	// substitute resource IDs for remapping help topics
 	IDS_HINT_PIANO_FILTER_CHANNEL = ID_APP_DYNAMIC_SUBMENU_BASE - 100,
+	IDS_HINT_GRAPH_CHANNEL,
 };
 
 // stream file that optionally supports UTF-8 character encoding

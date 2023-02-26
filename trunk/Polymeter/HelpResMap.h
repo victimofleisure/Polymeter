@@ -223,7 +223,8 @@
 // string IDs
 {IDS_OPT_NAME_General_bAlwaysRecord,	IDH_Options_General_Always_Record},
 {IDS_OPT_NAME_General_bCheckForUpdates,	IDH_Options_General_Automatically_Check_for_Updates},
-{IDS_OPT_NAME_General_bGraphUnicode,	IDH_Options_General_Graph_Handles_Unicode},
+{IDS_OPT_NAME_Graph_bGraphUnicode,		IDH_Options_Graph_Graph_Handles_Unicode},
+{IDS_OPT_NAME_Graph_sGraphvizFolder,	IDH_Options_Graph_Graphviz_Folder},
 {IDS_OPT_NAME_General_bPropertyDescrips,	IDH_Options_General_Show_Property_Descriptions},
 {IDS_OPT_NAME_Midi_bSendMidiClock,		IDH_Options_MIDI_Send_MIDI_Clock},
 {IDS_OPT_NAME_Midi_bThru,				IDH_Options_MIDI_Thru},
@@ -255,6 +256,7 @@
 {IDS_PDR_NAME_nTimeDiv,					IDH_Properties_Timebase},
 
 // handle dynamically generated submenus
+{IDS_HINT_GRAPH_CHANNEL,				IDH_Docking_Windows_Graph_bar_Graph_context_menu},
 {IDS_HINT_GRAPH_DEPTH,					IDH_Docking_Windows_Graph_bar_Graph_context_menu},
 {IDS_HINT_GRAPH_DEPTH_MAX,				IDH_Docking_Windows_Graph_bar_Graph_context_menu},
 {IDS_HINT_GRAPH_FILTER_MOD_TYPE,		IDH_Docking_Windows_Graph_bar_Graph_context_menu},
@@ -266,8 +268,8 @@
 {IDS_HINT_GRAPH_SCOPE_SOURCES,			IDH_Docking_Windows_Graph_bar_Graph_context_menu},
 {IDS_HINT_GRAPH_SCOPE_TARGETS,			IDH_Docking_Windows_Graph_bar_Graph_context_menu},
 {IDS_HINT_MAIN_CONVERGENCE_SIZE,		IDH_Menus_Transport_Convergence_Size},
-{IDS_HINT_PIANO_FILTER_CHANNEL,			IDH_Docking_Windows_Piano_bar_Piano_context_menu},
 {IDS_HINT_PIANO_CHANNEL_MULTI,			IDH_Docking_Windows_Piano_bar_Multiple_keyboards},
+{IDS_HINT_PIANO_FILTER_CHANNEL,			IDH_Docking_Windows_Piano_bar_Piano_context_menu},
 {IDS_SM_FILTER_CHANNEL_ALL,				IDH_Docking_Windows_MIDI_Input_bar_MIDI_IO_context_menu},
 {IDS_SM_FILTER_CHANNEL_SELECT,			IDH_Docking_Windows_MIDI_Input_bar_MIDI_IO_context_menu},
 {IDS_SM_FILTER_MESSAGE_ALL,				IDH_Docking_Windows_MIDI_Input_bar_MIDI_IO_context_menu},

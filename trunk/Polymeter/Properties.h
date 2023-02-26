@@ -18,6 +18,7 @@
 		08		27jan19	add methods to load option strings
 		09		19aug21	add time span conversion methods
 		10		19feb22	remove profile methods
+		11		26feb23	add folder property type
 
 */
 
@@ -61,6 +62,7 @@ public:
 		PT_ENUM,		// drop list of enumerated options; value is integer selection index
 		PT_COLOR,		// color picker; value is COLORREF
 		PT_FILE,		// file picker; value is CString
+		PT_FOLDER,		// folder picker; value is CString
 		PT_TIME,		// time span in hh:mm:ss format; value is int
 		PT_CUSTOM,		// user-defined format
 		PROP_TYPES

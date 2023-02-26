@@ -38,6 +38,7 @@
 		28		11nov21	move static menu methods to app class
 		29		22jan22	add tempo pane to status bar
 		30		25jan23	add method to show panes menu
+		31		23feb23	fix compiler warning on MIDI output event array
 
 */
 
@@ -173,7 +174,7 @@ protected:  // control bar embedded members
 	CString	m_sReplaceText;				// replace text
 	bool	m_bFindMatchCase;			// true if find should match case
 	bool	m_bIsViewTimerSet;			// true if view timer is set
-	CSequencer::CMidiEventArray m_arrMIDIOutputEvent;	// array of MIDI output events
+	CTrackBase::CMidiEventArray m_arrMIDIOutputEvent;	// array of MIDI output events
 	CAutoPtr<CMFCColorMenuButton>	m_pbtnTrackColor;	// pointer to track color menu button
 	int		m_nConvergenceSize;			// minimum number of modulos in a convergence
 	DWORD	m_dwCachedTempo;			// cached tempo in microseconds per quarter note
