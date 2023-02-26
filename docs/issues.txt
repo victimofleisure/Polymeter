@@ -2,7 +2,7 @@ id	open	close	type	description	rev	user
 189	09/07/18		bug	song edits sometimes leave fragments, especially if zoom is changed while editing		
 272	01/26/19		bug	resizing docked pane via mouse drag leaves artifacts in Windows 10; affects stock VS2012 app too		
 273	01/26/19		bug	resizing docked pane via mouse drag leaves gap between scroll bar and pane, when two or more documents exist; affects stock VS2012 app too		
-297	11/04/19		bug	GraphViz times out if modulation is too complicated; introduce variable timeout option?		
+297	11/04/19		bug	Graphviz times out if modulation is too complicated; introduce variable timeout option?		
 298	11/12/19		bug	MDI tab control sometimes disappears after opening or closing document; hard to reproduce		
 303	12/03/19		bug	playback lags behind UI by one tick (0.5 seconds) at tempo of 1 with GS Synth (see phase test)		
 304	12/10/19		bug	steps aren't drawn when track's quant is very large (e.g. 30720) and step view is zoomed in		
@@ -222,7 +222,7 @@ id	open	close	type	description	rev	user
 268	01/16/19	01/17/19	done	in recursive modulation, handle mute by continuing instead of aborting	0.0.22.002	
 270	01/20/19	01/21/19	done	modulation bar paste doesn't set document modified flag	0.0.23.000	
 271	01/20/19	01/21/19	done	modulation bar doesn't update all views consistently	0.0.23.000	
-242	11/27/18	01/28/19	done	modulation graph, via GraphViz; output SVG and display in IWebBrowser control	0.0.23.000	
+242	11/27/18	01/28/19	done	modulation graph, via Graphviz; output SVG and display in IWebBrowser control	0.0.23.000	
 256	12/09/18	01/28/19	done	right click on track list header divider unexpectedly shows view context menu	0.0.23.000	
 275	01/28/19	01/29/19	done	add MIDI input bar	0.0.23.001	
 276	01/29/19	01/29/19	done	MIDI through from input device to sequencer should exclude system status messages	0.0.23.001	
@@ -330,7 +330,7 @@ id	open	close	type	description	rev	user
 412	10/07/20	10/07/20	done	Time to Repeat should compute greatest prime factor in common unit if possible	0.0.34.001	
 413	10/07/20	10/07/20	done	in Stretch command, make interpolation of non-note tracks optional	0.0.34.001	
 414	10/08/20	10/08/20	done	stretch interpolation is skewed, and should ignore tie bit	0.0.34.001	
-415	10/15/20	10/19/20	done	can't find GraphViz 2.44; layout executables are missing, specify layout via dot parameter, support x64	0.0.34.002	
+415	10/15/20	10/19/20	done	can't find Graphviz 2.44; layout executables are missing, specify layout via dot parameter, support x64	0.0.34.002	
 417	10/26/20	10/26/20	done	fill dialog's signed/unsigned radio buttons can cause validation errors; don't compensate value range	0.0.35.000	
 401	08/05/20	11/05/20	done	find and replace for step values; add another page to Velocities property sheet	0.0.35.000	
 17	03/22/18	11/16/20	done	PPQ change should update tracks (Quant, Offset, Swing, Duration) instead of zooming step view	0.0.35.000	
@@ -420,7 +420,7 @@ id	open	close	type	description	rev	user
 505	02/05/22	02/05/22	done	make tie a mapping target	1.0.07.000	
 513	02/13/22	02/13/22	done	support offset modulation of modulator tracks	1.0.07.000	
 514	02/15/22	02/15/22	done	if MIDI error occurs during playback, app locks up due to endless message boxes reporting MIDI error 5	1.0.07.000	
-472	11/08/21	02/26/22	done	graph sometimes clips rightmost objects, in GraphViz versions 2.44 and above; fixed in GraphViz 3.0		GraphViz
+472	11/08/21	02/26/22	done	graph sometimes clips rightmost objects, in Graphviz versions 2.44 and above; fixed in Graphviz 3.0		Graphviz
 516	05/18/22	05/19/22	done	specifying loop via cell selection in Song view gives incorrect results if master start time is non-default	1.0.08.000	
 518	05/18/22	05/19/22	done	if loop exists, starting playback from position past end of loop causes incorrect looping	1.0.08.000	
 517	05/19/22	05/19/22	done	indicate loop range on Track and Song view rulers; support dragging of loop start/end	1.0.08.000	
@@ -445,9 +445,13 @@ id	open	close	type	description	rev	user
 552	12/07/22	12/14/22	done	allow quant to be entered as a fraction	1.0.12.000	
 551	12/07/22	12/17/22	done	optionally display track quants as fractions; also show drop down with common values	1.0.12.000	
 269	01/19/19	02/17/23	done	support Unicode characters in track, part, and preset names; MIDI file format doesn't support Unicode	1.0.13.000	
-395	07/22/20	02/17/23	done	in live view, add pane menu via Shift+F10, so dockable bars can be shown in full screen mode	1.0.13.000	
+395	07/22/20	02/17/23	done	in live view, add pane menu via Shift+F10, so phase bar or other bars can be shown in full screen mode	1.0.13.000	
 553	01/13/23	02/17/23	done	velocity replace should optionally allow target to be a range of values	1.0.13.000	
 558	02/04/23	02/17/23	done	missing help for piano bar's Insert Track command	1.0.13.000	
+560	01/21/23	02/23/23	done	in MainFrm.h, replace CSequencer::CMidiEventArray with CTrackBase::CMidiEventArray to fix warning	1.0.13.001	
+563	02/23/23	02/23/23	done	phase bar video export should delete any previously existing frames in destination folder	1.0.13.001	
+562	02/20/23	02/25/23	done	graph should allow filtering by channel; apply filter to target tracks only	1.0.13.001	
+563	02/26/23	02/26/23	done	move Graphviz path into app options	1.0.13.001	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -506,7 +510,7 @@ id	open	close	type	description	rev	user
 405	08/22/20		hold	in mapping, add Note Number input event type: get data value from note's index, ignoring velocity and note off		
 407	09/17/20		hold	select all unmuted tracks; hardly worth cluttering up the Edit menu?		
 410	09/28/20		hold	live view position bars for track groups should reflect LCM of periods instead of maximum period; could be slow		
-416	10/20/20		hold	GraphViz PDF output looks better than SVG (if Adobe is installed) but it overrides our context menu		
+416	10/20/20		hold	Graphviz PDF output looks better than SVG (if Adobe is installed) but it overrides our context menu		
 431	01/13/21		hold	device change notification should retry missing MIDI device and close message box if successful		
 434	01/19/21		hold	graph should optionally indicate track type		
 433	01/19/21		hold	track should be a potential mapping source, so tracks can automate parameters; inject MIDI event?		
@@ -529,6 +533,8 @@ id	open	close	type	description	rev	user
 554	01/20/23		hold	phase bar lacks command to export still image; workaround is export one-second video with frame rate of 1		
 555	01/21/23		hold	need a scaling factor that modulation source step values are multiplied by; member of modulation or track?		
 557	02/04/23		hold	help for context menu command should navigate directly to relevant text even if it's in a table; use tr tag's id		
+559	02/19/23		hold	view timer is extremely inaccurate; add option to use multimedia timer with drift compensation		
+561	02/20/23		hold	graph should optionally indicate muted tracks		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		

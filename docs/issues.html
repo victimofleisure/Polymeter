@@ -69,7 +69,7 @@
 <TD>11/04/19</TD>
 <TD>&nbsp;</TD>
 <TD>bug</TD>
-<TD>GraphViz times out if modulation is too complicated; introduce variable timeout option?</TD>
+<TD>Graphviz times out if modulation is too complicated; introduce variable timeout option?</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -2049,7 +2049,7 @@
 <TD>11/27/18</TD>
 <TD>01/28/19</TD>
 <TD>done</TD>
-<TD>modulation graph, via GraphViz; output SVG and display in IWebBrowser control</TD>
+<TD>modulation graph, via Graphviz; output SVG and display in IWebBrowser control</TD>
 <TD>0.0.23.000</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -3021,7 +3021,7 @@
 <TD>10/15/20</TD>
 <TD>10/19/20</TD>
 <TD>done</TD>
-<TD>can't find GraphViz 2.44; layout executables are missing, specify layout via dot parameter, support x64</TD>
+<TD>can't find Graphviz 2.44; layout executables are missing, specify layout via dot parameter, support x64</TD>
 <TD>0.0.34.002</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -3831,9 +3831,9 @@
 <TD>11/08/21</TD>
 <TD>02/26/22</TD>
 <TD>done</TD>
-<TD>graph sometimes clips rightmost objects, in GraphViz versions 2.44 and above; fixed in GraphViz 3.0</TD>
+<TD>graph sometimes clips rightmost objects, in Graphviz versions 2.44 and above; fixed in Graphviz 3.0</TD>
 <TD>&nbsp;</TD>
-<TD>GraphViz</TD>
+<TD>Graphviz</TD>
 </TR>
 <TR VALIGN=TOP>
 <TH>516</TH>
@@ -4056,7 +4056,7 @@
 <TD>07/22/20</TD>
 <TD>02/17/23</TD>
 <TD>done</TD>
-<TD>in live view, add pane menu via Shift+F10, so dockable bars can be shown in full screen mode</TD>
+<TD>in live view, add pane menu via Shift+F10, so phase bar or other bars can be shown in full screen mode</TD>
 <TD>1.0.13.000</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -4076,6 +4076,42 @@
 <TD>done</TD>
 <TD>missing help for piano bar's Insert Track command</TD>
 <TD>1.0.13.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TH>560</TH>
+<TD>01/21/23</TD>
+<TD>02/23/23</TD>
+<TD>done</TD>
+<TD>in MainFrm.h, replace CSequencer::CMidiEventArray with CTrackBase::CMidiEventArray to fix warning</TD>
+<TD>1.0.13.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TH>563</TH>
+<TD>02/23/23</TD>
+<TD>02/23/23</TD>
+<TD>done</TD>
+<TD>phase bar video export should delete any previously existing frames in destination folder</TD>
+<TD>1.0.13.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TH>562</TH>
+<TD>02/20/23</TD>
+<TD>02/25/23</TD>
+<TD>done</TD>
+<TD>graph should allow filtering by channel; apply filter to target tracks only</TD>
+<TD>1.0.13.001</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TH>563</TH>
+<TD>02/26/23</TD>
+<TD>02/26/23</TD>
+<TD>done</TD>
+<TD>move Graphviz path into app options</TD>
+<TD>1.0.13.001</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
@@ -4605,7 +4641,7 @@
 <TD>10/20/20</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>GraphViz PDF output looks better than SVG (if Adobe is installed) but it overrides our context menu</TD>
+<TD>Graphviz PDF output looks better than SVG (if Adobe is installed) but it overrides our context menu</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -4804,6 +4840,24 @@
 <TD>&nbsp;</TD>
 <TD>hold</TD>
 <TD>help for context menu command should navigate directly to relevant text even if it's in a table; use tr tag's id</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TH>559</TH>
+<TD>02/19/23</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>view timer is extremely inaccurate; add option to use multimedia timer with drift compensation</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TH>561</TH>
+<TD>02/20/23</TD>
+<TD>&nbsp;</TD>
+<TD>hold</TD>
+<TD>graph should optionally indicate muted tracks</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>

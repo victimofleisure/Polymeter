@@ -4128,3 +4128,34 @@ void CMainFrame::ShowPanesMenu(CPoint point)
 And in CLiveView::OnContextMenu:
 
 	theApp.GetMainFrame()->ShowPanesMenu(point);
+
+2/18/23 live screen recording
+
+The issue with the existing screen recorder code is that the BitBlt takes on the order of 25ms.
+That's too slow to keep up with a 30 FPS frame rate, because it doesn't leave enough time for
+other work (such as updating the UI, and saving the frame). The reason BitBlt is so slow is 
+that we're using the desktop window's device context, which means the OS has to do compositing 
+to account for windows other than the application's. If we use the main frame's device context
+instead, BitBlt only takes about 4ms, roughly an order of magnitude faster. Hopefully that's
+fast enough to keep up. Writing PNG files is much too slow, so it will be necessary to compare
+successive frames and only store the differences via run length encoding (presumably in a
+worker thread) and then reconstruct the frames and save them as PNGs after recording stops.
+
+Here are the necessary changes:
+1. In CScreenRecorder, use the main window instead of the desktop window
+//	m_hWnd = GetDesktopWindow();
+	m_hWnd = AfxGetMainWnd()->m_hWnd;
+
+//	m_hdcWnd = GetWindowDC(NULL);  no good now that we're using main frame instead!
+	m_hdcWnd = GetWindowDC(m_hWnd);
+
+2. In CMainFrame::MakeFullScreen, comment out the InflateRect
+//	rScreen.InflateRect(szAdjust.cx, 1, szAdjust.cx, szAdjust.cy);
+
+3. In CMainFrame::ExportVideo, before we call MakeFullScreen, remove the caption bar and frame
+	ModifyStyle(WS_CAPTION | WS_THICKFRAME, 0);
+
+The caption bar will be omitted, but that's the price you pay for using the main frame's DC.
+On the good side, the main frame will be slightly taller so you'll have more space for UI.
+Don't forget to restore the caption bar and frame after recording stops!
+

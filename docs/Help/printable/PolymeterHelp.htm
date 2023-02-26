@@ -109,11 +109,15 @@
 <dd><a href="#Live_View_Font_Height">Live View Font Height</a>
 </dl>
 <dd><dl>
+<dt>Graph
+<dd><a href="#Graphviz_Folder">Graphviz Folder</a>
+<dd><a href="#Graph_Handles_Unicode">Graph Handles Unicode</a>
+</dl>
+<dd><dl>
 <dt>General
 <dd><a href="#Show_Property_Descriptions">Show Property Descriptions</a>
 <dd><a href="#Automatically_Check_for_Updates">Automatically Check for Updates</a>
 <dd><a href="#Always_Record">Always Record</a>
-<dd><a href="#Graph_Handles_Unicode">Graph Handles Unicode</a>
 </dl>
 <dt>Menus
 <dd><dl>
@@ -1529,7 +1533,8 @@
 <tr><td>Scope</td><td>Use this submenu to select the scope of the graph. Scopes are explained above. For scopes other than All, the modulation network is crawled by starting from the selected tracks and traversing their modulators, targets, or both. The traversal can be limited to a specific distance via the Depth option.</td></tr>
 <tr><td>Depth</td><td>Use this submenu to limit the recursion depth of the graph to a specific number of levels. To allow unlimited recursion depth, select Maximum. This option lets you simplify the graph by only including modulations that are closely connected to the selected tracks. It has no effect if the Scope is All.</td></tr>
 <tr><td>Layout</td><td>Use this submenu to select a Graphviz layout engine. The dot layout engine draws a hierarchical graph, which is often the most useful way to visualize a modulation network. The other layout engines draw various types of non-hierarchical graphs.  For more information on layouts, see the <a href="http://graphviz.org/documentation/">Graphviz documentation</a>.</td></tr>
-<tr><td>Filter</td><td>Use this submenu to filter the graph by modulation type. To show all types, select All. To show only a single type, select its name. To show multiple types, select Multiple, check list items in the resulting dialog, and press OK. By default, all types are shown. The filter is applied after the modulation network has been crawled.</td></tr>
+<tr><td>Filter</td><td>Use this submenu to filter the graph by modulation type. To show all types, select All. To show only a single type, select its name. To show multiple types, select Multiple, check the desired list items in the resulting dialog, and press OK. By default, all types are shown. The filter is applied after the modulation network has been crawled.</td></tr>
+<tr><td>Channel</td><td>Use this submenu to select which MIDI channels are shown. To show all channels, select All. To show only a single channel, select its number. To show multiple channels, select Multiple, check the desired list items in the <a href="#Multiple_keyboards">Select Channels dialog</a>, and press OK. By default, all channels are shown. The channel selection is applied after the modulation network has been crawled. Tracks with a <a href="#Track_types">track type</a> of Modulator are only included if they directly or indirectly modulate a non-Modulator track that matches the channel selection.</td></tr>
 <tr><td>Zoom</td><td>Use this submenu to zoom the graph in or out, or reset zoom to its default value. The shortcuts are <span class="key">Ctrl++</span> to zoom in, <span class="key">Ctrl+-</span> to zoom out, and <span class="key">Ctrl+0</span> to reset the zoom. To zoom in/out to/from the cursor position, spin the mouse wheel while pressing the <span class="key">Ctrl</span> key.</td></tr>
 <tr><td>Highlight</td><td>This item enables or disables highlighting of the selected tracks in the graph. When this option is enabled, the selected tracks are indicated by drawing the corresponding graph nodes with a different background color.</td></tr>
 <tr><td>Labels</td><td>This item enables or disables edge labels. When this option is enabled, a label appears next to every connecting line in the graph, identifying the corresponding modulation type. This is only recommended for simple graphs, because otherwise the graph is hard to read.</td></tr>
@@ -2052,6 +2057,19 @@
 <p>This is the height of the <a href="#Live_View">Live View</a> font, in pixels. Making the font smaller fits more rows in the live view's lists of presets and tracks, which may let you avoid scrolling the lists, at the cost of making them harder to read. Another way to avoid scrolling is by grouping related tracks into <a href="#Parts">parts</a>.
 
 
+<h2>Graph</h2>
+
+<a name="Graphviz_Folder"><h3>Graphviz Folder</h3></a>
+
+<p>This is the location of the folder containing the Graphviz executables. Graphviz is an excellent free graphing software that's used by many notable projects. Polymeter uses Graphviz to make graphs of your <a href="#Modulations">modulations</a>. If you wish to display modulation graphs, the Graphviz executables are required. This option is set automatically by the Graphviz wizard when you show the <a href="#Graph_bar">Graph bar</a>.
+
+<p>You may set this option manually, either by typing a path, or via the browse button. The browse button is normally hidden, but it appears on the right when the option is selected. Click the browse button to display a Browse for Folder dialog. Note that the path must be fully-qualified, and the folder it identifies must contain the Graphviz excutables, which are normally found in the bin subfolder of the Graphviz distribution.
+
+<a name="Graph_Handles_Unicode"><h3>Graph Handles Unicode</h3></a>
+
+<p>If true, the <a href="#Graph_bar">Graph bar</a> correctly handles <a href="#Unicode">non-ASCII</a> characters in <a href="#Track_Name">track names</a>. This option is only meaningful if Graphviz is installed. Enabling this option adds overhead due to UTF-8 encoding, hence it's disabled by default. With this option disabled, non-ASCII characters may display as question marks in the graph, and can also cause incomplete or erroneous graphs. If you regularly use non-ASCII characters, enable this option.
+
+
 <h2>General</h2>
 
 <a name="Show_Property_Descriptions"><h3>Show Property Descriptions</h3></a>
@@ -2073,10 +2091,6 @@
 <p>If true, <a href="#Dubs">dubs</a> are always recorded during playback, and the resultant recordings are saved automatically. Enabling this option prevents data loss due to forgetting to press <a href="#Record">Record</a>. The recordings are stored in the current user's profile, and named using a combination of the document title and the current date and time. For a user named foo, the destination folder would typically be:
 
 <p>C:\Users\foo\AppData\Roaming\Polymeter
-
-<a name="Graph_Handles_Unicode"><h3>Graph Handles Unicode</h3></a>
-
-<p>If true, the <a href="#Graph_bar">Graph bar</a> correctly handles <a href="#Unicode">non-ASCII</a> characters in <a href="#Track_Name">track names</a>. This option is only meaningful if GraphViz is installed. Enabling this option adds overhead due to UTF-8 encoding, hence it's disabled by default. With this option disabled, non-ASCII characters may display as question marks in the graph, and can also cause incomplete or erroneous graphs. If you regularly use non-ASCII characters, enable this option.
 
 
 
@@ -2916,11 +2930,13 @@
 <tr><td><a href="#Unique_Track_Names">Unique Track Names</a></td><td>When renaming multiple tracks, append number to keep names unique</td></tr>
 <tr><td><a href="#Zoom_Step">Zoom Step</a></td><td>Zoom step size, as a percentage</td></tr>
 <tr><td><a href="#Live_View_Font_Height">Live View Font Height</a></td><td>Height of live view font, in pixels</td></tr>
+<tr><th colspan=2>Graph</th></tr>
+<tr><td><a href="#Graphviz_Folder">Graphviz Folder</a></td><td>Location of Graphviz executable files</td></tr>
+<tr><td><a href="#Graph_Handles_Unicode">Graph Handles Unicode</a></td><td>If true, graph handles Unicode characters in track names</td></tr>
 <tr><th colspan=2>General</th></tr>
 <tr><td><a href="#Show_Property_Descriptions">Show Property Descriptions</a></td><td>If true, show descriptions area in properties bar</td></tr>
 <tr><td><a href="#Automatically_Check_for_Updates">Automatically Check for Updates</a></td><td>Automatically check for newer version of app during startup</td></tr>
 <tr><td><a href="#Always_Record">Always Record</a></td><td>Always record dubs during playback and automatically save the recordings</td></tr>
-<tr><td><a href="#Graph_Handles_Unicode">Graph Handles Unicode</a></td><td>If true, graph handles Unicode characters in track names</td></tr>
 </table>
 
 <a name="Shortcuts"><h2>Shortcuts</h2></a>
