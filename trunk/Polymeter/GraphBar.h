@@ -237,7 +237,7 @@ protected:
 	void	RebuildMuteCacheIfNeeded();
 	void	OnTrackMuteChange();
 	void	OnTrackPropertyChange(int iProp);
-	void	ApplyChannelMask(CPolymeterDoc *pDoc, const CTrackBase::CPackedModulationArray& arrMod, CWordArrayEx& arrTrackChannelMask) const;
+	void	ApplyChannelMask(CPolymeterDoc *pDoc, const CTrackBase::CPackedModulationArray& arrMod, CBoolArrayEx& arrOnSelectedChannel) const;
 	static	bool	FindGraphvizExes(CString sFolderPath);
 	static	bool	FindGraphvizExesFlexible(CPathStr& sFolderPath);
 	static	bool	FindGraphvizFast(CString& sGraphvizPath);

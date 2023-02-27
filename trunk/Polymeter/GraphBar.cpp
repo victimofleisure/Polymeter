@@ -36,6 +36,7 @@
 		26		16feb23	add special handling for non-ASCII characters
 		27		24feb23	add channel selection
 		28		26feb23	move Graphviz path to app options
+		29		27feb23	optimize channel selection
 
 */
 
@@ -460,10 +461,10 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes, const CSize& szGraph, b
 			nLevels = INT_MAX;
 		pDoc->m_Seq.GetTracks().GetLinkedTracks(pDoc->m_arrTrackSel, arrMod, nLinkFlags, nLevels);
 	}
-	CWordArrayEx	arrTrackChannelMask;
+	CBoolArrayEx	arrOnSelectedChannel;
 	WORD	nChannelMask = m_nGraphChannelMask;
 	if (nChannelMask) {	// if channels specified
-		ApplyChannelMask(pDoc, arrMod, arrTrackChannelMask);
+		ApplyChannelMask(pDoc, arrMod, arrOnSelectedChannel);
 	}
 	MOD_TYPE_MASK	nModTypeFilterMask;
 	if (m_iGraphFilter >= 0) {	// if modulation type filter index is valid
@@ -482,7 +483,7 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes, const CSize& szGraph, b
 			if (!m_bShowMuted && (pDoc->m_Seq.GetMute(mod.m_iSource) || pDoc->m_Seq.GetMute(mod.m_iTarget)))
 				continue;	// skip this modulation
 			// if channels specified and modulation targets an excluded channel
-			if (nChannelMask && !arrTrackChannelMask[mod.m_iTarget])
+			if (nChannelMask && !arrOnSelectedChannel[mod.m_iTarget])
 				continue;	// skip this modulation
 			MOD_TYPE_MASK	nModTypeBit = MAKE_MOD_TYPE_MASK(mod.m_iType);	// make bitmask for this type
 			if (nModTypeFilterMask & nModTypeBit) {	// if modulation's type passes filter
@@ -545,23 +546,23 @@ bool CGraphBar::WriteGraph(LPCTSTR pszPath, int& nNodes, const CSize& szGraph, b
 	return true;
 }
 
-__forceinline void CGraphBar::ApplyChannelMask(CPolymeterDoc *pDoc, const CTrackBase::CPackedModulationArray& arrMod, CWordArrayEx& arrTrackChannelMask) const
+__forceinline void CGraphBar::ApplyChannelMask(CPolymeterDoc *pDoc, const CTrackBase::CPackedModulationArray& arrMod, CBoolArrayEx& arrOnSelectedChannel) const
 {
 	// This method determines which of the modulations in arrMod target the
 	// MIDI channels specified by the channel bitmask in m_nGraphChannelMask.
-	// The result is returned via the arrTrackChannelMask array, which has
-	// an element for each track, set non-zero if modulations targeting that
-	// track should be included. The modulations are processed in two stages:
+	// The result is returned via the arrOnSelectedChannel array, which has an
+	// element for each track, set true if modulations targeting that track
+	// should be included. The modulations are processed in two stages:
 	//
-	// 1. A modulation passes if it targets a non-modulator track and the bit
-	// corresponding to that track's channel is set in the channel bitmask.
+	// 1. A modulation is included if it targets a non-modulator track and the
+	// bit corresponding to that track's channel is set in the channel bitmask.
 	//
-	// 2. A modulation passes if it targets a modulator track that directly
-	// or indirectly targets a non-modulator track that passed the filter.
+	// 2. A modulation is included if it targets a modulator track that directly
+	// or indirectly targets a non-modulator track that was included in stage 1.
 	//
 	WORD	nChannelMask = m_nGraphChannelMask;	// copy member var
 	int	nTracks = pDoc->GetTrackCount();
-	arrTrackChannelMask.SetSize(nTracks);	// allocate array
+	arrOnSelectedChannel.SetSize(nTracks);	// allocate array
 	int	nMods = arrMod.GetSize();
 	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
 		const CTrackBase::CPackedModulation&	mod = arrMod[iMod];
@@ -570,17 +571,17 @@ __forceinline void CGraphBar::ApplyChannelMask(CPolymeterDoc *pDoc, const CTrack
 			WORD	nTargetChannelBit = MAKE_CHANNEL_MASK(trkTarget.m_nChannel);
 			if (nChannelMask & nTargetChannelBit) {	// if track's channel matches channel mask
 				if (m_bShowMuted || !pDoc->m_Seq.GetMute(mod.m_iTarget)) {	// if showing muted tracks or target track is unmuted
-					arrTrackChannelMask[mod.m_iTarget] |= nTargetChannelBit;	// add channel to source track's mask
-					arrTrackChannelMask[mod.m_iSource] |= nTargetChannelBit;	// add channel to target track's mask
+					arrOnSelectedChannel[mod.m_iTarget] = true;	// include source track
+					arrOnSelectedChannel[mod.m_iSource] = true;	// include target track
 				}
 			}
 		}
 	}
 	// A modulator track doesn't output MIDI events, hence its MIDI channel is
-	// meaningless. To determine whether a modulator track passes the channel
-	// filter, we must examine any non-modulator tracks it targets, which may
-	// be multiple hops away. We do this by propagating channel usage outward
-	// from the non-modulator tracks, until further propagation is impossible.
+	// meaningless. To determine whether a modulator track should be included,
+	// we must inspect any non-modulator tracks it targets, which may be
+	// multiple hops away. We do this by propagating inclusion outward from
+	// the non-modulator tracks, until further propagation is impossible.
 	//
 	bool	bPassChanged;
 	do {
@@ -589,12 +590,10 @@ __forceinline void CGraphBar::ApplyChannelMask(CPolymeterDoc *pDoc, const CTrack
 			const CTrackBase::CPackedModulation&	mod = arrMod[iMod];
 			const CTrack& trkTarget = pDoc->m_Seq.GetTrack(mod.m_iTarget);
 			if (trkTarget.m_iType == CTrack::TT_MODULATOR) {	// if target track is a modulator
-				WORD	nTargetChannelMask = arrTrackChannelMask[mod.m_iTarget];
-				if (nTargetChannelMask) {	// if target track's channel mask is non-zero
-					// if target track's channel mask differs from source track's channel mask
-					if ((arrTrackChannelMask[mod.m_iSource] & nTargetChannelMask) != nTargetChannelMask) {
-						arrTrackChannelMask[mod.m_iSource] |= nTargetChannelMask;	// update source track's channel mask
-						bPassChanged = true;	// pass changed something
+				if (arrOnSelectedChannel[mod.m_iTarget]) {	// if target track included
+					if (!arrOnSelectedChannel[mod.m_iSource]) {	// if source track not included
+						arrOnSelectedChannel[mod.m_iSource] = true;	// include source track
+						bPassChanged = true;	// pass made a change
 					}
 				}
 			}
