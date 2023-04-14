@@ -4159,3 +4159,66 @@ The caption bar will be omitted, but that's the price you pay for using the main
 On the good side, the main frame will be slightly taller so you'll have more space for UI.
 Don't forget to restore the caption bar and frame after recording stops!
 
+3/10/23 Graph text is too small when system text size is greater than 100% (96 dpi)
+
+This has nothing to do with Graphviz. It's caused by the web browser control (IWebBrowser)
+which displays the SVG file that Graphviz outputs. The core issue is that Internet Explorer
+defaults to being non-DPI aware. This problem and various solutions are discussed here: 
+https://stackoverflow.com/questions/38754354/wpf-web-browser-control-and-dpi-scaling
+The easiest solution is to create this registry key:
+HKEY_CURRENT_USER\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_96DPI_PIXEL
+and in that key, create a REG_DWORD value named Polymeter.exe with a value of 1.
+If done in HKEY_CURRENT_USER, this fix works for both 64-bit and 32-bit flavors of the app.
+To affect all users, the fix must be done in HKEY_LOCAL_MACHINE, but you need admin to do it,
+AND you need to do it in two separate places in order to affect both 64-bit and 32-bit apps:
+HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_96DPI_PIXEL
+and
+HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_96DPI_PIXEL
+Note that FEATURE_96DPI_PIXEL is obsolete according to MSDN, so YMMV.
+Also note that all of the above assumes you're using 64-bit Windows.
+
+3/10/23 more phase videos for Yoyaku (60 FPS)
+
+Have a Good One
+audio starts at 0:00:00.612675
+start sequencer at -1:080
+convergence size 5
+
+Awesome on Mars
+0:00:00.232523
+convergence size 7
+
+Not My Problem, I'll Be Dead
+0:00:00.204892, PLM starts -0:00:00.462, start at frame 16
+convergence size 6
+
+Baby Batter Bingo
+0:00:00.215512, start at frame 15 
+convergence size 7
+
+NOTE: these three made with UNMASTERED AUDIO so redo them later; start times will change
+
+K35
+audio starts at 0:00:00.214669 seconds
+first note at -28:60, delay is 0:0.231 seconds, start at frame 1
+convergence size 8
+
+Saz
+0:00:00.135479, change PLM start to 0:000, start at frame 20
+convergence size 8
+
+Primitive Man
+0:00:00.222454, start at frame 0
+convergence size 5
+
+LCM
+0:00:00.107405, start at frame 23
+convergence size 8
+
+More Than Four
+0:00:00.09801, about five frames; just delay video
+convergence size 6
+
+Virtue Signal
+0:00:00.097684, about five frames; just delay video
+convergence size 6
