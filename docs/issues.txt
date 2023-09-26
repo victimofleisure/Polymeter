@@ -16,6 +16,7 @@ id	open	close	type	description	rev	user
 458	07/22/21		bug	song position and loop to/from don't report formatting errors; song length reports errors but doesn't retry		
 515	04/04/22		bug	changing track length via mapped control can cause undo/redo of step array edits to fail		
 532	08/01/22		bug	modulation bar's label tooltip shows stale data if track selection changes		
+565	03/05/23		bug	graph text is too small when system text size is greater than 100%; use Cairo, or FEATURE_96DPI_PIXEL hack		
 1	03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 2	03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 3	03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -452,6 +453,9 @@ id	open	close	type	description	rev	user
 563	02/23/23	02/23/23	done	phase bar video export should delete any previously existing frames in destination folder	1.0.13.001	
 563	02/26/23	02/26/23	done	move Graphviz path into app options	1.0.13.001	
 562	02/20/23	02/27/23	done	graph should allow channel selection	1.0.13.003	
+566	03/13/23	09/20/23	done	add an option for graph to use Cairo instead of default renderer; explain text size issue in help	1.0.13.004	
+568	05/10/23	09/20/23	done	increase maximum quant from 32K to 64K	1.0.13.004	
+570	09/18/23	09/20/23	done	linear fill command fails if track has only one step	1.0.13.004	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -533,8 +537,11 @@ id	open	close	type	description	rev	user
 554	01/20/23		hold	phase bar lacks command to export still image; workaround is export one-second video with frame rate of 1		
 555	01/21/23		hold	need a scaling factor that modulation source step values are multiplied by; member of modulation or track?		
 557	02/04/23		hold	help for context menu command should navigate directly to relevant text even if it's in a table; use tr tag's id		
-559	02/19/23		hold	view timer is extremely inaccurate; add option to use multimedia timer with drift compensation		
-561	02/20/23		hold	graph should optionally indicate muted tracks		
+559	02/19/23		hold	view timer is extremely inaccurate; add option to use multimedia timer, possibly with drift compensation		
+561	02/20/23		hold	graph should optionally indicate muted tracks, but how?		
+564	02/28/23		hold	graph font should be configurable; what about font size? Helvetica has special meaning in Graphviz		
+567	05/10/23		hold	in track fill, add bias and amplitude options, or remove fill dialog's value range limits		
+569	09/08/23		hold	optionally show targets in modulations bar; editing targets is a messy problem		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		

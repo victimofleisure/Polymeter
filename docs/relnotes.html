@@ -30,7 +30,7 @@
 
 <h1>Release Notes</h1>
 
-<h3>1.0.13.003 &emsp;<small>02/26/2023</small></h3>
+<h3>1.0.13.003 &emsp;<small>09/20/2023</small></h3>
 
 <p><ol>
 <li>In previous versions, non-ASCII characters in track, part, or preset names could cause the application to save a corrupted document, which would have damaged or missing data when reopened. Fixed.
@@ -38,6 +38,9 @@
 <li>The velocity replace command now optionally allows the target to be a range of values.
 <li>The graph bar now allows channel selection via its context menu.
 <li>The phase bar's video export now deletes any previously existing frames in the destination folder.
+<li>Added an option for graph to use Cairo instead of default renderer.
+<li>Increased maximum quant size from 32K to 64K.
+<li>Linear fill command fails if track has only one step; fixed.
 </ol>
 
 <h3>1.0.12.000 &emsp;<small>12/17/2022</small></h3>

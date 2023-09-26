@@ -1834,6 +1834,10 @@ You may set this option manually, either by typing a path, or via the browse but
 
 If true, the @[Graph bar] correctly handles @[unicode\non-ASCII] characters in @[track name\track names]. This option is only meaningful if Graphviz is installed. Enabling this option adds overhead due to UTF-8 encoding, hence it's disabled by default. With this option disabled, non-ASCII characters may display as question marks in the graph, and can also cause incomplete or erroneous graphs. If you regularly use non-ASCII characters, enable this option.
 
+@topic Use Cairo
+
+If true, the graph is rendered with the Cairo graphics library, which is included in Graphviz. If you have problems with the graph's text size, setting this option may help. Graphviz normally outputs high-level instructions (SVG) which are then rendered by a web browser control. This is efficient, but it can cause problems with fonts, particularly if the system text size isn't 100%. Setting this option instructs Graphviz to do its own rendering instead of relying on the web browser.
+
 @endchapter
 
 @chapter General
@@ -2711,6 +2715,7 @@ The @[Graph bar] optionally supports Unicode, but the option is disabled by defa
 <tr><th colspan=2>Graph</th></tr>
 <tr><td>@[Graphviz Folder]</td><td>Location of Graphviz executable files</td></tr>
 <tr><td>@[Graph Handles Unicode]</td><td>If true, graph handles Unicode characters in track names</td></tr>
+<tr><td>@[Use Cairo]</td><td>Render graph with Cairo graphics library</td></tr>
 <tr><th colspan=2>General</th></tr>
 <tr><td>@[Show Property Descriptions]</td><td>If true, show descriptions area in properties bar</td></tr>
 <tr><td>@[Automatically Check for Updates]</td><td>Automatically check for newer version of app during startup</td></tr>
