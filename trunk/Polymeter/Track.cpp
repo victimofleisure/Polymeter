@@ -44,6 +44,7 @@
 		34		20oct22	support offset modulation of controller tracks
 		35		18dec22	in tick dependency scaling, clamp quant to its range
 		36		16feb23	add special handling for non-ASCII characters
+		37		25sep23	fix warning in LoopCheckRecurse
 
 */
 
@@ -1297,8 +1298,8 @@ bool CTrackArray::CModulationCrawler::LoopCheckRecurse(int iTrack)
 		const CModulation& mod = trk.m_arrModulator[iMod];
 		if (mod.m_iSource >= 0) {	// if valid modulation source track index
 			if (m_arrIsCrawled[mod.m_iSource]) {	// if source track is being crawled
-				CPackedModulation	mod(mod.m_iType, mod.m_iSource, iTrack);
-				m_arrMod.Add(mod);	// add offending modulation info to caller's array
+				CPackedModulation	modBad(mod.m_iType, mod.m_iSource, iTrack);
+				m_arrMod.Add(modBad);	// add offending modulation info to caller's array
 				return false;	// infinite loop detected; abort crawl
 			}
 			if (!LoopCheckRecurse(mod.m_iSource)) {	// if source iteration fails

@@ -224,6 +224,7 @@
 {IDS_OPT_NAME_General_bAlwaysRecord,	IDH_Options_General_Always_Record},
 {IDS_OPT_NAME_General_bCheckForUpdates,	IDH_Options_General_Automatically_Check_for_Updates},
 {IDS_OPT_NAME_Graph_bGraphUnicode,		IDH_Options_Graph_Graph_Handles_Unicode},
+{IDS_OPT_NAME_Graph_bGraphUseCairo,		IDH_Options_Graph_Use_Cairo},
 {IDS_OPT_NAME_Graph_sGraphvizFolder,	IDH_Options_Graph_Graphviz_Folder},
 {IDS_OPT_NAME_General_bPropertyDescrips,	IDH_Options_General_Show_Property_Descriptions},
 {IDS_OPT_NAME_Midi_bSendMidiClock,		IDH_Options_MIDI_Send_MIDI_Clock},

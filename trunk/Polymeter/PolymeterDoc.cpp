@@ -88,6 +88,7 @@
 		78		16dec22	add quant string conversions that support fractions
 		79		16feb23	add special handling for non-ASCII characters
 		80		17feb23	add replace range to velocity transform
+		81		20sep23	in track fill, fix divide by zero errors
 
 */
 
@@ -3643,12 +3644,19 @@ void CPolymeterDoc::TrackFill(const CIntArrayEx& arrTrackSel, CRange<int> rngSte
 {
 	int	nSels = arrTrackSel.GetSize();
 	int	nSteps = rngStep.Length();
-	int	nDeltaVal = rngVal.Length();
-	double	fDeltaT;
-	if (fFrequency)
-		fDeltaT = nSteps / fFrequency;
-	else
-		fDeltaT = 0;	// avoid divide by zero
+	int	nLength = rngVal.Length();
+	double	fDelta;
+	if (iFunction < 0) {	// if function is linear
+		if (nSteps > 1)	// avoid divide by zero
+			fDelta = double(nLength) / (nSteps - 1);
+		else
+			fDelta = 0;	// avoid divide by zero
+	} else {
+		if (nSteps > 1)	// avoid divide by zero
+			fDelta = fFrequency / nSteps;
+		else
+			fDelta = 0;	// avoid divide by zero
+	}
 	if (fPower == 1)
 		fPower = 0;	// avoid divide by zero
 	double	fScale = fPower - 1;
@@ -3659,14 +3667,14 @@ void CPolymeterDoc::TrackFill(const CIntArrayEx& arrTrackSel, CRange<int> rngSte
 		for (int iStep = 0; iStep < nSteps; iStep++) {	// for each step in range
 			int	iVal;
 			if (iFunction < 0) {	// if function is linear
-				iVal = Round(iStep * double(nDeltaVal) / (nSteps - 1)) + rngVal.Start;
+				iVal = Round(iStep * fDelta) + rngVal.Start;	// compute step's value
 			} else {	// periodic function
-				double	fStepPhase = iStep / fDeltaT + fPhase;	// compute step's phase
+				double	fStepPhase = iStep * fDelta + fPhase;	// compute step's phase
 				double	r = CVelocityView::GetWave(iFunction, fStepPhase);	// compute periodic function
 				r = (r + 1) / 2;	// convert function result from bipolar to unipolar
 				if (fPower > 0)	// if power was specified
 					r = (pow(fPower, r) - 1) / fScale;	// apply power in normalized space
-				iVal = Round(r * nDeltaVal) + rngVal.Start;	// scale, offset, and round
+				iVal = Round(r * nLength) + rngVal.Start;	// scale, offset, and round
 			}
 			iVal = CLAMP(iVal, 0, MIDI_NOTE_MAX);	// clamp to step range just in case
 			if (iStep + rngStep.Start >= trk.GetLength())	// if step index out of range

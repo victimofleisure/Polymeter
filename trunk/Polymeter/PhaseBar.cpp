@@ -24,6 +24,7 @@
 		14		05dec22	center period text unless crosshairs are shown
 		15		06dec22	add period unit
 		16		23feb23	delete previous frame files if any
+		17		25sep23	fix warnings in OnDrawD2D
 
 */
 
@@ -892,6 +893,9 @@ LRESULT CPhaseBar::OnDrawD2D(WPARAM wParam, LPARAM lParam)
 					else	// no orbit selection
 						nMaxConvs = nOrbits;	// limit convergence size to total orbit count
 					nConvergenceSize = min(theApp.GetMainFrame()->GetConvergenceSize(), nMaxConvs);
+				} else {	// not showing convergences
+					nConvergenceSize = 0;	// keep compiler happy
+					nSelectedOrbits = 0;
 				}
 				for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
 					const COrbit&	orbit = m_arrOrbit[iOrbit];
@@ -901,7 +905,7 @@ LRESULT CPhaseBar::OnDrawD2D(WPARAM wParam, LPARAM lParam)
 					double	fOrbitPhase = double(nModTicks) / orbit.m_nPeriod;
 					double	fTheta = fOrbitPhase * (M_PI * 2);
 					double	fOrbitRadius = (iOrbit + 0.5) * fOrbitWidth;
-					float	fOrbitWidth;
+					float	fStrokeWidth;
 					if (m_nDrawStyle & DSB_CONVERGENCES) {	// if showing convergences
 						bool	bIsConverging = false;
 						const double	fConvMargin = 0.15;	// half width of convergence zone, as a normalized angle
@@ -920,18 +924,18 @@ LRESULT CPhaseBar::OnDrawD2D(WPARAM wParam, LPARAM lParam)
 								fOrbitWidthNorm = 1 - fOrbitPhase / fConvMargin;
 							else	// convergence is receding
 								fOrbitWidthNorm = (fOrbitPhase - (1 - fConvMargin)) / fConvMargin;
-							fOrbitWidth = float(1 + (fPlanetRadius * 2 - 1) * fOrbitWidthNorm);
+							fStrokeWidth = float(1 + (fPlanetRadius * 2 - 1) * fOrbitWidthNorm);
 							m_brOrbitNormal.SetColor(D2D1::ColorF(1, float(fOrbitWidthNorm), 0));
 						} else {	// orbit isn't converging
-							fOrbitWidth = 1;
+							fStrokeWidth = 1;
 							m_brOrbitNormal.SetColor(m_clrOrbitNormal);	// restore brush color
 						}
 					} else {	// not showing convergences
-						fOrbitWidth = 1;
+						fStrokeWidth = 1;
 					}
 					pRenderTarget->DrawEllipse(	// draw orbit
 						D2D1::Ellipse(ptOrigin, float(fOrbitRadius * fAspect), float(fOrbitRadius)), 
-						&m_brOrbitNormal, fOrbitWidth);
+						&m_brOrbitNormal, fStrokeWidth);
 					D2D1_POINT_2F	ptPlanet = {
 						float(sin(fTheta) * fOrbitRadius * fAspect + ptOrigin.x),
 						float(ptOrigin.y - cos(fTheta) * fOrbitRadius)	// flip y-axis

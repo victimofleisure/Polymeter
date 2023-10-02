@@ -25,6 +25,7 @@
 		15		01dec22	vary orientation with aspect ratio when floating
 		16		17dec22	use lParam macros in parent notify handler
 		17		23feb23	make prompting for channel selection public
+		18		25sep23	fix warning in SetChannelFilter
 
 */
 
@@ -411,9 +412,9 @@ void CPianoBar::SetChannelFilter(int iChannel, USHORT nChannelMask)
 			nNewChannelMask = nChannelMask;
 			nPianos = nSetBits;	// show multiple pianos, one for each selected channel
 			int	iPiano = 0;
-			for (int iChannel = 0; iChannel < MIDI_CHANNELS; iChannel++) {	// for each channel
-				if (nChannelMask & MAKE_CHANNEL_MASK(iChannel)) {	// if channel is selected
-					m_arrChannelPiano[iChannel] = static_cast<BYTE>(iPiano);	// map channel to its piano
+			for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each channel
+				if (nChannelMask & MAKE_CHANNEL_MASK(iChan)) {	// if channel is selected
+					m_arrChannelPiano[iChan] = static_cast<BYTE>(iPiano);	// map channel to its piano
 					iPiano++;
 				}
 			}

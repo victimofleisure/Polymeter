@@ -37,6 +37,7 @@
 		27		24feb23	add channel selection
 		28		26feb23	move Graphviz path to app options
 		29		27feb23	optimize channel selection
+		30		20sep23	move use Cairo flag to app options
 
 */
 
@@ -121,13 +122,6 @@ const LPCTSTR CGraphBar::m_arrGraphFindExeName[] = {
 #define RK_EXPORT_WIDTH _T("ExportWidth")
 #define RK_EXPORT_HEIGHT _T("ExportHeight")
 
-// Since Graphviz 2.38, SVG output can be clipped due to bug #1855; 
-// rendering with Cairo avoids it, at the cost of bloated SVG files
-bool CGraphBar::m_bUseCairo;
-// To render SVG using Cairo, create a DWORD registry value with 
-// this name within the graph bar's key and set its value non-zero
-#define RK_USE_CAIRO _T("UseCairo")
-
 #define MAKE_MOD_TYPE_MASK(iType) (static_cast<MOD_TYPE_MASK>(1) << iType)
 #define MAKE_CHANNEL_MASK(iType) (static_cast<USHORT>(1) << iType)
 
@@ -163,7 +157,6 @@ CGraphBar::CGraphBar()
 	RdReg(RK_GraphBar, RK_HIGHLIGHT_SELECT, m_bHighlightSelect);
 	RdReg(RK_GraphBar, RK_EDGE_LABELS, m_bEdgeLabels);
 	RdReg(RK_GraphBar, RK_SHOW_LEGEND, m_bShowLegend);
-	RdReg(RK_GraphBar, RK_USE_CAIRO, m_bUseCairo);	// fix for Graphviz bug #1855, see above
 	RdReg(RK_GraphBar, RK_SHOW_MUTED, m_bShowMuted);
 }
 
@@ -312,7 +305,7 @@ UINT CGraphBar::GraphThread(LPVOID pParam)
 	CPathStr	sExePath(theApp.m_Options.m_Graph_sGraphvizFolder);
 	sExePath.Append(m_arrGraphExeName);
 	LPCTSTR	pszRender;
-	if (m_bUseCairo)
+	if (theApp.m_Options.m_Graph_bGraphUseCairo)
 		pszRender = _T(":cairo");	// fix for Graphviz bug #1855; see above
 	else	// default render
 		pszRender = _T("");
@@ -366,7 +359,7 @@ bool CGraphBar::ExportGraph(CString sOutFormat, CString sOutPath, const CSize& s
 	CPathStr	sExePath(theApp.m_Options.m_Graph_sGraphvizFolder);
 	sExePath.Append(m_arrGraphExeName);
 	LPCTSTR	pszRender;
-	if (m_bUseCairo)
+	if (theApp.m_Options.m_Graph_bGraphUseCairo)
 		pszRender = _T(":cairo");	// fix for Graphviz bug #1855; see above
 	else	// default render
 		pszRender = _T("");
@@ -735,8 +728,9 @@ void CGraphBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			if (theApp.m_Options.m_Graph_sGraphvizFolder != pPropHint->m_pPrevOptions->m_Graph_sGraphvizFolder) {
 				m_bGraphvizFound = false;
 			}
-			// if Graph Unicode option changed, redraw graph
-			if (theApp.m_Options.m_Graph_bGraphUnicode != pPropHint->m_pPrevOptions->m_Graph_bGraphUnicode) {
+			// if Graph Unicode or Cairo options changed, redraw graph
+			if (theApp.m_Options.m_Graph_bGraphUnicode != pPropHint->m_pPrevOptions->m_Graph_bGraphUnicode
+			|| theApp.m_Options.m_Graph_bGraphUseCairo != pPropHint->m_pPrevOptions->m_Graph_bGraphUseCairo) {
 				StartDeferredUpdate();
 			}
 		}

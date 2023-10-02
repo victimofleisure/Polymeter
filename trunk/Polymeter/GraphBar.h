@@ -19,6 +19,7 @@
 		09		13dec22	add export of formats other than SVG
 		10		24feb23	add channel selection
 		11		26feb23	move Graphviz path to app options
+		12		20sep23	move use Cairo flag to app options
 		
 */
 
@@ -218,7 +219,6 @@ protected:
 	CTempFilePath	m_tfpData;	// temp file path of graph input data (in DOT syntax)
 	CTempFilePath	m_tfpGraph;	// temp file path of graph output image
 	CBoolArrayEx	m_arrMute;	// array of cached track mute states
-	static	bool	m_bUseCairo;	// true if rendering via Cairo; Graphviz bug #1855
 
 // Helpers
 	void	StartDeferredUpdate();

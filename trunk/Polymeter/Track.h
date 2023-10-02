@@ -42,6 +42,7 @@
 		32		19feb22	use INI file class directly instead of via profile
 		33		19may22	add offset method to loop range class
 		34		16feb23	add special handling for non-ASCII characters
+		35		20sep23	increase maximum quant from 32K to 64K
 
 */
 
@@ -66,7 +67,7 @@ public:
 	enum {
 		INIT_STEPS = 32,			// initial number of steps
 		MIN_DUB_TIME = INT_MIN,		// minimum dub time
-		MAX_QUANT = SHRT_MAX,		// maximum quant in ticks
+		MAX_QUANT = USHRT_MAX,		// maximum quant in ticks
 	};
 	enum {	// step bitmasks; these define the layout of a sequencer step
 		// for track types other than note, the velocity carries the event's
