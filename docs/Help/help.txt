@@ -1836,7 +1836,7 @@ If true, the @[Graph bar] correctly handles @[unicode\non-ASCII] characters in @
 
 @topic Use Cairo
 
-If true, the graph is rendered with the Cairo graphics library, which is included in Graphviz. If you have problems with the graph's text size, setting this option may help. Graphviz normally outputs high-level instructions (SVG) which are then rendered by a web browser control. This is efficient, but it can cause problems with fonts, particularly if the system text size isn't 100%. Setting this option instructs Graphviz to do its own rendering instead of relying on the web browser.
+If true, the @[graph bar\graph] is rendered with the Cairo graphics library, which is included in Graphviz. If you're having problems with the graph's text, enabling this option may help. Graphviz normally outputs high-level instructions in SVG format, which are then rendered by a web browser control. This is efficient, but it can cause problems with fonts. Enabling this option instructs Graphviz to convert fonts to lines and curves instead of relying on the web browser's fonts. This brute force solution greatly increases the size of the SVG files and may reduce graphing performance. Before enabling this option, consider that the most likely cause of <em>undersized</em> graph text is the system display scaling, and a specific fix is available for that, as explained @[undersized graph text\here]. 
 
 @endchapter
 
@@ -2684,6 +2684,25 @@ The application generally supports Unicode, which means non-ASCII characters are
 ASCII here means <em>printable</em> ASCII, excluding control characters, in other words the 7-bit characters ranging from 32 to 126 decimal; characters outside this range are considered non-ASCII.
 
 The @[Graph bar] optionally supports Unicode, but the option is disabled by default because it increases overhead. To enable it, set the @[Graph Handles Unicode] option to true.
+
+@topic Undersized graph text
+
+If the @[graph bar\graph] text is unexpectedly small, the most likely cause is that the system display scaling is greater than 100%, as is often the case when using a high-resolution monitor. To determine whether display scaling is in fact the cause, check its value in Settings / Display / Scale and layout. If display scaling is currently greater than 100%, change it to 100%, and then exit and restart Polymeter. If the graph text is now appropriately sized, display scaling is the cause. Restore the previous display scaling and apply one of the fixes below.
+
+The root cause is that the web browser control is not DPI-aware. An automated fix for that is available from the Polymeter download page. It's a zip archive named Polymeter-Graphviz-small-text-fix.zip, containing a REG file and instructions. The fix makes the web browser control DPI-aware for the Polymeter application only. If you prefer to apply the fix manually using the Registry Editor, follow the instructions below. Note that elevation to administrator privileges may be required.
+
+To fix the problem for the current user <em>only</em>, create the following key:
+HKEY_CURRENT_USER\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_96DPI_PIXEL
+and in that key, create a DWORD value named Polymeter.exe with a value of 1.
+
+To fix the problem for ALL users, create the following key:
+HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_96DPI_PIXEL
+and in that key, again create a DWORD value named Polymeter.exe with a value of 1.
+
+The fix for all users shown above only affects the 64-bit version of Polymeter. For the 32-bit version, the key is instead:
+HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_96DPI_PIXEL
+
+If the above fixes don't help, you can also try enabling the @[Use Cairo] option.
 
 @endchapter
 

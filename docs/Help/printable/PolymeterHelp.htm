@@ -112,6 +112,7 @@
 <dt>Graph
 <dd><a href="#Graphviz_Folder">Graphviz Folder</a>
 <dd><a href="#Graph_Handles_Unicode">Graph Handles Unicode</a>
+<dd><a href="#Use_Cairo">Use Cairo</a>
 </dl>
 <dd><dl>
 <dt>General
@@ -239,6 +240,7 @@
 <dd><a href="#Modular_arithmetic">Modular arithmetic</a>
 <dd><a href="#Clipping">Clipping</a>
 <dd><a href="#Unicode">Unicode</a>
+<dd><a href="#Undersized_graph_text">Undersized graph text</a>
 <dt>Reference
 <dd><a href="#Options_Summary">Options Summary</a>
 <dd><a href="#Shortcuts">Shortcuts</a>
@@ -2069,6 +2071,10 @@
 
 <p>If true, the <a href="#Graph_bar">Graph bar</a> correctly handles <a href="#Unicode">non-ASCII</a> characters in <a href="#Track_Name">track names</a>. This option is only meaningful if Graphviz is installed. Enabling this option adds overhead due to UTF-8 encoding, hence it's disabled by default. With this option disabled, non-ASCII characters may display as question marks in the graph, and can also cause incomplete or erroneous graphs. If you regularly use non-ASCII characters, enable this option.
 
+<a name="Use_Cairo"><h3>Use Cairo</h3></a>
+
+<p>If true, the <a href="#Graph_bar">graph</a> is rendered with the Cairo graphics library, which is included in Graphviz. If you're having problems with the graph's text, enabling this option may help. Graphviz normally outputs high-level instructions in SVG format, which are then rendered by a web browser control. This is efficient, but it can cause problems with fonts. Enabling this option instructs Graphviz to convert fonts to lines and curves instead of relying on the web browser's fonts. This brute force solution greatly increases the size of the SVG files and may reduce graphing performance. Before enabling this option, consider that the most likely cause of <em>undersized</em> graph text is the system display scaling, and a specific fix is available for that, as explained <a href="#Undersized_graph_text">here</a>.
+
 
 <h2>General</h2>
 
@@ -2904,6 +2910,25 @@
 
 <p>The <a href="#Graph_bar">Graph bar</a> optionally supports Unicode, but the option is disabled by default because it increases overhead. To enable it, set the <a href="#Graph_Handles_Unicode">Graph Handles Unicode</a> option to true.
 
+<a name="Undersized_graph_text"><h2>Undersized graph text</h2></a>
+
+<p>If the <a href="#Graph_bar">graph</a> text is unexpectedly small, the most likely cause is that the system display scaling is greater than 100%, as is often the case when using a high-resolution monitor. To determine whether display scaling is in fact the cause, check its value in Settings / Display / Scale and layout. If display scaling is currently greater than 100%, change it to 100%, and then exit and restart Polymeter. If the graph text is now appropriately sized, display scaling is the cause. Restore the previous display scaling and apply one of the fixes below.
+
+<p>The root cause is that the web browser control is not DPI-aware. An automated fix for that is available from the Polymeter download page. It's a zip archive named Polymeter-Graphviz-small-text-fix.zip, containing a REG file and instructions. The fix makes the web browser control DPI-aware for the Polymeter application only. If you prefer to apply the fix manually using the Registry Editor, follow the instructions below. Note that elevation to administrator privileges may be required.
+
+<p>To fix the problem for the current user <em>only</em>, create the following key:
+<br>HKEY_CURRENT_USER\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_96DPI_PIXEL
+<br>and in that key, create a DWORD value named Polymeter.exe with a value of 1.
+
+<p>To fix the problem for ALL users, create the following key:
+<br>HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_96DPI_PIXEL
+<br>and in that key, again create a DWORD value named Polymeter.exe with a value of 1.
+
+<p>The fix for all users shown above only affects the 64-bit version of Polymeter. For the 32-bit version, the key is instead:
+<br>HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_96DPI_PIXEL
+
+<p>If the above fixes don't help, you can also try enabling the <a href="#Use_Cairo">Use Cairo</a> option.
+
 
 <h1>Reference</h1>
 
@@ -2933,6 +2958,7 @@
 <tr><th colspan=2>Graph</th></tr>
 <tr><td><a href="#Graphviz_Folder">Graphviz Folder</a></td><td>Location of Graphviz executable files</td></tr>
 <tr><td><a href="#Graph_Handles_Unicode">Graph Handles Unicode</a></td><td>If true, graph handles Unicode characters in track names</td></tr>
+<tr><td><a href="#Use_Cairo">Use Cairo</a></td><td>Render graph with Cairo graphics library</td></tr>
 <tr><th colspan=2>General</th></tr>
 <tr><td><a href="#Show_Property_Descriptions">Show Property Descriptions</a></td><td>If true, show descriptions area in properties bar</td></tr>
 <tr><td><a href="#Automatically_Check_for_Updates">Automatically Check for Updates</a></td><td>Automatically check for newer version of app during startup</td></tr>
