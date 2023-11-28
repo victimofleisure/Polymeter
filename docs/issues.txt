@@ -436,7 +436,7 @@ id	open	close	type	description	rev	user
 528	07/17/22	07/23/22	done	optionally exclude muted tracks from graph	1.0.10.001	
 535	10/20/22	10/20/22	done	support offset modulation of controller tracks	1.0.11.001	
 530	07/27/22	10/24/22	done	song view should line up with track view when they're side by side; use track grid's header and item height	1.0.11.001	
-531	08/01/22	10/25/22	done	add command to select all unmuted tracks	1.0.11.001	
+407	09/17/20	10/25/22	done	add command to select all unmuted tracks	1.0.11.001	
 534	09/22/22	10/29/22	done	FormatMessage call must specify ignore inserts	1.0.11.001	
 536	11/12/22	11/13/22	done	offset modulation of modulator implements sign backwards; negative value should hasten target	1.0.11.002	
 547	11/30/22	12/01/22	done	floating piano bar should use vertical orientation if bar's height exceeds its width	1.0.12.000	
@@ -456,6 +456,7 @@ id	open	close	type	description	rev	user
 566	03/13/23	09/20/23	done	add an option for graph to use Cairo instead of default renderer; explain text size issue in help	1.0.13.004	
 568	05/10/23	09/20/23	done	increase maximum quant from 32K to 64K	1.0.13.004	
 570	09/18/23	09/20/23	done	linear fill command fails if track has only one step	1.0.13.004	
+571	11/27/23	11/27/23	done	MIDI export doesn't specify time signature or key signature	1.0.13.005	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -504,7 +505,7 @@ id	open	close	type	description	rev	user
 354	04/11/20		hold	channel modulation; but is it really necessary? Same effect is achievable with mute modulations		
 355	04/11/20		hold	window that shows current song time in huge font; excessive?		
 370	05/27/20		hold	force MIDI thru to a specified channel; useful for controllers that lack channel setting, but complicates MidiInProc		
-372	06/08/20		hold	song view should show loop lengths and their covergences graphically, possibly in a separate timeline pane		
+372	06/08/20		hold	song view should show loop lengths and their convergences graphically, possibly in a separate timeline pane		
 373	06/13/20		hold	in phase bar, add option to hide muted tracks; conflicts with showing convergences		
 383	07/01/20		hold	add more input quants; possibly useful with larger time divisions		
 393	07/17/20		hold	switching to song view should set all mutes to match song's current dub state (chase); must be synchronous		
@@ -512,7 +513,6 @@ id	open	close	type	description	rev	user
 402	08/05/20		hold	indicate step selection in Step view's velocities pane		
 403	08/22/20		hold	preset track type, interpreting step value as preset index; requires moving preset array into sequencer		
 405	08/22/20		hold	in mapping, add Note Number input event type: get data value from note's index, ignoring velocity and note off		
-407	09/17/20		hold	select all unmuted tracks; hardly worth cluttering up the Edit menu?		
 410	09/28/20		hold	live view position bars for track groups should reflect LCM of periods instead of maximum period; could be slow		
 416	10/20/20		hold	Graphviz PDF output looks better than SVG (if Adobe is installed) but it overrides our context menu		
 431	01/13/21		hold	device change notification should retry missing MIDI device and close message box if successful		
