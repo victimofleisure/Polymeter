@@ -54,6 +54,7 @@
 		44		19may22	set position offset in SetPosition stopped case
 		45		20oct22	support offset modulation of controller tracks
 		46		12nov22	flip sign in recursive offset modulation case
+		47		27nov23	include time signature and key signature in Export
 
 */
 
@@ -66,6 +67,8 @@
 #include <math.h>
 
 #define CHECK(x) { MMRESULT nResult = x; if (MIDI_FAILED(nResult)) { OnMidiError(nResult); return false; } }
+
+bool CSequencer::m_bExportTimeKeySigs = true;
 
 CSequencer::CSequencer()
 {
@@ -1034,7 +1037,7 @@ lblFixNoteOverlaps:;
 	}
 }
 
-bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
+bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration, int nKeySig)
 {
 	// note that this method may throw CFileException (from CMidiFile)
 	if (nDuration <= 0)	// if invalid duration (in seconds)
@@ -1113,7 +1116,18 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 		}
 		parrTempoMap = &arrTempoMap;
 	}
-	fMidi.WriteHeader(uTracks, uTimeDiv, m_fTempo, nDurationTicks, NULL, NULL, parrTempoMap);	// write MIDI file header
+	CMidiFile::TIME_SIGNATURE	sigTime = {static_cast<BYTE>(m_nMeter), 2, 0, 8};	// denominator is quarter note
+	CMidiFile::KEY_SIGNATURE	sigKey = {static_cast<signed char>(GetMidiKeySignature(nKeySig)), 0};
+	CMidiFile::TIME_SIGNATURE	*pTimeSig;
+	CMidiFile::KEY_SIGNATURE	*pKeySig;
+	if (m_bExportTimeKeySigs) {	// if exporting time and key signatures
+		pTimeSig = &sigTime;
+		pKeySig = &sigKey;
+	} else {	// exclude time and key signatures
+		pTimeSig = NULL;
+		pKeySig = NULL;
+	}
+	fMidi.WriteHeader(uTracks, uTimeDiv, m_fTempo, nDurationTicks, pTimeSig, pKeySig, parrTempoMap);	// write MIDI file header
 	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each MIDI channel
 		int	iTrack = arrFirstTrack[iChan];
 		if (iTrack >= 0) {	// if channel is used
@@ -1134,12 +1148,23 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration)
 	return true;
 }
 
-bool CSequencer::Export(LPCTSTR pszPath, int nDuration, bool bSongMode, int nStartPos)
+bool CSequencer::Export(LPCTSTR pszPath, int nDuration, bool bSongMode, int nStartPos, int nKeySig)
 {
 	CSequencerReader	seq(*this);	// give export its own sequencer instance
 	seq.SetSongMode(bSongMode);
 	seq.m_nStartPos = nStartPos;
-	return seq.ExportImpl(pszPath, nDuration);
+	return seq.ExportImpl(pszPath, nDuration, nKeySig);
+}
+
+inline int CSequencer::GetMidiKeySignature(int nKey)
+{
+	// convert key [0..11] to number of sharps (positive) or flats (negative)
+	ASSERT(nKey >= 0 && nKey < 12);
+	if (nKey & 1)
+		return nKey - 6;
+	if (nKey >= 6)
+		return nKey - 12;
+	return nKey;
 }
 
 CSequencerReader::CSequencerReader(CSequencer& seq)
@@ -1151,6 +1176,7 @@ CSequencerReader::CSequencerReader(CSequencer& seq)
 	// copy any variables used by export
 	m_fTempo = seq.m_fTempo;
 	m_nTimeDiv = seq.m_nTimeDiv;
+	m_nMeter = seq.m_nMeter;
 	m_bIsSongMode = seq.m_bIsSongMode;
 	m_nLatency = seq.m_nLatency;
 	m_arrInitMidiEvent = seq.m_arrInitMidiEvent;

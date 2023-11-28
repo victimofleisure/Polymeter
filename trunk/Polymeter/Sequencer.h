@@ -30,6 +30,7 @@
 		20		21jan22	add per-channel note overlap methods
 		21		13feb22	let RecurseModulations modify event time
 		22		20oct22	refactor control event helper for offset modulation
+		23		27nov23	add optional key signature parameter to Export
 
 */
 
@@ -113,12 +114,13 @@ public:
 	USHORT	GetNoteOverlapMethods() const;
 	void	SetNoteOverlapMethods(USHORT nMask);
 	void	SetNoteOverlapMethod(int iChannel, bool bIsMerge);
+	static	void	SetExportTimeKeySigs(bool bEnable);
 
 // Operations
 	bool	Play(bool bEnable, bool bRecord = false);
 	bool	Pause(bool bEnable);
 	void	Abort();
-	bool	Export(LPCTSTR pszPath, int nDuration, bool bSongMode, int nStartPos);
+	bool	Export(LPCTSTR pszPath, int nDuration, bool bSongMode, int nStartPos, int nKeySig = 0);
 	bool	OutputLiveEvent(DWORD dwEvent);
 	void	ConvertPositionToBeat(LONGLONG nPos, LONGLONG& nMeasure, LONGLONG& nBeat, LONGLONG& nTick) const;
 	void	ConvertBeatToPosition(LONGLONG nMeasure, LONGLONG nBeat, LONGLONG nTick, LONGLONG& nPos) const;
@@ -216,6 +218,7 @@ protected:
 	CDWordArrayEx	m_arrMappedEvent;	// array of translated MIDI events from mapping
 	CLoopRange	m_rngLoop;			// loop range in ticks
 	USHORT	m_nNoteOverlapMethods;	// for each MIDI channel, non-zero bit if merging overlapped notes
+	static	bool	m_bExportTimeKeySigs;	// true if exporting time and key signatures
 
 #if SEQ_DUMP_EVENTS
 	CArrayEx<CMidiEventStream, CMidiEventStream&>	m_arrDumpEvent;	// for debug only
@@ -237,7 +240,8 @@ protected:
 	bool	WriteTempo(double fTempo);
 	int		GetCallbackLength(int nLatency) const;
 	void	UpdateCallbackLength();
-	bool	ExportImpl(LPCTSTR pszPath, int nDuration);
+	bool	ExportImpl(LPCTSTR pszPath, int nDuration, int nKeySig = 0);
+	static	int		GetMidiKeySignature(int nKey);
 	void	ResetCachedParameters();
 	bool	MakeControlEvent(const CTrack& track, int nTime, int nVal, CMidiEvent& evt);
 	static	int		ApplyNoteRange(int nNote, int nRangeStart, int iRangeType);
@@ -465,4 +469,9 @@ inline void CSequencer::SetNoteOverlapMethod(int iChannel, bool bIsMerge)
 		m_nNoteOverlapMethods |= nChannelMask;
 	else
 		m_nNoteOverlapMethods &= ~nChannelMask;
+}
+
+inline void CSequencer::SetExportTimeKeySigs(bool bEnable)
+{
+	m_bExportTimeKeySigs = bEnable;
 }

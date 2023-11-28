@@ -89,6 +89,7 @@
 		79		16feb23	add special handling for non-ASCII characters
 		80		17feb23	add replace range to velocity transform
 		81		20sep23	in track fill, fix divide by zero errors
+		82		27nov23	specify key signature in OnFileExport
 
 */
 
@@ -4249,7 +4250,7 @@ void CPolymeterDoc::OnFileExport()
 		if (PromptForExportParams(bSongMode, nDuration)) {
 			CWaitCursor	wc;	// show wait cursor; export can take time
 			UpdateChannelEvents();	// queue channel events to be output at start of playback
-			if (!m_Seq.Export(fd.GetPathName(), nDuration, bSongMode, m_nStartPos)) {
+			if (!m_Seq.Export(fd.GetPathName(), nDuration, bSongMode, m_nStartPos, m_nKeySig)) {
 				AfxMessageBox(IDS_EXPORT_ERROR);
 			}
 		}
