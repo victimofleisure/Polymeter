@@ -17,6 +17,7 @@
 		07		19jul21	add command help handler
 		08		19may22	add ruler selection
 		09		16jun22	don't delay initial zoom, move to OnInitialUpdate
+		10		13dec23	fix invalid selection error after track length change
 
 */
 
@@ -143,6 +144,8 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				OnTrackSizeChange(iTrack);
 				if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
 					UpdateSongPositionNoRedraw(iTrack);	// update song position, no redraw
+				if (iProp == PROP_Length)
+					OnTrackLengthChange();
 				break;
 			case PROP_Offset:
 				if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
@@ -169,6 +172,8 @@ void CStepView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 				UpdateViewSize();
 				if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
 					UpdateSongPositionNoRedraw(pPropHint->m_arrSelection);	// update song position, no redraw
+				if (iProp == PROP_Length)
+					OnTrackLengthChange();
 				break;
 			case PROP_Offset:
 				if (theApp.m_Options.m_View_bShowCurPos)	// if showing current position
@@ -508,6 +513,20 @@ void CStepView::SetStepSelection(const CRect& rStepSel, bool bUpdate)
 	GetDocument()->m_rStepSel = rStepSel;	// document mirrors step selection
 	if (bUpdate)
 		UpdateSteps(rStepSel);
+}
+
+void CStepView::OnTrackLengthChange()
+{
+	if (HaveStepSelection()) {	// if step selection exists
+		// for each track in step selection
+		for (int iTrack = m_rStepSel.top; iTrack < m_rStepSel.bottom; iTrack++) {
+			// if track length is less than step selection's right edge
+			if (GetDocument()->m_Seq.GetLength(iTrack) < m_rStepSel.right) {
+				ResetStepSelection();	// prevent confusing step selection errors
+				break;	// step selection is reset so don't check more tracks
+			}
+		}
+	}
 }
 
 bool CStepView::HaveEitherSelection() const

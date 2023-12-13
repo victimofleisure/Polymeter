@@ -14,6 +14,7 @@
 		04		19jul21	add command help handler
 		05		19may22	add ruler selection
 		06		16jun22	remove delayed create handler
+		07		13dec23	add OnTrackLengthChange
 
 */
 
@@ -72,6 +73,7 @@ public:
 public:
 	void	ResetStepSelection();
 	void	SetStepSelection(const CRect& rStepSel, bool bUpdateSteps = true);
+	void	OnTrackLengthChange();
 	int		HitTest(CPoint point, int& iStep, UINT nFlags = 0) const;
 	void	EndDrag();
 	void	OnTrackLength(CPoint point);
