@@ -38,6 +38,7 @@
 		28		26feb23	move Graphviz path to app options
 		29		27feb23	optimize channel selection
 		30		20sep23	move use Cairo flag to app options
+		31		19dec23	replace track type member usage with accessor
 
 */
 
@@ -560,7 +561,7 @@ __forceinline void CGraphBar::ApplyChannelMask(CPolymeterDoc *pDoc, const CTrack
 	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
 		const CTrackBase::CPackedModulation&	mod = arrMod[iMod];
 		const CTrack& trkTarget = pDoc->m_Seq.GetTrack(mod.m_iTarget);
-		if (trkTarget.m_iType != CTrack::TT_MODULATOR) {	// if target track isn't a modulator
+		if (!trkTarget.IsModulator()) {	// if target track isn't a modulator
 			WORD	nTargetChannelBit = MAKE_CHANNEL_MASK(trkTarget.m_nChannel);
 			if (nChannelMask & nTargetChannelBit) {	// if track's channel matches channel mask
 				if (m_bShowMuted || !pDoc->m_Seq.GetMute(mod.m_iTarget)) {	// if showing muted tracks or target track is unmuted
@@ -584,7 +585,7 @@ __forceinline void CGraphBar::ApplyChannelMask(CPolymeterDoc *pDoc, const CTrack
 		for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
 			const CTrackBase::CPackedModulation&	mod = arrMod[iMod];
 			const CTrack& trkTarget = pDoc->m_Seq.GetTrack(mod.m_iTarget);
-			if (trkTarget.m_iType == CTrack::TT_MODULATOR) {	// if target track is a modulator
+			if (trkTarget.IsModulator()) {	// if target track is a modulator
 				if (arrOnSelectedChannel[mod.m_iTarget]) {	// if target track included
 					if (mod.m_iSource >= 0) {	// if valid modulation
 						if (!arrOnSelectedChannel[mod.m_iSource]) {	// if source track not included

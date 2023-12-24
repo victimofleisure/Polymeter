@@ -19,6 +19,7 @@
 		09		21jan22	add tempo mapping target
 		10		05feb22	add tie mapping target
 		11		19feb22	use INI file class directly instead of via profile
+		12		23dec23	add mapping target for note overlap method
 
 */
 
@@ -271,6 +272,9 @@ bool CMappingArray::MapMidiEvent(DWORD dwInEvent, CDWordArrayEx& arrOutEvent) co
 							double	fScaledTempo = pDoc->m_fTempo * pow(2, fExponent);	// scale base tempo
 							pDoc->m_Seq.SetTempo(fScaledTempo);
 						}
+						break;
+					case CMapping::OUT_Overlaps:
+						pDoc->m_Seq.SetNoteOverlapMethod(map.m_nOutChannel, nDataVal != 0);
 						break;
 					default:
 						int	iTrack = map.m_nTrack;

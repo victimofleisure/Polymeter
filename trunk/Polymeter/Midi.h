@@ -14,6 +14,7 @@
 		04		19mar20	add channel voice command to index macro
 		05		19mar20	add channel voice and system status messages
 		06		21jan22	add stream buffer event macros
+		07		23dec23	add message component bitmasks
 
 		midi types and constants
 
@@ -67,6 +68,14 @@ enum {	// MIDI system status messages
 enum {	// MIDI controllers
 	#define MIDI_CTRLR_DEF(name) name,
 	#include "MidiCtrlrDef.h"	// generate enum
+};
+
+enum {	// bitmasks for MIDI message components
+	MIDI_CHAN_MASK	= 0x00000f,	// channel nibble
+	MIDI_CMD_MASK	= 0x0000f0,	// command nibble
+	MIDI_STAT_MASK	= 0x0000ff,	// status byte
+	MIDI_P1_MASK	= 0x00ff00,	// 1st parameter byte
+	MIDI_P2_MASK	= 0xff0000,	// 2nd parameter byte
 };
 
 #define MIDI_STAT(msg)		LOBYTE(msg)

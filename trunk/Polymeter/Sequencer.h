@@ -31,6 +31,7 @@
 		21		13feb22	let RecurseModulations modify event time
 		22		20oct22	refactor control event helper for offset modulation
 		23		27nov23	add optional key signature parameter to Export
+		24		19dec23	add internal track type and controllers
 
 */
 
@@ -157,7 +158,14 @@ protected:
 		char	arrPatch[MIDI_CHANNELS];	// program change
 		char	arrChanAft[MIDI_CHANNELS];	// channel aftertouch
 		char	arrWheel[MIDI_CHANNELS];	// pitch bend
+		char	arrInternal[MIDI_CHANNELS][MIDI_NOTES];	// internal controllers
 	};
+	class CChannelState {
+	public:
+		CMidiEventArray	m_arrSustainNote;	// per-channel array of sustain note offs
+		CMidiEventArray	m_arrSostenutoNote;	// per-channel array of sostenuto note offs
+	};
+	typedef CChannelState CChannelStateArray[MIDI_CHANNELS];
 
 // Constants
 	enum {
@@ -165,8 +173,17 @@ protected:
 		DEF_BUFFER_SIZE = 4096,		// default buffer size, in events
 		MOD_MAX_RECURSIONS = 32,	// maximum number of modulation recursions
 		OCTAVE = 12,				// size of an octave in semitones
+	};
+	enum {	// sequencer events
 		SEVT_NOP = MEVT_NOP << 24,	// pads buffer to callback duration
 		SEVT_TEMPO = MEVT_TEMPO << 24,	// new tempo in microseconds per quarter note
+		SEVT_INTERNAL = 0x40 << 24,	// internal controller, enumerated below
+	};
+	enum {	// internal controllers
+		ICTL_NOTE_OVERLAP = 63,		// note overlap controller
+		ICTL_SUSTAIN = 64,			// sustain controller
+		ICTL_SOSTENUTO = 66,		// sostenuto controller
+		ICTL_ALL_NOTES_OFF = 123,	// all notes off controller
 	};
 
 // Member data
@@ -218,6 +235,9 @@ protected:
 	CDWordArrayEx	m_arrMappedEvent;	// array of translated MIDI events from mapping
 	CLoopRange	m_rngLoop;			// loop range in ticks
 	USHORT	m_nNoteOverlapMethods;	// for each MIDI channel, non-zero bit if merging overlapped notes
+	USHORT	m_nSustainMask;			// for each MIDI channel, non-zero bit if sustain is on
+	USHORT	m_nSostenutoMask;		// for each MIDI channel, non-zero bit if sostento is on
+	CChannelStateArray	m_arrChannelState;	// state information for each MIDI channel
 	static	bool	m_bExportTimeKeySigs;	// true if exporting time and key signatures
 
 #if SEQ_DUMP_EVENTS
@@ -229,10 +249,15 @@ protected:
 
 // Helpers
 	static	void	CALLBACK MidiOutProc(HMIDIOUT hMidiOut, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2);
+	void	ResetChannelStates();
 	int		GetNoteDuration(const CStepArray& arrStep, int nSteps, int iCurStep) const;
 	bool	RecurseModulations(int iTrack, int& nAbsEvtTime, int& nPosMod);
 	void	AddTrackEvents(int iTrack, int nCBStart);
 	void	AddNoteOffs(int nCBStart, int nCBEnd);
+	void	OnInternalControl(const CMidiEvent& noteOff, BYTE iChan, int nCBStart);
+	void	ReleaseHeldNotes(CMidiEventArray& arrHeldNoteOff, int nTime, int nCBStart, bool bForceExpire = false);
+	void	CullNoteOffs(CMidiEventArray& arrCulledNoteOff, BYTE iChan, int nTime, int nCBStart);
+	void	AllNotesOff(BYTE iChan, int nTime, int nCBStart);
 	bool	IsRecordedEventPlayback() const;
 	void	AddRecordedEvents(int nCBStart, int nCBEnd);
 	bool	OutputMidiBuffer();

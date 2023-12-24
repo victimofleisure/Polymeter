@@ -90,6 +90,7 @@
 		80		17feb23	add replace range to velocity transform
 		81		20sep23	in track fill, fix divide by zero errors
 		82		27nov23	specify key signature in OnFileExport
+		83		19dec23	bump file version for internal track type
 
 */
 
@@ -132,7 +133,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 // file versioning
 #define FILE_ID				_T("Polymeter")
-#define	FILE_VERSION		20
+#define	FILE_VERSION		21
 
 // file format keys
 #define RK_FILE_ID			_T("FileID")

@@ -55,6 +55,7 @@
 		45		20oct22	support offset modulation of controller tracks
 		46		12nov22	flip sign in recursive offset modulation case
 		47		27nov23	include time signature and key signature in Export
+		48		19dec23	add internal track type and controllers
 
 */
 
@@ -67,6 +68,7 @@
 #include <math.h>
 
 #define CHECK(x) { MMRESULT nResult = x; if (MIDI_FAILED(nResult)) { OnMidiError(nResult); return false; } }
+#define MAKE_CHANNEL_MASK(iType) (static_cast<USHORT>(1) << iType)
 
 bool CSequencer::m_bExportTimeKeySigs = true;
 
@@ -107,6 +109,8 @@ CSequencer::CSequencer()
 	m_fLatencySecs = 0;
 	m_rngLoop = CLoopRange(0, 0);
 	m_nNoteOverlapMethods = 0;
+	m_nSustainMask = 0;
+	m_nSostenutoMask = 0;
 }
 
 CSequencer::~CSequencer()
@@ -285,6 +289,17 @@ DWORD CSequencer::GetMidiSongPositionMsg(int nMidiSongPos) const
 	return SONG_POSITION | ((nMidiSongPos & 0x7f) << 8) | ((nMidiSongPos >> 7) << 16);
 }
 
+inline void CSequencer::ResetChannelStates()
+{
+	m_nSustainMask = 0;
+	m_nSostenutoMask = 0;
+	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each channel
+		CChannelState&	cs = m_arrChannelState[iChan];	// reference channel's state
+		cs.m_arrSustainNote.FastRemoveAll();	// empty sustain note array
+		cs.m_arrSostenutoNote.FastRemoveAll();	// empty sostenuto note array
+	}
+}
+
 bool CSequencer::Play(bool bEnable, bool bRecord)
 {
 	if (bEnable == m_bIsPlaying)	// if already in requested state
@@ -315,6 +330,7 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 		m_arrEvent.FastRemoveAll();
 		m_arrNoteOff.SetSize(DEF_BUFFER_SIZE);	// preallocate note off array
 		m_arrNoteOff.FastRemoveAll();
+		ResetChannelStates();
 		if (m_bIsSongMode)
 			ChaseDubs(m_nStartPos, true);
 		UINT	uDevice = m_iOutputDevice;
@@ -775,7 +791,7 @@ lblNoteScheduled:;
 								}
 								nDuration = max(nDuration, 1);	// keep duration above zero
 								evt.m_nTime = nAbsEvtTime + nDuration;	// absolute time
-								evt.m_dwEvent &= ~0xff0000;	// zero note's velocity
+								evt.m_dwEvent &= ~MIDI_P2_MASK;	// zero note's velocity
 								m_arrNoteOff.FastInsertSorted(evt);	// add pending note off to array
 							}
 						}
@@ -791,6 +807,35 @@ lblNoteScheduled:;
 						m_fTempoScaling = fTempoScaling;	// save tempo scaling factor
 						CMidiEvent	evtTempo(nEvtTime, SEVT_TEMPO | nTempo);
 						m_arrTempoEvent.FastAdd(evtTempo);	// add tempo event
+					}
+				} else if (trk.m_iType == TT_INTERNAL) {	// if track type is internal
+					int	nVal = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
+					nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
+					char	cVal = static_cast<char>(nVal);	// avoids compiler warning
+					if (cVal != m_MidiCache.arrInternal[trk.m_nChannel][trk.m_nNote]) {	// if value changed
+						m_MidiCache.arrInternal[trk.m_nChannel][trk.m_nNote] = cVal;	// update cache
+						switch (trk.m_nNote) {
+						case ICTL_SUSTAIN:
+						case ICTL_SOSTENUTO:
+						case ICTL_ALL_NOTES_OFF:
+							{
+								CMidiEvent	evt;
+								evt.m_nTime = nEvtTime + arrMod[MT_Offset] + nCBStart;
+								evt.m_dwEvent = MakeMidiMsg(CONTROL, trk.m_nChannel, trk.m_nNote, nVal);
+								evt.m_dwEvent |= SEVT_INTERNAL;	// set bit to indicate event is internal
+								m_arrNoteOff.FastInsertSorted(evt);	// controller is handled by AddNoteOffs
+							}
+							break;
+						case ICTL_NOTE_OVERLAP:
+							if (m_bPreventNoteOverlap) {	// if preventing note overlap
+								CMidiEvent	evt;
+								evt.m_nTime = nEvtTime + arrMod[MT_Offset] + nCBStart;
+								evt.m_dwEvent = MakeMidiMsg(CONTROL, trk.m_nChannel, trk.m_nNote, nVal);
+								evt.m_dwEvent |= SEVT_INTERNAL;	// set bit to indicate event is internal
+								m_arrEvent.FastInsertSorted(evt);	// controller is handled by FixNoteOverlaps
+							}
+							break;
+						}
 					}
 				} else {	// track type is control event
 					int	nVal = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
@@ -826,13 +871,134 @@ lblNextStep:
 
 __forceinline void CSequencer::AddNoteOffs(int nCBStart, int nCBEnd)
 {
+	int	nOffs = m_arrNoteOff.GetSize();	// cache note off count
+	while (nOffs > 0 && m_arrNoteOff[0].m_nTime < nCBEnd) {	// while more note offs within this callback period
+		CMidiEvent&	noteOff = m_arrNoteOff[0];	// reference the first note off in the array
+		BYTE	iChan = MIDI_CHAN(noteOff.m_dwEvent);	// get note off's channel index
+		if (noteOff.m_dwEvent & SEVT_INTERNAL) {	// if note off is an internal event
+			OnInternalControl(noteOff, iChan, nCBStart);	// handle internal event
+			nOffs = m_arrNoteOff.GetSize();	// assume note off array changed and update cached count
+		} else {	// ordinary note off
+			USHORT	nChannelBit = MAKE_CHANNEL_MASK(iChan);	// convert channel index to bitmask
+			if (m_nSustainMask & nChannelBit) {	// if channel's sustain is on
+				m_arrChannelState[iChan].m_arrSustainNote.FastAdd(noteOff);	// add note off to channel's sustain array
+			} else {	// channel's sustain is off
+				noteOff.m_nTime -= nCBStart;	// make time relative to this callback
+				ASSERT(noteOff.m_nTime >= 0);	// time must be positive
+				m_arrEvent.FastInsertSorted(noteOff);	// add note off to event array for output
+			}
+		}
+		m_arrNoteOff.FastRemoveAt(0);	// remove note off that was processed above
+		nOffs--;	// one less note off
+	}
+}
+
+void CSequencer::OnInternalControl(const CMidiEvent& noteOff, BYTE iChan, int nCBStart)
+{
+	USHORT	nChannelBit = MAKE_CHANNEL_MASK(iChan);	// convert channel index to bitmask
+	CChannelState&	cs = m_arrChannelState[iChan];	// reference channel's state for brevity
+	switch (MIDI_P1(noteOff.m_dwEvent)) {	// internal controller number determines action if any
+	case ICTL_SUSTAIN:	// if internal sustain controller
+		if (MIDI_P2(noteOff.m_dwEvent)) {	// if event data is non-zero
+			m_nSustainMask |= nChannelBit;	// enable channel's sustain
+		} else {	// event data is zero
+			if (m_nSustainMask & nChannelBit) {	// if channel's sustain is on
+				m_nSustainMask &= ~nChannelBit;	// disable channel's sustain
+				ReleaseHeldNotes(cs.m_arrSustainNote, noteOff.m_nTime, nCBStart);	// release sustain notes
+			}
+		}
+		break;
+	case ICTL_SOSTENUTO:	// if internal sostenuto controller
+		if (MIDI_P2(noteOff.m_dwEvent)) {	// if event data is non-zero
+			if (!(m_nSostenutoMask & nChannelBit)) {	// if channel's sostenuto is off
+				m_nSostenutoMask |= nChannelBit;	// enable channel's sostenuto
+				CullNoteOffs(cs.m_arrSostenutoNote, iChan, noteOff.m_nTime, nCBStart);	// cull sostenuto notes
+			}
+		} else {	// event data is zero
+			if (m_nSostenutoMask & nChannelBit) {	// if channel's sostenuto is on
+				m_nSostenutoMask &= ~nChannelBit;	// disable channel's sostenuto
+				if (m_nSustainMask & nChannelBit) {	// if channel's sustain is on
+					cs.m_arrSustainNote.Append(cs.m_arrSostenutoNote);	// add sostenuto notes to sustain array
+					cs.m_arrSostenutoNote.FastRemoveAll();	// empty sostenuto array
+				} else {	// channel's sustain is off
+					ReleaseHeldNotes(cs.m_arrSostenutoNote, noteOff.m_nTime, nCBStart);	// release sostenuto notes
+				}
+			}
+		}
+		break;
+	case ICTL_ALL_NOTES_OFF:	// if internal all notes off controller
+		if (MIDI_P2(noteOff.m_dwEvent)) {	// if event data is non-zero
+			AllNotesOff(iChan, noteOff.m_nTime, nCBStart);
+		}
+		break;
+	}
+}
+
+void CSequencer::ReleaseHeldNotes(CMidiEventArray& arrHeldNoteOff, int nTime, int nCBStart, bool bForceExpire)
+{
+	int	nHolds = arrHeldNoteOff.GetSize();
+	for (int iHeld = 0; iHeld < nHolds; iHeld++) {	// for each held note
+		CMidiEvent&	noteOff = arrHeldNoteOff[iHeld];
+		if (noteOff.m_nTime > nTime && !bForceExpire) {	// if note off is pending
+			m_arrNoteOff.FastInsertSorted(noteOff);	// restore to note off array
+		} else {	// note off is expired, or caller is forcing expiration
+			noteOff.m_nTime = nTime;	// set event time to caller's time
+			noteOff.m_nTime -= nCBStart;	// make time relative to this callback
+			ASSERT(noteOff.m_nTime >= 0);	// time must be positive
+			m_arrEvent.FastInsertSorted(noteOff);	// insert in output event array
+		}
+	}
+	arrHeldNoteOff.FastRemoveAll();	// empty held note array
+}
+
+void CSequencer::CullNoteOffs(CMidiEventArray& arrCulledNoteOff, BYTE iChan, int nTime, int nCBStart)
+{
+	arrCulledNoteOff.FastRemoveAll();
 	int	nOffs = m_arrNoteOff.GetSize();
-	while (nOffs > 0 && m_arrNoteOff[0].m_nTime < nCBEnd) {
-		m_arrNoteOff[0].m_nTime -= nCBStart;	// make time relative to this callback
-		ASSERT(m_arrNoteOff[0].m_nTime >= 0);	// time must be positive
-		m_arrEvent.FastInsertSorted(m_arrNoteOff[0]);
-		m_arrNoteOff.FastRemoveAt(0);
-		nOffs--;
+	CMidiEvent	evtFindStart(nTime - nCBStart, 0);	// start event search at caller's time
+	int	iEventStart = static_cast<int>(m_arrEvent.BinarySearchAbove(evtFindStart));
+	for (int iOff = nOffs - 1; iOff >= 0; iOff--) {	// reverse iterate for deletion stability
+		CMidiEvent&	noteOff = m_arrNoteOff[iOff];
+		if (MIDI_CHAN(noteOff.m_dwEvent) == iChan	// if event channel matches
+		&& !(noteOff.m_dwEvent & SEVT_INTERNAL)) {	// and not internal event
+			bool	bIsFutureNote = false;	// assume note was triggered before caller's time
+			if (iEventStart >= 0) {	// if event search starting index is valid
+				int	nEvents = m_arrEvent.GetSize();
+				int	nRelOffTime = noteOff.m_nTime - nCBStart;	// make note off's time callback-relative
+				for (int iEvent = iEventStart; iEvent < nEvents; iEvent++) {	// for each event
+					const CMidiEvent&	evt = m_arrEvent[iEvent];
+					if (evt.m_nTime >= nRelOffTime) {	// if event time equals or exceeds note off's
+						break;	// any subsequent events are irrelevant
+					}
+					// if event is a note on message, and its channel and note number match note off's
+					if (MIDI_SHORT_MSG_CMD(evt.m_dwEvent) == NOTE_ON && (evt.m_dwEvent & MIDI_P2_MASK)
+					&& (evt.m_dwEvent & ~MIDI_P2_MASK) == noteOff.m_dwEvent) {
+						bIsFutureNote = true;	// note was triggered after caller's time
+						break;	// note off belongs to a future note and must remain untouched
+					}
+				}
+			}
+			if (!bIsFutureNote) {	// if note was triggered before caller's time, it's fair game
+				noteOff.m_nTime = nTime;	// set event time to caller's time
+				noteOff.m_nTime -= nCBStart;	// make time relative to this callback
+				ASSERT(noteOff.m_nTime >= 0);	// time must be positive
+				arrCulledNoteOff.FastAdd(noteOff);	// first add note off to destination array
+				m_arrNoteOff.FastRemoveAt(iOff);	// then remove it; it's a reference, so order matters
+			}
+		}
+	}
+}
+
+void CSequencer::AllNotesOff(BYTE iChan, int nTime, int nCBStart)
+{
+	CChannelState&	cs = m_arrChannelState[iChan];	// reference channel's state
+	ReleaseHeldNotes(cs.m_arrSustainNote, nTime, nCBStart, true);	// force expiration
+	ReleaseHeldNotes(cs.m_arrSostenutoNote, nTime, nCBStart, true);	// force expiration
+	CMidiEventArray	arrNoteOff;
+	CullNoteOffs(arrNoteOff, iChan, nTime, nCBStart);
+	int	nOffs = arrNoteOff.GetSize();
+	for (int iOff = 0; iOff < nOffs; iOff++) {	// for each culled note off
+		m_arrEvent.InsertSorted(arrNoteOff[iOff]);	// add note off to output event array
 	}
 }
 
@@ -989,9 +1155,18 @@ void CSequencer::FixNoteOverlaps()
 {
 	int	nEvents = m_arrEvent.GetSize();
 	int	iEvent = 0;
-	UINT	nNoteOverlapMethods = m_nNoteOverlapMethods;	// cache per-channel bitmask
+	USHORT	nNoteOverlapMethods = m_nNoteOverlapMethods;	// cache per-channel bitmask
 	while (iEvent < nEvents) {	// for each event
 		DWORD	dwEvent = m_arrEvent[iEvent].m_dwEvent;
+		if (dwEvent & SEVT_INTERNAL) {	// if internal event
+			if (MIDI_P1(dwEvent) == ICTL_NOTE_OVERLAP) {	// if internal note overlap controller
+				SetNoteOverlapMethod(MIDI_CHAN(dwEvent), MIDI_P2(dwEvent) != 0);
+				nNoteOverlapMethods = m_nNoteOverlapMethods;	// update cached bitmask
+			}
+			m_arrEvent.FastRemoveAt(iEvent);	// delete internal event
+			nEvents--;	// one less event
+			continue;	// proceed to next event if any
+		}
 		ASSERT(MIDI_IS_SHORT_MSG(dwEvent));	// short MIDI messages only
 		if (MIDI_CMD(dwEvent) == NOTE_ON) {	// if note on event
 			int	iChan = MIDI_CHAN(dwEvent);
@@ -1009,14 +1184,14 @@ void CSequencer::FixNoteOverlaps()
 							goto lblFixNoteOverlaps;	// skip incrementing index to account for deletion
 						}
 					}
-					UINT	nEvtChanMask = 1 << MIDI_CHAN(m_arrEvent[iEvent].m_dwEvent);
+					USHORT	nEvtChanMask = MAKE_CHANNEL_MASK(iChan);
 					if (nNoteOverlapMethods & nEvtChanMask) {	// if this channel wants note overlaps merged
 						m_arrEvent.FastRemoveAt(iEvent);	// delete note on event
 						nEvents--;	// one less event
 						goto lblFixNoteOverlaps;	// skip incrementing index to account for deletion
 					}
 					CMidiEvent	evt(m_arrEvent[iEvent]);
-					evt.m_dwEvent &= ~0xff0000;	// convert to note off (zero note's velocity)
+					evt.m_dwEvent &= ~MIDI_P2_MASK;	// convert to note off (zero note's velocity)
 					m_arrEvent.FastInsertAt(iEvent, evt);	// insert note off event
 					iEvent++;	// extra index increment to account for insertion
 					nEvents++;	// one more event

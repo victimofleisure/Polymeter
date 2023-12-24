@@ -17,6 +17,7 @@
 		07		08jun20	add offset modulation
 		08		16nov20	add tick dependencies
 		09		19feb22	add conditional to exclude track name
+		10		19dec23	add internal track type
 
 */
 
@@ -65,6 +66,7 @@ TRACKTYPEDEF(CHAN_AFT)
 TRACKTYPEDEF(WHEEL)
 TRACKTYPEDEF(TEMPO)
 TRACKTYPEDEF(MODULATOR)
+TRACKTYPEDEF(INTERNAL)
 
 #undef TRACKTYPEDEF
 #endif	// TRACKTYPEDEF
