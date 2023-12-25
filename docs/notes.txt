@@ -4263,3 +4263,23 @@ PhaseBar.cpp(909): warning C4701: potentially uninitialized local variable 'nSel
 PhaseBar.cpp(913): warning C4701: potentially uninitialized local variable 'nConvergenceSize' used
 Track.cpp(1300,61): warning C4456: declaration of 'mod' hides previous local declaration
 
+12/24/23 binary search that returns the exactly matching item or the nearest item above the target value
+
+W64INT BinarySearchAboveEqual(const CArrayEx_TYPE& val) const 
+{
+	W64INT iStart = 0;
+	W64INT iEnd = m_nSize - 1;
+	W64INT iResult = -1;
+	while (iStart <= iEnd) {
+		W64INT iMid = (iStart + iEnd) / 2;
+		if (val == GetAt(iMid))
+			return iMid;
+		else if (GetAt(iMid) < val)
+			iStart = iMid + 1;
+		else {
+			iResult = iMid;
+			iEnd = iMid - 1;
+		}
+	}
+	return iResult;
+}

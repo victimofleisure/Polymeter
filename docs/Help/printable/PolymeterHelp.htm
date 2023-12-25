@@ -28,6 +28,7 @@
 <dd><a href="#Controller_tracks">Controller tracks</a>
 <dd><a href="#Tempo_tracks">Tempo tracks</a>
 <dd><a href="#Modulator_tracks">Modulator tracks</a>
+<dd><a href="#Internal_tracks">Internal tracks</a>
 <dt>Modulation
 <dd><a href="#Mute_modulation">Mute modulation</a>
 <dd><a href="#Note_modulation">Note modulation</a>
@@ -376,6 +377,7 @@
 <tr><td><a href="#Controller_tracks">Wheel</a></td><td>Pitch bend message</td><td>Signed pitch bend value (most significant byte only)</td></tr>
 <tr><td><a href="#Tempo_tracks">Tempo</a></td><td>Tempo change message</td><td>Signed fractional tempo change</td></tr>
 <tr><td><a href="#Modulator_tracks">Modulator</a></td><td>Nothing</td><td>Depends on the <a href="#Modulations">modulation</a> type</td></tr>
+<tr><td><a href="#Internal_tracks">Internal</a></td><td>Depends on controller number</td><td>Internal controller value</td></tr>
 </table>
 
 <a name="Steps"><h2>Steps</h2></a>
@@ -473,7 +475,7 @@
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Target track type</th><th>Supported modulation types</th></tr>
 <tr><td>Note</td><td>All except Tempo</td></tr>
-<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel</td><td>Mute, Position, Velocity, Offset</td></tr>
+<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel, Internal</td><td>Mute, Position, Velocity, Offset</td></tr>
 <tr><td>Tempo</td><td>Mute, Position, Tempo</td></tr>
 <tr><td>Modulator</td><td>Mute, Position, Offset; also Note but only if target is a Scale or Chord modulator</td></tr>
 </table>
@@ -739,6 +741,28 @@
 
 <p>It's recommended to give modulator tracks a small negative time <a href="#Track_Offset">offset</a>, so that they're slightly ahead of their targets. This avoids races and track order dependencies.
 
+<a name="Internal_tracks"><h2>Internal tracks</h2></a>
+
+<p>An internal track alters the sequencer's behavior. Internal tracks are analogous to <a href="#Controller_tracks">controller tracks</a>, but instead of transmitting control change messages to the <a href="#Output_Device">output device</a>, they're handled within the sequencer.
+
+<p>An internal track accesses an <a href="#Internal_controllers">internal controller</a>. Up to 128 internal controllers are possible, though relatively few are currently implemented. Which internal controller is accessed depends on the <em>control number</em>, which is specified via the track's <a href="#Track_Note">note</a> property. Some of the internal controllers <a href="#Internal_versus_external_controllers">emulate</a> existing MIDI controllers, and in such cases the same control number is used. For example, one of the internal controllers implements sustain, and like the MIDI sustain controller, it uses control number 64. The supported internal controllers are shown in the table below.
+
+<p>Internal tracks are <em>per-channel</em>, meaning that each internal track operates on a single MIDI channel, selected via the track's <a href="#Track_Channel">channel</a> property. To operate on multiple channels, create multiple internal tracks, one for each of the desired channels.
+
+<a name="Internal_controllers"><h3>Internal controllers</h3></a>
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Control Number</th><th>Name</th><th>Function</th></tr>
+<tr><td>63</td><td>Note Overlap</td><td>Sets the channel's method of correcting <a href="#Note_Overlap">note overlaps</a>. Track steps are interpreted as unsigned values. A value of zero selects Split, and any other value selects Merge. This controller overrides the Overlaps setting in the <a href="#Channels_bar">Channels bar</a>. This controller only works if the note overlap <a href="#Master_properties">master property</a> is set to Prevent, otherwise it has no effect.</td></tr>
+<tr><td>64</td><td>Sustain</td><td>Sets the channel's sustain switch. Track steps are interpreted as unsigned values. A value of zero turns sustain off, and any other value turns it on. While sustain is on, all active notes on the channel are sustained, regardless of their durations. This applies both to notes that are already active when sustain is switched on, and to notes that are triggered while sustain is on. When sustain is switched off, notes with expired durations stop immediately, but notes with duration remaining continue until their durations expire.</td></tr>
+<tr><td>66</td><td>Sostenuto</td><td>Sets the channel's sostenuto switch. Track steps are interpreted as unsigned values. A value of zero turns sostenuto off, and any other value turns it on. Sostenuto is similar to sustain, except that it only sustains notes that are already active when sostenuto is switched on. Notes that are triggered while sostenuto is on are <em>not</em> sustained. Sostenuto is typically used to hold a note or chord, and then play melodies over the held note or chord. When sostenuto is switched off, notes with expired durations stop immediately, but notes with duration remaining continue until their durations expire. Sostenuto can be combined with sustain.</td></tr>
+<tr><td>123</td><td>All Notes Off</td><td>Turns off all notes on the channel. Track steps are interpreted as unsigned values. Transitioning from zero to any non-zero value stops all notes immediately, regardless of their durations. Notes that are being held by the sustain or sostenuto internal controllers are also stopped immediately.</td></tr>
+</table>
+
+<a name="Internal_versus_external_controllers"><h3>Internal versus external controllers</h3></a>
+
+<p>Why are internal sustain and sostenuto controllers useful? One reason is that the output device may not implement these controllers correctly or at all. Another reason is that the internal controllers modify the actual note durations, both during <a href="#Play">playback</a> and in the <a href="#Export">MIDI export</a>. Because internal sustain and sostenuto are applied to the note durations, the exported MIDI file will play as intended even if the playback device doesn't support these controllers. The <a href="#Piano_bar">Piano bar</a> also shows the actual note durations resulting from internal sustain and sostenuto, which it doesn't do for the corresponding external controllers.
+
 
 <h1>Modulation</h1>
 
@@ -979,6 +1003,7 @@
 <tr><td>Wheel</td><td>Unused.</td></tr>
 <tr><td>Tempo</td><td>Unused.</td></tr>
 <tr><td>Modulator</td><td>Unused.</td></tr>
+<tr><td>Internal</td><td>Which internal controller is accessed.</td></tr>
 </table>
 
 <p>For <a href="#Note_tracks">note tracks</a>, the note property is normally displayed as a MIDI note name instead of a number (for example C4 instead of 60), however this behavior can be disabled by setting the <a href="#Show_Note_Names">Show Note Names</a> option to false, and the note value can be entered numerically regardless of this option. For channel 10 only, the note property is normally displayed as a General MIDI drum name, using a drop list instead of an edit box, but this can be disabled by setting <a href="#Show_General_MIDI_Names">Show General MIDI Names</a> to false.
@@ -1698,6 +1723,7 @@
 <tr><td><a href="#Record">Record</a></td><td>N/A</td><td>N/A</td><td>Non-zero to record</td></tr>
 <tr><td><a href="#Loop">Loop</a></td><td>N/A</td><td>N/A</td><td>Non-zero to loop</td></tr>
 <tr><td><a href="#Tempo">Tempo</a></td><td>N/A</td><td>N/A</td><td>Fractional multiplier; see <a href="#Tempo_mapping">tempo mapping</a></td></tr>
+<tr><td><a href="#Note_Overlap">Overlaps</a></td><td>N/A</td><td>N/A</td><td>Sets output channel's note overlap method, to Merge if non-zero, otherwise to Split</td></tr>
 </table>
 
 <a name="Learning_mappings"><h3>Learning mappings</h3></a>
@@ -1922,7 +1948,7 @@
 <tr><th>Merge</th><td>Eliminates all but the first note. The overlapping notes are merged into a single note that spans all of them, and gets its velocity from the first note.</td></tr>
 </table>
 
-<p>Selecting a note overlap method is only meaningful if overlap correction is enabled, by setting the Note Overlap <a href="#Master_properties">master property</a> to <b>Prevent</b>. If Note Overlap is set to <b>Allow</b>, overlap correction is disabled and Split versus Merge is irrelevant. The Note Overlap master property enables overlap correction <em>as a whole</em>, whereas the Overlaps column in the Channels bar determines which correction method (Split or Merge) is used for each channel.
+<p>Selecting a note overlap method is only meaningful if overlap correction is enabled, by setting the Note Overlap <a href="#Master_properties">master property</a> to <b>Prevent</b>. If Note Overlap is set to <b>Allow</b>, overlap correction is disabled and Split versus Merge is irrelevant. The Note Overlap master property enables overlap correction <em>as a whole</em>, whereas the Overlaps column in the Channels bar determines which correction method (Split or Merge) is used for each channel. The correction method can also be controlled by an <a href="#Internal_tracks">internal track</a>, or remotely via MIDI <a href="#Mappings">mapping</a>.
 
 <p>Merge has uses beyond overlap correction. It can also be used to concatenate adjacent instances of the same note, so that they become one long note. To do this, you must force the adjacent notes to overlap, typically by slightly increasing their durations, using the <a href="#Track_Duration">track duration</a> property or via <a href="#Duration_modulation">duration modulation</a>.
 

@@ -458,6 +458,12 @@ id	open	close	type	description	rev	user
 570	09/18/23	09/20/23	done	linear fill command fails if track has only one step	1.0.13.004	
 571	11/27/23	11/27/23	done	MIDI export doesn't specify time signature or key signature	1.0.13.005	
 572	12/13/23	12/13/23	done	if changing track length removes step selection, attempting to delete track gives invalid step selection error	1.0.13.006	
+506	02/09/22	12/19/23	done	internal sustain controller that postpones a channel's note offs while active, emulates MIDI controller 64	1.0.14.000	
+573	12/18/23	12/19/23	done	internal all notes off controller, emulates MIDI controller 123	1.0.14.000	
+574	12/18/23	12/19/23	done	new track type (internal) for controlling sequencer behaviors such as sustain and all notes off	1.0.14.000	
+575	12/18/23	12/19/23	done	internal controller for per-channel note overlap method (Split versus Merge); MIDI controller 63	1.0.14.000	
+576	12/23/23	12/23/23	done	add mapping target for note overlap method	1.0.14.000	
+576	12/24/23	12/24/23	done	internal sostenuto controller; like sustain, but only holds notes that were on when controller was activated	1.0.14.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -526,7 +532,6 @@ id	open	close	type	description	rev	user
 494	01/18/22		hold	insert modulators command; create appropriately initialized modulator track(s) of specified type		
 503	02/01/22		hold	indicate MIDI input activity in the status bar; per-channel indicators would be helpful too		
 507	02/09/22		hold	sequence modulation; similar to index modulation, but returns next step regardless of song position		
-506	02/09/22		hold	add Hold track type; postpone a channel's note offs until Hold state is zero, like damper pedal controller		
 510	02/13/22		hold	in Wine, Phase bar doesn't work at all, likely due to its use of Direct2D		Wine
 511	02/13/22		hold	in Wine, HTML help's Contents and Index tabs are empty, but Search works and all topics are present		Wine
 512	02/13/22		hold	in Wine, MIDI devices added while app is running don't appear until the app is exited and restarted		Wine

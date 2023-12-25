@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Internal tracks</title>
+<meta name="author" content="Chris Korda">
+<link rel=stylesheet href="../content.css" type="text/css">
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Internal tracks</h3>
+
+<p>An internal track alters the sequencer's behavior. Internal tracks are analogous to <a href="../Tracks/Controller_tracks.htm">controller tracks</a>, but instead of transmitting control change messages to the <a href="../Options/MIDI/Output_Device.htm">output device</a>, they're handled within the sequencer.
+
+<p>An internal track accesses an <a href="../Tracks/Internal_tracks.htm#Internal_controllers">internal controller</a>. Up to 128 internal controllers are possible, though relatively few are currently implemented. Which internal controller is accessed depends on the <em>control number</em>, which is specified via the track's <a href="../Views/Track_View/Track_Grid.htm#Track_Note">note</a> property. Some of the internal controllers <a href="../Tracks/Internal_tracks.htm#Internal_versus_external_controllers">emulate</a> existing MIDI controllers, and in such cases the same control number is used. For example, one of the internal controllers implements sustain, and like the MIDI sustain controller, it uses control number 64. The supported internal controllers are shown in the table below.
+
+<p>Internal tracks are <em>per-channel</em>, meaning that each internal track operates on a single MIDI channel, selected via the track's <a href="../Views/Track_View/Track_Grid.htm#Track_Channel">channel</a> property. To operate on multiple channels, create multiple internal tracks, one for each of the desired channels.
+
+<a name="Internal_controllers"><p><b>Internal controllers</b></a>
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Control Number</th><th>Name</th><th>Function</th></tr>
+<tr><td>63</td><td>Note Overlap</td><td>Sets the channel's method of correcting <a href="../Properties/Note_Overlap.htm">note overlaps</a>. Track steps are interpreted as unsigned values. A value of zero selects Split, and any other value selects Merge. This controller overrides the Overlaps setting in the <a href="../Docking_Windows/Channels_bar.htm">Channels bar</a>. This controller only works if the note overlap <a href="../Docking_Windows/Properties_bar.htm#Master_properties">master property</a> is set to Prevent, otherwise it has no effect.</td></tr>
+<tr><td>64</td><td>Sustain</td><td>Sets the channel's sustain switch. Track steps are interpreted as unsigned values. A value of zero turns sustain off, and any other value turns it on. While sustain is on, all active notes on the channel are sustained, regardless of their durations. This applies both to notes that are already active when sustain is switched on, and to notes that are triggered while sustain is on. When sustain is switched off, notes with expired durations stop immediately, but notes with duration remaining continue until their durations expire.</td></tr>
+<tr><td>66</td><td>Sostenuto</td><td>Sets the channel's sostenuto switch. Track steps are interpreted as unsigned values. A value of zero turns sostenuto off, and any other value turns it on. Sostenuto is similar to sustain, except that it only sustains notes that are already active when sostenuto is switched on. Notes that are triggered while sostenuto is on are <em>not</em> sustained. Sostenuto is typically used to hold a note or chord, and then play melodies over the held note or chord. When sostenuto is switched off, notes with expired durations stop immediately, but notes with duration remaining continue until their durations expire. Sostenuto can be combined with sustain.</td></tr>
+<tr><td>123</td><td>All Notes Off</td><td>Turns off all notes on the channel. Track steps are interpreted as unsigned values. Transitioning from zero to any non-zero value stops all notes immediately, regardless of their durations. Notes that are being held by the sustain or sostenuto internal controllers are also stopped immediately.</td></tr>
+</table>
+
+<a name="Internal_versus_external_controllers"><p><b>Internal versus external controllers</b></a>
+<p>Why are internal sustain and sostenuto controllers useful? One reason is that the output device may not implement these controllers correctly or at all. Another reason is that the internal controllers modify the actual note durations, both during <a href="../Menus/Transport/Play.htm">playback</a> and in the <a href="../Menus/File/Export.htm">MIDI export</a>. Because internal sustain and sostenuto are applied to the note durations, the exported MIDI file will play as intended even if the playback device doesn't support these controllers. The <a href="../Docking_Windows/Piano_bar.htm">Piano bar</a> also shows the actual note durations resulting from internal sustain and sostenuto, which it doesn't do for the corresponding external controllers.
+
+
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>
