@@ -258,6 +258,18 @@ inline void CSequencer::ResetCachedParameters()
 	memset(&m_MidiCache, 0xff, sizeof(m_MidiCache));	// MIDI parameters are 7-bit so 0xff is unused
 	if (m_bPreventNoteOverlap)	// if preventing note overlaps
 		ZeroMemory(m_arrNoteRef, sizeof(m_arrNoteRef));	// zero note reference counts
+	ResetChannelStates();
+}
+
+inline void CSequencer::ResetChannelStates()
+{
+	m_nSustainMask = 0;
+	m_nSostenutoMask = 0;
+	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each channel
+		CChannelState&	cs = m_arrChannelState[iChan];	// reference channel's state
+		cs.m_arrSustainNote.FastRemoveAll();	// empty sustain note array
+		cs.m_arrSostenutoNote.FastRemoveAll();	// empty sostenuto note array
+	}
 }
 
 bool CSequencer::IsValidMidiSongPosition(int nSongPos) const
@@ -287,17 +299,6 @@ DWORD CSequencer::GetMidiSongPositionMsg(int nMidiSongPos) const
 {
 	// byte 0: command, byte 1: position's low 7 bits, byte 2: position's high 7 bits
 	return SONG_POSITION | ((nMidiSongPos & 0x7f) << 8) | ((nMidiSongPos >> 7) << 16);
-}
-
-inline void CSequencer::ResetChannelStates()
-{
-	m_nSustainMask = 0;
-	m_nSostenutoMask = 0;
-	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each channel
-		CChannelState&	cs = m_arrChannelState[iChan];	// reference channel's state
-		cs.m_arrSustainNote.FastRemoveAll();	// empty sustain note array
-		cs.m_arrSostenutoNote.FastRemoveAll();	// empty sostenuto note array
-	}
 }
 
 bool CSequencer::Play(bool bEnable, bool bRecord)
@@ -330,7 +331,6 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 		m_arrEvent.FastRemoveAll();
 		m_arrNoteOff.SetSize(DEF_BUFFER_SIZE);	// preallocate note off array
 		m_arrNoteOff.FastRemoveAll();
-		ResetChannelStates();
 		if (m_bIsSongMode)
 			ChaseDubs(m_nStartPos, true);
 		UINT	uDevice = m_iOutputDevice;
@@ -979,9 +979,6 @@ void CSequencer::CullNoteOffs(CMidiEventArray& arrCulledNoteOff, BYTE iChan, int
 				}
 			}
 			if (!bIsFutureNote) {	// if note was triggered before caller's time, it's fair game
-				noteOff.m_nTime = nTime;	// set event time to caller's time
-				noteOff.m_nTime -= nCBStart;	// make time relative to this callback
-				ASSERT(noteOff.m_nTime >= 0);	// time must be positive
 				arrCulledNoteOff.FastAdd(noteOff);	// first add note off to destination array
 				m_arrNoteOff.FastRemoveAt(iOff);	// then remove it; it's a reference, so order matters
 			}
@@ -996,10 +993,7 @@ void CSequencer::AllNotesOff(BYTE iChan, int nTime, int nCBStart)
 	ReleaseHeldNotes(cs.m_arrSostenutoNote, nTime, nCBStart, true);	// force expiration
 	CMidiEventArray	arrNoteOff;
 	CullNoteOffs(arrNoteOff, iChan, nTime, nCBStart);
-	int	nOffs = arrNoteOff.GetSize();
-	for (int iOff = 0; iOff < nOffs; iOff++) {	// for each culled note off
-		m_arrEvent.InsertSorted(arrNoteOff[iOff]);	// add note off to output event array
-	}
+	ReleaseHeldNotes(arrNoteOff, nTime, nCBStart, true);	// force expiration
 }
 
 __forceinline bool CSequencer::IsRecordedEventPlayback() const

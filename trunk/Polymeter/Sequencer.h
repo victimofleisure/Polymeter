@@ -174,12 +174,12 @@ protected:
 		MOD_MAX_RECURSIONS = 32,	// maximum number of modulation recursions
 		OCTAVE = 12,				// size of an octave in semitones
 	};
-	enum {	// sequencer events
+	enum {	// sequencer event types
 		SEVT_NOP = MEVT_NOP << 24,	// pads buffer to callback duration
 		SEVT_TEMPO = MEVT_TEMPO << 24,	// new tempo in microseconds per quarter note
 		SEVT_INTERNAL = 0x40 << 24,	// internal controller, enumerated below
 	};
-	enum {	// internal controllers
+	enum {	// internal controller numbers
 		ICTL_NOTE_OVERLAP = 63,		// note overlap controller
 		ICTL_SUSTAIN = 64,			// sustain controller
 		ICTL_SOSTENUTO = 66,		// sostenuto controller
