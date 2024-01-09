@@ -4283,3 +4283,57 @@ W64INT BinarySearchAboveEqual(const CArrayEx_TYPE& val) const
 	}
 	return iResult;
 }
+
+1/9/24 time signature with variable denominator (i.e. other than four)
+
+We assume values are restricted to small positive integer powers of two. 
+The goal is to allow time signatures such as 3/8 and 5/16.
+
+The most important changes are in CSequencer::ConvertPositionToBeat and 
+CSequencer::ConvertBeatToPosition. In both methods, replace all instances
+of m_nTimeDiv with m_nBeatDiv, which is m_nTimeDiv scaled as necessary.
+
+The denominator can be stored as a binary exponent of two, as in:
+0 == whole, 1 == half, 2 == quarter, 3 == eighth, 4 == sixteenth, etc.
+This inherently restricts the denominator to powers of two.
+Given the above scheme, computing beat divisions is straightforward:
+m_nBeatDiv = m_nTimeDiv * 4 >> m_nMeterDenominator;
+
+The preceding handles all tick / MBT conversions, excepting the step and
+song grid rulers. The rulers are a harder problem. The following edits
+are required for both step and song views. Instead of this:
+
+double	fBeatWidth = m_pS???View->GetBeatWidth() * m_pS???View->GetZoom();
+
+substitute this (??? indicates specialization for Step or Song):
+
+int	nBeatWidth = (m_pS???View->GetBeatWidth() * 4) >> GetDocument()->GetMeterDenominator();
+double	fBeatWidth = nBeatWidth * m_pS???View->GetZoom();
+
+and in UpdateRulerNumbers, instead of:
+
+m_wndRuler.SetMidiParams(pDoc->GetTimeDivisionTicks(), pDoc->m_nMeter);
+
+substitute this:
+
+m_wndRuler.SetMidiParams(pDoc->m_Seq.GetBeatDivision(), pDoc->m_nMeter);
+
+This is the minimum for correct behavior. The remaining issue is that
+the ruler doesn't necessarily align major ticks with the denominator. 
+So for example in 3/8 time, the major ticks will be:
+
+1:1  1:3  2:2  3:1  3:3  4:2  5:1  etc.
+
+This is not wrong, but it's certainly not optimal. OTH the rulers already
+display unexpected major tick alignment even without variable denominator.
+Variable denominator just makes the preexisting issue more obvious.
+
+Also, the MIDI export must use the meter denominator in its time signature.
+Replace this:
+
+CMidiFile::TIME_SIGNATURE	sigTime = {static_cast<BYTE>(m_nMeter), 2, 0, 8};	// denominator is quarter note
+
+with this:
+
+CMidiFile::TIME_SIGNATURE	sigTime = {static_cast<BYTE>(m_nMeter), static_cast<BYTE>(m_nMeterDenominator), 0, 8};
+
