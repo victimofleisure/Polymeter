@@ -77,7 +77,7 @@ public:
 	bool	m_bIsLooping;			// true if looping
 	USHORT	m_nNoteOverlapMethods;	// for each MIDI channel, non-zero bit if merging overlapped notes
 	USHORT	m_nSustainMask;			// for each MIDI channel, non-zero bit if sustain is on
-	USHORT	m_nSostenutoMask;		// for each MIDI channel, non-zero bit if sostento is on
+	USHORT	m_nSostenutoMask;		// for each MIDI channel, non-zero bit if sostenuto is on
 };
 
 class CSequencer : public CSeqTrackArray, protected CSequencerBase {
