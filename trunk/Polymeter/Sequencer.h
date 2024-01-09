@@ -32,6 +32,7 @@
 		22		20oct22	refactor control event helper for offset modulation
 		23		27nov23	add optional key signature parameter to Export
 		24		19dec23	add internal track type and controllers
+		25		09jan24	add base class to streamline reader init
 
 */
 
@@ -41,7 +42,45 @@
 #include "SeqTrackArray.h"
 #include "Mapping.h"
 
-class CSequencer : public CSeqTrackArray {
+class CSequencerBase {
+public:
+	// declare simple data members here so CSequencerReader can copy them all at once
+	double	m_fTempo;				// tempo, in beats per minute
+	double	m_fTempoScaling;		// tempo scaling factor
+	double	m_fLatencySecs;			// desired playback latency in fractional seconds
+	int		m_nAltTempo;			// altered tempo, in microseconds per quarter note
+	int		m_iOutputDevice;		// index of output MIDI device
+	int		m_nTimeDiv;				// time division, in ticks per quarter note
+	int		m_nMeter;				// number of beats in a measure
+	int		m_nCBTime;				// time at start of next callback, in ticks
+	int		m_nCBLen;				// length of a callback period, in ticks
+	int		m_nLatency;				// desired latency of playback in milliseconds
+	int		m_nBufferSize;			// size of event buffers, in events
+	int		m_iBuffer;				// index of most recently queued buffer
+	int		m_nStartPos;			// starting position of playback, in ticks
+	int		m_nPosOffset;			// total position correction, in ticks
+	int		m_nRecursions;			// current depth of recursive modulation
+	int		m_iRecordEvent;			// index of next recorded event to output
+	int		m_nRecordOffset;		// offset added to recorded event times during playback, in ticks
+	int		m_nMidiClockPeriod;		// number of ticks per MIDI clock (timebase / 24)
+	int		m_nMidiClockTimer;		// number of ticks remaining until next MIDI clock
+	bool	m_bIsPlaying;			// true if playing
+	bool	m_bIsPaused;			// true if paused
+	bool	m_bIsStopping;			// true if stopping
+	bool	m_bIsRecording;			// true if recording
+	bool	m_bIsTempoChange;		// true if tempo changed
+	bool	m_bIsPositionChange;	// true if position changed
+	bool	m_bIsSongMode;			// true if applying track dubs
+	bool	m_bIsOutputCapture;		// true if capturing output events
+	bool	m_bPreventNoteOverlap;	// true if preventing note overlaps
+	bool	m_bIsSendingMidiClock;	// true if sending MIDI clock
+	bool	m_bIsLooping;			// true if looping
+	USHORT	m_nNoteOverlapMethods;	// for each MIDI channel, non-zero bit if merging overlapped notes
+	USHORT	m_nSustainMask;			// for each MIDI channel, non-zero bit if sustain is on
+	USHORT	m_nSostenutoMask;		// for each MIDI channel, non-zero bit if sostento is on
+};
+
+class CSequencer : public CSeqTrackArray, protected CSequencerBase {
 public:
 // Construction
 	CSequencer();
@@ -189,37 +228,7 @@ protected:
 // Member data
 	HMIDISTRM	m_hStrm;			// MIDI stream handle
 	MIDIHDR	m_arrMsgHdr[BUFFERS];	// array of MIDI message headers
-	double	m_fTempo;				// tempo, in beats per minute
-	double	m_fTempoScaling;		// tempo scaling factor
-	int		m_nAltTempo;			// altered tempo, in microseconds per quarter note
-	int		m_iOutputDevice;		// index of output MIDI device
-	int		m_nTimeDiv;				// time division, in ticks per quarter note
-	int		m_nMeter;				// number of beats in a measure
-	int		m_nCBTime;				// time at start of next callback, in ticks
-	int		m_nCBLen;				// length of a callback period, in ticks
-	int		m_nLatency;				// desired latency of playback in milliseconds
-	int		m_nBufferSize;			// size of event buffers, in events
-	int		m_iBuffer;				// index of most recently queued buffer
-	int		m_nStartPos;			// starting position of playback, in ticks
-	int		m_nPosOffset;			// total position correction, in ticks
-	int		m_nRecursions;			// current depth of recursive modulation
-	int		m_iRecordEvent;			// index of next recorded event to output
-	int		m_nRecordOffset;		// offset added to recorded event times during playback, in ticks
-	int		m_nMidiClockPeriod;		// number of ticks per MIDI clock (timebase / 24)
-	int		m_nMidiClockTimer;		// number of ticks remaining until next MIDI clock
-	bool	m_bIsPlaying;			// true if playing
-	bool	m_bIsPaused;			// true if paused
-	bool	m_bIsStopping;			// true if stopping
-	bool	m_bIsRecording;			// true if recording
-	bool	m_bIsTempoChange;		// true if tempo changed
-	bool	m_bIsPositionChange;	// true if position changed
-	bool	m_bIsSongMode;			// true if applying track dubs
-	bool	m_bIsOutputCapture;		// true if capturing output events
-	bool	m_bPreventNoteOverlap;	// true if preventing note overlaps
-	bool	m_bIsSendingMidiClock;	// true if sending MIDI clock
-	bool	m_bIsLooping;			// true if looping
 	STATS	m_stats;				// timing statistics
-	double	m_fLatencySecs;			// desired playback latency in fractional seconds
 	CMidiEventStream	m_arrMidiEvent[BUFFERS];	// array of MIDI event stream buffers
 	CMidiEventArray	m_arrEvent;			// array of track events
 	CMidiEventArray	m_arrNoteOff;		// array of pending note off events
@@ -234,9 +243,6 @@ protected:
 	CIntArrayEx	m_arrVoicing;		// array of voices to drop an octave, as one-origin indices from top
 	CDWordArrayEx	m_arrMappedEvent;	// array of translated MIDI events from mapping
 	CLoopRange	m_rngLoop;			// loop range in ticks
-	USHORT	m_nNoteOverlapMethods;	// for each MIDI channel, non-zero bit if merging overlapped notes
-	USHORT	m_nSustainMask;			// for each MIDI channel, non-zero bit if sustain is on
-	USHORT	m_nSostenutoMask;		// for each MIDI channel, non-zero bit if sostento is on
 	CChannelStateArray	m_arrChannelState;	// state information for each MIDI channel
 	static	bool	m_bExportTimeKeySigs;	// true if exporting time and key signatures
 

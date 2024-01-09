@@ -56,6 +56,7 @@
 		46		12nov22	flip sign in recursive offset modulation case
 		47		27nov23	include time signature and key signature in Export
 		48		19dec23	add internal track type and controllers
+		49		09jan24	add base class to streamline reader init
 
 */
 
@@ -74,10 +75,9 @@ bool CSequencer::m_bExportTimeKeySigs = true;
 
 CSequencer::CSequencer()
 {
-	m_hStrm = 0;
-	ZeroMemory(&m_arrMsgHdr, sizeof(m_arrMsgHdr));
 	m_fTempo = SEQ_INIT_TEMPO;
 	m_fTempoScaling = 1;
+	m_fLatencySecs = 0;
 	m_nAltTempo = 0;
 	m_iOutputDevice = 0;
 	m_nTimeDiv = SEQ_INIT_TIME_DIV;
@@ -105,12 +105,13 @@ CSequencer::CSequencer()
 	m_bPreventNoteOverlap = false;
 	m_bIsSendingMidiClock = false;
 	m_bIsLooping = false;
-	ZeroMemory(&m_stats, sizeof(m_stats));
-	m_fLatencySecs = 0;
-	m_rngLoop = CLoopRange(0, 0);
 	m_nNoteOverlapMethods = 0;
 	m_nSustainMask = 0;
 	m_nSostenutoMask = 0;
+	m_hStrm = 0;
+	ZeroMemory(&m_arrMsgHdr, sizeof(m_arrMsgHdr));
+	ZeroMemory(&m_stats, sizeof(m_stats));
+	m_rngLoop = CLoopRange(0, 0);
 }
 
 CSequencer::~CSequencer()
@@ -1342,17 +1343,12 @@ CSequencerReader::CSequencerReader(CSequencer& seq)
 	// our instance is destroyed before sequencer, and never modifies track array
 	Attach(seq.GetData(), seq.GetSize());
 	GetMutes(m_arrTrackMute);	// export does modify track mutes, so save them
-	// copy any variables used by export
-	m_fTempo = seq.m_fTempo;
-	m_nTimeDiv = seq.m_nTimeDiv;
-	m_nMeter = seq.m_nMeter;
-	m_bIsSongMode = seq.m_bIsSongMode;
-	m_nLatency = seq.m_nLatency;
+	CSequencerBase&	seqBaseData = *this;	// downcast to base class
+	seqBaseData = seq;	// copy simple data members all at once
+	// copy any other members used by export
 	m_arrInitMidiEvent = seq.m_arrInitMidiEvent;
-	m_bPreventNoteOverlap = seq.m_bPreventNoteOverlap;
 	m_arrRecordEvent.Attach(seq.m_arrRecordEvent.GetData(), seq.m_arrRecordEvent.GetSize());
 	m_mapping.SetArray(seq.m_mapping.GetArray());
-	m_nNoteOverlapMethods = seq.m_nNoteOverlapMethods;
 }
 
 CSequencerReader::~CSequencerReader()
