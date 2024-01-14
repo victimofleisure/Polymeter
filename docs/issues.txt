@@ -1,4 +1,5 @@
 id	open	close	type	description	rev	user
+74	05/10/18		bug	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 189	09/07/18		bug	song edits sometimes leave fragments, especially if zoom is changed while editing		
 272	01/26/19		bug	resizing docked pane via mouse drag leaves artifacts in Windows 10; affects stock VS2012 app too		
 273	01/26/19		bug	resizing docked pane via mouse drag leaves gap between scroll bar and pane, when two or more documents exist; affects stock VS2012 app too		
@@ -549,7 +550,6 @@ id	open	close	type	description	rev	user
 567	05/10/23		hold	in track fill, add bias and amplitude options, or remove fill dialog's value range limits		
 569	09/08/23		hold	optionally show targets in modulations bar; editing targets is a messy problem		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
-74	05/10/18		punt	synchronized scrolling of track and step views can fail to line up, especially if velocity pane is showing		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 100	05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
 119	06/08/18		punt	untying note should set all steps to velocity of original tied note; better to preserve velocity		
@@ -566,3 +566,5 @@ id	open	close	type	description	rev	user
 476	11/13/21		punt	render phase diagram in 3D, with variable lighting, texture and rotation of orbital plane; simulated 3D is enough		
 483	11/16/21		punt	docking windows submenu doesn't support selection via mnemonics; framework issue, BuildPanesMenu		
 556	01/21/23		punt	resize live view's progress bar via left-click drag; conflicts with primary function of left-click		
+577	12/29/23		todo	add option to ignore sequencer errors during playback, or at least don't stop playback		
+578	01/05/24		todo	allow meter denominators other than four, limited to small powers of two		

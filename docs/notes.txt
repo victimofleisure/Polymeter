@@ -4293,9 +4293,10 @@ The most important changes are in CSequencer::ConvertPositionToBeat and
 CSequencer::ConvertBeatToPosition. In both methods, replace all instances
 of m_nTimeDiv with m_nBeatDiv, which is m_nTimeDiv scaled as necessary.
 
-The denominator can be stored as a binary exponent of two, as in:
+The meter denominator can be stored as a binary exponent of two, as in:
 0 == whole, 1 == half, 2 == quarter, 3 == eighth, 4 == sixteenth, etc.
-This inherently restricts the denominator to powers of two.
+This inherently restricts the denominator to powers of two. Note that
+since the denominator shift won't exceed 5 it can be stored in a BYTE.
 Given the above scheme, computing beat divisions is straightforward:
 m_nBeatDiv = m_nTimeDiv * 4 >> m_nMeterDenominator;
 
