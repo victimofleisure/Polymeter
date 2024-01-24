@@ -13,7 +13,7 @@
 
 <h3>Modulations</h3>
 
-<p>This <a href="../Docking_Windows/Docking_windows.htm">docking window</a> lets you edit your <a href="../Concepts/Modulations.htm">modulations</a>. The modulations are edited using a <a href="../Concepts/Grid_controls.htm">grid control</a>. Only modulators for the <a href="../Views/Track_View/Track_Selection.htm">selected tracks</a> are shown. If no tracks are selected, or if the selected tracks don't have any modulators, the window is empty.
+<p>This <a href="../Docking_Windows/Docking_windows.htm">docking window</a> lets you edit your <a href="../Concepts/Modulations.htm">modulations</a>. The modulations are edited using a <a href="../Concepts/Grid_controls.htm">grid control</a>. Only modulators for the <a href="../Views/Track_View/Track_Selection.htm">selected tracks</a> are shown. If no tracks are selected, or if the selected tracks don't have any modulators, the window is empty. In addition to showing modulators, the window can optionally also <a href="../Docking_Windows/Modulations_bar.htm#Show_Targets">show targets</a>.
 
 <a name="Creating_a_modulation"><p><b>Creating a modulation</b></a>
 <p>To create a modulation, do the following:
@@ -54,8 +54,16 @@
 <tr><td>Paste</td><td>Inserts the contents of the modulations clipboard at the current position.</td></tr>
 <tr><td>Select All</td><td>Selects all items in the modulations list.</td></tr>
 <tr><td>Show Differences</td><td>Toggles <a href="../Docking_Windows/Modulations_bar.htm#Show_Differences">Show Differences</a> mode.</td></tr>
+<tr><td>Show Targets</td><td>Shows or hides the <a href="../Docking_Windows/Modulations_bar.htm#Show_Targets">Targets</a> pane.</td></tr>
 <tr><td>Sort</td><td>Sorts the modulators by modulation type or by source track index.</td></tr>
 </table>
+
+<a name="Show_Targets"><p><b>Show Targets</b></a>
+<p>In addition to sources, the Modulations bar can also show <a href="../Concepts/Modulations.htm">targets</a>, i.e. tracks that are modulated by the selected tracks. The targets are shown in a separate pane. To show or hide the targets pane, select <span class="cmd">Show Targets</span> from the bar's context menu. The targets pane doesn't support editing, because unlike sources, targets are read-only.
+
+<p>The source and target panes are separated by a splitter bar. To change the relative size of the panes, left-click and drag the splitter bar. To change the split type, right-click the splitter bar to display its context menu, and then select <span class="cmd">Horizontal</span> or <span class="cmd">Vertical</span>. To move the splitter bar to the middle of the window, select <span class="cmd">Center</span>.
+
+<p>Only the direct targets of the selected tracks are shown; to show indirect targets, use the <a href="../Docking_Windows/Graph_bar.htm">graph bar</a>. The targets pane respects <a href="../Docking_Windows/Modulations_bar.htm#Show_Differences">Show Differences</a> mode.
 
 <!--  content stops HERE  -->
 			

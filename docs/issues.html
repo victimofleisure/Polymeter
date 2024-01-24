@@ -209,6 +209,24 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
+<TH>580</TH>
+<TD>01/18/24</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>if app is maximized when it exits, on next launch, docked panes that split a side have incorrect sizes; framework bug</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TH>581</TH>
+<TD>01/22/24</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>docking pane tabs don't connect to context help; framework bug</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
 <TH>1</TH>
 <TD>03/22/18</TD>
 <TD>03/25/18</TD>
@@ -4223,12 +4241,30 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TH>576</TH>
+<TH>581</TH>
 <TD>12/24/23</TD>
 <TD>12/24/23</TD>
 <TD>done</TD>
 <TD>internal sostenuto controller; like sustain, but only holds notes that were on when controller was activated</TD>
 <TD>1.0.14.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TH>569</TH>
+<TD>09/08/23</TD>
+<TD>01/24/24</TD>
+<TD>done</TD>
+<TD>optionally show targets in modulations bar; read-only is good enough for now</TD>
+<TD>1.0.15.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TH>582</TH>
+<TD>01/24/24</TD>
+<TD>01/24/24</TD>
+<TD>done</TD>
+<TD>sequencer's callback overrun error is non-fatal and shouldn't stop playback</TD>
+<TD>1.0.15.000</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
@@ -4979,11 +5015,11 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TH>569</TH>
-<TD>09/08/23</TD>
+<TH>578</TH>
+<TD>01/05/24</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>optionally show targets in modulations bar; editing targets is a messy problem</TD>
+<TD>allow meter denominators other than four, limited to small powers of two</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -5144,17 +5180,17 @@
 <TH>577</TH>
 <TD>12/29/23</TD>
 <TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>add option to ignore sequencer errors during playback, or at least don't stop playback</TD>
+<TD>punt</TD>
+<TD>add option to ignore sequencer errors during playback; no need now that callback overrun is only a warning</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TH>578</TH>
-<TD>01/05/24</TD>
+<TH>579</TH>
+<TD>01/15/24</TD>
 <TD>&nbsp;</TD>
-<TD>todo</TD>
-<TD>allow meter denominators other than four, limited to small powers of two</TD>
+<TD>punt</TD>
+<TD>Check Modulations should report unused modulators; dubious as they're not actually an error</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>

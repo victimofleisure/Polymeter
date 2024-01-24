@@ -4338,3 +4338,39 @@ with this:
 
 CMidiFile::TIME_SIGNATURE	sigTime = {static_cast<BYTE>(m_nMeter), static_cast<BYTE>(m_nMeterDenominator), 0, 8};
 
+1/19/24 on launch, docked panes that split a side have incorrect sizes if app was previously maximized
+
+This bug can be replicated in a stock VS 2012 or VS 2019 MFC app, taking the defaults for all template settings.
+1. Run the app.
+2. Maximize the app (if it isn't already so).
+3. Dock the classes pane below the files pane (if it isn't already so).
+4. Change the split point between the files and class panes, via left-click and drag, so that the last item 
+shown in the files pane is FakeApp.rc.
+5. Exit and re-run the app. Notice that the split point between the files and classes panes has changed.
+
+If you repeat the above test but without maximizing the app, the split point between the panes is correctly restored.
+
+Another way to replicate the error:
+1. Run the app.
+2. Maximize the app (if it isn't already so).
+3. Dock the classes pane below the files pane (if it isn't already so).
+4. Change the split point between the files and classes panes, via left-click and drag, so that the last item 
+shown in the files pane is FakeApp.rc.
+5. Un-maximize the app (restore the app to its default size).
+6. Re-maximize the app. Notice again that the split point between the files and classes panes has changed,
+and by the same amount as in the first example.
+
+1/23/24 test new more efficient CModulationTargets against original GetModulationTargets
+
+	CModulationArrayArray	arrTarget;
+	pDoc->m_Seq.GetTracks().GetModulationTargets(arrTarget);
+	for (int iTarg = 0; iTarg < arrTarget.GetSize(); iTarg++) {
+		const CModulationArray&	arrMod = arrTarget[iTarg];
+		int	nMods = arrMod.GetSize();
+		ASSERT(nMods == parrTarget->GetCount(iTarg));
+		const CModulationArray	*parrTrackTarget = parrTarget->GetTargets(iTarg);
+		for (int iMod = 0; iMod < nMods; iMod++) {
+			ASSERT(arrMod[iMod] == parrTarget->GetAt(iTarg, iMod));
+			ASSERT(arrMod[iMod] == (*parrTrackTarget)[iMod]);
+		}
+	}

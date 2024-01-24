@@ -1188,7 +1188,7 @@ This @[docking windows\docking window] lets you edit your @[parts]. When you cre
 
 @topic Modulations bar\Modulations
 
-This @[docking windows\docking window] lets you edit your @[modulations]. The modulations are edited using a @[grid controls\grid control]. Only modulators for the @[track selection\selected tracks] are shown. If no tracks are selected, or if the selected tracks don't have any modulators, the window is empty.
+This @[docking windows\docking window] lets you edit your @[modulations]. The modulations are edited using a @[grid controls\grid control]. Only modulators for the @[track selection\selected tracks] are shown. If no tracks are selected, or if the selected tracks don't have any modulators, the window is empty. In addition to showing modulators, the window can optionally also @[show targets].
 
 @item Creating a modulation
 
@@ -1233,8 +1233,17 @@ In some cases you may prefer to show all modulations that target any of the sele
 <tr><td>Paste</td><td>Inserts the contents of the modulations clipboard at the current position.</td></tr>
 <tr><td>Select All</td><td>Selects all items in the modulations list.</td></tr>
 <tr><td>Show Differences</td><td>Toggles @[Show Differences] mode.</td></tr>
+<tr><td>Show Targets</td><td>Shows or hides the @[show targets\Targets] pane.</td></tr>
 <tr><td>Sort</td><td>Sorts the modulators by modulation type or by source track index.</td></tr>
 </table>
+
+@item Show Targets
+
+In addition to sources, the Modulations bar can also show @[modulations\targets], i.e. tracks that are modulated by the selected tracks. The targets are shown in a separate pane. To show or hide the targets pane, select @{cmd}Show Targets@} from the bar's context menu. The targets pane doesn't support editing, because unlike sources, targets are read-only.
+
+The source and target panes are separated by a splitter bar. To change the relative size of the panes, left-click and drag the splitter bar. To change the split type, right-click the splitter bar to display its context menu, and then select @{cmd}Horizontal@} or @{cmd}Vertical@}. To move the splitter bar to the middle of the window, select @{cmd}Center@}.
+
+Only the direct targets of the selected tracks are shown; to show indirect targets, use the @[graph bar]. The targets pane respects @[Show Differences] mode.
 
 @topic MIDI Input bar\MIDI Input
 

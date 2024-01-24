@@ -18,6 +18,8 @@ id	open	close	type	description	rev	user
 515	04/04/22		bug	changing track length via mapped control can cause undo/redo of step array edits to fail		
 532	08/01/22		bug	modulation bar's label tooltip shows stale data if track selection changes		
 565	03/05/23		bug	graph text is too small when system text size is greater than 100%; use Cairo, or FEATURE_96DPI_PIXEL hack		
+580	01/18/24		bug	if app is maximized when it exits, on next launch, docked panes that split a side have incorrect sizes; framework bug		
+581	01/22/24		bug	docking pane tabs don't connect to context help; framework bug		
 1	03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 2	03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 3	03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -464,7 +466,9 @@ id	open	close	type	description	rev	user
 574	12/18/23	12/19/23	done	new track type (internal) for controlling sequencer behaviors such as sustain and all notes off	1.0.14.000	
 575	12/18/23	12/19/23	done	internal controller for per-channel note overlap method (Split versus Merge); MIDI controller 63	1.0.14.000	
 576	12/23/23	12/23/23	done	add mapping target for note overlap method	1.0.14.000	
-576	12/24/23	12/24/23	done	internal sostenuto controller; like sustain, but only holds notes that were on when controller was activated	1.0.14.000	
+581	12/24/23	12/24/23	done	internal sostenuto controller; like sustain, but only holds notes that were on when controller was activated	1.0.14.000	
+569	09/08/23	01/24/24	done	optionally show targets in modulations bar; read-only is good enough for now	1.0.15.000	
+582	01/24/24	01/24/24	done	sequencer's callback overrun error is non-fatal and shouldn't stop playback	1.0.15.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -548,7 +552,7 @@ id	open	close	type	description	rev	user
 561	02/20/23		hold	graph should optionally indicate muted tracks, but how?		
 564	02/28/23		hold	graph font should be configurable; what about font size? Helvetica has special meaning in Graphviz		
 567	05/10/23		hold	in track fill, add bias and amplitude options, or remove fill dialog's value range limits		
-569	09/08/23		hold	optionally show targets in modulations bar; editing targets is a messy problem		
+578	01/05/24		hold	allow meter denominators other than four, limited to small powers of two		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 100	05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
@@ -566,5 +570,5 @@ id	open	close	type	description	rev	user
 476	11/13/21		punt	render phase diagram in 3D, with variable lighting, texture and rotation of orbital plane; simulated 3D is enough		
 483	11/16/21		punt	docking windows submenu doesn't support selection via mnemonics; framework issue, BuildPanesMenu		
 556	01/21/23		punt	resize live view's progress bar via left-click drag; conflicts with primary function of left-click		
-577	12/29/23		todo	add option to ignore sequencer errors during playback, or at least don't stop playback		
-578	01/05/24		todo	allow meter denominators other than four, limited to small powers of two		
+577	12/29/23		punt	add option to ignore sequencer errors during playback; no need now that callback overrun is only a warning		
+579	01/15/24		punt	Check Modulations should report unused modulators; dubious as they're not actually an error		
