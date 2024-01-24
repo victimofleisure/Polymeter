@@ -43,6 +43,7 @@
 		33		19may22	add offset method to loop range class
 		34		16feb23	add special handling for non-ASCII characters
 		35		20sep23	increase maximum quant from 32K to 64K
+		36		23jan24	add CModulationTargets
 
 */
 
@@ -54,6 +55,8 @@
 #include "Midi.h"		// for MIDI message enums
 #include "MidiFile.h"	// for import track array class
 #include "CritSec.h"
+
+class CTrackArray;	// for CModulationTargets
 
 class CTrackBase {
 public:
@@ -261,6 +264,34 @@ public:
 		void	Offset(int nOffset);
 		int		m_nFrom;	// start position of loop, in ticks
 		int		m_nTo;		// end position of loop, in ticks
+	};
+	class CModulationTargets {	// optimized alternative to GetModulationTargets
+	public:
+		CModulationTargets(const CTrackArray& arrTrack);
+		int		GetCount(int iTrack) const;
+		int		GetFirst(int iTrack) const;
+		CModulation& GetAt(int iTrack, int iMod);
+		const CModulation& GetAt(int iTrack, int iMod) const;
+		CModulation& GetAt(int iTarget);
+		const CModulation& GetAt(int iTarget) const;
+		int		Find(int iTrack, const CModulation& mod) const;
+
+	protected:
+		CIntArrayEx	m_arrFirst;	// for each track, index of its first m_arrTarget element
+		CModulationArray	m_arrTarget;	// array of modulation targets for all tracks
+	};
+	class CModulationTargetsEx : public CModulationTargets {
+	public:
+		CModulationTargetsEx(const CTrackArray& arrTrack);
+		const CModulationArray	*GetTargets(int iTrack);
+
+	protected:
+		class CTrackTargetArray : public CModulationArray {
+		public:
+			~CTrackTargetArray();
+			void	SetTrack(CModulation *pMod, int nMods);
+		};
+		CTrackTargetArray	m_arrTrackTarget;	// array of modulation targets for current track
 	};
 
 // Attributes
@@ -576,6 +607,72 @@ inline void CTrackBase::CLoopRange::Offset(int nOffset)
 	m_nTo += nOffset;
 }
 
+inline int CTrackBase::CModulationTargets::GetCount(int iTrack) const
+{
+	return m_arrFirst[iTrack + 1] - m_arrFirst[iTrack];
+}
+
+inline int CTrackBase::CModulationTargets::GetFirst(int iTrack) const
+{
+	return m_arrFirst[iTrack];
+}
+
+inline CTrackBase::CModulation& CTrackBase::CModulationTargets::GetAt(int iTrack, int iMod)
+{
+	ASSERT(iMod >= 0 && iMod < GetCount(iTrack));
+	return m_arrTarget[m_arrFirst[iTrack] + iMod];
+}
+
+inline const CTrackBase::CModulation& CTrackBase::CModulationTargets::GetAt(int iTrack, int iMod) const
+{
+	ASSERT(iMod >= 0 && iMod < GetCount(iTrack));
+	return m_arrTarget[m_arrFirst[iTrack] + iMod];
+}
+
+inline CTrackBase::CModulation& CTrackBase::CModulationTargets::GetAt(int iTarget)
+{
+	return m_arrTarget[iTarget];
+}
+
+inline const CTrackBase::CModulation& CTrackBase::CModulationTargets::GetAt(int iTarget) const
+{
+	return m_arrTarget[iTarget];
+}
+
+inline int CTrackBase::CModulationTargets::Find(int iTrack, const CModulation& mod) const
+{
+	const CModulation	*parrTarget = &GetAt(iTrack, 0);
+	int	nTargets = GetCount(iTrack);
+	for (int iTarget = 0; iTarget < nTargets; iTarget++) {	// for each target
+		if (parrTarget[iTarget] == mod)	// if modulation matches
+			return iTarget;	// return target index
+	}
+	return -1;
+}
+
+inline CTrackBase::CModulationTargetsEx::CModulationTargetsEx(const CTrackArray& arrTrack) 
+	: CModulationTargets(arrTrack)
+{
+}
+
+inline const CTrackBase::CModulationArray *CTrackBase::CModulationTargetsEx::GetTargets(int iTrack)
+{
+	m_arrTrackTarget.SetTrack(&m_arrTarget[m_arrFirst[iTrack]], GetCount(iTrack));
+	return &m_arrTrackTarget;
+}
+
+inline CTrackBase::CModulationTargetsEx::CTrackTargetArray::~CTrackTargetArray()
+{
+	m_pData = NULL;	// array doesn't own its data; prevent base class from deleting
+	m_nSize = 0;	// avoids assertion
+}
+
+inline void CTrackBase::CModulationTargetsEx::CTrackTargetArray::SetTrack(CModulation *pMod, int nMods)
+{
+	m_pData = pMod;
+	m_nSize = nMods;
+}
+
 class CTrack : public CTrackBase {
 public:
 // Construction
@@ -744,7 +841,7 @@ protected:
 		const CTrackArray&	m_arrTrack;	// reference to parent track array
 		CPackedModulationArray&	m_arrMod;	// reference to output array of modulations
 		CBoolArrayEx	m_arrIsCrawled;	// for each track, true if track has already been crawled
-		CModulationArrayArray	m_arrTarget;	// for each track, array of modulation targets
+		CModulationTargets	m_targets;	// for each track, array of modulation targets
 		UINT	m_nLinkFlags;	// modulation linkage flags; see enum above
 		int		m_nLevels;		// maximum number of modulation levels
 		int		m_nDepth;		// current recursion depth of crawl

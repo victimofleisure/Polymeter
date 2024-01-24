@@ -33,6 +33,7 @@
 		23		27nov23	add optional key signature parameter to Export
 		24		19dec23	add internal track type and controllers
 		25		09jan24	add base class to streamline reader init
+		26		24jan24	add warning error attribute
 
 */
 
@@ -155,6 +156,7 @@ public:
 	void	SetNoteOverlapMethods(USHORT nMask);
 	void	SetNoteOverlapMethod(int iChannel, bool bIsMerge);
 	static	void	SetExportTimeKeySigs(bool bEnable);
+	static	bool	IsErrorWarning(MMRESULT nSeqError);
 
 // Operations
 	bool	Play(bool bEnable, bool bRecord = false);

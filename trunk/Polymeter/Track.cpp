@@ -46,6 +46,7 @@
 		36		16feb23	add special handling for non-ASCII characters
 		37		25sep23	fix warning in LoopCheckRecurse
 		38		19dec23	replace track type member usage with accessor
+		39		23jan24	add CModulationTargets
 
 */
 
@@ -445,6 +446,52 @@ void CTrackBase::CDubArray::Dump() const
 	printf("%d dubs\n", nDubs);
 	for (int iDub = 0; iDub < nDubs; iDub++)
 		printf("%d: %d %d\n", iDub, GetAt(iDub).m_nTime, GetAt(iDub).m_bMute);
+}
+
+CTrackBase::CModulationTargets::CModulationTargets(const CTrackArray& arrTrack)
+{
+	int	nTracks = arrTrack.GetSize();
+	// compute each track's modulation target count
+	m_arrFirst.FastSetSize(nTracks + 1);	// one extra for terminator
+	m_arrFirst[0] = 0;	// first element is always zero
+	int	*parrFirst = m_arrFirst.GetData() + 1;	// skip first element
+	int	iTrack;
+	for (iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		const CTrack&	trk = arrTrack.GetAt(iTrack);
+		int	nMods = trk.m_arrModulator.GetSize();
+		for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
+			const CModulation&	modulator = trk.m_arrModulator[iMod];
+			int	iModSource = modulator.m_iSource;
+			if (iModSource >= 0) {	// if modulator is valid
+				ASSERT(iModSource < nTracks);	// within track index range
+				parrFirst[iModSource]++;	// increment target count
+			}
+		}
+	}
+	// convert target counts to first target indices
+	int	iNextTarget = 0;
+	for (iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		int	nTargets = parrFirst[iTrack];	// save target count
+		parrFirst[iTrack] = iNextTarget;	// replace count with cumulative index
+		iNextTarget += nTargets;	// increment cumulative index by target count
+	}
+	// allocate target array; extra element avoids range checking in GetTargets
+	m_arrTarget.FastSetSize(iNextTarget + 1);	// one extra for terminator
+	// reiterate targets, storing them in array allocated above
+	for (iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		const CTrack&	trk = arrTrack.GetAt(iTrack);
+		int	nMods = trk.m_arrModulator.GetSize();
+		for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
+			const CModulation&	modulator = trk.m_arrModulator[iMod];
+			int	iModSource = modulator.m_iSource;
+			if (iModSource >= 0) {	// if modulator is valid
+				// for targets, m_iSource is redefined to be index of target instead
+				CModulation	target(modulator.m_iType, iTrack);
+				m_arrTarget[parrFirst[iModSource]] = target;
+				parrFirst[iModSource]++;	// use index as track's write position
+			}
+		}
+	}
 }
 
 void CTrack::DumpModulations() const
@@ -1099,13 +1146,12 @@ bool CTrackArray::CheckModulations(CModulationErrorArray& arrError) const
 		CModulationError	error(arrPackedMod[0], MODERR_INFINITE_LOOP);
 		arrError.Add(error);
 	}
-	CModulationArrayArray	arrTarget;
-	GetModulationTargets(arrTarget);	// repurposes m_iSource to hold index of target track
+	CModulationTargets	targets(*this);	// repurposes m_iSource to hold index of target track
 	int	nTracks = GetSize();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-		int	nMods = arrTarget[iTrack].GetSize();
+		int	nMods = targets.GetCount(iTrack);
 		for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulation targets
-			const CModulation& mod = arrTarget[iTrack][iMod];
+			const CModulation& mod = targets.GetAt(iTrack, iMod);
 			int	iTargetTrack = mod.m_iSource;	// source is actually target; see above
 			const CTrack&	trkTarget = GetAt(iTargetTrack);
 			bool	bIsUnsupportedType = false;	// assume success
@@ -1113,9 +1159,9 @@ bool CTrackArray::CheckModulations(CModulationErrorArray& arrError) const
 				if (!mod.IsRecursiveType()) {	// if modulation type doesn't support recursion
 					if (mod.m_iType == CTrackBase::MT_Note) {	// if note modulation
 						// for each of target track's modulation targets (sub-modulations)
-						int	nSubMods = arrTarget[iTargetTrack].GetSize();
+						int	nSubMods = targets.GetCount(iTargetTrack);
 						for (int iSubMod = 0; iSubMod < nSubMods; iSubMod++) {
-							const CModulation& modSub = arrTarget[iTargetTrack][iSubMod];
+							const CModulation& modSub = targets.GetAt(iTargetTrack, iSubMod);
 							// if sub-modulation type isn't scale or chord
 							if (!(modSub.m_iType == MT_Scale || modSub.m_iType == MT_Chord)) {
 								bIsUnsupportedType = true;	// unsupported type error
@@ -1205,7 +1251,7 @@ void CTrackArray::GetLinkedTracks(const CIntArrayEx& arrSelection, CPackedModula
 }
 
 CTrackArray::CModulationCrawler::CModulationCrawler(const CTrackArray& arrTrack, CPackedModulationArray& arrMod, UINT nLinkFlags, int nLevels) 
-	: m_arrTrack(arrTrack), m_arrMod(arrMod)
+	: m_arrTrack(arrTrack), m_arrMod(arrMod), m_targets(arrTrack)
 {
 	m_nLinkFlags = nLinkFlags;
 	m_nLevels = nLevels;
@@ -1216,7 +1262,6 @@ void CTrackArray::CModulationCrawler::Crawl(const CIntArrayEx& arrSelection)
 	m_arrMod.RemoveAll();	// empty destination array
 	m_nDepth = 0;	// init recursion depth
 	int	nTracks = m_arrTrack.GetSize();
-	m_arrTrack.GetModulationTargets(m_arrTarget);	// build target cross-reference
 	m_arrIsCrawled.RemoveAll();	// empty crawled flags array
 	m_arrIsCrawled.SetSize(nTracks);	// allocate and zero crawled flags
 	int	nSels = arrSelection.GetSize();
@@ -1238,9 +1283,9 @@ void CTrackArray::CModulationCrawler::Recurse(int iTrack)
 			int	iSource = mod.m_iSource;
 			if (iSource >= 0) {	// if source is a valid track index
 				CModulation	modTarget(mod.m_iType, iTrack);
-				INT_PTR	iPos = m_arrTarget[iSource].Find(modTarget);
+				int	iPos = m_targets.Find(iSource, modTarget);
 				if (iPos >= 0) {	// if modulation found in source track's target array
-					m_arrTarget[iSource][iPos].m_iSource = -1;	// mark modulation used
+					m_targets.GetAt(iSource, iPos).m_iSource = -1;	// mark modulation used
 					CPackedModulation	modPacked(mod.m_iType, iSource, iTrack);
 					m_arrMod.Add(modPacked);	// add modulation to destination array
 				}
@@ -1253,10 +1298,10 @@ void CTrackArray::CModulationCrawler::Recurse(int iTrack)
 		}
 	}
 	if (m_nLinkFlags & MODLINKF_TARGET) {	// if crawling targets
-		CModulationArray&	arrTarget = m_arrTarget[iTrack];
-		int	nMods = arrTarget.GetSize();
-		for (int iMod = 0; iMod < nMods; iMod++) {	// for each target
-			CModulation&	mod = arrTarget[iMod];
+		int	iFirstMod = m_targets.GetFirst(iTrack);
+		int	nMods = m_targets.GetCount(iTrack);
+		for (int iMod = iFirstMod; iMod < iFirstMod + nMods; iMod++) {	// for each target
+			CModulation&	mod = m_targets.GetAt(iMod);
 			int	iTarget = mod.m_iSource;	// target array redefines source as target
 			if (iTarget >= 0) {	// if target is a valid track index
 				mod.m_iSource = -1;	// mark modulation used

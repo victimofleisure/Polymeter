@@ -57,6 +57,7 @@
 		47		27nov23	include time signature and key signature in Export
 		48		19dec23	add internal track type and controllers
 		49		09jan24	add base class to streamline reader init
+		50		24jan24	add warning error attribute
 
 */
 
@@ -122,6 +123,14 @@ CSequencer::~CSequencer()
 void CSequencer::OnMidiError(MMRESULT nResult)
 {
 	UNREFERENCED_PARAMETER(nResult);
+}
+
+bool CSequencer::IsErrorWarning(MMRESULT nSeqError)
+{
+	static const MMRESULT arrWarning[] = {	// non-fatal sequencer errors
+		SEQERR_CALLBACK_TOO_LONG,
+	};
+	return ARRAY_FIND(arrWarning, nSeqError) >= 0;	// return true if error is a warning
 }
 
 bool CSequencer::GetPosition(MMTIME& time, UINT wType)

@@ -62,6 +62,7 @@
 		52		05feb22	refactor track and step index validation
 		53		15feb22	fix MIDI error handling to avoid endless messages
 		54		25jan23	add method to show panes menu
+		55		24jan24	use sequencer's warning error attribute
 
 */
 
@@ -1073,11 +1074,15 @@ LRESULT	CMainFrame::OnMidiError(WPARAM wParam, LPARAM lParam)
 	MMRESULT	nResult = static_cast<MMRESULT>(wParam);
 	CPolymeterDoc*	pDoc = reinterpret_cast<CPolymeterDoc*>(lParam);
 	ASSERT(pDoc != NULL);
-	theApp.m_pPlayingDoc = NULL;	// prevent OnTimer from querying MIDI stream
-	SetViewTimer(false);	// stop timer ASAP in case an exception gets thrown
-	theApp.OnMidiError(nResult);	// display error message; handler continues
-	if (pDoc != NULL) {	// be extra cautious since pointer was message argument
-		pDoc->StopPlayback();	// could throw an exception, so do this last
+	if (CSequencer::IsErrorWarning(nResult)) {	// if error is a warning
+		theApp.OnMidiError(nResult);	// display error message but keep playing
+	} else {	// fatal error
+		theApp.m_pPlayingDoc = NULL;	// prevent OnTimer from querying MIDI stream
+		SetViewTimer(false);	// stop timer ASAP in case an exception gets thrown
+		theApp.OnMidiError(nResult);	// display error message; handler continues
+		if (pDoc != NULL) {	// be extra cautious since pointer was message argument
+			pDoc->StopPlayback();	// could throw an exception, so do this last
+		}
 	}
 	return 0;
 }

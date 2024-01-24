@@ -91,6 +91,7 @@
 		81		20sep23	in track fill, fix divide by zero errors
 		82		27nov23	specify key signature in OnFileExport
 		83		19dec23	bump file version for internal track type
+		84		24jan24	use sequencer's warning error attribute
 
 */
 
@@ -232,10 +233,7 @@ CPolymeterDoc::~CPolymeterDoc()
 void CPolymeterDoc::CMySequencer::OnMidiError(MMRESULT nResult)
 {
 	theApp.GetMainFrame()->PostMessage(UWM_MIDI_ERROR, nResult, LPARAM(m_pDocument));
-	switch (nResult) {
-	case CSequencer::SEQERR_CALLBACK_TOO_LONG:
-		break;	// non-fatal error
-	default:
+	if (!IsErrorWarning(nResult)) {	// if fatal error
 		Abort();	// abort playback and clean up
 	}
 }

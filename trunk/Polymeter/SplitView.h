@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      31may18	initial version
+        01      20jan24	make split enable and type public
 
 */
 
@@ -47,16 +48,18 @@ public:
 
 // Operations
 
-protected:
 // Constants
 	enum {
 		m_nSplitBarWidth = 6,	// width or height of splitter bar, in client coords
 	};
 
-// Member data
+// Public data
 	bool	m_bIsShowSplit;		// true if view is split
-	bool	m_bIsSplitDrag;		// true while dragging splitter bar
 	bool	m_bIsSplitVert;		// true if we're split vertically, else split horizontally
+
+protected:
+// Member data
+	bool	m_bIsSplitDrag;		// true while dragging splitter bar
 	HCURSOR	m_hSplitCursor;		// cached splitter bar cursor
 
 // Helpers
