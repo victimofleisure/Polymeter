@@ -1239,11 +1239,22 @@ In some cases you may prefer to show all modulations that target any of the sele
 
 @item Show Targets
 
-In addition to sources, the Modulations bar can also show @[modulations\targets], i.e. tracks that are modulated by the selected tracks. The targets are shown in a separate pane. To show or hide the targets pane, select @{cmd}Show Targets@} from the bar's context menu. The targets pane doesn't support editing, because unlike sources, targets are read-only.
+In addition to sources, the Modulations bar can also show @[modulations\targets], i.e. tracks that are modulated by the selected tracks. The targets are shown in a separate pane. To show or hide the target pane, select @{cmd}Show Targets@} from the bar's context menu.
 
 The source and target panes are separated by a splitter bar. To change the relative size of the panes, left-click and drag the splitter bar. To change the split type, right-click the splitter bar to display its context menu, and then select @{cmd}Horizontal@} or @{cmd}Vertical@}. To move the splitter bar to the middle of the window, select @{cmd}Center@}.
 
-Only the direct targets of the selected tracks are shown; to show indirect targets, use the @[graph bar]. The targets pane respects @[Show Differences] mode.
+Only the direct targets of the selected tracks are shown; to show indirect targets, use the @[graph bar]. The target pane respects @[Show Differences] mode. The target pane only partially supports editing, as shown in the table below. To change the type or target of selected modulations, use the target pane's @[grid controls\grid control]. Commands supported in both panes are applied to whichever pane has focus.
+
+<p><table border=1 cellpadding=2 cellspacing=0>
+<tr><th>Edit</th><th>Supported</th></tr>
+<tr><td>Change type or target</td><td>Yes</td></tr>
+<tr><td>Insert</td><td>No</td></tr>
+<tr><td>Insert Group</td><td>Yes</td></tr>
+<tr><td>Delete</td><td>Yes</td></tr>
+<tr><td>Cut/Copy/Paste</td><td>No</td></tr>
+<tr><td>Sort</td><td>No</td></tr>
+<tr><td>Drag Reorder</td><td>No</td></tr>
+</table>
 
 @topic MIDI Input bar\MIDI Input
 
@@ -2741,6 +2752,47 @@ If the above fixes don't help, you can also try enabling the @[Use Cairo] option
 @endchapter
 
 @chapter Reference
+
+@topic Errors
+
+Only application-specific errors are listed here. For generic errors, see the Windows documentation.
+
+@item Sequencer errors
+
+<p><table class="top-align-all" border=1 cellpadding=2 cellspacing=0>
+<tr><th>Error</th><th>Message</th><th>Severity</th><th>Comment</th></tr>
+<tr><td>@{#Buffer Overrun}</td><td>MIDI event buffer size exceeded.</td><td>Fatal</td><td>Too many MIDI events were scheduled during a callback, exceeding the space allocated for them. This error could conceivably occur with extremely dense sequences. Try increasing the @[buffer size].</td></tr>
+<tr><td>@{#Bad Time Format}</td><td>Unsupported MIDI time format.</td><td>Fatal</td><td>The application couldn't obtain a current position from the MIDI subsystem in the requested format. This error is unlikely, but if it occurs it's possibly a driver issue. Try using a different @[output device].</td></tr>
+<tr><td>@{#Too Many Recursions}</td><td>Modulation exceeded the maximum number of recursions.</td><td>Fatal</td><td>The sequencer exceeded the maximum permissible depth while traversing a @[nested modulation]. This error is usually caused by a modulation loop, in which a track directly or indirectly modulates itself. Try running the @[check modulations] command. If it's not a loop and you actually need more depth, fork the code, edit Sequencer.h and increase MOD_MAX_RECURSIONS.</td></tr>
+<tr><td>@{#Callback Too Long}</td><td>Sequencer callback took too long.</td><td>Warning</td><td>The sequencer took too long generating the next chunk of MIDI data, and delivered it too late. This condition is called an @[underruns\underrun], and it may produce an audible gap in the output. It could be caused by an extremely complex sequence, an unusually slow output device, or setting the @[latency] too short. If it occurs, try increasing the latency. This error is only reported once during a given playback of the document. You can determine how many times the error actually occurred by inspecting CB Underruns in the sequencer @[statistics].</td></tr>
+</table>
+
+@item User interface errors
+
+<p><table class="top-align-all" border=1 cellpadding=2 cellspacing=0>
+<tr><th>Error</th><th>Message</th><th>Comment</th></tr>
+<tr><td>@{#Bad Format}</td><td>'[path]' has an invalid format.</td><td>The most likely causes are opening a file that isn't a Polymeter document, or opening a damaged document. This error also occurs if you inadvertently convert a Polymeter document to Unicode, for example by editing it with a text editor. Try comparing the problematic document to one that opens correctly, using a file comparison utility.</td></tr>
+<tr><td>@{#Bad Step Selection}</td><td>Invalid step selection.</td><td>This occurs if the @[step selection] isn't <em>rectangular</em>, and the attempted edit requires a rectangular selection. A rectangular selection includes the same number of @[steps\steps] in each of its rows. Non-rectangular selections can occur when selecting steps within multiple tracks that have different @[track length\lengths], and especially when selecting near the end of a track.</td></tr>
+<tr><td>@{#Can't Truncate Recording}</td><td>Can't set song length shorter than the recording.</td><td>This can occur when attempting to shorten the song via the @[Song Length] property.  It occurs because the song contains one or more @[dubs] after the specified length. Delete all such dubs and then try setting the song length again.</td></tr>
+<tr><td>@{#Clip Warning}</td><td>Clipping may occur.</td><td>This occurs when a @[velocity\Velocity] command would cause one or more steps to exceed the @[unsigned versus signed steps\valid range] of a step. It also occurs if a @[Transpose] command would cause one or more tracks to exceed the range of a MIDI note. If you proceed despite the warning, the offending values are @[clipping\clipped].</td></tr>
+<tr><td>@{#Convergence Out of Range}</td><td>Convergence is out of range.</td><td>This occurs with the @[Next Convergence] and @[Previous Convergence] commands, if the next or previous convergence would exceed the range of a position in @[ticks], which is +/&minus; 2.147 billion, the range of a 32-bit integer. It's likely to occur if the convergence is calculated for many loops with different relatively prime lengths, and the @[Convergence Size] is set to a large number or All. Try lowering the convergence size.</td></tr>
+<tr><td>@{#Group Overlap}</td><td>One or more of the selected tracks already belong to a group, and will be reassigned.</td><td>This occurs when using the @[create group\Group] command or the @[Parts bar] @{cmd}Update@} command. It occurs because a track can only belong to one @[parts\part] at a time. If you proceed despite the warning, the offending tracks are removed from the parts they currently belong to, before being made members of the new or updated part.</td></tr>
+<tr><td>@{#Newer Version}</td><td>'[path]' is from a newer document version. Some of its features may not be supported.</td><td>This occurs if you open a document that was created by a more recent version of Polymeter than the one you're using. The result depends on which features were added since your version, and whether the document you're opening uses them. The document probably won't work as intended. The solution is to upgrade to the latest version.</td></tr>
+<tr><td>@{#Search Text Not Found}</td><td>Search text not found.</td><td>The @[Find] and @[Replace] commands give this warning if no track has the specified name.</td></tr>
+<tr><td>@{#Track Length Cursor}</td><td>Cursor must be over track step to indicate desired length.</td><td>This occurs when the Track menu's @[Length] command is unable to determine the intended length. Specify the track length either via a @[step selection] or by positioning the cursor over the desired last step.</td></tr>
+<tr><td>@{#Track Too Long}</td><td>Track too long.</td><td>This occurs if one or more tracks would exceed the @[maximum track length]. It occurs when editing the track @[track length\Length] or @[track quant\Quant].</td></tr>
+<tr><td>@{#Value Not Found}</td><td>Value not found.</td><td>The @[Replacing velocities\Replace Velocity] command gives this warning if none of the selected steps match the specified value or range of values.</td></tr>
+<tr><td>@{#Export Bad Duration}</td><td>Invalid duration. Time format is HH:MM:SS and duration must be greater than zero.</td><td>This occurs with the @[Export] or @[Export Song] commands if the specified duration is improperly formatted or otherwise unacceptable. The expected format is hours, minutes and seconds separated by colons.</td></tr>
+<tr><td>@{#Export Error}</td><td>Error during export.</td><td>The @[Export] command failed.</td></tr>
+<tr><td>@{#Grid Error Bad Time Format}</td><td>Enter time in hh:mm:ss format.</td><td>This occurs when entering a time in the @[Properties bar], for example in the @[Song Length] field. The expected format is hours, minutes and seconds separated by colons.</td></tr>
+<tr><td>@{#Hyperlink Can't Launch}</td><td>Can't launch browser.</td><td>The application was unable to display a web page. It could happen with the @[Polymeter on the Web] command. The most likely causes are no Internet connection, or the web site is unavailable. To rule out the former, try your browser.</td></tr>
+<tr><td>@{#Import Error Format}</td><td>Format error.</td><td>This occurs with @[Import Tracks] if the input CSV file contains data that doesn't conform to the expected format of the corresponding track property. The message includes the one-based row and column at which the error was found.</td></tr>
+<tr><td>@{#Import Error Property}</td><td>Undefined property name.</td><td>This occurs with @[Import Tracks] if the input CSV file's mandatory header row specifies an unrecognized property name. To obtain a list of valid property names, use the @[Export Tracks] command and examine the resulting CSV file.</td></tr>
+<tr><td>@{#Import Error Range}</td><td>Range error.</td><td>This occurs with @[Import Tracks] if the input CSV file contains data that exceeds the range of the corresponding track property. The message includes the one-based row and column at which the error was found.</td></tr>
+<tr><td>@{#MIDI Devices Missing}</td><td>MIDI devices are missing.</td><td>This means a selected MIDI device is no longer available. Both @[input device\input] and @[output device\output] devices can give this error. It typically occurs when a USB MIDI device is unplugged or powered off. You can recover by making the device available again (for example by plugging it back in, or powering it back on) and then clicking Retry. If you click Cancel, the device selection is reset.</td></tr>
+<tr><td>@{#MIDI Incompatible Song Position}</td><td>Song position is incompatible with MIDI clock sync. Playback will start from the nearest sixteenth note.</td><td>This warning can occur when starting @[play\playback] with @[Send MIDI Clock] enabled. The sequencer's starting @[song position] is either misaligned or exceeds the range of MIDI clock sync. The MIDI Song Position Pointer message can only cue to sixteenth notes, and is limited to 16384 sixteenth notes. If you click OK, the song position is quantized to the nearest acceptable value. To avoid the warning, start playback from a compatible position.</td></tr>
+<tr><td>@{#MIDI No Output Device}</td><td>No MIDI output device is selected.</td><td>This occurs if you attempt to start @[play\playback] with no @[output device] selected. It's most likely to occur after abandoning a missing device by selecting Cancel in the MIDI Devices Missing dialog (see above). The solution is to select an output device.</td></tr>
+</table>
 
 @topic Options Summary
 
