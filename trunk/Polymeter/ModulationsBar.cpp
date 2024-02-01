@@ -21,7 +21,8 @@
 		11		19nov20	add show changed handler
 		12		20jun21	remove dispatch edit keys
 		13		29jan22	don't horizontally scroll source column
-		14		20jan24	add targets pane
+		14		20jan24	add target pane
+		15		29jan24	add target pane editing
 
 */
 
@@ -57,10 +58,14 @@ const CGridCtrl::COL_INFO CModulationsBar::m_arrColInfo[COLUMNS] = {
 #define RK_SPLIT_POS_HORZ _T("SplitPosHorz")
 #define RK_SPLIT_POS_VERT _T("SplitPosVert")
 
+// save some typing
+#define paneSource m_arrPane[PANE_SOURCE] 
+#define paneTarget m_arrPane[PANE_TARGET] 
+#define gridSource m_arrPane[PANE_SOURCE].m_grid
+#define gridTarget m_arrPane[PANE_TARGET].m_grid
+
 CModulationsBar::CModulationsBar()
 {
-	m_arrPane[PANE_SOURCE].m_pList = &m_grid;
-	m_arrPane[PANE_TARGET].m_pList = &m_listTarget;
 	m_bUpdatePending = false;
 	m_bShowDifferences = false;
 	m_bShowTargets = false;
@@ -99,11 +104,11 @@ void CModulationsBar::OnShowChanged(bool bShow)
 
 inline void CModulationsBar::ResetModulatorCache()
 {
-	m_arrPane[PANE_SOURCE].m_arrModulator.RemoveAll();	// reset modulator cache
-	m_arrPane[PANE_TARGET].m_arrModulator.RemoveAll();	// reset target cache too
-	m_grid.SetItemCountEx(0);	// synchronize grid control with modulator cache
+	paneSource.m_arrModulator.RemoveAll();	// reset modulator cache
+	paneTarget.m_arrModulator.RemoveAll();	// reset target cache too
+	gridSource.SetItemCountEx(0);	// synchronize grid control with modulator cache
 	if (m_bShowTargets)	// if showing targets
-		m_listTarget.SetItemCountEx(0);	// synchronize targets list control too
+		gridTarget.SetItemCountEx(0);	// synchronize targets list control too
 }
 
 inline void CModulationsBar::StartDeferredUpdate()
@@ -137,9 +142,9 @@ void CModulationsBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		{
 			const CPolymeterDoc::CPropHint	*pPropHint = static_cast<CPolymeterDoc::CPropHint *>(pHint);
 			if (pPropHint->m_iProp == PROP_Name) {	// if track name change
-				m_arrPane[PANE_SOURCE].OnTrackNameChange(pPropHint->m_iItem);
+				paneSource.OnTrackNameChange(pPropHint->m_iItem);
 				if (m_bShowTargets)	// if showing targets
-					m_arrPane[PANE_TARGET].OnTrackNameChange(pPropHint->m_iItem);
+					paneTarget.OnTrackNameChange(pPropHint->m_iItem);
 			}
 		}
 		break;
@@ -147,33 +152,33 @@ void CModulationsBar::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		{
 			const CPolymeterDoc::CMultiItemPropHint	*pPropHint = static_cast<CPolymeterDoc::CMultiItemPropHint *>(pHint);
 			if (pPropHint->m_iProp == PROP_Name) {	// if multi-track name change
-				m_arrPane[PANE_SOURCE].OnTrackNameChange(pPropHint->m_arrSelection);
+				paneSource.OnTrackNameChange(pPropHint->m_arrSelection);
 				if (m_bShowTargets)	// if showing targets
-					m_arrPane[PANE_TARGET].OnTrackNameChange(pPropHint->m_arrSelection);
+					paneTarget.OnTrackNameChange(pPropHint->m_arrSelection);
 			}
 		}
 		break;
 	}
 }
 
-void CModulationsBar::CModPane::OnTrackNameChange(int iSelItem) const
+void CModulationsBar::CModPane::OnTrackNameChange(int iSelItem)
 {
 	int	nMods = m_arrModulator.GetSize();
 	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
 		if (m_arrModulator[iMod].m_iSource == iSelItem) {	// if selected track is modulator
-			m_pList->RedrawSubItem(iMod, COL_SOURCE);
+			m_grid.RedrawSubItem(iMod, COL_SOURCE);
 		}
 	}
 }
 
-void CModulationsBar::CModPane::OnTrackNameChange(const CIntArrayEx& arrSel) const
+void CModulationsBar::CModPane::OnTrackNameChange(const CIntArrayEx& arrSel)
 {
 	int	nMods = m_arrModulator.GetSize();
 	for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulation
 		int	iSrcTrack = m_arrModulator[iMod].m_iSource;
 		if (iSrcTrack >= 0	// if modulation is valid, and selected track is modulator
 		&& arrSel.Find(iSrcTrack) >= 0) {
-			m_pList->RedrawSubItem(iMod, COL_SOURCE);
+			m_grid.RedrawSubItem(iMod, COL_SOURCE);
 		}
 	}
 }
@@ -244,10 +249,10 @@ void CModulationsBar::UpdateAll(int iPane)
 		}
 	}
 	if (bListChange) {	// if list items changed
-		pane.m_pList->SetItemCountEx(arrMod.GetSize(), 0);	// invalidate all items
+		pane.m_grid.SetItemCountEx(arrMod.GetSize(), 0);	// invalidate all items
 	} else {	// list items unchanged
 		if (pane.m_bModDifferences && !bModDifferences)	// if differences transitioning to false
-			pane.m_pList->Invalidate();
+			pane.m_grid.Invalidate();
 	}
 	pane.m_bModDifferences = bModDifferences;	// update cached differences flag
 }
@@ -315,7 +320,7 @@ void CModulationsBar::UpdateUnion(int iPane)
 	if (arrMod != pane.m_arrModulator || arrModCount != pane.m_arrModCount) {	// if modulations changed
 		pane.m_arrModulator = arrMod;	// update member arrays
 		pane.m_arrModCount = arrModCount;
-		pane.m_pList->SetItemCountEx(nUniqueMods, 0);	// invalidate all items
+		pane.m_grid.SetItemCountEx(nUniqueMods, 0);	// invalidate all items
 	}
 	pane.m_bModDifferences = false;	// difference indicator isn't applicable in this mode
 }
@@ -334,6 +339,26 @@ int CModulationsBar::ModPairSortCompare(const void *arg1, const void *arg2)
 	return retc;
 }
 
+CPolymeterDoc::CSaveTrackSelection *CModulationsBar::SelectTargets(CPolymeterDoc *pDoc, const CModulationArray& arrMod, const CIntArrayEx& arrModSel, CIntArrayEx& arrTargetSel)
+{
+	// After saving the document's track selection, replace it with the
+	// targets of the selected modulations. This facilitates the undoing
+	// of target edits. Return a dynamically allocated instance, which
+	// when deleted, restores the document's original track selection.
+	ASSERT(pDoc != NULL);	// document must exist
+	ASSERT(arrTargetSel.IsEmpty());	// target selection array must be empty
+	int	nModSels = arrModSel.GetSize();
+	for (int iModSel = 0; iModSel < nModSels; iModSel++) {	// for each selected modulation
+		int	iTarget = arrMod[arrModSel[iModSel]].m_iSource;	// m_iSource is actually target track index
+		arrTargetSel.InsertSortedUnique(iTarget);	// add to sorted array of unique target track indices
+	}
+	// ctor saves document's track selection
+	CPolymeterDoc::CSaveTrackSelection	*pSaveTrackSel = new CPolymeterDoc::CSaveTrackSelection(pDoc);
+	ASSERT(pSaveTrackSel != NULL);
+	pDoc->m_arrTrackSel = arrTargetSel;	// set document's track selection to targets, so they're saved for undo
+	return pSaveTrackSel;	// caller is responsible for deleting returned instance, restoring track selection
+}
+
 CWnd *CModulationsBar::CModGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
 	UNREFERENCED_PARAMETER(pszText);
@@ -341,14 +366,17 @@ CWnd *CModulationsBar::CModGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwSty
 	UNREFERENCED_PARAMETER(pParentWnd);
 	UNREFERENCED_PARAMETER(nID);
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	if (pDoc == NULL || !pDoc->GetSelectedCount())
+	if (pDoc == NULL || !pDoc->GetSelectedCount())	// if no track selection
 		return NULL;
 	CPopupCombo	*pCombo = CPopupCombo::Factory(0, rect, this, 0, 100);
 	if (pCombo == NULL)
 		return NULL;
 	CModulationsBar	*pParent = STATIC_DOWNCAST(CModulationsBar, GetParent());
 	CString	sTrackNum;
-	const CModulation&	modSel = pParent->m_arrPane[PANE_SOURCE].m_arrModulator[m_iEditRow];
+	UINT	nGridID = GetDlgCtrlID();
+	int	iPane = nGridID - IDC_MOD_LIST_SOURCE;
+	CModPane&	pane = pParent->m_arrPane[iPane];
+	const CModulation&	modSel = pane.m_arrModulator[m_iEditRow];
 	switch (m_iEditCol) {
 	case COL_TYPE:
 		{
@@ -359,8 +387,10 @@ CWnd *CModulationsBar::CModGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwSty
 		break;
 	case COL_SOURCE:
 		{
-			pCombo->AddString(GetTrackNoneString());
-			pCombo->SetItemData(0, DWORD_PTR(-1));	// assign invalid track index to none item
+			if (iPane == PANE_SOURCE) {	// target pane doesn't support selecting none
+				pCombo->AddString(GetTrackNoneString());
+				pCombo->SetItemData(0, DWORD_PTR(-1));	// assign invalid track index to none item
+			}
 			int	iSelItem = 0;	// index of selected item; defaults to none
 			int	nTracks = pDoc->GetTrackCount();
 			for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
@@ -383,26 +413,38 @@ void CModulationsBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 {
 	UNREFERENCED_PARAMETER(pszText);
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	if (pDoc != NULL && pDoc->GetSelectedCount()) {	// if track selection exists
-		CPopupCombo	*pCombo = STATIC_DOWNCAST(CPopupCombo, m_pEditCtrl);
-		CModulationsBar	*pParent = STATIC_DOWNCAST(CModulationsBar, GetParent());
-		CIntArrayEx	arrSelection;
-		GetSelection(arrSelection);	// get item indices of selected modulations
-		if (arrSelection.Find(m_iEditRow) < 0) {	// if changed item not found in selected modulations
-			arrSelection.SetSize(1);
-			arrSelection[0] = m_iEditRow;	// operate on changed item only, ignoring selected modulations
-		}
-		int	nModSels = arrSelection.GetSize();
-		int	nTrackSels = pDoc->GetSelectedCount();
-		int	iSelItem = pCombo->GetCurSel();	// index of changed item
-		CModulationArray&	arrMod = pParent->m_arrPane[PANE_SOURCE].m_arrModulator;
-		CModulation&	modSel = arrMod[m_iEditRow];
-		switch (m_iEditCol) {
-		case COL_TYPE:
-			if (iSelItem != modSel.m_iType) {	// if modulation type actually changed
-				pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
+	if (pDoc == NULL || !pDoc->GetSelectedCount())	// if no track selection
+		return;	// nothing to do
+	CPopupCombo	*pCombo = STATIC_DOWNCAST(CPopupCombo, m_pEditCtrl);
+	CModulationsBar	*pParent = STATIC_DOWNCAST(CModulationsBar, GetParent());
+	CIntArrayEx	arrModSel;
+	GetSelection(arrModSel);	// get item indices of selected modulations
+	if (arrModSel.Find(m_iEditRow) < 0) {	// if changed item not found in selected modulations
+		arrModSel.SetSize(1);
+		arrModSel[0] = m_iEditRow;	// operate on changed item only, ignoring selected modulations
+	}
+	int	nModSels = arrModSel.GetSize();
+	int	nTrackSels = pDoc->GetSelectedCount();
+	int	iSelItem = pCombo->GetCurSel();	// index of changed item
+	UINT	nGridID = GetDlgCtrlID();
+	int	iPane = nGridID - IDC_MOD_LIST_SOURCE;
+	CModPane&	pane = pParent->m_arrPane[iPane];
+	CModulationArray&	arrMod = pane.m_arrModulator;
+	CModulation&	modSel = arrMod[m_iEditRow];
+	CIntArrayEx	arrTargetSel;
+	CPolymeterDoc::CSaveTrackSelectionPtr	pSaveTrackSel;	// dtor restores document's track selection
+	if (iPane != PANE_SOURCE) {	// if target pane
+		pSaveTrackSel.Attach(SelectTargets(pDoc, arrMod, arrModSel, arrTargetSel));
+		nTrackSels = arrTargetSel.GetSize();	// overwrite selected tracks count with target tracks count
+	}
+	bool	bIsModChanged = false;
+	switch (m_iEditCol) {
+	case COL_TYPE:
+		if (iSelItem != modSel.m_iType) {	// if modulation type actually changed
+			pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
+			if (iPane == PANE_SOURCE) {	// if source pane
 				for (int iModSel = 0; iModSel < nModSels; iModSel++) {	// for each selected modulation
-					CModulation&	mod = arrMod[arrSelection[iModSel]];
+					CModulation&	mod = arrMod[arrModSel[iModSel]];
 					for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
 						int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
 						int	iMod = INT64TO32(pDoc->m_Seq.GetTrack(iTrack).m_arrModulator.Find(mod));
@@ -411,18 +453,39 @@ void CModulationsBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 					}
 					mod.m_iType = iSelItem;	// update cached modulation type
 				}
-				pDoc->SetModifiedFlag();
-				// specify sender view as this instance; prevents needless rebuild of modulation cache
-				pDoc->UpdateAllViews(reinterpret_cast<CView*>(this), CPolymeterDoc::HINT_MODULATION);
-			}
-			break;
-		case COL_SOURCE:
-			if (iSelItem >= 0)	// if valid item
-				iSelItem = static_cast<int>(pCombo->GetItemData(iSelItem));	// convert item index to track index
-			if (iSelItem != modSel.m_iSource) {	// if modulation source actually changed
-				pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
+			} else {	// target pane
+				const CIntArrayEx&	arrSourceSel = pSaveTrackSel->GetSel();
 				for (int iModSel = 0; iModSel < nModSels; iModSel++) {	// for each selected modulation
-					CModulation&	mod = arrMod[arrSelection[iModSel]];
+					CModulation&	mod = arrMod[arrModSel[iModSel]];
+					for (int iTargetSel = 0; iTargetSel < nTrackSels; iTargetSel++) {	// for each selected target track
+						int	iTargetTrack = arrTargetSel[iTargetSel];	// subtle differences from source pane case above
+						int	nSourceSels = arrSourceSel.GetSize();
+						for (int iSourceSel = 0; iSourceSel < nSourceSels; iSourceSel++) {	// for each selected source track
+							int	iSourceTrack = arrSourceSel[iSourceSel];
+							CModulation	modSource(mod.m_iType, iSourceTrack);
+							int	iMod = INT64TO32(pDoc->m_Seq.GetTrack(iTargetTrack).m_arrModulator.Find(modSource));
+							if (iMod >= 0)	// if modulator found in target track
+								pDoc->m_Seq.SetModulationType(iTargetTrack, iMod, iSelItem);	// update modulation type
+						}
+					}
+					mod.m_iType = iSelItem;	// update cached modulation type
+				}
+			}
+			bIsModChanged = true;
+		}
+		break;
+	case COL_SOURCE:
+		if (iSelItem >= 0)	// if valid item
+			iSelItem = static_cast<int>(pCombo->GetItemData(iSelItem));	// convert item index to track index
+		if (iSelItem != modSel.m_iSource) {	// if modulation source actually changed
+			if (iPane != PANE_SOURCE) {	// if target pane
+				ASSERT(iSelItem >= 0);	// target pane doesn't support selecting none
+				pDoc->m_arrTrackSel.InsertSortedUnique(iSelItem);	// selected item must also be saved for undo
+			}
+			pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
+			if (iPane == PANE_SOURCE) {	// if source pane
+				for (int iModSel = 0; iModSel < nModSels; iModSel++) {	// for each selected modulation
+					CModulation&	mod = arrMod[arrModSel[iModSel]];
 					for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
 						int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
 						int	iMod = INT64TO32(pDoc->m_Seq.GetTrack(iTrack).m_arrModulator.Find(mod));
@@ -431,12 +494,37 @@ void CModulationsBar::CModGridCtrl::OnItemChange(LPCTSTR pszText)
 					}
 					mod.m_iSource = iSelItem;	// update cached modulation source (index of source track)
 				}
-				pDoc->SetModifiedFlag();
-				// specify sender view as this instance; prevents needless rebuild of modulation cache
-				pDoc->UpdateAllViews(reinterpret_cast<CView*>(this), CPolymeterDoc::HINT_MODULATION);
+			} else {	// target pane
+				const CIntArrayEx&	arrSourceSel = pSaveTrackSel->GetSel();
+				for (int iModSel = 0; iModSel < nModSels; iModSel++) {	// for each selected modulation
+					CModulation&	mod = arrMod[arrModSel[iModSel]];
+					for (int iTargetSel = 0; iTargetSel < nTrackSels; iTargetSel++) {	// for each selected target track
+						int	iTargetTrack = arrTargetSel[iTargetSel];	// subtle differences from source pane case above
+						int	nSourceSels = arrSourceSel.GetSize();
+						for (int iSourceSel = 0; iSourceSel < nSourceSels; iSourceSel++) {	// for each selected source track
+							int	iSourceTrack = arrSourceSel[iSourceSel];
+							CModulation	modSource(mod.m_iType, iSourceTrack);
+							int	iMod = INT64TO32(pDoc->m_Seq.GetTrack(iTargetTrack).m_arrModulator.Find(modSource));
+							if (iMod >= 0) {	// if modulator found in target track
+								pDoc->m_Seq.RemoveModulation(iTargetTrack, iMod);	// remove modulator from target track
+								int	nSelItemMods = pDoc->m_Seq.GetModulationCount(iSelItem);
+								pDoc->m_Seq.InsertModulation(iSelItem, nSelItemMods, modSource);	// add modulator to new target
+							}
+						}
+					}
+					mod.m_iSource = iSelItem;	// update cached modulation target (index of target track)
+				}
 			}
-			break;
+			bIsModChanged = true;
 		}
+		break;
+	}
+	if (pSaveTrackSel != NULL)	// if track selection was saved
+		pSaveTrackSel.Free();	// restore document's track selection before updating views
+	if (bIsModChanged) {	// if modulations were changed
+		pDoc->SetModifiedFlag();
+		// specify sender view as this instance; prevents needless rebuild of modulation cache
+		pDoc->UpdateAllViews(reinterpret_cast<CView*>(this), CPolymeterDoc::HINT_MODULATION);
 	}
 }
 
@@ -471,7 +559,7 @@ bool CModulationsBar::ShowTargets(bool bEnable)
 	if (bEnable == m_bShowTargets)	// if already in requested state
 		return true;	// nothing to do
 	if (bEnable) {	// if showing targets
-		if (!m_listTarget.Create(LIST_STYLE, CRect(0, 0, 0, 0), this, IDC_MOD_LIST_TARGET)) {
+		if (!gridTarget.Create(LIST_STYLE, CRect(0, 0, 0, 0), this, IDC_MOD_LIST_TARGET)) {
 			ASSERT(0);	// can't create target list control
 			return false;
 		}
@@ -485,11 +573,11 @@ bool CModulationsBar::ShowTargets(bool bEnable)
 		}
 		m_pSplitView->m_bIsSplitVert = m_bIsSplitVert;	// copy split type to view
 		LoadSplitPos();	// load split position for this type, if necessary
-		InitList(m_listTarget);
-		m_listTarget.SetColumnName(COL_SOURCE, LDS(IDS_MOD_TARGET));
+		InitList(gridTarget);
+		gridTarget.SetColumnName(COL_SOURCE, LDS(IDS_MOD_TARGET));
 	} else {	// hiding targets
 		ASSERT(m_pSplitView != NULL);	// split view must exist, else logic error
-		m_listTarget.DestroyWindow();
+		gridTarget.DestroyWindow();
 		m_pSplitView->DestroyWindow();	// view self-deletes its instance
 		m_pSplitView = NULL;	// mark split view as destroyed
 	}
@@ -549,8 +637,8 @@ void CModulationsBar::UpdateSplit(CSize szClient)
 	UINT	dwFlags = SWP_NOACTIVATE | SWP_NOZORDER;
 	HDWP	hDWP;
 	hDWP = BeginDeferWindowPos(SPLIT_TYPES);
-	hDWP = DeferWindowPos(hDWP, m_grid.m_hWnd, NULL, 0, 0, sz1.cx, sz1.cy, dwFlags);
-	hDWP = DeferWindowPos(hDWP, m_listTarget.m_hWnd, NULL, pt2.x, pt2.y, sz2.cx, sz2.cy, dwFlags);
+	hDWP = DeferWindowPos(hDWP, gridSource.m_hWnd, NULL, 0, 0, sz1.cx, sz1.cy, dwFlags);
+	hDWP = DeferWindowPos(hDWP, gridTarget.m_hWnd, NULL, pt2.x, pt2.y, sz2.cx, sz2.cy, dwFlags);
 	EndDeferWindowPos(hDWP);	// move both lists at once
 	ASSERT(m_pSplitView != NULL);	// split view must exist
 	m_pSplitView->Invalidate();
@@ -655,9 +743,9 @@ BEGIN_MESSAGE_MAP(CModulationsBar, CMyDockablePane)
 	ON_WM_CONTEXTMENU()
 	ON_COMMAND(ID_LIST_COL_HDR_RESET, OnListColHdrReset)
 	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditDelete)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditCut)
 	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditDelete)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditCut)
 	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
 	ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
@@ -676,10 +764,10 @@ BEGIN_MESSAGE_MAP(CModulationsBar, CMyDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_MODULATION_SORT_BY_TYPE, OnUpdateSort)
 	ON_UPDATE_COMMAND_UI(ID_MODULATION_SORT_BY_SOURCE, OnUpdateSort)
 	ON_COMMAND(ID_MODULATION_INSERT_GROUP, OnInsertGroup)
-	ON_UPDATE_COMMAND_UI(ID_MODULATION_INSERT_GROUP, OnUpdateEditInsert)
-	ON_COMMAND_RANGE(ID_MODULATION_SPLIT_TYPE_HORZ, ID_MODULATION_SPLIT_TYPE_VERT, OnSplitType)
-	ON_UPDATE_COMMAND_UI_RANGE(ID_MODULATION_SPLIT_TYPE_HORZ, ID_MODULATION_SPLIT_TYPE_VERT, OnUpdateSplitType)
-	ON_COMMAND(ID_MODULATION_SPLIT_CENTER, OnSplitCenter)
+	ON_UPDATE_COMMAND_UI(ID_MODULATION_INSERT_GROUP, OnUpdateInsertGroup)
+	ON_COMMAND_RANGE(ID_SPLIT_TYPE_HORZ, ID_SPLIT_TYPE_VERT, OnSplitType)
+	ON_UPDATE_COMMAND_UI_RANGE(ID_SPLIT_TYPE_HORZ, ID_SPLIT_TYPE_VERT, OnUpdateSplitType)
+	ON_COMMAND(ID_SPLIT_CENTER, OnSplitCenter)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -690,9 +778,9 @@ int CModulationsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CMyDockablePane::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
-	if (!m_grid.Create(LIST_STYLE, CRect(0, 0, 0, 0), this, IDC_MOD_LIST_SOURCE))
+	if (!gridSource.Create(LIST_STYLE, CRect(0, 0, 0, 0), this, IDC_MOD_LIST_SOURCE))
 		return -1;
-	InitList(m_grid);
+	InitList(gridSource);
 	if (m_bShowTargets) {	// if showing targets
 		m_bShowTargets = false;	// spoof no-op test
 		ShowTargets(true);
@@ -702,8 +790,8 @@ int CModulationsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CModulationsBar::OnDestroy()
 {
-	m_grid.SaveColumnOrder(RK_ModulationsBar, RK_COL_ORDER);
-	m_grid.SaveColumnWidths(RK_ModulationsBar, RK_COL_WIDTH);
+	gridSource.SaveColumnOrder(RK_ModulationsBar, RK_COL_ORDER);
+	gridSource.SaveColumnWidths(RK_ModulationsBar, RK_COL_WIDTH);
 	CMyDockablePane::OnDestroy();
 }
 
@@ -715,14 +803,14 @@ void CModulationsBar::OnSize(UINT nType, int cx, int cy)
 		m_pSplitView->MoveWindow(0, 0, cx, cy);
 		UpdateSplit(CSize(cx, cy));
 	} else {	// showing sources only
-		m_grid.MoveWindow(0, 0, cx, cy);
+		gridSource.MoveWindow(0, 0, cx, cy);
 	}
 }
 
 void CModulationsBar::OnSetFocus(CWnd* pOldWnd)
 {
 	CMyDockablePane::OnSetFocus(pOldWnd);
-	m_grid.SetFocus();	// delegate focus to child control
+	gridSource.SetFocus();	// delegate focus to child control
 }
 
 void CModulationsBar::OnListGetdispinfo(UINT id, NMHDR* pNMHDR, LRESULT* pResult)
@@ -779,13 +867,13 @@ void CModulationsBar::OnListCustomdraw(UINT id, NMHDR* pNMHDR, LRESULT* pResult)
 			// draw differences indicator below list's last item
 			// list must be tall enough to display all items plus one extra, else indicator may be clipped
 			CRect	rClient;
-			CListCtrlExSel	*pList = pane.m_pList;
-			pList->GetClientRect(rClient);
+			CListCtrlExSel&	list = pane.m_grid;
+			list.GetClientRect(rClient);
 			CRect	rItem;
 			if (pane.m_arrModulator.GetSize())	// if list has items
-				pList->GetItemRect(pane.m_arrModulator.GetSize() - 1, rItem, LVIR_BOUNDS);	// get last item's rect
+				list.GetItemRect(pane.m_arrModulator.GetSize() - 1, rItem, LVIR_BOUNDS);	// get last item's rect
 			else	// list is empty
-				pList->GetHeaderCtrl()->GetClientRect(rItem);	// use header control rect instead
+				list.GetHeaderCtrl()->GetClientRect(rItem);	// use header control rect instead
 			int	nVMargin = GetSystemMetrics(SM_CYEDGE);
 			CPoint	pt(rClient.Width() / 2, rItem.bottom + nVMargin);
 			CDC	*pDC = CDC::FromHandle(pLVCD->nmcd.hdc);
@@ -808,7 +896,7 @@ LRESULT CModulationsBar::OnDeferredUpdate(WPARAM wParam, LPARAM lParam)
 
 void CModulationsBar::OnContextMenu(CWnd* pWnd, CPoint point)
 {
-	if (FixListContextMenuPoint(pWnd, m_grid, point))
+	if (FixListContextMenuPoint(pWnd, gridSource, point))
 		return;
 	int	nMenuID = IDR_MODULATION_CTX;
 	if (m_bShowTargets) {	// if showing targets
@@ -816,36 +904,30 @@ void CModulationsBar::OnContextMenu(CWnd* pWnd, CPoint point)
 		GetSplitRect(rSplit);
 		CPoint	ptClient(point);
 		ScreenToClient(&ptClient);
-		if (rSplit.PtInRect(ptClient)) {
-			nMenuID = IDR_MODULATION_SPLIT_CTX;
-		} else {
-			CRect	rTarget;
-			m_listTarget.GetWindowRect(rTarget);
-			if (rTarget.PtInRect(point)) {
-				nMenuID = IDR_MODULATION_TARGET_CTX;
-			}
-		}
+		if (rSplit.PtInRect(ptClient))
+			nMenuID = IDR_SPLIT_CTX;
 	}
 	DoGenericContextMenu(nMenuID, point, this);
 }
 
 void CModulationsBar::OnListColHdrReset()
 {
-	m_grid.ResetColumnHeader(m_arrColInfo, COLUMNS);
-	m_listTarget.ResetColumnHeader(m_arrColInfo, COLUMNS);
+	gridSource.ResetColumnHeader(m_arrColInfo, COLUMNS);
+	gridTarget.ResetColumnHeader(m_arrColInfo, COLUMNS);
 }
 
 void CModulationsBar::OnEditCopy()
 {
+	ASSERT(SourcePaneHasFocus());	// supported for source pane only
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL && pDoc->GetSelectedCount()) {	// if track selection exists
 		CIntArrayEx	arrModSel;
-		m_grid.GetSelection(arrModSel);
+		gridSource.GetSelection(arrModSel);
 		int	nModSels = arrModSel.GetSize();
 		theApp.m_arrModClipboard.SetSize(nModSels);
 		for (int iModSel = 0; iModSel < nModSels; iModSel++) {	// for each selected modulation
 			int	iMod = arrModSel[iModSel];
-			const CModulation&	mod = m_arrPane[PANE_SOURCE].m_arrModulator[iMod];
+			const CModulation&	mod = paneSource.m_arrModulator[iMod];
 			int	nSourceID;
 			if (mod.m_iSource >= 0)	// if modulation source track index is valid
 				nSourceID = pDoc->m_Seq.GetID(mod.m_iSource);	// map track index to unique ID
@@ -862,8 +944,15 @@ void CModulationsBar::OnEditCut()
 	OnEditDelete();
 }
 
+void CModulationsBar::OnUpdateEditCut(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(SourcePaneHasFocus()	// supported for source pane only
+		&& gridSource.GetSelectedCount());
+}
+
 void CModulationsBar::OnEditPaste()
 {
+	ASSERT(SourcePaneHasFocus());	// supported for source pane only
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL && pDoc->GetSelectedCount()) {	// if track selection exists
 		CPolymeterDoc::CTrackIDMap	mapTrackID;
@@ -880,7 +969,7 @@ void CModulationsBar::OnEditPaste()
 				arrModCB[iMod] = CModulation(mod.m_iType, iModSource);
 			}
 			int	nTrackSels = pDoc->GetSelectedCount();
-			int	iSelItem = m_grid.GetSelection();
+			int	iSelItem = gridSource.GetSelection();
 			for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
 				int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
 				int	iMod = iSelItem;
@@ -892,23 +981,23 @@ void CModulationsBar::OnEditPaste()
 				pDoc->m_Seq.InsertModulations(iTrack, iMod, arrModCB);	// insert clipboard modulations
 			}
 			pDoc->SetModifiedFlag();
-			const CModulationArray&	arrMod = m_arrPane[PANE_SOURCE].m_arrModulator;
+			const CModulationArray&	arrMod = paneSource.m_arrModulator;
 			int	nPrevMods = arrMod.GetSize();
 			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
 			if (m_bShowDifferences) {	// if showing differences
-				m_grid.Deselect();	// remove selection
+				gridSource.Deselect();	// remove selection
 				for (int iMod = 0; iMod < nPasteMods; iMod++) {	// for each pasted modulation
 					int	iItem = static_cast<int>(arrMod.Find(arrMod[iMod]));	// find pasted element
 					if (iItem >= 0)	// if pasted element found in modulator array
-						m_grid.Select(iItem);	// select pasted item
+						gridSource.Select(iItem);	// select pasted item
 				}
 			} else {	// hiding differences
 				if (iSelItem < 0)	// if no selection
 					iSelItem = nPrevMods;	// appended
 				if (iSelItem >= 0)	// if valid item index
-					m_grid.SelectRange(iSelItem, nPasteMods);	// select pasted items
+					gridSource.SelectRange(iSelItem, nPasteMods);	// select pasted items
 				else	// invalid item index
-					m_grid.Deselect();	// remove selection
+					gridSource.Deselect();	// remove selection
 			}
 		}
 	}
@@ -918,17 +1007,19 @@ void CModulationsBar::OnUpdateEditPaste(CCmdUI *pCmdUI)
 {
 	// enable if track selection exists and modulation clipboard isn't empty
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	pCmdUI->Enable(pDoc != NULL && pDoc->GetSelectedCount() && theApp.m_arrModClipboard.GetSize());
+	pCmdUI->Enable(SourcePaneHasFocus()	// supported for source pane only
+		&& pDoc != NULL && pDoc->GetSelectedCount() && theApp.m_arrModClipboard.GetSize());
 }
 
 void CModulationsBar::OnEditInsert()
 {
+	ASSERT(SourcePaneHasFocus());	// supported for source pane only
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL && pDoc->GetSelectedCount()) {	// if track selection exists
 		pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
 		CModulation	mod(MT_Mute, -1);
 		int	nTrackSels = pDoc->GetSelectedCount();
-		int	iSelItem = m_grid.GetSelection();
+		int	iSelItem = gridSource.GetSelection();
 		for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
 			int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
 			int	iMod = iSelItem;
@@ -940,7 +1031,7 @@ void CModulationsBar::OnEditInsert()
 			pDoc->m_Seq.InsertModulation(iTrack, iMod, mod);
 		}
 		pDoc->SetModifiedFlag();
-		const CModulationArray&	arrMod = m_arrPane[PANE_SOURCE].m_arrModulator;
+		const CModulationArray&	arrMod = paneSource.m_arrModulator;
 		int	nPrevMods = arrMod.GetSize();
 		pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
 		if (m_bShowDifferences) {	// if showing differences
@@ -950,71 +1041,101 @@ void CModulationsBar::OnEditInsert()
 				iSelItem = nPrevMods;	// appended
 		}
 		if (iSelItem >= 0)	// if valid item index
-			m_grid.SelectOnly(iSelItem);	// select inserted item
+			gridSource.SelectOnly(iSelItem);	// select inserted item
 		else	// invalid item index
-			m_grid.Deselect();	// remove selection
+			gridSource.Deselect();	// remove selection
 	}
 }
 
 void CModulationsBar::OnUpdateEditInsert(CCmdUI *pCmdUI)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	pCmdUI->Enable(pDoc != NULL && pDoc->GetSelectedCount());	// if track selection exists
+	pCmdUI->Enable(SourcePaneHasFocus()	// supported for source pane only
+		&& pDoc != NULL && pDoc->GetSelectedCount());	// if track selection exists
 }
 
 void CModulationsBar::OnEditDelete()
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL && pDoc->GetSelectedCount()) {	// if track selection exists
+		int	iPane = GetFocusPaneIndex();
+		CModPane&	pane = m_arrPane[iPane];
 		int	nTrackSels = pDoc->GetSelectedCount();
 		CIntArrayEx	arrModSel;
-		m_grid.GetSelection(arrModSel);
-		ASSERT(arrModSel.GetSize());
+		pane.m_grid.GetSelection(arrModSel);
+		int	nModSels = arrModSel.GetSize();
+		ASSERT(nModSels);	// at least one modulation must be selected
+		const CModulationArray&	arrMod = pane.m_arrModulator;
+		CIntArrayEx	arrTargetSel;
+		CPolymeterDoc::CSaveTrackSelectionPtr	pSaveTrackSel;	// dtor restores document's track selection
+		if (iPane != PANE_SOURCE) {	// if target pane
+			pSaveTrackSel.Attach(SelectTargets(pDoc, arrMod, arrModSel, arrTargetSel));
+			nTrackSels = arrTargetSel.GetSize();	// overwrite selected tracks count with target tracks count
+		}
 		pDoc->NotifyUndoableEdit(0, UCODE_MODULATION);
-		const CModulationArray&	arrMod = m_arrPane[PANE_SOURCE].m_arrModulator;
-		for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
-			int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
-			int	nModSels = arrModSel.GetSize();
-			for (int iModSel = 0; iModSel < nModSels; iModSel++) {
-				const CModulation& modSel = arrMod[arrModSel[iModSel]];
-				int	iMod = INT64TO32(pDoc->m_Seq.GetTrack(iTrack).m_arrModulator.Find(modSel));
-				if (iMod >= 0)	// if modulation found
-					pDoc->m_Seq.RemoveModulation(iTrack, iMod);
+		if (iPane == PANE_SOURCE) {	// if source pane
+			for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
+				int	iTrack = pDoc->m_arrTrackSel[iTrackSel];
+				for (int iModSel = 0; iModSel < nModSels; iModSel++) {
+					const CModulation& modSel = arrMod[arrModSel[iModSel]];
+					int	iMod = INT64TO32(pDoc->m_Seq.GetTrack(iTrack).m_arrModulator.Find(modSel));
+					if (iMod >= 0)	// if modulation found
+						pDoc->m_Seq.RemoveModulation(iTrack, iMod);
+				}
+			}
+		} else {	// target pane
+			const CIntArrayEx&	arrSourceSel = pSaveTrackSel->GetSel();
+			for (int iModSel = 0; iModSel < nModSels; iModSel++) {	// for each selected modulation
+				const CModulation&	mod = arrMod[arrModSel[iModSel]];
+				for (int iTargetSel = 0; iTargetSel < nTrackSels; iTargetSel++) {	// for each selected target track
+					int	iTargetTrack = arrTargetSel[iTargetSel];	// subtle differences from source pane case above
+					int	nSourceSels = arrSourceSel.GetSize();
+					for (int iSourceSel = 0; iSourceSel < nSourceSels; iSourceSel++) {	// for each selected source track
+						int	iSourceTrack = arrSourceSel[iSourceSel];
+						CModulation	modSource(mod.m_iType, iSourceTrack);
+						int	iMod = INT64TO32(pDoc->m_Seq.GetTrack(iTargetTrack).m_arrModulator.Find(modSource));
+						if (iMod >= 0) {	// if modulator found in target track
+							pDoc->m_Seq.RemoveModulation(iTargetTrack, iMod);	// remove modulator from target track
+						}
+					}
+				}
 			}
 		}
+		if (pSaveTrackSel != NULL)	// if track selection was saved
+			pSaveTrackSel.Free();	// restore document's track selection before updating views
 		pDoc->SetModifiedFlag();
 		pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
-		m_grid.Deselect();	// remove selection
+		pane.m_grid.Deselect();	// remove selection
 	}
 }
 
 void CModulationsBar::OnUpdateEditDelete(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_grid.GetSelectedCount());
+	pCmdUI->Enable(GetFocusPane().m_grid.GetSelectedCount());
 }
 
 void CModulationsBar::OnEditSelectAll()
 {
-	m_grid.SelectAll();
+	GetFocusPane().m_grid.SelectAll();
 }
 
 void CModulationsBar::OnUpdateEditSelectAll(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(m_grid.GetItemCount());
+	pCmdUI->Enable(GetFocusPane().m_grid.GetItemCount());
 }
 
 void CModulationsBar::OnListReorder(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	UNREFERENCED_PARAMETER(pNMHDR);	// NMLISTVIEW
 	UNREFERENCED_PARAMETER(pResult);
-	int	iDropPos = m_grid.GetCompensatedDropPos();
+	int	iDropPos = gridSource.GetCompensatedDropPos();
 	if (iDropPos >= 0) {	// if items are actually moving
 		CIntArrayEx	arrModSel;
-		m_grid.GetSelection(arrModSel);
+		gridSource.GetSelection(arrModSel);
 		if (arrModSel.GetSize()) {
 			CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 			if (pDoc != NULL) {
-				const CModulationArray&	arrMod = m_arrPane[PANE_SOURCE].m_arrModulator;
+				const CModulationArray&	arrMod = paneSource.m_arrModulator;
 				int	nTrackSels = pDoc->GetSelectedCount();
 				// selected tracks must all have exact same modulations, otherwise move is unsupported
 				for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
@@ -1029,7 +1150,7 @@ void CModulationsBar::OnListReorder(NMHDR* pNMHDR, LRESULT* pResult)
 				}
 				pDoc->SetModifiedFlag();
 				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
-				m_grid.SelectRange(iDropPos, arrModSel.GetSize());
+				gridSource.SelectRange(iDropPos, arrModSel.GetSize());
 			}
 		}
 	}
@@ -1072,22 +1193,30 @@ void CModulationsBar::OnSortBySource()
 void CModulationsBar::OnUpdateSort(CCmdUI *pCmdUI)
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	pCmdUI->Enable(pDoc != NULL && pDoc->GetSelectedCount());
+	pCmdUI->Enable(SourcePaneHasFocus()	// supported for source pane only
+		&& pDoc != NULL && pDoc->GetSelectedCount());
 }
 
 void CModulationsBar::OnInsertGroup()
 {
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	ASSERT(pDoc != NULL && pDoc->GetSelectedCount());
+	bool	bTargets = TargetPaneHasFocus();
 	if (pDoc != NULL) {
-		int	iSelItem = m_grid.GetSelection();
-		pDoc->CreateModulation(iSelItem);
+		int	iSelItem = gridSource.GetSelection();
+		pDoc->CreateModulation(iSelItem, bTargets);
 	}
+}
+
+void CModulationsBar::OnUpdateInsertGroup(CCmdUI *pCmdUI)
+{
+	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
+	pCmdUI->Enable(pDoc != NULL && pDoc->GetSelectedCount());	// if track selection exists
 }
 
 void CModulationsBar::OnSplitType(UINT nID)
 {
-	int nSplitType = nID - ID_MODULATION_SPLIT_TYPE_HORZ;
+	int nSplitType = nID - ID_SPLIT_TYPE_HORZ;
 	ASSERT(nSplitType >= 0 && nSplitType < SPLIT_TYPES);
 	SetSplitType(nSplitType != SPLIT_HORZ);
 }
@@ -1095,7 +1224,7 @@ void CModulationsBar::OnSplitType(UINT nID)
 void CModulationsBar::OnUpdateSplitType(CCmdUI *pCmdUI)
 {
 	ASSERT(pCmdUI != NULL);
-	int nSplitType = pCmdUI->m_nID - ID_MODULATION_SPLIT_TYPE_HORZ;
+	int nSplitType = pCmdUI->m_nID - ID_SPLIT_TYPE_HORZ;
 	ASSERT(nSplitType >= 0 && nSplitType < SPLIT_TYPES);
 	pCmdUI->SetRadio((nSplitType != SPLIT_HORZ) == m_bIsSplitVert);
 }

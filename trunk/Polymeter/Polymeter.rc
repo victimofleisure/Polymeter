@@ -651,23 +651,14 @@ BEGIN
     END
 END
 
-IDR_MODULATION_TARGET_CTX MENU
+IDR_SPLIT_CTX MENU
 BEGIN
     POPUP "&Modulation"
     BEGIN
-        MENUITEM "Sh&ow Differences",           ID_MODULATION_SHOW_DIFFERENCES
-        MENUITEM "Show Ta&rgets",               ID_MODULATION_SHOW_TARGETS
-    END
-END
-
-IDR_MODULATION_SPLIT_CTX MENU
-BEGIN
-    POPUP "&Modulation"
-    BEGIN
-        MENUITEM "&Horizontal",                 ID_MODULATION_SPLIT_TYPE_HORZ
-        MENUITEM "&Vertical",                   ID_MODULATION_SPLIT_TYPE_VERT
+        MENUITEM "&Horizontal",                 ID_SPLIT_TYPE_HORZ
+        MENUITEM "&Vertical",                   ID_SPLIT_TYPE_VERT
         MENUITEM SEPARATOR
-        MENUITEM "&Center",                     ID_MODULATION_SPLIT_CENTER
+        MENUITEM "&Center",                     ID_SPLIT_CENTER
     END
 END
 
@@ -960,7 +951,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "Modulation"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "&Source Tracks:",IDC_STATIC,7,7,51,8
+    LTEXT           "&Source Tracks:",IDC_MODULATION_CAP_SOURCE,7,7,51,8
     LISTBOX         IDC_MODULATION_SOURCE_LIST,7,17,150,134,LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
     LTEXT           "&Type:",IDC_STATIC,166,7,20,8
     LISTBOX         IDC_MODULATION_TYPE_LIST,166,17,80,134,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
@@ -1491,12 +1482,13 @@ BEGIN
     IDS_MIDI_SYS_STAT_TUNE_REQUEST "Tune Request"
     IDS_MODERR_INFINITE_LOOP "Infinite loop"
     IDS_MODERR_UNSUPPORTED_MOD_TYPE "Unsupported modulation type"
+    IDS_MODULATION_CAP_TARGET "T&arget Tracks:"
     IDS_MOD_DIFFERENCES     "<Differences>"
-    IDS_MOD_SOURCE          "Source"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_MOD_SOURCE          "Source"
     IDS_MOD_TARGET          "Target"
     IDS_NONE                "<None>"
     IDS_NOTE_OVERLAP_Allow  "Allow"
@@ -1518,11 +1510,11 @@ BEGIN
     IDS_OPT_DESC_Midi_bSendMidiClock 
                             "Transmit MIDI synchronization messages to slave device"
     IDS_OPT_DESC_Midi_bThru "Pass MIDI input through to output device"
-    IDS_OPT_DESC_Midi_iInputDevice "Selected MIDI input device"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_DESC_Midi_iInputDevice "Selected MIDI input device"
     IDS_OPT_DESC_Midi_iInputQuant 
                             "Quantization for converting MIDI input to steps"
     IDS_OPT_DESC_Midi_iOutputDevice "Selected MIDI output device"
@@ -1548,11 +1540,11 @@ BEGIN
                             "Frequency at which view is updated, in Hertz"
     IDS_OPT_DESC_View_fZoomDelta "Zoom step size, as a percentage"
     IDS_OPT_DESC_View_nLiveFontHeight "Height of live view font, in pixels"
-    IDS_OPT_GROUP_General   "General"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_GROUP_General   "General"
     IDS_OPT_GROUP_Graph     "Graph"
     IDS_OPT_GROUP_Midi      "MIDI"
     IDS_OPT_GROUP_View      "View"
@@ -1568,11 +1560,11 @@ BEGIN
     IDS_OPT_NAME_Midi_iInputQuant "Input Quantization"
     IDS_OPT_NAME_Midi_iOutputDevice "Output Device"
     IDS_OPT_NAME_Midi_nBufferSize "Buffer Size"
-    IDS_OPT_NAME_Midi_nDefaultVelocity "Default Velocity"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_OPT_NAME_Midi_nDefaultVelocity "Default Velocity"
     IDS_OPT_NAME_Midi_nLatency "Latency"
     IDS_OPT_NAME_Midi_nRecordInput "Record Input"
     IDS_OPT_NAME_View_bShowCurPos "Show Current Position"
@@ -1589,11 +1581,11 @@ BEGIN
                             "How to handle overlapping instances of the same note on a channel"
     IDS_PDR_DESC_nKeySig    "Key in which notes are displayed"
     IDS_PDR_DESC_nLoopFrom  "Starting position of loop, in beats and ticks"
-    IDS_PDR_DESC_nLoopTo    "Ending position of loop, in beats and ticks"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_DESC_nLoopTo    "Ending position of loop, in beats and ticks"
     IDS_PDR_DESC_nMeter     "Number of beats in a measure"
     IDS_PDR_DESC_nRecordOffset 
                             "Offset added to recorded MIDI event times during playback, in ticks"
@@ -1610,11 +1602,11 @@ BEGIN
     IDS_PDR_NAME_nRecordOffset "Record Offset"
     IDS_PDR_NAME_nSongLength "Song Length"
     IDS_PDR_NAME_nStartPos  "Start Position"
-    IDS_PDR_NAME_nTimeDiv   "Timebase"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_PDR_NAME_nTimeDiv   "Timebase"
     IDS_PHASE_EXPORT_OVERWRITE_WARN 
                             "Destination folder already contains an image sequence.\nDo you want to replace it?"
     IDS_PHASE_PERIOD_UNIT   "Period Unit"
@@ -1631,11 +1623,11 @@ BEGIN
     IDS_SC_MAXIMIZE         "&Maximize"
     IDS_SC_RESTORE          "&Restore"
     IDS_SEQERR_BAD_TIME_FORMAT "Unsupported MIDI time format."
-    IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
 END
 
 STRINGTABLE
 BEGIN
+    IDS_SEQERR_BUFFER_OVERRUN "MIDI event buffer size exceeded."
     IDS_SEQERR_CALLBACK_TOO_LONG "Sequencer callback took too long."
     IDS_SEQERR_TOO_MANY_RECURSIONS 
                             "Modulation exceeded the maximum number of recursions."
@@ -1652,11 +1644,11 @@ BEGIN
     IDS_STATUS_PANE1        "Pane 1"
     IDS_STATUS_PANE2        "Pane 2"
     IDS_STEP_TIE            "Tie"
-    IDS_TIME_TO_REPEAT_BEATS "beats"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TIME_TO_REPEAT_BEATS "beats"
     IDS_TIME_TO_REPEAT_DAYS "days"
     IDS_TIME_TO_REPEAT_TICKS "ticks"
     IDS_TIME_TO_REPEAT_YEARS "years"
@@ -1672,11 +1664,11 @@ BEGIN
     IDS_TRACK_TYPE_TEMPO    "Tempo"
     IDS_TRACK_TYPE_WHEEL    "Wheel"
     IDS_TRANSPORT_LOOP      "Loop"
-    IDS_TRANSPORT_PAUSE     "Pause"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRANSPORT_PAUSE     "Pause"
     IDS_TRANSPORT_PLAY      "Play"
     IDS_TRANSPORT_RECORD    "Record"
     IDS_TRK_Channel         "Channel"
@@ -1692,11 +1684,11 @@ BEGIN
     IDS_TRK_Position        "Position"
     IDS_TRK_Quant           "Quant"
     IDS_TRK_Range           "Range"
-    IDS_TRK_RangeStart      "Range Start"
 END
 
 STRINGTABLE
 BEGIN
+    IDS_TRK_RangeStart      "Range Start"
     IDS_TRK_RangeType       "Range Type"
     IDS_TRK_STEP            "Step"
     IDS_TRK_Scale           "Scale"
@@ -1771,9 +1763,6 @@ BEGIN
     ID_MODULATION_SHOW_TARGETS "Show modulation targets"
     ID_MODULATION_SORT_BY_SOURCE "Sort modulations by source track"
     ID_MODULATION_SORT_BY_TYPE "Sort modulations by type"
-    ID_MODULATION_SPLIT_CENTER "Move split to center"
-    ID_MODULATION_SPLIT_TYPE_HORZ "Split window horizontally"
-    ID_MODULATION_SPLIT_TYPE_VERT "Split window vertically"
     ID_PARTS_SELECT_TRACKS  "Select tracks belonging to selected parts"
     ID_PARTS_SORT_BY_NAME   "Sort parts by name"
     ID_PARTS_SORT_BY_TRACK  "Sort parts by first track"
@@ -1781,19 +1770,22 @@ BEGIN
     ID_PHASE_FULL_SCREEN    "Toggle full screen mode for this pane"
     ID_PHASE_PERIOD_UNIT    "Specify amount to divide periods by, in ticks"
     ID_PHASE_STYLE_00_CIRCULAR_ORBITS "Make orbits circular"
+    ID_PHASE_STYLE_01_3D_PLANETS "Show planets in 3D"
+    ID_PHASE_STYLE_02_NIGHT_SKY "Show dark background"
+    ID_PHASE_STYLE_03_CROSSHAIRS "Show crosshairs"
 END
 
 STRINGTABLE
 BEGIN
-    ID_PHASE_STYLE_01_3D_PLANETS "Show planets in 3D"
-    ID_PHASE_STYLE_02_NIGHT_SKY "Show dark background"
-    ID_PHASE_STYLE_03_CROSSHAIRS "Show crosshairs"
     ID_PHASE_STYLE_04_PERIODS "Show period labels"
     ID_PHASE_STYLE_05_CONVERGENCES "Show convergences"
     ID_PIANO_COLOR_VELOCITY "Color keys to show note velocities"
     ID_PIANO_INSERT_TRACK   "Insert track for selected note"
     ID_PIANO_ROTATE_LABELS  "Rotate key labels sideways"
     ID_PIANO_SHOW_KEY_LABELS "Show note names on piano keys"
+    ID_SPLIT_CENTER "Move split to center"
+    ID_SPLIT_TYPE_HORZ "Split window horizontally"
+    ID_SPLIT_TYPE_VERT "Split window vertically"
     ID_STEP_VALUES_DELIMIT_COMMA "Export comma delimited values"
     ID_STEP_VALUES_DELIMIT_TAB "Export tab delimited values"
     ID_STEP_VALUES_EXPORT_COPY 

@@ -924,7 +924,7 @@ void CTrackArray::OnImportTracksError(int nErrMsgFormatID, int iRow, int iCol)
 {
 	CString	sLocation;
 	sLocation.Format(IDS_IMPORT_ERR_LOCATION, iRow + 1, iCol + 1);
-	AfxMessageBox(LDS(nErrMsgFormatID) + '\n' + sLocation);
+	AfxMessageBox(LDS(nErrMsgFormatID) + '\n' + sLocation, MB_OK, nErrMsgFormatID);
 	AfxThrowUserException();
 }
 

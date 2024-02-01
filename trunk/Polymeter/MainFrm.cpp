@@ -63,6 +63,7 @@
 		53		15feb22	fix MIDI error handling to avoid endless messages
 		54		25jan23	add method to show panes menu
 		55		24jan24	use sequencer's warning error attribute
+		56		29jan24	use class to save and restore track selection
 
 */
 
@@ -708,10 +709,10 @@ bool CMainFrame::DoFindReplace()
 		}
 		if (arrHit.IsEmpty())	// if no hits
 			return false;	// failure: string not found
-		CIntArrayEx	arrTrackSel(pDoc->m_arrTrackSel);	// save document's track selection
+		CPolymeterDoc::CSaveTrackSelectionPtr 	pSaveTrackSel(pDoc);	// save track selection
 		pDoc->m_arrTrackSel = arrHit;	// set our track selection for undo notification
 		pDoc->NotifyUndoableEdit(CTrack::PROP_Name, UCODE_MULTI_TRACK_PROP);
-		pDoc->m_arrTrackSel = arrTrackSel;	// restore document's track selection
+		pSaveTrackSel.Free();	// restore track selection
 		int	nHits = arrHit.GetSize();
 		for (int iHit = 0; iHit < nHits; iHit++) {	// for each hit
 			int	iHitTrack = arrHit[iHit];

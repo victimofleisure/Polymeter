@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      15apr20	initial version
+		01		29jan24	add select targets flag
 
 */
 
@@ -27,6 +28,7 @@ public:
 
 // Public data
 	CModulationArray	m_arrMod;
+	bool	m_bSelTargets;		// true if selecting targets instead of sources
 
 // Overrides
 	protected:

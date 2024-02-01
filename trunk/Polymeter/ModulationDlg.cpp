@@ -8,6 +8,7 @@
 		revision history:
 		rev		date	comments
         00      15apr20	initial version
+		01		29jan24	add select targets flag
 
 */
 
@@ -23,6 +24,7 @@ CModulationDlg::CModulationDlg(CPolymeterDoc *pDoc, CWnd* pParentWnd /*=NULL*/)
 {
 	ASSERT(pDoc != NULL);
 	m_pDoc = pDoc;
+	m_bSelTargets = false;
 }
 
 bool CModulationDlg::GetListBoxSelection(CListBox& wndListBox, CIntArrayEx& arrSelection)
@@ -68,6 +70,9 @@ BOOL CModulationDlg::OnInitDialog()
 	for (int iType = 0; iType < MODULATION_TYPES; iType++) {	// for each modulation type
 		m_listType.AddString(GetModulationTypeName(iType));	// add modulation type name to type list box
 		m_listType.SetCurSel(0);	// select default item
+	}
+	if (m_bSelTargets) {	// if selecting targets instead of sources, change source list caption
+		GetDlgItem(IDC_MODULATION_CAP_SOURCE)->SetWindowText(LDS(IDS_MODULATION_CAP_TARGET));
 	}
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE

@@ -47,6 +47,7 @@
 		37		19may22	add loop ruler selection attribute
 		38		25oct22	add command to select all unmuted tracks
 		39		16dec22	add quant string conversions that support fractions
+		40		29jan24	add class to save and restore track selection
 
 */
 
@@ -166,6 +167,21 @@ public:
 		CString	m_sRedoMenuItem;	// redo's edit menu item string; prefixed redo title
 		static	CString	m_sUndoPrefix;	// prefix for undo's edit menu item, from resource
 		static	CString	m_sRedoPrefix;	// prefix for redo's edit menu item, from resource
+	};
+	class CSaveTrackSelection {
+	public:
+		CSaveTrackSelection(CPolymeterDoc *pDoc);
+		~CSaveTrackSelection();
+		const CIntArrayEx&	GetSel() const;
+
+	protected:
+		CPolymeterDoc	*m_pDoc;		// pointer to document
+		CIntArrayEx	m_arrTrackSel;		// saved track selection array
+	};
+	class CSaveTrackSelectionPtr : public CAutoPtr<CSaveTrackSelection> {
+	public:
+		CSaveTrackSelectionPtr() {};
+		CSaveTrackSelectionPtr(CPolymeterDoc *pDoc);
 	};
 
 // Public data
@@ -306,7 +322,7 @@ public:
 	void	SortMappings(int iProp, bool bDescending = false);
 	void	LearnMapping(int iMapping, DWORD nInMidiMsg, bool bCoalesceEdit = false);
 	void	LearnMappings(const CIntArrayEx& arrSelection, DWORD nInMidiMsg, bool bCoalesceEdit = false);
-	void	CreateModulation(int iSelItem = -1);
+	void	CreateModulation(int iSelItem = -1, bool bSelTargets = false);
 	void	ChangeTimeDivision(int nNewTimeDivTicks);
 	void	SetLoopRange(CLoopRange rngTicks);
 	void	OnLoopRangeChange();
@@ -683,4 +699,26 @@ inline int CPolymeterDoc::CellToTime(int iCell, double fTicksPerCell, int nSongT
 inline bool CPolymeterDoc::IsLoopRangeValid() const
 {
 	return m_nLoopFrom < m_nLoopTo;
+}
+
+inline CPolymeterDoc::CSaveTrackSelection::CSaveTrackSelection(CPolymeterDoc *pDoc)
+{
+	ASSERT(pDoc != NULL);	// document must exist
+	m_pDoc = pDoc;
+	m_arrTrackSel = pDoc->m_arrTrackSel;	// save document's track selection
+}
+
+inline CPolymeterDoc::CSaveTrackSelection::~CSaveTrackSelection()
+{
+	m_pDoc->m_arrTrackSel = m_arrTrackSel;	// restore document's track selection
+}
+
+inline const CIntArrayEx& CPolymeterDoc::CSaveTrackSelection::GetSel() const
+{
+	return m_arrTrackSel;
+}
+
+inline CPolymeterDoc::CSaveTrackSelectionPtr::CSaveTrackSelectionPtr(CPolymeterDoc *pDoc)
+{
+	Attach(new CSaveTrackSelection(pDoc));
 }

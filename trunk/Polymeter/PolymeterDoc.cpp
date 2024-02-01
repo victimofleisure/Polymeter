@@ -92,6 +92,7 @@
 		82		27nov23	specify key signature in OnFileExport
 		83		19dec23	bump file version for internal track type
 		84		24jan24	use sequencer's warning error attribute
+		85		29jan24	add class to save and restore track selection
 
 */
 
@@ -393,14 +394,14 @@ void CPolymeterDoc::ReadProperties(LPCTSTR pszPath)
 	if (sFileID != FILE_ID) {	// if unexpected file ID
 		CString	msg;
 		AfxFormatString1(msg, IDS_DOC_BAD_FORMAT, pszPath);
-		AfxMessageBox(msg);
+		AfxMessageBox(msg, MB_OK, IDS_DOC_BAD_FORMAT);
 		AfxThrowUserException();	// fatal error
 	}
 	fIni.Get(RK_FILE_VERSION, m_nFileVersion);
 	if (m_nFileVersion > FILE_VERSION) {	// if file is from a newer version
 		CString	msg;
 		AfxFormatString1(msg, IDS_DOC_NEWER_VERSION, pszPath);
-		AfxMessageBox(msg);
+		AfxMessageBox(msg, MB_OK, IDS_DOC_NEWER_VERSION);
 	}
 	#define PROPDEF(group, subgroup, proptype, type, name, initval, minval, maxval, itemname, items) \
 		if (PT_##proptype == PT_ENUM) \
@@ -1072,7 +1073,7 @@ void CPolymeterDoc::SetTrackLength(const CIntArrayEx& arrLength)
 
 void CPolymeterDoc::SetTrackLength(const CRect& rSelection, int nLength)
 {
-	CIntArrayEx	arrPrevTrackSel(m_arrTrackSel);	// save track selection
+	CSaveTrackSelectionPtr	pSaveTrackSel(this);	// save track selection
 	MakeTrackSelection(rSelection, m_arrTrackSel);	// create track selection from step selection
 	CIntArrayEx	arrLength;
 	int	nSels = GetSelectedCount();
@@ -1080,7 +1081,7 @@ void CPolymeterDoc::SetTrackLength(const CRect& rSelection, int nLength)
 	for (int iSel = 0; iSel < nSels; iSel++)	// for each selected track
 		arrLength[iSel] = nLength;	// make same length
 	SetTrackLength(arrLength);
-	m_arrTrackSel = arrPrevTrackSel;	// restore previous track selection
+	pSaveTrackSel.Free();	// restore track selection
 }
 
 bool CPolymeterDoc::ReverseTracks()
@@ -3713,10 +3714,10 @@ bool CPolymeterDoc::TrackFill(const CRect *prStepSel)
 	dlg.StoreState();	// save dialog state
 	if (dlg.m_bSigned)	// if signed values
 		dlg.m_rngVal += MIDI_NOTES / 2;	// TrackFill expects unsigned value range
-	CIntArrayEx	arrPrevTrackSel(m_arrTrackSel);	// save track selection
+	CSaveTrackSelectionPtr	pSaveTrackSel(this);	// save track selection
 	m_arrTrackSel = arrTrackSel;	// undo handler uses member track selection
 	NotifyUndoableEdit(0, UCODE_FILL_STEPS);	// notify undo
-	m_arrTrackSel = arrPrevTrackSel;	// restore previous track selection
+	pSaveTrackSel.Free();	// restore track selection
 	TrackFill(arrTrackSel, dlg.m_rngStep, dlg.m_rngVal, dlg.m_iFunction - 1, dlg.m_fFrequency, dlg.m_fPhase, dlg.m_fCurviness);
 	CMultiItemPropHint	hint(arrTrackSel);
 	UpdateAllViews(NULL, HINT_MULTI_TRACK_STEPS, &hint);
@@ -3962,13 +3963,31 @@ void CPolymeterDoc::LearnMappings(const CIntArrayEx& arrSelection, DWORD nInMidi
 	UpdateAllViews(NULL, CPolymeterDoc::HINT_MULTI_MAPPING_PROP, &hint);
 }
 
-void CPolymeterDoc::CreateModulation(int iSelItem)
+void CPolymeterDoc::CreateModulation(int iSelItem, bool bSelTargets)
 {
 	ASSERT(GetSelectedCount());
 	CSaveRestoreFocus	focus;	// restore focus after modal dialog
 	CModulationDlg	dlg(this);
+	dlg.m_bSelTargets = bSelTargets;
 	if (dlg.DoModal() == IDOK) {
 		ASSERT(dlg.m_arrMod.GetSize());	// at least one modulator
+		CSaveTrackSelectionPtr	pSaveTrackSel;
+		if (bSelTargets) {	// if selecting targets instead of sources
+			pSaveTrackSel.Attach(new CSaveTrackSelection(this));	// save track selection
+			int	nTargets = dlg.m_arrMod.GetSize();
+			m_arrTrackSel.SetSize(nTargets);	// replace track selection with target tracks
+			for (int iTarget = 0; iTarget < nTargets; iTarget++) {	// for each target
+				m_arrTrackSel[iTarget] = dlg.m_arrMod[iTarget].m_iSource;
+			}
+			int	nSources = pSaveTrackSel->GetSel().GetSize();
+			int	iModType = dlg.m_arrMod[0].m_iType;	// all items share the same type
+			dlg.m_arrMod.SetSize(nSources);	// replace modulation array with source tracks
+			for (int iSource = 0; iSource < nSources; iSource++) {	// for each source
+				CModulation	mod(iModType, pSaveTrackSel->GetSel()[iSource]);
+				dlg.m_arrMod[iSource] = mod;
+			}
+			iSelItem = -1; // insert position is unsupported for targets; always append
+		}
 		NotifyUndoableEdit(0, UCODE_MODULATION);
 		int	nTrackSels = GetSelectedCount();
 		for (int iTrackSel = 0; iTrackSel < nTrackSels; iTrackSel++) {	// for each selected track
@@ -3978,6 +3997,8 @@ void CPolymeterDoc::CreateModulation(int iSelItem)
 				iMod = m_Seq.GetModulationCount(iTrack);	// append
 			m_Seq.InsertModulations(iTrack, iMod, dlg.m_arrMod);	// insert modulation array
 		}
+		if (pSaveTrackSel != NULL)	// if track selection was saved
+			pSaveTrackSel.Free();	// restore track selection before updating views
 		SetModifiedFlag();
 		UpdateAllViews(NULL, CPolymeterDoc::HINT_MODULATION);
 	}
@@ -4912,10 +4933,10 @@ void CPolymeterDoc::OnToolsImportModulations()
 		CPackedModulationArray	arrMod;
 		arrMod.Import(fd.GetPathName(), GetTrackCount());
 		if (arrMod.GetSize()) {	// if modulations were imported
-			CIntArrayEx	arrTrackSel(m_arrTrackSel);	// save track selection
+			CSaveTrackSelectionPtr	pSaveTrackSel(this);	// save track selection
 			GetSelectAll(m_arrTrackSel);	// select all tracks for undo notification
 			NotifyUndoableEdit(0, UCODE_MODULATION);	// notify undo
-			m_arrTrackSel = arrTrackSel;	// restore track selection
+			pSaveTrackSel.Free();	// restore track selection
 			m_Seq.SetModulations(arrMod);	// replace existing modulations with imported ones
 			UpdateAllViews(NULL, HINT_MODULATION);
 			SetModifiedFlag();

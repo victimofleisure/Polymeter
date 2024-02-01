@@ -38,7 +38,7 @@
 		28		29oct22	bump resource version
 		29		16dec22	bump resource version
 		30		17feb23	bump resource version
-		31		20jan24	bump resource version
+		31		30jan24	bump resource version
 
 */
 
@@ -76,7 +76,7 @@
 #define RK_TIE_NOTES _T("bTieNotes")
 #define RK_RESOURCE_VERSION _T("nResourceVersion")
 
-const int CPolymeterApp::m_nNewResourceVersion = 12;	// update if resource change breaks customization
+const int CPolymeterApp::m_nNewResourceVersion = 13;	// update if resource change breaks customization
 
 #include "HelpIDs.h"	// help IDs generated automatically by doc2web
 const CPolymeterApp::HELP_RES_MAP CPolymeterApp::m_HelpResMap[] = {
@@ -626,14 +626,17 @@ void CPolymeterApp::OnMidiError(MMRESULT nResult)
 	if (!m_bInMsgBox) {	// if not already displaying message box
 		CSaveObj<bool>	save(m_bInMsgBox, true);	// save and set reentry guard
 		CString	sError;
+		int	nIDHelp;
 		if (nResult > CSequencer::SEQERR_FIRST && nResult < CSequencer::SEQERR_LAST) {
 			int	iSeqErr = static_cast<int>(nResult) - (CSequencer::SEQERR_FIRST + 1);
-			sError.LoadString(nSeqErrorId[iSeqErr]);
+			nIDHelp = nSeqErrorId[iSeqErr];
+			sError.LoadString(nIDHelp);
 		} else {
 			sError.Format(LDS(IDS_SEQ_MIDI_ERROR), nResult);
 			sError += '\n' + CMidiOut::GetErrorString(nResult);
+			nIDHelp = -1;
 		}
-		AfxMessageBox(sError);
+		AfxMessageBox(sError, MB_OK, nIDHelp);
 	}
 }
 

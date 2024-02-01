@@ -15,7 +15,8 @@
 		05		19nov20	add show changed handler
 		06		20jun21	add list accessor
 		07		29jan22	don't horizontally scroll source column
-		08		20jan24	add targets pane
+		08		20jan24	add target pane
+		09		29jan24	add target pane editing
 
 */
 
@@ -25,6 +26,7 @@
 #include "GridCtrl.h"
 #include "FixedArray.h"
 #include "SplitView.h"
+#include "PolymeterDoc.h"	// for CSaveTrackSelection
 
 class CModulationsBar : public CMyDockablePane, public CTrackBase
 {
@@ -36,6 +38,9 @@ public:
 // Attributes
 public:
 	CGridCtrl&	GetListCtrl();
+	bool	IsShowingTargets() const;
+	bool	TargetPaneHasFocus() const;
+	bool	SourcePaneHasFocus() const;
 
 // Operations
 public:
@@ -59,12 +64,12 @@ protected:
 	class CModPane {
 	public:
 		CModPane();
-		CListCtrlExSel	*m_pList;		// pointer to grid or list control
+		CModGridCtrl	m_grid;			// grid control
 		CModulationArray	m_arrModulator;	// array of cached modulations for current track selection
 		CIntArrayEx	m_arrModCount;		// in show differences mode, instance count for each cached modulation
 		bool	m_bModDifferences;		// true if selected tracks have differing modulations
-		void	OnTrackNameChange(int iSelItem) const;
-		void	OnTrackNameChange(const CIntArrayEx& arrSel) const;
+		void	OnTrackNameChange(int iSelItem);
+		void	OnTrackNameChange(const CIntArrayEx& arrSel);
 	};
 	class CModulationSplitView : public CSplitView {
 	public:
@@ -104,7 +109,7 @@ protected:
 		SPLIT_TYPES
 	};
 	enum {	// pane state flags
-		PSF_SHOW_TARGETS		= 0x01,		// non-zero if showing targets pane
+		PSF_SHOW_TARGETS		= 0x01,		// non-zero if showing target pane
 		PSF_SPLIT_TYPE			= 0x02,		// non-zero if vertical split, else horizontal
 	};
 	enum {	// split persistence flags
@@ -116,8 +121,6 @@ protected:
 	static const CGridCtrl::COL_INFO	m_arrColInfo[COLUMNS];
 
 // Member data
-	CModGridCtrl	m_grid;			// grid control
-	CListCtrlExSel	m_listTarget;	// list control for targets
 	CFixedArray<CModPane, PANES>	m_arrPane;	// array of panes
 	bool	m_bUpdatePending;		// true if an update is pending
 	bool	m_bShowDifferences;		// true if showing modulation differences
@@ -146,6 +149,9 @@ protected:
 	void	LoadSplitPos();
 	void	SetSplitPos(float fPos, bool bUpdate = true);
 	void	OnSplitDrag(int nNewSplit);
+	int		GetFocusPaneIndex() const;
+	CModPane&	GetFocusPane();
+	static	CPolymeterDoc::CSaveTrackSelection *SelectTargets(CPolymeterDoc *pDoc, const CModulationArray& arrMod, const CIntArrayEx& arrModSel, CIntArrayEx& arrTargetSel);
 
 // Overrides
 	virtual void OnShowChanged(bool bShow);
@@ -163,6 +169,7 @@ protected:
 	afx_msg void OnListColHdrReset();
 	afx_msg void OnEditCopy();
 	afx_msg void OnEditCut();
+	afx_msg void OnUpdateEditCut(CCmdUI *pCmdUI);
 	afx_msg void OnEditPaste();
 	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
 	afx_msg void OnEditSelectAll();
@@ -180,6 +187,7 @@ protected:
 	afx_msg void OnSortBySource();
 	afx_msg void OnUpdateSort(CCmdUI *pCmdUI);
 	afx_msg void OnInsertGroup();
+	afx_msg void OnUpdateInsertGroup(CCmdUI *pCmdUI);
 	afx_msg void OnSplitType(UINT nID);
 	afx_msg void OnUpdateSplitType(CCmdUI *pCmdUI);
 	afx_msg void OnSplitCenter();
@@ -187,11 +195,36 @@ protected:
 
 inline CGridCtrl& CModulationsBar::GetListCtrl()
 {
-	return m_grid;
+	return GetFocusPane().m_grid;
+}
+
+inline bool CModulationsBar::IsShowingTargets() const
+{
+	return m_bShowTargets;
+}
+
+inline bool CModulationsBar::TargetPaneHasFocus() const
+{
+	return m_arrPane[PANE_TARGET].m_grid.m_hWnd		// true if target grid control exists
+		&& m_arrPane[PANE_TARGET].m_grid.m_hWnd == ::GetFocus();	// and also has focus
+}
+
+inline bool CModulationsBar::SourcePaneHasFocus() const
+{
+	return !TargetPaneHasFocus();
+}
+
+inline int CModulationsBar::GetFocusPaneIndex() const
+{
+	return TargetPaneHasFocus() ? PANE_TARGET : PANE_SOURCE;
+}
+
+inline CModulationsBar::CModPane& CModulationsBar::GetFocusPane()
+{
+	return m_arrPane[GetFocusPaneIndex()];
 }
 
 inline CModulationsBar::CModPane::CModPane()
 {
-	m_pList = NULL;
 	m_bModDifferences = false;
 }
