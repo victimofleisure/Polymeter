@@ -421,7 +421,7 @@ END
 
 IDR_LIST_COL_HDR MENU
 BEGIN
-    POPUP ""
+    POPUP "List Header"
     BEGIN
         MENUITEM "&Reset",                      ID_LIST_COL_HDR_RESET
     END
@@ -429,7 +429,7 @@ END
 
 IDR_PRESETS_CTX MENU
 BEGIN
-    POPUP "&Presets"
+    POPUP "P&resets"
     BEGIN
         MENUITEM "&Create",                     ID_TRACK_PRESET_CREATE
         MENUITEM "&Apply",                      ID_TRACK_PRESET_APPLY
@@ -507,7 +507,7 @@ END
 
 IDR_PIANO_CTX MENU
 BEGIN
-    POPUP "&Piano"
+    POPUP "Pia&no"
     BEGIN
         POPUP "&Channel Filter"
         BEGIN
@@ -571,7 +571,7 @@ END
 
 IDR_STEP_VALUES_CTX MENU
 BEGIN
-    POPUP ""
+    POPUP "Step &Values"
     BEGIN
         POPUP "&Format"
         BEGIN
@@ -604,7 +604,7 @@ END
 
 IDR_MAPPING_CTX MENU
 BEGIN
-    POPUP ""
+    POPUP "M&apping"
     BEGIN
         MENUITEM "&Insert",                     ID_EDIT_INSERT
         MENUITEM "&Delete",                     ID_EDIT_DELETE
@@ -621,7 +621,7 @@ END
 
 IDR_PHASE_CTX MENU
 BEGIN
-    POPUP "ERT"
+    POPUP "P&hase"
     BEGIN
         MENUITEM "&Export Video...",            ID_PHASE_EXPORT_VIDEO
         MENUITEM SEPARATOR
@@ -653,7 +653,7 @@ END
 
 IDR_SPLIT_CTX MENU
 BEGIN
-    POPUP "&Modulation"
+    POPUP "Spli&t"
     BEGIN
         MENUITEM "&Horizontal",                 ID_SPLIT_TYPE_HORZ
         MENUITEM "&Vertical",                   ID_SPLIT_TYPE_VERT
@@ -1783,9 +1783,9 @@ BEGIN
     ID_PIANO_INSERT_TRACK   "Insert track for selected note"
     ID_PIANO_ROTATE_LABELS  "Rotate key labels sideways"
     ID_PIANO_SHOW_KEY_LABELS "Show note names on piano keys"
-    ID_SPLIT_CENTER "Move split to center"
-    ID_SPLIT_TYPE_HORZ "Split window horizontally"
-    ID_SPLIT_TYPE_VERT "Split window vertically"
+    ID_SPLIT_CENTER         "Move split to center"
+    ID_SPLIT_TYPE_HORZ      "Split window horizontally"
+    ID_SPLIT_TYPE_VERT      "Split window vertically"
     ID_STEP_VALUES_DELIMIT_COMMA "Export comma delimited values"
     ID_STEP_VALUES_DELIMIT_TAB "Export tab delimited values"
     ID_STEP_VALUES_EXPORT_COPY 
