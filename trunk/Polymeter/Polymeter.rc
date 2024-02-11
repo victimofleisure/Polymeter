@@ -429,7 +429,7 @@ END
 
 IDR_PRESETS_CTX MENU
 BEGIN
-    POPUP "P&resets"
+    POPUP "Presets"
     BEGIN
         MENUITEM "&Create",                     ID_TRACK_PRESET_CREATE
         MENUITEM "&Apply",                      ID_TRACK_PRESET_APPLY
@@ -441,7 +441,7 @@ END
 
 IDR_PARTS_CTX MENU
 BEGIN
-    POPUP "&Parts"
+    POPUP "Parts"
     BEGIN
         MENUITEM "&Create",                     ID_TRACK_PART_CREATE
         MENUITEM "&Delete",                     ID_EDIT_DELETE
@@ -459,7 +459,7 @@ END
 
 IDR_MODULATION_CTX MENU
 BEGIN
-    POPUP "&Modulation"
+    POPUP "Modulation"
     BEGIN
         MENUITEM "&Insert",                     ID_EDIT_INSERT
         MENUITEM "Insert &Group...",            ID_MODULATION_INSERT_GROUP
@@ -482,7 +482,7 @@ END
 
 IDR_MIDI_EVENT_CTX MENU
 BEGIN
-    POPUP "MIDI &Event"
+    POPUP "MIDI Event"
     BEGIN
         POPUP "&Channel Filter"
         BEGIN
@@ -507,7 +507,7 @@ END
 
 IDR_PIANO_CTX MENU
 BEGIN
-    POPUP "Pia&no"
+    POPUP "Piano"
     BEGIN
         POPUP "&Channel Filter"
         BEGIN
@@ -530,7 +530,7 @@ END
 
 IDR_GRAPH_CTX MENU
 BEGIN
-    POPUP "&Graph"
+    POPUP "Graph"
     BEGIN
         POPUP "&Scope"
         BEGIN
@@ -571,7 +571,7 @@ END
 
 IDR_STEP_VALUES_CTX MENU
 BEGIN
-    POPUP "Step &Values"
+    POPUP "Step Values"
     BEGIN
         POPUP "&Format"
         BEGIN
@@ -604,7 +604,7 @@ END
 
 IDR_MAPPING_CTX MENU
 BEGIN
-    POPUP "M&apping"
+    POPUP "Mapping"
     BEGIN
         MENUITEM "&Insert",                     ID_EDIT_INSERT
         MENUITEM "&Delete",                     ID_EDIT_DELETE
@@ -621,7 +621,7 @@ END
 
 IDR_PHASE_CTX MENU
 BEGIN
-    POPUP "P&hase"
+    POPUP "Phase"
     BEGIN
         MENUITEM "&Export Video...",            ID_PHASE_EXPORT_VIDEO
         MENUITEM SEPARATOR
@@ -653,7 +653,7 @@ END
 
 IDR_SPLIT_CTX MENU
 BEGIN
-    POPUP "Spli&t"
+    POPUP "Split"
     BEGIN
         MENUITEM "&Horizontal",                 ID_SPLIT_TYPE_HORZ
         MENUITEM "&Vertical",                   ID_SPLIT_TYPE_VERT
