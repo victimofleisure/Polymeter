@@ -34,6 +34,7 @@
 		24		19dec23	add internal track type and controllers
 		25		09jan24	add base class to streamline reader init
 		26		24jan24	add warning error attribute
+		27		10feb24	add flag for export's all notes off behavior
 
 */
 
@@ -155,7 +156,8 @@ public:
 	USHORT	GetNoteOverlapMethods() const;
 	void	SetNoteOverlapMethods(USHORT nMask);
 	void	SetNoteOverlapMethod(int iChannel, bool bIsMerge);
-	static	void	SetExportTimeKeySigs(bool bEnable);
+	static	void	SetExportTimeKeySigs(bool bEnable);	// for regression testing
+	static	void	SetExportAllNotesOff(bool bEnable);	// for regression testing
 	static	bool	IsErrorWarning(MMRESULT nSeqError);
 
 // Operations
@@ -247,6 +249,7 @@ protected:
 	CLoopRange	m_rngLoop;			// loop range in ticks
 	CChannelStateArray	m_arrChannelState;	// state information for each MIDI channel
 	static	bool	m_bExportTimeKeySigs;	// true if exporting time and key signatures
+	static	bool	m_bExportAllNotesOff;	// true if export turns off all notes at end
 
 #if SEQ_DUMP_EVENTS
 	CArrayEx<CMidiEventStream, CMidiEventStream&>	m_arrDumpEvent;	// for debug only
@@ -507,4 +510,9 @@ inline void CSequencer::SetNoteOverlapMethod(int iChannel, bool bIsMerge)
 inline void CSequencer::SetExportTimeKeySigs(bool bEnable)
 {
 	m_bExportTimeKeySigs = bEnable;
+}
+
+inline void CSequencer::SetExportAllNotesOff(bool bEnable)
+{
+	m_bExportAllNotesOff = bEnable;
 }

@@ -58,6 +58,7 @@
 		48		19dec23	add internal track type and controllers
 		49		09jan24	add base class to streamline reader init
 		50		24jan24	add warning error attribute
+		51		10feb24	export now turns off all notes at end of file
 
 */
 
@@ -73,6 +74,7 @@
 #define MAKE_CHANNEL_MASK(iType) (static_cast<USHORT>(1) << iType)
 
 bool CSequencer::m_bExportTimeKeySigs = true;
+bool CSequencer::m_bExportAllNotesOff = true;
 
 CSequencer::CSequencer()
 {
@@ -1279,6 +1281,21 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration, int nKeySig)
 			arrSongTempoEvent.FastInsertSorted(m_arrTempoEvent[iTempoEvt]);	// add event to song tempo event array
 		}
 		nCBTime += nChunkLen;
+	}
+	if (m_bExportAllNotesOff) {	// if turning off all notes
+		m_arrEvent.FastRemoveAll();	// empty event array
+		for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each MIDI channel
+			AllNotesOff(static_cast<BYTE>(iChan), nCBTime, nCBTime);	// turn off all notes
+		}
+		int	nEvents = m_arrEvent.GetSize();
+		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each event
+			const CMidiEvent&	evt = m_arrEvent[iEvent];
+			CMidiFile::MIDI_EVENT	midiEvt;
+			midiEvt.DeltaT = evt.m_nTime + nCBTime;	// convert to song time
+			midiEvt.Msg = evt.m_dwEvent;
+			int	iChan = MIDI_CHAN(evt.m_dwEvent);
+			arrMidiEvent[iChan].FastAdd(midiEvt);	// add event to per-channel array
+		}
 	}
 	CMidiFile::CMidiEventArray arrTempoMap;
 	CMidiFile::CMidiEventArray *parrTempoMap = NULL;
