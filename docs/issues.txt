@@ -472,6 +472,7 @@ id	open	close	type	description	rev	user
 583	01/24/24	01/29/24	done	Modulations bar Targets pane should support editing	1.0.15.001	
 584	01/31/24	02/01/24	done	add context-sensitive help for errors; ideally link to appropriate row in help's error table	1.0.15.001	
 585	02/10/24	02/11/24	done	MIDI export potentially leaves notes on at end of file	1.0.15.002	
+586	02/16/24	02/16/24	done	resetting modulation bar's column header crashes if target pane is hidden	1.0.15.003	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		

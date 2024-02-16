@@ -4374,3 +4374,36 @@ and by the same amount as in the first example.
 			ASSERT(arrMod[iMod] == (*parrTrackTarget)[iMod]);
 		}
 	}
+
+2/15/24 investigation into possibly excessive update command UI activity
+
+OnIdle calls occur in pairs, as determined by overriding CWinApp::OnIdle.
+Only the first call, with the lCount argument == 0, does meaningful work.
+According to MSDN and code review, this call "updates command user-interface 
+objects such as menu items and toolbar buttons, and it performs internal 
+data structure cleanup" (which means releasing temporary objects). This 
+first call takes approximately a quarter of a millisecond in Release, 
+so there is not much margin for optimization.
+
+The next question is why the call occurs periodically during playback, with
+a period of one second. This period doesn't correspond to any application
+timer. The only active application timer is the view timer, which is much 
+faster. The mysterious OnIdle call is traceable to updating the position and
+time in the status bar, via the HINT_SONG_POS case in CMainFrame::OnTimer.
+Commenting out UpdateSongPositionDisplay() eliminates the mysterious OnIdle
+call. UpdateSongPositionDisplay only calls FastSetPaneText and much time was
+apparently spent optimizing that method. It boils down to a conditional buffer
+reallocation, a string copy, some rectangle manipulation, and InvalidateRect.
+
+Unsurprisingly, it's the InvalidateRect, but why exactly? Strangely, doing 
+m_wndStatusBar.UpdateWindow afterwards doesn't help, nor does RedrawWindow.
+
+
+
+
+
+
+
+
+
+
