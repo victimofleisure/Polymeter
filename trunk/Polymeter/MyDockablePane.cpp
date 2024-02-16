@@ -14,6 +14,7 @@
 		04		19nov20	use visible style to determine pane visibility
 		05		01nov21	add toggle show pane method
 		06		17dec21	add full screen mode
+		07		16feb24	override OnUpdateCmdUI to skip iterating child controls
 
 */
 
@@ -269,4 +270,23 @@ void CMyDockablePane::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	if (m_bIsFullScreen && nChar == VK_ESCAPE)	// if full screen and escape was hit
 		SetFullScreen(false);	// exit full screen mode
 	CDockablePane::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+void CMyDockablePane::OnUpdateCmdUI(class CFrameWnd *pTarget, int bDisableIfNoHndler)
+{
+//	implementation copied from base class, except disable UpdateCmdUI support;
+//	assume child controls don't need it and avoid searching their message maps
+//	UpdateDialogControls(pTarget, bDisableIfNoHndler);
+	UNREFERENCED_PARAMETER(pTarget);
+	UNREFERENCED_PARAMETER(bDisableIfNoHndler);
+
+	CWnd* pFocus = GetFocus();
+	BOOL bActiveOld = m_bActive;
+
+	m_bActive = (pFocus->GetSafeHwnd() != NULL && (IsChild(pFocus) || pFocus->GetSafeHwnd() == GetSafeHwnd()));
+
+	if (m_bActive != bActiveOld)
+	{
+		SendMessage(WM_NCPAINT);
+	}
 }

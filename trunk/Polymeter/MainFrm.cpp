@@ -64,6 +64,7 @@
 		54		25jan23	add method to show panes menu
 		55		24jan24	use sequencer's warning error attribute
 		56		29jan24	use class to save and restore track selection
+		57		16feb24	move track color message handlers to document
 
 */
 
@@ -782,6 +783,10 @@ void CMainFrame::Dump(CDumpContext& dc) const
 // CMainFrame message map
 
 BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
+	ON_WM_TIMER()	// frequent messages first
+	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SONG_POS, OnUpdateIndicatorSongPos)
+	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SONG_TIME, OnUpdateIndicatorSongPos)
+	ON_UPDATE_COMMAND_UI(ID_INDICATOR_TEMPO, OnUpdateIndicatorTempo)
 	ON_WM_CREATE()
 	ON_WM_DESTROY()
 	ON_COMMAND(ID_WINDOW_MANAGER, &CMainFrame::OnWindowManager)
@@ -789,16 +794,12 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_REGISTERED_MESSAGE(AFX_WM_CREATETOOLBAR, &CMainFrame::OnToolbarCreateNew)
 	ON_COMMAND_RANGE(ID_VIEW_APPLOOK_FIRST, ID_VIEW_APPLOOK_LAST, OnApplicationLook)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_VIEW_APPLOOK_FIRST, ID_VIEW_APPLOOK_LAST, OnUpdateApplicationLook)
-	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SONG_POS, OnUpdateIndicatorSongPos)
-	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SONG_TIME, OnUpdateIndicatorSongPos)
-	ON_UPDATE_COMMAND_UI(ID_INDICATOR_TEMPO, OnUpdateIndicatorTempo)
 #if _MSC_VER >= 1700	// if Visual Studio 2012 or later
 	ON_REGISTERED_MESSAGE(AFX_WM_AFTER_TASKBAR_ACTIVATE, OnAfterTaskbarActivate)
 #endif
 	ON_MESSAGE(UWM_HANDLE_DLG_KEY, OnHandleDlgKey)
 	ON_MESSAGE(UWM_PROPERTY_CHANGE, OnPropertyChange)
 	ON_MESSAGE(UWM_PROPERTY_SELECT, OnPropertySelect)
-	ON_WM_TIMER()
 	ON_COMMAND(ID_TOOLS_OPTIONS, OnToolsOptions)
 	ON_COMMAND(ID_APP_CHECK_FOR_UPDATES, OnAppCheckForUpdates)
 	ON_MESSAGE(UWM_DELAYED_CREATE, OnDelayedCreate)
@@ -825,8 +826,6 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_UPDATE_COMMAND_UI(ID_TOOLS_MIDI_LEARN, OnUpdateToolsMidiLearn)
 	ON_REGISTERED_MESSAGE(AFX_WM_RESETTOOLBAR, OnResetToolBar)
 	ON_REGISTERED_MESSAGE(AFX_WM_GETDOCUMENTCOLORS, OnGetDocumentColors)
-	ON_COMMAND(ID_TRACK_COLOR, OnTrackColor)
-	ON_UPDATE_COMMAND_UI(ID_TRACK_COLOR, OnUpdateTrackColor)
 	ON_WM_INITMENUPOPUP()
 	ON_MESSAGE(WM_SETMESSAGESTRING, OnSetMessageString)
 	ON_COMMAND_RANGE(ID_CONVERGENCE_SIZE_START, ID_CONVERGENCE_SIZE_END, OnTransportConvergenceSize)
@@ -1365,28 +1364,6 @@ LRESULT CMainFrame::OnGetDocumentColors(WPARAM wParam, LPARAM lParam)
 		plistColor->AddTail(m_arrTrackColor[iColor]);
 	}
 	return 0;
-}
-
-void CMainFrame::OnTrackColor()
-{
-	COLORREF	clr = m_pbtnTrackColor->GetColorByCmdID(ID_TRACK_COLOR);
-	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	if (pDoc != NULL) {
-		pDoc->NotifyUndoableEdit(CPolymeterDoc::PROP_COLOR, UCODE_MULTI_TRACK_PROP);
-		int	nSels = pDoc->GetSelectedCount();
-		for (int iSel = 0; iSel < nSels; iSel++) {
-			int	iTrack = pDoc->m_arrTrackSel[iSel];
-			pDoc->m_Seq.SetColor(iTrack, clr);
-		}
-		pDoc->SetModifiedFlag();
-		pDoc->Deselect();
-	}
-}
-
-void CMainFrame::OnUpdateTrackColor(CCmdUI *pCmdUI)
-{
-	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
-	pCmdUI->Enable(theApp.m_Options.m_View_bShowTrackColors && pDoc != NULL && pDoc->GetSelectedCount());
 }
 
 void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)

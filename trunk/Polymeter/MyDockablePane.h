@@ -12,6 +12,7 @@
 		02		18nov20	add maximize/restore to docking context menu
 		03		01nov21	add toggle show pane method
 		04		17dec21	add full screen mode
+		05		16feb24	override OnUpdateCmdUI to skip iterating child controls
 
 */
 
@@ -40,6 +41,7 @@ public:
 	void	SetFullScreen(bool bEnable);
 
 // Overrides
+	virtual void OnUpdateCmdUI(class CFrameWnd *pTarget, int bDisableIfNoHndler);
 
 // Implementation
 public:

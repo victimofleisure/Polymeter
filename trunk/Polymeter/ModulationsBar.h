@@ -17,6 +17,7 @@
 		07		29jan22	don't horizontally scroll source column
 		08		20jan24	add target pane
 		09		29jan24	add target pane editing
+		10		16feb24	propagate column width between source and target grids
 
 */
 
@@ -124,10 +125,10 @@ protected:
 	CFixedArray<CModPane, PANES>	m_arrPane;	// array of panes
 	bool	m_bUpdatePending;		// true if an update is pending
 	bool	m_bShowDifferences;		// true if showing modulation differences
-	bool	m_bShowTargets;			// true if showing targets
+	bool	m_bShowTargets;			// true if showing targets, else target pane doesn't exist
 	bool	m_bIsSplitVert;			// true if split is vertical, else horizontal
 	BYTE	m_nSplitPersist;		// split persistence bitmask; see enum above
-	CModulationSplitView	*m_pSplitView;	// splitter view
+	CModulationSplitView	*m_pSplitView;	// splitter view; only exists if showing targets
 	float	m_arrSplitPos[SPLIT_TYPES];	// normalized split position for each split type
 
 // Helpers
@@ -151,6 +152,7 @@ protected:
 	void	OnSplitDrag(int nNewSplit);
 	int		GetFocusPaneIndex() const;
 	CModPane&	GetFocusPane();
+	int		FindPane(HWND hWnd) const;
 	static	CPolymeterDoc::CSaveTrackSelection *SelectTargets(CPolymeterDoc *pDoc, const CModulationArray& arrMod, const CIntArrayEx& arrModSel, CIntArrayEx& arrTargetSel);
 
 // Overrides
@@ -167,6 +169,7 @@ protected:
 	afx_msg LRESULT OnDeferredUpdate(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	afx_msg void OnListColHdrReset();
+	afx_msg void OnListHdrEndTrack(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnEditCopy();
 	afx_msg void OnEditCut();
 	afx_msg void OnUpdateEditCut(CCmdUI *pCmdUI);

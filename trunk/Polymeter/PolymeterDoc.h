@@ -48,6 +48,7 @@
 		38		25oct22	add command to select all unmuted tracks
 		39		16dec22	add quant string conversions that support fractions
 		40		29jan24	add class to save and restore track selection
+		41		16feb24	move track color message handlers here
 
 */
 
@@ -601,6 +602,7 @@ protected:
 	afx_msg void OnTransportRecord();
 	afx_msg void OnUpdateTransportRecord(CCmdUI *pCmdUI);
 	afx_msg void OnTransportRewind();
+	afx_msg void OnUpdateTransportRewind(CCmdUI *pCmdUI);
 	afx_msg void OnTransportGoToPosition();
 	afx_msg void OnTransportRecordTracks();
 	afx_msg void OnUpdateTransportRecordTracks(CCmdUI *pCmdUI);
@@ -664,6 +666,8 @@ protected:
 	afx_msg void OnStretchTracks();
 	afx_msg void OnTrackFill();
 	afx_msg void OnUpdateTrackFill(CCmdUI *pCmdUI);
+	afx_msg void OnTrackColor();
+	afx_msg void OnUpdateTrackColor(CCmdUI *pCmdUI);
 };
 
 inline int CPolymeterDoc::GetTrackCount() const

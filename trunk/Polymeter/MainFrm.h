@@ -39,6 +39,7 @@
 		29		22jan22	add tempo pane to status bar
 		30		25jan23	add method to show panes menu
 		31		23feb23	fix compiler warning on MIDI output event array
+		32		16feb24	move track color message handlers to document
 
 */
 
@@ -114,6 +115,7 @@ public:
 	CString	GetSongTimeString() const;
 	CString	GetTempoString() const;
 	int		GetConvergenceSize() const;
+	COLORREF	GetTrackColor() const;
 
 // Public data
 	CMFCMenuBar     m_wndMenuBar;
@@ -234,8 +236,6 @@ protected:
 	afx_msg void OnWindowResetLayout();
 	afx_msg LRESULT OnResetToolBar(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnGetDocumentColors(WPARAM wParam, LPARAM lParam);
-	afx_msg void OnTrackColor();
-	afx_msg void OnUpdateTrackColor(CCmdUI *pCmdUI);
 	afx_msg void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
 	afx_msg LRESULT OnSetMessageString(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnTransportConvergenceSize(UINT nID);
@@ -294,4 +294,13 @@ inline CString CMainFrame::GetTempoString() const
 inline int CMainFrame::GetConvergenceSize() const
 {
 	return m_nConvergenceSize;
+}
+
+inline COLORREF CMainFrame::GetTrackColor() const
+{
+	ASSERT(m_pbtnTrackColor != NULL);	// color menu button must exist
+	if (m_pbtnTrackColor != NULL)
+		return m_pbtnTrackColor->GetColorByCmdID(ID_TRACK_COLOR);
+	else
+		return 0;
 }

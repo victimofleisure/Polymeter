@@ -93,6 +93,7 @@
 		83		19dec23	bump file version for internal track type
 		84		24jan24	use sequencer's warning error attribute
 		85		29jan24	add class to save and restore track selection
+		86		16feb24	move track color message handlers here
 
 */
 
@@ -4130,6 +4131,7 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_COMMAND(ID_TRANSPORT_RECORD, OnTransportRecord)
 	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_RECORD, OnUpdateTransportRecord)
 	ON_COMMAND(ID_TRANSPORT_REWIND, OnTransportRewind)
+	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_REWIND, OnUpdateTransportRewind)
 	ON_COMMAND(ID_TRANSPORT_GO_TO_POSITION, OnTransportGoToPosition)
 	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_RECORD_TRACKS, OnUpdateTransportRecordTracks)
 	ON_COMMAND(ID_TRANSPORT_RECORD_TRACKS, OnTransportRecordTracks)
@@ -4207,6 +4209,8 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_STRETCH, OnUpdateEditDeselect)
 	ON_COMMAND(ID_TRACK_FILL, OnTrackFill)
 	ON_UPDATE_COMMAND_UI(ID_TRACK_FILL, OnUpdateTrackFill)
+	ON_COMMAND(ID_TRACK_COLOR, OnTrackColor)
+	ON_UPDATE_COMMAND_UI(ID_TRACK_COLOR, OnUpdateTrackColor)
 END_MESSAGE_MAP()
 
 // CPolymeterDoc commands
@@ -4587,6 +4591,24 @@ void CPolymeterDoc::OnUpdateTrackFill(CCmdUI *pCmdUI)
 	pCmdUI->Enable(HaveTrackOrStepSelection());
 }
 
+void CPolymeterDoc::OnTrackColor()
+{
+	COLORREF	clr = theApp.GetMainFrame()->GetTrackColor();
+	NotifyUndoableEdit(CPolymeterDoc::PROP_COLOR, UCODE_MULTI_TRACK_PROP);
+	int	nSels = GetSelectedCount();
+	for (int iSel = 0; iSel < nSels; iSel++) {
+		int	iTrack = m_arrTrackSel[iSel];
+		m_Seq.SetColor(iTrack, clr);
+	}
+	SetModifiedFlag();
+	Deselect();
+}
+
+void CPolymeterDoc::OnUpdateTrackColor(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(theApp.m_Options.m_View_bShowTrackColors && GetSelectedCount());
+}
+
 void CPolymeterDoc::OnTransportPlay()
 {
 	Play(!m_Seq.IsPlaying());
@@ -4622,6 +4644,11 @@ void CPolymeterDoc::OnUpdateTransportRecord(CCmdUI *pCmdUI)
 void CPolymeterDoc::OnTransportRewind()
 {
 	SetPosition(m_nStartPos);
+}
+
+void CPolymeterDoc::OnUpdateTransportRewind(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(true);
 }
 
 void CPolymeterDoc::OnTransportGoToPosition()

@@ -23,6 +23,7 @@
 		13		29jan22	don't horizontally scroll source column
 		14		20jan24	add target pane
 		15		29jan24	add target pane editing
+		16		16feb24	fix crash on column header reset with target pane hidden
 
 */
 
@@ -621,6 +622,8 @@ void CModulationsBar::GetSplitRect(CRect& rSplit)
 
 void CModulationsBar::UpdateSplit(CSize szClient)
 {
+	ASSERT(m_pSplitView != NULL);	// split view must exist
+	ASSERT(gridTarget.m_hWnd);	// target grid must exist
 	CRect	rSplit;
 	GetSplitRect(szClient, rSplit);
 	CPoint	pt2;
@@ -640,7 +643,6 @@ void CModulationsBar::UpdateSplit(CSize szClient)
 	hDWP = DeferWindowPos(hDWP, gridSource.m_hWnd, NULL, 0, 0, sz1.cx, sz1.cy, dwFlags);
 	hDWP = DeferWindowPos(hDWP, gridTarget.m_hWnd, NULL, pt2.x, pt2.y, sz2.cx, sz2.cy, dwFlags);
 	EndDeferWindowPos(hDWP);	// move both lists at once
-	ASSERT(m_pSplitView != NULL);	// split view must exist
 	m_pSplitView->Invalidate();
 }
 
@@ -692,6 +694,15 @@ void CModulationsBar::OnSplitDrag(int nNewSplit)
 	float	fPos = nSplitRange ? float(nNewSplit) / nSplitRange : 0;
 	SetSplitPos(fPos, false);	// don't update, it's done below
 	UpdateSplit(szClient);	// avoids getting client rect again
+}
+
+int CModulationsBar::FindPane(HWND hWnd) const
+{
+	if (hWnd == gridSource.m_hWnd)
+		return PANE_SOURCE;
+	if (hWnd == gridTarget.m_hWnd)
+		return PANE_TARGET;
+	return -1;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -768,6 +779,7 @@ BEGIN_MESSAGE_MAP(CModulationsBar, CMyDockablePane)
 	ON_COMMAND_RANGE(ID_SPLIT_TYPE_HORZ, ID_SPLIT_TYPE_VERT, OnSplitType)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_SPLIT_TYPE_HORZ, ID_SPLIT_TYPE_VERT, OnUpdateSplitType)
 	ON_COMMAND(ID_SPLIT_CENTER, OnSplitCenter)
+	ON_NOTIFY(HDN_ENDTRACK, 0, OnListHdrEndTrack)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -913,7 +925,25 @@ void CModulationsBar::OnContextMenu(CWnd* pWnd, CPoint point)
 void CModulationsBar::OnListColHdrReset()
 {
 	gridSource.ResetColumnHeader(m_arrColInfo, COLUMNS);
-	gridTarget.ResetColumnHeader(m_arrColInfo, COLUMNS);
+	if (m_bShowTargets)	// if showing targets
+		gridTarget.ResetColumnHeader(m_arrColInfo, COLUMNS);
+}
+
+void CModulationsBar::OnListHdrEndTrack(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	UNREFERENCED_PARAMETER(pResult);
+	if (m_bShowTargets) {	// if showing targets
+		LPNMHEADER	pNMHeader = reinterpret_cast<LPNMHEADER>(pNMHDR);
+		LPHDITEM	pHdrItem = pNMHeader->pitem;
+		ASSERT(pHdrItem != NULL);
+		ASSERT(pHdrItem->mask & HDI_WIDTH);
+		HWND	hwndList = ::GetParent(pNMHeader->hdr.hwndFrom);
+		int	iPane = FindPane(hwndList);
+		if (iPane >= 0) {	// if notifying pane found
+			// propagate updated column width to other pane
+			m_arrPane[iPane ^ 1].m_grid.SetColumnWidth(pNMHeader->iItem, pHdrItem->cxy);
+		}
+	}
 }
 
 void CModulationsBar::OnEditCopy()
@@ -1171,6 +1201,11 @@ void CModulationsBar::OnUpdateShowDifferences(CCmdUI *pCmdUI)
 void CModulationsBar::OnShowTargets()
 {
 	ShowTargets(!m_bShowTargets);
+	if (m_bShowTargets) {
+		CIntArrayEx	arrColWidth;
+		gridSource.GetColumnWidths(arrColWidth);
+		gridTarget.SetColumnWidths(arrColWidth);
+	}
 	ResetModulatorCache();	// mode change invalidates cache
 	UpdateAll();	// rebuild cache for new mode
 }
