@@ -4398,12 +4398,60 @@ reallocation, a string copy, some rectangle manipulation, and InvalidateRect.
 Unsurprisingly, it's the InvalidateRect, but why exactly? Strangely, doing 
 m_wndStatusBar.UpdateWindow afterwards doesn't help, nor does RedrawWindow.
 
+2/18/24 compacting CTrack
 
+In the future it may become necessary to add members to CTrack. To avoid
+increasing CTrack's memory footprint, it could be advantageous to compact 
+CTrack by making its member variables smaller where possible. The following
+CTrack member variables are currently int (four bytes) and could be char:
+Type, Channel, Note, Velocity, RangeType, RangeStart.
 
+Maximal savings would achieved by making all char members adjacent, but
+this would affect their order in the user interface, which is undesirable. 
+As Type, Channel and Note are adjacent, as are RangeType, RangeStart.
+Making those members char instead of int saves 16 bytes, and leaves 2 bytes
+available for new char members. Note that converting the Range members to
+char saves more space than expected because they're followed by Mute which
+is bool; RangeType, RangeStart and Mute would occupy 4 bytes instead of 12.
+3 * sizeof(int) + 3 * sizeof(int) -> sizeof(int) + sizeof(int)
+24 -> 8
+This gets the size of CTrack from 192 bytes down to 176 bytes. Making
+Velocity char wouldn't reduce CTrack's size, but would make 3 more
+bytes available for reuse.
 
+For the least impact on existing code, make the CSeqTrackArray attribute
+wrappers (e.g. SetType and GetType) use char instead of int. It's also 
+necessary to overload CPolymeterDoc::ReadEnum for char as follows:
 
+inline void CPolymeterDoc::ReadEnum(CIniFile& fIni, LPCTSTR pszSection, LPCTSTR pszKey, char& Value, const CProperties::OPTION_INFO *pOption, int nOptions)
+{
+	int	nIntValue;
+	ReadEnum(fIni, pszSection, pszKey, nIntValue, pOption, nOptions);
+	Value = static_cast<char>(nIntValue);
+}
 
+inline void CPolymeterDoc::WriteEnum(CIniFile& fIni, LPCTSTR pszSection, LPCTSTR pszKey, const char& Value, const CProperties::OPTION_INFO *pOption, int nOptions) const
+{
+	int	nIntValue = Value;
+	WriteEnum(fIni, pszSection, pszKey, nIntValue, pOption, nOptions);
+}
 
+and also overload CParseCSV::StrToVal for char:
 
+bool CParseCSV::StrToVal(const CString& str, char& nVal)
+{
+	int	nIntVal;
+	if (_stscanf_s(str, _T("%d"), &nIntVal) != 1)
+		return false;
+	nVal = static_cast<char>(nIntVal);
+	return true;
+}
 
+The rest of the changes are minor edits to avoid warnings. Note that this
+revision could potentially introduce bugs. It could also potentially impact 
+performance, due to the need for extra machine language instructions to 
+extend bytes to words, though this impact might be reduced or eliminated in
+the 64-bit executable as 32-bit words are probably being extended to 64-bit
+words anyway. Also the memory savings from reducing the size of CTrack may
+improve cache performance and thereby offset any increased code complexity.
 
