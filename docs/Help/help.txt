@@ -259,7 +259,7 @@ A part's member tracks all share the same @[track mutes\mute] state in live view
 
 Parts are edited using the @[Parts bar]. To create a new part, first @[track selection\select] its member tracks, and then use the Track menu's @[Create Group\Group] command. A new part initially has the same name as its first member track, but you can rename it.
 
-A track can belong to at most one part. When you create a new part, if any of the selected tracks already belong to a part, a warning message is displayed, giving you the option to continue or cancel. If you continue, the offending tracks are removed from their previous part before being reassigned to the new one.
+A track can belong to at most one part. When you create a new part, if any of the selected tracks already belong to a part, a warning @[group overlap\message] is displayed, giving you the option to continue or cancel. If you continue, the offending tracks are removed from their previous part before being reassigned to the new one.
 
 To update an existing part, in other words to add or remove members, do as follows:
 
@@ -1161,13 +1161,13 @@ This @[docking windows\docking window] lets you edit your @[presets]. When you c
 
 @item Presets context menu\Context menu
 
-<p><table border=1 cellpadding=2 cellspacing=0>
+<p><table class="top-align-all" border=1 cellpadding=2 cellspacing=0>
 <tr><th>Item</th><th>Description</th><th>Selection</th></tr>
-<tr><td>Create</td><td>Creates a new preset from the current state of the @[track mutes], and appends it to the presets list.</td><td>N/A</td></tr>
-<tr><td>Apply</td><td>This command applies the selected preset, by muting and unmuting tracks as needed.</td><td>Single</td></tr>
-<tr><td>Delete</td><td>Deletes the selected presets.</td><td>Multiple</td></tr>
-<tr><td>Rename</td><td>Renames the selected preset.</td><td>Single</td></tr>
-<tr><td>Update</td><td>Updates the selected preset from the current state of the track mutes.</td><td>Single</td></tr>
+<tr><td>@{#PreCM Create\Create}</td><td>Creates a new preset from the current state of the @[track mutes], and appends it to the presets list.</td><td>N/A</td></tr>
+<tr><td>@{#PreCM Apply\Apply}</td><td>This command applies the selected preset, by muting and unmuting tracks as needed.</td><td>Single</td></tr>
+<tr><td>@{#PreCM Delete\Delete}</td><td>Deletes the selected presets.</td><td>Multiple</td></tr>
+<tr><td>@{#PreCM Rename\Rename}</td><td>Renames the selected preset.</td><td>Single</td></tr>
+<tr><td>@{#PreCM Update\Update}</td><td>Updates the selected preset from the current state of the track mutes.</td><td>Single</td></tr>
 </table>
 
 @topic Parts bar\Parts
@@ -1176,14 +1176,14 @@ This @[docking windows\docking window] lets you edit your @[parts]. When you cre
 
 @item Parts context menu\Context menu
 
-<p><table border=1 cellpadding=2 cellspacing=0>
+<p><table class="top-align-all" border=1 cellpadding=2 cellspacing=0>
 <tr><th>Item</th><th>Description</th><th>Selection</th></tr>
-<tr><td>Create</td><td>Creates a new part from the selected tracks, and appends it to the parts list.</td><td>N/A</td></tr>
-<tr><td>Delete</td><td>Deletes the selected parts.</td><td>Multiple</td></tr>
-<tr><td>Rename</td><td>Renames the selected part.</td><td>Single</td></tr>
-<tr><td>Update</td><td>Updates the selected part from the selected tracks.</td><td>Single</td></tr>
-<tr><td>Tracks</td><td>Selects the tracks that belong to the selected parts.</td><td>Multiple</td></tr>
-<tr><td>Sort</td><td>Sorts the parts, by name or by track.</td><td>N/A</td></tr>
+<tr><td>@{#ParCM Create\Create}</td><td>Creates a new part from the selected tracks, and appends it to the parts list.</td><td>N/A</td></tr>
+<tr><td>@{#ParCM Delete\Delete}</td><td>Deletes the selected parts.</td><td>Multiple</td></tr>
+<tr><td>@{#ParCM Rename\Rename}</td><td>Renames the selected part.</td><td>Single</td></tr>
+<tr><td>@{#ParCM Update\Update}</td><td>Updates the selected part from the selected tracks.</td><td>Single</td></tr>
+<tr><td>@{#ParCM Tracks\Tracks}</td><td>Selects the tracks that belong to the selected parts.</td><td>Multiple</td></tr>
+<tr><td>@{#ParCM Sort\Sort}</td><td>Sorts the parts, by name or by track.</td><td>N/A</td></tr>
 </table>
 
 @topic Modulations bar\Modulations
@@ -1223,18 +1223,18 @@ In some cases you may prefer to show all modulations that target any of the sele
 
 @item Modulations context menu\Context menu
 
-<p><table border=1 cellpadding=2 cellspacing=0>
+<p><table class="top-align-all" border=1 cellpadding=2 cellspacing=0>
 <tr><th>Item</th><th>Description</th></tr>
-<tr><td>Insert</td><td>Inserts a new modulator at the current position.</td></tr>
-<tr><td>Insert Group</td><td>Inserts a @[Create Modulation\group] of modulators at the current position.</td>
-<tr><td>Delete</td><td>Deletes the selected modulators.</td></tr>
-<tr><td>Cut</td><td>Deletes the selected modulators after copying them to the @[clipboards\clipboard].</td></tr>
-<tr><td>Copy</td><td>Copies the selected modulators to the clipboard.</td></tr>
-<tr><td>Paste</td><td>Inserts the contents of the modulations clipboard at the current position.</td></tr>
-<tr><td>Select All</td><td>Selects all items in the modulations list.</td></tr>
-<tr><td>Show Differences</td><td>Toggles @[Show Differences] mode.</td></tr>
-<tr><td>Show Targets</td><td>Shows or hides the @[show targets\Targets] pane.</td></tr>
-<tr><td>Sort</td><td>Sorts the modulators by modulation type or by source track index.</td></tr>
+<tr><td>@{#ModCM Insert\Insert}</td><td>Inserts a new modulator at the current position.</td></tr>
+<tr><td>@{#ModCM Insert Group\Insert Group}</td><td>Inserts a @[Create Modulation\group] of modulators at the current position.</td>
+<tr><td>@{#ModCM Delete\Delete}</td><td>Deletes the selected modulators.</td></tr>
+<tr><td>@{#ModCM Cut\Cut}</td><td>Deletes the selected modulators after copying them to the @[clipboards\clipboard].</td></tr>
+<tr><td>@{#ModCM Copy\Copy}</td><td>Copies the selected modulators to the clipboard.</td></tr>
+<tr><td>@{#ModCM Paste\Paste}</td><td>Inserts the contents of the modulations clipboard at the current position.</td></tr>
+<tr><td>@{#ModCM Select All\Select All}</td><td>Selects all items in the modulations list.</td></tr>
+<tr><td>@{#ModCM Show Differences\Show Differences}</td><td>Toggles @[Show Differences] mode.</td></tr>
+<tr><td>@{#ModCM Show Targets\Show Targets}</td><td>Shows or hides the @[show targets\Targets] pane.</td></tr>
+<tr><td>@{#ModCM Sort\Sort}</td><td>Sorts the modulators by modulation type or by source track index.</td></tr>
 </table>
 
 @item Show Targets
@@ -1268,17 +1268,17 @@ To pause the display, select @{cmd}Pause@} in the window's context menu. Events 
 
 @item MIDI IO context menu\Context menu
 
-<p><table border=1 cellpadding=2 cellspacing=0>
-<tr><td>Channel Filter</td><td>To show only a particular channel, select the corresponding submenu item, or select "All" to show messages from all channels.</td></tr>
-<tr><td>Message Filter</td><td>To show only a particular message type, select the corresponding submenu item, or select "All" to show all message types.</td></tr>
-<tr><td>System Messages</td><td>Check this item to enable the display of system messages.</td></tr>
-<tr><td>Reset Filters</td><td>Resets all filters to their default settings (show all channels and all messages, including system messages).</td></tr>
-<tr><td>Pause</td><td>Pauses and unpauses the display.</td></tr>
-<tr><td>Clear History</td><td>Removes all stored messages from the history.</td></tr>
-<tr><td>Export</td><td>Exports the current message history to a CSV file. All messages are exported, regardless of filtering.</td></tr>
-<tr><td>Note Names</td><td>Check this item to display note names instead of numbers.</td></tr>
-<tr><td>Controller Names</td><td>Check this item to display controller names instead of numbers.</td></tr>
-<tr><td>Reset Columns</td><td>This command resets the list column header to its default state.</td></tr>
+<p><table class="top-align-all" border=1 cellpadding=2 cellspacing=0>
+<tr><td>@{#MIOCM Channel Filter\Channel Filter}</td><td>To show only a particular channel, select the corresponding submenu item, or select "All" to show messages from all channels.</td></tr>
+<tr><td>@{#MIOCM Message Filter\Message Filter}</td><td>To show only a particular message type, select the corresponding submenu item, or select "All" to show all message types.</td></tr>
+<tr><td>@{#MIOCM System Messages\System Messages}</td><td>Check this item to enable the display of system messages.</td></tr>
+<tr><td>@{#MIOCM Reset Filters\Reset Filters}</td><td>Resets all filters to their default settings (show all channels and all messages, including system messages).</td></tr>
+<tr><td>@{#MIOCM Pause\Pause}</td><td>Pauses and unpauses the display.</td></tr>
+<tr><td>@{#MIOCM Clear History\Clear History}</td><td>Removes all stored messages from the history.</td></tr>
+<tr><td>@{#MIOCM Export\Export}</td><td>Exports the current message history to a CSV file. All messages are exported, regardless of filtering.</td></tr>
+<tr><td>@{#MIOCM Note Names\Note Names}</td><td>Check this item to display note names instead of numbers.</td></tr>
+<tr><td>@{#MIOCM Controller Names\Controller Names}</td><td>Check this item to display controller names instead of numbers.</td></tr>
+<tr><td>@{#MIOCM Reset Columns\Reset Columns}</td><td>This command resets the list column header to its default state.</td></tr>
 </table>
 
 @topic MIDI Output bar\MIDI Output
@@ -1293,14 +1293,14 @@ By default, output notes are displayed for all MIDI channels. To show only a par
 
 @item Piano context menu\Context menu
 
-<p><table border=1 cellpadding=2 cellspacing=0>
-<tr><td>Channel Filter</td><td>To only show notes for a particular MIDI channel, select the corresponding submenu item, or select "All" to show notes for all channels. You can also select "Multiple" to choose @[multiple keyboards\multiple channels].</td></tr>
-<tr><td>Output Channel</td><td>In this submenu, select the MIDI channel on which left-clicked piano keys should send the corresponding notes, or select "None" to disable this feature.</td></tr>
-<tr><td>Piano Size</td><td>To resize the keyboard, select a standard piano size from the submenu.</td></tr>
-<tr><td>Key Labels</td><td>Check this item to show labels on the piano keys that identify the corresponding MIDI notes.</td></tr>
-<tr><td>Rotate Labels</td><td>Check this item to rotate the key labels 90&deg; counterclockwise, so that they're vertical instead of horizontal. This may allow the labels to use a larger font. This option is only supported when the window is docked horizontally.</td></tr>
-<tr><td>Color Velocities</td><td>Check this item to color the piano keys according to the velocities of the output notes. The colors range spectrally from blue (softest) to red (loudest).</td></tr>
-<tr><td>Insert Track</td><td>This command inserts a track for the selected note. Position the cursor over the desired note on the piano keyboard before using this command. The new track's @[track note\note] property will be set appropriately.</td></tr>
+<p><table class="top-align-all" border=1 cellpadding=2 cellspacing=0>
+<tr><td>@{#PiaCM Channel Filter\Channel Filter}</td><td>To only show notes for a particular MIDI channel, select the corresponding submenu item, or select "All" to show notes for all channels. You can also select "Multiple" to choose @[multiple keyboards\multiple channels].</td></tr>
+<tr><td>@{#PiaCM Output Channel\Output Channel}</td><td>In this submenu, select the MIDI channel on which left-clicked piano keys should send the corresponding notes, or select "None" to disable this feature.</td></tr>
+<tr><td>@{#PiaCM Piano Size\Piano Size}</td><td>To resize the keyboard, select a standard piano size from the submenu.</td></tr>
+<tr><td>@{#PiaCM Key Labels\Key Labels}</td><td>Check this item to show labels on the piano keys that identify the corresponding MIDI notes.</td></tr>
+<tr><td>@{#PiaCM Rotate Labels\Rotate Labels}</td><td>Check this item to rotate the key labels 90&deg; counterclockwise, so that they're vertical instead of horizontal. This may allow the labels to use a larger font. This option is only supported when the window is docked horizontally.</td></tr>
+<tr><td>@{#PiaCM Color Velocities\Color Velocities}</td><td>Check this item to color the piano keys according to the velocities of the output notes. The colors range spectrally from blue (softest) to red (loudest).</td></tr>
+<tr><td>@{#PiaCM Insert Track\Insert Track}</td><td>This command inserts a track for the selected note. Position the cursor over the desired note on the piano keyboard before using this command. The new track's @[track note\note] property will be set appropriately.</td></tr>
 </table>
 
 @item Multiple keyboards
@@ -1334,19 +1334,19 @@ Various graph layouts are supported, including dot (for hierarchical graphs) and
 
 @item Graph context menu\Context menu
 
-<p><table border=1 cellpadding=2 cellspacing=0>
-<tr><td>Scope</td><td>Use this submenu to select the scope of the graph. Scopes are explained above. For scopes other than All, the modulation network is crawled by starting from the selected tracks and traversing their modulators, targets, or both. The traversal can be limited to a specific distance via the Depth option.</td></tr>
-<tr><td>Depth</td><td>Use this submenu to limit the recursion depth of the graph to a specific number of levels. To allow unlimited recursion depth, select Maximum. This option lets you simplify the graph by only including modulations that are closely connected to the selected tracks. It has no effect if the Scope is All.</td></tr>
-<tr><td>Layout</td><td>Use this submenu to select a Graphviz layout engine. The dot layout engine draws a hierarchical graph, which is often the most useful way to visualize a modulation network. The other layout engines draw various types of non-hierarchical graphs.  For more information on layouts, see the <a href="http://graphviz.org/documentation/">Graphviz documentation</a>.</td></tr>
-<tr><td>Filter</td><td>Use this submenu to filter the graph by modulation type. To show all types, select All. To show only a single type, select its name. To show multiple types, select Multiple, check the desired list items in the resulting dialog, and press OK. By default, all types are shown. The filter is applied after the modulation network has been crawled.</td></tr>
-<tr><td>Channel</td><td>Use this submenu to select which MIDI channels are shown. To show all channels, select All. To show only a single channel, select its number. To show multiple channels, select Multiple, check the desired list items in the @[multiple keyboards\Select Channels dialog], and press OK. By default, all channels are shown. The channel selection is applied after the modulation network has been crawled. Tracks with a @[track types\track type] of Modulator are only included if they directly or indirectly modulate a non-Modulator track that matches the channel selection.</td></tr>
-<tr><td>Zoom</td><td>Use this submenu to zoom the graph in or out, or reset zoom to its default value. The shortcuts are @{key}Ctrl++@} to zoom in, @{key}Ctrl+-@} to zoom out, and @{key}Ctrl+0@} to reset the zoom. To zoom in/out to/from the cursor position, spin the mouse wheel while pressing the @{key}Ctrl@} key.</td></tr>
-<tr><td>Highlight</td><td>This item enables or disables highlighting of the selected tracks in the graph. When this option is enabled, the selected tracks are indicated by drawing the corresponding graph nodes with a different background color.</td></tr>
-<tr><td>Labels</td><td>This item enables or disables edge labels. When this option is enabled, a label appears next to every connecting line in the graph, identifying the corresponding modulation type. This is only recommended for simple graphs, because otherwise the graph is hard to read.</td></tr>
-<tr><td>Legend</td><td>This item enables or disables showing a legend that maps the @[graph edge colors\edge colors] in use to their corresponding modulation types.</td></tr>
-<tr><td>Muted</td><td>This item determines whether the graph includes @[track mutes\muted tracks]. If this item is checked (the default), muted tracks are included, and the graph is unaffected by muting or unmuting tracks. Uncheck this item to exclude muted tracks. Excluding muted tracks can simplify the graph, but the graph also changes more often, because it updates whenever track mutes change. To match the @[Modulations bar], check this item; to match what you're hearing, uncheck it.</td></tr>
-<tr><td>Save As</td><td>This item saves the current graph to a file. The default output format is SVG, which is vector-based and scalable. Other supported formats include PNG, BMP, and PDF. The command displays a file dialog, which lets you specify the name and location of the output file. To change the output format, use the "Save as type" drop list near the bottom of the file dialog. The command also displays an Image Export dialog, which lets you specify the output image size. If "Same size as window" is selected, the output image will have the same size as the graph window. To specify a different size, select "Custom size" and enter the desired width and height in pixels.</td></tr>
-<tr><td>Reload</td><td>This item redraws the graph.</td></tr>
+<p><table class="top-align-all" border=1 cellpadding=2 cellspacing=0>
+<tr><td>@{#GraCM Scope\Scope}</td><td>Use this submenu to select the scope of the graph. Scopes are explained above. For scopes other than All, the modulation network is crawled by starting from the selected tracks and traversing their modulators, targets, or both. The traversal can be limited to a specific distance via the Depth option.</td></tr>
+<tr><td>@{#GraCM Depth\Depth}</td><td>Use this submenu to limit the recursion depth of the graph to a specific number of levels. To allow unlimited recursion depth, select Maximum. This option lets you simplify the graph by only including modulations that are closely connected to the selected tracks. It has no effect if the Scope is All.</td></tr>
+<tr><td>@{#GraCM Layout\Layout}</td><td>Use this submenu to select a Graphviz layout engine. The dot layout engine draws a hierarchical graph, which is often the most useful way to visualize a modulation network. The other layout engines draw various types of non-hierarchical graphs.  For more information on layouts, see the <a href="http://graphviz.org/documentation/">Graphviz documentation</a>.</td></tr>
+<tr><td>@{#GraCM Filter\Filter}</td><td>Use this submenu to filter the graph by @[Modulation types\modulation type]. To show all types, select All. To show only a single type, select its name. To show multiple types, select Multiple, check the desired list items in the resulting dialog, and press OK. By default, all types are shown. The filter is applied after the modulation network has been crawled.</td></tr>
+<tr><td>@{#GraCM Channel\Channel}</td><td>Use this submenu to select which MIDI channels are shown. To show all channels, select All. To show only a single channel, select its number. To show multiple channels, select Multiple, check the desired list items in the @[multiple keyboards\Select Channels dialog], and press OK. By default, all channels are shown. The channel selection is applied after the modulation network has been crawled. Tracks with a @[track types\track type] of Modulator are only included if they directly or indirectly modulate a non-Modulator track that matches the channel selection.</td></tr>
+<tr><td>@{#GraCM Zoom\Zoom}</td><td>Use this submenu to zoom the graph in or out, or reset zoom to its default value. The shortcuts are @{key}Ctrl++@} to zoom in, @{key}Ctrl+-@} to zoom out, and @{key}Ctrl+0@} to reset the zoom. To zoom in/out to/from the cursor position, spin the mouse wheel while pressing the @{key}Ctrl@} key.</td></tr>
+<tr><td>@{#GraCM Highlight\Highlight}</td><td>This item enables or disables highlighting of the selected tracks in the graph. When this option is enabled, the selected tracks are indicated by drawing the corresponding graph nodes with a different background color.</td></tr>
+<tr><td>@{#GraCM Labels\Labels}</td><td>This item enables or disables edge labels. When this option is enabled, a label appears next to every connecting line in the graph, identifying the corresponding modulation type. This is only recommended for simple graphs, because otherwise the graph is hard to read.</td></tr>
+<tr><td>@{#GraCM Legend\Legend}</td><td>This item enables or disables showing a legend that maps the @[graph edge colors\edge colors] in use to their corresponding modulation types.</td></tr>
+<tr><td>@{#GraCM Muted\Muted}</td><td>This item determines whether the graph includes @[track mutes\muted tracks]. If this item is checked (the default), muted tracks are included, and the graph is unaffected by muting or unmuting tracks. Uncheck this item to exclude muted tracks. Excluding muted tracks can simplify the graph, but the graph also changes more often, because it updates whenever track mutes change. To match the @[Modulations bar], check this item; to match what you're hearing, uncheck it.</td></tr>
+<tr><td>@{#GraCM Save As\Save As}</td><td>This item saves the current graph to a file. The default output format is SVG, which is vector-based and scalable. Other supported formats include PNG, BMP, and PDF. The command displays a file dialog, which lets you specify the name and location of the output file. To change the output format, use the "Save as type" drop list near the bottom of the file dialog. The command also displays an Image Export dialog, which lets you specify the output image size. If "Same size as window" is selected, the output image will have the same size as the graph window. To specify a different size, select "Custom size" and enter the desired width and height in pixels.</td></tr>
+<tr><td>@{#GraCM Reload\Reload}</td><td>This item redraws the graph.</td></tr>
 </table>
 
 @item Graph edge colors
@@ -1400,17 +1400,17 @@ This command can potentially consume a large amount of disk space. You're respon
 
 @item Phase bar context menu\Context menu
 
-<p><table border=1 cellpadding=2 cellspacing=0>
+<p><table class="top-align-all" border=1 cellpadding=2 cellspacing=0>
 <tr><th>Item</th><th>Description</th></tr>
-<tr><td>Export Video</td><td>Exports video of the animated diagram as an image sequence; see @[Exporting phase video\above].</td></tr>
-<tr><td>Circular Orbits</td><td>If checked, the orbits are circular, otherwise the orbits are elliptical with the same aspect ratio as the window.</td></tr>
-<tr><td>3D Planets</td><td>If checked, the planets are drawn in 3D instead of 2D.</td></tr>
-<tr><td>Night Sky</td><td>If checked, the background is dark instead of light.</td></tr>
-<tr><td>Crosshairs</td><td>If checked, the diagram includes crosshairs.</td></tr>
-<tr><td>Periods</td><td>If checked, the diagram includes labels that specify each orbit's @[period]. The periods are displayed in @[ticks] by default, but you can optionally convert them to another unit via division; see Period Unit below. Showing labels increases overhead.</td></tr>
-<tr><td>Convergences</td><td>If checked, the diagram indicates @[convergences] slightly before and after they occur. The participating orbits are increasingly highlighted as the convergence approaches, and gradually return to normal as the convergence recedes. To specify the minimum number of orbits that must participate in a convergence, use the @[Convergence Size] options on the Transport menu. To skip lesser convergences, increase the size. If orbits are selected, only those orbits participate in convergences.</td></tr>
-<tr><td>Full Screen</td><td>Makes the Phase bar enter full screen mode, or if it's already full screen, restores it to its previous size and position. In full screen mode, the diagram is shown without borders and fills the entire monitor. To make the bar fill a secondary monitor, drag the bar onto that monitor before making it full-screen. The shortcut key to enter or exit full screen mode is @{key}Ctrl+F11@}. You can also exit full screen mode by pressing the @{key}Escape@} key. To use either key, you may need to give the Phase bar the input focus first, by left-clicking the diagram's background.</td></tr>
-<tr><td>Period Unit</td><td>This command lets you convert the period labels to a unit other than ticks, via division. It's only meaningful if you include period labels on the graph, by checking the Periods option as explained above. The command displays the Period Unit dialog; enter the desired unit in ticks, and click OK. All periods are divided by the specified unit before being displayed. For example, if the @[timebase] is 120, specifying 30 will cause periods to be displayed in sixteenth notes. To revert to displaying periods in ticks, repeat this command and set the unit to zero.</td></tr>
+<tr><td>@{#PhaCM Export Video\Export Video}</td><td>Exports video of the animated diagram as an image sequence; see @[Exporting phase video\above].</td></tr>
+<tr><td>@{#PhaCM Circular Orbits\Circular Orbits}</td><td>If checked, the orbits are circular, otherwise the orbits are elliptical with the same aspect ratio as the window.</td></tr>
+<tr><td>@{#PhaCM 3D Planets\3D Planets}</td><td>If checked, the planets are drawn in 3D instead of 2D.</td></tr>
+<tr><td>@{#PhaCM Night Sky\Night Sky}</td><td>If checked, the background is dark instead of light.</td></tr>
+<tr><td>@{#PhaCM Crosshairs\Crosshairs}</td><td>If checked, the diagram includes crosshairs.</td></tr>
+<tr><td>@{#PhaCM Periods\Periods}</td><td>If checked, the diagram includes labels that specify each orbit's @[period]. The periods are displayed in @[ticks] by default, but you can optionally convert them to another unit via division; see Period Unit below. Showing labels increases overhead.</td></tr>
+<tr><td>@{#PhaCM Convergences\Convergences}</td><td>If checked, the diagram indicates @[convergences] slightly before and after they occur. The participating orbits are increasingly highlighted as the convergence approaches, and gradually return to normal as the convergence recedes. To specify the minimum number of orbits that must participate in a convergence, use the @[Convergence Size] options on the Transport menu. To skip lesser convergences, increase the size. If orbits are selected, only those orbits participate in convergences.</td></tr>
+<tr><td>@{#PhaCM Full Screen\Full Screen}</td><td>Makes the Phase bar enter full screen mode, or if it's already full screen, restores it to its previous size and position. In full screen mode, the diagram is shown without borders and fills the entire monitor. To make the bar fill a secondary monitor, drag the bar onto that monitor before making it full-screen. The shortcut key to enter or exit full screen mode is @{key}Ctrl+F11@}. You can also exit full screen mode by pressing the @{key}Escape@} key. To use either key, you may need to give the Phase bar the input focus first, by left-clicking the diagram's background.</td></tr>
+<tr><td>@{#PhaCM Period Unit\Period Unit}</td><td>This command lets you convert the period labels to a unit other than ticks, via division. It's only meaningful if you include period labels on the graph, by checking the Periods option as explained above. The command displays the Period Unit dialog; enter the desired unit in ticks, and click OK. All periods are divided by the specified unit before being displayed. For example, if the @[timebase] is 120, specifying 30 will cause periods to be displayed in sixteenth notes. To revert to displaying periods in ticks, repeat this command and set the unit to zero.</td></tr>
 </table>
 
 @topic Step Values bar\Step Values
@@ -1429,17 +1429,17 @@ Various display formats can be selected using the window's @[Step values context
 
 @item Step values context menu\Context menu
 
-<p><table border=1 cellpadding=2 cellspacing=0>
+<p><table class="top-align-all" border=1 cellpadding=2 cellspacing=0>
 <tr><th>Item</th><th>Description</th></tr>
-<tr><td>Format</td><td>This submenu lets you select a @[step values display formats\display format].</td></tr>
-<tr><td>Cut</td><td>Deletes the selected steps after copying them to the @[clipboards\clipboard].</td></tr>
-<tr><td>Copy</td><td>Copies the selected steps to the clipboard.</td></tr>
-<tr><td>Paste</td><td>Inserts the contents of the steps clipboard at the current position.</td></tr>
-<tr><td>Insert</td><td>Inserts a new step.</td></tr>
-<tr><td>Delete</td><td>Deletes the selected steps.</td></tr>
-<tr><td>Select All</td><td>Selects all steps.</td></tr>
-<tr><td>Export</td><td>Exports the steps as text to the system clipboard.</td></tr>
-<tr><td>Options</td><td>Configures the export. You can choose Columns = Steps versus Columns = Tracks, and Comma Delimited (CSV) versus Tab Delimited.</td></tr>
+<tr><td>@{#StVCM Format\Format}</td><td>This submenu lets you select a @[step values display formats\display format].</td></tr>
+<tr><td>@{#StVCM Cut\Cut}</td><td>Deletes the selected steps after copying them to the @[clipboards\clipboard].</td></tr>
+<tr><td>@{#StVCM Copy\Copy}</td><td>Copies the selected steps to the clipboard.</td></tr>
+<tr><td>@{#StVCM Paste\Paste}</td><td>Inserts the contents of the steps clipboard at the current position.</td></tr>
+<tr><td>@{#StVCM Insert\Insert}</td><td>Inserts a new step.</td></tr>
+<tr><td>@{#StVCM Delete\Delete}</td><td>Deletes the selected steps.</td></tr>
+<tr><td>@{#StVCM Select All\Select All}</td><td>Selects all steps.</td></tr>
+<tr><td>@{#StVCM Export\Export}</td><td>Exports the steps as text to the system clipboard.</td></tr>
+<tr><td>@{#StVCM Options\Options}</td><td>Configures the export. You can choose Columns = Steps versus Columns = Tracks, and Comma Delimited (CSV) versus Tab Delimited.</td></tr>
 </table>
 
 @topic Mapping bar\Mapping
@@ -1510,15 +1510,15 @@ The application also supports @[MIDI learn] mode, i.e. the input messages can be
 
 @item Mapping context menu\Context menu
 
-<p><table border=1 cellpadding=2 cellspacing=0>
-<tr><td>Insert</td><td>Inserts a new mapping at the current position</td></tr>
-<tr><td>Delete</td><td>Deletes the selected mappings</td></tr>
-<tr><td>Cut</td><td>Deletes the selected mappings after copying them to the @[clipboards\clipboard]</td></tr>
-<tr><td>Copy</td><td>Copies the selected mappings to the clipboard</td></tr>
-<tr><td>Paste</td><td>Inserts the contents of the mapping clipboard at the current position</td></tr>
-<tr><td>Select All</td><td>Selects all mappings</td></tr>
-<tr><td>Learn</td><td>Toggles MIDI Learn mode</td></tr>
-<tr><td>Map Tracks</td><td>Creates mappings for the selected @[tracks]</td></tr>
+<p><table class="top-align-all" border=1 cellpadding=2 cellspacing=0>
+<tr><td>@{#MapCM Insert\Insert}</td><td>Inserts a new mapping at the current position</td></tr>
+<tr><td>@{#MapCM Delete\Delete}</td><td>Deletes the selected mappings</td></tr>
+<tr><td>@{#MapCM Cut\Cut}</td><td>Deletes the selected mappings after copying them to the @[clipboards\clipboard]</td></tr>
+<tr><td>@{#MapCM Copy\Copy}</td><td>Copies the selected mappings to the clipboard</td></tr>
+<tr><td>@{#MapCM Paste\Paste}</td><td>Inserts the contents of the mapping clipboard at the current position</td></tr>
+<tr><td>@{#MapCM Select All\Select All}</td><td>Selects all mappings</td></tr>
+<tr><td>@{#MapCM Learn\Learn}</td><td>Toggles MIDI Learn mode</td></tr>
+<tr><td>@{#MapCM Map Tracks\Map Tracks}</td><td>Creates mappings for the selected @[tracks]</td></tr>
 </table>
 
 @item Tempo mapping
@@ -2274,7 +2274,7 @@ This command transposes the @[track selection\selected tracks]. A dialog is disp
 
 @topic Velocity
 
-This command changes the velocities of the selected @[tracks] or @[steps]. It has three functions: Offset, Scale and Replace. If a @[step selection] exists, it takes priority, and in this case only the selected steps are affected. Otherwise the command operates on the @[track selection\selected tracks]. The command supports all @[track types], even though they interpret step values differently. For @[note tracks], only notes that start within the step selection are affected. For all functions, the resulting values are @[clipping\clipped] so that they can't exceed the permissible range. If clipping is likely, a "Clipping may occur" warning message is displayed, giving you the opportunity to cancel or continue. The clipping check accounts for all velocity offsets including @[velocity modulation].
+This command changes the velocities of the selected @[tracks] or @[steps]. It has three functions: Offset, Scale and Replace. If a @[step selection] exists, it takes priority, and in this case only the selected steps are affected. Otherwise the command operates on the @[track selection\selected tracks]. The command supports all @[track types], even though they interpret step values differently. For @[note tracks], only notes that start within the step selection are affected. For all functions, the resulting values are @[clipping\clipped] so that they can't exceed the permissible range. If clipping is likely, a "Clipping may occur" warning @[clip warning\message] is displayed, giving you the opportunity to cancel or continue. The clipping check accounts for all velocity offsets including @[velocity modulation].
 
 @item Offsetting velocities\Offset
 
@@ -2347,7 +2347,7 @@ This command solos the @[track selection\selected tracks]. The selected tracks a
 
 This command groups the @[track selection\selected tracks] into a new @[parts\part]. The new part is named after its first member track, and appears in the @[Parts bar].
 
-If any of the selected tracks already belong to a part, a warning message is displayed, giving you the option to continue or cancel. If you continue, the offending tracks are removed from their previous part before being reassigned to the new one.
+If any of the selected tracks already belong to a part, a warning @[group overlap\message] is displayed, giving you the option to continue or cancel. If you continue, the offending tracks are removed from their previous part before being reassigned to the new one.
 
 @topic Create Preset\Preset
 
