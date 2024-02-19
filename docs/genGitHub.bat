@@ -35,6 +35,7 @@ echo y | C:\Chris\tools\fsr links.htm "\"http://whorld.sourceforge.net/\"" "\"ht
 echo y | C:\Chris\tools\fsr links.htm "\"http://whorld.org/\"" "\"https://victimofleisure.github.io/Whorld/\""
 ren links.htm links.html
 copy C:\Chris\MyProjects\Polymeter\Help\help.txt Help
+copy C:\Chris\MyProjects\Polymeter\Help\Polymeter.hhp Help
 if errorlevel 1 goto err
 goto exit
 :err

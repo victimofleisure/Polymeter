@@ -1,0 +1,623 @@
+
+[OPTIONS]
+Auto Index=Yes
+Compatibility=1.1 or later
+Compiled file=Polymeter.chm
+Contents file=Polymeter.hhc
+Default Window=main
+Default topic=Getting_Started\Introduction.htm
+Display compile progress=No
+Error log file=_errorlog.txt
+Full-text search=Yes
+Index file=Polymeter.hhk
+Language=0x409 English (United States)
+Title=Polymeter Help
+
+[WINDOWS]
+main="Polymeter Help","Polymeter.hhc","Polymeter.hhk","Getting_Started\Introduction.htm","Getting_Started\Introduction.htm",,,,,0x22520,222,0x1046,[10,10,1024,768],0xb0000,0x8,,,,,0
+
+
+[INFOTYPES]
+
+[FILES]
+Getting_Started/Introduction.htm
+Getting_Started/License.htm
+Getting_Started/Requirements.htm
+Getting_Started/Installing.htm
+Getting_Started/Uninstalling.htm
+Getting_Started/Getting_help.htm
+Concepts/Polymeter.htm
+Concepts/Tracks.htm
+Concepts/Steps.htm
+Concepts/Modulations.htm
+Concepts/Dubs.htm
+Concepts/Songs.htm
+Concepts/Parts.htm
+Concepts/Presets.htm
+Concepts/Mappings.htm
+Concepts/Convergences.htm
+Concepts/List_controls.htm
+Concepts/Grid_controls.htm
+Tracks/Note_tracks.htm
+Tracks/Controller_tracks.htm
+Tracks/Tempo_tracks.htm
+Tracks/Modulator_tracks.htm
+Tracks/Internal_tracks.htm
+Modulation/Mute_modulation.htm
+Modulation/Note_modulation.htm
+Modulation/Velocity_modulation.htm
+Modulation/Duration_modulation.htm
+Modulation/Range_modulation.htm
+Modulation/Position_modulation.htm
+Modulation/Tempo_modulation.htm
+Modulation/Scale_modulation.htm
+Modulation/Chord_modulation.htm
+Modulation/Index_modulation.htm
+Modulation/Voicing_modulation.htm
+Modulation/Offset_modulation.htm
+Views/Views.htm
+Views/Track_View/Track_View.htm
+Views/Track_View/Track_Grid.htm
+Views/Track_View/Track_Mutes.htm
+Views/Track_View/Track_Steps.htm
+Views/Track_View/Track_Selection.htm
+Views/Track_View/Step_Selection.htm
+Views/Track_View/Velocities_Pane.htm
+Views/Song_View.htm
+Views/Live_View.htm
+Docking_Windows/Docking_windows.htm
+Docking_Windows/Arranging_docking_windows.htm
+Docking_Windows/Menu_bar.htm
+Docking_Windows/Toolbar.htm
+Docking_Windows/Properties_bar.htm
+Docking_Windows/Channels_bar.htm
+Docking_Windows/Presets_bar.htm
+Docking_Windows/Parts_bar.htm
+Docking_Windows/Modulations_bar.htm
+Docking_Windows/MIDI_Input_bar.htm
+Docking_Windows/MIDI_Output_bar.htm
+Docking_Windows/Piano_bar.htm
+Docking_Windows/Graph_bar.htm
+Docking_Windows/Phase_bar.htm
+Docking_Windows/Step_Values_bar.htm
+Docking_Windows/Mapping_bar.htm
+Properties/Tempo.htm
+Properties/Timebase.htm
+Properties/Meter.htm
+Properties/Key_Signature.htm
+Properties/Song_Length.htm
+Properties/Start_Position.htm
+Properties/Note_Overlap.htm
+Properties/Record_Offset.htm
+Properties/Loop_From.htm
+Properties/Loop_To.htm
+Options/MIDI/Input_Device.htm
+Options/MIDI/Output_Device.htm
+Options/MIDI/Latency.htm
+Options/MIDI/Buffer_Size.htm
+Options/MIDI/Thru.htm
+Options/MIDI/Default_Velocity.htm
+Options/MIDI/Input_Quantization.htm
+Options/MIDI/Record_Input.htm
+Options/MIDI/Send_MIDI_Clock.htm
+Options/View/Update_Frequency.htm
+Options/View/Show_Current_Position.htm
+Options/View/Show_Note_Names.htm
+Options/View/Show_General_MIDI_Names.htm
+Options/View/Show_Quant_as_Fraction.htm
+Options/View/Show_Track_Colors.htm
+Options/View/Unique_Track_Names.htm
+Options/View/Zoom_Step.htm
+Options/View/Live_View_Font_Height.htm
+Options/Graph/Graphviz_Folder.htm
+Options/Graph/Graph_Handles_Unicode.htm
+Options/Graph/Use_Cairo.htm
+Options/General/Show_Property_Descriptions.htm
+Options/General/Automatically_Check_for_Updates.htm
+Options/General/Always_Record.htm
+Menus/File/New.htm
+Menus/File/Open.htm
+Menus/File/Close.htm
+Menus/File/Save.htm
+Menus/File/Save_As.htm
+Menus/File/Export.htm
+Menus/File/Import.htm
+Menus/File/Exit.htm
+Menus/Edit/Standard_editing_commands.htm
+Menus/Edit/Undo.htm
+Menus/Edit/Redo.htm
+Menus/Edit/Cut.htm
+Menus/Edit/Copy.htm
+Menus/Edit/Paste.htm
+Menus/Edit/Insert.htm
+Menus/Edit/Delete.htm
+Menus/Edit/Select_All.htm
+Menus/Edit/Deselect.htm
+Menus/Edit/Rename.htm
+Menus/Edit/Find.htm
+Menus/Edit/Replace.htm
+Menus/View/View_Docking_Windows.htm
+Menus/View/Status_Bar.htm
+Menus/View/Application_Look.htm
+Menus/View/Zoom_In.htm
+Menus/View/Zoom_Out.htm
+Menus/View/Zoom_Reset.htm
+Menus/View/Show_Properties.htm
+Menus/View/Show_Channels.htm
+Menus/View/Show_Modulations.htm
+Menus/View/Groups.htm
+Menus/View/Show_Velocities.htm
+Menus/View/Show_Track_View.htm
+Menus/View/Show_Song_View.htm
+Menus/View/Show_Live_View.htm
+Menus/View/Customize.htm
+Menus/Track/Length.htm
+Menus/Track/Shift.htm
+Menus/Track/Rotate.htm
+Menus/Track/Reverse.htm
+Menus/Track/Invert.htm
+Menus/Track/Tie_Notes.htm
+Menus/Track/Transpose.htm
+Menus/Track/Velocity.htm
+Menus/Track/Fill.htm
+Menus/Track/Stretch.htm
+Menus/Track/Mute.htm
+Menus/Track/Solo.htm
+Menus/Track/Create_Group.htm
+Menus/Track/Create_Preset.htm
+Menus/Track/Create_Modulation.htm
+Menus/Track/Sort.htm
+Menus/Track/Color.htm
+Menus/Transport/Play.htm
+Menus/Transport/Pause.htm
+Menus/Transport/Record.htm
+Menus/Transport/Rewind.htm
+Menus/Transport/Loop.htm
+Menus/Transport/Go_To_Position.htm
+Menus/Transport/Next_Convergence.htm
+Menus/Transport/Previous_Convergence.htm
+Menus/Transport/Convergence_Size.htm
+Menus/Transport/Record_Tracks.htm
+Menus/Tools/Statistics.htm
+Menus/Tools/Time_To_Repeat.htm
+Menus/Tools/Prime_Factors.htm
+Menus/Tools/Velocity_Range.htm
+Menus/Tools/Check_Modulations.htm
+Menus/Tools/Devices.htm
+Menus/Tools/Options.htm
+Menus/Tools/Import_Table.htm
+Menus/Tools/Export_Table.htm
+Menus/Tools/Convergences_Calculator.htm
+Menus/Tools/Select_Unmuted.htm
+Menus/Tools/MIDI_Learn.htm
+Menus/Window/New_Window.htm
+Menus/Window/Full_Screen.htm
+Menus/Window/Reset_Layout.htm
+Menus/Window/New_Horizontal_Tab_Group.htm
+Menus/Window/New_Vertical_Tab_Group.htm
+Menus/Window/Windows.htm
+Menus/Help/Help_Topics.htm
+Menus/Help/Polymeter_on_the_Web.htm
+Menus/Help/Check_for_Updates.htm
+Menus/Help/About.htm
+Loose_Ends/Audio_versus_events.htm
+Loose_Ends/Recording_MIDI_input.htm
+Loose_Ends/Maximum_track_length.htm
+Loose_Ends/Normalized_angles.htm
+Loose_Ends/Period.htm
+Loose_Ends/Primes.htm
+Loose_Ends/Modular_arithmetic.htm
+Loose_Ends/Clipping.htm
+Loose_Ends/Unicode.htm
+Loose_Ends/Undersized_graph_text.htm
+Reference/Errors.htm
+Reference/Options_Summary.htm
+Reference/Shortcuts.htm
+
+[ALIAS]
+IDH_Getting_Started_Introduction = Getting_Started/Introduction.htm
+IDH_Getting_Started_License = Getting_Started/License.htm
+IDH_Getting_Started_Requirements = Getting_Started/Requirements.htm
+IDH_Getting_Started_Installing = Getting_Started/Installing.htm
+IDH_Getting_Started_Uninstalling = Getting_Started/Uninstalling.htm
+IDH_Getting_Started_Getting_help = Getting_Started/Getting_help.htm
+IDH_Concepts_Polymeter = Concepts/Polymeter.htm
+IDH_Concepts_Polymeter_Complex_polymeter = Concepts/Polymeter.htm#Complex_polymeter
+IDH_Concepts_Polymeter_Polymeter_versus_polyrhythm__odd_time__and_phasing = Concepts/Polymeter.htm#Polymeter_versus_polyrhythm,_odd_time,_and_phasing
+IDH_Concepts_Tracks = Concepts/Tracks.htm
+IDH_Concepts_Tracks_Track_properties = Concepts/Tracks.htm#Track_properties
+IDH_Concepts_Tracks_Track_types = Concepts/Tracks.htm#Track_types
+IDH_Concepts_Steps = Concepts/Steps.htm
+IDH_Concepts_Steps_Unsigned_versus_signed_steps = Concepts/Steps.htm#Unsigned_versus_signed_steps
+IDH_Concepts_Steps_Ticks = Concepts/Steps.htm#Ticks
+IDH_Concepts_Modulations = Concepts/Modulations.htm
+IDH_Concepts_Modulations_Modulation_types = Concepts/Modulations.htm#Modulation_types
+IDH_Concepts_Modulations_Modulation_relationships = Concepts/Modulations.htm#Modulation_relationships
+IDH_Concepts_Modulations_Nested_modulation = Concepts/Modulations.htm#Nested_modulation
+IDH_Concepts_Modulations_Modulation_rules = Concepts/Modulations.htm#Modulation_rules
+IDH_Concepts_Dubs = Concepts/Dubs.htm
+IDH_Concepts_Songs = Concepts/Songs.htm
+IDH_Concepts_Parts = Concepts/Parts.htm
+IDH_Concepts_Presets = Concepts/Presets.htm
+IDH_Concepts_Mappings = Concepts/Mappings.htm
+IDH_Concepts_Convergences = Concepts/Convergences.htm
+IDH_Concepts_Convergences_Convergence_example = Concepts/Convergences.htm#Convergence_example
+IDH_Concepts_List_controls = Concepts/List_controls.htm
+IDH_Concepts_List_controls_Selecting_rows_via_mouse = Concepts/List_controls.htm#Selecting_rows_via_mouse
+IDH_Concepts_List_controls_Selecting_rows_via_keyboard = Concepts/List_controls.htm#Selecting_rows_via_keyboard
+IDH_Concepts_List_controls_List_columns = Concepts/List_controls.htm#List_columns
+IDH_Concepts_Grid_controls = Concepts/Grid_controls.htm
+IDH_Tracks_Note_tracks = Tracks/Note_tracks.htm
+IDH_Tracks_Note_tracks_Tied_notes = Tracks/Note_tracks.htm#Tied_notes
+IDH_Tracks_Note_tracks_Triggering_samples = Tracks/Note_tracks.htm#Triggering_samples
+IDH_Tracks_Note_tracks_Note_off = Tracks/Note_tracks.htm#Note_off
+IDH_Tracks_Controller_tracks = Tracks/Controller_tracks.htm
+IDH_Tracks_Tempo_tracks = Tracks/Tempo_tracks.htm
+IDH_Tracks_Modulator_tracks = Tracks/Modulator_tracks.htm
+IDH_Tracks_Internal_tracks = Tracks/Internal_tracks.htm
+IDH_Tracks_Internal_tracks_Internal_controllers = Tracks/Internal_tracks.htm#Internal_controllers
+IDH_Tracks_Internal_tracks_Internal_versus_external_controllers = Tracks/Internal_tracks.htm#Internal_versus_external_controllers
+IDH_Modulation_Mute_modulation = Modulation/Mute_modulation.htm
+IDH_Modulation_Note_modulation = Modulation/Note_modulation.htm
+IDH_Modulation_Velocity_modulation = Modulation/Velocity_modulation.htm
+IDH_Modulation_Duration_modulation = Modulation/Duration_modulation.htm
+IDH_Modulation_Range_modulation = Modulation/Range_modulation.htm
+IDH_Modulation_Position_modulation = Modulation/Position_modulation.htm
+IDH_Modulation_Tempo_modulation = Modulation/Tempo_modulation.htm
+IDH_Modulation_Scale_modulation = Modulation/Scale_modulation.htm
+IDH_Modulation_Chord_modulation = Modulation/Chord_modulation.htm
+IDH_Modulation_Index_modulation = Modulation/Index_modulation.htm
+IDH_Modulation_Voicing_modulation = Modulation/Voicing_modulation.htm
+IDH_Modulation_Offset_modulation = Modulation/Offset_modulation.htm
+IDH_Views_Views = Views/Views.htm
+IDH_Views_Views_Song_Mode = Views/Views.htm#Song_Mode
+IDH_Views_Track_View_Track_View = Views/Track_View/Track_View.htm
+IDH_Views_Track_View_Track_View_Track_view_quick_help = Views/Track_View/Track_View.htm#Track_view_quick_help
+IDH_Views_Track_View_Track_View_Panes = Views/Track_View/Track_View.htm#Panes
+IDH_Views_Track_View_Track_Grid = Views/Track_View/Track_Grid.htm
+IDH_Views_Track_View_Track_Grid_Track_Number = Views/Track_View/Track_Grid.htm#Track_Number
+IDH_Views_Track_View_Track_Grid_Track_Name = Views/Track_View/Track_Grid.htm#Track_Name
+IDH_Views_Track_View_Track_Grid_Track_Type = Views/Track_View/Track_Grid.htm#Track_Type
+IDH_Views_Track_View_Track_Grid_Track_Channel = Views/Track_View/Track_Grid.htm#Track_Channel
+IDH_Views_Track_View_Track_Grid_Track_Note = Views/Track_View/Track_Grid.htm#Track_Note
+IDH_Views_Track_View_Track_Grid_Track_Length = Views/Track_View/Track_Grid.htm#Track_Length
+IDH_Views_Track_View_Track_Grid_Track_Quant = Views/Track_View/Track_Grid.htm#Track_Quant
+IDH_Views_Track_View_Track_Grid_Track_Offset = Views/Track_View/Track_Grid.htm#Track_Offset
+IDH_Views_Track_View_Track_Grid_Track_Swing = Views/Track_View/Track_Grid.htm#Track_Swing
+IDH_Views_Track_View_Track_Grid_Track_Velocity = Views/Track_View/Track_Grid.htm#Track_Velocity
+IDH_Views_Track_View_Track_Grid_Track_Duration = Views/Track_View/Track_Grid.htm#Track_Duration
+IDH_Views_Track_View_Track_Grid_Track_Range_Type = Views/Track_View/Track_Grid.htm#Track_Range_Type
+IDH_Views_Track_View_Track_Grid_Track_Range_Start = Views/Track_View/Track_Grid.htm#Track_Range_Start
+IDH_Views_Track_View_Track_Mutes = Views/Track_View/Track_Mutes.htm
+IDH_Views_Track_View_Track_Steps = Views/Track_View/Track_Steps.htm
+IDH_Views_Track_View_Track_Steps_Track_steps_quick_help = Views/Track_View/Track_Steps.htm#Track_steps_quick_help
+IDH_Views_Track_View_Track_Selection = Views/Track_View/Track_Selection.htm
+IDH_Views_Track_View_Track_Selection_Track_Selection_Commands = Views/Track_View/Track_Selection.htm#Track_Selection_Commands
+IDH_Views_Track_View_Step_Selection = Views/Track_View/Step_Selection.htm
+IDH_Views_Track_View_Velocities_Pane = Views/Track_View/Velocities_Pane.htm
+IDH_Views_Song_View = Views/Song_View.htm
+IDH_Views_Song_View_Song_Grid = Views/Song_View.htm#Song_Grid
+IDH_Views_Song_View_Song_grid_quick_help = Views/Song_View.htm#Song_grid_quick_help
+IDH_Views_Song_View_Cell_selection = Views/Song_View.htm#Cell_selection
+IDH_Views_Live_View = Views/Live_View.htm
+IDH_Docking_Windows_Docking_windows = Docking_Windows/Docking_windows.htm
+IDH_Docking_Windows_Arranging_docking_windows = Docking_Windows/Arranging_docking_windows.htm
+IDH_Docking_Windows_Arranging_docking_windows_Floating_windows = Docking_Windows/Arranging_docking_windows.htm#Floating_windows
+IDH_Docking_Windows_Arranging_docking_windows_Auto_hide = Docking_Windows/Arranging_docking_windows.htm#Auto_hide
+IDH_Docking_Windows_Arranging_docking_windows_Specifying_a_Monitor = Docking_Windows/Arranging_docking_windows.htm#Specifying_a_Monitor
+IDH_Docking_Windows_Arranging_docking_windows_Resetting_window_layouts = Docking_Windows/Arranging_docking_windows.htm#Resetting_window_layouts
+IDH_Docking_Windows_Menu_bar = Docking_Windows/Menu_bar.htm
+IDH_Docking_Windows_Toolbar = Docking_Windows/Toolbar.htm
+IDH_Docking_Windows_Properties_bar = Docking_Windows/Properties_bar.htm
+IDH_Docking_Windows_Properties_bar_Master_properties = Docking_Windows/Properties_bar.htm#Master_properties
+IDH_Docking_Windows_Channels_bar = Docking_Windows/Channels_bar.htm
+IDH_Docking_Windows_Channels_bar_Channels_columns = Docking_Windows/Channels_bar.htm#Channels_columns
+IDH_Docking_Windows_Presets_bar = Docking_Windows/Presets_bar.htm
+IDH_Docking_Windows_Presets_bar_Presets_context_menu = Docking_Windows/Presets_bar.htm#Presets_context_menu
+IDH_Docking_Windows_Presets_bar_PreCM_Create = Docking_Windows/Presets_bar.htm#PreCM_Create
+IDH_Docking_Windows_Presets_bar_PreCM_Apply = Docking_Windows/Presets_bar.htm#PreCM_Apply
+IDH_Docking_Windows_Presets_bar_PreCM_Delete = Docking_Windows/Presets_bar.htm#PreCM_Delete
+IDH_Docking_Windows_Presets_bar_PreCM_Rename = Docking_Windows/Presets_bar.htm#PreCM_Rename
+IDH_Docking_Windows_Presets_bar_PreCM_Update = Docking_Windows/Presets_bar.htm#PreCM_Update
+IDH_Docking_Windows_Parts_bar = Docking_Windows/Parts_bar.htm
+IDH_Docking_Windows_Parts_bar_Parts_context_menu = Docking_Windows/Parts_bar.htm#Parts_context_menu
+IDH_Docking_Windows_Parts_bar_ParCM_Create = Docking_Windows/Parts_bar.htm#ParCM_Create
+IDH_Docking_Windows_Parts_bar_ParCM_Delete = Docking_Windows/Parts_bar.htm#ParCM_Delete
+IDH_Docking_Windows_Parts_bar_ParCM_Rename = Docking_Windows/Parts_bar.htm#ParCM_Rename
+IDH_Docking_Windows_Parts_bar_ParCM_Update = Docking_Windows/Parts_bar.htm#ParCM_Update
+IDH_Docking_Windows_Parts_bar_ParCM_Tracks = Docking_Windows/Parts_bar.htm#ParCM_Tracks
+IDH_Docking_Windows_Parts_bar_ParCM_Sort = Docking_Windows/Parts_bar.htm#ParCM_Sort
+IDH_Docking_Windows_Modulations_bar = Docking_Windows/Modulations_bar.htm
+IDH_Docking_Windows_Modulations_bar_Creating_a_modulation = Docking_Windows/Modulations_bar.htm#Creating_a_modulation
+IDH_Docking_Windows_Modulations_bar_Creating_a_modulation_group = Docking_Windows/Modulations_bar.htm#Creating_a_modulation_group
+IDH_Docking_Windows_Modulations_bar_Show_Differences = Docking_Windows/Modulations_bar.htm#Show_Differences
+IDH_Docking_Windows_Modulations_bar_Modulations_context_menu = Docking_Windows/Modulations_bar.htm#Modulations_context_menu
+IDH_Docking_Windows_Modulations_bar_ModCM_Insert = Docking_Windows/Modulations_bar.htm#ModCM_Insert
+IDH_Docking_Windows_Modulations_bar_ModCM_Insert_Group = Docking_Windows/Modulations_bar.htm#ModCM_Insert_Group
+IDH_Docking_Windows_Modulations_bar_ModCM_Delete = Docking_Windows/Modulations_bar.htm#ModCM_Delete
+IDH_Docking_Windows_Modulations_bar_ModCM_Cut = Docking_Windows/Modulations_bar.htm#ModCM_Cut
+IDH_Docking_Windows_Modulations_bar_ModCM_Copy = Docking_Windows/Modulations_bar.htm#ModCM_Copy
+IDH_Docking_Windows_Modulations_bar_ModCM_Paste = Docking_Windows/Modulations_bar.htm#ModCM_Paste
+IDH_Docking_Windows_Modulations_bar_ModCM_Select_All = Docking_Windows/Modulations_bar.htm#ModCM_Select_All
+IDH_Docking_Windows_Modulations_bar_ModCM_Show_Differences = Docking_Windows/Modulations_bar.htm#ModCM_Show_Differences
+IDH_Docking_Windows_Modulations_bar_ModCM_Show_Targets = Docking_Windows/Modulations_bar.htm#ModCM_Show_Targets
+IDH_Docking_Windows_Modulations_bar_ModCM_Sort = Docking_Windows/Modulations_bar.htm#ModCM_Sort
+IDH_Docking_Windows_Modulations_bar_Show_Targets = Docking_Windows/Modulations_bar.htm#Show_Targets
+IDH_Docking_Windows_MIDI_Input_bar = Docking_Windows/MIDI_Input_bar.htm
+IDH_Docking_Windows_MIDI_Input_bar_MIDI_IO_context_menu = Docking_Windows/MIDI_Input_bar.htm#MIDI_IO_context_menu
+IDH_Docking_Windows_MIDI_Input_bar_MIOCM_Channel_Filter = Docking_Windows/MIDI_Input_bar.htm#MIOCM_Channel_Filter
+IDH_Docking_Windows_MIDI_Input_bar_MIOCM_Message_Filter = Docking_Windows/MIDI_Input_bar.htm#MIOCM_Message_Filter
+IDH_Docking_Windows_MIDI_Input_bar_MIOCM_System_Messages = Docking_Windows/MIDI_Input_bar.htm#MIOCM_System_Messages
+IDH_Docking_Windows_MIDI_Input_bar_MIOCM_Reset_Filters = Docking_Windows/MIDI_Input_bar.htm#MIOCM_Reset_Filters
+IDH_Docking_Windows_MIDI_Input_bar_MIOCM_Pause = Docking_Windows/MIDI_Input_bar.htm#MIOCM_Pause
+IDH_Docking_Windows_MIDI_Input_bar_MIOCM_Clear_History = Docking_Windows/MIDI_Input_bar.htm#MIOCM_Clear_History
+IDH_Docking_Windows_MIDI_Input_bar_MIOCM_Export = Docking_Windows/MIDI_Input_bar.htm#MIOCM_Export
+IDH_Docking_Windows_MIDI_Input_bar_MIOCM_Note_Names = Docking_Windows/MIDI_Input_bar.htm#MIOCM_Note_Names
+IDH_Docking_Windows_MIDI_Input_bar_MIOCM_Controller_Names = Docking_Windows/MIDI_Input_bar.htm#MIOCM_Controller_Names
+IDH_Docking_Windows_MIDI_Input_bar_MIOCM_Reset_Columns = Docking_Windows/MIDI_Input_bar.htm#MIOCM_Reset_Columns
+IDH_Docking_Windows_MIDI_Output_bar = Docking_Windows/MIDI_Output_bar.htm
+IDH_Docking_Windows_Piano_bar = Docking_Windows/Piano_bar.htm
+IDH_Docking_Windows_Piano_bar_Piano_context_menu = Docking_Windows/Piano_bar.htm#Piano_context_menu
+IDH_Docking_Windows_Piano_bar_PiaCM_Channel_Filter = Docking_Windows/Piano_bar.htm#PiaCM_Channel_Filter
+IDH_Docking_Windows_Piano_bar_PiaCM_Output_Channel = Docking_Windows/Piano_bar.htm#PiaCM_Output_Channel
+IDH_Docking_Windows_Piano_bar_PiaCM_Piano_Size = Docking_Windows/Piano_bar.htm#PiaCM_Piano_Size
+IDH_Docking_Windows_Piano_bar_PiaCM_Key_Labels = Docking_Windows/Piano_bar.htm#PiaCM_Key_Labels
+IDH_Docking_Windows_Piano_bar_PiaCM_Rotate_Labels = Docking_Windows/Piano_bar.htm#PiaCM_Rotate_Labels
+IDH_Docking_Windows_Piano_bar_PiaCM_Color_Velocities = Docking_Windows/Piano_bar.htm#PiaCM_Color_Velocities
+IDH_Docking_Windows_Piano_bar_PiaCM_Insert_Track = Docking_Windows/Piano_bar.htm#PiaCM_Insert_Track
+IDH_Docking_Windows_Piano_bar_Multiple_keyboards = Docking_Windows/Piano_bar.htm#Multiple_keyboards
+IDH_Docking_Windows_Graph_bar = Docking_Windows/Graph_bar.htm
+IDH_Docking_Windows_Graph_bar_Graph_context_menu = Docking_Windows/Graph_bar.htm#Graph_context_menu
+IDH_Docking_Windows_Graph_bar_GraCM_Scope = Docking_Windows/Graph_bar.htm#GraCM_Scope
+IDH_Docking_Windows_Graph_bar_GraCM_Depth = Docking_Windows/Graph_bar.htm#GraCM_Depth
+IDH_Docking_Windows_Graph_bar_GraCM_Layout = Docking_Windows/Graph_bar.htm#GraCM_Layout
+IDH_Docking_Windows_Graph_bar_GraCM_Filter = Docking_Windows/Graph_bar.htm#GraCM_Filter
+IDH_Docking_Windows_Graph_bar_GraCM_Channel = Docking_Windows/Graph_bar.htm#GraCM_Channel
+IDH_Docking_Windows_Graph_bar_GraCM_Zoom = Docking_Windows/Graph_bar.htm#GraCM_Zoom
+IDH_Docking_Windows_Graph_bar_GraCM_Highlight = Docking_Windows/Graph_bar.htm#GraCM_Highlight
+IDH_Docking_Windows_Graph_bar_GraCM_Labels = Docking_Windows/Graph_bar.htm#GraCM_Labels
+IDH_Docking_Windows_Graph_bar_GraCM_Legend = Docking_Windows/Graph_bar.htm#GraCM_Legend
+IDH_Docking_Windows_Graph_bar_GraCM_Muted = Docking_Windows/Graph_bar.htm#GraCM_Muted
+IDH_Docking_Windows_Graph_bar_GraCM_Save_As = Docking_Windows/Graph_bar.htm#GraCM_Save_As
+IDH_Docking_Windows_Graph_bar_GraCM_Reload = Docking_Windows/Graph_bar.htm#GraCM_Reload
+IDH_Docking_Windows_Graph_bar_Graph_edge_colors = Docking_Windows/Graph_bar.htm#Graph_edge_colors
+IDH_Docking_Windows_Graph_bar_Graph_full_screen = Docking_Windows/Graph_bar.htm#Graph_full_screen
+IDH_Docking_Windows_Phase_bar = Docking_Windows/Phase_bar.htm
+IDH_Docking_Windows_Phase_bar_Exporting_phase_video = Docking_Windows/Phase_bar.htm#Exporting_phase_video
+IDH_Docking_Windows_Phase_bar_Phase_bar_context_menu = Docking_Windows/Phase_bar.htm#Phase_bar_context_menu
+IDH_Docking_Windows_Phase_bar_PhaCM_Export_Video = Docking_Windows/Phase_bar.htm#PhaCM_Export_Video
+IDH_Docking_Windows_Phase_bar_PhaCM_Circular_Orbits = Docking_Windows/Phase_bar.htm#PhaCM_Circular_Orbits
+IDH_Docking_Windows_Phase_bar_PhaCM_3D_Planets = Docking_Windows/Phase_bar.htm#PhaCM_3D_Planets
+IDH_Docking_Windows_Phase_bar_PhaCM_Night_Sky = Docking_Windows/Phase_bar.htm#PhaCM_Night_Sky
+IDH_Docking_Windows_Phase_bar_PhaCM_Crosshairs = Docking_Windows/Phase_bar.htm#PhaCM_Crosshairs
+IDH_Docking_Windows_Phase_bar_PhaCM_Periods = Docking_Windows/Phase_bar.htm#PhaCM_Periods
+IDH_Docking_Windows_Phase_bar_PhaCM_Convergences = Docking_Windows/Phase_bar.htm#PhaCM_Convergences
+IDH_Docking_Windows_Phase_bar_PhaCM_Full_Screen = Docking_Windows/Phase_bar.htm#PhaCM_Full_Screen
+IDH_Docking_Windows_Phase_bar_PhaCM_Period_Unit = Docking_Windows/Phase_bar.htm#PhaCM_Period_Unit
+IDH_Docking_Windows_Step_Values_bar = Docking_Windows/Step_Values_bar.htm
+IDH_Docking_Windows_Step_Values_bar_Step_values_display_formats = Docking_Windows/Step_Values_bar.htm#Step_values_display_formats
+IDH_Docking_Windows_Step_Values_bar_Step_values_context_menu = Docking_Windows/Step_Values_bar.htm#Step_values_context_menu
+IDH_Docking_Windows_Step_Values_bar_StVCM_Format = Docking_Windows/Step_Values_bar.htm#StVCM_Format
+IDH_Docking_Windows_Step_Values_bar_StVCM_Cut = Docking_Windows/Step_Values_bar.htm#StVCM_Cut
+IDH_Docking_Windows_Step_Values_bar_StVCM_Copy = Docking_Windows/Step_Values_bar.htm#StVCM_Copy
+IDH_Docking_Windows_Step_Values_bar_StVCM_Paste = Docking_Windows/Step_Values_bar.htm#StVCM_Paste
+IDH_Docking_Windows_Step_Values_bar_StVCM_Insert = Docking_Windows/Step_Values_bar.htm#StVCM_Insert
+IDH_Docking_Windows_Step_Values_bar_StVCM_Delete = Docking_Windows/Step_Values_bar.htm#StVCM_Delete
+IDH_Docking_Windows_Step_Values_bar_StVCM_Select_All = Docking_Windows/Step_Values_bar.htm#StVCM_Select_All
+IDH_Docking_Windows_Step_Values_bar_StVCM_Export = Docking_Windows/Step_Values_bar.htm#StVCM_Export
+IDH_Docking_Windows_Step_Values_bar_StVCM_Options = Docking_Windows/Step_Values_bar.htm#StVCM_Options
+IDH_Docking_Windows_Mapping_bar = Docking_Windows/Mapping_bar.htm
+IDH_Docking_Windows_Mapping_bar_Mapping_columns = Docking_Windows/Mapping_bar.htm#Mapping_columns
+IDH_Docking_Windows_Mapping_bar_Output_event_types = Docking_Windows/Mapping_bar.htm#Output_event_types
+IDH_Docking_Windows_Mapping_bar_Learning_mappings = Docking_Windows/Mapping_bar.htm#Learning_mappings
+IDH_Docking_Windows_Mapping_bar_Mapping_context_menu = Docking_Windows/Mapping_bar.htm#Mapping_context_menu
+IDH_Docking_Windows_Mapping_bar_MapCM_Insert = Docking_Windows/Mapping_bar.htm#MapCM_Insert
+IDH_Docking_Windows_Mapping_bar_MapCM_Delete = Docking_Windows/Mapping_bar.htm#MapCM_Delete
+IDH_Docking_Windows_Mapping_bar_MapCM_Cut = Docking_Windows/Mapping_bar.htm#MapCM_Cut
+IDH_Docking_Windows_Mapping_bar_MapCM_Copy = Docking_Windows/Mapping_bar.htm#MapCM_Copy
+IDH_Docking_Windows_Mapping_bar_MapCM_Paste = Docking_Windows/Mapping_bar.htm#MapCM_Paste
+IDH_Docking_Windows_Mapping_bar_MapCM_Select_All = Docking_Windows/Mapping_bar.htm#MapCM_Select_All
+IDH_Docking_Windows_Mapping_bar_MapCM_Learn = Docking_Windows/Mapping_bar.htm#MapCM_Learn
+IDH_Docking_Windows_Mapping_bar_MapCM_Map_Tracks = Docking_Windows/Mapping_bar.htm#MapCM_Map_Tracks
+IDH_Docking_Windows_Mapping_bar_Tempo_mapping = Docking_Windows/Mapping_bar.htm#Tempo_mapping
+IDH_Docking_Windows_Mapping_bar_Position_mapping = Docking_Windows/Mapping_bar.htm#Position_mapping
+IDH_Docking_Windows_Mapping_bar_Step_mapping = Docking_Windows/Mapping_bar.htm#Step_mapping
+IDH_Docking_Windows_Mapping_bar_Tie_mapping = Docking_Windows/Mapping_bar.htm#Tie_mapping
+IDH_Properties_Tempo = Properties/Tempo.htm
+IDH_Properties_Timebase = Properties/Timebase.htm
+IDH_Properties_Timebase_Timebase_values = Properties/Timebase.htm#Timebase_values
+IDH_Properties_Meter = Properties/Meter.htm
+IDH_Properties_Meter_Song_position = Properties/Meter.htm#Song_position
+IDH_Properties_Key_Signature = Properties/Key_Signature.htm
+IDH_Properties_Song_Length = Properties/Song_Length.htm
+IDH_Properties_Start_Position = Properties/Start_Position.htm
+IDH_Properties_Note_Overlap = Properties/Note_Overlap.htm
+IDH_Properties_Record_Offset = Properties/Record_Offset.htm
+IDH_Properties_Loop_From = Properties/Loop_From.htm
+IDH_Properties_Loop_To = Properties/Loop_To.htm
+IDH_Options_MIDI_Input_Device = Options/MIDI/Input_Device.htm
+IDH_Options_MIDI_Output_Device = Options/MIDI/Output_Device.htm
+IDH_Options_MIDI_Latency = Options/MIDI/Latency.htm
+IDH_Options_MIDI_Latency_Underruns = Options/MIDI/Latency.htm#Underruns
+IDH_Options_MIDI_Buffer_Size = Options/MIDI/Buffer_Size.htm
+IDH_Options_MIDI_Thru = Options/MIDI/Thru.htm
+IDH_Options_MIDI_Default_Velocity = Options/MIDI/Default_Velocity.htm
+IDH_Options_MIDI_Input_Quantization = Options/MIDI/Input_Quantization.htm
+IDH_Options_MIDI_Record_Input = Options/MIDI/Record_Input.htm
+IDH_Options_MIDI_Send_MIDI_Clock = Options/MIDI/Send_MIDI_Clock.htm
+IDH_Options_View_Update_Frequency = Options/View/Update_Frequency.htm
+IDH_Options_View_Show_Current_Position = Options/View/Show_Current_Position.htm
+IDH_Options_View_Show_Note_Names = Options/View/Show_Note_Names.htm
+IDH_Options_View_Show_General_MIDI_Names = Options/View/Show_General_MIDI_Names.htm
+IDH_Options_View_Show_Quant_as_Fraction = Options/View/Show_Quant_as_Fraction.htm
+IDH_Options_View_Show_Track_Colors = Options/View/Show_Track_Colors.htm
+IDH_Options_View_Unique_Track_Names = Options/View/Unique_Track_Names.htm
+IDH_Options_View_Zoom_Step = Options/View/Zoom_Step.htm
+IDH_Options_View_Live_View_Font_Height = Options/View/Live_View_Font_Height.htm
+IDH_Options_Graph_Graphviz_Folder = Options/Graph/Graphviz_Folder.htm
+IDH_Options_Graph_Graph_Handles_Unicode = Options/Graph/Graph_Handles_Unicode.htm
+IDH_Options_Graph_Use_Cairo = Options/Graph/Use_Cairo.htm
+IDH_Options_General_Show_Property_Descriptions = Options/General/Show_Property_Descriptions.htm
+IDH_Options_General_Automatically_Check_for_Updates = Options/General/Automatically_Check_for_Updates.htm
+IDH_Options_General_Always_Record = Options/General/Always_Record.htm
+IDH_Menus_File_New = Menus/File/New.htm
+IDH_Menus_File_Open = Menus/File/Open.htm
+IDH_Menus_File_Close = Menus/File/Close.htm
+IDH_Menus_File_Save = Menus/File/Save.htm
+IDH_Menus_File_Save_As = Menus/File/Save_As.htm
+IDH_Menus_File_Export = Menus/File/Export.htm
+IDH_Menus_File_Import = Menus/File/Import.htm
+IDH_Menus_File_Exit = Menus/File/Exit.htm
+IDH_Menus_Edit_Standard_editing_commands = Menus/Edit/Standard_editing_commands.htm
+IDH_Menus_Edit_Standard_editing_commands_Clipboards = Menus/Edit/Standard_editing_commands.htm#Clipboards
+IDH_Menus_Edit_Undo = Menus/Edit/Undo.htm
+IDH_Menus_Edit_Redo = Menus/Edit/Redo.htm
+IDH_Menus_Edit_Cut = Menus/Edit/Cut.htm
+IDH_Menus_Edit_Copy = Menus/Edit/Copy.htm
+IDH_Menus_Edit_Paste = Menus/Edit/Paste.htm
+IDH_Menus_Edit_Insert = Menus/Edit/Insert.htm
+IDH_Menus_Edit_Delete = Menus/Edit/Delete.htm
+IDH_Menus_Edit_Select_All = Menus/Edit/Select_All.htm
+IDH_Menus_Edit_Deselect = Menus/Edit/Deselect.htm
+IDH_Menus_Edit_Rename = Menus/Edit/Rename.htm
+IDH_Menus_Edit_Find = Menus/Edit/Find.htm
+IDH_Menus_Edit_Replace = Menus/Edit/Replace.htm
+IDH_Menus_View_View_Docking_Windows = Menus/View/View_Docking_Windows.htm
+IDH_Menus_View_Status_Bar = Menus/View/Status_Bar.htm
+IDH_Menus_View_Application_Look = Menus/View/Application_Look.htm
+IDH_Menus_View_Zoom_In = Menus/View/Zoom_In.htm
+IDH_Menus_View_Zoom_Out = Menus/View/Zoom_Out.htm
+IDH_Menus_View_Zoom_Reset = Menus/View/Zoom_Reset.htm
+IDH_Menus_View_Show_Properties = Menus/View/Show_Properties.htm
+IDH_Menus_View_Show_Channels = Menus/View/Show_Channels.htm
+IDH_Menus_View_Show_Modulations = Menus/View/Show_Modulations.htm
+IDH_Menus_View_Groups = Menus/View/Groups.htm
+IDH_Menus_View_Groups_Show_Presets = Menus/View/Groups.htm#Show_Presets
+IDH_Menus_View_Groups_Show_Parts = Menus/View/Groups.htm#Show_Parts
+IDH_Menus_View_Show_Velocities = Menus/View/Show_Velocities.htm
+IDH_Menus_View_Show_Track_View = Menus/View/Show_Track_View.htm
+IDH_Menus_View_Show_Song_View = Menus/View/Show_Song_View.htm
+IDH_Menus_View_Show_Live_View = Menus/View/Show_Live_View.htm
+IDH_Menus_View_Customize = Menus/View/Customize.htm
+IDH_Menus_View_Customize_Customize_Commands = Menus/View/Customize.htm#Customize_Commands
+IDH_Menus_View_Customize_Customize_Toolbars = Menus/View/Customize.htm#Customize_Toolbars
+IDH_Menus_View_Customize_Customize_Keyboard = Menus/View/Customize.htm#Customize_Keyboard
+IDH_Menus_View_Customize_Customize_Menu = Menus/View/Customize.htm#Customize_Menu
+IDH_Menus_View_Customize_Customize_Options = Menus/View/Customize.htm#Customize_Options
+IDH_Menus_Track_Length = Menus/Track/Length.htm
+IDH_Menus_Track_Shift = Menus/Track/Shift.htm
+IDH_Menus_Track_Shift_Shift_Left = Menus/Track/Shift.htm#Shift_Left
+IDH_Menus_Track_Shift_Shift_Right = Menus/Track/Shift.htm#Shift_Right
+IDH_Menus_Track_Shift_Shift_Steps = Menus/Track/Shift.htm#Shift_Steps
+IDH_Menus_Track_Rotate = Menus/Track/Rotate.htm
+IDH_Menus_Track_Rotate_Rotate_Left = Menus/Track/Rotate.htm#Rotate_Left
+IDH_Menus_Track_Rotate_Rotate_Right = Menus/Track/Rotate.htm#Rotate_Right
+IDH_Menus_Track_Rotate_Rotate_Steps = Menus/Track/Rotate.htm#Rotate_Steps
+IDH_Menus_Track_Rotate_Offset_Tracks = Menus/Track/Rotate.htm#Offset_Tracks
+IDH_Menus_Track_Reverse = Menus/Track/Reverse.htm
+IDH_Menus_Track_Invert = Menus/Track/Invert.htm
+IDH_Menus_Track_Tie_Notes = Menus/Track/Tie_Notes.htm
+IDH_Menus_Track_Transpose = Menus/Track/Transpose.htm
+IDH_Menus_Track_Velocity = Menus/Track/Velocity.htm
+IDH_Menus_Track_Velocity_Offsetting_velocities = Menus/Track/Velocity.htm#Offsetting_velocities
+IDH_Menus_Track_Velocity_Scaling_velocities = Menus/Track/Velocity.htm#Scaling_velocities
+IDH_Menus_Track_Velocity_Replacing_velocities = Menus/Track/Velocity.htm#Replacing_velocities
+IDH_Menus_Track_Fill = Menus/Track/Fill.htm
+IDH_Menus_Track_Fill_Fill_value_range = Menus/Track/Fill.htm#Fill_value_range
+IDH_Menus_Track_Fill_Fill_step_range = Menus/Track/Fill.htm#Fill_step_range
+IDH_Menus_Track_Fill_Fill_function = Menus/Track/Fill.htm#Fill_function
+IDH_Menus_Track_Fill_Fill_Frequency = Menus/Track/Fill.htm#Fill_Frequency
+IDH_Menus_Track_Fill_Fill_Phase = Menus/Track/Fill.htm#Fill_Phase
+IDH_Menus_Track_Fill_Fill_Curviness = Menus/Track/Fill.htm#Fill_Curviness
+IDH_Menus_Track_Stretch = Menus/Track/Stretch.htm
+IDH_Menus_Track_Mute = Menus/Track/Mute.htm
+IDH_Menus_Track_Solo = Menus/Track/Solo.htm
+IDH_Menus_Track_Create_Group = Menus/Track/Create_Group.htm
+IDH_Menus_Track_Create_Preset = Menus/Track/Create_Preset.htm
+IDH_Menus_Track_Create_Modulation = Menus/Track/Create_Modulation.htm
+IDH_Menus_Track_Sort = Menus/Track/Sort.htm
+IDH_Menus_Track_Color = Menus/Track/Color.htm
+IDH_Menus_Transport_Play = Menus/Transport/Play.htm
+IDH_Menus_Transport_Pause = Menus/Transport/Pause.htm
+IDH_Menus_Transport_Record = Menus/Transport/Record.htm
+IDH_Menus_Transport_Rewind = Menus/Transport/Rewind.htm
+IDH_Menus_Transport_Loop = Menus/Transport/Loop.htm
+IDH_Menus_Transport_Go_To_Position = Menus/Transport/Go_To_Position.htm
+IDH_Menus_Transport_Next_Convergence = Menus/Transport/Next_Convergence.htm
+IDH_Menus_Transport_Previous_Convergence = Menus/Transport/Previous_Convergence.htm
+IDH_Menus_Transport_Convergence_Size = Menus/Transport/Convergence_Size.htm
+IDH_Menus_Transport_Record_Tracks = Menus/Transport/Record_Tracks.htm
+IDH_Menus_Tools_Statistics = Menus/Tools/Statistics.htm
+IDH_Menus_Tools_Time_To_Repeat = Menus/Tools/Time_To_Repeat.htm
+IDH_Menus_Tools_Prime_Factors = Menus/Tools/Prime_Factors.htm
+IDH_Menus_Tools_Velocity_Range = Menus/Tools/Velocity_Range.htm
+IDH_Menus_Tools_Check_Modulations = Menus/Tools/Check_Modulations.htm
+IDH_Menus_Tools_Devices = Menus/Tools/Devices.htm
+IDH_Menus_Tools_Options = Menus/Tools/Options.htm
+IDH_Menus_Tools_Import_Table = Menus/Tools/Import_Table.htm
+IDH_Menus_Tools_Import_Table_Import_Tracks = Menus/Tools/Import_Table.htm#Import_Tracks
+IDH_Menus_Tools_Import_Table_Import_Steps = Menus/Tools/Import_Table.htm#Import_Steps
+IDH_Menus_Tools_Import_Table_Import_Modulations = Menus/Tools/Import_Table.htm#Import_Modulations
+IDH_Menus_Tools_Export_Table = Menus/Tools/Export_Table.htm
+IDH_Menus_Tools_Export_Table_Export_Tracks = Menus/Tools/Export_Table.htm#Export_Tracks
+IDH_Menus_Tools_Export_Table_Export_Steps = Menus/Tools/Export_Table.htm#Export_Steps
+IDH_Menus_Tools_Export_Table_Export_Modulations = Menus/Tools/Export_Table.htm#Export_Modulations
+IDH_Menus_Tools_Export_Table_Export_Song = Menus/Tools/Export_Table.htm#Export_Song
+IDH_Menus_Tools_Convergences_Calculator = Menus/Tools/Convergences_Calculator.htm
+IDH_Menus_Tools_Select_Unmuted = Menus/Tools/Select_Unmuted.htm
+IDH_Menus_Tools_MIDI_Learn = Menus/Tools/MIDI_Learn.htm
+IDH_Menus_Window_New_Window = Menus/Window/New_Window.htm
+IDH_Menus_Window_New_Window_Splits = Menus/Window/New_Window.htm#Splits
+IDH_Menus_Window_New_Window_Multiple_monitors = Menus/Window/New_Window.htm#Multiple_monitors
+IDH_Menus_Window_Full_Screen = Menus/Window/Full_Screen.htm
+IDH_Menus_Window_Reset_Layout = Menus/Window/Reset_Layout.htm
+IDH_Menus_Window_New_Horizontal_Tab_Group = Menus/Window/New_Horizontal_Tab_Group.htm
+IDH_Menus_Window_New_Vertical_Tab_Group = Menus/Window/New_Vertical_Tab_Group.htm
+IDH_Menus_Window_Windows = Menus/Window/Windows.htm
+IDH_Menus_Help_Help_Topics = Menus/Help/Help_Topics.htm
+IDH_Menus_Help_Polymeter_on_the_Web = Menus/Help/Polymeter_on_the_Web.htm
+IDH_Menus_Help_Check_for_Updates = Menus/Help/Check_for_Updates.htm
+IDH_Menus_Help_About = Menus/Help/About.htm
+IDH_Loose_Ends_Audio_versus_events = Loose_Ends/Audio_versus_events.htm
+IDH_Loose_Ends_Recording_MIDI_input = Loose_Ends/Recording_MIDI_input.htm
+IDH_Loose_Ends_Maximum_track_length = Loose_Ends/Maximum_track_length.htm
+IDH_Loose_Ends_Normalized_angles = Loose_Ends/Normalized_angles.htm
+IDH_Loose_Ends_Period = Loose_Ends/Period.htm
+IDH_Loose_Ends_Primes = Loose_Ends/Primes.htm
+IDH_Loose_Ends_Modular_arithmetic = Loose_Ends/Modular_arithmetic.htm
+IDH_Loose_Ends_Clipping = Loose_Ends/Clipping.htm
+IDH_Loose_Ends_Unicode = Loose_Ends/Unicode.htm
+IDH_Loose_Ends_Undersized_graph_text = Loose_Ends/Undersized_graph_text.htm
+IDH_Reference_Errors = Reference/Errors.htm
+IDH_Reference_Errors_Sequencer_errors = Reference/Errors.htm#Sequencer_errors
+IDH_Reference_Errors_Buffer_Overrun = Reference/Errors.htm#Buffer_Overrun
+IDH_Reference_Errors_Bad_Time_Format = Reference/Errors.htm#Bad_Time_Format
+IDH_Reference_Errors_Too_Many_Recursions = Reference/Errors.htm#Too_Many_Recursions
+IDH_Reference_Errors_Callback_Too_Long = Reference/Errors.htm#Callback_Too_Long
+IDH_Reference_Errors_User_interface_errors = Reference/Errors.htm#User_interface_errors
+IDH_Reference_Errors_Bad_Format = Reference/Errors.htm#Bad_Format
+IDH_Reference_Errors_Bad_Step_Selection = Reference/Errors.htm#Bad_Step_Selection
+IDH_Reference_Errors_Cant_Truncate_Recording = Reference/Errors.htm#Cant_Truncate_Recording
+IDH_Reference_Errors_Clip_Warning = Reference/Errors.htm#Clip_Warning
+IDH_Reference_Errors_Convergence_Out_of_Range = Reference/Errors.htm#Convergence_Out_of_Range
+IDH_Reference_Errors_Group_Overlap = Reference/Errors.htm#Group_Overlap
+IDH_Reference_Errors_Newer_Version = Reference/Errors.htm#Newer_Version
+IDH_Reference_Errors_Search_Text_Not_Found = Reference/Errors.htm#Search_Text_Not_Found
+IDH_Reference_Errors_Track_Length_Cursor = Reference/Errors.htm#Track_Length_Cursor
+IDH_Reference_Errors_Track_Too_Long = Reference/Errors.htm#Track_Too_Long
+IDH_Reference_Errors_Value_Not_Found = Reference/Errors.htm#Value_Not_Found
+IDH_Reference_Errors_Export_Bad_Duration = Reference/Errors.htm#Export_Bad_Duration
+IDH_Reference_Errors_Export_Error = Reference/Errors.htm#Export_Error
+IDH_Reference_Errors_Grid_Error_Bad_Time_Format = Reference/Errors.htm#Grid_Error_Bad_Time_Format
+IDH_Reference_Errors_Hyperlink_Cant_Launch = Reference/Errors.htm#Hyperlink_Cant_Launch
+IDH_Reference_Errors_Import_Error_Format = Reference/Errors.htm#Import_Error_Format
+IDH_Reference_Errors_Import_Error_Property = Reference/Errors.htm#Import_Error_Property
+IDH_Reference_Errors_Import_Error_Range = Reference/Errors.htm#Import_Error_Range
+IDH_Reference_Errors_MIDI_Devices_Missing = Reference/Errors.htm#MIDI_Devices_Missing
+IDH_Reference_Errors_MIDI_Incompatible_Song_Position = Reference/Errors.htm#MIDI_Incompatible_Song_Position
+IDH_Reference_Errors_MIDI_No_Output_Device = Reference/Errors.htm#MIDI_No_Output_Device
+IDH_Reference_Options_Summary = Reference/Options_Summary.htm
+IDH_Reference_Shortcuts = Reference/Shortcuts.htm
+
+[MAP]
+#include "PolymeterHelpIDs.h
