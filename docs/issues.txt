@@ -474,6 +474,10 @@ id	open	close	type	description	rev	user
 585	02/10/24	02/11/24	done	MIDI export potentially leaves notes on at end of file	1.0.15.002	
 586	02/16/24	02/16/24	done	resetting modulation bar's column header crashes if target pane is hidden	1.0.15.003	
 557	02/04/23	02/19/24	done	help for context menu command should navigate directly to relevant text even if it's in a table	1.0.15.004	
+588	02/25/24	02/25/24	done	status bar indicators create needless overhead; enable them in child frame's OnCmdMsg	1.0.15.005	
+589	02/25/24	02/25/24	done	remove non-functional Print icon from toolbar to avoid its needless overhead	1.0.15.005	
+590	02/25/24	02/25/24	done	next / previous convergence command crashes if document contains no tracks	1.0.15.005	
+529	07/22/22	02/27/24	done	dockable bar context menu commands should be available in Customize dialog	1.0.15.005	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -548,7 +552,6 @@ id	open	close	type	description	rev	user
 519	06/07/22		hold	optionally group tracks by MIDI channel in Live view, with each group in its own list and group muting		
 522	06/17/22		hold	indicate step or cell selection in status bar, depending on which view has focus		
 525	06/21/22		hold	Step view and Step Values bar should mirror each other's selection if possible		
-529	07/22/22		hold	docking bar context menu commands should be available in Customize dialog		
 533	09/05/22		hold	overlay preset; save mute states of selected tracks only, and affect only those tracks when preset is applied		
 554	01/20/23		hold	phase bar lacks command to export still image; workaround is export one-second video with frame rate of 1		
 555	01/21/23		hold	need a scaling factor that modulation source step values are multiplied by; member of modulation or track?		
@@ -557,6 +560,7 @@ id	open	close	type	description	rev	user
 564	02/28/23		hold	graph font should be configurable; what about font size? Helvetica has special meaning in Graphviz		
 567	05/10/23		hold	in track fill, add bias and amplitude options, or remove fill dialog's value range limits		
 578	01/05/24		hold	allow meter denominators other than four, limited to small powers of two		
+587	02/23/24		hold	add phase bar mode that only shows selected tracks; see notes for disadvantages		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 100	05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		

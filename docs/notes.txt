@@ -4455,3 +4455,177 @@ the 64-bit executable as 32-bit words are probably being extended to 64-bit
 words anyway. Also the memory savings from reducing the size of CTrack may
 improve cache performance and thereby offset any increased code complexity.
 
+2/24/24 docking bar context menu commands should be available in Customize dialog
+
+(issue 529, 7/22/22)
+
+It would nice if commands from some of the dockable windows could be assigned
+keyboard shortcuts (accelerators) or added to the main menu. The Modulation, 
+Phase, and Graph bars are the most likely to be useful. It seemed at first 
+that it was necessary to override CMainFrame::OnCmdMsg to also search the
+message maps of dockable bars, and while this does work, it's an expensive
+solution in terms of performance. OnCmdMsg is called at high frequency, and
+can potentially bog down the user interface. It's also a wasteful solution,
+as most of the commands in the dockable window context menus won't be used
+in customization, yet their entire message maps have to be searched every
+time OnCmdMsg runs.
+
+It's simpler and much more performant to just add command range handlers 
+to CMainFrame's message map for the additional command ranges that should
+be available in customization. This will get both accelerators and main
+menu additions working. However for menu additions, if you want checked
+items to appear checked, it's also necessary to add a command update UI
+range handler.
+
+ON_COMMAND_RANGE(ID_MODULATION_INSERT_GROUP, ID_MODULATION_SORT_BY_TYPE, OnModulationCmd)
+ON_UPDATE_COMMAND_UI_RANGE(ID_MODULATION_INSERT_GROUP, ID_MODULATION_SORT_BY_TYPE, OnUpdateModulationCmd)
+
+void CMainFrame::OnModulationCmd(UINT nID)
+{
+	m_wndModulationsBar.SendMessage(WM_COMMAND, nID);
+}
+
+void CMainFrame::OnUpdateModulationCmd(CCmdUI *pCmdUI)
+{
+	pCmdUI->DoUpdate(&m_wndModulationsBar, false);
+}
+
+This construct must be repeated for each of the desired context menus.
+It's possible to generate the code automatically via the preprocessor.
+Other than that, it's only necessary to add the desired context menus
+to pDlgCust in OnViewCustomize. It might be useful to filter out edit
+commands, or any other commands that lie outside the ranges that were 
+added to the message map. This too could be done via the preprocessor.
+
+Delete these items from a context menu before passing it to Customize:
+menu.DeleteMenu(nEditCmdID, MF_BYCOMMAND);
+ID_EDIT_CUT,
+ID_EDIT_COPY,
+ID_EDIT_PASTE,
+ID_EDIT_INSERT,
+ID_EDIT_DELETE,
+ID_EDIT_SELECT_ALL,
+ID_EDIT_RENAME,
+
+2/25/24 More on the update command UI maze
+
+By overriding CMainFrame::OnCmdMsg it's possible to see which commands
+are being left to the application due to the absence of handlers in the 
+document, child frame or main frame. Every such message is expensive in
+terms of performance because CWinAppEx::OnCmdMsg will search all the
+message maps again.
+
+BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
+{
+	BOOL bRet = CMDIFrameWndEx::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+	if (!bRet) printf("%d %d (%x)\n", nCode, nID, nID);
+	return bRet;
+}
+
+The results are as follows:
+0 57607 (e107) // ID_FILE_PRINT
+-1 57664 (e140) // ID_APP_ABOUT
+-1 101 (65)
+-1 101 (65)
+-1 57600 (e100) // ID_FILE_NEW
+-1 57601 (e101) // ID_FILE_OPEN
+-1 57603 (e103) // ID_FILE_SAVE
+-1 57607 (e107) // ID_FILE_PRINT
+
+The file commands are due to their presence on the toolbar, proved
+by removing them from the toolbar using View/Customize. Based on
+this evidence, it would make sense to remove the non-functional
+Print icon from the toolbar, as it's needlessly adding overhead.
+
+Overriding the CPolymeterApp::OnCmdMsg reveals that the three status
+bar indicators are being routed there.
+
+-1 32789 (8015)	// ID_INDICATOR_SONG_POS
+-1 32790 (8016) // ID_INDICATOR_SONG_TIME
+-1 32791 (8017) // ID_INDICATOR_TEMPO
+-1 57664 (e140) // ID_APP_ABOUT
+-1 101 (65)
+-1 101 (65)
+
+This occurs because CMDIFrameWnd::OnCmdMsg tries both the child and 
+main frames (in that order) and in both cases the work is done by the
+bass class CFrameWnd::OnCmdMsg, which first tries the frame's active 
+view if any, then the frame itself, and finally the app. In the first 
+CFrameWnd::OnCmdMsg (for the child frame) the indicator messages are 
+not handled by the child frame, so the app is then tried, uselessly. 
+
+Standard Command Route:
+MDI frame window (CMDIFrameWnd) 
+1. Active CMDIChildWnd <-- see CMDIChildWnd routing below
+2. This frame window
+3. Application (CWinApp object)
+
+Document frame window (CFrameWnd, CMDIChildWnd) 	
+1. Active view
+2. This frame window
+3. Application (CWinApp object) <-- this is how the indicators are getting passed to CPolymeterApp::OnCmdMsg before CMainFrame::OnCmdMsg
+
+The easiest solution is to handle the indicators in the child frame.
+Because the main frame explicitly updates the song position, time, and
+tempo, they don't need update command UI support for their text. They do
+need to be enabled while a document exists, but that can be accomplished
+by having CChildFrame::OnCmdMsg simply return TRUE for the indicator IDs.
+The main frame doesn't even need to have message map entries for the
+indicators, provided OnUpdate blanks the tempo pane when playback stops.
+
+	case CPolymeterDoc::HINT_PLAY:
+		m_dwCachedTempo = 0;	// force status bar tempo pane to update when playback starts
+		if (theApp.m_pPlayingDoc == NULL)
+			m_wndStatusBar.SetPaneText(SBP_TEMPO, _T(""));
+		break;
+
+The messages with ID 101 come from the tab controls that the framework
+creates when multiple dockable panes are docked together in the same 
+mini-frame. There's no obvious solution to that.
+
+The keyboard indicators are presumably handled by the app. Eliminating 
+them would boost performance, but they're arguably useful.
+
+59137 (E701) // ID_INDICATOR_CAPS
+59138 (E702) // ID_INDICATOR_NUM
+59139 (E703) // ID_INDICATOR_SCRL
+
+Summary of proposal:
+1. Remove the non-functional Print icon from both toolbars.
+2. Return TRUE for the indicators in CChildFrame::OnCmdMsg,
+and remove the indicator handlers in CMainFrame, along with
+the tempo status pane fix shown above.
+
+2/25/24 Phase bar selected tracks only mode
+
+if selected only mode:
+in Update, only add selected tracks, and set m_bSelected false
+disable OnLButtonDown (exit from top)
+disable OnTrackSelectionChange (call Update and exit from top)
+in FindNextConvergence, copy all orbit periods to arrMod
+
+On the good side, this mode gives the user a way of directly
+specifying which periods are included in the phase diagram.
+This is particularly advantageous for documents that contain 
+many different periods which would otherwise cause the diagram
+to be excessively complex and hard to read.
+
+There are several disadvantages however:
+
+1. The phase window is empty unless tracks are selected,
+which is potentially confusing and looks like a bug.
+
+2. The mode causes the Transport Next / Previous Convergence
+commands to behave differently (only the selected tracks are
+included in the convergence calculation), which similarly 
+could be confusing and look like a bug.
+
+3. Because the track selection is ephemeral and often
+changes, for example due to editing or merely switching
+between documents, the user might have to re-specify 
+the periods frequently, which could get aggravating.
+
+4. The mode doesn't work in Live view, because entering 
+Live view clears the track selection
+
+
