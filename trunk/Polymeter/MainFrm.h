@@ -40,6 +40,8 @@
 		30		25jan23	add method to show panes menu
 		31		23feb23	fix compiler warning on MIDI output event array
 		32		16feb24	move track color message handlers to document
+		33		25feb24	remove status bar indicator handlers
+		34		27feb24	make dockable bar context menus available for customization
 
 */
 
@@ -139,6 +141,7 @@ public:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	virtual BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL);
 	virtual void GetMessageString(UINT nID, CString& rMessage) const;
+	virtual UINT GetTrackingID();
 
 // Implementation
 public:
@@ -151,6 +154,40 @@ public:
 protected:  // control bar embedded members
 	CMFCToolBarImages m_UserImages;
 
+// Types
+	class CDockBarMenus {
+	public:
+		void	Create();
+		void	LazyInit();
+		void	AddToCustomizeDlg(CMFCToolBarsCustomizeDialog *pDlgCust);
+		int		GetItemCount() const;
+		int		FindItem(UINT nID) const;
+		CBasePane	*GetBar(int iItem) const;
+		UINT	GetItemID(int iItem) const;
+
+	protected:
+		struct BAR_INFO {
+			USHORT	nBarID;		// dockable bar's ID
+			USHORT	nMenuID;	// resource ID of bar's context menu
+		};
+		struct BAR_MENU_ITEM {
+			USHORT	iBar;		// index of bar within bar array
+			USHORT	nItemID;	// resource ID of context menu item
+		};
+		enum {
+			#define DOCKBARMENUDEF(bar, menu) DOCK_BAR_##bar,
+			#include "MainDockBarDef.h"	// generate bar enumeration
+			DOCK_BARS
+		};
+		static const BAR_INFO	m_arrBarInfo[DOCK_BARS];
+		static const USHORT	m_arrEditCmd[];
+		CDWordArrayEx	m_arrMenuItem;	// menu item array; cast elements to BAR_MENU_ITEM
+		CBasePane	*m_arrBarPtr[DOCK_BARS];	// array of pointers to bars
+		UINT	m_iCurBar;	// index of current bar during AddMenuItems
+		void	AddMenuItems(CMenu *pMenu);
+		const BAR_MENU_ITEM&	GetItem(int iItem) const;
+	};
+
 // Constants
 	static const UINT m_arrIndicatorID[];	// array of status bar indicator IDs
 	static const COLORREF m_arrTrackColor[];	// palette of track colors
@@ -162,6 +199,11 @@ protected:  // control bar embedded members
 		ID_CONVERGENCE_SIZE_START = ID_APP_DYNAMIC_SUBMENU_BASE,
 		ID_CONVERGENCE_SIZE_END = ID_CONVERGENCE_SIZE_START + CONVERGENCE_SIZES - 1,
 		CONVERGENCE_SIZE_INITIAL_ITEM_COUNT = 2,	// All and Custom
+	};
+	enum {	// range of command IDs used as proxies for dockable bar context menu items
+		DOCK_BAR_MENU_MAX_ITEMS = 0x80,
+		ID_DOCK_BAR_MENU_START = ID_APP_DYNAMIC_SUBMENU_BASE + 0x100,
+		ID_DOCK_BAR_MENU_END = ID_DOCK_BAR_MENU_START + DOCK_BAR_MENU_MAX_ITEMS, 
 	};
 	static const UINT m_arrDockingBarNameID[DOCKING_BARS];	// array of docking bar name IDs
 
@@ -181,6 +223,7 @@ protected:  // control bar embedded members
 	int		m_nConvergenceSize;			// minimum number of modulos in a convergence
 	DWORD	m_dwCachedTempo;			// cached tempo in microseconds per quarter note
 	int		m_arrStatusPaneTextLength[STATUS_BAR_PANES];	// used for FastSetPaneText
+	CDockBarMenus	m_DockBarMenus;		// makes dockable bar menus available for customization
 
 // Helpers
 	BOOL	CreateDockingWindows();
@@ -203,8 +246,6 @@ protected:
 	afx_msg LRESULT OnToolbarCreateNew(WPARAM wp, LPARAM lp);
 	afx_msg void OnApplicationLook(UINT id);
 	afx_msg void OnUpdateApplicationLook(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateIndicatorSongPos(CCmdUI* pCmdUI);
-	afx_msg void OnUpdateIndicatorTempo(CCmdUI* pCmdUI);
 	afx_msg LRESULT OnAfterTaskbarActivate(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT	OnHandleDlgKey(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPropertyChange(WPARAM wParam, LPARAM lParam);
@@ -248,6 +289,8 @@ protected:
 	afx_msg void OnUpdateWindowNewHorizontalTabGroup(CCmdUI *pCmdUI);
 	afx_msg void OnWindowNewVerticalTabGroup();
 	afx_msg void OnUpdateWindowNewVerticalTabGroup(CCmdUI *pCmdUI);
+	afx_msg void OnDockBarMenu(UINT nID);
+	afx_msg void OnUpdateDockBarMenu(CCmdUI *pCmdUI);
 };
 
 inline HACCEL CMainFrame::GetAccelTable() const

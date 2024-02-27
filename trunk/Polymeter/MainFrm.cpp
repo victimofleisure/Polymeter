@@ -65,6 +65,8 @@
 		55		24jan24	use sequencer's warning error attribute
 		56		29jan24	use class to save and restore track selection
 		57		16feb24	move track color message handlers to document
+		58		25feb24	remove status bar indicator handlers
+		59		27feb24	make dockable bar context menus available for customization
 
 */
 
@@ -492,6 +494,8 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 			break;
 		case CPolymeterDoc::HINT_PLAY:
 			m_dwCachedTempo = 0;	// force status bar tempo pane to update when playback starts
+			if (theApp.m_pPlayingDoc == NULL)	// if stopping playback
+				m_wndStatusBar.SetPaneText(SBP_TEMPO, _T(""));	// blank tempo pane
 			break;
 		}
 		bool	bIsPlaying = pDoc->m_Seq.IsPlaying();
@@ -766,6 +770,137 @@ void CMainFrame::ShowPanesMenu(CPoint point)
 	m_dockManager.OnPaneContextMenu(point);	// in screen coordinates
 }
 
+UINT CMainFrame::GetTrackingID()
+{
+	UINT	nID = CMDIFrameWndEx::GetTrackingID();
+	int	iItem = m_DockBarMenus.FindItem(nID);	// find menu item for this ID
+	if (iItem >= 0)	// if menu item found
+		nID = m_DockBarMenus.GetItemID(iItem);	// substitute menu item ID for proxy ID
+	return nID;
+}
+
+// Nested class to make docking bar context menu commands available for UI customization
+
+const CMainFrame::CDockBarMenus::BAR_INFO CMainFrame::CDockBarMenus::m_arrBarInfo[DOCK_BARS] = {
+	#define DOCKBARMENUDEF(bar, menu) {ID_BAR_##bar, menu},
+	#include "MainDockBarDef.h"	// generate array of bar information
+};
+
+const USHORT CMainFrame::CDockBarMenus::m_arrEditCmd[] = {
+	ID_EDIT_COPY,
+	ID_EDIT_CUT,
+	ID_EDIT_PASTE,
+	ID_EDIT_INSERT,
+	ID_EDIT_DELETE,
+	ID_EDIT_SELECT_ALL,
+	ID_EDIT_RENAME,
+};
+
+void CMainFrame::CDockBarMenus::Create()
+{
+	// using DWORD array instead of template array avoids considerable code bloat
+	ASSERT(sizeof(BAR_MENU_ITEM) == sizeof(DWORD));	// provided BAR_MENU_ITEM fits in a DWORD
+	m_arrMenuItem.FastRemoveAll();	// empty menu item array just in case
+	int	nBars = _countof(m_arrBarInfo);
+	for (int iBar = 0; iBar < nBars; iBar++) {	// for each bar
+		m_iCurBar = iBar;	// store current bar index in member var for AddMenuItems
+		CBasePane *pBar = theApp.GetMainFrame()->GetPane(m_arrBarInfo[iBar].nBarID);	// get pointer to bar
+		ASSERT(pBar != NULL);	// bar should exist, else frame is hosed
+		m_arrBarPtr[iBar] = pBar;	// cache bar pointer in member var; improves command UI performance
+		if (pBar != NULL) {	// if bar exists
+			CMenu	menu;
+			VERIFY(menu.LoadMenu(m_arrBarInfo[iBar].nMenuID));	// load bar's context menu
+			AddMenuItems(&menu);	// add context menu's items to m_arrMenuItem
+		}
+	}
+}
+
+inline void CMainFrame::CDockBarMenus::LazyInit()
+{
+	if (m_arrMenuItem.IsEmpty())	// if not created yet
+		Create();	// create on demand
+}
+
+void CMainFrame::CDockBarMenus::AddMenuItems(CMenu *pMenu)
+{
+	int nItems = pMenu->GetMenuItemCount();
+	for (int iItem = 0; iItem < nItems; iItem++) {	// for each menu item
+		UINT	nCmdID = pMenu->GetMenuItemID(iItem);	// get menu item's ID
+		if (nCmdID) {	// if not separator
+			if (nCmdID == -1) {	// if submenu
+				CMenu	*pSubMenu = pMenu->GetSubMenu(iItem);
+				if (pSubMenu != NULL)	// if valid submenu
+					AddMenuItems(pSubMenu);	// recurse into submenu
+			} else {	// ordinary menu item
+				USHORT	nCmdIDShort = static_cast<USHORT>(nCmdID);
+				if (ArrayFind(m_arrEditCmd, _countof(m_arrEditCmd), nCmdIDShort) < 0) {	// exclude editing commands
+					ASSERT(m_arrMenuItem.GetSize() < DOCK_BAR_MENU_MAX_ITEMS);	// check item range
+					DWORD	dwItem = MAKELONG(m_iCurBar, nCmdIDShort);	// DWORD array instead of template array
+					m_arrMenuItem.Add(dwItem);	// add element to menu item array
+				}
+			}
+		}
+	}
+}
+
+void CMainFrame::CDockBarMenus::AddToCustomizeDlg(CMFCToolBarsCustomizeDialog *pDlgCust)
+{
+	CMenu	menu;
+	UINT	iCurBar = UINT_MAX;	// index of current bar, for detecting bar changes
+	CString	sBarName, sScopedItemName;
+	CMFCToolBarButton	button;	// reuse instance to reduce overhead
+	int	nItems = m_arrMenuItem.GetSize();
+	for (int iItem = 0; iItem < nItems; iItem++) {	// for each menu item
+		const BAR_MENU_ITEM&	item = GetItem(iItem);
+		if (item.iBar != iCurBar) {	// if bar has changed
+			ASSERT(item.iBar < _countof(m_arrBarInfo));	// check bar index
+			CBasePane	*pBar = m_arrBarPtr[item.iBar];	// get pointer to bar
+			ASSERT(pBar != NULL);	// bar pointer should never be null, else logic error
+			pBar->GetWindowText(sBarName);	// get bar name
+			menu.DestroyMenu();	// destroy temporary menu if it exists
+			VERIFY(menu.LoadMenu(m_arrBarInfo[item.iBar].nMenuID));	// load bar's context menu
+			iCurBar = item.iBar;	// update cached bar index
+		}
+		menu.GetMenuString(item.nItemID, button.m_strText, MF_BYCOMMAND);	// get menu item name
+		button.m_strText.Remove('&');	// remove ampersands from item name
+		button.m_nID = ID_DOCK_BAR_MENU_START + iItem;	// convert item index to proxy ID
+		sScopedItemName = sBarName + button.m_strText;	// create scoped item name for All Commands
+		sScopedItemName.Remove(' ');	// remove spaces from item name
+		button.m_strTextCustom = sScopedItemName.SpanExcluding(_T("\t"));	// remove anything after tab
+		pDlgCust->AddButton(sBarName, button);	// add command to customize dialog
+	}
+}
+
+inline int CMainFrame::CDockBarMenus::GetItemCount() const
+{
+	return m_arrMenuItem.GetSize();
+}
+
+inline int CMainFrame::CDockBarMenus::FindItem(UINT nID) const
+{
+	int	iItem = nID - ID_DOCK_BAR_MENU_START;	// convert proxy ID to item index
+	if (iItem >= 0 && iItem < GetItemCount())	// if valid item index
+		return iItem;	// return item index
+	return -1;	// item not found
+}
+
+inline const CMainFrame::CDockBarMenus::BAR_MENU_ITEM& CMainFrame::CDockBarMenus::GetItem(int iItem) const
+{
+	return *reinterpret_cast<const BAR_MENU_ITEM *>(&m_arrMenuItem[iItem]);	// cast from DWORD to BAR_MENU_ITEM
+}
+
+inline CBasePane *CMainFrame::CDockBarMenus::GetBar(int iItem) const
+{
+	UINT	iBar = GetItem(iItem).iBar;
+	ASSERT(iBar < _countof(m_arrBarInfo));
+	return m_arrBarPtr[iBar];
+}
+
+inline UINT CMainFrame::CDockBarMenus::GetItemID(int iItem) const
+{
+	return GetItem(iItem).nItemID;
+}
+
 // CMainFrame diagnostics
 
 #ifdef _DEBUG
@@ -784,9 +919,6 @@ void CMainFrame::Dump(CDumpContext& dc) const
 
 BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_WM_TIMER()	// frequent messages first
-	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SONG_POS, OnUpdateIndicatorSongPos)
-	ON_UPDATE_COMMAND_UI(ID_INDICATOR_SONG_TIME, OnUpdateIndicatorSongPos)
-	ON_UPDATE_COMMAND_UI(ID_INDICATOR_TEMPO, OnUpdateIndicatorTempo)
 	ON_WM_CREATE()
 	ON_WM_DESTROY()
 	ON_COMMAND(ID_WINDOW_MANAGER, &CMainFrame::OnWindowManager)
@@ -838,6 +970,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_UPDATE_COMMAND_UI(ID_WINDOW_NEW_HORZ_TAB_GROUP, OnUpdateWindowNewHorizontalTabGroup)
 	ON_COMMAND(ID_WINDOW_NEW_VERT_TAB_GROUP, OnWindowNewVerticalTabGroup)
 	ON_UPDATE_COMMAND_UI(ID_WINDOW_NEW_VERT_TAB_GROUP, OnUpdateWindowNewVerticalTabGroup)
+	ON_COMMAND_RANGE(ID_DOCK_BAR_MENU_START, ID_DOCK_BAR_MENU_END, OnDockBarMenu)
+	ON_UPDATE_COMMAND_UI_RANGE(ID_DOCK_BAR_MENU_START, ID_DOCK_BAR_MENU_END, OnUpdateDockBarMenu)
 END_MESSAGE_MAP()
 
 // CMainFrame message handlers
@@ -851,10 +985,12 @@ void CMainFrame::OnViewCustomize()
 {
 	CMFCToolBarsCustomizeDialog* pDlgCust = new CMFCToolBarsCustomizeDialog(this, TRUE /* scan menus */);
 	CMenu menuView;
-	menuView.LoadMenu(IDR_VIEW_EX_CTX);	// extra view commands that aren't on default main menus
+	VERIFY(menuView.LoadMenu(IDR_VIEW_EX_CTX));	// extra view commands that aren't on default main menus
 	CString	sMenuViewName;
 	menuView.GetMenuString(0, sMenuViewName, MF_BYPOSITION);
 	pDlgCust->AddMenuCommands(&menuView, FALSE, sMenuViewName);	// make available for customization
+	m_DockBarMenus.LazyInit();	// create menu proxies on demand
+	m_DockBarMenus.AddToCustomizeDlg(pDlgCust);	// make dockable bar menus available for customization
 	pDlgCust->EnableUserDefinedToolbars();
 	pDlgCust->Create();
 }
@@ -1000,19 +1136,6 @@ LRESULT	CMainFrame::OnHandleDlgKey(WPARAM wParam, LPARAM lParam)
 {
 	UNREFERENCED_PARAMETER(lParam);
 	return theApp.HandleDlgKeyMsg((MSG *)wParam);
-}
-
-void CMainFrame::OnUpdateIndicatorSongPos(CCmdUI* pCmdUI)
-{
-	pCmdUI->Enable(m_pActiveDoc != NULL);
-}
-
-void CMainFrame::OnUpdateIndicatorTempo(CCmdUI* pCmdUI)
-{
-	bool	bIsPlaying = theApp.IsDocPlaying();
-	pCmdUI->Enable(bIsPlaying);
-	if (!bIsPlaying)	// if stopped
-		pCmdUI->SetText(_T(""));	// tempo is only available while playing
 }
 
 LRESULT CMainFrame::OnPropertyChange(WPARAM wParam, LPARAM lParam)
@@ -1398,9 +1521,12 @@ void CMainFrame::GetMessageString(UINT nID, CString& rMessage) const
 	if (nID >= ID_APP_DOCKING_BAR_FIRST && nID <= ID_APP_DOCKING_BAR_LAST) {	// if docking bar ID
 		INT_PTR	iBar = nID - ID_APP_DOCKING_BAR_FIRST;
 		AfxFormatString1(rMessage, IDS_MAIN_DOCKING_BAR_HINT_FMT, LDS(m_arrDockingBarNameID[iBar]));
-	}  else if (nID >= ID_VIEW_APPLOOK_FIRST && nID <= ID_VIEW_APPLOOK_LAST) {	// if app look ID
+	} else if (nID >= ID_VIEW_APPLOOK_FIRST && nID <= ID_VIEW_APPLOOK_LAST) {	// if app look ID
 		rMessage.LoadString(IDS_HINT_APPLOOK_SELECT);
 	} else {	// normal ID, do base class behavior
+		int	iItem = m_DockBarMenus.FindItem(nID);	// find menu item for this ID
+		if (iItem >= 0)	// if menu item found
+			nID = m_DockBarMenus.GetItemID(iItem);	// substitute menu item ID for proxy ID
 		CMDIFrameWndEx::GetMessageString(nID, rMessage);
 	}
 }
@@ -1464,4 +1590,30 @@ void CMainFrame::OnWindowNewVerticalTabGroup()
 void CMainFrame::OnUpdateWindowNewVerticalTabGroup(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(GetMDITabsContextMenuAllowedItems() & AFX_MDI_CREATE_VERT_GROUP);
+}
+
+void CMainFrame::OnDockBarMenu(UINT nID)
+{
+	m_DockBarMenus.LazyInit();	// create menu proxies on demand
+	int	iItem = m_DockBarMenus.FindItem(nID);	// find menu item for this ID
+	if (iItem >= 0) {	// if menu item found
+		CBasePane *pBar = m_DockBarMenus.GetBar(iItem);	// get pointer to target bar
+		ASSERT(pBar != NULL);
+		UINT	nItemID = m_DockBarMenus.GetItemID(iItem);	// map index to item ID
+		pBar->SendMessage(WM_COMMAND, nItemID);	// relay command to target bar
+	}
+}
+
+void CMainFrame::OnUpdateDockBarMenu(CCmdUI *pCmdUI)
+{
+	m_DockBarMenus.LazyInit();	// create menu proxies on demand
+	int	iItem = m_DockBarMenus.FindItem(pCmdUI->m_nID);	// find menu item for this ID
+	if (iItem >= 0) {	// if menu item found
+		CBasePane *pBar = m_DockBarMenus.GetBar(iItem);	// get pointer to target bar
+		ASSERT(pBar != NULL);
+		UINT	nPrevID = pCmdUI->m_nID;	// save caller's target ID
+		pCmdUI->m_nID = m_DockBarMenus.GetItemID(iItem);	// set target ID to our item
+		pCmdUI->DoUpdate(pBar, false);	// relay update command UI to target bar
+		pCmdUI->m_nID = nPrevID;	// restore caller's target ID
+	}
 }

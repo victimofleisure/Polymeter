@@ -49,6 +49,7 @@
 		39		16dec22	add quant string conversions that support fractions
 		40		29jan24	add class to save and restore track selection
 		41		16feb24	move track color message handlers here
+		42		25feb24	single handler for next and prev convergence
 
 */
 
@@ -606,8 +607,7 @@ protected:
 	afx_msg void OnTransportGoToPosition();
 	afx_msg void OnTransportRecordTracks();
 	afx_msg void OnUpdateTransportRecordTracks(CCmdUI *pCmdUI);
-	afx_msg void OnTransportConvergenceNext();
-	afx_msg void OnTransportConvergencePrevious();
+	afx_msg void OnTransportConvergence(UINT nID);
 	afx_msg void OnTransportLoop();
 	afx_msg void OnUpdateTransportLoop(CCmdUI *pCmdUI);
 	afx_msg void OnEditCopy();

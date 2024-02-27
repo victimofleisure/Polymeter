@@ -13,6 +13,7 @@
 		03		20jun21	move focus edit handling here
 		04		13aug21	in next/previous pane handler, set focus to track view
 		05		24oct22	set song view ruler and track heights to match track view
+		06		25feb24	add status bar indicators to OnCmdMsg
 
 */
 
@@ -275,6 +276,12 @@ BOOL CChildFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext)
 BOOL CChildFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
 {
 	switch (nID) {
+	case 101:	// occurs when dockable panes are combined in a tabbed pane; ID is hard-coded in CTabbedPane
+		return TRUE;	// reduces overhead by avoiding main frame's pass
+	case ID_INDICATOR_SONG_POS:
+	case ID_INDICATOR_SONG_TIME:
+	case ID_INDICATOR_TEMPO:
+		return TRUE;	// CMainFrame explicitly updates these status bar panes
 	case ID_VIEW_ZOOM_IN:
 	case ID_VIEW_ZOOM_OUT:
 	case ID_VIEW_ZOOM_RESET:

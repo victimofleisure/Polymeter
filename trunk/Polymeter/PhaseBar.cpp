@@ -25,6 +25,7 @@
 		15		06dec22	add period unit
 		16		23feb23	delete previous frame files if any
 		17		25sep23	fix warnings in OnDrawD2D
+		18		25feb24	add runtime array check in find next/prev convergence
 
 */
 
@@ -479,6 +480,8 @@ LONGLONG CPhaseBar::FindNextConvergence(const CLongLongArray& arrMod, LONGLONG n
 {
 	INT_PTR	nMods = arrMod.GetSize();
 	ASSERT(nMods > 0);
+	if (nMods <= 0)	// if modulo array is empty
+		return nStartPos;	// avoid access violation
 	nConvSize = min(nConvSize, nMods);	// else infinite loop
 	CLongLongArray	arrPos;
 	arrPos.SetSize(nMods);
@@ -532,6 +535,8 @@ LONGLONG CPhaseBar::FindPrevConvergence(const CLongLongArray& arrMod, LONGLONG n
 {
 	INT_PTR	nMods = arrMod.GetSize();
 	ASSERT(nMods > 0);
+	if (nMods <= 0)	// if modulo array is empty
+		return nStartPos;	// avoid access violation
 	nConvSize = min(nConvSize, nMods);	// else infinite loop
 	CLongLongArray	arrPos;
 	arrPos.SetSize(nMods);

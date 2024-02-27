@@ -94,6 +94,7 @@
 		84		24jan24	use sequencer's warning error attribute
 		85		29jan24	add class to save and restore track selection
 		86		16feb24	move track color message handlers here
+		87		25feb24	disable next and prev convergence if no tracks
 
 */
 
@@ -4135,8 +4136,8 @@ BEGIN_MESSAGE_MAP(CPolymeterDoc, CDocument)
 	ON_COMMAND(ID_TRANSPORT_GO_TO_POSITION, OnTransportGoToPosition)
 	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_RECORD_TRACKS, OnUpdateTransportRecordTracks)
 	ON_COMMAND(ID_TRANSPORT_RECORD_TRACKS, OnTransportRecordTracks)
-	ON_COMMAND(ID_TRANSPORT_CONVERGENCE_NEXT, OnTransportConvergenceNext)
-	ON_COMMAND(ID_TRANSPORT_CONVERGENCE_PREVIOUS, OnTransportConvergencePrevious)
+	ON_COMMAND_RANGE(ID_TRANSPORT_CONVERGENCE_NEXT, ID_TRANSPORT_CONVERGENCE_PREVIOUS, OnTransportConvergence)
+	ON_UPDATE_COMMAND_UI_RANGE(ID_TRANSPORT_CONVERGENCE_NEXT, ID_TRANSPORT_CONVERGENCE_PREVIOUS, OnUpdateEditSelectAll)
 	ON_UPDATE_COMMAND_UI(ID_TRANSPORT_LOOP, OnUpdateTransportLoop)
 	ON_COMMAND(ID_TRANSPORT_LOOP, OnTransportLoop)
 	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
@@ -4673,21 +4674,12 @@ void CPolymeterDoc::OnUpdateTransportRecordTracks(CCmdUI *pCmdUI)
 	pCmdUI->SetCheck(theApp.IsRecordingMidiInput() && !theApp.m_bIsRecording);
 }
 
-void CPolymeterDoc::OnTransportConvergenceNext()
+void CPolymeterDoc::OnTransportConvergence(UINT nID)
 {
+	bool	bReverse = nID == ID_TRANSPORT_CONVERGENCE_PREVIOUS;	// assume IDs are sorted
 	theApp.GetMainFrame()->m_wndMenuBar.RestoreFocus();	// accelerator uses menu key
-	LONGLONG	nPos = theApp.GetMainFrame()->m_wndPhaseBar.FindNextConvergence(false);
-	if (nPos > INT_MAX)
-		AfxMessageBox(IDS_DOC_CONVERGENCE_OUT_OF_RANGE);
-	else
-		SetPosition(static_cast<int>(nPos), true);	// center song position
-}
-
-void CPolymeterDoc::OnTransportConvergencePrevious()
-{
-	theApp.GetMainFrame()->m_wndMenuBar.RestoreFocus();	// accelerator uses menu key
-	LONGLONG	nPos = theApp.GetMainFrame()->m_wndPhaseBar.FindNextConvergence(true);
-	if (nPos < INT_MIN)
+	LONGLONG	nPos = theApp.GetMainFrame()->m_wndPhaseBar.FindNextConvergence(bReverse);
+	if (nPos < INT_MIN || nPos > INT_MAX)
 		AfxMessageBox(IDS_DOC_CONVERGENCE_OUT_OF_RANGE);
 	else
 		SetPosition(static_cast<int>(nPos), true);	// center song position
