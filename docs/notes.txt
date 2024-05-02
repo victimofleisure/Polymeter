@@ -4628,4 +4628,137 @@ the periods frequently, which could get aggravating.
 4. The mode doesn't work in Live view, because entering 
 Live view clears the track selection
 
+3/6/24
+
+Smooth offset modulation
+
+PLM file: offset modulation frequency test 2
+
+Tempo = 120 BPM, Timebase = 120 PPQ
+tick length = 0.0041666666666667
+
+144 = 0.6 Hz
+120 = 2 Hz
+96 = 2.5 Hz
+
+Using a sine wave as the offset modulation function
+sounds reasonably smooth, but is it the proper function
+for frequency change?
+
+2.5 is approximately four times 0.6, or two doublings.
+But 0.6 times two is 1.2, not 2. So it's not smooth in log space.
+The right function is probably 2 to the power of a normalized triangle wave, as with tempo.
+
+4/18/24 saving space in CTrack by converting eligible data members from int to char
+
+The base version was Polymeter 1.0.15.005.
+Track members Type, Channel, Note, RangeType and RangeStart were converted from int to char.
+Only one critical function, OutputMidiBuffer, was measured, and only in x64 Release.
+Its size increased from 5824 bytes to 5968 bytes, an increase of 2.5% or 144 bytes.
+This code size increase could plausibly affect performance. The increase may be
+due in part to the need to zero-extend or sign-extend bytes loaded into registers.
+According to the MSDN page Learn / Windows / Windows / Drivers / x64 Architecture:
+"Operations that output to a 32-bit subregister are automatically zero-extended 
+to the entire 64-bit register. Operations that output to 8-bit or 16-bit 
+subregisters aren't zero-extended (this is compatible x86 behavior)."
+Another possible cause of the increase is that byte-accessing MOV instructions are longer.
+
+The size of CTrack can be reduced by 8 bytes (from 192 to 184) by moving m_clrCustom
+from its current position (it's the last member var) to just before m_arrStep. That
+still leaves 3 unused bytes after m_bMute. Alternatively, two 32-bit members could be
+added to CTrack (one before m_arrStep and one after m_clrCustom) without increasing its size.
+
+5/2/24 minor sequencer optimizations
+
+In AddTrackEvents, the bIsOdd boolean was replaced with flipping the sign of
+nSwing, thereby eliminating a conditional branch in the critical path. To test
+whether the current step is odd, compare nSwing to trk.m_nSwing; if they're
+unequal, it's odd.
+
+In AddTrackEvents and RecurseModulations, the track index parameter was 
+replaced with a track reference. The functions made no use of the track
+index, except to convert it to a reference that was already available
+in the calling code. This slightly reduces code size and presumably
+increases performance by avoiding a redundant indexing operation.
+
+5/2/24 first stab at length modulation
+
+It gets pretty hairy. The main change is in AddTrackEvents:
+
+case MT_Length:
+	{
+		arrMod[MT_Length] += nStepVal - MIDI_NOTES / 2;	// accumulate length modulation
+		int	nModLength = trk.GetLength() + arrMod[MT_Length];	// compute modulated length
+		nModLength = CLAMP(nModLength, 1, trk.GetLength());	// enforce length range
+		if (nModLength != nLength) {	// if length changed
+			nLength = nModLength;	// update length
+			int	nStraightEvtTime = nEvtTime;
+			if (nSwing != trk.m_nSwing)	// if odd event
+				nStraightEvtTime -= nSwing;	// remove swing
+			int iQuant = (nStraightEvtTime + nTrkStart) / nQuant;
+			iStep = iQuant % nLength;	// update step index for new length
+		}
+	}
+	break;
+
+But this only gets you direct length modulation. For recursive
+length modulation, more work is needed. It might be more efficient
+and maintainable to make the recursion parameters a struct.
+
+struct RECURSE_PARAMS {	// parameters passed to RecurseModulations, which it may modify
+	int		nAbsEvtTime;	// absolute event time in ticks; modified by offset modulation
+	int		nPosMod;		// position offset in steps; modified by position modulation
+	int		nLength;		// dynamic track length in steps; modified by length modulation
+};
+
+if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
+	RECURSE_PARAMS	rp = {nAbsEvtTime, 0, trkModSource.GetLength()};
+	m_nRecursions = 0;
+	if (RecurseModulations(trkModSource, rp))	// recurse into modulator's modulations
+		continue;	// recursion returned mute, so skip this modulator
+	iModStep = trkModSource.GetStepIndex(rp.nAbsEvtTime, rp.nLength);	// use potentially modified event time and length
+	if (rp.nPosMod)	// if recursion returned a non-zero position modulation
+		iModStep = ModWrap(iModStep - rp.nPosMod, rp.nLength);	// modulate position
+} else {	// modulator isn't modulated
+	iModStep = trkModSource.GetStepIndex(nAbsEvtTime);
+}
+
+And in RecurseModulations:
+
+RECURSE_PARAMS	rp2 = {rp.nAbsEvtTime, 0, trkModSource.GetLength()};
+if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
+	if (m_nRecursions >= MOD_MAX_RECURSIONS) {	// if maximum recursion depth reached
+		OnMidiError(SEQERR_TOO_MANY_RECURSIONS);
+		return true;	// abort recursion
+	}
+	m_nRecursions++;	// increment recursion depth
+	bool	bMute = RecurseModulations(trkModSource, rp2);	// traverse sub-modulations
+	m_nRecursions--;	// decrement recursion depth
+	if (bMute)	// if recursion returned mute
+		continue;	// skip this modulator
+}
+int	iModStep = trkModSource.GetStepIndex(rp2.nAbsEvtTime, rp2.nLength);	// use potentially modified event time and length
+if (rp2.nPosMod)	// if recursion returned a non-zero position modulation
+	iModStep = ModWrap(iModStep - rp2.nPosMod, rp2.nLength);	// modulate position
+int	nStepVal = trkModSource.m_arrStep[iModStep] & SB_VELOCITY;
+
+case MT_Length:	// length modulation
+	nLengthModSum += nStepVal;	// add step value to accumulated length modulation
+	rp.nLength = trk.GetLength() + nLengthModSum;	// update caller's length
+	rp.nLength = CLAMP(rp.nLength, 1, trk.GetLength());	// enforce length range
+	break;
+
+And in SumModulations:
+
+RECURSE_PARAMS	rp = {nAbsEvtTime, 0, trkModSource.GetLength()};
+if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
+	m_nRecursions = 0;
+	if (RecurseModulations(trkModSource, rp))	// recurse into modulator's modulations
+		continue;	// recursion returned mute, so skip this modulator
+}
+
+The main objection is that length modulation just isn't useful enough 
+to justify the increased complexity. Another objection is that the target
+track shifts phase whenever its length changes. There is no way to avoid
+the phase shifts without introducing per-track state and indeterminacy.
 

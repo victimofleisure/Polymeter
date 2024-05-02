@@ -478,6 +478,8 @@ id	open	close	type	description	rev	user
 589	02/25/24	02/25/24	done	remove non-functional Print icon from toolbar to avoid its needless overhead	1.0.15.005	
 590	02/25/24	02/25/24	done	next / previous convergence command crashes if document contains no tracks	1.0.15.005	
 529	07/22/22	02/27/24	done	dockable bar context menu commands should be available in Customize dialog	1.0.15.005	
+591	03/23/24	04/27/24	done	redirecting stdio to console window doesn't work in VS2019; use freopen_s instead	1.0.15.006	
+594	04/10/24	04/27/24	done	add internal track type to tracks help topic	1.0.15.006	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -510,11 +512,11 @@ id	open	close	type	description	rev	user
 201	09/25/18		hold	pan column in channels bar should show signed values; conflicts with use of -1 as unspecified value		
 212	10/17/18		hold	in live view, dragging list selection beyond window boundaries should scroll list		
 217	10/27/18		hold	switching from song view to live view doesn't always update parts list to reflect dub state? Hard to replicate		
+236	11/19/18		hold	length modulation; cool idea but hard to implement and utility is questionable		Benoit
 232	11/19/18		hold	not/invert operator for modulations; would allow a single modulator track to control a crossfade		Benoit
 233	11/19/18		hold	highlight modulated parameters; complicates UI and doesn't fully capture modulation state		Benoit
 234	11/19/18		hold	detail view of modulations that shows target as well as source and type; editable, sortable, clipboard		Benoit
 235	11/19/18		hold	vertically fill the note column with values from a scale or chord		Benoit
-236	11/19/18		hold	length modulation; cool idea but hard to implement		Benoit
 257	12/09/18		hold	add hide/unhide column commands to track list header's context menu; where to store previous width?		
 259	12/12/18		hold	grid control's header should display tooltip for truncated column names; must subclass header control?		
 296	06/12/19		hold	option for space bar to start/stop playback without needing to also press Ctrl key; causes many UI conflicts		
@@ -554,13 +556,14 @@ id	open	close	type	description	rev	user
 525	06/21/22		hold	Step view and Step Values bar should mirror each other's selection if possible		
 533	09/05/22		hold	overlay preset; save mute states of selected tracks only, and affect only those tracks when preset is applied		
 554	01/20/23		hold	phase bar lacks command to export still image; workaround is export one-second video with frame rate of 1		
-555	01/21/23		hold	need a scaling factor that modulation source step values are multiplied by; member of modulation or track?		
+555	01/21/23		hold	to support large offset modulations, add a scaling factor that source step values are multiplied by		
 559	02/19/23		hold	view timer is extremely inaccurate; add option to use multimedia timer, possibly with drift compensation		
 561	02/20/23		hold	graph should optionally indicate muted tracks, but how?		
 564	02/28/23		hold	graph font should be configurable; what about font size? Helvetica has special meaning in Graphviz		
 567	05/10/23		hold	in track fill, add bias and amplitude options, or remove fill dialog's value range limits		
 578	01/05/24		hold	allow meter denominators other than four, limited to small powers of two		
 587	02/23/24		hold	add phase bar mode that only shows selected tracks; see notes for disadvantages		
+593	04/04/24		hold	Step Values bar should scroll to current position if possible; could be distracting, make it optional?		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 100	05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
@@ -580,3 +583,4 @@ id	open	close	type	description	rev	user
 556	01/21/23		punt	resize live view's progress bar via left-click drag; conflicts with primary function of left-click		
 577	12/29/23		punt	add option to ignore sequencer errors during playback; no need now that callback overrun is only a warning		
 579	01/15/24		punt	Check Modulations should report unused modulators; dubious as they're not actually an error		
+592	04/04/24		punt	Create Modulation dialog should have types on the left and tracks on the right, to match modulations bar column order		

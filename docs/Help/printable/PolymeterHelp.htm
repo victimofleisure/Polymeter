@@ -341,6 +341,7 @@
 <li><a href="#Controller_tracks">Controller tracks</a> output a MIDI controller, pitch bend, aftertouch, or program change.
 <li><a href="#Tempo_tracks">Tempo tracks</a> output a tempo change.
 <li><a href="#Modulator_tracks">Modulator tracks</a> output nothing, and are used to alter the behavior of other tracks.
+<li><a href="#Internal_tracks">Internal tracks</a> alter the sequencer's behavior.
 </ul>
 
 <p>A track can be edited via the track view, which is vertically split into two <a href="#Panes">panes</a>. The <a href="#Track_Grid">left pane</a> lets you edit the track's properties, while the <a href="#Track_Steps">right pane</a> lets you mute or unmute tracks and edit the track's steps.
@@ -446,7 +447,7 @@
 <tr><td><a href="#Chord_modulation">Chord</a></td><td>Note tracks only</td><td>Adds scale tone to current chord</td><td>Signed zero-based scale tone index</td></tr>
 <tr><td><a href="#Index_modulation">Index</a></td><td>Note tracks only</td><td>Picks a scale or chord tone</td><td>Signed zero-based scale or chord tone index</td></tr>
 <tr><td><a href="#Voicing_modulation">Voicing</a></td><td>Note tracks only</td><td>Drops or raises a scale or chord tone</td><td>Signed one-based voice index</td></tr>
-<tr><td><a href="#Offset_modulation">Offset</a></td><td>All track types except Tempo</td><td>Offsets playback timing</td><td>Offset in ticks; unsigned for Note or Controller, signed for Modulator</td></tr>
+<tr><td><a href="#Offset_modulation">Offset</a></td><td>All track types except Tempo</td><td>Offsets playback timing</td><td>Offset in ticks; unsigned for Note or Controller, signed for Modulator</td>
 </table>
 
 <a name="Modulation_relationships"><h3>Modulation relationships</h3></a>
@@ -465,7 +466,7 @@
 
 <a name="Nested_modulation"><h3>Nested modulation</h3></a>
 
-<p>Nested relationships are also possible, in other words a modulator can modulate a modulator, though there are limits on this, as explained below. The only thing that's definitely not allowed is a track modulating itself, either directly, or indirectly via a loop, as this would lead to infinite recursion. The user interface tries to prevent self-modulation, but if it occurs you'll get the error message "Modulation exceeded the maximum number of recursions." The maximum modulation depth is 32 levels, however only <a href="#Mute_modulation">mute modulation</a>, <a href="#Position_modulation">position modulation</a>, and <a href="#Offset_modulation">offset modulation</a> fully support nesting. The modulation types that fully support nesting can form chains, for example:
+<p>Nested relationships are also possible, in other words a modulator can modulate a modulator, though there are limits on this, as explained below. The only thing that's definitely not allowed is a track modulating itself, either directly, or indirectly via a loop, as this would lead to infinite recursion. The user interface tries to prevent self-modulation, but if it occurs you'll get the error message "Modulation exceeded the maximum number of recursions." The maximum modulation depth is 32 levels, however only <a href="#Mute_modulation">mute</a>, <a href="#Position_modulation">position</a>, and <a href="#Offset_modulation">offset</a> modulation fully support nesting. The modulation types that fully support nesting can form chains, for example:
 
 <p>mute modulator &rarr; position modulator &rarr; note modulator &rarr; note track
 
@@ -476,9 +477,9 @@
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Target track type</th><th>Supported modulation types</th></tr>
 <tr><td>Note</td><td>All except Tempo</td></tr>
-<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel, Internal</td><td>Mute, Position, Velocity, Offset</td></tr>
-<tr><td>Tempo</td><td>Mute, Position, Tempo</td></tr>
-<tr><td>Modulator</td><td>Mute, Position, Offset; also Note but only if target is a Scale or Chord modulator</td></tr>
+<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel, Internal</td><td>Mute, Velocity, Position, Offset, Length</td></tr>
+<tr><td>Tempo</td><td>Mute, Position, Tempo, Length</td></tr>
+<tr><td>Modulator</td><td>Mute, Position, Offset, Length; also Note but only if target is a Scale or Chord modulator</td></tr>
 </table>
 
 <a name="Dubs"><h2>Dubs</h2></a>
