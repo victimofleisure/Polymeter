@@ -199,7 +199,7 @@ Besides juxtaposition, another important method of combining @[tracks] is <em>mo
 <tr><td>@[chord modulation\Chord]</td><td>Note tracks only</td><td>Adds scale tone to current chord</td><td>Signed zero-based scale tone index</td></tr>
 <tr><td>@[index modulation\Index]</td><td>Note tracks only</td><td>Picks a scale or chord tone</td><td>Signed zero-based scale or chord tone index</td></tr>
 <tr><td>@[voicing modulation\Voicing]</td><td>Note tracks only</td><td>Drops or raises a scale or chord tone</td><td>Signed one-based voice index</td></tr>
-<tr><td>@[offset modulation\Offset]</td><td>All track types except Tempo</td><td>Offsets playback timing</td><td>Offset in ticks; unsigned for Note or Controller, signed for Modulator</td>
+<tr><td>@[offset modulation\Offset]</td><td>All track types except Tempo</td><td>Offsets playback timing</td><td>Offset in ticks; unsigned for Note or Controller, signed for Modulator</td></tr>
 </table>
 
 @item Modulation relationships
@@ -229,9 +229,9 @@ The table below summarizes the supported modulation behavior. For each track typ
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Target track type</th><th>Supported modulation types</th></tr>
 <tr><td>Note</td><td>All except Tempo</td></tr>
-<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel, Internal</td><td>Mute, Velocity, Position, Offset, Length</td></tr>
-<tr><td>Tempo</td><td>Mute, Position, Tempo, Length</td></tr>
-<tr><td>Modulator</td><td>Mute, Position, Offset, Length; also Note but only if target is a Scale or Chord modulator</td></tr>
+<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel, Internal</td><td>Mute, Velocity, Position, Offset</td></tr>
+<tr><td>Tempo</td><td>Mute, Position, Tempo</td></tr>
+<tr><td>Modulator</td><td>Mute, Position, Offset; also Note but only if target is a Scale or Chord modulator</td></tr>
 </table>
 
 @topic Dubs
