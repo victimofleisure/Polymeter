@@ -59,6 +59,8 @@
 		49		09jan24	add base class to streamline reader init
 		50		24jan24	add warning error attribute
 		51		10feb24	export now turns off all notes at end of file
+		52		02may24	optimize swing; replace boolean with sign flip
+		53		02may24	replace redundant track index with reference
 
 */
 
@@ -546,10 +548,8 @@ __forceinline bool CSequencer::MakeControlEvent(const CTrack& trk, int nTime, in
 	return true;
 }
 
-bool CSequencer::RecurseModulations(int iTrack, int& nAbsEvtTime, int& nPosMod)
+bool CSequencer::RecurseModulations(const CTrack& trk, int& nAbsEvtTime, int& nPosMod)
 {
-	nPosMod = 0;
-	const CTrack& trk = GetTrack(iTrack);
 	int	nTracks = GetTrackCount();
 	int	nMods = trk.m_arrModulator.GetSize();
 	for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
@@ -568,7 +568,7 @@ bool CSequencer::RecurseModulations(int iTrack, int& nAbsEvtTime, int& nPosMod)
 						return true;	// abort recursion
 					}
 					m_nRecursions++;	// increment recursion depth
-					bool	bMute = RecurseModulations(iModSource, nAbsEvtTime2, nPosMod2);	// traverse sub-modulations
+					bool	bMute = RecurseModulations(trkModSource, nAbsEvtTime2, nPosMod2);	// traverse sub-modulations
 					m_nRecursions--;	// decrement recursion depth
 					if (bMute)	// if recursion returned mute
 						continue;	// skip this modulator
@@ -606,7 +606,7 @@ int CSequencer::SumModulations(const CTrack& trk, int iModType, int nAbsEvtTime)
 				int	nPosMod = 0;
 				if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
 					m_nRecursions = 0;
-					if (RecurseModulations(iModSource, nAbsEvtTime, nPosMod))	// recurse into modulator's modulations
+					if (RecurseModulations(trkModSource, nAbsEvtTime, nPosMod))	// recurse into modulator's modulations
 						continue;	// recursion returned mute, so skip this modulator
 				}
 				int	iModStep = trkModSource.GetStepIndex(nAbsEvtTime);
@@ -621,9 +621,8 @@ int CSequencer::SumModulations(const CTrack& trk, int iModType, int nAbsEvtTime)
 	return nSum;
 }
 
-__forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
+__forceinline void CSequencer::AddTrackEvents(CTrack& trk, int nCBStart)
 {
-	CTrack&	trk = GetAt(iTrack);
 	int	nOffset = trk.m_nOffset;	// cache these values for thread safety
 	int	nLength = trk.GetLength();
 	int	nQuant = trk.m_nQuant;
@@ -641,7 +640,6 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 	if (iStep < 0)	// if negative step index
 		iStep += nLength;	// wrap step index
 	nEvtTime = -nEvtTime;	// start far enough back to discard up to two events
-	bool	bIsOdd = false;	// starting on even step, due to pair of quants logic
 	int	nTracks = GetTrackCount();
 	while (nEvtTime < m_nCBLen) {	// while event time within callback period
 		if (nEvtTime >= 0) {	// discard already played events
@@ -669,9 +667,9 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 						int	iModStep;
 						if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
 							int	nAbsEvtTime2 = nAbsEvtTime;	// copy event time; offset modulation may change it
-							int	nPosMod;
+							int	nPosMod = 0;
 							m_nRecursions = 0;
-							if (RecurseModulations(iModSource, nAbsEvtTime2, nPosMod))	// recurse into modulator's modulations
+							if (RecurseModulations(trkModSource, nAbsEvtTime2, nPosMod))	// recurse into modulator's modulations
 								continue;	// recursion returned mute, so skip this modulator
 							iModStep = trkModSource.GetStepIndex(nAbsEvtTime2);	// use potentially offset event time
 							if (nPosMod)	// if recursion returned a non-zero position modulation
@@ -795,12 +793,8 @@ __forceinline void CSequencer::AddTrackEvents(int iTrack, int nCBStart)
 lblNoteScheduled:;
 							if (nVel) {	// if non-zero velocity, queue note off
 								int	nDuration = nDurSteps * nQuant + trk.m_nDuration + arrMod[MT_Duration];	// add duration offset
-								if (nDurSteps & 1) {	// if odd duration
-									if (bIsOdd)	// if odd step
-										nDuration -= nSwing;	// subtract swing from duration
-									else	// even step
-										nDuration += nSwing;	// add swing to duration
-								}
+								if (nDurSteps & 1)	// if odd duration
+									nDuration += nSwing;	// add swing to duration
 								nDuration = max(nDuration, 1);	// keep duration above zero
 								evt.m_nTime = nAbsEvtTime + nDuration;	// absolute time
 								evt.m_dwEvent &= ~MIDI_P2_MASK;	// zero note's velocity
@@ -872,12 +866,8 @@ lblNextStep:
 		iStep++;	// advance to next track step
 		if (iStep >= nLength)	// if track length reached
 			iStep -= nLength;	// wrap to start of track
-		nEvtTime += nQuant;	// advance event time by track's time quant
-		if (bIsOdd)	// if odd step
-			nEvtTime -= nSwing;	// subtract swing from event time
-		else	// even step
-			nEvtTime += nSwing;	// add swing to event time
-		bIsOdd ^= 1;	// toggle odd step flag
+		nEvtTime += nQuant + nSwing;	// advance event time by track's swung time quant
+		nSwing = -nSwing;	// invert swing
 	}
 }
 
@@ -1073,16 +1063,16 @@ bool CSequencer::OutputMidiBuffer()
 		m_nCBTime = nCBEnd;	// advance callback time by one period
 		int	nTracks = GetSize();
 		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+			CTrack&	trk = GetAt(iTrack);
 			bool	bIsDubbing = false;
 			if (m_bIsSongMode) {	// if applying track dubs
-				const CTrack&	trk = GetAt(iTrack);
 				if (trk.m_iDub < trk.m_arrDub.GetSize()) {	// if unplayed dubs remain
 					if (trk.m_arrDub[trk.m_iDub].m_nTime < nCBEnd)	// if dubs during this callback
 						bIsDubbing = true;	// call AddTrackEvents even if track is muted
 				}
 			}
-			if (!GetAt(iTrack).m_bMute || bIsDubbing)	// if track isn't muted, or track is dubbing
-				AddTrackEvents(iTrack, nCBStart);	// add events for this callback period
+			if (!trk.m_bMute || bIsDubbing)	// if track isn't muted, or track is dubbing
+				AddTrackEvents(trk, nCBStart);	// add events for this callback period
 		}
 		if (IsRecordedEventPlayback())
 			AddRecordedEvents(nCBStart, nCBEnd);	// add recorded events for this callback period
@@ -1259,7 +1249,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration, int nKeySig)
 		m_arrTempoEvent.FastRemoveAll();	// empty tempo event array
 		int	nCBEnd = nCBTime + nChunkLen;
 		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-			AddTrackEvents(iTrack, nCBTime);	// get track's events for this chunk
+			AddTrackEvents(GetAt(iTrack), nCBTime);	// get track's events for this chunk
 		}
 		if (IsRecordedEventPlayback())
 			AddRecordedEvents(nCBTime, nCBEnd);	// add recorded events for this chunk

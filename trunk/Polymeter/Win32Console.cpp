@@ -10,6 +10,7 @@
 		01		30nov07		handle close signal by closing main window
 		02		29jan08		change SetScreenBufferSize arg type to fix warning
 		03		08jun21		fix handle cast warning in redirect method
+		04		27apr24		replace Redirect with standard file reopen
 
 		Create a Win32 console and redirect standard I/O to it
 
@@ -36,9 +37,10 @@ bool Win32Console::Create()
 {
 	if (!m_IsOpen) {
 		if (AllocConsole()) {
-			if (Redirect(GetStdHandle(STD_OUTPUT_HANDLE), stdout, "w")
-			&& Redirect(GetStdHandle(STD_INPUT_HANDLE), stdin, "r")
-			&& Redirect(GetStdHandle(STD_ERROR_HANDLE), stderr, "w")) {
+			FILE	*pStream = NULL;
+			if (!freopen_s(&pStream, "CONOUT$", "w", stdout)
+			&& !freopen_s(&pStream, "CONOUT$", "w", stderr)
+			&& !freopen_s(&pStream, "CONIN$", "r", stdin)) {
 				m_IsOpen = TRUE;
 				SetConsoleCtrlHandler(SignalHandler, TRUE);
 			}
@@ -56,21 +58,6 @@ bool Win32Console::SetScreenBufferSize(WORD Cols, WORD Rows)
 		dwSize.Y = Rows;
 		if (SetConsoleScreenBufferSize(hCon, dwSize))
 			return(TRUE);
-	}
-	return(FALSE);
-}
-
-bool Win32Console::Redirect(HANDLE Handle, FILE *File, LPCSTR Mode)
-{
-	if (Handle != INVALID_HANDLE_VALUE) {
-		int hCrt = _open_osfhandle((INT_PTR)Handle, _O_TEXT);
-		if (hCrt >= 0) {
-			FILE	*fp = _fdopen(hCrt, Mode);
-			if (fp != NULL) {
-				*File = *fp;
-				return(TRUE);
-			}
-		}
 	}
 	return(FALSE);
 }

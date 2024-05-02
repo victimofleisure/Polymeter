@@ -35,6 +35,7 @@
 		25		09jan24	add base class to streamline reader init
 		26		24jan24	add warning error attribute
 		27		10feb24	add flag for export's all notes off behavior
+		28		02may24	replace redundant track index with reference
 
 */
 
@@ -262,8 +263,8 @@ protected:
 	static	void	CALLBACK MidiOutProc(HMIDIOUT hMidiOut, UINT wMsg, W64UINT dwInstance, W64UINT dwParam1, W64UINT dwParam2);
 	void	ResetChannelStates();
 	int		GetNoteDuration(const CStepArray& arrStep, int nSteps, int iCurStep) const;
-	bool	RecurseModulations(int iTrack, int& nAbsEvtTime, int& nPosMod);
-	void	AddTrackEvents(int iTrack, int nCBStart);
+	bool	RecurseModulations(const CTrack& trk, int& nAbsEvtTime, int& nPosMod);
+	void	AddTrackEvents(CTrack& trk, int nCBStart);
 	void	AddNoteOffs(int nCBStart, int nCBEnd);
 	void	OnInternalControl(const CMidiEvent& noteOff, BYTE iChan, int nCBStart);
 	void	ReleaseHeldNotes(CMidiEventArray& arrHeldNoteOff, int nTime, int nCBStart, bool bForceExpire = false);
