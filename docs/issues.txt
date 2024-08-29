@@ -480,6 +480,8 @@ id	open	close	type	description	rev	user
 529	07/22/22	02/27/24	done	dockable bar context menu commands should be available in Customize dialog	1.0.15.005	
 591	03/23/24	04/27/24	done	redirecting stdio to console window doesn't work in VS2019; use freopen_s instead	1.0.15.006	
 594	04/10/24	04/27/24	done	add internal track type to tracks help topic	1.0.15.006	
+373	06/13/20	08/27/24	done	in phase bar, add option to exclude muted tracks; conflicts with showing convergences	1.0.16.000	
+595	08/17/24	08/28/24	done	track view's UpdateNotes doesn't update Range Start, potentially causing inconsistencies	1.0.16.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -529,7 +531,6 @@ id	open	close	type	description	rev	user
 355	04/11/20		hold	window that shows current song time in huge font; excessive?		
 370	05/27/20		hold	force MIDI thru to a specified channel; useful for controllers that lack channel setting, but complicates MidiInProc		
 372	06/08/20		hold	song view should show loop lengths and their convergences graphically, possibly in a separate timeline pane		
-373	06/13/20		hold	in phase bar, add option to hide muted tracks; conflicts with showing convergences		
 383	07/01/20		hold	add more input quants; possibly useful with larger time divisions		
 393	07/17/20		hold	switching to song view should set all mutes to match song's current dub state (chase); must be synchronous		
 396	07/22/20		hold	transition from one document to another without stopping playback; conflicts with recording implementation		
@@ -564,6 +565,7 @@ id	open	close	type	description	rev	user
 578	01/05/24		hold	allow meter denominators other than four, limited to small powers of two		
 587	02/23/24		hold	add phase bar mode that only shows selected tracks; see notes for disadvantages		
 593	04/04/24		hold	Step Values bar should scroll to current position if possible; could be distracting, make it optional?		
+596	08/28/24		hold	phase bar should optionally show period labels above ellipses; labels would be blocked by convergences		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 100	05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		

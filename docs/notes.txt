@@ -4762,3 +4762,61 @@ to justify the increased complexity. Another objection is that the target
 track shifts phase whenever its length changes. There is no way to avoid
 the phase shifts without introducing per-track state and indeterminacy.
 
+5/29/24 using tempo modulation to add a precise delay
+
+This example assumes we want to add a one-beat rest, by 
+making a sixteenth note step into five sixteenth notes.
+ 
+tempo = 120 BPM
+1/4 = 0.5 s
+1/16 = 0.125 s
+desired outcome is 1/16 -> 5/16
+5/16 = 5 x 0.125 = 0.625 s
+at what tempo does 1/16 = 0.625 s ?
+4 x 0.625 = 2.5
+1/4 = 2.5 s
+60 / 2.5 = 24 BPM
+24 = 120 / 5 (we're back where we started: 5)
+5 = 2 to the x ?
+x = log(5) / log(2)
+x = 2.321928
+x = 232%
+
+The tempo track should have its active step set to -64
+and its Duration set to 232. This is confirmed to work.
+
+1/16 -> n/16
+duration = log(n) / log(2) * 100
+for example, for a rest of 9/16, duration = log(9) / log(2) * 100 = 317
+
+7/1/24 per-channel duplicate note avoidance proposal
+
+This feature only applies to tracks with scale (or scale and chord)
+modulators. For each channel, a previous note is maintained. If the 
+track's current note would be the same as the previous note, the track's 
+index is incremented by one and the scale/chord array lookup is then
+repeated. This should prevent a duplicate note, provided the track's
+scale (or chord) contains at least two unique notes. There's no risk of
+a loop because only one retry is done. The only significant cost is 
+updating the previous note. The previous notes must be initialized to
+-1 at the start of playback. The feature is controlled per-channel via 
+a 16-bit mask word, and selectable in the UI via the Channels bar.
+
+8/28/24 show phase bar text at top of ellipses
+
+The minimum is this:
+
+fmtText.Get()->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);	// align text to bottom
+double	oy = ptOrigin.y - fOrbitWidth / 2;
+
+float	y = float(oy - iOrbit * fOrbitWidth);
+
+And if crosshairs are showing, it may look better if upper text is drawn left of vertical
+crosshair and right-aligned, especially text is shown at both top and bottom of ellipses.
+
+if (m_nDrawStyle & DSB_CROSSHAIRS) {	// if showing crosshairs
+	fmtText.Get()->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+	x1 = ptOrigin.x - nTextOffset - nTextMaxWidth;	// right-align text to right of vertical axis
+	x2 = ptOrigin.x - nTextOffset;
+}
+

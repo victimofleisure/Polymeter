@@ -1621,6 +1621,8 @@
 
 <p>Multiple tracks having the same period are coalesced into a single orbit because they all share the same phase. If all of the tracks have the same period, only one orbit is shown. The diagram makes it easier to visualize <a href="#Convergences">convergences</a>.  When two or more planets are shown at zero degrees (noon), the corresponding periods converge. All periods converge at the start of the first beat of the first measure. Subsequent convergences may be located using <a href="#Time_To_Repeat">Time to Repeat</a>, the <a href="#Convergences_Calculator">Convergences calculator</a>, or the <a href="#Next_Convergence">Next Convergence</a> and <a href="#Previous_Convergence">Previous Convergence</a> commands.
 
+<p>The diagram indicates track <a href="#Track_Mutes">muting</a>. A planet is drawn in red if <em>all</em> tracks having the corresponding length are muted. It's also possible to <a href="#PhaCM_Exclude_Muted">exclude muted</a> tracks from the diagram, but doing so has <a href="#phase_excluding_muted_tracks">side effects</a>.
+
 <p>The diagram also indicates <a href="#Track_Selection">track selection</a> if any. Since each orbit can represent multiple tracks, the orbit is highlighted if any of the tracks it represents is selected. It's also possible to select tracks by left-clicking within the diagram, as explained below:
 
 <ul>
@@ -1653,9 +1655,20 @@
 <tr><td><a name="PhaCM_Crosshairs">Crosshairs</a></td><td>If checked, the diagram includes crosshairs.</td></tr>
 <tr><td><a name="PhaCM_Periods">Periods</a></td><td>If checked, the diagram includes labels that specify each orbit's <a href="#Period">period</a>. The periods are displayed in <a href="#Ticks">ticks</a> by default, but you can optionally convert them to another unit via division; see Period Unit below. Showing labels increases overhead.</td></tr>
 <tr><td><a name="PhaCM_Convergences">Convergences</a></td><td>If checked, the diagram indicates <a href="#Convergences">convergences</a> slightly before and after they occur. The participating orbits are increasingly highlighted as the convergence approaches, and gradually return to normal as the convergence recedes. To specify the minimum number of orbits that must participate in a convergence, use the <a href="#Convergence_Size">Convergence Size</a> options on the Transport menu. To skip lesser convergences, increase the size. If orbits are selected, only those orbits participate in convergences.</td></tr>
+<tr><td><a name="PhaCM_Exclude_Muted">Exclude Muted</a></td><td>If checked, the diagram excludes <a href="#Track_Mutes">muted</a> tracks. This potentially simplifies the diagram. An orbit is only omitted if <em>all</em> tracks having the corresponding length are muted. Excluding muted tracks may conflict with showing convergences, and also affects the <a href="#Next_Convergence">convergence commands</a>, as explained <a href="#phase_excluding_muted_tracks">below</a>.</td></tr>
 <tr><td><a name="PhaCM_Full_Screen">Full Screen</a></td><td>Makes the Phase bar enter full screen mode, or if it's already full screen, restores it to its previous size and position. In full screen mode, the diagram is shown without borders and fills the entire monitor. To make the bar fill a secondary monitor, drag the bar onto that monitor before making it full-screen. The shortcut key to enter or exit full screen mode is <span class="key">Ctrl+F11</span>. You can also exit full screen mode by pressing the <span class="key">Escape</span> key. To use either key, you may need to give the Phase bar the input focus first, by left-clicking the diagram's background.</td></tr>
 <tr><td><a name="PhaCM_Period_Unit">Period Unit</a></td><td>This command lets you convert the period labels to a unit other than ticks, via division. It's only meaningful if you include period labels on the graph, by checking the Periods option as explained above. The command displays the Period Unit dialog; enter the desired unit in ticks, and click OK. All periods are divided by the specified unit before being displayed. For example, if the <a href="#Timebase">timebase</a> is 120, specifying 30 will cause periods to be displayed in sixteenth notes. To revert to displaying periods in ticks, repeat this command and set the unit to zero.</td></tr>
 </table>
+
+<a name="phase_excluding_muted_tracks"><h3>Excluding muted tracks</h3></a>
+
+<p>When many different loop lengths are used, the phase diagram can have an excessive number of orbits, making it hard to read. If a significant portion of the tracks are <a href="#Track_Mutes">muted</a>, the diagram can be simplified by excluding muted tracks. To do this, check <a href="#PhaCM_Exclude_Muted">Exclude Muted</a> in the phase bar's <a href="#Phase_bar_context_menu">context menu</a>. Normally, if <em>all</em> tracks having a given length are muted, the corresponding planet is drawn in red, but when Exclude Muted is checked, that planet and its orbit are omitted from the diagram. Excluding muted tracks has the following side effects:
+
+<ul>
+<li>The <a href="#Next_Convergence">convergence commands</a> only consider unmuted tracks, and if all tracks are muted, these commands do nothing.
+<li>The convergence commands can behave unexpectedly in <a href="#Song_View">Song View</a>, because in that view, which tracks are muted depends on the current <a href="#Song_position">song position</a>. The nearest convergence is calculated for whichever tracks are unmuted when the command occurs. Depending on the <a href="#Dubs">dubs</a>, moving to the convergence's position may mute tracks that participated in the convergence, in which case the corresponding orbits may not be <a href="#PhaCM_Convergences">highlighted</a>, or may disappear from the phase diagram entirely.
+<li>When iterating through convergences in Song View, if you reach a position at which all tracks are muted, the iteration halts. This is particularly likely at the end of the song. To get unstuck, <a href="#Navigating_within_a_song">navigate</a> to a position where at least one track is unmuted.
+</ul>
 
 <a name="Step_Values_bar"><h2>Step Values</h2></a>
 
@@ -1883,6 +1896,19 @@
 <tr align=right><td>&minus;360</td><td>&minus;2:000</td><td>0:1:000</td><td>0:2:000</td></tr>
 <tr align=right><td>&minus;480</td><td>&minus;3:000</td><td>&minus;1:3:000</td><td>0:1:000</td></tr>
 </table>
+
+<a name="Navigating_within_a_song"><h3>Navigating within a song</h3></a>
+
+<p>To move the <a href="#Song_position">song position</a> to a specific location, use one of these methods:
+
+<ul>
+<li>In the <a href="#Track_Grid">track grid</a> or <a href="#Song_Grid">song grid</a>, left-click the desired location in the ruler at the top of the view.
+<li>To move to the <a href="#Start_Position">start position</a>, use the Transport menu's <a href="#Rewind">Rewind</a> command.
+<li>To specify the desired location numerically, use the Transport menu's <a href="#Go_To_Position">Go To Position</a> command.
+<li>To move to the nearest <a href="#Convergences">convergence</a>, use the <a href="#Next_Convergence">Next Convergence</a> and <a href="#Previous_Convergence">Previous Convergence</a> commands on the Transport menu, or their keyboard shortcuts: <span class="key">Alt+Right</span> for next convergence, or <span class="key">Alt+Left</span> for previous convergence.
+<li>In the <a href="#Step_Values_bar">Step Values bar</a>, left-click a step value to move to the corresponding location.
+<li>In <a href="#Song_View">Song view</a> only, use <span class="key">Shift+Right</span> to move to the next <a href="#Dubs">dub</a>, or <span class="key">Shift+Left</span> to move to the previous dub.
+</ul>
 
 <a name="Key_Signature"><h2>Key Signature</h2></a>
 
@@ -2636,11 +2662,15 @@
 
 <a name="Next_Convergence"><h3>Next Convergence</h3></a>
 
-<p>This command goes to the next <a href="#Convergences">convergence</a>. If a <a href="#Track_Selection">track selection</a> exists, the convergence is calculated for the selected tracks only, otherwise it's calculated for all tracks. To specify a threshold of significance below which convergences are skipped, use the <a href="#Convergence_Size">Convergence Size</a> submenu.
+<p>This command goes to the next <a href="#Convergences">convergence</a>. If a <a href="#Track_Selection">track selection</a> exists, the convergence is calculated for the selected tracks only, otherwise it's calculated for all tracks. To specify a threshold of significance below which convergences are skipped, use the <a href="#Convergence_Size">Convergence Size</a> submenu. To go backwards, use the <a href="#Previous_Convergence">Previous Convergence</a> command.
+
+<p>Note that this command is affected by <a href="#phase_excluding_muted_tracks">excluding muted tracks</a> from the Phase bar.
 
 <a name="Previous_Convergence"><h3>Previous Convergence</h3></a>
 
 <p>This command goes to the previous <a href="#Convergences">convergence</a>. For more information, see <a href="#Next_Convergence">Next Convergence</a>.
+
+<p>Note that this command is affected by <a href="#phase_excluding_muted_tracks">excluding muted tracks</a> from the Phase bar.
 
 <a name="Convergence_Size"><h3>Convergence Size</h3></a>
 
