@@ -21,6 +21,7 @@
 		11		27nov21	add phase bar draw styles
 		12		20dec21	add phase bar convergence style
 		13		27feb24	add dockable bar context menus
+		14		27aug24	add phase bar exclude muted style
 		
 */
 
@@ -86,5 +87,6 @@ PHASEBARDEF_DRAWSTYLE(02, NIGHT_SKY)
 PHASEBARDEF_DRAWSTYLE(03, CROSSHAIRS)
 PHASEBARDEF_DRAWSTYLE(04, PERIODS)
 PHASEBARDEF_DRAWSTYLE(05, CONVERGENCES)
+PHASEBARDEF_DRAWSTYLE(06, EXCLUDE_MUTED)
 #endif
 #undef PHASEBARDEF_DRAWSTYLE

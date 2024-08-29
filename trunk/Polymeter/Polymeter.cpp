@@ -28,17 +28,19 @@
 		18		31oct21	in ctor, set base class flag to defer showing main window
 		19		07nov21	delay main frame show/update to avoid view flicker
 		20		08nov21	don't delete main frame pointer if load frame fails
-		21		11nov21	bump resource version
-		22		17nov21	bump resource version
-		23		20dec21	bump resource version
-		24		21jan22	bump resource version
-		25		05feb22	bump resource version
+		21		11nov21	bump resource version to 3
+		22		17nov21	bump resource version to 4
+		23		20dec21	bump resource version to 5
+		24		21jan22	bump resource version to 6
+		25		05feb22	bump resource version to 7
 		26		19feb22	remove profile method overrides
-		27		23jul22	bump resource version
-		28		29oct22	bump resource version
-		29		16dec22	bump resource version
-		30		17feb23	bump resource version
-		31		30jan24	bump resource version
+		27		23jul22	bump resource version to 8
+		28		29oct22	bump resource version to 9
+		29		16dec22	bump resource version to 10
+		30		17feb23	bump resource version to 11
+		31		20jan24	bump resource version to 12
+		32		30jan24	bump resource version to 13
+		33		27aug24	bump resource version to 14
 
 */
 
@@ -76,7 +78,7 @@
 #define RK_TIE_NOTES _T("bTieNotes")
 #define RK_RESOURCE_VERSION _T("nResourceVersion")
 
-const int CPolymeterApp::m_nNewResourceVersion = 13;	// update if resource change breaks customization
+const int CPolymeterApp::m_nNewResourceVersion = 14;	// update if resource change breaks customization
 
 #include "HelpIDs.h"	// help IDs generated automatically by doc2web
 const CPolymeterApp::HELP_RES_MAP CPolymeterApp::m_HelpResMap[] = {

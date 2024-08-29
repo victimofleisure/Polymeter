@@ -26,6 +26,7 @@
 		16		23feb23	delete previous frame files if any
 		17		25sep23	fix warnings in OnDrawD2D
 		18		25feb24	add runtime array check in find next/prev convergence
+		19		27aug24	add exclude muted style
 
 */
 
@@ -177,12 +178,15 @@ void CPhaseBar::Update()
 	m_arrOrbit.FastRemoveAll();
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL) {	// if active document exists
+		COrbit	orbit;
 		int	nTracks = pDoc->GetTrackCount();
+		bool	bSkipMuted = (m_nDrawStyle & DSB_EXCLUDE_MUTED) != 0;
 		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-			COrbit	orbit;
+			orbit.m_bMuted = pDoc->m_Seq.GetMute(iTrack);
+			if (bSkipMuted && orbit.m_bMuted)	// if excluding muted tracks and track is muted
+				continue;	// skip track
 			orbit.m_nPeriod = pDoc->m_Seq.GetPeriod(iTrack);
 			orbit.m_bSelected = pDoc->GetSelected(iTrack);
-			orbit.m_bMuted = pDoc->m_Seq.GetMute(iTrack);
 			W64INT	iOrbit = m_arrOrbit.FastInsertSortedUnique(orbit);
 			if (iOrbit >= 0) {	// if orbit already exists for this period
 				// orbit is selected if any of its member tracks are selected
@@ -204,8 +208,11 @@ void CPhaseBar::OnTrackSelectionChange()
 			m_arrOrbit[iOrbit].m_bSelected = false;	// deselect orbit
 		COrbit	orbit;
 		int	nSels = pDoc->m_arrTrackSel.GetSize();
+		bool	bSkipMuted = (m_nDrawStyle & DSB_EXCLUDE_MUTED) != 0;
 		for (int iSel = 0; iSel < nSels; iSel++) {	// for each selected track
 			int	iSelTrack = pDoc->m_arrTrackSel[iSel];
+			if (bSkipMuted && pDoc->m_Seq.GetMute(iSelTrack))	// if excluding muted tracks and track is muted
+				continue;	// skip track
 			orbit.m_nPeriod = pDoc->m_Seq.GetPeriod(iSelTrack);
 			// assume orbits are ordered by period and COrbit comparison operators evaluate period only
 			W64INT	iOrbit = m_arrOrbit.BinarySearch(orbit);	// find orbit with matching period
@@ -221,17 +228,42 @@ void CPhaseBar::OnTrackMuteChange()
 	CPolymeterDoc	*pDoc = theApp.GetMainFrame()->GetActiveMDIDoc();
 	if (pDoc != NULL) {	// if active document exists
 		int	nOrbits = m_arrOrbit.GetSize();
-		for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++)	// for each orbit
+		for (int iOrbit = 0; iOrbit < nOrbits; iOrbit++) {	// for each orbit
 			m_arrOrbit[iOrbit].m_bMuted = true;	// initialize orbit to muted
-		COrbit	orbit;
-		int	nTracks = pDoc->GetTrackCount();
-		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-			if (!pDoc->m_Seq.GetMute(iTrack)) {	// if track is unmuted
-				orbit.m_nPeriod = pDoc->m_Seq.GetPeriod(iTrack);
-				// assume orbits are ordered by period and COrbit comparison operators evaluate period only
-				W64INT	iOrbit = m_arrOrbit.BinarySearch(orbit);	// find orbit with matching period
-				if (iOrbit >= 0)	// if orbit found (should always be true)
-					m_arrOrbit[iOrbit].m_bMuted = false;	// unmute orbit
+		}
+		if (m_nDrawStyle & DSB_EXCLUDE_MUTED) {	// if excluding muted tracks
+			COrbit	orbit;
+			int	nTracks = pDoc->GetTrackCount();
+			for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+				if (!pDoc->m_Seq.GetMute(iTrack)) {	// if track is unmuted
+					orbit.m_nPeriod = pDoc->m_Seq.GetPeriod(iTrack);
+					// assume orbits are ordered by period and COrbit comparison operators evaluate period only
+					W64INT	iOrbit = m_arrOrbit.BinarySearch(orbit);	// find orbit with matching period
+					if (iOrbit >= 0) {	// if orbit found
+						m_arrOrbit[iOrbit].m_bMuted = false;	// mark orbit as unmuted
+					} else {	// orbit not found
+						orbit.m_bMuted = false;	// new orbit is unmuted
+						orbit.m_bSelected = pDoc->GetSelected(iTrack);
+						m_arrOrbit.FastInsertSortedUnique(orbit);	// insert new orbit
+					}
+				}
+			}
+			nOrbits = m_arrOrbit.GetSize();	// reload orbit count as it may have changed due to insertions
+			for (int iOrbit = nOrbits - 1; iOrbit >= 0; iOrbit--) {	// for each orbit; reverse iterate for deletion stability
+				if (m_arrOrbit[iOrbit].m_bMuted)	// if orbit is muted
+					m_arrOrbit.RemoveAt(iOrbit);	// remove orbit
+			}
+		} else {	// showing muted tracks
+			COrbit	orbit;
+			int	nTracks = pDoc->GetTrackCount();
+			for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+				if (!pDoc->m_Seq.GetMute(iTrack)) {	// if track is unmuted
+					orbit.m_nPeriod = pDoc->m_Seq.GetPeriod(iTrack);
+					// assume orbits are ordered by period and COrbit comparison operators evaluate period only
+					W64INT	iOrbit = m_arrOrbit.BinarySearch(orbit);	// find orbit with matching period
+					if (iOrbit >= 0)	// if orbit found (should always be true)
+						m_arrOrbit[iOrbit].m_bMuted = false;	// unmute orbit
+				}
 			}
 		}
 		Invalidate();
@@ -319,7 +351,10 @@ void CPhaseBar::SelectTracksByPeriod(const CIntArrayEx& arrPeriod) const
 	if (pDoc != NULL) {	// if active document exists
 		int	nTracks = pDoc->m_Seq.GetTrackCount();
 		CIntArrayEx	arrSelection;
+		bool	bSkipMuted = (m_nDrawStyle & DSB_EXCLUDE_MUTED) != 0;
 		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+			if (bSkipMuted && pDoc->m_Seq.GetMute(iTrack))	// if excluding muted tracks and track is muted
+				continue;	// skip track
 			if (arrPeriod.BinarySearch(pDoc->m_Seq.GetPeriod(iTrack)) >= 0)	// if period matches
 				arrSelection.Add(iTrack);	// add track index to selection
 		}
@@ -479,7 +514,6 @@ void CPhaseBar::PostExportVideo()
 LONGLONG CPhaseBar::FindNextConvergence(const CLongLongArray& arrMod, LONGLONG nStartPos, INT_PTR nConvSize)
 {
 	INT_PTR	nMods = arrMod.GetSize();
-	ASSERT(nMods > 0);
 	if (nMods <= 0)	// if modulo array is empty
 		return nStartPos;	// avoid access violation
 	nConvSize = min(nConvSize, nMods);	// else infinite loop
@@ -534,7 +568,6 @@ LONGLONG CPhaseBar::FindNextConvergence(const CLongLongArray& arrMod, LONGLONG n
 LONGLONG CPhaseBar::FindPrevConvergence(const CLongLongArray& arrMod, LONGLONG nStartPos, INT_PTR nConvSize)
 {
 	INT_PTR	nMods = arrMod.GetSize();
-	ASSERT(nMods > 0);
 	if (nMods <= 0)	// if modulo array is empty
 		return nStartPos;	// avoid access violation
 	nConvSize = min(nConvSize, nMods);	// else infinite loop
@@ -698,6 +731,7 @@ void CPhaseBar::SetDrawStyle(UINT nStyle)
 {
 	if (nStyle == m_nDrawStyle)	// if style unchanged
 		return;	// nothing to do
+	bool	bDoUpdate = false;
 	UINT	nChanged = m_nDrawStyle ^ nStyle;	// determine which style bits changed
 	m_nDrawStyle = nStyle;	// update style member variable
 	if (nChanged & DSB_3D_PLANETS) {	// if 3D planets style changed
@@ -709,7 +743,14 @@ void CPhaseBar::SetDrawStyle(UINT nStyle)
 	if (nChanged & DSB_NIGHT_SKY) {	// if night sky style changed
 		SetNightSky((nStyle & DSB_NIGHT_SKY) != 0);
 	}
-	Invalidate();
+	if (nChanged & DSB_EXCLUDE_MUTED) {	// if exclude muted style changed
+		bDoUpdate = true;
+	}
+	if (bDoUpdate) {	// if update needed
+		Update();
+	} else {
+		Invalidate();
+	}
 }
 
 void CPhaseBar::SetPeriodUnit(int nUnit)

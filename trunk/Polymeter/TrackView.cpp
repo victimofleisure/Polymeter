@@ -22,6 +22,7 @@
 		12		25oct21	add menu select and exit menu handlers
 		13		14dec22	add support for quant fractions
 		14		16dec22	add quant fraction drop down menu
+		15		28aug24	in UpdateNotes, also redraw range start
 
 */
 
@@ -213,8 +214,10 @@ void CTrackView::UpdateNotes()
 	int	iStartTrack = m_grid.GetTopIndex();
 	int	iEndTrack = min(iStartTrack + m_grid.GetCountPerPage() + 1, pDoc->m_Seq.GetTrackCount());	// account for partial item
 	for (int iTrack = iStartTrack; iTrack < iEndTrack; iTrack++) {	// for each visible track
-		if (pDoc->m_Seq.IsNote(iTrack))	// if track type is note
+		if (pDoc->m_Seq.IsNote(iTrack)) {	// if track type is note
 			m_grid.RedrawSubItem(iTrack, COL_Note);	// redraw note
+			m_grid.RedrawSubItem(iTrack, COL_RangeStart);	// redraw range start
+		}
 	}
 }
 

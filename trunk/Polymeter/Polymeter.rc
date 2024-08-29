@@ -627,6 +627,7 @@ BEGIN
         MENUITEM "C&rosshairs",                 ID_PHASE_STYLE_03_CROSSHAIRS
         MENUITEM "&Periods",                    ID_PHASE_STYLE_04_PERIODS
         MENUITEM "C&onvergences",               ID_PHASE_STYLE_05_CONVERGENCES
+        MENUITEM "Exclude &Muted",              ID_PHASE_STYLE_06_EXCLUDE_MUTED
         MENUITEM SEPARATOR
         MENUITEM "&Full Screen",                ID_PHASE_FULL_SCREEN
         MENUITEM "Period &Unit...",             ID_PHASE_PERIOD_UNIT
@@ -1708,6 +1709,27 @@ END
 
 STRINGTABLE
 BEGIN
+    ID_PHASE_STYLE_04_PERIODS "Show period labels"
+    ID_PHASE_STYLE_05_CONVERGENCES "Show convergences"
+    ID_PHASE_STYLE_06_EXCLUDE_MUTED "Exclude muted tracks"
+    ID_PIANO_COLOR_VELOCITY "Color keys to show note velocities"
+    ID_PIANO_INSERT_TRACK   "Insert track for selected note"
+    ID_PIANO_ROTATE_LABELS  "Rotate key labels sideways"
+    ID_PIANO_SHOW_KEY_LABELS "Show note names on piano keys"
+    ID_SPLIT_CENTER         "Move split to center"
+    ID_SPLIT_TYPE_HORZ      "Split window horizontally"
+    ID_SPLIT_TYPE_VERT      "Split window vertically"
+    ID_STEP_VALUES_DELIMIT_COMMA "Export comma delimited values"
+    ID_STEP_VALUES_DELIMIT_TAB "Export tab delimited values"
+    ID_STEP_VALUES_EXPORT_COPY 
+                            "Export selected steps as text and copy them to the clipboard"
+    ID_STEP_VALUES_FORMAT_HEX "Show values in hexadecimal"
+    ID_STEP_VALUES_FORMAT_NOTES "Show steps as notes"
+    ID_STEP_VALUES_FORMAT_OCTAVES "Include octave in note name"
+END
+
+STRINGTABLE
+BEGIN
     IDR_PolymeterTYPE       "\nPolymeter\nPolymeter\nPolymeter Files (*.plm)\n.plm\nPolymeter.Document\nPolymeter.Document"
 END
 
@@ -1773,27 +1795,7 @@ END
 
 STRINGTABLE
 BEGIN
-    ID_PHASE_STYLE_04_PERIODS "Show period labels"
-    ID_PHASE_STYLE_05_CONVERGENCES "Show convergences"
-    ID_PIANO_COLOR_VELOCITY "Color keys to show note velocities"
-    ID_PIANO_INSERT_TRACK   "Insert track for selected note"
-    ID_PIANO_ROTATE_LABELS  "Rotate key labels sideways"
-    ID_PIANO_SHOW_KEY_LABELS "Show note names on piano keys"
-    ID_SPLIT_CENTER         "Move split to center"
-    ID_SPLIT_TYPE_HORZ      "Split window horizontally"
-    ID_SPLIT_TYPE_VERT      "Split window vertically"
-    ID_STEP_VALUES_DELIMIT_COMMA "Export comma delimited values"
-    ID_STEP_VALUES_DELIMIT_TAB "Export tab delimited values"
-    ID_STEP_VALUES_EXPORT_COPY 
-                            "Export selected steps as text and copy them to the clipboard"
-    ID_STEP_VALUES_FORMAT_HEX "Show values in hexadecimal"
-    ID_STEP_VALUES_FORMAT_NOTES "Show steps as notes"
-    ID_STEP_VALUES_FORMAT_OCTAVES "Include octave in note name"
     ID_STEP_VALUES_FORMAT_SIGNED "Show steps as signed integers"
-END
-
-STRINGTABLE
-BEGIN
     ID_STEP_VALUES_FORMAT_TIES "Include tied note state"
     ID_STEP_VALUES_LAYOUT_COLS_STEPS 
                             "In export, columns are steps and rows are tracks"
@@ -1814,11 +1816,11 @@ BEGIN
     ID_TOOLS_IMPORT_TRACKS  "Import tracks from a CSV file\nImport Tracks"
     ID_TOOLS_MIDI_LEARN     "Learn mappings from MIDI input\nMIDI Learn"
     ID_TOOLS_OPTIONS        "Edit the options\nOptions"
-    ID_TOOLS_PRIME_FACTORS  "Compute the prime factors of the selected tracks' lengths\nPrime Factors"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TOOLS_PRIME_FACTORS  "Compute the prime factors of the selected tracks' lengths\nPrime Factors"
     ID_TOOLS_SELECT_UNMUTED "Select all unmuted tracks\nSelect Unmuted"
     ID_TOOLS_STATISTICS     "Display sequencer performance statistics\nStatistics"
     ID_TOOLS_TIME_TO_REPEAT "Compute how long it takes for the selected tracks to repeat\nTime to Repeat"
@@ -1834,11 +1836,11 @@ BEGIN
     ID_TRACK_PART_CREATE    "Create a new part from the selected tracks\nCreate Part"
     ID_TRACK_PART_UPDATE    "Update the selected part from the selected tracks\nUpdate Part"
     ID_TRACK_PRESET_APPLY   "Apply the selected preset to the track mutes\nApply Preset"
-    ID_TRACK_PRESET_CREATE  "Create a new preset from the track mutes\nCreate Preset"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRACK_PRESET_CREATE  "Create a new preset from the track mutes\nCreate Preset"
     ID_TRACK_PRESET_UPDATE  "Update the selected preset from the track mutes\nUpdate Preset"
     ID_TRACK_REVERSE        "Reverse the selected tracks or steps\nReverse"
     ID_TRACK_ROTATE_LEFT    "Rotate the selected tracks or steps left\nRotate Left"
@@ -1854,12 +1856,12 @@ BEGIN
     ID_TRACK_TRANSPOSE      "Transpose the selected tracks\nTranspose"
     ID_TRACK_VELOCITY       "Transform the velocities of the selected tracks or steps\nVelocity"
     ID_TRANSPORT_CONVERGENCE_NEXT "Go to next convergence\nNext Convergence"
-    ID_TRANSPORT_CONVERGENCE_PREVIOUS 
-                            "Go to previous convergence\nPrevious Convergence"
 END
 
 STRINGTABLE
 BEGIN
+    ID_TRANSPORT_CONVERGENCE_PREVIOUS 
+                            "Go to previous convergence\nPrevious Convergence"
     ID_TRANSPORT_CONVERGENCE_SIZE_ALL 
                             "Require all modulos to coincide\nFull Convergence"
     ID_TRANSPORT_CONVERGENCE_SIZE_CUSTOM 
@@ -1888,11 +1890,11 @@ BEGIN
     ID_VIEW_BAR_Piano       "Show or hide the piano bar\nShow Piano"
     ID_VIEW_BAR_Presets     "Show or hide the presets bar\nShow Presets"
     ID_VIEW_BAR_Properties  "Show or hide the properties bar\nShow Properties"
-    ID_VIEW_BAR_StepValues  "Show or hide the step values bar\nShow Step Values"
 END
 
 STRINGTABLE
 BEGIN
+    ID_VIEW_BAR_StepValues  "Show or hide the step values bar\nShow Step Values"
     ID_VIEW_CUSTOMIZE       "Customize the application's interface\nCustomize"
     ID_VIEW_TYPE_LIVE       "Show the live view\nLive View"
     ID_VIEW_TYPE_SONG       "Show the song view\nSong View"

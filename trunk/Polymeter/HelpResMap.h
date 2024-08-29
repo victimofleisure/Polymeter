@@ -106,6 +106,7 @@
 {ID_PHASE_STYLE_03_CROSSHAIRS,			IDH_Docking_Windows_Phase_bar_PhaCM_Crosshairs},
 {ID_PHASE_STYLE_04_PERIODS,				IDH_Docking_Windows_Phase_bar_PhaCM_Periods},
 {ID_PHASE_STYLE_05_CONVERGENCES,		IDH_Docking_Windows_Phase_bar_PhaCM_Convergences},
+{ID_PHASE_STYLE_06_EXCLUDE_MUTED,		IDH_Docking_Windows_Phase_bar_PhaCM_Exclude_Muted},
 {ID_PIANO_COLOR_VELOCITY,				IDH_Docking_Windows_Piano_bar_PiaCM_Color_Velocities},
 {ID_PIANO_INSERT_TRACK, 				IDH_Docking_Windows_Piano_bar_PiaCM_Insert_Track},
 {ID_PIANO_ROTATE_LABELS,				IDH_Docking_Windows_Piano_bar_PiaCM_Rotate_Labels},

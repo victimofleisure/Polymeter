@@ -37,19 +37,19 @@
 		27		26dec19	in TimeToRepeat, report fractional beats
 		28		24feb20	use new INI file implementation
 		29		29feb20	add support for recording live events
-		30		16mar20	bump file version for new modulation types
+		30		16mar20	bump file version to 15 for new modulation types
 		31		18mar20	cache song position in document
 		32		20mar20	add mapping
 		33		29mar20	add learn multiple mappings
 		34		03apr20	refactor go to position dialog for variable format
-		35		04apr20	bump file version for chord modulation
+		35		04apr20	bump file version to 16 for chord modulation
 		36		07apr20	add move steps; fix cut steps undo code
 		37		14apr20	add send MIDI clock option
-		38		17apr20	add track color; bump file version
+		38		17apr20	add track color; bump file version to 17
 		39		19apr20	optimize undo/redo menu item prefixing
 		40		30apr20	add velocity only flag to set step methods
 		41		19may20	refactor record dub methods to include conditional
-		42		23may20	bump file version for negative voicing modulation
+		42		23may20	bump file version to 18 for negative voicing modulation
 		43		03jun20	in record undo, restore recorded MIDI events 
 		44		13jun20	add find convergence
 		45		18jun20	add track modulation command
@@ -78,8 +78,8 @@
 		68		31oct21	suppress view type notification when opening document
 		69		15nov21	add tempo map to export song as CSV
 		70		23nov21	add method to export tempo map
-		71		21jan22	add note overlap method and bump file version
-		72		05feb22	bump file version for tie mapping
+		71		21jan22	add note overlap method and bump file version to 19
+		72		05feb22	bump file version to 20 for tie mapping
 		73		15feb22	add check modulations command
 		74		19feb22	use INI file class directly instead of via profile
 		75		19may22	add loop ruler selection attribute
@@ -90,7 +90,7 @@
 		80		17feb23	add replace range to velocity transform
 		81		20sep23	in track fill, fix divide by zero errors
 		82		27nov23	specify key signature in OnFileExport
-		83		19dec23	bump file version for internal track type
+		83		19dec23	bump file version to 21 for internal track type
 		84		24jan24	use sequencer's warning error attribute
 		85		29jan24	add class to save and restore track selection
 		86		16feb24	move track color message handlers here
