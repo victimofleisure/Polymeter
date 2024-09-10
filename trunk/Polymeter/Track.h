@@ -44,6 +44,7 @@
 		34		16feb23	add special handling for non-ASCII characters
 		35		20sep23	increase maximum quant from 32K to 64K
 		36		23jan24	add CModulationTargets
+		37		01sep24	add per-channel duplicate note methods
 
 */
 
@@ -114,6 +115,11 @@ public:
 		CHAN_NOTE_OVERLAP_SPLIT,	// split overlapping notes into shorter notes
 		CHAN_NOTE_OVERLAP_MERGE,	// merge overlapping notes into one long note
 		CHAN_NOTE_OVERLAP_METHODS,
+	};
+	enum {	// per-channel duplicate note methods
+		CHAN_DUPLICATE_NOTE_ALLOW,	// allow duplicate notes
+		CHAN_DUPLICATE_NOTE_PREVENT,	// prevent duplicate notes
+		CHAN_DUPLICATE_NOTE_METHODS,
 	};
 	enum {	// modulation errors, for CheckModulations
 		MODERR_NO_ERROR,

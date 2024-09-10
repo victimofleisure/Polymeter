@@ -14,6 +14,7 @@
 		04		19nov20	add update and show changed handlers
 		05		19nov20	move set channel property methods to document
 		06		21jan22	add property for note overlap method
+		07		01sep24	add property for duplicate notes method
 		
 */
 
@@ -53,7 +54,13 @@ const int CChannelsBar::m_arrOverlapStringID[CTrack::CHAN_NOTE_OVERLAP_METHODS] 
 	IDS_CHAN_NOTE_OVERLAP_MERGE,
 };
 
+const int CChannelsBar::m_arrDupNoteStringID[CTrack::CHAN_DUPLICATE_NOTE_METHODS] = {
+	IDS_NOTE_OVERLAP_Allow,	// reuse note overlap method strings
+	IDS_NOTE_OVERLAP_Prevent,
+};
+
 CString	CChannelsBar::m_arrOverlapString[CTrack::CHAN_NOTE_OVERLAP_METHODS];
+CString	CChannelsBar::m_arrDupNoteString[CTrack::CHAN_DUPLICATE_NOTE_METHODS];
 
 #define RK_COL_ORDER _T("ColOrder")
 #define RK_COL_WIDTH _T("ColWidth")
@@ -170,14 +177,26 @@ CWnd *CChannelsBar::CChannelsGridCtrl::CreateEditCtrl(LPCTSTR pszText, DWORD dwS
 		}
 		break;
 	case COL_Overlaps:
+	case COL_Duplicates:
 		{
 			CPopupCombo	*pCombo = CPopupCombo::Factory(0, rect, this, 0, 100);
 			if (pCombo == NULL)
 				return NULL;
-			for (int iMethod = 0; iMethod < CTrack::CHAN_NOTE_OVERLAP_METHODS; iMethod++) {	// for each note overlap method
-				pCombo->AddString(m_arrOverlapString[iMethod]);
+			int	iSel = -1;
+			switch (m_iEditCol) {
+			case COL_Overlaps:
+				for (int iMethod = 0; iMethod < CTrack::CHAN_NOTE_OVERLAP_METHODS; iMethod++) {	// for each note overlap method
+					pCombo->AddString(m_arrOverlapString[iMethod]);
+				}
+				iSel = pDoc->m_arrChannel[iChan].m_nOverlaps;
+				break;
+			case COL_Duplicates:
+				for (int iMethod = 0; iMethod < CTrack::CHAN_DUPLICATE_NOTE_METHODS; iMethod++) {	// for each duplicate note method
+					pCombo->AddString(m_arrDupNoteString[iMethod]);
+				}
+				iSel = pDoc->m_arrChannel[iChan].m_nDuplicates;
+				break;
 			}
-			int	iSel = pDoc->m_arrChannel[iChan].m_nOverlaps;
 			pCombo->SetCurSel(iSel);
 			pCombo->ShowDropDown();
 			return pCombo;
@@ -335,6 +354,9 @@ int CChannelsBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	for (int iMethod = 0; iMethod < CTrack::CHAN_NOTE_OVERLAP_METHODS; iMethod++) {	// for each note overlap method
 		m_arrOverlapString[iMethod] = LDS(m_arrOverlapStringID[iMethod]);
 	}
+	for (int iMethod = 0; iMethod < CTrack::CHAN_DUPLICATE_NOTE_METHODS; iMethod++) {	// for each note overlap method
+		m_arrDupNoteString[iMethod] = LDS(m_arrDupNoteStringID[iMethod]);
+	}
 	return 0;
 }
 
@@ -392,6 +414,13 @@ void CChannelsBar::OnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 				int iMethod = pChan->m_nOverlaps;
 				ASSERT(iMethod >= 0 && iMethod < CTrack::CHAN_NOTE_OVERLAP_METHODS);
 				_tcscpy_s(item.pszText, item.cchTextMax, m_arrOverlapString[iMethod]);
+			}
+			break;
+		case COL_Duplicates:
+			{
+				int iMethod = pChan->m_nDuplicates;
+				ASSERT(iMethod >= 0 && iMethod < CTrack::CHAN_DUPLICATE_NOTE_METHODS);
+				_tcscpy_s(item.pszText, item.cchTextMax, m_arrDupNoteString[iMethod]);
 			}
 			break;
 		default:

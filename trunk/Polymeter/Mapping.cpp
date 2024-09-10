@@ -20,6 +20,7 @@
 		10		05feb22	add tie mapping target
 		11		19feb22	use INI file class directly instead of via profile
 		12		23dec23	add mapping target for note overlap method
+		13		01sep24	add mapping target for duplicate note method
 
 */
 
@@ -274,7 +275,14 @@ bool CMappingArray::MapMidiEvent(DWORD dwInEvent, CDWordArrayEx& arrOutEvent) co
 						}
 						break;
 					case CMapping::OUT_Overlaps:
-						pDoc->m_Seq.SetNoteOverlapMethod(map.m_nOutChannel, nDataVal != 0);
+						pDoc->m_Seq.SetNoteOverlapMethod(map.m_nOutChannel, nDataVal != 0);	// potential race with UI thread
+						pDoc->m_arrChannel[map.m_nOutChannel].SetProperty(CChannel::PROP_Overlaps, nDataVal != 0);
+						theApp.GetMainFrame()->PostMessage(UWM_CHANNEL_PROP_CHANGE,	map.m_nOutChannel, CChannel::PROP_Overlaps);
+						break;
+					case CMapping::OUT_Duplicates:
+						pDoc->m_Seq.SetDuplicateNoteMethod(map.m_nOutChannel, nDataVal != 0);	// potential race with UI thread
+						pDoc->m_arrChannel[map.m_nOutChannel].SetProperty(CChannel::PROP_Duplicates, nDataVal != 0);
+						theApp.GetMainFrame()->PostMessage(UWM_CHANNEL_PROP_CHANGE,	map.m_nOutChannel, CChannel::PROP_Duplicates);
 						break;
 					default:
 						int	iTrack = map.m_nTrack;

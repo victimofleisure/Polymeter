@@ -41,6 +41,7 @@
 		31		20jan24	bump resource version to 12
 		32		30jan24	bump resource version to 13
 		33		27aug24	bump resource version to 14
+		34		10sep24	if missing output device and user cancels, select first device if available
 
 */
 
@@ -693,12 +694,15 @@ void CPolymeterApp::OnDeviceChange()
 	if (!m_bInMsgBox) {	// if not already displaying message box
 		CSaveObj<bool>	save(m_bInMsgBox, true);	// save and set reentry guard
 		UINT	nChangeMask;
-		m_midiDevs.OnDeviceChange(nChangeMask);	// handle MIDI device change
+		bool	bResult = m_midiDevs.OnDeviceChange(nChangeMask);	// handle MIDI device change
 		if (nChangeMask & CMidiDevices::CM_INPUT) {	// if MIDI input device changed
 			CloseMidiInputDevice();	// force reopen
 			OpenMidiInputDevice(true);
 		}
 		if (nChangeMask & CMidiDevices::CM_OUTPUT) {	// if MIDI output device changed
+			if (!bResult && m_midiDevs.GetCount(CMidiDevices::OUTPUT)) {	// if user canceled and an output device is available
+				m_midiDevs.SetIdx(CMidiDevices::OUTPUT, 0);	// select first output device
+			}
 			CAllDocIter	iter;	// iterate all documents
 			CPolymeterDoc	*pDoc;
 			while ((pDoc = STATIC_DOWNCAST(CPolymeterDoc, iter.GetNextDoc())) != NULL) {

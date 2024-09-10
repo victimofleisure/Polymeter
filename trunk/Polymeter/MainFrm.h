@@ -42,6 +42,7 @@
 		32		16feb24	move track color message handlers to document
 		33		25feb24	remove status bar indicator handlers
 		34		27feb24	make dockable bar context menus available for customization
+		35		01sep24	add handler for channel property change message
 
 */
 
@@ -259,6 +260,7 @@ protected:
 	afx_msg BOOL OnDeviceChange(UINT nEventType, W64ULONG dwData);
 	afx_msg LRESULT OnTrackPropertyChange(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnTrackStepChange(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnChannelPropertyChange(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPresetApply(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPartApply(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnMappedCommand(WPARAM wParam, LPARAM lParam);

@@ -13,6 +13,7 @@
 		03		21jan22	add tempo mapping target
 		04		05feb22	add tie mapping target
 		05		23dec23	add mapping target for note overlap method
+		06		01sep24	add per-channel duplicate note methods
  
 		mapping column and member definitions
 
@@ -51,6 +52,7 @@ MAPPINGDEF_SPECIAL_TARGET(Record,	IDS_TRANSPORT_RECORD)
 MAPPINGDEF_SPECIAL_TARGET(Loop,		IDS_TRANSPORT_LOOP)
 MAPPINGDEF_SPECIAL_TARGET(Tempo,	IDS_TRK_Tempo)
 MAPPINGDEF_SPECIAL_TARGET(Overlaps,	IDS_CHANNEL_COL_Overlaps)
+MAPPINGDEF_SPECIAL_TARGET(Duplicates,	IDS_CHANNEL_COL_Duplicates)
 
 #undef MAPPINGDEF_SPECIAL_TARGET
 

@@ -18,6 +18,7 @@
 		08		30dec21	replace AfxGetApp with faster method
 		09		16feb23	add stream file with UTF-8 support
 		10		24feb23	add resource ID for graph channel selection
+		11		01sep24	add channel property change message
 
 		global definitions and inlines
 
@@ -133,6 +134,7 @@ enum {	// application-wide user window messages, based on WP_APP
 	UWM_PRESET_APPLY,			// wParam: preset index, lParam: none
 	UWM_PART_APPLY,				// wParam: part index, lParam: bool mute state
 	UWM_MAPPED_COMMAND,			// wParam: command ID, lParam: varies
+	UWM_CHANNEL_PROP_CHANGE,	// wParam: channel index, lParam: property index
 };
 
 // sequencer dump should always be zero in a shipping version

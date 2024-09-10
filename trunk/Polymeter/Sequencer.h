@@ -36,6 +36,7 @@
 		26		24jan24	add warning error attribute
 		27		10feb24	add flag for export's all notes off behavior
 		28		02may24	replace redundant track index with reference
+		29		01sep24	add per-channel duplicate note methods
 
 */
 
@@ -79,6 +80,7 @@ public:
 	bool	m_bIsSendingMidiClock;	// true if sending MIDI clock
 	bool	m_bIsLooping;			// true if looping
 	USHORT	m_nNoteOverlapMethods;	// for each MIDI channel, non-zero bit if merging overlapped notes
+	USHORT	m_nDuplicateNoteMethods;	// for each MIDI channel, non-zero bit if preventing duplicate notes
 	USHORT	m_nSustainMask;			// for each MIDI channel, non-zero bit if sustain is on
 	USHORT	m_nSostenutoMask;		// for each MIDI channel, non-zero bit if sostenuto is on
 };
@@ -157,6 +159,9 @@ public:
 	USHORT	GetNoteOverlapMethods() const;
 	void	SetNoteOverlapMethods(USHORT nMask);
 	void	SetNoteOverlapMethod(int iChannel, bool bIsMerge);
+	USHORT	GetDuplicateNoteMethods() const;
+	void	SetDuplicateNoteMethods(USHORT nMask);
+	void	SetDuplicateNoteMethod(int iChannel, bool bIsPrevent);
 	static	void	SetExportTimeKeySigs(bool bEnable);	// for regression testing
 	static	void	SetExportAllNotesOff(bool bEnable);	// for regression testing
 	static	bool	IsErrorWarning(MMRESULT nSeqError);
@@ -224,6 +229,7 @@ protected:
 		SEVT_INTERNAL = 0x40 << 24,	// internal controller, enumerated below
 	};
 	enum {	// internal controller numbers
+		ICTL_DUPLICATE_NOTES = 62,	// duplicate notes controller
 		ICTL_NOTE_OVERLAP = 63,		// note overlap controller
 		ICTL_SUSTAIN = 64,			// sustain controller
 		ICTL_SOSTENUTO = 66,		// sostenuto controller
@@ -249,6 +255,7 @@ protected:
 	CDWordArrayEx	m_arrMappedEvent;	// array of translated MIDI events from mapping
 	CLoopRange	m_rngLoop;			// loop range in ticks
 	CChannelStateArray	m_arrChannelState;	// state information for each MIDI channel
+	BYTE	m_arrPrevNote[MIDI_CHANNELS];	// for each MIDI channel, its previous note
 	static	bool	m_bExportTimeKeySigs;	// true if exporting time and key signatures
 	static	bool	m_bExportAllNotesOff;	// true if export turns off all notes at end
 
@@ -506,6 +513,25 @@ inline void CSequencer::SetNoteOverlapMethod(int iChannel, bool bIsMerge)
 		m_nNoteOverlapMethods |= nChannelMask;
 	else
 		m_nNoteOverlapMethods &= ~nChannelMask;
+}
+
+inline USHORT CSequencer::GetDuplicateNoteMethods() const
+{
+	return m_nDuplicateNoteMethods;
+}
+
+inline void CSequencer::SetDuplicateNoteMethods(USHORT nMask)
+{
+	m_nDuplicateNoteMethods = nMask;
+}
+
+inline void CSequencer::SetDuplicateNoteMethod(int iChannel, bool bIsPrevent)
+{
+	USHORT	nChannelMask = static_cast<USHORT>(1 << iChannel);
+	if (bIsPrevent)
+		m_nDuplicateNoteMethods |= nChannelMask;
+	else
+		m_nDuplicateNoteMethods &= ~nChannelMask;
 }
 
 inline void CSequencer::SetExportTimeKeySigs(bool bEnable)

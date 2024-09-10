@@ -11,6 +11,7 @@
 		01		10feb19	in channel array, add method to get MIDI event array
 		02		21jan22	add property for note overlap method
 		03		19feb22	use INI file class directly instead of via profile
+		04		01sep24	add property for duplicate notes method
 
 */
 
@@ -77,7 +78,7 @@ public:
 // Attributes
 	int		GetUsedCount() const;
 	DWORD	GetMidiEvent(int iChan, int iProp) const;
-	USHORT	GetMidiEvents(CDWordArrayEx& arrMidiEvent) const;
+	USHORT	GetMidiEvents(CDWordArrayEx& arrMidiEvent, USHORT& nDuplicateNoteMethodMask) const;
 
 // Operations
 	void	Read(CIniFile& fIni);

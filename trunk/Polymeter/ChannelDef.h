@@ -11,6 +11,7 @@
         01		09jan19	reorder columns so bank comes last
 		02		21jan22	add property for note overlap method
 		03		27jan22	add exclusions for events and non-events
+		04		01sep24	add property for duplicate notes method
 	
 */
 
@@ -26,6 +27,7 @@ CHANNELDEF(BankLSB,	LVCFMT_LEFT,	70	)
 #endif
 #ifndef CHANNELDEF_EXCLUDE_NON_EVENTS
 CHANNELDEF(Overlaps,	LVCFMT_LEFT,	70	)
+CHANNELDEF(Duplicates,	LVCFMT_LEFT,	70	)
 #endif
 
 #undef CHANNELDEF

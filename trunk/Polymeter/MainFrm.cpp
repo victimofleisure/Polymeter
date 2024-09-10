@@ -67,6 +67,7 @@
 		57		16feb24	move track color message handlers to document
 		58		25feb24	remove status bar indicator handlers
 		59		27feb24	make dockable bar context menus available for customization
+		60		01sep24	add handler for channel property change message
 
 */
 
@@ -941,6 +942,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWndEx)
 	ON_COMMAND(ID_TOOLS_DEVICES, OnToolsDevices)
 	ON_MESSAGE(UWM_TRACK_PROPERTY_CHANGE, OnTrackPropertyChange)
 	ON_MESSAGE(UWM_TRACK_STEP_CHANGE, OnTrackStepChange)
+	ON_MESSAGE(UWM_CHANNEL_PROP_CHANGE, OnChannelPropertyChange)
 	ON_MESSAGE(UWM_PRESET_APPLY, OnPresetApply)
 	ON_MESSAGE(UWM_PART_APPLY, OnPartApply)
 	ON_MESSAGE(UWM_MAPPED_COMMAND, OnMappedCommand)
@@ -1310,6 +1312,21 @@ LRESULT CMainFrame::OnTrackStepChange(WPARAM wParam, LPARAM lParam)
 				CPolymeterDoc::CPropHint	hint(iTrack, iStep);
 				pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_STEP, &hint);
 			}
+		}
+	}
+	return 0;
+}
+
+LRESULT CMainFrame::OnChannelPropertyChange(WPARAM wParam, LPARAM lParam)
+{
+	// this message can be posted by worker threads, so proceed cautiously
+	CPolymeterDoc	*pDoc = GetActiveMDIDoc();
+	if (pDoc != NULL) {	// if valid document
+		int	iChan = static_cast<int>(wParam);
+		if (IsMidiChan(iChan)) {	// if valid channel index
+			int	iProp = static_cast<int>(lParam);
+			CPolymeterDoc::CPropHint	hint(iChan, iProp);
+			pDoc->UpdateAllViews(NULL, CPolymeterDoc::HINT_CHANNEL_PROP, &hint);
 		}
 	}
 	return 0;

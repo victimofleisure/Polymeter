@@ -12,6 +12,7 @@
 		02		21jan22	add property for note overlap method
 		03		27jan22	fix Write's default value test to handle note overlap
 		04		19feb22	use INI file class directly instead of via profile
+		05		01sep24	add property for duplicate notes method
 
 */
 
@@ -30,6 +31,7 @@ void CChannel::SetDefaults()
 	#define CHANNELDEF(name, align, width) m_n##name = -1;
 	#include "ChannelDef.h"	// generate member initialization
 	m_nOverlaps = 0;
+	m_nDuplicates = 0;
 }
 
 bool CChannel::operator==(const CChannel& chan) const
@@ -95,6 +97,7 @@ DWORD CChannelArray::GetMidiEvent(int iChan, int iProp) const
 			return MakeMidiMsg(CONTROL, iChan, PAN, chan.m_nPan);
 		break;
 	case CChannel::PROP_Overlaps:
+	case CChannel::PROP_Duplicates:
 		return 0;	// property doesn't map to a MIDI event
 	default:
 		NODEFAULTCASE;
@@ -102,10 +105,11 @@ DWORD CChannelArray::GetMidiEvent(int iChan, int iProp) const
 	return 0;
 }
 
-USHORT CChannelArray::GetMidiEvents(CDWordArrayEx& arrMidiEvent) const
+USHORT CChannelArray::GetMidiEvents(CDWordArrayEx& arrMidiEvent, USHORT& nDuplicateNoteMethodMask) const
 {
 	ASSERT(arrMidiEvent.IsEmpty());
 	USHORT	nNoteOverlapMethodMask = 0;
+	nDuplicateNoteMethodMask = 0;
 	for (int iChan = 0; iChan < MIDI_CHANNELS; iChan++) {	// for each channel
 		for (int iProp = 0; iProp < CChannel::EVENT_PROPERTIES; iProp++) {	// for each event-based channel property
 			DWORD	dwEvent = GetMidiEvent(iChan, iProp);	// get property's MIDI event
@@ -114,6 +118,8 @@ USHORT CChannelArray::GetMidiEvents(CDWordArrayEx& arrMidiEvent) const
 		}
 		if ((*this)[iChan].m_nOverlaps)	// if this channel wants note overlaps merged
 			nNoteOverlapMethodMask |= static_cast<USHORT>(1 << iChan);
+		if ((*this)[iChan].m_nDuplicates)	// if this channel wants duplicate notes prevented
+			nDuplicateNoteMethodMask |= static_cast<USHORT>(1 << iChan);
 	}
 	return nNoteOverlapMethodMask;
 }

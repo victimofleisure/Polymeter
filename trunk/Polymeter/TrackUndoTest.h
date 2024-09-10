@@ -12,6 +12,7 @@
 		02		09sep14	add CPatchObject
 		03		02dec19	remove sort function, array now provides it
 		04		19nov20	add randomized docking bar visibility
+		05		10sep24	add method to randomize channel property
 
 		automated undo test for patch editing
  
@@ -54,6 +55,7 @@ protected:
 	bool	GetRandomStep(CPoint& ptStep) const;
 	bool	MakeRandomStepSelection(CRect& rSelection) const;
 	int		MakeRandomMappingProperty(int iProp);
+	int		MakeRandomChannelProperty(int iProp);
 	void	RandomizeBarVisibility();
 	CString	PrintSelection(CIntArrayEx& arrSelection) const;
 	CString	PrintSelection(CRect& rSelection) const;

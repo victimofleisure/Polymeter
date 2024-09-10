@@ -267,6 +267,7 @@ IDH_Modulation_Tempo_modulation = Modulation/Tempo_modulation.htm
 IDH_Modulation_Scale_modulation = Modulation/Scale_modulation.htm
 IDH_Modulation_Chord_modulation = Modulation/Chord_modulation.htm
 IDH_Modulation_Index_modulation = Modulation/Index_modulation.htm
+IDH_Modulation_Index_modulation_Duplicate_notes = Modulation/Index_modulation.htm#Duplicate_notes
 IDH_Modulation_Voicing_modulation = Modulation/Voicing_modulation.htm
 IDH_Modulation_Offset_modulation = Modulation/Offset_modulation.htm
 IDH_Views_Views = Views/Views.htm

@@ -755,7 +755,8 @@
 
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Control Number</th><th>Name</th><th>Function</th></tr>
-<tr><td>63</td><td>Note Overlap</td><td>Sets the channel's method of correcting <a href="#Note_Overlap">note overlaps</a>. Track steps are interpreted as unsigned values. A value of zero selects Split, and any other value selects Merge. This controller overrides the Overlaps setting in the <a href="#Channels_bar">Channels bar</a>. This controller only works if the note overlap <a href="#Master_properties">master property</a> is set to Prevent, otherwise it has no effect.</td></tr>
+<tr><td>62</td><td>Duplicate Notes</td><td>Sets whether the channel prevents <a href="#Duplicate_notes">duplicate notes</a>. Track steps are interpreted as unsigned values. A value of zero selects Allow, and any other value selects Prevent. This controller overrides the Duplicates setting in the <a href="#Channels_bar">Channels bar</a>.</td></tr>
+<tr><td>63</td><td>Note Overlap</td><td>Sets the channel's method of correcting <a href="#Note_Overlap">note overlaps</a>. Track steps are interpreted as unsigned values. A value of zero selects Split, and any other value selects Merge. This controller overrides the Overlaps setting in the Channels bar. This controller only works if the note overlap <a href="#Master_properties">master property</a> is set to Prevent, otherwise it has no effect.</td></tr>
 <tr><td>64</td><td>Sustain</td><td>Sets the channel's sustain switch. Track steps are interpreted as unsigned values. A value of zero turns sustain off, and any other value turns it on. While sustain is on, all active notes on the channel are sustained, regardless of their durations. This applies both to notes that are already active when sustain is switched on, and to notes that are triggered while sustain is on. When sustain is switched off, notes with expired durations stop immediately, but notes with duration remaining continue until their durations expire.</td></tr>
 <tr><td>66</td><td>Sostenuto</td><td>Sets the channel's sostenuto switch. Track steps are interpreted as unsigned values. A value of zero turns sostenuto off, and any other value turns it on. Sostenuto is similar to sustain, except that it only sustains notes that are already active when sostenuto is switched on. Notes that are triggered while sostenuto is on are <em>not</em> sustained. Sostenuto is typically used to hold a note or chord, and then play melodies over the held note or chord. When sostenuto is switched off, notes with expired durations stop immediately, but notes with duration remaining continue until their durations expire. Sostenuto can be combined with sustain.</td></tr>
 <tr><td>123</td><td>All Notes Off</td><td>Turns off all notes on the channel. Track steps are interpreted as unsigned values. Transitioning from zero to any non-zero value stops all notes immediately, regardless of their durations. Notes that are being held by the sustain or sostenuto internal controllers are also stopped immediately.</td></tr>
@@ -891,6 +892,14 @@
 <p>The index is zero-based, meaning zero accesses the first tone, one accesses the second tone, and so on. If the index exceeds the range of the chord or scale, it <a href="#Modular_arithmetic">wraps around</a>. For example, if the scale has seven tones, they correspond to index values 0 through 6. If the index has a value of 7, it wraps around and accesses the first tone. Similarly, if the index has a value of &minus;1, it wraps around in the other direction and accesses the last tone.
 
 <p>The mapping from index values to scale or chord tones may be affected by the order in which the scale or chord modulations are listed for the target track. For this reason, it's advisable to keep scale and chord modulations in ascending sequential order.
+
+<a name="Duplicate_notes"><h3>Duplicate notes</h3></a>
+
+<p>A duplicate note occurs when an instrument plays the same MIDI note value twice in a row. Duplicate notes may be perceived as flaws, especially in arpeggios. If you're using <a href="#Index_modulation">index modulation</a> to pick scale or chord tones, you have the option to prevent duplicate notes automatically, by picking the tones in a slightly different order.
+
+<p>Prevention adds a retry to the indexing. The picked tone is compared to the relevant channel's previous note, and if they match, the index value is incremented by one, and the indexing is then retried. This prevents a duplicate note provided 1) the scale or chord contains at least two tones, and 2) all tones in the scale or chord are unique.
+
+<p>Duplicate note prevention is enabled on a per-channel basis, via the Duplicates column in the <a href="#Channels_bar">channels bar</a>. To prevent duplicate notes, change the relevant channel's drop list value from "Allow" to "Prevent". Prevention can also be controlled via <a href="#Mappings">MIDI mapping</a> or an <a href="#Internal_controllers">internal controller</a>.
 
 <a name="Voicing_modulation"><h2>Voicing modulation</h2></a>
 
@@ -1397,6 +1406,7 @@
 <tr><td>Bank LSB</td><td>The Least Significant Byte of the channel's bank, or &minus;1 for none</td></tr>
 <tr><td>Bank MSB</td><td>The Most Significant Byte of the channel's bank, or &minus;1 for none</td></tr>
 <tr><td>Overlaps</td><td>Selects a method of preventing <a href="#Note_Overlap">note overlaps</a> for this channel. This option is only meaningful if the Note Overlap <a href="#Master_properties">master property</a> is set to Prevent.</td></tr>
+<tr><td>Duplicates</td><td>To prevent <a href="#Duplicate_notes">duplicate notes</a> on the channel, set this to "Prevent". The default is "Allow". Only tracks that use <a href="#Index_modulation">index modulation</a> are affected.</td></tr>
 </table>
 
 <a name="Presets_bar"><h2>Presets</h2></a>
@@ -1759,6 +1769,7 @@
 <tr><td><a href="#Loop">Loop</a></td><td>N/A</td><td>N/A</td><td>Non-zero to loop</td></tr>
 <tr><td><a href="#Tempo">Tempo</a></td><td>N/A</td><td>N/A</td><td>Fractional multiplier; see <a href="#Tempo_mapping">tempo mapping</a></td></tr>
 <tr><td><a href="#Note_Overlap">Overlaps</a></td><td>N/A</td><td>N/A</td><td>Sets output channel's note overlap method, to Merge if non-zero, otherwise to Split</td></tr>
+<tr><td><a href="#Duplicate_notes">Duplicates</a></td><td>N/A</td><td>N/A</td><td>Sets output channel's duplicate notes method, to Prevent if non-zero, otherwise to Allow</td></tr>
 </table>
 
 <a name="Learning_mappings"><h3>Learning mappings</h3></a>

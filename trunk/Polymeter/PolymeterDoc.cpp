@@ -95,6 +95,7 @@
 		85		29jan24	add class to save and restore track selection
 		86		16feb24	move track color message handlers here
 		87		25feb24	disable next and prev convergence if no tracks
+		88		01sep24	add duplicate note methods; bump file version to 22
 
 */
 
@@ -137,7 +138,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 // file versioning
 #define FILE_ID				_T("Polymeter")
-#define	FILE_VERSION		21
+#define	FILE_VERSION		22
 
 // file format keys
 #define RK_FILE_ID			_T("FileID")
@@ -2931,9 +2932,11 @@ int CPolymeterDoc::TimeToSecs(LPCTSTR pszTime)
 void CPolymeterDoc::UpdateChannelEvents()
 {
 	CDWordArrayEx	arrMidiEvent;
-	USHORT	nMethods = m_arrChannel.GetMidiEvents(arrMidiEvent);
+	USHORT	nDuplicateNoteMethods;
+	USHORT	nOverlapMethods = m_arrChannel.GetMidiEvents(arrMidiEvent, nDuplicateNoteMethods);
 	m_Seq.SetInitialMidiEvents(arrMidiEvent);
-	m_Seq.SetNoteOverlapMethods(nMethods);
+	m_Seq.SetNoteOverlapMethods(nOverlapMethods);
+	m_Seq.SetDuplicateNoteMethods(nDuplicateNoteMethods);
 }
 
 void CPolymeterDoc::OutputChannelEvent(int iChan, int iProp)
@@ -2958,8 +2961,13 @@ void CPolymeterDoc::OutputChannelEvent(int iChan, int iProp)
 				break;
 			}
 		} else {	// event not specified
-			if (iProp == CChannel::PROP_Overlaps) {	// if property is note overlap method
+			switch (iProp) {
+			case CChannel::PROP_Overlaps:	// if property is note overlap method
 				m_Seq.SetNoteOverlapMethod(iChan, m_arrChannel[iChan].m_nOverlaps != CHAN_NOTE_OVERLAP_SPLIT);
+				break;
+			case CChannel::PROP_Duplicates:	// if property is duplicate notes method
+				m_Seq.SetDuplicateNoteMethod(iChan, m_arrChannel[iChan].m_nDuplicates != CHAN_DUPLICATE_NOTE_ALLOW);
+				break;
 			}
 		}
 	}

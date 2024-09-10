@@ -19,6 +19,13 @@
 
 <p>The mapping from index values to scale or chord tones may be affected by the order in which the scale or chord modulations are listed for the target track. For this reason, it's advisable to keep scale and chord modulations in ascending sequential order.
 
+<a name="Duplicate_notes"><p><b>Duplicate notes</b></a>
+<p>A duplicate note occurs when an instrument plays the same MIDI note value twice in a row. Duplicate notes may be perceived as flaws, especially in arpeggios. If you're using <a href="../Modulation/Index_modulation.htm">index modulation</a> to pick scale or chord tones, you have the option to prevent duplicate notes automatically, by picking the tones in a slightly different order.
+
+<p>Prevention adds a retry to the indexing. The picked tone is compared to the relevant channel's previous note, and if they match, the index value is incremented by one, and the indexing is then retried. This prevents a duplicate note provided 1) the scale or chord contains at least two tones, and 2) all tones in the scale or chord are unique.
+
+<p>Duplicate note prevention is enabled on a per-channel basis, via the Duplicates column in the <a href="../Docking_Windows/Channels_bar.htm">channels bar</a>. To prevent duplicate notes, change the relevant channel's drop list value from "Allow" to "Prevent". Prevention can also be controlled via <a href="../Concepts/Mappings.htm">MIDI mapping</a> or an <a href="../Tracks/Internal_tracks.htm#Internal_controllers">internal controller</a>.
+
 <!--  content stops HERE  -->
 			
 </body>

@@ -22,6 +22,7 @@
 		12		19nov20	add randomized docking bar visibility
 		13		21jun21	route track editing commands directly to document
 		14		22jan22	limit channel tests to event properties
+		15		10sep24	add method to randomize channel property
 
 		automated undo test for patch editing
  
@@ -273,6 +274,18 @@ int CTrackUndoTest::MakeRandomMappingProperty(int iProp)
 	}
 }
 
+int CTrackUndoTest::MakeRandomChannelProperty(int iProp)
+{
+	switch (iProp) {
+	case CChannel::PROP_Overlaps:
+		return Random(CHAN_NOTE_OVERLAP_METHODS);
+	case CChannel::PROP_Duplicates:
+		return Random(CHAN_DUPLICATE_NOTE_METHODS);
+	default:
+		return Random(MIDI_NOTES + 1) - 1;
+	}
+}
+
 CString	CTrackUndoTest::PrintSelection(CIntArrayEx& arrSelection) const
 {
 	CString	str;
@@ -498,7 +511,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 		{
 			int	iChan = Random(MIDI_CHANNELS);
 			int	iProp = Random(CChannel::EVENT_PROPERTIES);
-			int	nVal = Random(MIDI_NOTES + 1) - 1;
+			int	nVal = MakeRandomChannelProperty(iProp);
 			m_pDoc->SetChannelProperty(iChan, iProp, nVal);
 			PRINTF(_T("%s %d %d\n"), sUndoTitle, iChan, iProp);
 		}
@@ -509,7 +522,7 @@ int CTrackUndoTest::ApplyEdit(int UndoCode)
 			if (!MakeRandomSelection(MIDI_CHANNELS, arrSelection))
 				return(DISABLED);
 			int	iProp = Random(CChannel::EVENT_PROPERTIES);
-			int	nVal = Random(MIDI_NOTES + 1) - 1;
+			int	nVal = MakeRandomChannelProperty(iProp);
 			m_pDoc->SetMultiChannelProperty(arrSelection, iProp, nVal);
 			PRINTF(_T("%s %d %s\n"), sUndoTitle, iProp, PrintSelection(arrSelection));
 		}

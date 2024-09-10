@@ -61,6 +61,7 @@
 		51		10feb24	export now turns off all notes at end of file
 		52		02may24	optimize swing; replace boolean with sign flip
 		53		02may24	replace redundant track index with reference
+		54		01sep24	add per-channel duplicate note methods
 
 */
 
@@ -111,12 +112,14 @@ CSequencer::CSequencer()
 	m_bIsSendingMidiClock = false;
 	m_bIsLooping = false;
 	m_nNoteOverlapMethods = 0;
+	m_nDuplicateNoteMethods = 0;
 	m_nSustainMask = 0;
 	m_nSostenutoMask = 0;
 	m_hStrm = 0;
 	ZeroMemory(&m_arrMsgHdr, sizeof(m_arrMsgHdr));
 	ZeroMemory(&m_stats, sizeof(m_stats));
 	m_rngLoop = CLoopRange(0, 0);
+	memset(m_arrPrevNote, 0xff, sizeof(m_arrPrevNote));
 }
 
 CSequencer::~CSequencer()
@@ -273,6 +276,7 @@ inline void CSequencer::ResetCachedParameters()
 	if (m_bPreventNoteOverlap)	// if preventing note overlaps
 		ZeroMemory(m_arrNoteRef, sizeof(m_arrNoteRef));	// zero note reference counts
 	ResetChannelStates();
+	memset(m_arrPrevNote, 0xff, sizeof(m_arrPrevNote));	// init to invalid note
 }
 
 inline void CSequencer::ResetChannelStates()
@@ -772,6 +776,15 @@ __forceinline void CSequencer::AddTrackEvents(CTrack& trk, int nCBStart)
 								}
 								int	iTone = ModWrap(arrMod[MT_Index], nScaleTones);
 								nNote = m_arrScale[iTone];
+								if (m_nDuplicateNoteMethods & (1 << trk.m_nChannel)) {	// if channel prevents duplicate notes
+									if (nNote == m_arrPrevNote[trk.m_nChannel]) {	// if note matches channel's previous note
+										iTone++;	// try scale or chord's next tone
+										if (iTone >= nScaleTones)	// if out of range
+											iTone = 0;	// wrap around to first tone
+										nNote = m_arrScale[iTone];
+									}
+									m_arrPrevNote[trk.m_nChannel] = static_cast<BYTE>(nNote);	// update previous note
+								}
 							} else {	// scale not defined
 								if (trk.m_iRangeType != RT_NONE)	// if applying range to note
 									nNote = ApplyNoteRange(nNote, trk.m_nRangeStart + arrMod[MT_Range], trk.m_iRangeType);
@@ -831,6 +844,9 @@ lblNoteScheduled:;
 								evt.m_dwEvent |= SEVT_INTERNAL;	// set bit to indicate event is internal
 								m_arrNoteOff.FastInsertSorted(evt);	// controller is handled by AddNoteOffs
 							}
+							break;
+						case ICTL_DUPLICATE_NOTES:
+							SetDuplicateNoteMethod(trk.m_nChannel, nVal != 0);
 							break;
 						case ICTL_NOTE_OVERLAP:
 							if (m_bPreventNoteOverlap) {	// if preventing note overlap

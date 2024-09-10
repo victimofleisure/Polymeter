@@ -4791,16 +4791,21 @@ for example, for a rest of 9/16, duration = log(9) / log(2) * 100 = 317
 
 7/1/24 per-channel duplicate note avoidance proposal
 
-This feature only applies to tracks with scale (or scale and chord)
-modulators. For each channel, a previous note is maintained. If the 
-track's current note would be the same as the previous note, the track's 
-index is incremented by one and the scale/chord array lookup is then
-repeated. This should prevent a duplicate note, provided the track's
-scale (or chord) contains at least two unique notes. There's no risk of
-a loop because only one retry is done. The only significant cost is 
-updating the previous note. The previous notes must be initialized to
--1 at the start of playback. The feature is controlled per-channel via 
-a 16-bit mask word, and selectable in the UI via the Channels bar.
+This feature only applies to tracks with scale, or scale and chord
+modulators. A previous note is maintained for each channel. After
+the scale/chord array lookup is done, if the resulting note is the
+same as the previous note, the index modulator value is incremented
+by one and the scale/chord array lookup is repeated. This prevents
+a duplicate note, provided the track's scale (or chord) contains at
+least two tones and all of the tones are unique. There's no risk of
+a loop because only one retry is done. The only significant cost is
+updating the previous note. The previous notes must be initialized
+to -1 at the start of playback. The feature would be controllable 
+per-channel via a 16-bit mask word, and selectable in the UI via 
+the Channels bar grid. The feature could also be a mapping target.
+Controlling it via an internal controller in theory risks variable
+behavior depending on track order and callback length, but testing
+did not confirm that problem. Released in 1.0.16.001.
 
 8/28/24 show phase bar text at top of ellipses
 

@@ -11,6 +11,7 @@
 		01		01apr20	standardize context menu handling
 		02		19nov20	add update and show changed handlers
 		03		21jan22	add property for note overlap method
+		04		01sep24	add property for duplicate notes method
 		
 */
 
@@ -68,10 +69,12 @@ protected:
 	static const CGridCtrl::COL_INFO	m_arrColInfo[COLUMNS];
 	static const LPCTSTR	m_arrGMPatchName[MIDI_NOTES];
 	static const int	m_arrOverlapStringID[CTrack::CHAN_NOTE_OVERLAP_METHODS];
+	static const int	m_arrDupNoteStringID[CTrack::CHAN_DUPLICATE_NOTE_METHODS];
 
 // Member data
 	CChannelsGridCtrl	m_grid;		// grid control
 	static	CString	m_arrOverlapString[CTrack::CHAN_NOTE_OVERLAP_METHODS];
+	static	CString	m_arrDupNoteString[CTrack::CHAN_DUPLICATE_NOTE_METHODS];
 
 // Overrides
 	virtual void OnShowChanged(bool bShow);
