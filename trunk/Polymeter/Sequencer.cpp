@@ -62,6 +62,7 @@
 		52		02may24	optimize swing; replace boolean with sign flip
 		53		02may24	replace redundant track index with reference
 		54		01sep24	add per-channel duplicate note methods
+		55		02oct24	fix looping so it doesn't lose time
 
 */
 
@@ -1053,8 +1054,10 @@ bool CSequencer::OutputMidiBuffer()
 	int	nCBStart, nCBEnd;
 	{
 		WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
-		if (m_bIsLooping && m_nCBTime + m_nCBLen >= m_rngLoop.m_nTo)	// if looping and callback reaches end of loop
-			SetPosition(m_rngLoop.m_nFrom);	// set position to start of loop
+		if (m_bIsLooping && m_rngLoop.m_nTo < m_nCBTime + m_nCBLen) {	// if looping and end of loop within callback
+			int	nScrapTicks = m_rngLoop.m_nTo - m_nCBTime;	// number of ticks at end of loop that remain unplayed
+			SetPosition(m_rngLoop.m_nFrom - nScrapTicks);	// set position to start of loop, minus sync correction
+		}
 		m_arrEvent.FastRemoveAll();
 		m_arrTempoEvent.FastRemoveAll();
 		// handle tempo change first to improve responsiveness
