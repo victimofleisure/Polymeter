@@ -4825,3 +4825,55 @@ if (m_nDrawStyle & DSB_CROSSHAIRS) {	// if showing crosshairs
 	x2 = ptOrigin.x - nTextOffset;
 }
 
+10/3/24 jump proposal 
+
+Proposal: Allow the song position to "jump" to a different position when a 
+specified position is reached, without changing the song position displayed
+in the status bar or elsewhere, and without affecting smooth progression
+through the dubs in song view. This would allow transitions to "reset the 
+clock", which is useful when a composition has sections that use unrelated
+time signatures. Currently such compositions can only be produced by either
+1) changing section only at a convergence between all the relevant lengths,
+or 2) creating a separate Polymeter project for each section, exporting a 
+separate MIDI file for each section, and then assembling the sections in 
+an external editor. Both workarounds limit creativity in different ways.
+
+The timing granularity will be callbacks rather than ticks, because the song
+position can't be modified within the callback function's track-processing
+loop (AddTrackEvents), due to architectural constraints. This is the same
+reason the looping feature can only loop on callback boundaries. This won't
+be problematic in practice, because each callback only is only a few ticks 
+long at typical settings. For example, at 120 BPM, 120 PPQ, and the default
+callback length of 10 ms, each callback takes 3 ticks.
+
+ticks_per_callback = callback_seconds / (60 / BPM / PPQ)
+(rounded up to nearest integer)
+
+The implementation would need to add an offset to the song position that's
+passed to AddTrackEvents (nCBStart). This offset must be a member variable,
+separate from m_nCBTime, because it persists between callbacks. Limiting
+jump processing to callback boundaries introduces a timing error, and the
+destination position must be compensated for that error, using a similar
+method to the compensation of looping (introduced in version 1.0.16.002).
+
+The UI would presumably be a grid control, having the following columns:
+sequence # (for selecting rows), From Time, To Time. Insert and delete 
+would need support, but not reordering, as the list should automatically
+keep itself in ascending order by From Time. Both times are in ordinary
+song position coordinates. The jump does NOT change the song position; 
+it's as if you've added an offset to all the tracks. This offset won't
+be visible in song view, but it could optionally be shown elsewhere, 
+for example in Track view or Phase view.
+
+For example, if the first row contains 17:00, 26:00, the result is that
+when playback reaches 17:00, an offset is then applied to all tracks,
+so that they're repositioned AS IF song position had jumped to 26:00,
+while the song position continues on from 17:00 as usual. This allows
+each section of a composition to have any desired synchronization, 
+without resorting to an external editor.
+
+The jump list must be inside the sequencer engine. An index member 
+variable is also required, and the jump list needs to be chased at 
+start of playback and in SetSongPosition, in the same way that dubs
+and recorded events are chased. The jump processing must be done in
+both OutputMidiBuffer and the export, presumably in a subroutine.
