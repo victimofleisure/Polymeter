@@ -4877,3 +4877,13 @@ variable is also required, and the jump list needs to be chased at
 start of playback and in SetSongPosition, in the same way that dubs
 and recorded events are chased. The jump processing must be done in
 both OutputMidiBuffer and the export, presumably in a subroutine.
+
+10/07/24 switching to song view should set all mutes to match song's current dub state (chase)
+
+This issue dates back to 07/17/20. It's categorized as hold but it
+should arguably be escalated to a bug. It certainly acts like a bug.
+The question is only whether fixing it would have undesirable side
+effects. This should be explored, especially in the case where 
+multiple different views of a document exist simultaneously.
+The issue stresses that the chase must be synchronous. Is this merely
+a warning to prevent race conditions, or something more sinister?
