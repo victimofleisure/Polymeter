@@ -1,4 +1,6 @@
 @echo off
+echo regenerate all Polymeter web pages; Ctrl+C to abort
+pause
 C:\Chris\MyProjects\tbl2web\release\tbl2web "..\Polymeter ToDo.txt" issues.html issues.txt "Polymeter Issues"
 if errorlevel 1 goto err
 attrib /s tools\*.* +r

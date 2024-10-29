@@ -34,6 +34,9 @@ echo y | C:\Chris\tools\fsr links.htm "\"http://waveshop.sourceforge.net/\"" "\"
 echo y | C:\Chris\tools\fsr links.htm "\"http://whorld.sourceforge.net/\"" "\"https://victimofleisure.github.io/Whorld/\""
 echo y | C:\Chris\tools\fsr links.htm "\"http://whorld.org/\"" "\"https://victimofleisure.github.io/Whorld/\""
 ren links.htm links.html
+ren translate.html translate.htm
+echo y | C:\Chris\tools\fsr translate.htm "\"https://polymeter-sourceforge-io.translate.goog/\"" "\"https://victimofleisure-github-io.translate.goog/Polymeter/\""
+ren translate.htm translate.html
 copy C:\Chris\MyProjects\Polymeter\Help\help.txt Help
 copy C:\Chris\MyProjects\Polymeter\Help\Polymeter.hhp Help
 if errorlevel 1 goto err
