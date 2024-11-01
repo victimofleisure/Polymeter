@@ -63,6 +63,7 @@
 		53		02may24	replace redundant track index with reference
 		54		01sep24	add per-channel duplicate note methods
 		55		02oct24	fix looping so it doesn't lose time
+		56		07oct24	streamline conditional around adding track events
 
 */
 
@@ -1083,15 +1084,12 @@ bool CSequencer::OutputMidiBuffer()
 		int	nTracks = GetSize();
 		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 			CTrack&	trk = GetAt(iTrack);
-			bool	bIsDubbing = false;
-			if (m_bIsSongMode) {	// if applying track dubs
-				if (trk.m_iDub < trk.m_arrDub.GetSize()) {	// if unplayed dubs remain
-					if (trk.m_arrDub[trk.m_iDub].m_nTime < nCBEnd)	// if dubs during this callback
-						bIsDubbing = true;	// call AddTrackEvents even if track is muted
-				}
-			}
-			if (!trk.m_bMute || bIsDubbing)	// if track isn't muted, or track is dubbing
+			if (!trk.m_bMute	// if track is unmuted
+			|| (m_bIsSongMode	// or we're in song mode
+			&& trk.m_iDub < trk.m_arrDub.GetSize() // and track has unplayed dubs
+			&& trk.m_arrDub[trk.m_iDub].m_nTime < nCBEnd)) {	// and dubs occur during this callback
 				AddTrackEvents(trk, nCBStart);	// add events for this callback period
+			}
 		}
 		if (IsRecordedEventPlayback())
 			AddRecordedEvents(nCBStart, nCBEnd);	// add recorded events for this callback period
