@@ -45,6 +45,7 @@
 		35		20sep23	increase maximum quant from 32K to 64K
 		36		23jan24	add CModulationTargets
 		37		01sep24	add per-channel duplicate note methods
+		38		04nov24	fix incorrect MIDI event relational operators
 
 */
 
@@ -466,7 +467,7 @@ inline bool CTrackBase::CMidiEvent::operator==(const CMidiEvent &evt) const
 
 inline bool CTrackBase::CMidiEvent::operator!=(const CMidiEvent &evt) const
 {
-	return !operator==(evt);
+	return m_nTime != evt.m_nTime || m_dwEvent != evt.m_dwEvent;
 }
 
 inline bool CTrackBase::CMidiEvent::operator<(const CMidiEvent &evt) const
@@ -476,7 +477,7 @@ inline bool CTrackBase::CMidiEvent::operator<(const CMidiEvent &evt) const
 
 inline bool CTrackBase::CMidiEvent::operator>(const CMidiEvent &evt) const
 {
-	return !operator>=(evt);
+	return m_nTime > evt.m_nTime || (m_nTime == evt.m_nTime && m_dwEvent > evt.m_dwEvent);
 }
 
 inline bool CTrackBase::CMidiEvent::operator<=(const CMidiEvent &evt) const
@@ -486,7 +487,7 @@ inline bool CTrackBase::CMidiEvent::operator<=(const CMidiEvent &evt) const
 
 inline bool CTrackBase::CMidiEvent::operator>=(const CMidiEvent &evt) const
 {
-	return !operator<(evt);
+	return m_nTime > evt.m_nTime || (m_nTime == evt.m_nTime && m_dwEvent >= evt.m_dwEvent);
 }
 
 inline CTrackBase::CMidiEvent::operator CTrackBase::MIDI_STREAM_EVENT() const
