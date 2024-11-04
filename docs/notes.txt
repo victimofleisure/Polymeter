@@ -4887,3 +4887,91 @@ effects. This should be explored, especially in the case where
 multiple different views of a document exist simultaneously.
 The issue stresses that the chase must be synchronous. Is this merely
 a warning to prevent race conditions, or something more sinister?
+
+11/03/24 buggy MIDI event comparison operators
+
+CMidiEvent::operator> is incorrect.
+The fifth group of tests asserts.
+
+// test operator==
+ASSERT(CMidiEvent(1, 1) == CMidiEvent(1, 1));
+ASSERT(!(CMidiEvent(1, 1) == CMidiEvent(0, 1)));
+ASSERT(!(CMidiEvent(1, 1) == CMidiEvent(1, 0)));
+
+// test operator!=
+ASSERT(CMidiEvent(1, 1) != CMidiEvent(0, 1));
+ASSERT(CMidiEvent(1, 1) != CMidiEvent(1, 0));
+ASSERT(!(CMidiEvent(1, 1) != CMidiEvent(1, 1)));
+
+// test operator<
+ASSERT(CMidiEvent(0, 0) < CMidiEvent(1, 1));
+ASSERT(CMidiEvent(0, 1) < CMidiEvent(1, 1));
+ASSERT(CMidiEvent(1, 0) < CMidiEvent(1, 1));
+ASSERT(!(CMidiEvent(1, 1) < CMidiEvent(1, 1)));
+ASSERT(!(CMidiEvent(1, 1) < CMidiEvent(1, 0)));
+ASSERT(!(CMidiEvent(1, 1) < CMidiEvent(0, 1)));
+ASSERT(!(CMidiEvent(1, 1) < CMidiEvent(0, 0)));
+
+// test operator<=
+ASSERT(CMidiEvent(0, 0) <= CMidiEvent(1, 1));
+ASSERT(CMidiEvent(0, 1) <= CMidiEvent(1, 1));
+ASSERT(CMidiEvent(1, 0) <= CMidiEvent(1, 1));
+ASSERT(CMidiEvent(1, 1) <= CMidiEvent(1, 1));
+ASSERT(!(CMidiEvent(1, 1) <= CMidiEvent(1, 0)));
+ASSERT(!(CMidiEvent(1, 1) <= CMidiEvent(0, 1)));
+ASSERT(!(CMidiEvent(1, 1) <= CMidiEvent(0, 0)));
+
+// test operator>
+ASSERT(CMidiEvent(1, 1) > CMidiEvent(0, 0));
+ASSERT(CMidiEvent(1, 1) > CMidiEvent(0, 1));
+ASSERT(CMidiEvent(1, 1) > CMidiEvent(1, 0));
+ASSERT(!(CMidiEvent(1, 1) > CMidiEvent(1, 1)));
+ASSERT(!(CMidiEvent(1, 0) > CMidiEvent(1, 1)));
+ASSERT(!(CMidiEvent(0, 1) > CMidiEvent(1, 1)));
+ASSERT(!(CMidiEvent(0, 0) > CMidiEvent(1, 1)));
+
+// test operator>=
+ASSERT(CMidiEvent(1, 1) >= CMidiEvent(0, 0));
+ASSERT(CMidiEvent(1, 1) >= CMidiEvent(0, 1));
+ASSERT(CMidiEvent(1, 1) >= CMidiEvent(1, 0));
+ASSERT(CMidiEvent(1, 1) >= CMidiEvent(1, 1));
+ASSERT(!(CMidiEvent(1, 0) >= CMidiEvent(1, 1)));
+ASSERT(!(CMidiEvent(0, 1) >= CMidiEvent(1, 1)));
+ASSERT(!(CMidiEvent(0, 0) >= CMidiEvent(1, 1)));
+
+The essential point is that in relational operators for a pair
+like this, the secondary members should only control the result
+when the primary members are equal. The correct definitions are:
+
+inline bool CTrackBase::CMidiEvent::operator==(const CMidiEvent &evt) const
+{
+	return m_nTime == evt.m_nTime && m_dwEvent == evt.m_dwEvent;
+}
+
+inline bool CTrackBase::CMidiEvent::operator!=(const CMidiEvent &evt) const
+{
+	return m_nTime != evt.m_nTime || m_dwEvent != evt.m_dwEvent;
+}
+
+inline bool CTrackBase::CMidiEvent::operator<(const CMidiEvent &evt) const
+{
+	return m_nTime < evt.m_nTime || (m_nTime == evt.m_nTime && m_dwEvent < evt.m_dwEvent);
+}
+
+inline bool CTrackBase::CMidiEvent::operator>(const CMidiEvent &evt) const
+{
+	return m_nTime > evt.m_nTime || (m_nTime == evt.m_nTime && m_dwEvent > evt.m_dwEvent);
+}
+
+inline bool CTrackBase::CMidiEvent::operator<=(const CMidiEvent &evt) const
+{
+	return m_nTime < evt.m_nTime || (m_nTime == evt.m_nTime && m_dwEvent <= evt.m_dwEvent);
+}
+
+inline bool CTrackBase::CMidiEvent::operator>=(const CMidiEvent &evt) const
+{
+	return m_nTime > evt.m_nTime || (m_nTime == evt.m_nTime && m_dwEvent >= evt.m_dwEvent);
+}
+
+Fortunately CMidiEvent::operator> is not used.
+Correcting the error passes the regression test.
