@@ -28,10 +28,8 @@
 <div id=body>
 <!--  content goes HERE  -->
 
-<form action="https://victimofleisure-github-io.translate.goog/Polymeter/">
-<label for="cars">Choose a language:</label>
-<input type="hidden" name="_x_tr_sl" value="en">
-<select name="_x_tr_tl" id="lang">
+<p><label>Language:</label>
+<select id="mySelect" onchange="myFunction()">
 <option value="af">Afrikaans</option>
 <option value="sq">Albanian</option>
 <option value="am">Amharic</option>
@@ -58,7 +56,7 @@
 <option value="dv">Dhivehi</option>
 <option value="doi">Dogri</option>
 <option value="nl">Dutch</option>
-<option value="en">English</option>
+<option value="en" selected="selected">English</option>
 <option value="eo">Esperanto</option>
 <option value="et">Estonian</option>
 <option value="ee">Ewe</option>
@@ -141,7 +139,7 @@
 <option value="sk">Slovak</option>
 <option value="sl">Slovenian</option>
 <option value="so">Somali</option>
-<option value="es" selected="selected">Spanish</option>
+<option value="es">Spanish</option>
 <option value="su">Sundanese</option>
 <option value="sw">Swahili</option>
 <option value="sv">Swedish</option>
@@ -167,12 +165,11 @@
 <option value="yo">Yoruba</option>
 <option value="zu">Zulu</option>
 </select>
-<br><br>
-<input type="submit" value="Translate">
-<input type="hidden" name="_x_tr_pto" value="wapp">
-</form>
-
-<p>And then click the "Translate" button.</p>
+<script>
+function myFunction() {
+  window.location.href = "https://victimofleisure-github-io.translate.goog/Polymeter/?_x_tr_sl=en&_x_tr_tl=" + document.getElementById("mySelect").value + "&_x_tr_pto=wapp"
+}
+</script>
 
 <!--  content stops HERE  -->
 </div>
