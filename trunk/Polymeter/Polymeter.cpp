@@ -42,6 +42,7 @@
 		32		30jan24	bump resource version to 13
 		33		27aug24	bump resource version to 14
 		34		10sep24	if missing output device and user cancels, select first device if available
+		35		18dec24	bump resource version to 15
 
 */
 
@@ -79,7 +80,7 @@
 #define RK_TIE_NOTES _T("bTieNotes")
 #define RK_RESOURCE_VERSION _T("nResourceVersion")
 
-const int CPolymeterApp::m_nNewResourceVersion = 14;	// update if resource change breaks customization
+const int CPolymeterApp::m_nNewResourceVersion = 15;	// update if resource change breaks customization
 
 #include "HelpIDs.h"	// help IDs generated automatically by doc2web
 const CPolymeterApp::HELP_RES_MAP CPolymeterApp::m_HelpResMap[] = {

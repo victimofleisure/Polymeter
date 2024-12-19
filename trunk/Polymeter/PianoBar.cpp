@@ -26,6 +26,7 @@
 		16		17dec22	use lParam macros in parent notify handler
 		17		23feb23	make prompting for channel selection public
 		18		25sep23	fix warning in SetChannelFilter
+		19		18dec24	make select channels command available to customize
 
 */
 
@@ -607,6 +608,7 @@ BEGIN_MESSAGE_MAP(CPianoBar, CMyDockablePane)
 	ON_COMMAND(ID_PIANO_COLOR_VELOCITY, OnColorVelocity)
 	ON_UPDATE_COMMAND_UI(ID_PIANO_COLOR_VELOCITY, OnUpdateColorVelocity)
 	ON_COMMAND(ID_PIANO_INSERT_TRACK, OnInsertTrack)
+	ON_COMMAND(ID_PIANO_SELECT_CHANNELS, OnSelectChannels)
 	ON_MESSAGE(UWM_PIANOKEYPRESS, OnPianoKeyPress)
 	ON_MESSAGE(UWM_MIDI_EVENT, OnMidiEvent)
 END_MESSAGE_MAP()
@@ -700,6 +702,7 @@ void CPianoBar::OnContextMenu(CWnd* pWnd, CPoint point)
 	// create channel submenu
 	pSubMenu = pPopup->GetSubMenu(SM_CHANNEL);
 	ASSERT(pSubMenu != NULL);
+	pSubMenu->RemoveMenu(MF_BYCOMMAND, ID_PIANO_SELECT_CHANNELS);	// exists only for customizing UI
 	CStringArrayEx	arrItemStr;	// menu item strings
 	arrItemStr.SetSize(MIDI_CHANNELS + 2);	// two extra items, one for wildcard, one for multi
 	arrItemStr[0] = LDS(IDS_FILTER_ALL);	// wildcard comes first
@@ -722,6 +725,7 @@ void CPianoBar::OnContextMenu(CWnd* pWnd, CPoint point)
 	theApp.MakePopup(*pSubMenu, SMID_OUTPUT_CHANNEL_FIRST, arrItemStr, m_iOutputChannel + 1);
 	// make piano size submenu
 	pSubMenu = pPopup->GetSubMenu(SM_PIANO_SIZE);
+	ASSERT(pSubMenu != NULL);
 	arrItemStr.SetSize(PIANO_SIZES);
 	for (int iItem = 0; iItem < PIANO_SIZES; iItem++) {
 		s.Format(_T("%d"), m_arrPianoRange[iItem].nKeyCount);
@@ -865,6 +869,11 @@ void CPianoBar::OnInsertTrack()
 	CPoint	pt(m_ptContextMenu);
 	ScreenToClient(&pt);
 	InsertTrackFromPoint(pt);
+}
+
+void CPianoBar::OnSelectChannels()
+{
+	OnFilterChannel(SMID_FILTER_CHANNEL_FIRST + 1 + MIDI_CHANNELS);
 }
 
 LRESULT CPianoBar::OnPianoKeyPress(WPARAM wParam, LPARAM lParam)

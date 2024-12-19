@@ -39,6 +39,8 @@
 		29		27feb23	optimize channel selection
 		30		20sep23	move use Cairo flag to app options
 		31		19dec23	replace track type member usage with accessor
+		32		18dec24	allow all unchecked in modulation type dialog
+		33		18dec24	make filter and channels available to customize
 
 */
 
@@ -790,6 +792,7 @@ void CGraphBar::DoContextMenu(CWnd* pWnd, CPoint point)
 	// create graph filter submenu
 	pSubMenu = pPopup->GetSubMenu(SM_GRAPH_FILTER);
 	ASSERT(pSubMenu != NULL);
+	pSubMenu->RemoveMenu(MF_BYCOMMAND, ID_GRAPH_SELECT_MODULATION_TYPES);	// exists only for customizing UI
 	arrItemStr.SetSize(GRAPH_FILTERS);
 	arrItemStr[0] = LDS(IDS_FILTER_ALL);	// wildcard comes first
 	for (int iItem = 0; iItem < CTrack::MODULATION_TYPES; iItem++) {	// for each modulation type
@@ -799,6 +802,8 @@ void CGraphBar::DoContextMenu(CWnd* pWnd, CPoint point)
 	theApp.MakePopup(*pSubMenu, SMID_GRAPH_FILTER_FIRST, arrItemStr, m_iGraphFilter + 1);
 	// create graph channel submenu
 	pSubMenu = pPopup->GetSubMenu(SM_GRAPH_CHANNEL);
+	ASSERT(pSubMenu != NULL);
+	pSubMenu->RemoveMenu(MF_BYCOMMAND, ID_GRAPH_SELECT_CHANNELS);	// exists only for customizing UI
 	arrItemStr.SetSize(MIDI_CHANNELS + 2);	// two extra items, one for wildcard, one for multi
 	arrItemStr[0] = LDS(IDS_FILTER_ALL);	// wildcard comes first
 	CString	s;
@@ -810,6 +815,7 @@ void CGraphBar::DoContextMenu(CWnd* pWnd, CPoint point)
 	theApp.MakePopup(*pSubMenu, SMID_GRAPH_CHANNEL_FIRST, arrItemStr, m_iGraphChannel + 1);
 	// create graph depth submenu
 	pSubMenu = pPopup->GetSubMenu(SM_GRAPH_DEPTH);
+	ASSERT(pSubMenu != NULL);
 	VERIFY(theApp.InsertNumericMenuItems(pSubMenu, ID_GRAPH_DEPTH_MAX, 
 		SMID_GRAPH_DEPTH_FIRST + 1, 1, GRAPH_DEPTHS - 1, true));	// insert after
 	MENUITEMINFO itemInfo;
@@ -1152,7 +1158,6 @@ CGraphBar::CModulationTypeDlg::CModulationTypeDlg(CWnd* pParentWnd) : CDialog(ID
 }
 
 BEGIN_MESSAGE_MAP(CGraphBar::CModulationTypeDlg, CDialog)
-	ON_CLBN_CHKCHANGE(IDC_MOD_TYPE_LIST, OnCheckChangeList)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1172,7 +1177,6 @@ BOOL CGraphBar::CModulationTypeDlg::OnInitDialog()
 		if (m_nModTypeMask & MAKE_MOD_TYPE_MASK(iItem))	// if corresponding bit is set within mask
 			m_list.SetCheck(iItem, BST_CHECKED);	// check list item
 	}
-	GetDlgItem(IDOK)->EnableWindow(m_nModTypeMask != 0);
 	return TRUE;
 }
 
@@ -1185,18 +1189,6 @@ void CGraphBar::CModulationTypeDlg::OnOK()
 	}
 	m_nModTypeMask = nModTypeMask;
 	CDialog::OnOK();
-}
-
-void CGraphBar::CModulationTypeDlg::OnCheckChangeList()
-{
-	bool	bGotChecks = false;
-	for (int iItem = 0; iItem < CTrack::MODULATION_TYPES; iItem++) {	// for each modulation type
-		if (m_list.GetCheck(iItem) & BST_CHECKED) {	// if list item is checked
-			bGotChecks = true;
-			break;	// we're done
-		}
-	}
-	GetDlgItem(IDOK)->EnableWindow(bGotChecks);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1312,6 +1304,8 @@ BEGIN_MESSAGE_MAP(CGraphBar, CMyDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_GRAPH_LEGEND, OnUpdateGraphLegend)
 	ON_COMMAND(ID_GRAPH_SHOW_MUTED, OnGraphShowMuted)
 	ON_UPDATE_COMMAND_UI(ID_GRAPH_SHOW_MUTED, OnUpdateGraphShowMuted)
+	ON_COMMAND(ID_GRAPH_SELECT_MODULATION_TYPES, OnGraphSelectModulationTypes)
+	ON_COMMAND(ID_GRAPH_SELECT_CHANNELS, OnGraphSelectChannels)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1625,4 +1619,14 @@ void CGraphBar::OnGraphShowMuted()
 void CGraphBar::OnUpdateGraphShowMuted(CCmdUI *pCmdUI)
 {
 	pCmdUI->SetCheck(m_bShowMuted);
+}
+
+void CGraphBar::OnGraphSelectModulationTypes()
+{
+	OnGraphFilter(SMID_GRAPH_FILTER_FIRST + 1 + GRAPH_FILTER_MULTI);	// show dialog with check list box
+}
+
+void CGraphBar::OnGraphSelectChannels()
+{
+	OnGraphChannel(SMID_GRAPH_CHANNEL_FIRST + 1 + GRAPH_CHANNEL_MULTI);	// show dialog with check list box
 }

@@ -20,6 +20,7 @@
 		10		24feb23	add channel selection
 		11		26feb23	move Graphviz path to app options
 		12		20sep23	move use Cairo flag to app options
+		13		18dec24	make filter and channels available to customize
 		
 */
 
@@ -104,7 +105,6 @@ protected:
 		virtual void OnOK();
 		enum { IDD = IDD_MODULATION_TYPE };
 		DECLARE_MESSAGE_MAP()
-		afx_msg void OnCheckChangeList();
 		CCheckListBox	m_list;		// check list box control
 	};
 	class CImageExportDlg : public CDialog {
@@ -276,6 +276,8 @@ protected:
 	afx_msg void OnUpdateGraphLegend(CCmdUI *pCmdUI);
 	afx_msg void OnGraphShowMuted();
 	afx_msg void OnUpdateGraphShowMuted(CCmdUI *pCmdUI);
+	afx_msg void OnGraphSelectModulationTypes();
+	afx_msg void OnGraphSelectChannels();
 };
 
 inline bool CGraphBar::IsThreadBusy() const

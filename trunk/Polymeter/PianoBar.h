@@ -19,6 +19,7 @@
 		09		05jul22	add multiple pianos feature
 		10		01dec22	vary orientation with aspect ratio when floating
 		11		23feb23	make prompting for channel selection public
+		12		18dec24	make select channels command available to customize
 
 */
 
@@ -200,6 +201,7 @@ protected:
 	afx_msg void OnColorVelocity();
 	afx_msg void OnUpdateColorVelocity(CCmdUI *pCmdUI);
 	afx_msg void OnInsertTrack();
+	afx_msg void OnSelectChannels();
 	afx_msg LRESULT OnPianoKeyPress(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnMidiEvent(WPARAM wParam, LPARAM lParam);
 };
