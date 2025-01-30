@@ -4975,3 +4975,41 @@ inline bool CTrackBase::CMidiEvent::operator>=(const CMidiEvent &evt) const
 
 Fortunately CMidiEvent::operator> is not used.
 Correcting the error passes the regression test.
+
+1/15/25 PianoRoll view
+
+It works, but is the increased code justified?
+
+1/28/25 Queue modulation
+
+It works, but it's hard to control and seems less useful than hoped.
+Chasing to the start position would be an additional challenge.
+
+TrackDef.h:
+MODTYPEDEF(Queue)
+add string resource: IDS_TRK_Queue "Queue"
+
+GraphBar.h:
+#define MOD_TYPE_COLOR_Queue	"peru"
+
+Track.h:
+	STEP	GetNextStep();
+
+inline CTrackBase::STEP CTrack::GetNextStep()
+{
+	if (m_iNextStep >= GetLength())	// enforce range before access
+		m_iNextStep = 0;
+	return m_arrStep[m_iNextStep++];
+}
+
+Sequencer.cpp:
+	case MT_Queue:
+		arrMod[MT_Queue] = iModSource + 1;
+		break;
+
+	int	iIdx = arrMod[MT_Index];
+	if (arrMod[MT_Queue] > 0) {
+		iIdx += (GetAt(arrMod[MT_Queue] - 1).GetNextStep() & SB_VELOCITY) - MIDI_NOTES / 2;
+	}
+	int	iTone = ModWrap(iIdx, nScaleTones);
+
