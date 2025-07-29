@@ -64,6 +64,7 @@
 		54		01sep24	add per-channel duplicate note methods
 		55		02oct24	fix looping so it doesn't lose time
 		56		07oct24	streamline conditional around adding track events
+		57		29jul25	fix export omits first tempo change after playback
 
 */
 
@@ -279,6 +280,8 @@ inline void CSequencer::ResetCachedParameters()
 		ZeroMemory(m_arrNoteRef, sizeof(m_arrNoteRef));	// zero note reference counts
 	ResetChannelStates();
 	memset(m_arrPrevNote, 0xff, sizeof(m_arrPrevNote));	// init to invalid note
+	m_nAltTempo = 0;	// clear stale data
+	m_fTempoScaling = 1;
 }
 
 inline void CSequencer::ResetChannelStates()
@@ -337,8 +340,6 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 		m_fLatencySecs = m_nLatency / 1000.0;	// invariant while playing
 		UpdateCallbackLength();
 		ResetCachedParameters();
-		m_nAltTempo = 0;
-		m_fTempoScaling = 1;
 		m_nCBTime = m_nStartPos;
 		m_nPosOffset = m_nStartPos;
 		m_iBuffer = 0;
