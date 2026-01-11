@@ -10,16 +10,17 @@ id	open	close	type	description	rev	user
 319	03/04/20		bug	in step view, very long tracks aren't displayed when zoomed in; caused by scroll view's 32-bit limitations		
 348	04/07/20		bug	stopping sequencer occasionally causes MIDI error 65 (still playing); happens every time in Mac Wine		
 349	04/07/20		bug	attempting to open MIDI device that's already open gives misleading out of memory error message		
-352	04/10/20		bug	sequencer is taking too long; probable cause is time-critical winmm thread preempting sequencer callback		
+352	04/10/20		bug	sequencer sometimes takes too long; probable cause is time-critical winmm thread preempting sequencer callback		
 358	04/17/20		bug	Time To Repeat command can take too long, stalling UI; show progress bar or use worker thread		
 376	06/20/20		bug	undoing modulation edit doesn't restore modulation selection; can't without also restoring track selection and Show Differences state		
-392	07/10/20		bug	Alt key commands don't work mode while cursor is hovering over MDI tab; affects stock VS2012 app too		
+392	07/10/20		bug	Alt key commands don't work while cursor is hovering over MDI tab; affects stock VS2012 app too		
 458	07/22/21		bug	song position and loop to/from don't report formatting errors; song length reports errors but doesn't retry		
 515	04/04/22		bug	changing track length via mapped control can cause undo/redo of step array edits to fail		
 532	08/01/22		bug	modulation bar's label tooltip shows stale data if track selection changes		
 565	03/05/23		bug	graph text is too small when system text size is greater than 100%; use Cairo, or FEATURE_96DPI_PIXEL hack		
 580	01/18/24		bug	if app is maximized when it exits, on next launch, docked panes that split a side have incorrect sizes; framework bug		
 581	01/22/24		bug	docking pane tabs don't connect to context help; framework bug		
+605	07/31/25		bug	in export, tempo events could be added instead of inserted, because they're supposedly already in time order		
 1	03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 2	03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 3	03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -466,7 +467,7 @@ id	open	close	type	description	rev	user
 574	12/18/23	12/19/23	done	new track type (internal) for controlling sequencer behaviors such as sustain and all notes off	1.0.14.000	
 575	12/18/23	12/19/23	done	internal controller for per-channel note overlap method (Split versus Merge); MIDI controller 63	1.0.14.000	
 576	12/23/23	12/23/23	done	add mapping target for note overlap method	1.0.14.000	
-581	12/24/23	12/24/23	done	internal sostenuto controller; like sustain, but only holds notes that were on when controller was activated	1.0.14.000	
+605	12/24/23	12/24/23	done	internal sostenuto controller; like sustain, but only holds notes that were on when controller was activated	1.0.14.000	
 569	09/08/23	01/24/24	done	optionally show targets in modulations bar; read-only is good enough for now	1.0.15.000	
 582	01/24/24	01/24/24	done	sequencer's callback overrun error is non-fatal and shouldn't stop playback	1.0.15.000	
 583	01/24/24	01/29/24	done	Modulations bar Targets pane should support editing	1.0.15.001	
@@ -488,6 +489,8 @@ id	open	close	type	description	rev	user
 601	11/04/24	11/04/24	done	sequencer MIDI event's operator> and operator>= are incorrect	1.0.16.004	
 602	12/18/24	12/18/24	done	make piano bar's select channels command available to UI customization; same for graph bar's filter and channels	1.0.16.005	
 603	07/29/25	07/29/25	done	export omits first tempo change after playback, due to stale data in m_nAltTempo	1.0.16.006	
+604	07/30/25	01/11/26	done	console sometimes doesn't work in Release build if run without debugger; create console after base class InitInstance	1.0.17.000	
+606	01/11/26	01/11/26	done	add Distribute checkbox to Insert Group dialog; sequentially distribute one modulation source to each selected target	1.0.17.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -513,7 +516,7 @@ id	open	close	type	description	rev	user
 167	07/26/18		hold	command to shift selected steps up or down one or more tracks		
 168	07/26/18		hold	replace steps, like paste but overwrite steps at insert position instead of shifting them; command or mode?		
 181	07/30/18		hold	optional tool tip in step view showing step's position and value; position in what format? Step index?		
-183	08/02/18		hold	mute tracks in song view; complicates sequencer and song view UI		
+183	08/02/18		hold	mute tracks in song view; complicates sequencer and song view UI; easier to mute instruments in DAW		
 193	09/17/18		hold	step zoom via Ctrl + mouse wheel doesn't work unless step view has focus; default OS behavior		
 194	09/17/18		hold	in step view, add command to select all steps of selected tracks		
 200	09/23/18		hold	ReadEnum should report undefined strings as errors? More accurate, but less robust		
@@ -554,7 +557,7 @@ id	open	close	type	description	rev	user
 477	11/13/21		hold	modulation types filter dialog should be modeless or at least have a preview option		
 494	01/18/22		hold	insert modulators command; create appropriately initialized modulator track(s) of specified type		
 503	02/01/22		hold	indicate MIDI input activity in the status bar; per-channel indicators would be helpful too		
-507	02/09/22		hold	sequence modulation; similar to index modulation, but returns next step regardless of song position		
+507	02/09/22		hold	sequence or queue modulation; similar to index modulation, but returns next step regardless of song position		
 510	02/13/22		hold	in Wine, Phase bar doesn't work at all, likely due to its use of Direct2D		Wine
 511	02/13/22		hold	in Wine, HTML help's Contents and Index tabs are empty, but Search works and all topics are present		Wine
 512	02/13/22		hold	in Wine, MIDI devices added while app is running don't appear until the app is exited and restarted		Wine
@@ -593,3 +596,4 @@ id	open	close	type	description	rev	user
 577	12/29/23		punt	add option to ignore sequencer errors during playback; no need now that callback overrun is only a warning		
 579	01/15/24		punt	Check Modulations should report unused modulators; dubious as they're not actually an error		
 592	04/04/24		punt	Create Modulation dialog should have types on the left and tracks on the right, to match modulations bar column order		
+607	01/11/26		todo	add notes view showing output note sequence in piano roll format		

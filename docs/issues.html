@@ -141,7 +141,7 @@
 <TD>04/10/20</TD>
 <TD>&nbsp;</TD>
 <TD>bug</TD>
-<TD>sequencer is taking too long; probable cause is time-critical winmm thread preempting sequencer callback</TD>
+<TD>sequencer sometimes takes too long; probable cause is time-critical winmm thread preempting sequencer callback</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -168,7 +168,7 @@
 <TD>07/10/20</TD>
 <TD>&nbsp;</TD>
 <TD>bug</TD>
-<TD>Alt key commands don't work mode while cursor is hovering over MDI tab; affects stock VS2012 app too</TD>
+<TD>Alt key commands don't work while cursor is hovering over MDI tab; affects stock VS2012 app too</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -223,6 +223,15 @@
 <TD>&nbsp;</TD>
 <TD>bug</TD>
 <TD>docking pane tabs don't connect to context help; framework bug</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TH>605</TH>
+<TD>07/31/25</TD>
+<TD>&nbsp;</TD>
+<TD>bug</TD>
+<TD>in export, tempo events could be added instead of inserted, because they're supposedly already in time order</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -4241,7 +4250,7 @@
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
-<TH>581</TH>
+<TH>605</TH>
 <TD>12/24/23</TD>
 <TD>12/24/23</TD>
 <TD>done</TD>
@@ -4436,6 +4445,24 @@
 <TD>done</TD>
 <TD>export omits first tempo change after playback, due to stale data in m_nAltTempo</TD>
 <TD>1.0.16.006</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TH>604</TH>
+<TD>07/30/25</TD>
+<TD>01/11/26</TD>
+<TD>done</TD>
+<TD>console sometimes doesn't work in Release build if run without debugger; create console after base class InitInstance</TD>
+<TD>1.0.17.000</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TH>606</TH>
+<TD>01/11/26</TD>
+<TD>01/11/26</TD>
+<TD>done</TD>
+<TD>add Distribute checkbox to Insert Group dialog; sequentially distribute one modulation source to each selected target</TD>
+<TD>1.0.17.000</TD>
 <TD>&nbsp;</TD>
 </TR>
 <TR VALIGN=TOP>
@@ -4668,7 +4695,7 @@
 <TD>08/02/18</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>mute tracks in song view; complicates sequencer and song view UI</TD>
+<TD>mute tracks in song view; complicates sequencer and song view UI; easier to mute instruments in DAW</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -5037,7 +5064,7 @@
 <TD>02/09/22</TD>
 <TD>&nbsp;</TD>
 <TD>hold</TD>
-<TD>sequence modulation; similar to index modulation, but returns next step regardless of song position</TD>
+<TD>sequence or queue modulation; similar to index modulation, but returns next step regardless of song position</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>
@@ -5380,6 +5407,15 @@
 <TD>&nbsp;</TD>
 <TD>punt</TD>
 <TD>Create Modulation dialog should have types on the left and tracks on the right, to match modulations bar column order</TD>
+<TD>&nbsp;</TD>
+<TD>&nbsp;</TD>
+</TR>
+<TR VALIGN=TOP>
+<TH>607</TH>
+<TD>01/11/26</TD>
+<TD>&nbsp;</TD>
+<TD>todo</TD>
+<TD>add notes view showing output note sequence in piano roll format</TD>
 <TD>&nbsp;</TD>
 <TD>&nbsp;</TD>
 </TR>

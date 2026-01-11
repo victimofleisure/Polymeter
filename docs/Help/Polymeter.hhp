@@ -601,6 +601,7 @@ IDH_Reference_Errors_Callback_Too_Long = Reference/Errors.htm#Callback_Too_Long
 IDH_Reference_Errors_User_interface_errors = Reference/Errors.htm#User_interface_errors
 IDH_Reference_Errors_Bad_Format = Reference/Errors.htm#Bad_Format
 IDH_Reference_Errors_Bad_Step_Selection = Reference/Errors.htm#Bad_Step_Selection
+IDH_Reference_Errors_Cant_Distribute = Reference/Errors.htm#Cant_Distribute
 IDH_Reference_Errors_Cant_Truncate_Recording = Reference/Errors.htm#Cant_Truncate_Recording
 IDH_Reference_Errors_Clip_Warning = Reference/Errors.htm#Clip_Warning
 IDH_Reference_Errors_Convergence_Out_of_Range = Reference/Errors.htm#Convergence_Out_of_Range

@@ -5013,3 +5013,98 @@ Sequencer.cpp:
 	}
 	int	iTone = ModWrap(iIdx, nScaleTones);
 
+7/31/25 Piano roll view
+
+This complicated idea consists of two separate proposals: a live note viewer,
+and a precalculated sequence viewer. They appear superficially similar, and
+both show the sequencer's output notes, but they operate very differently.
+
+The live note viewer is similar to a MIDI visualizer such as MidiTrail, with
+new notes scrolling in horizontally from the right edge. A crucial difference
+is that unlike such visualizers, which typically show future notes as well as
+past ones, the equivalent Polymeter view doesn't have access to future notes,
+and can therefore only show past ones, similar to the MIDI output event view.
+
+The precalculated sequence viewer already exists as a standalone app called
+MidiRoll. Unlike the live note viewer, it can show the future, but only up to
+the time limit of the precalculated sequence. The longer the sequence is, the
+more of the future is accessible, at the cost of increased computation time.
+
+Based on experiments, the sequence viewer seems the more useful of the two.
+The live note viewer can be frustrating to watch due to its inability to show
+the future. The scrolling is also potentially nausea-inducing, depending on
+its speed, which increases the further the view is zoomed in horizontally.
+
+The live note viewer's main advantage is that it shows what actually happened.
+By comparison, the sequence viewer is constantly rewriting history; if a
+change is made to the document, the entire sequence is updated as if that
+change had always been in effect.
+
+The futureless nature of a live note viewer can only be avoided by showing 
+a precalculated sequence, while the Orwellian nature of a sequence viewer
+can only be avoided by showing live notes. The two views are conceptually
+distinct and have fundamentally different objectives. The live note viewer
+is a *recording*, whereas the sequencer viewer is a *projection*.
+
+A long-standing issue with the Polymeter sequencer is that it can't show you
+the impact of a given edit played forward in time. You can listen to the
+resulting sequence, and watch it play on one or more piano keyboards, or in
+the MIDI event view, but none of those can show you the future, because they
+all share the same data source: the stream of live MIDI events emanating from
+the sequencer.
+
+The sequence viewer would solve this problem. Unlike any existing view, it
+would let you immediately visualize your edits without having to play the
+resulting sequence in real time, and this is arguably quite useful.
+
+The main implementation challenge is that it's computationally expensive to
+calculate the sequence, and the cost is incurred for every edit. The cost
+is also proportional to sequence length and complexity, and this requires
+special consideration due to the sequencer's unusual nature. Creation of
+very long patterns is one of Polymeter's main design goals, and its extant
+views are unaffected by pattern length. By comparison, the ability of a
+sequence viewer to show long patterns is inherently limited. The more of
+the sequence is calculated, the longer the lag between the edit and its
+visualization becomes. There's no way around this tradeoff.
+
+The best we can do is offload the work of calculating the sequence onto a
+worker thread, so that the user interface stays responsive. It's necessary
+to copy the track data, but that's very fast according to benchmarks, around
+50 microseconds, and the overhead of launching the worker thread is also
+negligible. This multi-threaded model is already exploited to compute the
+modulation graph, which similarly can take considerable time.
+
+The sequence viewer's latency is proportional to both song length and track
+complexity, and can be improved by reducing either. The user may only want to
+visualize a subset of the tracks anyway, and in such cases, muting the tracks
+that aren't of interest will reduce the workload and thereby improve latency.
+
+Performance may be improved by skipping controller tracks, as processing them
+can be expensive due to their potentially extreme event density, and a note
+visualization excludes control events anyway.
+
+Performance could also be improved by doing the export to memory instead of
+writing and reading a MIDI file, which incurs needless processing costs. The
+MidiRoll app wants all the MIDI notes in a single array, and currently must
+combine the MIDI file's per-channel arrays, necessitating a time-wasting sort.
+It would be more efficient to export all the events to a single array, so that
+they're already in the form the view wants, with no sorting required. This
+would also avoid the regression risks of reconfiguring the existing export.
+
+9/16/25 scaling dub times
+
+The following code is useful if you need to change the denominator of a
+composition's meter, for example from half notes to quarter notes, though
+the operation is lossy for any dub times that aren't evenly divisible.
+
+for (int iTrack = 0; iTrack < GetTrackCount(); iTrack++) {	// for each track
+	CTrack	trk(m_Seq.GetTrack(iTrack));
+	for (int iDub = 0; iDub < trk.m_arrDub.GetSize(); iDub++) {
+		CDub&	dub = trk.m_arrDub[iDub];
+		dub.m_nTime /= 2; // or any other suitable divisor
+	}
+	m_Seq.SetTrack(iTrack, trk);
+	m_Seq.SetQuant(iTrack, m_Seq.GetQuant(iTrack) / 2);
+	UpdateAllViews(NULL);
+	SetModifiedFlag();
+}
