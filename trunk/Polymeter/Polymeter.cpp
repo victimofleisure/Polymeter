@@ -43,6 +43,8 @@
 		33		27aug24	bump resource version to 14
 		34		10sep24	if missing output device and user cancels, select first device if available
 		35		18dec24	bump resource version to 15
+		36		11jan26	create console after base class init instance
+		37		11jan26	bump resource version to 16
 
 */
 
@@ -80,7 +82,7 @@
 #define RK_TIE_NOTES _T("bTieNotes")
 #define RK_RESOURCE_VERSION _T("nResourceVersion")
 
-const int CPolymeterApp::m_nNewResourceVersion = 15;	// update if resource change breaks customization
+const int CPolymeterApp::m_nNewResourceVersion = 16;	// update if resource change breaks customization
 
 #include "HelpIDs.h"	// help IDs generated automatically by doc2web
 const CPolymeterApp::HELP_RES_MAP CPolymeterApp::m_HelpResMap[] = {
@@ -120,9 +122,6 @@ CPolymeterApp theApp;
 
 BOOL CPolymeterApp::InitInstance()
 {
-#ifdef _DEBUG
-	Win32Console::Create();
-#endif
 	// InitCommonControlsEx() is required on Windows XP if an application
 	// manifest specifies use of ComCtl32.dll version 6 or later to enable
 	// visual styles.  Otherwise, any window creation will fail.
@@ -134,7 +133,9 @@ BOOL CPolymeterApp::InitInstance()
 	InitCommonControlsEx(&InitCtrls);
 
 	CWinAppEx::InitInstance();
-
+#ifdef _DEBUG
+	Win32Console::Create();
+#endif
 
 	// Initialize OLE libraries
 	if (!AfxOleInit())

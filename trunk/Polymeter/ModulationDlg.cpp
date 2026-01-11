@@ -9,6 +9,7 @@
 		rev		date	comments
         00      15apr20	initial version
 		01		29jan24	add select targets flag
+		02		11jan26	add distribute checkbox
 
 */
 
@@ -21,6 +22,7 @@
 
 CModulationDlg::CModulationDlg(CPolymeterDoc *pDoc, CWnd* pParentWnd /*=NULL*/) 
 	: CDialog(IDD, pParentWnd)
+	, m_bDistribute(FALSE)
 {
 	ASSERT(pDoc != NULL);
 	m_pDoc = pDoc;
@@ -44,6 +46,7 @@ void CModulationDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_MODULATION_SOURCE_LIST, m_listSource);
 	DDX_Control(pDX, IDC_MODULATION_TYPE_LIST, m_listType);
+	DDX_Check(pDX, IDC_MODULATION_DISTRIBUTE, m_bDistribute);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -80,6 +83,13 @@ BOOL CModulationDlg::OnInitDialog()
 
 void CModulationDlg::OnOK()
 {
+	if (IsDlgButtonChecked(IDC_MODULATION_DISTRIBUTE)) {	// if distributing sources
+		// can't distribute unless source count matches target count
+		if (m_listSource.GetSelCount() != m_pDoc->GetSelectedCount()) {
+			AfxMessageBox(IDS_MODULATION_CANT_DISTRIBUTE);
+			return;
+		}
+	}
 	CDialog::OnOK();
 	int	iType = m_listType.GetCurSel();
 	if (iType >= 0) {	// if valid modulation type selection

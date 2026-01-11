@@ -9,6 +9,7 @@
 		rev		date	comments
         00      15apr20	initial version
 		01		29jan24	add select targets flag
+		02		11jan26	add distribute checkbox
 
 */
 
@@ -53,4 +54,5 @@ public:
 	virtual void OnOK();
 	LRESULT OnKickIdle(WPARAM, LPARAM);
 	void OnUpdateOK(CCmdUI *pCmdUI);
+	BOOL m_bDistribute;
 };

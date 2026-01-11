@@ -955,6 +955,7 @@ BEGIN
     LISTBOX         IDC_MODULATION_SOURCE_LIST,7,17,150,134,LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_TABSTOP
     LTEXT           "&Type:",IDC_STATIC,166,7,20,8
     LISTBOX         IDC_MODULATION_TYPE_LIST,166,17,80,134,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Distribute",IDC_MODULATION_DISTRIBUTE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,158,47,10
     DEFPUSHBUTTON   "OK",IDOK,142,157,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,196,157,50,14
 END
@@ -2027,7 +2028,8 @@ STRINGTABLE
 BEGIN
     AFX_IDS_SCRESTORE       "Restore the window to normal size"
     AFX_IDS_SCTASKLIST      "Activate Task List"
-    AFX_IDS_MDICHILD        "Activate this window"
+    IDS_MODULATION_CANT_DISTRIBUTE 
+                            "Can't distribute unless source count matches target count."
 END
 
 #endif    // English (United States) resources

@@ -96,6 +96,7 @@
 		86		16feb24	move track color message handlers here
 		87		25feb24	disable next and prev convergence if no tracks
 		88		01sep24	add duplicate note methods; bump file version to 22
+		89		11jan26	in CreateModulation, add distribute option
 
 */
 
@@ -4005,7 +4006,13 @@ void CPolymeterDoc::CreateModulation(int iSelItem, bool bSelTargets)
 			int	iMod = iSelItem;
 			if (iMod < 0)	// if no selection
 				iMod = m_Seq.GetModulationCount(iTrack);	// append
-			m_Seq.InsertModulations(iTrack, iMod, dlg.m_arrMod);	// insert modulation array
+			if (dlg.m_bDistribute) {	// if distributing
+				// sequentially distribute one source to each selected track
+				if (iTrackSel < dlg.m_arrMod.GetSize())	// if index within range
+					m_Seq.InsertModulation(iTrack, iMod, dlg.m_arrMod[iTrackSel]);
+			} else {	// add all sources to selected tracks
+				m_Seq.InsertModulations(iTrack, iMod, dlg.m_arrMod);	// insert modulation array
+			}
 		}
 		if (pSaveTrackSel != NULL)	// if track selection was saved
 			pSaveTrackSel.Free();	// restore track selection before updating views
