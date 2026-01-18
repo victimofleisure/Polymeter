@@ -1162,6 +1162,8 @@
 
 <p>A step selection may be entirely within one track, or may span multiple tracks, in other words it can be one-dimensional or two-dimensional. A multi-track step selection is created using a diagonal motion: right-click one of its corners, and then while keeping the right mouse button pressed, move the pointer to the diagonally opposite corner, and then release the right mouse button.
 
+<p>An existing selection can be extended or trimmed. While holding down the <span class="key">Shift</span> key, right-click the step that should be the new corner or edge of the selection. If that step is within the selection, the selection is trimmed, otherwise it's extended. This feature is useful for precisely selecting a large area: First do a rough cut by drag selecting while zoomed out, and then refine it by zooming into the selection's borders and extending or trimming them as needed.
+
 <p>Some commands only accept a <em>rectangular</em> step selection. A multi-track step selection is rectangular if all of its rows contain the same number of steps. This isn't necessarily the case if the tracks involved have different lengths, particularly if you select near the end of such tracks. If the step selection isn't rectangular, and you try to execute a command that requires it to be rectangular, you'll get the error message "Invalid step selection." For example, the <a href="#Standard_editing_commands">standard editing commands</a> only accept a rectangular step selection.
 
 <p>Some commands can operate on either a <a href="#Track_Selection">track selection</a> or a step selection. For such commands, if a step selection exists, it has priority over the track selection, meaning the track selection is ignored in that case. This can potentially cause confusion, particularly if the steps area is scrolled so that the step selection is no longer visible.
@@ -2082,7 +2084,7 @@
 
 <a name="Input_Quantization"><h3>Input Quantization</h3></a>
 
-<p>This is the quantization for converting MIDI input to steps. It's used when <a href="#Import">importing</a> a MIDI file, and also by the <a href="#Record_Tracks">Record Tracks</a> command.
+<p>This is the quantization for converting MIDI input to steps. It's used when <a href="#Import">importing</a> a MIDI file, and also by the <a href="#Record_Tracks">Record Tracks</a> command. It can be set to none, in which case the input is converted to the finest resolution available in the current <a href="#Timebase">timebase</a>, which is a <a href="#Track_Quant">Quant</a> of one tick.
 
 <a name="Record_Input"><h3>Record Input</h3></a>
 

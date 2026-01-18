@@ -917,6 +917,8 @@ Many commands operate on a contiguous range of selected @[steps]. Steps are sele
 
 A step selection may be entirely within one track, or may span multiple tracks, in other words it can be one-dimensional or two-dimensional. A multi-track step selection is created using a diagonal motion: right-click one of its corners, and then while keeping the right mouse button pressed, move the pointer to the diagonally opposite corner, and then release the right mouse button.
 
+An existing selection can be extended or trimmed. While holding down the @{key}Shift@} key, right-click the step that should be the new corner or edge of the selection. If that step is within the selection, the selection is trimmed, otherwise it's extended. This feature is useful for precisely selecting a large area: First do a rough cut by drag selecting while zoomed out, and then refine it by zooming into the selection's borders and extending or trimming them as needed.
+
 Some commands only accept a <em>rectangular</em> step selection. A multi-track step selection is rectangular if all of its rows contain the same number of steps. This isn't necessarily the case if the tracks involved have different lengths, particularly if you select near the end of such tracks. If the step selection isn't rectangular, and you try to execute a command that requires it to be rectangular, you'll get the error message "Invalid step selection." For example, the @[standard editing commands] only accept a rectangular step selection.
 
 Some commands can operate on either a @[track selection] or a step selection. For such commands, if a step selection exists, it has priority over the track selection, meaning the track selection is ignored in that case. This can potentially cause confusion, particularly if the steps area is scrolled so that the step selection is no longer visible.
@@ -1841,7 +1843,7 @@ This is the default note velocity or controller value for new @[steps].
 
 @topic Input Quantization
 
-This is the quantization for converting MIDI input to steps. It's used when @[import\importing] a MIDI file, and also by the @[Record Tracks] command.
+This is the quantization for converting MIDI input to steps. It's used when @[import\importing] a MIDI file, and also by the @[Record Tracks] command. It can be set to none, in which case the input is converted to the finest resolution available in the current @[timebase], which is a @[track quant\Quant] of one tick.
 
 @topic Record Input
 

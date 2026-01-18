@@ -5108,3 +5108,50 @@ for (int iTrack = 0; iTrack < GetTrackCount(); iTrack++) {	// for each track
 	UpdateAllViews(NULL);
 	SetModifiedFlag();
 }
+
+1/17/26 zoom out step view issue
+
+When steps are too narrow, it's necessary to iterate the steps
+for each pixel and accumulate (OR) the step and and step color.
+
+if (fStepWidth >= MIN_GRID_STEP_WIDTH) {	// if steps are wide enough to iterate steps
+
+	the usual method ...
+
+} else {	// steps are too narrow, so iterate pixels instead of steps
+	x1 = rClipSteps.left;
+	x2 = rClipSteps.right;
+	int	iStep1 = Round(x1 / fStepWidth);
+	iStep1 = CLAMP(iStep1, 0, nTrackSteps - 1);
+	for (int x = x1; x < x2; x++) {	// for each invalid pixel
+		int	iStep2 = Round((x + 1) / fStepWidth);
+		iStep2 = CLAMP(iStep2, 0, nTrackSteps - 1);
+		int	iAccStepColor = 0;	// accumulate step color via ORing
+		for (int iStep = iStep1; iStep < iStep2; iStep++) {
+			STEP	nStep = seq.GetStep(iTrack, iStep);
+			iAccStepColor |= GetStepColorIdx(iTrack, iStep, nStep, bMute);
+		}
+		DrawStep(pDC, x, y1 + 1, 1, y2 - y1 - 1, 0, iAccStepColor, iTrackType);
+		iStep1 = iStep2;
+	}
+}
+
+This also requires a change to GetStepRect:
+
+	int	x1, x2;
+	if (fStepWidth >= MIN_GRID_STEP_WIDTH) {
+		x1 = Round(iStep * fStepWidth);
+		x2 = Round((iStep + 1) * fStepWidth);
+	} else {
+		x1 = Round(floor(iStep * fStepWidth));
+		x2 = Round(ceil((iStep + 1) * fStepWidth));
+	}
+	int	nStepWidth = x2 - x1;
+
+// simpler but wasteful version of UpdateSelection(CPoint point)
+if (rStepSel != m_rStepSel) {	// if rectangular step selection changed
+	CRect	rUnion;
+	VERIFY(rUnion.UnionRect(m_rStepSel, rStepSel));
+	m_rStepSel = rStepSel;
+	UpdateSteps(rUnion);
+}

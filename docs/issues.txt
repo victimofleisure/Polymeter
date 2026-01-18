@@ -491,6 +491,10 @@ id	open	close	type	description	rev	user
 603	07/29/25	07/29/25	done	export omits first tempo change after playback, due to stale data in m_nAltTempo	1.0.16.006	
 604	07/30/25	01/11/26	done	console sometimes doesn't work in Release build if run without debugger; create console after base class InitInstance	1.0.17.000	
 606	01/11/26	01/11/26	done	add Distribute checkbox to Insert Group dialog; sequentially distribute one modulation source to each selected target	1.0.17.000	
+608	01/16/26	01/18/26	done	in step view, zooming out can cause vertical grid lines to cover step data and stall UI	1.0.17.002	
+609	01/16/26	01/18/26	done	MIDI file import should process each input track separately instead of merging them	1.0.17.002	
+610	01/16/26	01/18/26	done	MIDI file import needs an option to disable quantization	1.0.17.002	
+611	01/17/26	01/18/26	done	in step and song views, Shift + right click within selection should trim selection	1.0.17.002	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
