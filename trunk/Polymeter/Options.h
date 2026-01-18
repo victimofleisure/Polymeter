@@ -10,6 +10,7 @@
         00      27mar18	initial version
 		01		20feb19	rename option info vars
 		02		03jun20	add record input options
+		03		18jan26	allow unquantized MIDI input
 		
 */
 
@@ -54,6 +55,7 @@ public:
 	double	GetZoomDeltaFrac() const;
 	static	int		GetInputQuantization(int iInQuant);
 	int		GetInputQuantization() const;
+	double	GetInputQuantizationFrac() const;
 	bool	IsRecordDubs() const;
 	bool	IsRecordMidi() const;
 
@@ -88,12 +90,18 @@ inline int COptions::GetInputQuantization(int iInQuant)
 {
 	ASSERT(iInQuant >= 0 && iInQuant < INPUT_QUANTS);
 	iInQuant = CLAMP(iInQuant, 0, INPUT_QUANTS - 1);	// clamp index to valid range
-	return m_arrInputQuant[iInQuant];
+	return m_arrInputQuant[iInQuant];	// may be zero, meaning unquantized
 }
 
 inline int COptions::GetInputQuantization() const
 {
 	return GetInputQuantization(m_Midi_iInputQuant);
+}
+
+inline double COptions::GetInputQuantizationFrac() const
+{
+	int	nQuant = GetInputQuantization(m_Midi_iInputQuant);
+	return nQuant ? 4.0 / nQuant : 0;	// fraction of a whole note, or zero if no quantization
 }
 
 inline bool COptions::IsRecordDubs() const

@@ -33,6 +33,7 @@
 		23		19may22	loop on cell selection must account for start position
 		24		19may22	add ruler selection
 		25		16jun22	don't delay initial zoom, move to OnInitialUpdate
+		26		18jan26	add cell selection trimming
 
 */
 
@@ -767,12 +768,22 @@ void CSongView::OnRButtonDown(UINT nFlags, CPoint point)
 	int	iCell;
 	int	iTrack = HitTest(point, iCell);
 	if (iTrack >= 0 && iCell >= 0) {	// if hit on cell
-		SetCapture();
-		m_nDragState = DS_TRACK;
-		if ((nFlags & MK_SHIFT) && HaveSelection()) {	// if shift key down and cell selection exists
-			m_rCellSel.UnionRect(m_rCellSel, CRect(CPoint(iCell, iTrack), CSize(1, 1)));
-			UpdateCells(m_rCellSel);	// set selection to union of existing selection and cell at cursor
-		} else {
+		if (nFlags & MK_SHIFT) {	// if shift key down 
+			if (HaveSelection()) {	// if cell selection exists
+				CPoint	ptHitCell(iCell, iTrack);
+				if (m_rCellSel.PtInRect(ptHitCell)) {	// if hit is within cell selection
+					CRect	rOldCellSel(m_rCellSel);	// save selection for updating
+					CStepView::TrimRect(m_rCellSel, ptHitCell);	// trim selection to hit cell
+					UpdateCells(rOldCellSel);	// update old selection, which contains new one
+				} else {	// hit is outside cell selection
+					// grow selection; set it to union of existing selection and hit cell
+					m_rCellSel.UnionRect(m_rCellSel, CRect(ptHitCell, CSize(1, 1)));
+					UpdateCells(m_rCellSel);
+				}
+			}
+		} else {	// shift key up
+			SetCapture();
+			m_nDragState = DS_TRACK;
 			m_ptDragOrigin = point + GetScrollPosition();	// include scrolling
 			ResetSelection();	// reset selection
 			m_rCellSel = CRect(CPoint(iCell, iTrack), CSize(1, 1));

@@ -11,6 +11,7 @@
 		01		20feb19	rename option info vars
 		02		03jun20	add record input options
 		03		08jun21	add space between concatenated string literals
+		04		18jan26	allow unquantized MIDI input
 		
 */
 
@@ -121,8 +122,12 @@ CString	COptions::GetOptionName(int iProp, int iOption) const
 		}
 	case PROP_Midi_iInputQuant:
 		{
+			int	nQuant = GetInputQuantization(iOption);
 			CString	sName;
-			sName.Format(_T("1/%d"), GetInputQuantization(iOption));
+			if (nQuant)
+				sName.Format(_T("1/%d"), GetInputQuantization(iOption));
+			else
+				sName.LoadString(IDS_NONE);
 			return sName;
 		}
 	default:

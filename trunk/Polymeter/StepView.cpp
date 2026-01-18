@@ -18,6 +18,8 @@
 		08		19may22	add ruler selection
 		09		16jun22	don't delay initial zoom, move to OnInitialUpdate
 		10		13dec23	fix invalid selection error after track length change
+		11		17jan26	if steps are too narrow, iterate pixels instead of steps
+		12		18jan26	add step selection trimming
 
 */
 
@@ -404,8 +406,14 @@ void CStepView::GetGridRect(int iTrack, CRect& rStep) const
 void CStepView::GetStepRect(int iTrack, int iStep, CRect& rStep) const
 {
 	double	fStepWidth = GetStepWidth(iTrack);
-	int	x1 = Round(iStep * fStepWidth);
-	int	x2 = Round((iStep + 1) * fStepWidth);
+	int	x1, x2;
+	if (fStepWidth >= MIN_GRID_STEP_WIDTH) {	// if steps are wide enough
+		x1 = Round(iStep * fStepWidth);
+		x2 = Round((iStep + 1) * fStepWidth);
+	} else {	// steps are too narrow
+		x1 = Round(floor(iStep * fStepWidth));
+		x2 = Round(ceil((iStep + 1) * fStepWidth));
+	}
 	int	nStepWidth = x2 - x1;
 	CPoint	ptStep(CPoint(x1, GetTrackY(iTrack)) - GetScrollPosition());
 	rStep = CRect(ptStep, CSize(nStepWidth, m_nTrackHeight));
@@ -420,7 +428,7 @@ void CStepView::GetStepsRect(int iTrack, CIntRange rngSteps, CRect& rSteps) cons
 	if (iEndStep > iStep) {
 		CRect	rEndStep;
 		GetStepRect(iTrack, iEndStep, rEndStep);
-		rSteps.UnionRect(rSteps, rEndStep);
+		rSteps.right = rEndStep.right;
 	}
 }
 
@@ -631,19 +639,35 @@ void CStepView::UpdateSongPosition()
 		int	iEndTrack = (ptScroll.y + rClient.Height()) / m_nTrackHeight;
 		int	nTracks = seq.GetTrackCount();
 		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+			double	fStepWidth = 0;
 			int	iNewStep = seq.GetStepIndex(iTrack, nPos);
 			int	iOldStep = m_arrTrackState[iTrack].m_iCurStep;
 			if (iNewStep != iOldStep) {	// if current step changed
 				bool	bIsTrackVisible = iTrack >= iStartTrack && iTrack <= iEndTrack;	// optimization
 				if (iOldStep >= 0) {	// if old current step valid
 					m_arrTrackState[iTrack].m_iCurStep = -1;	// draw depends on this
-					if (bIsTrackVisible)	// if track is visible
-						DrawClippedStep(&dc, rClient, seq, iTrack, iOldStep);	// remove highlight
+					if (bIsTrackVisible) {	// if track is visible
+						fStepWidth = GetStepWidth(iTrack);
+						if (fStepWidth >= MIN_GRID_STEP_WIDTH) {	// if steps are wide enough
+							DrawClippedStep(&dc, rClient, seq, iTrack, iOldStep);	// remove highlight
+						} else {	// steps are too narrow
+							UpdateStep(iTrack, iOldStep);
+							UpdateWindow();	// paint now to avoid large update rectangle
+						}
+					}
 				}
 				m_arrTrackState[iTrack].m_iCurStep = iNewStep;
 				if (iNewStep >= 0) {	// if new current step valid
-					if (bIsTrackVisible)	// if track is visible
-						DrawClippedStep(&dc, rClient, seq, iTrack, iNewStep);	// add highlight
+					if (bIsTrackVisible) {	// if track is visible
+						if (!fStepWidth)
+							fStepWidth = GetStepWidth(iTrack);
+						if (fStepWidth >= MIN_GRID_STEP_WIDTH) {	// if steps are wide enough
+							DrawClippedStep(&dc, rClient, seq, iTrack, iNewStep);	// add highlight
+						} else {	// steps are too narrow
+							UpdateStep(iTrack, iNewStep);
+							UpdateWindow();	// paint now to avoid large update rectangle
+						}
+					}
 				}
 			}
 		}
@@ -857,26 +881,51 @@ void CStepView::OnDraw(CDC* pDC)
 				CRect	rSteps(CPoint(0, y1), CSize(Round(fStepWidth * nTrackSteps) + 1, m_nTrackHeight + 1));
 				CRect	rClipSteps;
 				if (rClipSteps.IntersectRect(rClip, rSteps)) {	// if clip box intersects one or more steps
-					int	iFirstStep = Trunc(rClipSteps.left / fStepWidth);
-					iFirstStep = CLAMP(iFirstStep, 0, nTrackSteps - 1);
-					int	iLastStep = Trunc(rClipSteps.right / fStepWidth);
-					iLastStep = CLAMP(iLastStep, 0, nTrackSteps - 1);
-					int	x1 = Round(iFirstStep * fStepWidth);
 					int	y2 = y1 + m_nTrackHeight;
 					int	iTrackType = seq.GetType(iTrack);
 					bool	bMute = seq.GetMute(iTrack);
 					bool	bIsSelected = IsSelected(iTrack);
 					COLORREF	clrGridLine = m_clrGridLine[bIsSelected];
-					int	x2 = x1;
-					for (int iStep = iFirstStep; iStep <= iLastStep; iStep++) {	// for each invalid step
-						int	x = Round((iStep + 1) * fStepWidth);
-						STEP	nStep = seq.GetStep(iTrack, iStep);
-						int	iStepColor = GetStepColorIdx(iTrack, iStep, nStep, bMute);
-						DrawStep(pDC, x2 + 1, y1 + 1, x - x2 - 1, y2 - y1 - 1, nStep, iStepColor, iTrackType);
-						pDC->FillSolidRect(x2, y1, 1, m_nTrackHeight, clrGridLine);
-						x2 = x;
+					int	x1, x2;
+					if (fStepWidth >= MIN_GRID_STEP_WIDTH) {	// if steps are wide enough
+						int	iFirstStep = Trunc(rClipSteps.left / fStepWidth);
+						iFirstStep = CLAMP(iFirstStep, 0, nTrackSteps - 1);
+						int	iLastStep = Trunc(rClipSteps.right / fStepWidth);
+						iLastStep = CLAMP(iLastStep, 0, nTrackSteps - 1);
+						x1 = Round(iFirstStep * fStepWidth);
+						x2 = x1;
+						for (int iStep = iFirstStep; iStep <= iLastStep; iStep++) {	// for each invalid step
+							int	x = Round((iStep + 1) * fStepWidth);
+							STEP	nStep = seq.GetStep(iTrack, iStep);
+							int	iStepColor = GetStepColorIdx(iTrack, iStep, nStep, bMute);
+							DrawStep(pDC, x2 + 1, y1 + 1, x - x2 - 1, y2 - y1 - 1, nStep, iStepColor, iTrackType);
+							pDC->FillSolidRect(x2, y1, 1, m_nTrackHeight, clrGridLine);
+							x2 = x;
+						}
+						pDC->FillSolidRect(x2, y1, 1, m_nTrackHeight, clrGridLine);	// outline rightmost step side
+					} else {	// steps are too narrow; iterate pixels instead of steps
+						x1 = rClipSteps.left;
+						x2 = rClipSteps.right;
+						int	iStep1 = Round(x1 / fStepWidth);
+						iStep1 = CLAMP(iStep1, 0, nTrackSteps - 1);
+						for (int x = x1; x < x2; x++) {	// for each invalid pixel
+							int	iStep2 = Round((x + 1) / fStepWidth);
+							iStep2 = CLAMP(iStep2, 0, nTrackSteps - 1);
+							int	iAccStepColor;
+							if (iStep2 > iStep1) {	// if pixel contains at least one step boundary
+								iAccStepColor = 0;	// accumulate step color by ORing index values
+								for (int iStep = iStep1; iStep < iStep2; iStep++) {	// for each step
+									STEP	nStep = seq.GetStep(iTrack, iStep);
+									iAccStepColor |= GetStepColorIdx(iTrack, iStep, nStep, bMute);
+								}
+							} else {	// pixel is spanned by a step, so extend that step's color
+								STEP	nStep = seq.GetStep(iTrack, iStep1);
+								iAccStepColor = GetStepColorIdx(iTrack, iStep1, nStep, bMute);
+							}
+							DrawStep(pDC, x, y1 + 1, 1, y2 - y1 - 1, 0, iAccStepColor, iTrackType);
+							iStep1 = iStep2;
+						}
 					}
-					pDC->FillSolidRect(x2, y1, 1, m_nTrackHeight, clrGridLine);	// outline rightmost step side
 					pDC->FillSolidRect(x1, y1, x2 - x1 + 1, 1, clrGridLine);	// outline top of steps
 					bool	bIsSplitBottom = false;
 					// if this track isn't selected but next one is, may need to split bottom outline
@@ -1027,6 +1076,20 @@ void CStepView::DispatchToDocument()
 	GetDocument()->OnCmdMsg(LOWORD(pMsg->wParam), CN_COMMAND, NULL, NULL);	// low word is command ID
 }
 
+void CStepView::TrimRect(CRect& r, CPoint pt)
+{
+	// assume point is within rect
+	CPoint	ptSelCtr = r.CenterPoint();
+	if (pt.x < ptSelCtr.x)	// if left of center
+		r.left = pt.x;	// trim left
+	else	// on or right of center
+		r.right = pt.x + 1;	// trim right
+	if (pt.y < ptSelCtr.y)	// if above center
+		r.top = pt.y;	// trim top
+	else	// on or below center
+		r.bottom = pt.y + 1;	// trim bottom
+}
+
 // CStepView message map
 
 BEGIN_MESSAGE_MAP(CStepView, CScrollView)
@@ -1163,12 +1226,22 @@ void CStepView::OnRButtonDown(UINT nFlags, CPoint point)
 	int	iStep;
 	int	iTrack = HitTest(point, iStep);
 	if (iTrack >= 0 && iStep >= 0) {	// if hit on step
-		SetCapture();
-		m_nDragState = DS_TRACK;
-		if ((nFlags & MK_SHIFT) && HaveStepSelection()) {	// if shift key down and step selection exists
-			m_rStepSel.UnionRect(m_rStepSel, CRect(CPoint(iStep, iTrack), CSize(1, 1)));
-			UpdateSteps(m_rStepSel);	// set selection to union of existing selection and step at cursor
+		if (nFlags & MK_SHIFT) {	// if shift key down 
+			if (HaveStepSelection()) {	// if step selection exists
+				CPoint	ptHitStep(iStep, iTrack);
+				if (m_rStepSel.PtInRect(ptHitStep)) {	// if hit is within step selection
+					CRect	rOldStepSel(m_rStepSel);	// save selection for updating
+					TrimRect(m_rStepSel, ptHitStep);	// trim selection to hit step
+					UpdateSteps(rOldStepSel);	// update old selection, which contains new one
+				} else {	// hit is outside step selection
+					// grow selection; set it to union of existing selection and hit step
+					m_rStepSel.UnionRect(m_rStepSel, CRect(ptHitStep, CSize(1, 1)));
+					UpdateSteps(m_rStepSel);
+				}
+			}
 		} else {	// shift key up
+			SetCapture();
+			m_nDragState = DS_TRACK;
 			m_ptDragOrigin = point + GetScrollPosition();	// include scrolling
 			// if step selection exists and hit within selection
 			if (HaveStepSelection() && m_rStepSel.PtInRect(CPoint(iStep, iTrack))) {

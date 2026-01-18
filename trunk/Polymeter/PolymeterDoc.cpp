@@ -97,6 +97,7 @@
 		87		25feb24	disable next and prev convergence if no tracks
 		88		01sep24	add duplicate note methods; bump file version to 22
 		89		11jan26	in CreateModulation, add distribute option
+		90		18jan26	get quantization fraction from options
 
 */
 
@@ -3116,7 +3117,7 @@ bool CPolymeterDoc::RecordToTracks(bool bEnable)
 		CStringArrayEx	arrTrackName;
 		arrTrackName.SetSize(1);
 		int	nTimeDiv = m_Seq.GetTimeDivision();
-		double	fQuant = 4.0 / theApp.m_Options.GetInputQuantization();
+		double	fQuant = theApp.m_Options.GetInputQuantizationFrac();
 		if (!arrTrack.ImportMidiFile(arrMidiTrack, arrTrackName, nTimeDiv, nTimeDiv, fQuant))
 			return false;
 		OnImportTracks(arrTrack);
@@ -4307,7 +4308,7 @@ void CPolymeterDoc::OnFileImport()
 	fd.m_ofn.lpstrTitle = sDlgTitle;
 	if (fd.DoModal() == IDOK) {
 		CImportTrackArray	arrTrack;	// destination array
-		double	fQuant = 4.0 / theApp.m_Options.GetInputQuantization();
+		double	fQuant = theApp.m_Options.GetInputQuantizationFrac();
 		if (arrTrack.ImportMidiFile(fd.GetPathName(), m_Seq.GetTimeDivision(), fQuant))
 			OnImportTracks(arrTrack);
 	}

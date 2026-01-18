@@ -20,6 +20,7 @@
 		10		16feb23	add graph unicode option
 		11		26feb23	add Graphviz path
 		12		20sep23	add graph use Cairo option
+		13		18jan26	allow unquantized MIDI input
 
 */
 
@@ -69,6 +70,7 @@ PROPDEF(	General,	NONE,		VAR,		bool,		bAlwaysRecord,		0,			0,			0,			NULL,		0)
 
 #ifdef INPUTQUANTDEF
 
+INPUTQUANTDEF(0)	// unquantized
 INPUTQUANTDEF(1)
 INPUTQUANTDEF(2)
 INPUTQUANTDEF(3)

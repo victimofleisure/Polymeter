@@ -47,6 +47,7 @@
 		37		25sep23	fix warning in LoopCheckRecurse
 		38		19dec23	replace track type member usage with accessor
 		39		23jan24	add CModulationTargets
+		40		18jan26	in MIDI import, support unquantized input
 
 */
 
@@ -697,17 +698,25 @@ bool CImportTrackArray::ImportMidiFile(LPCTSTR pszPath, int nOutTimeDiv, double 
 
 bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTrack, const CStringArrayEx& arrInTrackName, int nInTimeDiv, int nOutTimeDiv, double fQuantization)
 {
-	int	nInQuant = max(Round(nInTimeDiv * fQuantization), 1);	// convert quantization to input ticks
-	int	nOutQuant = max(Round(nOutTimeDiv * fQuantization), 1);	// convert quantization to output ticks
-	int	nMaxTime = 0;
-	CTrackArray	arrOutTrack;
-	CMap<int, int, TRACK_INFO, TRACK_INFO&>	mapTrack;
+	ASSERT(nInTimeDiv > 0);
+	ASSERT(nOutTimeDiv > 0);
+	int	nInQuant, nOutQuant;
+	if (fQuantization > 0) {	// if quantizing
+		nInQuant = max(Round(nInTimeDiv * fQuantization), 1);	// convert quantization to input ticks
+		nOutQuant = max(Round(nOutTimeDiv * fQuantization), 1);	// convert quantization to output ticks
+	} else {	// unquantized
+		nInQuant = Round(double(nInTimeDiv) / nOutTimeDiv);	// convert input timebase to output timebase
+		nOutQuant = 1;	// finest resolution available in output timebase
+	}
 	int	nInTracks = arrInTrack.GetSize();
 	for (int iTrack = 0; iTrack < nInTracks; iTrack++) {	// for each input track
+		int	nMaxTime = 0;
+		CTrackArray	arrOutTrack;
+		CMap<int, int, TRACK_INFO, TRACK_INFO&>	mapTrack;
 		const CMidiFile::CMidiEventArray&	arrEvent = arrInTrack[iTrack];
 		int	nEvents = arrEvent.GetSize();
 		int	nTime = 0;	// reset event time
-		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each of track's events
+		for (int iEvent = 0; iEvent < nEvents; iEvent++) {	// for each of input track's events
 			nTime += arrEvent[iEvent].DeltaT;
 			if (nTime >= nMaxTime)
 				nMaxTime = nTime;
@@ -715,7 +724,7 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 			int	nCmd = MIDI_CMD(nMsg);
 			int	nKey;
 			TRACK_INFO	info;
-			if (nCmd == NOTE_ON || nCmd == NOTE_OFF) {	// if note command
+			if (nCmd == NOTE_ON || nCmd == NOTE_OFF) {	// if note message
 				int	nChan = MIDI_CHAN(nMsg);
 				int	nNote = MIDI_P1(nMsg);
 				nKey = MAKELONG(nNote, nChan);	// map key is note within channel
@@ -768,7 +777,7 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 					else	// not pitch bend message
 						info.nVelocity = 0;	// assume controller initially at zero
 					CTrack	trk(true);	// set track defaults
-					// assume track types and MIDI messages are in the same order, but shifted by one
+					// assume track types match MIDI channel voice messages, same order but offset by one
 					trk.m_iType = MIDI_CMD_IDX(nMsg) - MIDI_CVM_NOTE_ON;	// note off isn't a track type
 					trk.m_nChannel = nChan;
 					trk.m_nNote = nNote;
@@ -796,38 +805,39 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 			}
 			mapTrack.SetAt(nKey, info);	// update track info map
 		}
-	}
-	int	nMaxSteps = Round(double(nMaxTime) / nInQuant);	// compute maximum track length
-	if (nMaxSteps <= 0)	// step count must be greater than zero
-		return false;
-	CArrayEx<CTrack *, CTrack *>	arrTrackPtr;
-	int	nOutTracks = arrOutTrack.GetSize();
-	if (nOutTracks <= 0)	// track count must be greater than zero
-		return false;
-	arrTrackPtr.SetSize(nOutTracks);	// allocate track pointers
-	for (int iTrack = 0; iTrack < nOutTracks; iTrack++) {	// for each output track
-		CTrack&	trk = arrOutTrack[iTrack];
-		trk.m_arrStep.SetSize(nMaxSteps);	// make all tracks as long as longest track
-		arrTrackPtr[iTrack] = &trk;	// init track pointer
-		if (!trk.IsNote()) {	// if track type isn't note
-			UINT	nCmd = (trk.m_iType + MIDI_CVM_NOTE_ON + 8) << 4;	// track types start with note on
-			int	nKey = MAKELONG(trk.m_nNote, MAKEWORD(trk.m_nChannel, nCmd));	// note/control, channel, command
-			TRACK_INFO	info;
-			BOOL	bIsFound = mapTrack.Lookup(nKey, info);	// find track's corresponding info
-			ASSERT(bIsFound);	// should always be found, else logic error above
-			if (bIsFound) {	// if track info found
-				int	nSteps = trk.GetLength();
-				// for each step between track's last input event and end of track
-				for (int iStep = info.nStartTime + 1; iStep < nSteps; iStep++) {
-					trk.m_arrStep[iStep] = static_cast<STEP>(info.nVelocity);	// repeat last step value
+		int	nMaxSteps = Round(double(nMaxTime) / nInQuant);	// compute maximum track length
+		if (nMaxSteps <= 0)	// step count must be greater than zero
+			continue;
+		CArrayEx<CTrack *, CTrack *>	arrTrackPtr;
+		int	nOutTracks = arrOutTrack.GetSize();
+		if (nOutTracks <= 0)	// track count must be greater than zero
+			continue;
+		arrTrackPtr.SetSize(nOutTracks);	// allocate track pointers
+		for (int iTrack = 0; iTrack < nOutTracks; iTrack++) {	// for each output track
+			CTrack&	trk = arrOutTrack[iTrack];
+			trk.m_arrStep.SetSize(nMaxSteps);	// make all tracks as long as longest track
+			arrTrackPtr[iTrack] = &trk;	// init track pointer
+			if (!trk.IsNote()) {	// if track type isn't note
+				UINT	nCmd = (trk.m_iType + MIDI_CVM_NOTE_ON + 8) << 4;	// track types start with note on
+				int	nKey = MAKELONG(trk.m_nNote, MAKEWORD(trk.m_nChannel, nCmd));	// note/control, channel, command
+				TRACK_INFO	info;
+				BOOL	bIsFound = mapTrack.Lookup(nKey, info);	// find track's corresponding info
+				ASSERT(bIsFound);	// should always be found, else logic error above
+				if (bIsFound) {	// if track info found
+					int	nSteps = trk.GetLength();
+					// for each step between track's last input event and end of track
+					for (int iStep = info.nStartTime + 1; iStep < nSteps; iStep++) {
+						trk.m_arrStep[iStep] = static_cast<STEP>(info.nVelocity);	// repeat last step value
+					}
 				}
 			}
 		}
+		qsort(arrTrackPtr.GetData(), nOutTracks, sizeof(CTrack *), ImportSortCmp);	// sort track pointers
+		int	nOldSize = GetSize();
+		SetSize(nOldSize + nOutTracks);	// allocate space in member track array
+		for (int iTrack = 0; iTrack < nOutTracks; iTrack++)	// for each output track
+			GetAt(nOldSize + iTrack) = *arrTrackPtr[iTrack];	// copy track to member array in sorted order
 	}
-	qsort(arrTrackPtr.GetData(), nOutTracks, sizeof(CTrack *), ImportSortCmp);	// sort track pointers
-	SetSize(nOutTracks);	// allocate member track array
-	for (int iTrack = 0; iTrack < nOutTracks; iTrack++)	// for each output track
-		GetAt(iTrack) = *arrTrackPtr[iTrack];	// copy track to member array in sorted order
 	return true;
 }
 

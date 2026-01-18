@@ -15,6 +15,7 @@
 		05		19may22	add ruler selection
 		06		16jun22	remove delayed create handler
 		07		13dec23	add OnTrackLengthChange
+		08		17jan26	add minimum grid step width and TrimRect
 
 */
 
@@ -79,6 +80,7 @@ public:
 	void	OnTrackLength(CPoint point);
 	int		ConvertXToSongPos(int x) const;
 	void	UpdateMute(int iTrack);
+	static	void	TrimRect(CRect& r, CPoint pt);
 
 // Overrides
 public:
@@ -109,7 +111,8 @@ protected:
 	enum {
 		MAX_ZOOM_SCALE = 1024,
 		SCROLL_TIMER_ID = 1789,
-		SCROLL_DELAY = 50	// milliseconds
+		SCROLL_DELAY = 50,	// milliseconds
+		MIN_GRID_STEP_WIDTH = 2,	// widths below this require special handling
 	};
 	enum {	// step state flags
 		SF_ON		= 0x01,		// step is non-empty
