@@ -1238,6 +1238,7 @@ void CStepView::OnRButtonDown(UINT nFlags, CPoint point)
 					m_rStepSel.UnionRect(m_rStepSel, CRect(ptHitStep, CSize(1, 1)));
 					UpdateSteps(m_rStepSel);
 				}
+				pDoc->m_rStepSel = m_rStepSel;	// update document's step selection
 			}
 		} else {	// shift key up
 			SetCapture();
