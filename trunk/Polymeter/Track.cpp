@@ -48,6 +48,7 @@
 		38		19dec23	replace track type member usage with accessor
 		39		23jan24	add CModulationTargets
 		40		18jan26	in MIDI import, support unquantized input
+		41		19jan26	in MIDI import, fix pitch bend to use MSB
 
 */
 
@@ -789,9 +790,9 @@ bool CImportTrackArray::ImportMidiFile(const CMidiFile::CMidiTrackArray& arrInTr
 				CTrack&	trk = arrOutTrack[info.iTrack];
 				trk.m_arrStep.SetSize(iEvtStep + 1);
 				STEP	stepCur;
-				if (nCmd <= CONTROL)	// if control or key aftertouch message
-					stepCur = MIDI_P2(nMsg);	// second parameter is value
-				else	// not control message
+				if (nCmd <= CONTROL || nCmd == WHEEL)	// if control, key aftertouch or wheel message
+					stepCur = MIDI_P2(nMsg);	// second parameter is value (wheel MSB is P2)
+				else	// patch or channel aftertouch message
 					stepCur = MIDI_P1(nMsg);	// first parameter is value
 				trk.m_arrStep[iEvtStep] = stepCur;
 				STEP	stepPrev = static_cast<STEP>(info.nVelocity);
