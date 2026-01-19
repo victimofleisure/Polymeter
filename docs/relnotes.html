@@ -30,7 +30,7 @@
 
 <h1>Release Notes</h1>
 
-<h3>1.0.17.003 &emsp;<small>01/18/2026</small></h3>
+<h3>1.0.17.004 &emsp;<small>01/19/2026</small></h3>
 
 <p><ol>
 <li>Add a Distribute checkbox to the Insert Group dialog; sequentially distribute one modulation source to each selected target.
@@ -38,6 +38,7 @@
 <li>The MIDI file import now processes each input track separately instead of merging them.
 <li>The MIDI file import now allows quantization to be disabled, by setting Input Quantization to none in the MIDI options.
 <li>In the Step and Song views, Shift + right click within an existing selection now trims the selection to the cursor position.
+<li>The MIDI file import was handling pitch bend messages incorrectly, and should use the MSB, not the LSB; fixed.
 </ol>
 
 <h3>1.0.16.006 &emsp;<small>07/29/2025</small></h3>
