@@ -5155,3 +5155,63 @@ if (rStepSel != m_rStepSel) {	// if rectangular step selection changed
 	m_rStepSel = rStepSel;
 	UpdateSteps(rUnion);
 }
+
+1/22/26 Moving export's AddTrackEvents loop into a method
+
+AddTrackEventsBench is a separate method according to linker map file.
+
+Test file: Moonchego 06 area 51.plm
+Inline loop: 0.0818, 0.0837, 0.0820, 0.0838, 0.0836, 0.0827
+Method: 0.0810, 0.0837, 0.0849, 0.0830, 0.0824, 0.0826
+
+Conclusion: difference if any is insignificant
+
+#define TEST 1
+
+#if TEST
+void CSequencer::AddTrackEventsBench(int nCBStart)
+{
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		AddTrackEvents(GetAt(iTrack), nCBStart);	// get track's events for this chunk
+	}
+}
+#endif
+
+#if TEST
+		AddTrackEventsBench(nCBTime);
+#else
+		int	nTracks = GetSize();
+		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+			AddTrackEvents(GetAt(iTrack), nCBTime);	// get track's events for this chunk
+		}
+#endif
+
+File size:
+
+1.0.17.004 x64 Release (production)
+5,541,376 bytes
+
+with Queue modulation
+5,546,496 bytes
+
+5,120 bytes bigger
+
+Hypothesis: most of that increase is due to inlining of the entire AddTrackEvents loop.
+
+With AddAllTrackEvents:
+5,541,888 bytes
+
+512 bytes bigger, hypothesis was correct!
+
+void CSequencer::AddAllTrackEvents(int nCBStart)
+{
+	// AddTrackEvents is around 5K bytes of code, due to its extensive use of
+	// force inline. Moving track iteration to a method ensures that only two
+	// copies of AddTrackEvents exist in the binary: one for OutputMidiBuffer,
+	// and one here. This keeps playback optimized and code size reasonable.
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		AddTrackEvents(GetAt(iTrack), nCBStart);	// get track's events for this chunk
+	}
+}

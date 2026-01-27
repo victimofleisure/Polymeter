@@ -55,6 +55,7 @@ Modulation/Chord_modulation.htm
 Modulation/Index_modulation.htm
 Modulation/Voicing_modulation.htm
 Modulation/Offset_modulation.htm
+Modulation/Queue_modulation.htm
 Views/Views.htm
 Views/Track_View/Track_View.htm
 Views/Track_View/Track_Grid.htm
@@ -270,6 +271,7 @@ IDH_Modulation_Index_modulation = Modulation/Index_modulation.htm
 IDH_Modulation_Index_modulation_Duplicate_notes = Modulation/Index_modulation.htm#Duplicate_notes
 IDH_Modulation_Voicing_modulation = Modulation/Voicing_modulation.htm
 IDH_Modulation_Offset_modulation = Modulation/Offset_modulation.htm
+IDH_Modulation_Queue_modulation = Modulation/Queue_modulation.htm
 IDH_Views_Views = Views/Views.htm
 IDH_Views_Views_Song_Mode = Views/Views.htm#Song_Mode
 IDH_Views_Track_View_Track_View = Views/Track_View/Track_View.htm

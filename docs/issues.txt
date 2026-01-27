@@ -496,6 +496,7 @@ id	open	close	type	description	rev	user
 610	01/16/26	01/18/26	done	MIDI file import needs an option to disable quantization	1.0.17.003	
 611	01/17/26	01/18/26	done	in step and song views, Shift + right click within selection should trim selection	1.0.17.003	
 612	01/19/26	01/19/26	done	MIDI file import handles pitch bend messages incorrectly; should use MSB, not LSB	1.0.17.004	
+507	02/09/22	01/27/26	done	queue modulation; similar to note or index modulation, but steps only when target track plays a note	1.0.18.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -562,7 +563,6 @@ id	open	close	type	description	rev	user
 477	11/13/21		hold	modulation types filter dialog should be modeless or at least have a preview option		
 494	01/18/22		hold	insert modulators command; create appropriately initialized modulator track(s) of specified type		
 503	02/01/22		hold	indicate MIDI input activity in the status bar; per-channel indicators would be helpful too		
-507	02/09/22		hold	sequence or queue modulation; similar to index modulation, but returns next step regardless of song position		
 510	02/13/22		hold	in Wine, Phase bar doesn't work at all, likely due to its use of Direct2D		Wine
 511	02/13/22		hold	in Wine, HTML help's Contents and Index tabs are empty, but Search works and all topics are present		Wine
 512	02/13/22		hold	in Wine, MIDI devices added while app is running don't appear until the app is exited and restarted		Wine
@@ -602,3 +602,4 @@ id	open	close	type	description	rev	user
 579	01/15/24		punt	Check Modulations should report unused modulators; dubious as they're not actually an error		
 592	04/04/24		punt	Create Modulation dialog should have types on the left and tracks on the right, to match modulations bar column order		
 607	01/11/26		todo	add notes view showing output note sequence in piano roll format		
+613	01/23/26		todo	pitch bend should support LSB somehow; wheel modulation?		

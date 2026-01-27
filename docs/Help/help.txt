@@ -200,6 +200,7 @@ Besides juxtaposition, another important method of combining @[tracks] is <em>mo
 <tr><td>@[index modulation\Index]</td><td>Note tracks only</td><td>Picks a scale or chord tone</td><td>Signed zero-based scale or chord tone index</td></tr>
 <tr><td>@[voicing modulation\Voicing]</td><td>Note tracks only</td><td>Drops or raises a scale or chord tone</td><td>Signed one-based voice index</td></tr>
 <tr><td>@[offset modulation\Offset]</td><td>All track types except Tempo</td><td>Offsets playback timing</td><td>Offset in ticks; unsigned for Note or Controller, signed for Modulator</td></tr>
+<tr><td>@[queue modulation\Queue]</td><td>Note tracks only</td><td>Assigns a sequence of pitches to notes</td><td>Signed offset in semitones, or in scale or chord tones if indexing</td></tr>
 </table>
 
 @item Modulation relationships
@@ -512,6 +513,7 @@ Internal tracks are <em>per-channel</em>, meaning that each internal track opera
 <tr><td>63</td><td>Note Overlap</td><td>Sets the channel's method of correcting @[note overlap\note overlaps]. Track steps are interpreted as unsigned values. A value of zero selects Split, and any other value selects Merge. This controller overrides the Overlaps setting in the Channels bar. This controller only works if the note overlap @[master properties\master property] is set to Prevent, otherwise it has no effect.</td></tr>
 <tr><td>64</td><td>Sustain</td><td>Sets the channel's sustain switch. Track steps are interpreted as unsigned values. A value of zero turns sustain off, and any other value turns it on. While sustain is on, all active notes on the channel are sustained, regardless of their durations. This applies both to notes that are already active when sustain is switched on, and to notes that are triggered while sustain is on. When sustain is switched off, notes with expired durations stop immediately, but notes with duration remaining continue until their durations expire.</td></tr>
 <tr><td>66</td><td>Sostenuto</td><td>Sets the channel's sostenuto switch. Track steps are interpreted as unsigned values. A value of zero turns sostenuto off, and any other value turns it on. Sostenuto is similar to sustain, except that it only sustains notes that are already active when sostenuto is switched on. Notes that are triggered while sostenuto is on are <em>not</em> sustained. Sostenuto is typically used to hold a note or chord, and then play melodies over the held note or chord. When sostenuto is switched off, notes with expired durations stop immediately, but notes with duration remaining continue until their durations expire. Sostenuto can be combined with sustain.</td></tr>
+<tr><td>102</td><td>Queue Mod Reset</td><td>Resets all @[queue modulation\queue modulators] that target the channel. The target track's channel is what matters; the modulator track's channel is irrelevant. The internal controller track's steps are interpreted as unsigned values. When the internal controller transitions from zero to any non-zero value, all queue modulators targeting the channel jump to their first step, regardless of whether they're currently muted or unmuted.</td></tr>
 <tr><td>123</td><td>All Notes Off</td><td>Turns off all notes on the channel. Track steps are interpreted as unsigned values. Transitioning from zero to any non-zero value stops all notes immediately, regardless of their durations. Notes that are being held by the sustain or sostenuto internal controllers are also stopped immediately.</td></tr>
 </table>
 
@@ -684,6 +686,30 @@ Offset @[modulations\modulation] changes the time offset of a target track. The 
 Offset modulation changes the rhythmic feel of the target track, periodically speeding it up and slowing it down relative to the beat. It can be used to create rolls on drums, or to emulate the feel changes of a live performer. For best results, use a smooth function such as a triangle or sine wave. Sharp changes in offset modulation may alter the order of events. Offset modulation can cause @[note overlap\notes to overlap].
 
 Modulator tracks can also be offset modulated, but in this case the offset modulator's steps are interpreted as signed values, allowing offsets in the range of &minus;64 to +63. Positive values delay the target; negative values hasten it. Offset modulation is useful for time-shifting a group of modulators that have different @[track quant\quants]. Offset modulation is similar to @[position modulation], except that the shift is specified in ticks instead of steps.
+
+@topic Queue modulation
+
+Queue @[modulations\modulation] assigns a sequence of pitches to successive notes in order, regardless of note timing. Only @[note tracks] support queue modulation. Unlike other modulation types, a queue modulator doesn't continuously cycle through its steps during playback. A queue modulator only advances when its target track plays a note. Until the target track plays its next note, the queue modulator remains frozen on its current @[steps\step] for as long as it takes.
+
+A queue modulator is analogous to a line of customers waiting to pay. The customers stay in order, and the line only moves when the clerk signals for the next customer. The customers are the pitches and the clerk is the note track. But the clerk returns each customer to the back of the line, meaning the pitch sequence loops.
+
+A queue modulator's @[track quant\quant] is irrelevant because the modulator's stepping isn't driven by time. Any quant will do. The @[Track Steps] view and the @[Step Values bar] correctly report a queue modulator's current position, but other views may not.
+
+Queue modulation decouples pitch from rhythm. This allows a melody to be constructed by applying a sequence of pitches to an unrelated or unquantized rhythm. Even if the rhythm is erratic due to rests, triplets, or syncopation, pitches won't be skipped.
+
+If the target note track uses @[scale modulation\scale] or @[chord modulation], each queue modulator step is a zero-based signed index that selects a tone from the current scale or chord. If @[index modulation] is also used, the queue and index modulators are summed to produce the final index value. In any case the index value is wrapped as needed to stay within the scale or chord.
+
+If no scale is defined, each queue modulator step is a zero-based signed offset added to the @[track note\track's note]. If @[note modulation] is also used, the queue and note modulators are summed to produce the final note value.
+
+A note track can have only one active queue modulator. Multiple queue modulators can target a track without conflict provided only one of them is unmuted at a time. If a note track has multiple unmuted queue modulators, only the last one is used and the others have no effect.
+
+A queue modulator can target multiple note tracks at once, but this should be considered carefully. If multiple targets are unmuted, they compete for the modulator's pitches, and this potentially alters the sequence, which may or may not be desirable. If only one of the targets is unmuted at a time, there's no issue and the pitch sequence is preserved.
+
+To repeat a fixed melody, the queue modulator should have one step for every note in the target track. Otherwise, the melody may vary over time due to phasing. In the fixed melody case, a queue modulator can lose synchronization with its target note track. This can happen if the note track is muted during the middle of its cycle, for example. To enforce synchronization, a queue modulator can be periodically reset to its start using @[internal controllers\internal controller] 102 (Queue Mod Reset).
+
+Queue modulators can be targeted by @[mute modulation] and @[position modulation], but they don't support @[offset modulation].
+
+Position modulation causes a queue modulator to skip forward or backward in its sequence by the specified number of steps, but the effect is temporary and non-destructive. The target track may receive a different queue modulator step than it otherwise would have, but the queue modulator's internal position is unaffected.
 
 @endchapter
 
