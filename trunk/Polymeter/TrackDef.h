@@ -18,6 +18,7 @@
 		08		16nov20	add tick dependencies
 		09		19feb22	add conditional to exclude track name
 		10		19dec23	add internal track type
+		11		22jan26	add queue modulation type
 
 */
 
@@ -85,6 +86,7 @@ MODTYPEDEF(Chord)
 MODTYPEDEF(Index)
 MODTYPEDEF(Voicing)
 MODTYPEDEF(Offset)
+MODTYPEDEF(Queue)
 
 #undef MODTYPEDEF
 #endif	// MODTYPEDEF

@@ -46,6 +46,7 @@
 		36		23jan24	add CModulationTargets
 		37		01sep24	add per-channel duplicate note methods
 		38		04nov24	fix incorrect MIDI event relational operators
+		39		22jan26	add next step index for queue modulation type
 
 */
 
@@ -210,6 +211,7 @@ public:
 		CModulation(int iType, int iSource);
 		bool	operator==(const CModulation& mod) const;
 		bool	operator!=(const CModulation& mod) const;
+		bool	IsTypeInMask(UINT nTypeMask) const;
 		bool	IsRecursiveType() const;
 		int		m_iType;	// index of modulation type, enumerated above
 		int		m_iSource;	// index of modulation source in track array, or -1 if none
@@ -218,6 +220,7 @@ public:
 	public:
 		void	SortByType();
 		void	SortBySource();
+		bool	HasType(int iModType) const;
 
 	protected:
 		static	int		SortCompareByType(const void *arg1, const void *arg2);
@@ -282,6 +285,8 @@ public:
 		CModulation& GetAt(int iTarget);
 		const CModulation& GetAt(int iTarget) const;
 		int		Find(int iTrack, const CModulation& mod) const;
+		int		FindByModType(int iTrack, int iModType) const;
+		bool	TargetsType(int iTrack, UINT nTypeMask) const;
 
 	protected:
 		CIntArrayEx	m_arrFirst;	// for each track, index of its first m_arrTarget element
@@ -561,9 +566,24 @@ inline bool CTrackBase::CModulation::operator!=(const CModulation& mod) const
 	return !operator==(mod);
 }
 
+inline bool CTrackBase::CModulation::IsTypeInMask(UINT nTypeMask) const
+{
+	return ((1 << m_iType) & nTypeMask) != 0;
+}
+
 inline bool CTrackBase::CModulation::IsRecursiveType() const
 {
 	return ((1 << m_iType) & CTrackBase::RECURSIVE_MOD_TYPE_MASK) != 0;
+}
+
+inline bool CTrackBase::CModulationArray::HasType(int iModType) const
+{
+	int	nMods = GetSize();
+	for (int iMod = 0; iMod < nMods; iMod++) {
+		if (GetAt(iMod).m_iType == iModType)
+			return true;
+	}
+	return false;
 }
 
 inline CTrackBase::CPackedModulation::CPackedModulation()
@@ -648,11 +668,26 @@ inline const CTrackBase::CModulation& CTrackBase::CModulationTargets::GetAt(int 
 
 inline int CTrackBase::CModulationTargets::Find(int iTrack, const CModulation& mod) const
 {
-	const CModulation	*parrTarget = &GetAt(iTrack, 0);
 	int	nTargets = GetCount(iTrack);
-	for (int iTarget = 0; iTarget < nTargets; iTarget++) {	// for each target
-		if (parrTarget[iTarget] == mod)	// if modulation matches
-			return iTarget;	// return target index
+	if (nTargets) {	// if at least one target
+		const CModulation	*parrTarget = &GetAt(iTrack, 0);
+		for (int iTarget = 0; iTarget < nTargets; iTarget++) {	// for each target
+			if (parrTarget[iTarget] == mod)	// if modulation matches
+				return iTarget;	// return target index
+		}
+	}
+	return -1;
+}
+
+inline int CTrackBase::CModulationTargets::FindByModType(int iTrack, int iModType) const
+{
+	int	nTargets = GetCount(iTrack);
+	if (nTargets) {	// if at least one target
+		const CModulation	*parrTarget = &GetAt(iTrack, 0);
+		for (int iTarget = 0; iTarget < nTargets; iTarget++) {	// for each target
+			if (parrTarget[iTarget].m_iType == iModType)	// if modulation type matches
+				return iTarget;	// return target index
+		}
 	}
 	return -1;
 }
@@ -690,6 +725,7 @@ public:
 	#define TRACKDEF(proptype, type, prefix, name, defval, minval, maxval, itemopt, items) type m_##prefix##name;
 	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 	#include "TrackDef.h"		// generate definitions of track property member vars
+	int		m_iNextStep;		// index of next step for queue modulation, or -1 if unused
 	CStepArray	m_arrStep;		// array of steps
 	CDubArray	m_arrDub;		// array of dubs
 	UINT	m_nUID;				// unique ID
@@ -715,6 +751,7 @@ public:
 	void	GetTickDepends(CTickDepends& tickDepends) const;
 	void	SetTickDepends(const CTickDepends& tickDepends);
 	void	ScaleTickDepends(double fScale);
+	int		GetNextStep();
 
 // Operations
 	int		CompareProperty(int iProp, const CTrack& track) const;
@@ -808,6 +845,14 @@ inline void CTrack::SetStepTie(int iStep, bool bTie)
 {
 	m_arrStep[iStep] &= ~SB_TIE;
 	m_arrStep[iStep] |= bTie << TIE_BIT_SHIFT;
+}
+
+inline int CTrack::GetNextStep()
+{
+	// implement queue modulation; return index of queue's next step
+	if (m_iNextStep < 0 || m_iNextStep >= GetLength())	// enforce range before access
+		m_iNextStep = 0;	// reset next step index to first step
+	return m_iNextStep++;	// return next step index and post-increment
 }
 
 class CTrackArray : public CArrayEx<CTrack, CTrack&>, public CTrackBase {

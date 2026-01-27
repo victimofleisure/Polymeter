@@ -368,21 +368,22 @@
 #define IDS_TRK_Offset                  526
 #define IDS_TRK_Position                527
 #define IDS_TRK_Quant                   528
-#define IDS_TRK_Range                   529
-#define IDS_TRK_RangeStart              530
-#define IDS_TRK_RangeType               531
-#define IDS_TRK_STEP                    532
-#define IDS_TRK_Scale                   533
-#define IDS_TRK_Swing                   534
-#define IDS_TRK_Tempo                   535
-#define IDS_TRK_Type                    536
-#define IDS_TRK_Velocity                537
-#define IDS_TRK_Voicing                 538
-#define IDS_TYPE_TRACK                  539
-#define IDS_VELOCITY                    540
-#define IDS_WINDOW_MANAGER              541
-#define IDS_WINDOW_RESET_LAYOUT_WARN    542
-#define IDP_OLE_INIT_FAILED             543
+#define IDS_TRK_Queue                   529
+#define IDS_TRK_Range                   530
+#define IDS_TRK_RangeStart              531
+#define IDS_TRK_RangeType               532
+#define IDS_TRK_STEP                    533
+#define IDS_TRK_Scale                   534
+#define IDS_TRK_Swing                   535
+#define IDS_TRK_Tempo                   536
+#define IDS_TRK_Type                    537
+#define IDS_TRK_Velocity                538
+#define IDS_TRK_Voicing                 539
+#define IDS_TYPE_TRACK                  540
+#define IDS_VELOCITY                    541
+#define IDS_WINDOW_MANAGER              542
+#define IDS_WINDOW_RESET_LAYOUT_WARN    543
+#define IDP_OLE_INIT_FAILED             544
 #define IDC_ABOUT_LICENSE               1001
 #define IDC_ABOUT_VERSION               1002
 #define IDC_CONVERGE_INPUT              1003
@@ -620,7 +621,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                1
-#define _APS_NEXT_RESOURCE_VALUE        544
+#define _APS_NEXT_RESOURCE_VALUE        545
 #define _APS_NEXT_COMMAND_VALUE         32929
 #define _APS_NEXT_CONTROL_VALUE         1074
 #define _APS_NEXT_SYMED_VALUE           101

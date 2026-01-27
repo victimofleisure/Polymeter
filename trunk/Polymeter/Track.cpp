@@ -49,6 +49,7 @@
 		39		23jan24	add CModulationTargets
 		40		18jan26	in MIDI import, support unquantized input
 		41		19jan26	in MIDI import, fix pitch bend to use MSB
+		42		22jan26	add queue modulation to modulation checker
 
 */
 
@@ -125,6 +126,7 @@ void CTrack::SetDefaults()
 	#define TRACKDEF_EXCLUDE_LENGTH	// for all track properties except length
 	#include "TrackDef.h"		// generate code to initialize track properties
 	m_arrStep.SetSize(INIT_STEPS);	// length is actually step array size
+	m_iNextStep = -1;	// unused value indicating no queue modulation
 	m_nUID = 0;
 	m_iDub = 0;
 	m_clrCustom = COLORREF(-1);
@@ -494,6 +496,21 @@ CTrackBase::CModulationTargets::CModulationTargets(const CTrackArray& arrTrack)
 			}
 		}
 	}
+}
+
+bool CTrackBase::CModulationTargets::TargetsType(int iTrack, UINT nTypeMask) const
+{
+	int	nTargets = GetCount(iTrack);
+	if (nTargets) {	// if at least one target
+		const CModulation	*parrTarget = &GetAt(iTrack, 0);
+		// for each of target track's modulation targets
+		for (int iTarget = 0; iTarget < nTargets; iTarget++) {	// for each target
+			// if modulation type's bit is set in mask
+			if (parrTarget[iTarget].IsTypeInMask(nTypeMask))
+				return true;	// modulation targets one of the specified types
+		}
+	}
+	return false;	// modulation doesn't target any of the specified types
 }
 
 void CTrack::DumpModulations() const
@@ -960,7 +977,7 @@ void CTrackArray::ImportTracks(LPCTSTR pszPath)
 			CParseCSV	parser(sLine);
 			if (arrCol.IsEmpty()) {	// if expecting column header
 				while (parser.GetString(sToken)) {	// for each token in line
-					int	iProp = CTrackBase::FindPropertyInternalName(sToken);
+					int	iProp = FindPropertyInternalName(sToken);
 					if (iProp < 0) {	// if not ordinary track property
 						if (sToken == TRACK_EX_PROP_NAME_STEPS) {	// if steps array
 							iProp = PROP_STEPS;
@@ -1042,10 +1059,10 @@ void CTrackArray::ExportTracks(const CIntArrayEx *parrSelection, LPCTSTR pszPath
 	else	// no selection
 		nSels = GetSize();	// export all tracks
 	CString	sLine;
-	for (int iProp = 0; iProp < CTrackBase::PROPERTIES; iProp++) {	// for each property
+	for (int iProp = 0; iProp < PROPERTIES; iProp++) {	// for each property
 		if (iProp)	// if not first item
 			sLine += ',';	// insert separator
-		sLine += CTrackBase::GetPropertyInternalName(iProp);
+		sLine += GetPropertyInternalName(iProp);
 	}
 	sLine += _T(",") TRACK_EX_PROP_NAME_STEPS _T(",") TRACK_EX_PROP_NAME_MODS;
 	fOut.WriteString(sLine + '\n');
@@ -1058,7 +1075,7 @@ void CTrackArray::ExportTracks(const CIntArrayEx *parrSelection, LPCTSTR pszPath
 			iTrack = iSel;	// selection index is track index
 		const CTrack& trk = GetAt(iTrack);
 		sLine.Empty();
-		for (int iProp = 0; iProp < CTrackBase::PROPERTIES; iProp++) {	// for each property
+		for (int iProp = 0; iProp < PROPERTIES; iProp++) {	// for each property
 			if (iProp)	// if not first item
 				sLine += ',';	// insert separator
 			sLine += trk.PropertyToString(iProp);	// convert to string and append
@@ -1167,18 +1184,18 @@ bool CTrackArray::CheckModulations(CModulationErrorArray& arrError) const
 			const CTrack&	trkTarget = GetAt(iTargetTrack);
 			bool	bIsUnsupportedType = false;	// assume success
 			if (trkTarget.IsModulator()) {	// if target track is a modulator
-				if (!mod.IsRecursiveType()) {	// if modulation type doesn't support recursion
-					if (mod.m_iType == CTrackBase::MT_Note) {	// if note modulation
-						// for each of target track's modulation targets (sub-modulations)
-						int	nSubMods = targets.GetCount(iTargetTrack);
-						for (int iSubMod = 0; iSubMod < nSubMods; iSubMod++) {
-							const CModulation& modSub = targets.GetAt(iTargetTrack, iSubMod);
-							// if sub-modulation type isn't scale or chord
-							if (!(modSub.m_iType == MT_Scale || modSub.m_iType == MT_Chord)) {
-								bIsUnsupportedType = true;	// unsupported type error
-								break;	// no need to keep iterating
-							}
-						}
+				if (mod.IsRecursiveType()) {	// if modulation type supports recursion
+					// exception: queue modulator doesn't support offset modulation
+					if (mod.m_iType == MT_Offset) {	// if offset modulation
+						if (targets.TargetsType(iTargetTrack, MTB_Queue))	// targeting queue modulator
+							bIsUnsupportedType = true;	// unsupported type error
+					}
+				} else {	// modulation type doesn't support recursion
+					// exception: scale and chord modulators both support note modulation
+					if (mod.m_iType == MT_Note) {	// if note modulation
+						// targeting any modulation type other than scale or chord
+						if (!targets.TargetsType(iTargetTrack, MTB_Scale | MTB_Chord))
+							bIsUnsupportedType = true;	// unsupported type error
 					} else {	// modulation type isn't note
 						bIsUnsupportedType = true;	// unsupported type error
 					}
@@ -1231,8 +1248,8 @@ bool CTrackArray::TrackNamesAreASCII(const CIntArrayEx& arrSelection) const
 
 int CTrackBase::CPackedModulation::SortCompare(const void *p1, const void *p2)
 {
-	CTrack::CPackedModulation *pMod1 = (CTrack::CPackedModulation *)p1;
-	CTrack::CPackedModulation *pMod2 = (CTrack::CPackedModulation *)p2;
+	CPackedModulation *pMod1 = (CPackedModulation *)p1;
+	CPackedModulation *pMod2 = (CPackedModulation *)p2;
 	int	retc;	// sort order is target, source, type
 	retc = CTrack::Compare(pMod1->m_iTarget, pMod2->m_iTarget);
 	if (!retc) {

@@ -37,6 +37,7 @@
 		27		10feb24	add flag for export's all notes off behavior
 		28		02may24	replace redundant track index with reference
 		29		01sep24	add per-channel duplicate note methods
+		30		22jan26	add song start position for queue modulation
 
 */
 
@@ -68,6 +69,7 @@ public:
 	int		m_nRecordOffset;		// offset added to recorded event times during playback, in ticks
 	int		m_nMidiClockPeriod;		// number of ticks per MIDI clock (timebase / 24)
 	int		m_nMidiClockTimer;		// number of ticks remaining until next MIDI clock
+	int		m_nSongStartPos;		// starting position of song, in ticks
 	bool	m_bIsPlaying;			// true if playing
 	bool	m_bIsPaused;			// true if paused
 	bool	m_bIsStopping;			// true if stopping
@@ -165,6 +167,8 @@ public:
 	static	void	SetExportTimeKeySigs(bool bEnable);	// for regression testing
 	static	void	SetExportAllNotesOff(bool bEnable);	// for regression testing
 	static	bool	IsErrorWarning(MMRESULT nSeqError);
+	int		GetSongStartPos() const;
+	void	SetSongStartPos(int nTicks);
 
 // Operations
 	bool	Play(bool bEnable, bool bRecord = false);
@@ -233,6 +237,7 @@ protected:
 		ICTL_NOTE_OVERLAP = 63,		// note overlap controller
 		ICTL_SUSTAIN = 64,			// sustain controller
 		ICTL_SOSTENUTO = 66,		// sostenuto controller
+		ICTL_QUEUE_MOD_RESET = 102,	// reset queue modulation controller
 		ICTL_ALL_NOTES_OFF = 123,	// all notes off controller
 	};
 
@@ -272,6 +277,7 @@ protected:
 	int		GetNoteDuration(const CStepArray& arrStep, int nSteps, int iCurStep) const;
 	bool	RecurseModulations(const CTrack& trk, int& nAbsEvtTime, int& nPosMod);
 	void	AddTrackEvents(CTrack& trk, int nCBStart);
+	void	AddAllTrackEvents(int nCBStart);
 	void	AddNoteOffs(int nCBStart, int nCBEnd);
 	void	OnInternalControl(const CMidiEvent& noteOff, BYTE iChan, int nCBStart);
 	void	ReleaseHeldNotes(CMidiEventArray& arrHeldNoteOff, int nTime, int nCBStart, bool bForceExpire = false);
@@ -293,8 +299,10 @@ protected:
 	void	FixNoteOverlaps();
 	void	ChaseDubs(int nTime, bool bUpdateMutes = false);
 	int		SumModulations(const CTrack& trk, int iModType, int nAbsEvtTime);
+	int		GetQueueModulation(int iModSource, int nAbsEvtTime);
 	DWORD	GetMidiSongPositionMsg(int nMidiSongPos) const;
 	void	QuantizeStartPositionForSync(int& nMidiSongPos);
+	void	ChaseNextSteps(int nStartTime);
 #if SEQ_DUMP_EVENTS
 	void	AddDumpEvent(const CMidiEventStream& arrEvt, int nEvents);
 	void	DumpEvents(LPCTSTR pszPath);
@@ -542,4 +550,14 @@ inline void CSequencer::SetExportTimeKeySigs(bool bEnable)
 inline void CSequencer::SetExportAllNotesOff(bool bEnable)
 {
 	m_bExportAllNotesOff = bEnable;
+}
+
+inline int CSequencer::GetSongStartPos() const
+{
+	return m_nSongStartPos;
+}
+
+inline void CSequencer::SetSongStartPos(int nTicks)
+{
+	m_nSongStartPos = nTicks;
 }

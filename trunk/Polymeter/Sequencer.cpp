@@ -65,6 +65,7 @@
 		55		02oct24	fix looping so it doesn't lose time
 		56		07oct24	streamline conditional around adding track events
 		57		29jul25	fix export omits first tempo change after playback
+		58		22jan26	add queue modulation type
 
 */
 
@@ -81,6 +82,10 @@
 
 bool CSequencer::m_bExportTimeKeySigs = true;
 bool CSequencer::m_bExportAllNotesOff = true;
+
+// macros for accessing step members
+#define STEP_VEL(step) ((step) & SB_VELOCITY)
+#define STEP_TIE(step) ((step) & SB_TIE)
 
 CSequencer::CSequencer()
 {
@@ -103,6 +108,7 @@ CSequencer::CSequencer()
 	m_nRecordOffset = 0;
 	m_nMidiClockPeriod = 0;
 	m_nMidiClockTimer = 0;
+	m_nSongStartPos = 0;
 	m_bIsPlaying = false;
 	m_bIsPaused = false;
 	m_bIsStopping = false;
@@ -195,12 +201,14 @@ void CSequencer::SetPosition(int nTicks)
 		m_nPosOffset += nTicks - m_nCBTime;
 		m_nCBTime = nTicks;
 		m_bIsPositionChange = true;	// signal position change
+		ChaseNextSteps(nTicks);
 		if (m_bIsSongMode)	// if song playback
 			ChaseDubs(nTicks);	// reset dub indices
 	} else {	// stopped
 		m_nPosOffset = nTicks;
 		m_nCBTime = nTicks;
 		m_nStartPos = nTicks;
+		ChaseNextSteps(nTicks);
 		if (m_bIsSongMode)	// if song playback
 			ChaseDubs(nTicks, true);	// reset dub indices and update mutes
 	}
@@ -352,6 +360,7 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 		m_arrEvent.FastRemoveAll();
 		m_arrNoteOff.SetSize(DEF_BUFFER_SIZE);	// preallocate note off array
 		m_arrNoteOff.FastRemoveAll();
+		ChaseNextSteps(m_nStartPos);
 		if (m_bIsSongMode)
 			ChaseDubs(m_nStartPos, true);
 		UINT	uDevice = m_iOutputDevice;
@@ -492,16 +501,16 @@ __forceinline int CSequencer::GetNoteDuration(const CStepArray& arrStep, int nSt
 	int	iPrevStep = iCurStep - 1;	// previous step
 	if (iPrevStep < 0)	// if underrun
 		iPrevStep = nSteps - 1;	// wrap to last step
-	if (arrStep[iPrevStep] & SB_TIE)	// if previous step is tied
+	if (STEP_TIE(arrStep[iPrevStep]))	// if previous step is tied
 		return 0;	// failure; not at start of note
-	if (!(arrStep[iCurStep] & SB_TIE))	// if current step isn't tied
+	if (!STEP_TIE(arrStep[iCurStep]))	// if current step isn't tied
 		return 1;	// duration is one; optimized case
 	// current step is tied; find first step that isn't tied
 	for (int nDur = 1; nDur < nSteps; nDur++) {	// for remaining steps
 		iCurStep++;	// next step
 		if (iCurStep >= nSteps)	// if overrun
 			iCurStep = 0;	// wrap to first step
-		if (!(arrStep[iCurStep] & SB_TIE)) {	// if step isn't tied
+		if (!STEP_TIE(arrStep[iCurStep])) {	// if step isn't tied
 			if (arrStep[iCurStep])	// if step is on
 				return nDur + 1;	// duration includes this step
 			else	// step is off
@@ -583,7 +592,7 @@ bool CSequencer::RecurseModulations(const CTrack& trk, int& nAbsEvtTime, int& nP
 				int	iModStep = trkModSource.GetStepIndex(nAbsEvtTime2);	// use potentially offset event time
 				if (nPosMod2)	// if recursion returned a non-zero position modulation
 					iModStep = ModWrap(iModStep - nPosMod2, trkModSource.GetLength());	// modulate position
-				int	nStepVal = trkModSource.m_arrStep[iModStep] & SB_VELOCITY;
+				int	nStepVal = STEP_VEL(trkModSource.m_arrStep[iModStep]);
 				if (iModType == MT_Mute) {	// if mute modulation
 					if (nStepVal)	// if non-zero step
 						return true;	// abandon this branch and return mute
@@ -619,13 +628,27 @@ int CSequencer::SumModulations(const CTrack& trk, int iModType, int nAbsEvtTime)
 				int	iModStep = trkModSource.GetStepIndex(nAbsEvtTime);
 				if (nPosMod)	// if recursion returned a non-zero position modulation
 					iModStep = ModWrap(iModStep - nPosMod, trkModSource.GetLength());	// modulate position
-				int	nStepVal = trkModSource.m_arrStep[iModStep] & SB_VELOCITY;
+				int	nStepVal = STEP_VEL(trkModSource.m_arrStep[iModStep]);
 				nStepVal -= MIDI_NOTES / 2;	// convert step value to signed offset
 				nSum += nStepVal;
 			}
 		}
 	}
 	return nSum;
+}
+
+__forceinline int CSequencer::GetQueueModulation(int iModSource, int nAbsEvtTime)
+{
+	CTrack&	trkModSource = GetAt(iModSource);	// get modulator source track
+	int	iStep = trkModSource.GetNextStep();	// get queue modulator's step index and post-increment it
+	if (trkModSource.IsModulated()) {	// if modulation source is modulated (recursive modulation)
+		// compute net position modulation and apply it to queue modulator's step index
+		iStep += SumModulations(trkModSource, MT_Position, nAbsEvtTime);
+		iStep = ModWrap(iStep, trkModSource.GetLength());	// wrap step index as needed
+	}
+	// get queue modulator's step value at index computed above;
+	// convert step value to signed offset before returning it
+	return STEP_VEL(trkModSource.m_arrStep[iStep]) - MIDI_NOTES / 2;
 }
 
 __forceinline void CSequencer::AddTrackEvents(CTrack& trk, int nCBStart)
@@ -684,7 +707,7 @@ __forceinline void CSequencer::AddTrackEvents(CTrack& trk, int nCBStart)
 						} else {	// modulator isn't modulated
 							iModStep = trkModSource.GetStepIndex(nAbsEvtTime);
 						}
-						int	nStepVal = trkModSource.m_arrStep[iModStep] & SB_VELOCITY;
+						int	nStepVal = STEP_VEL(trkModSource.m_arrStep[iModStep]);
 						switch (iModType) {
 						case MT_Mute:
 							if (nStepVal)	// if track is muted by mute modulator
@@ -719,6 +742,10 @@ __forceinline void CSequencer::AddTrackEvents(CTrack& trk, int nCBStart)
 						case MT_Offset:
 							arrMod[MT_Offset] += nStepVal;	// offset modulation is unsigned (delay only)
 							break;
+						case MT_Queue:
+							// zero is reserved for no queue modulation, so track index must be offset
+							arrMod[MT_Queue] = iModSource + 1;	// make source track index one-based
+							break;
 						default:
 							nStepVal -= MIDI_NOTES / 2;	// convert step value to signed offset
 							arrMod[iModType] += nStepVal;	// accumulate modulation value
@@ -736,7 +763,11 @@ __forceinline void CSequencer::AddTrackEvents(CTrack& trk, int nCBStart)
 					if (trk.m_arrStep[iModStep]) {	// if step isn't empty
 						int	nDurSteps = GetNoteDuration(trk.m_arrStep, nLength, iModStep);
 						if (nDurSteps) {	// if at start of note
-							int	nVel = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
+							if (arrMod[MT_Queue] > 0) {	// if queue modulation applies
+								int	iQueueModSource = arrMod[MT_Queue] - 1;	// revert source track index to zero-based
+								arrMod[MT_Queue] = GetQueueModulation(iQueueModSource, nAbsEvtTime);
+							}
+							int	nVel = STEP_VEL(trk.m_arrStep[iModStep]) + trk.m_nVelocity + arrMod[MT_Velocity];
 							nVel = CLAMP(nVel, 0, MIDI_NOTE_MAX);
 							int	nNote = trk.m_nNote + arrMod[MT_Note];
 							int	nScaleTones = m_arrScale.GetSize();
@@ -777,7 +808,8 @@ __forceinline void CSequencer::AddTrackEvents(CTrack& trk, int nCBStart)
 									if (bDropped)	// if any voices were dropped
 										m_arrScale.Sort();	// re-sort scale tones
 								}
-								int	iTone = ModWrap(arrMod[MT_Index], nScaleTones);
+								// scale or chord tone index is wrapped sum of index and queue modulations
+								int	iTone = ModWrap(arrMod[MT_Index] + arrMod[MT_Queue], nScaleTones);
 								nNote = m_arrScale[iTone];
 								if (m_nDuplicateNoteMethods & (1 << trk.m_nChannel)) {	// if channel prevents duplicate notes
 									if (nNote == m_arrPrevNote[trk.m_nChannel]) {	// if note matches channel's previous note
@@ -789,6 +821,7 @@ __forceinline void CSequencer::AddTrackEvents(CTrack& trk, int nCBStart)
 									m_arrPrevNote[trk.m_nChannel] = static_cast<BYTE>(nNote);	// update previous note
 								}
 							} else {	// scale not defined
+								nNote += arrMod[MT_Queue];	// apply queue modulation if any
 								if (trk.m_iRangeType != RT_NONE)	// if applying range to note
 									nNote = ApplyNoteRange(nNote, trk.m_nRangeStart + arrMod[MT_Range], trk.m_iRangeType);
 							}
@@ -819,7 +852,7 @@ lblNoteScheduled:;
 						}
 					}
 				} else if (trk.m_iType == TT_TEMPO) {	// if track type is tempo
-					int	nVal = trk.m_arrStep[iModStep] & SB_VELOCITY;
+					int	nVal = STEP_VEL(trk.m_arrStep[iModStep]);
 					double	fValNorm = double(nVal - MIDI_NOTES / 2) / (MIDI_NOTES / 2);
 					double	fTempoScaling = pow(2, fValNorm * trk.m_nDuration / 100.0) * fTempoModulation;
 					double	fNewTempo = m_fTempo * fTempoScaling;
@@ -831,7 +864,7 @@ lblNoteScheduled:;
 						m_arrTempoEvent.FastAdd(evtTempo);	// add tempo event
 					}
 				} else if (trk.m_iType == TT_INTERNAL) {	// if track type is internal
-					int	nVal = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
+					int	nVal = STEP_VEL(trk.m_arrStep[iModStep]) + trk.m_nVelocity + arrMod[MT_Velocity];
 					nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
 					char	cVal = static_cast<char>(nVal);	// avoids compiler warning
 					if (cVal != m_MidiCache.arrInternal[trk.m_nChannel][trk.m_nNote]) {	// if value changed
@@ -860,10 +893,13 @@ lblNoteScheduled:;
 								m_arrEvent.FastInsertSorted(evt);	// controller is handled by FixNoteOverlaps
 							}
 							break;
+						case ICTL_QUEUE_MOD_RESET:
+							ResetNextStepsOnChannel(trk.m_nChannel);
+							break;
 						}
 					}
 				} else {	// track type is control event
-					int	nVal = (trk.m_arrStep[iModStep] & SB_VELOCITY) + trk.m_nVelocity + arrMod[MT_Velocity];
+					int	nVal = STEP_VEL(trk.m_arrStep[iModStep]) + trk.m_nVelocity + arrMod[MT_Velocity];
 					nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
 					CMidiEvent	evt;
 					if (MakeControlEvent(trk, nEvtTime, nVal, evt)) {	// if event state changed
@@ -1226,6 +1262,18 @@ lblFixNoteOverlaps:;
 	}
 }
 
+void CSequencer::AddAllTrackEvents(int nCBStart)
+{
+	// AddTrackEvents is around 5K bytes of code, due to its extensive use of
+	// force inline. Moving track iteration to a method ensures that only two
+	// copies of AddTrackEvents exist in the binary: one for OutputMidiBuffer,
+	// and one here. This keeps playback optimized and code size reasonable.
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		AddTrackEvents(GetAt(iTrack), nCBStart);	// get track's events for this chunk
+	}
+}
+
 bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration, int nKeySig)
 {
 	// note that this method may throw CFileException (from CMidiFile)
@@ -1243,6 +1291,7 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration, int nKeySig)
 			nUsedTracks++;
 		}
 	}
+	ResetNextSteps();
 	ChaseDubs(m_nStartPos, true);	// reset dub indices and update mutes
 	int	nChunkDuration = m_nLatency;	// same latency as playback to ensure identical dubbing
 	CMidiFile	fMidi(pszPath, CFile::modeCreate | CFile::modeWrite);	// create MIDI file
@@ -1261,14 +1310,11 @@ bool CSequencer::ExportImpl(LPCTSTR pszPath, int nDuration, int nKeySig)
 		arrMidiEvent[iChan].FastAdd(evt);	// add initial event to per-channel array
 	}
 	CMidiEventArray arrSongTempoEvent;
-	int	nTracks = GetSize();
 	for (int iChunk = 0; iChunk < nChunks; iChunk++) {	// for each time chunk
 		m_arrEvent.FastRemoveAll();	// empty event array
 		m_arrTempoEvent.FastRemoveAll();	// empty tempo event array
 		int	nCBEnd = nCBTime + nChunkLen;
-		for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
-			AddTrackEvents(GetAt(iTrack), nCBTime);	// get track's events for this chunk
-		}
+		AddAllTrackEvents(nCBTime);	// add events for all tracks for this chunk
 		if (IsRecordedEventPlayback())
 			AddRecordedEvents(nCBTime, nCBEnd);	// add recorded events for this chunk
 		AddNoteOffs(nCBTime, nCBEnd);	// add note offs for this chunk
@@ -1659,6 +1705,38 @@ void CSequencer::SetLoopRange(CLoopRange rngTicks)
 {
 	WCritSec::Lock	lock(m_csTrack);	// serialize access to loop range
 	m_rngLoop = rngTicks;
+}
+
+void CSequencer::ChaseNextSteps(int nStartTime)
+{
+	if (!ResetNextSteps())	// reset next step indices; returns true if we have queue modulators
+		return;	// no queue modulators
+	if (nStartTime <= m_nSongStartPos)	// if starting at or before song start position
+		return;	// don't chase
+	CSequencerBase	seqBasePrev = *this;	// save base class members
+	ChaseDubs(m_nSongStartPos, true);
+	int	nChunkDuration = m_nLatency;	// same latency as playback to ensure identical dubbing
+	int	nChunkLen = GetCallbackLength(nChunkDuration);	// convert chunk duration to ticks
+	int	nCBTime = m_nSongStartPos;
+	int	nRemainTime = nStartTime - m_nSongStartPos;
+	while (nRemainTime > 0) {	// while chunks remain to be processed
+		m_arrEvent.FastRemoveAll();
+		m_arrNoteOff.FastRemoveAll();
+		m_arrTempoEvent.FastRemoveAll();
+		int	nThisChunkLen = min(nChunkLen, nRemainTime);
+		if (nThisChunkLen > 0) {	// if this chunk has a non-zero duration
+			m_nCBLen = nThisChunkLen;	// set callback length
+			AddAllTrackEvents(nCBTime);	// add events for all tracks for this chunk
+		}
+		nCBTime += nChunkLen;
+		nRemainTime -= nChunkLen;
+	}
+	CSequencerBase&	seqBase = *this;
+	seqBase = seqBasePrev;	// restore base class members
+	ResetCachedParameters();
+	m_arrEvent.FastRemoveAll();
+	m_arrNoteOff.FastRemoveAll();
+	m_arrTempoEvent.FastRemoveAll();
 }
 
 #if SEQ_DUMP_EVENTS

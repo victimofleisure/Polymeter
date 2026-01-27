@@ -68,6 +68,7 @@
 		58		25feb24	remove status bar indicator handlers
 		59		27feb24	make dockable bar context menus available for customization
 		60		01sep24	add handler for channel property change message
+		61		28apr25	relay updated song start position to sequencer
 
 */
 
@@ -479,6 +480,9 @@ void CMainFrame::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 					if (pDoc->m_Seq.IsPlaying() && m_wndMidiOutputBar.IsVisible())
 						m_wndMidiOutputBar.SetKeySignature(pDoc->m_nKeySig);
 					m_wndPianoBar.SetKeySignature(pDoc->m_nKeySig);
+					break;
+				case CMasterProps::PROP_nStartPos:
+					pDoc->m_Seq.SetSongStartPos(pDoc->m_nStartPos);
 					break;
 				case CMasterProps::PROP_nRecordOffset:
 					pDoc->m_Seq.SetRecordOffset(pDoc->m_nRecordOffset);

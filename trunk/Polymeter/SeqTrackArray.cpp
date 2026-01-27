@@ -29,6 +29,7 @@
         19		11nov21	rename packed modulation members
         20		22jan22	add set tracks methods
 		21		25jan23	add replace steps range
+		22		22jan26	add reset next steps for queue modulation
 
 */
 
@@ -531,7 +532,7 @@ void CSeqTrackArray::ChaseDubs(int nTime, bool bUpdateMutes)
 			if (bUpdateMutes)
 				trk.m_bMute = trk.m_arrDub[iDub].m_bMute;
 		} else	// dub not found
-			GetAt(iTrack).m_iDub = 0;
+			trk.m_iDub = 0;
 	}
 }
 
@@ -1033,5 +1034,50 @@ void CSeqTrackArray::SetTickDepends(const CTickDependsArray& arrTickDepends)
 	int	nTracks = GetSize();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		GetAt(iTrack).SetTickDepends(arrTickDepends[iTrack]);
+	}
+}
+
+bool CSeqTrackArray::ResetNextSteps()
+{
+	// during playback, acquire the track critical section first to avoid races
+	bool	bHaveQueueMods = false;	// assume no queue modulators
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		GetAt(iTrack).m_iNextStep = -1;	// reset next step index to unused value
+	}
+	// now that all next step indices are reset, update queue modulators
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		const CTrack& trk = GetAt(iTrack);
+		int	nMods = trk.m_arrModulator.GetSize();
+		for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
+			const CModulation& mod = trk.m_arrModulator[iMod];
+			// if modulation type is queue and source track index is valid
+			if (mod.m_iType == MT_Queue && mod.m_iSource >= 0) {
+				// found queue modulator; reset its next step index to first step
+				GetAt(mod.m_iSource).m_iNextStep = 0;	// source track
+				bHaveQueueMods = true;	// flag existence of queue modulators
+			}
+		}
+	}
+	return bHaveQueueMods;	// true if any tracks are queue modulators
+}
+
+void CSeqTrackArray::ResetNextStepsOnChannel(int iChan)
+{
+	// reset next step index of all queue modulators targeting specified MIDI channel
+	int	nTracks = GetSize();
+	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
+		const CTrack& trk = GetAt(iTrack);
+		if (trk.m_nChannel == iChan) {	// if track's MIDI channel matches caller's
+			int	nMods = trk.m_arrModulator.GetSize();
+			for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
+				const CModulation& mod = trk.m_arrModulator[iMod];
+				// if modulation type is queue and source track index is valid
+				if (mod.m_iType == MT_Queue && mod.m_iSource >= 0) {
+					// found queue modulator; reset its next step index to first step
+					GetAt(mod.m_iSource).m_iNextStep = 0;	// source track
+				}
+			}
+		}
 	}
 }

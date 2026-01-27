@@ -41,6 +41,7 @@
 		31		19dec23	replace track type member usage with accessor
 		32		18dec24	allow all unchecked in modulation type dialog
 		33		18dec24	make filter and channels available to customize
+		34		22jan26	add queue modulation type
 
 */
 
@@ -79,6 +80,7 @@ IMPLEMENT_DYNAMIC(CGraphBar, CMyDockablePane)
 #define MOD_TYPE_COLOR_Index	"olive"
 #define MOD_TYPE_COLOR_Voicing	"orange"
 #define MOD_TYPE_COLOR_Offset	"turquoise"
+#define MOD_TYPE_COLOR_Queue	"peru"
 
 // adding a new modulation type requires adding a new color name above
 const LPCTSTR CGraphBar::m_arrModTypeColor[CTrack::MODULATION_TYPES] = {

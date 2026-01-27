@@ -28,6 +28,7 @@
 		18		05feb22	add step tie accessors
 		19		15feb22	don't inherit track base
 		20		25jan23	add replace steps range
+		21		22jan26	add reset next steps for queue modulation
 
 */
 
@@ -189,6 +190,8 @@ public:
 	void	GetTickDepends(CTickDependsArray& arrTickDepends) const;
 	void	SetTickDepends(const CTickDependsArray& arrTickDepends);
 	void	ScaleTickDepends(double fScale);
+	bool	ResetNextSteps();
+	void	ResetNextStepsOnChannel(int iChan);
 
 protected:
 // Member data
@@ -422,7 +425,18 @@ inline void CSeqTrackArray::SetStepTie(int iTrack, int iStep, bool bTie)
 
 inline int CSeqTrackArray::GetStepIndex(int iTrack, LONGLONG nPos) const
 {
-	return GetAt(iTrack).GetStepIndex(nPos);
+	const CTrack& trk = GetAt(iTrack);
+	if (trk.m_iNextStep >= 0) {	// if track is a queue modulator
+		int	iStep = trk.m_iNextStep - 1;	// assume caller wants current step
+		int	iLastStep = trk.GetLength() - 1;	// index of last step
+		if (iStep < 0) {	// if before first step
+			iStep = iLastStep;	// wrap to last step
+		} else if (iStep > iLastStep) {	// if after last step
+			iStep = 0;	// wrap to first step
+		}
+		return iStep;
+	}
+	return trk.GetStepIndex(nPos);	// track method doesn't handle queue modulation
 }
 
 inline void CSeqTrackArray::GetSteps(int iTrack, CStepArray& arrStep) const

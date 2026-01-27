@@ -98,6 +98,7 @@
 		88		01sep24	add duplicate note methods; bump file version to 22
 		89		11jan26	in CreateModulation, add distribute option
 		90		18jan26	get quantization fraction from options
+		91		22jan26	add queue modulation type; bump file version to 23
 
 */
 
@@ -140,7 +141,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 // file versioning
 #define FILE_ID				_T("Polymeter")
-#define	FILE_VERSION		22
+#define	FILE_VERSION		23
 
 // file format keys
 #define RK_FILE_ID			_T("FileID")
@@ -419,6 +420,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR pszPath)
 	m_Seq.SetNoteOverlapMode(m_iNoteOverlap != CMasterProps::NOTE_OVERLAP_Allow);
 	m_Seq.SetMeter(m_nMeter);
 	m_Seq.SetPosition(m_nStartPos);
+	m_Seq.SetSongStartPos(m_nStartPos);
 	m_Seq.SetLoopRange(CLoopRange(m_nLoopFrom, m_nLoopTo));
 	m_nSongPos = m_nStartPos;	// also set our cached song position
 	int	nTracks = 0;
@@ -2509,7 +2511,8 @@ void CPolymeterDoc::RestoreTimeDivision(const CUndoState& State)
 	m_nTimeDiv = CMasterProps::FindTimeDivision(pInfo->m_nTimeDivTicks);
 	ASSERT(m_nTimeDiv >= 0);
 	m_nStartPos = pInfo->m_nStartPos;
-	SetPosition(static_cast<int>(pInfo->m_nSongPos));
+	SetPosition(m_nStartPos);
+	m_Seq.SetSongStartPos(m_nStartPos);
 	m_nLoopFrom = pInfo->m_rngLoop.m_nFrom;
 	m_nLoopTo = pInfo->m_rngLoop.m_nTo;
 	OnLoopRangeChange();
@@ -4036,6 +4039,7 @@ void CPolymeterDoc::ChangeTimeDivision(int nNewTimeDivTicks)
 	m_nLoopTo = Round(m_nLoopTo * fScale);
 	OnLoopRangeChange();
 	SetPosition(static_cast<int>(Round64(m_nSongPos * fScale)));
+	m_Seq.SetSongStartPos(m_nStartPos);
 	UpdateAllViews(NULL);	// scaling affects many properties
 }
 
