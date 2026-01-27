@@ -15,6 +15,6 @@ The Polymeter MIDI Sequencer has its own [website](https://victimofleisure.githu
 * [Single Wiki page](https://github.com/victimofleisure/Polymeter/wiki)
 * Also available within the application as context-sensitive F1 help
 
-MacOS or Linux users should check the [FAQ](https://victimofleisure.github.io/Polymeter/faq.html) for possible solutions. A  virtual desktop running actual Windows is best, but Wine may work passably. The release notes are (here)[https://victimofleisure.github.io/Polymeter/relnotes.html].
+MacOS or Linux users should check the [FAQ](https://victimofleisure.github.io/Polymeter/faq.html) for possible solutions. A  virtual desktop running actual Windows is best, but Wine may work passably. The release notes are [here](https://victimofleisure.github.io/Polymeter/relnotes.html).
 
 The Polymeter MIDI Sequencer evolved from [software I developed in the 1990s](https://victimofleisure.github.io/Polymeter/gallery/bongo.html) in order to compose [polymeter electronic dance music](https://victimofleisure.github.io/Polymeter/tools/tracks.html). I have used Polymeter exclusively since 2019, and it continues to evolve as [my story](https://victimofleisure.github.io/) unfolds.
