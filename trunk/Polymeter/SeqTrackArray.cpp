@@ -30,6 +30,7 @@
         20		22jan22	add set tracks methods
 		21		25jan23	add replace steps range
 		22		22jan26	add reset next steps for queue modulation
+		23		28jan26	fix reset next steps on channel
 
 */
 
@@ -1068,7 +1069,8 @@ void CSeqTrackArray::ResetNextStepsOnChannel(int iChan)
 	int	nTracks = GetSize();
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		const CTrack& trk = GetAt(iTrack);
-		if (trk.m_nChannel == iChan) {	// if track's MIDI channel matches caller's
+		// if track is note and track's MIDI channel matches caller's
+		if (trk.IsNote() && trk.m_nChannel == iChan) {
 			int	nMods = trk.m_arrModulator.GetSize();
 			for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
 				const CModulation& mod = trk.m_arrModulator[iMod];

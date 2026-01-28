@@ -66,6 +66,7 @@
 		56		07oct24	streamline conditional around adding track events
 		57		29jul25	fix export omits first tempo change after playback
 		58		22jan26	add queue modulation type
+		59		28jan26	fix reset next steps on channel
 
 */
 
@@ -867,7 +868,8 @@ lblNoteScheduled:;
 					int	nVal = STEP_VEL(trk.m_arrStep[iModStep]) + trk.m_nVelocity + arrMod[MT_Velocity];
 					nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
 					char	cVal = static_cast<char>(nVal);	// avoids compiler warning
-					if (cVal != m_MidiCache.arrInternal[trk.m_nChannel][trk.m_nNote]) {	// if value changed
+					char	cOldVal = m_MidiCache.arrInternal[trk.m_nChannel][trk.m_nNote];
+					if (cVal != cOldVal) {	// if value changed
 						m_MidiCache.arrInternal[trk.m_nChannel][trk.m_nNote] = cVal;	// update cache
 						switch (trk.m_nNote) {
 						case ICTL_SUSTAIN:
@@ -894,7 +896,8 @@ lblNoteScheduled:;
 							}
 							break;
 						case ICTL_QUEUE_MOD_RESET:
-							ResetNextStepsOnChannel(trk.m_nChannel);
+							if (nVal && !cOldVal)	// if transition from zero to non-zero value
+								ResetNextStepsOnChannel(trk.m_nChannel);
 							break;
 						}
 					}
