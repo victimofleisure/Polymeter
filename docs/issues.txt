@@ -497,6 +497,7 @@ id	open	close	type	description	rev	user
 611	01/17/26	01/18/26	done	in step and song views, Shift + right click within selection should trim selection	1.0.17.003	
 612	01/19/26	01/19/26	done	MIDI file import handles pitch bend messages incorrectly; should use MSB, not LSB	1.0.17.004	
 507	02/09/22	01/27/26	done	queue modulation; similar to note or index modulation, but steps only when target track plays a note	1.0.18.000	
+614	01/28/26	01/28/26	done	queue modulation reset internal controller triggers unexpectedly; should trigger only on transition from zero to non-zero value	1.0.18.001	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
