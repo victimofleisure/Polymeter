@@ -67,6 +67,7 @@
 		57		29jul25	fix export omits first tempo change after playback
 		58		22jan26	add queue modulation type
 		59		28jan26	fix reset next steps on channel
+		60		31jan26	in SetPosition, reset stats timer to avoid error
 
 */
 
@@ -202,9 +203,11 @@ void CSequencer::SetPosition(int nTicks)
 		m_nPosOffset += nTicks - m_nCBTime;
 		m_nCBTime = nTicks;
 		m_bIsPositionChange = true;	// signal position change
-		ChaseNextSteps(nTicks);
+		ChaseNextSteps(nTicks);	// this takes a long time if nTicks is large; see reset below
 		if (m_bIsSongMode)	// if song playback
 			ChaseDubs(nTicks);	// reset dub indices
+		// reset statistics timer to prevent chase from triggering a callback took long error
+		m_timerStats.Reset();
 	} else {	// stopped
 		m_nPosOffset = nTicks;
 		m_nCBTime = nTicks;
@@ -1091,7 +1094,7 @@ lblEventWasMapped:;
 
 bool CSequencer::OutputMidiBuffer()
 {
-	CBenchmark b;	// for timing statistics only
+	m_timerStats.Reset();
 	int	nCBStart, nCBEnd;
 	{
 		WCritSec::Lock	lock(m_csTrack);	// serialize access to tracks
@@ -1189,7 +1192,7 @@ bool CSequencer::OutputMidiBuffer()
 	if (m_bIsOutputCapture)	// if capturing output MIDI events
 		QueueOutputEvents(nEvents);
 	// update statistics only after this point
-	double t = b.Elapsed();
+	double t = m_timerStats.Elapsed();
 	m_stats.nCallbacks++;
 	if (t < m_stats.fCBTimeMin)
 		m_stats.fCBTimeMin = t;

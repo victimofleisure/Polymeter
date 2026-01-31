@@ -38,6 +38,7 @@
 		28		02may24	replace redundant track index with reference
 		29		01sep24	add per-channel duplicate note methods
 		30		22jan26	add song start position for queue modulation
+		31		31jan26	add statistics timer member
 
 */
 
@@ -261,6 +262,7 @@ protected:
 	CLoopRange	m_rngLoop;			// loop range in ticks
 	CChannelStateArray	m_arrChannelState;	// state information for each MIDI channel
 	BYTE	m_arrPrevNote[MIDI_CHANNELS];	// for each MIDI channel, its previous note
+	CBenchmark	m_timerStats;		// performance counter for timing statistics
 	static	bool	m_bExportTimeKeySigs;	// true if exporting time and key signatures
 	static	bool	m_bExportAllNotesOff;	// true if export turns off all notes at end
 
