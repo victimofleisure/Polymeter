@@ -21,6 +21,7 @@ id	open	close	type	description	rev	user
 580	01/18/24		bug	if app is maximized when it exits, on next launch, docked panes that split a side have incorrect sizes; framework bug		
 581	01/22/24		bug	docking pane tabs don't connect to context help; framework bug		
 605	07/31/25		bug	in export, tempo events could be added instead of inserted, because they're supposedly already in time order		
+615	01/29/26		bug	all notes off internal controller triggers unexpectedly; should only trigger on transition from zero to non-zero value		
 1	03/22/18	03/25/18	done	tempo change while playing	0.0.00.043	
 2	03/22/18	03/25/18	done	PPQ change; only while stopped for now	0.0.00.043	
 3	03/22/18	03/25/18	done	add velocity to test app	0.0.00.043	
@@ -467,7 +468,7 @@ id	open	close	type	description	rev	user
 574	12/18/23	12/19/23	done	new track type (internal) for controlling sequencer behaviors such as sustain and all notes off	1.0.14.000	
 575	12/18/23	12/19/23	done	internal controller for per-channel note overlap method (Split versus Merge); MIDI controller 63	1.0.14.000	
 576	12/23/23	12/23/23	done	add mapping target for note overlap method	1.0.14.000	
-605	12/24/23	12/24/23	done	internal sostenuto controller; like sustain, but only holds notes that were on when controller was activated	1.0.14.000	
+615	12/24/23	12/24/23	done	internal sostenuto controller; like sustain, but only holds notes that were on when controller was activated	1.0.14.000	
 569	09/08/23	01/24/24	done	optionally show targets in modulations bar; read-only is good enough for now	1.0.15.000	
 582	01/24/24	01/24/24	done	sequencer's callback overrun error is non-fatal and shouldn't stop playback	1.0.15.000	
 583	01/24/24	01/29/24	done	Modulations bar Targets pane should support editing	1.0.15.001	
@@ -498,6 +499,8 @@ id	open	close	type	description	rev	user
 612	01/19/26	01/19/26	done	MIDI file import handles pitch bend messages incorrectly; should use MSB, not LSB	1.0.17.004	
 507	02/09/22	01/27/26	done	queue modulation; similar to note or index modulation, but steps only when target track plays a note	1.0.18.000	
 614	01/28/26	01/28/26	done	queue modulation reset internal controller triggers unexpectedly; should trigger only on transition from zero to non-zero value	1.0.18.001	
+616	01/29/26	01/31/26	done	Song View manual page gives incorrect modifier key for stepping through dubs: should be Shift, not Alt	1.0.18.002	
+617	01/30/26	01/31/26	done	if queue modulation is used, chase during playback triggers callback took too long error if target position is big	1.0.18.002	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		

@@ -998,7 +998,7 @@ A grid row is divided into cells, each of which represent one or more @[steps] o
 
 The song grid has features in common with the track view's @[track steps\steps pane]. For example, left-clicking toggles cells, and a rectangular range of cells can be @[cell selection\drag-selected] via the right mouse button, similarly to @[step selection]. The ruler at the top of the grid is marked in beats and ticks, and possibly also in measures, depending on the @[meter]. Left-clicking in the ruler jumps to the corresponding @[song position]. Right-clicking in the ruler clears the current cell selection.
 
-Be careful when editing while zoomed out, because the further out you're zoomed, the more details are hidden. This is most likely to be a problem when extending an existing dub. In such cases you should zoom in and make sure you haven't left unintended gaps. It's also recommended to step through your dubs, using the left and right arrow keys in combination with the @{key}Alt@} key, as this can help you find mistakes.
+Be careful when editing while zoomed out, because the further out you're zoomed, the more details are hidden. This is most likely to be a problem when extending an existing dub. In such cases you should zoom in and make sure you haven't left unintended gaps. It's also recommended to step through your dubs, using the left and right arrow keys in combination with the @{key}Shift@} key, as this can help you find mistakes.
 
 @item Song grid quick help\Quick help
 
