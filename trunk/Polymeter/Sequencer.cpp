@@ -68,6 +68,8 @@
 		58		22jan26	add queue modulation type
 		59		28jan26	fix reset next steps on channel
 		60		31jan26	in SetPosition, reset stats timer to avoid error
+		61		07feb26	fix offset handling for note overlap internal control
+		62		07feb26	fix sustain being applied to delayed control event
 
 */
 
@@ -88,6 +90,9 @@ bool CSequencer::m_bExportAllNotesOff = true;
 // macros for accessing step members
 #define STEP_VEL(step) ((step) & SB_VELOCITY)
 #define STEP_TIE(step) ((step) & SB_TIE)
+
+// assume note off is note on message with velocity of zero; ignore channel and note number
+#define IS_NOTE_OFF(msg) (((msg) & (MIDI_STRM_MASK | MIDI_P2_MASK | MIDI_CMD_MASK)) == NOTE_ON)
 
 CSequencer::CSequencer()
 {
@@ -892,10 +897,15 @@ lblNoteScheduled:;
 						case ICTL_NOTE_OVERLAP:
 							if (m_bPreventNoteOverlap) {	// if preventing note overlap
 								CMidiEvent	evt;
-								evt.m_nTime = nEvtTime + arrMod[MT_Offset] + nCBStart;
+								evt.m_nTime = nEvtTime + arrMod[MT_Offset];	// add offset modulation (delay) if any
 								evt.m_dwEvent = MakeMidiMsg(CONTROL, trk.m_nChannel, trk.m_nNote, nVal);
 								evt.m_dwEvent |= SEVT_INTERNAL;	// set bit to indicate event is internal
-								m_arrEvent.FastInsertSorted(evt);	// controller is handled by FixNoteOverlaps
+								if (evt.m_nTime >= m_nCBLen) {	// if event occurs after this callback
+									evt.m_nTime += nCBStart;	// convert time from callback-relative to absolute
+									m_arrNoteOff.FastInsertSorted(evt);	// schedule delayed event via note off array
+								} else {	// event occurs within this callback
+									m_arrEvent.FastInsertSorted(evt);	// controller is handled by FixNoteOverlaps
+								}
 							}
 							break;
 						case ICTL_QUEUE_MOD_RESET:
@@ -941,11 +951,11 @@ __forceinline void CSequencer::AddNoteOffs(int nCBStart, int nCBEnd)
 		if (noteOff.m_dwEvent & SEVT_INTERNAL) {	// if note off is an internal event
 			OnInternalControl(noteOff, iChan, nCBStart);	// handle internal event
 			nOffs = m_arrNoteOff.GetSize();	// assume note off array changed and update cached count
-		} else {	// ordinary note off
-			USHORT	nChannelBit = MAKE_CHANNEL_MASK(iChan);	// convert channel index to bitmask
-			if (m_nSustainMask & nChannelBit) {	// if channel's sustain is on
+		} else {	// ordinary note off, or event delayed due to offset modulation
+			if (IS_NOTE_OFF(noteOff.m_dwEvent)	// if event is note off
+			&& (m_nSustainMask & MAKE_CHANNEL_MASK(iChan))) {	// and channel's sustain is on
 				m_arrChannelState[iChan].m_arrSustainNote.FastAdd(noteOff);	// add note off to channel's sustain array
-			} else {	// channel's sustain is off
+			} else {	// event is due to be output
 				noteOff.m_nTime -= nCBStart;	// make time relative to this callback
 				ASSERT(noteOff.m_nTime >= 0);	// time must be positive
 				m_arrEvent.FastInsertSorted(noteOff);	// add note off to event array for output
@@ -994,6 +1004,15 @@ void CSequencer::OnInternalControl(const CMidiEvent& noteOff, BYTE iChan, int nC
 			AllNotesOff(iChan, noteOff.m_nTime, nCBStart);
 		}
 		break;
+	case ICTL_NOTE_OVERLAP:
+		{
+			// assume this internal control change event was diverted to the note offs array because
+			// offset modulation delayed it past the end of its callback; its event time is absolute
+			CMidiEvent	evtOverlap(noteOff);	// copy event
+			evtOverlap.m_nTime -= nCBStart;	// convert event time from absolute to callback-relative
+			m_arrEvent.InsertSorted(evtOverlap);	// add to event array, to be handled by FixNoteOverlaps
+		}
+		break;
 	}
 }
 
@@ -1023,7 +1042,7 @@ void CSequencer::CullNoteOffs(CMidiEventArray& arrCulledNoteOff, BYTE iChan, int
 	for (int iOff = nOffs - 1; iOff >= 0; iOff--) {	// reverse iterate for deletion stability
 		CMidiEvent&	noteOff = m_arrNoteOff[iOff];
 		if (MIDI_CHAN(noteOff.m_dwEvent) == iChan	// if event channel matches
-		&& !(noteOff.m_dwEvent & SEVT_INTERNAL)) {	// and not internal event
+		&& IS_NOTE_OFF(noteOff.m_dwEvent)) {	// and event is note off
 			bool	bIsFutureNote = false;	// assume note was triggered before caller's time
 			if (iEventStart >= 0) {	// if event search starting index is valid
 				int	nEvents = m_arrEvent.GetSize();

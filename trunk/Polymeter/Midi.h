@@ -15,6 +15,7 @@
 		05		19mar20	add channel voice and system status messages
 		06		21jan22	add stream buffer event macros
 		07		23dec23	add message component bitmasks
+		08		07feb26	add stream event bitmask
 
 		midi types and constants
 
@@ -23,30 +24,28 @@
 #ifndef MIDI_INCLUDED
 #define MIDI_INCLUDED
 
-enum {	// channel voice messages
-	NOTE_OFF 		= 0x80,
-	NOTE_ON			= 0x90,
-	KEY_AFT			= 0xa0,
-	CONTROL 		= 0xb0,
-	PATCH			= 0xc0,
-	CHAN_AFT 		= 0xd0,
-	WHEEL			= 0xe0,
-};
+// channel voice messages
+#define NOTE_OFF 	0x80
+#define NOTE_ON		0x90
+#define KEY_AFT		0xa0
+#define CONTROL 	0xb0
+#define PATCH		0xc0
+#define CHAN_AFT 	0xd0
+#define WHEEL		0xe0
 
-enum {	// system messages
-	SYSEX			= 0xf0,
-	MTC_QTR_FRAME	= 0xf1,
-	SONG_POSITION	= 0xf2,
-	SONG_SELECT 	= 0xf3,
-	TUNE_REQUEST	= 0xf6,
-	EOX 			= 0xf7,
-	CLOCK			= 0xf8,
-	START			= 0xfa,
-	CONTINUE		= 0xfb,
-	STOP			= 0xfc,
-	ACTIVE_SENSING	= 0xfe,
-	SYSTEM_RESET	= 0xff,
-};
+// system messages
+#define SYSEX			0xf0
+#define MTC_QTR_FRAME	0xf1
+#define SONG_POSITION	0xf2
+#define SONG_SELECT 	0xf3
+#define TUNE_REQUEST	0xf6
+#define EOX 			0xf7
+#define CLOCK			0xf8
+#define START			0xfa
+#define CONTINUE		0xfb
+#define STOP			0xfc
+#define ACTIVE_SENSING	0xfe
+#define SYSTEM_RESET	0xff
 
 enum {
 	MIDI_CHANNELS	= 16,
@@ -70,13 +69,13 @@ enum {	// MIDI controllers
 	#include "MidiCtrlrDef.h"	// generate enum
 };
 
-enum {	// bitmasks for MIDI message components
-	MIDI_CHAN_MASK	= 0x00000f,	// channel nibble
-	MIDI_CMD_MASK	= 0x0000f0,	// command nibble
-	MIDI_STAT_MASK	= 0x0000ff,	// status byte
-	MIDI_P1_MASK	= 0x00ff00,	// 1st parameter byte
-	MIDI_P2_MASK	= 0xff0000,	// 2nd parameter byte
-};
+// bitmasks for MIDI message components
+#define	MIDI_CHAN_MASK	0x0000000f	// channel nibble
+#define MIDI_CMD_MASK	0x000000f0	// command nibble
+#define MIDI_STAT_MASK	0x000000ff	// status byte
+#define MIDI_P1_MASK	0x0000ff00	// 1st parameter byte
+#define MIDI_P2_MASK	0x00ff0000	// 2nd parameter byte
+#define MIDI_STRM_MASK	0xff000000	// stream event byte
 
 #define MIDI_STAT(msg)		LOBYTE(msg)
 #define MIDI_P1(msg)		HIBYTE(msg)
@@ -89,8 +88,8 @@ enum {	// bitmasks for MIDI message components
 #define MIDI_BEAT_CLOCKS	6
 
 // stream buffer events have event type in high byte
-#define MIDI_IS_SHORT_MSG(msg)	(!(msg & 0xff000000))
-#define MIDI_SHORT_MSG_CMD(msg)	(msg & 0xff0000f0)
+#define MIDI_IS_SHORT_MSG(msg)	(!(msg & MIDI_STRM_MASK))
+#define MIDI_SHORT_MSG_CMD(msg)	(msg & (MIDI_STRM_MASK | MIDI_CMD_MASK))
 
 union MIDI_MSG {
 	struct {
