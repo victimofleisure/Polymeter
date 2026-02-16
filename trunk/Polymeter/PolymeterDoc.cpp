@@ -99,6 +99,7 @@
 		89		11jan26	in CreateModulation, add distribute option
 		90		18jan26	get quantization fraction from options
 		91		22jan26	add queue modulation type; bump file version to 23
+		92		14feb26	add run-length encoding; bump file version to 24
 
 */
 
@@ -141,7 +142,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 // file versioning
 #define FILE_ID				_T("Polymeter")
-#define	FILE_VERSION		23
+#define	FILE_VERSION		24
 
 // file format keys
 #define RK_FILE_ID			_T("FileID")
@@ -432,6 +433,7 @@ void CPolymeterDoc::ReadProperties(LPCTSTR pszPath)
 		pszStepKey = _T("Event");	// use legacy step key
 	else	// current format
 		pszStepKey = RK_TRACK_STEP;
+	bool	bRLEDecodeErrors = false;
 	for (int iTrack = 0; iTrack < nTracks; iTrack++) {	// for each track
 		CTrack	trk(true);	// initialize to defaults
 		CString	sTrkID;
@@ -449,7 +451,8 @@ void CPolymeterDoc::ReadProperties(LPCTSTR pszPath)
 		int	nLength = fIni.GetInt(sTrkID, RK_TRACK_LENGTH, INIT_STEPS);
 		trk.m_arrStep.SetSize(nLength);
 		UINT	nReadSize = nLength;
-		fIni.GetBinary(sTrkID, pszStepKey, trk.m_arrStep.GetData(), nReadSize);
+		if (!fIni.GetRLEBinary(sTrkID, pszStepKey, trk.m_arrStep.GetData(), nReadSize))
+			bRLEDecodeErrors = true;
 		int	nDubs = fIni.GetInt(sTrkID, RK_TRACK_DUB_COUNT, 0);
 		if (nDubs) {	// if track has dubs
 			trk.m_arrDub.SetSize(nDubs);
@@ -482,6 +485,8 @@ void CPolymeterDoc::ReadProperties(LPCTSTR pszPath)
 	CMappingArray	arrMapping;
 	arrMapping.Read(fIni);
 	m_Seq.m_mapping.Attach(arrMapping);
+	if (bRLEDecodeErrors)
+		AfxMessageBox(IDS_DOC_RLE_DECODE_ERRORS, MB_OK);
 }
 
 void CPolymeterDoc::WriteProperties(LPCTSTR pszPath) const
@@ -513,7 +518,7 @@ void CPolymeterDoc::WriteProperties(LPCTSTR pszPath) const
 		if (static_cast<int>(trk.m_clrCustom) >= 0)	// if track color specified
 			fIni.WriteInt(sTrkID, RK_TRACK_COLOR, trk.m_clrCustom);
 		fIni.WriteInt(sTrkID, RK_TRACK_LENGTH, trk.GetLength());
-		fIni.WriteBinary(sTrkID, RK_TRACK_STEP, trk.m_arrStep.GetData(), trk.GetUsedStepCount());
+		fIni.WriteRLEBinary(sTrkID, RK_TRACK_STEP, trk.m_arrStep.GetData(), trk.GetUsedStepCount());
 		DWORD	nDubs = trk.m_arrDub.GetSize();
 		if (nDubs) {	// if track has dubs
 			fIni.WriteInt(sTrkID, RK_TRACK_DUB_COUNT, nDubs);

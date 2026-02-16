@@ -12,6 +12,7 @@
 		02		08jun21	define ATL string length methods if earlier than VS2012
 		03		19feb22	refactor to fully emulate profile methods
 		04		16feb23	add Unicode string methods
+		05		14feb26	add run-length encoding
  
 		INI file wrapper
 
@@ -134,11 +135,11 @@ void CIniFile::Write()
 	}
 }
 
-CString	CIniFile::GetString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszDefault)
+CString	CIniFile::GetString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszDefault) const
 {
 	INT_PTR	iSection;
 	if (m_mapSection.Lookup(lpszSection, iSection)) {	// if section mapped
-		CSection&	section = m_arrSection[iSection];
+		const CSection&	section = m_arrSection[iSection];
 		INT_PTR	iKey;
 		if (section.m_mapKey.Lookup(lpszEntry, iKey)) {	// if key mapped
 			return section.m_arrKey[iKey].m_sVal;
@@ -147,12 +148,12 @@ CString	CIniFile::GetString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpsz
 	return lpszDefault;
 }
 
-bool CIniFile::GetStringEx(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString& sValue)
+bool CIniFile::GetStringEx(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString& sValue) const
 {
 	// same as GetString except returns whether value was found
 	INT_PTR	iSection;
 	if (m_mapSection.Lookup(lpszSection, iSection)) {	// if section mapped
-		CSection&	section = m_arrSection[iSection];
+		const CSection&	section = m_arrSection[iSection];
 		INT_PTR	iKey;
 		if (section.m_mapKey.Lookup(lpszEntry, iKey)) {	// if key mapped
 			sValue = section.m_arrKey[iKey].m_sVal;
@@ -184,7 +185,7 @@ void CIniFile::WriteString(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString sValu
 	section.m_mapKey.SetAt(key.m_sName, iKey);	// map key
 }
 
-int CIniFile::GetInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nDefault)
+int CIniFile::GetInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nDefault) const
 {
 	int	nValue = nDefault;
 	CString	sValue(GetString(lpszSection, lpszEntry));
@@ -199,52 +200,49 @@ void CIniFile::WriteInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nValue)
 	WriteString(lpszSection, lpszEntry, szVal);
 }
 
-bool CIniFile::GetBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry, void *pData, UINT& nBytes)
+bool CIniFile::GetBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry, void *pData, UINT& nBytes) const
 {
 	CString	str;
 	if (!GetStringEx(lpszSection, lpszEntry, str)) {	// if value not found
 		nBytes = 0;
 		return false;	// failure
 	}
-	UINT	nLen = str.GetLength();	// two characters per data byte
-	ASSERT((nLen & 1) == 0);	// string length should be even
-	nLen = min(nLen / 2, nBytes);	// conversion length in bytes
-	nBytes = nLen;	// return number of bytes converted to caller
-	LPCTSTR	pStr = str;
-	BYTE	*pOut = static_cast<BYTE *>(pData);
-	for (UINT i = 0; i < nLen; i++) {	// for each output data byte
-		pOut[i] = static_cast<BYTE>(((pStr[i * 2 + 1] - 'A') << 4) + (pStr[i * 2] - 'A'));
-	}
+	nBytes = DecodeBinary(str, str.GetLength(), pData, nBytes);
 	return true;	// success
 }
 
-void CIniFile::UnencodeBinary(CString str, void *pData, UINT nBytes)
+inline UINT CIniFile::DecodeBinary(LPCTSTR pStr, UINT nStrLen, void *pData, UINT nBytes)
 {
-	// same as GetBinary except we get string value from caller instead of looking it up
-	UINT	nLen = str.GetLength();	// two characters per data byte
-	ASSERT((nLen & 1) == 0);	// string length should be even
-	nLen = min(nLen / 2, nBytes);	// conversion length in bytes
-	LPCTSTR	pStr = str;
+	ASSERT((nStrLen & 1) == 0);	// string length should be even
+	nBytes = min(nStrLen / 2, nBytes);	// conversion length in bytes
 	BYTE	*pOut = static_cast<BYTE *>(pData);
-	for (UINT i = 0; i < nLen; i++) {	// for each output data byte
+	for (UINT i = 0; i < nBytes; i++) {	// for each output data byte
 		pOut[i] = static_cast<BYTE>(((pStr[i * 2 + 1] - 'A') << 4) + (pStr[i * 2] - 'A'));
 	}
+	return nBytes;	// return number of bytes converted
 }
 
 void CIniFile::WriteBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry, const void *pData, UINT nBytes)
 {
 	CString	str;
-	LPTSTR	pStr = str.GetBuffer(nBytes * 2);	// two characters per data byte
+	int	nStrLen = nBytes * 2;	// two characters per data byte
+	LPTSTR	pStr = str.GetBuffer(nStrLen);
+	EncodeBinary(pData, nBytes, pStr, nStrLen);
+	str.ReleaseBuffer(nStrLen);
+	WriteString(lpszSection, lpszEntry, str);
+}
+
+inline void CIniFile::EncodeBinary(const void *pData, UINT nBytes, LPTSTR pStr, UINT nStrLen)
+{
 	const BYTE	*pBuf = static_cast<const BYTE *>(pData);
+	nBytes = min(nBytes, nStrLen / 2);
 	for (UINT i = 0; i < nBytes; i++) {	// for each input data byte
 		pStr[i * 2] = (TCHAR)((pBuf[i] & 0x0F) + 'A');	// low nibble
 		pStr[i * 2 + 1] = (TCHAR)(((pBuf[i] >> 4) & 0x0F) + 'A');	// high nibble
 	}
-	str.ReleaseBuffer(nBytes * 2);
-	WriteString(lpszSection, lpszEntry, str);
 }
 
-void CIniFile::GetUnicodeString(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString& sValue)
+void CIniFile::GetUnicodeString(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString& sValue) const
 {
 #ifdef UNICODE
 	if (!GetStringEx(lpszSection, lpszEntry, sValue)) {	// if regular string read fails
@@ -255,7 +253,7 @@ void CIniFile::GetUnicodeString(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString&
 			UINT	nOutBytes = str.GetLength() / 2;	// output length in bytes
 			UINT	nOutChars = nOutBytes / sizeof(TCHAR);	// output length in characters
 			BYTE	*pOutBuf = reinterpret_cast<BYTE *>(sValue.GetBuffer(nOutChars));
-			UnencodeBinary(str, pOutBuf, nOutBytes);
+			DecodeBinary(str, str.GetLength(), pOutBuf, nOutBytes);
 			sValue.ReleaseBuffer(nOutChars);
 		}
 	}
@@ -277,4 +275,100 @@ void CIniFile::WriteUnicodeString(LPCTSTR lpszSection, LPCTSTR lpszEntry, CStrin
 #else	// not UNICODE
 	WriteString(lpszSection, lpszEntry, sValue);
 #endif
+}
+
+bool CIniFile::RLEEncode(const BYTE *aIn, UINT nInLen, CByteArrayEx& aOut)
+{
+	if (!nInLen)	// if no data
+		return false;	// invalid input
+	aOut.FastSetSize(nInLen);	// don't zero buffer
+	// the stored run length is one less than the actual run length; zero indicates
+	// a one-byte run (the minimum), and 255 indicates a 256-byte run (the maximum)
+	BYTE	nRunData = aIn[0];	// start new run
+	BYTE	nRunLen = 0;	// run's initial length is one
+	UINT	iOut = 0;	// output index
+	for (UINT iIn = 1; iIn < nInLen; iIn++) {	// for remaining input bytes
+		// if input data is unchanged and run can grow
+		if (aIn[iIn] == nRunData && nRunLen < BYTE_MAX) {
+			nRunLen++;	// grow run by one
+		} else {	// flush run
+			if (iOut + 2 >= nInLen)	// if run won't fit in buffer
+				return false;	// encoding wouldn't save space
+			aOut[iOut++] = nRunLen;	// store run length
+			aOut[iOut++] = nRunData;	// store run data
+			nRunData = aIn[iIn];	// start new run
+			nRunLen = 0;	// run's initial length is one
+		}
+	}
+	// flush last run
+	if (iOut + 2 >= nInLen)	// if run won't fit in buffer
+		return false;	// encoding wouldn't save space
+	aOut[iOut++] = nRunLen;	// store run length
+	aOut[iOut++] = nRunData;	// store run data
+	aOut.FastSetSize(iOut);	// resize buffer to fit data
+	return true;	// success
+}
+
+bool CIniFile::RLEDecode(const CByteArrayEx& aIn, BYTE *aOut, UINT& nOutLen)
+{
+	// the caller is responsible for allocating the output buffer, and it must
+	// be exactly the size of the uncompressed data, else this function fails
+	UINT	nInLen = aIn.GetSize();
+	if (!nInLen)	// if no data
+		return false;	// invalid input
+	if (nInLen & 1)	// if length is odd
+		return false;	// invalid input
+	// the stored run length is one less than the actual run length; zero indicates
+	// a one-byte run (the minimum), and 255 indicates a 256-byte run (the maximum)
+	BYTE	nRunData;
+	BYTE	nRunLen;
+	UINT	iOut = 0;
+	for (UINT iIn = 0; iIn < nInLen; iIn += 2) {	// for each RLE run
+		nRunLen = aIn[iIn];
+		nRunData = aIn[iIn + 1];
+		if (iOut + nRunLen >= nOutLen)	// if run won't fit
+			return false;	// invalid input or output array too small
+		for (int iLen = 0; iLen <= nRunLen; iLen++) {	// for each of run's bytes
+			aOut[iOut++] = nRunData;	// store run data repeatedly
+		}
+	}
+	nOutLen = iOut;	// pass number of bytes decoded back to caller
+	return true;
+}
+
+bool CIniFile::GetRLEBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry, void *pData, UINT& nBytes)
+{
+	CString	str;
+	if (!GetStringEx(lpszSection, lpszEntry, str)) {	// if value not found
+		nBytes = 0;
+		return false;	// failure
+	}
+	// string starting with uppercase R indicates run-length encoding
+	LPCTSTR	pStr = str;
+	int	nStrLen = str.GetLength();
+	if (nStrLen && str[0] == 'R') {	// if data is run-length encoded
+		m_aRLE.FastSetSize((nStrLen - 1) / 2);	// subtract one char for RLE flag
+		DecodeBinary(pStr + 1, nStrLen - 1, m_aRLE.GetData(), m_aRLE.GetSize());
+		return RLEDecode(m_aRLE, static_cast<BYTE*>(pData), nBytes);
+	} else {	// not encoded
+		DecodeBinary(pStr, nStrLen, pData, nBytes);	// fallback
+		return true;
+	}
+}
+
+void CIniFile::WriteRLEBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry, const void *pData, UINT nBytes)
+{
+	// run-length encode data if doing so would save space
+	if (RLEEncode(static_cast<const BYTE*>(pData), nBytes, m_aRLE)) {	// if encoding succeeds
+		// start output string with uppercase R to indicate run-length encoding
+		CString	sOut;
+		UINT	nStrLen = m_aRLE.GetSize() * 2 + 1;	// two characters per data byte, plus RLE flag
+		LPTSTR	pOutBuf = sOut.GetBuffer(nStrLen);
+		*pOutBuf = 'R';	// set string's first character to RLE flag
+		EncodeBinary(m_aRLE.GetData(), m_aRLE.GetSize(), pOutBuf + 1, nStrLen - 1);	// skip RLE flag
+		sOut.ReleaseBuffer(nStrLen);
+		WriteString(lpszSection, lpszEntry, sOut);
+	} else {	// encoding wouldn't save space
+		WriteBinary(lpszSection, lpszEntry, pData, nBytes);	// fallback
+	}
 }

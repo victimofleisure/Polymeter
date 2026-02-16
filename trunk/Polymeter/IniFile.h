@@ -11,6 +11,7 @@
 		01		24feb20	implement read/write
 		02		19feb22	refactor to fully emulate profile methods
 		03		16feb23	add Unicode string methods
+		04		14feb26	add run-length encoding
  
 		INI file wrapper
 
@@ -29,20 +30,24 @@ public:
 // Operations
 	void	Read();
 	void	Write();
-	CString	GetString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszDefault = NULL);
-	bool	GetStringEx(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString& sValue);
+	CString	GetString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszDefault = NULL) const;
+	bool	GetStringEx(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString& sValue) const;
 	void	WriteString(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString sValue = _T(""));
-	int		GetInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nDefault = 0);
+	int		GetInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nDefault = 0) const;
 	void	WriteInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nValue = 0);
-	bool	GetBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry, void *pData, UINT& nBytes);
+	bool	GetBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry, void *pData, UINT& nBytes) const;
 	void	WriteBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry, const void *pData, UINT nBytes);
-	void	GetUnicodeString(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString& sValue);
+	void	GetUnicodeString(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString& sValue) const;
 	void	WriteUnicodeString(LPCTSTR lpszSection, LPCTSTR lpszEntry, CString sValue = _T(""));
+	bool	GetRLEBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry, void *pData, UINT& nBytes);
+	void	WriteRLEBinary(LPCTSTR lpszSection, LPCTSTR lpszEntry, const void *pData, UINT nBytes);
 	static	bool	IsPrintableASCII(LPCTSTR pszIn);
+	static	bool	RLEEncode(const BYTE *aIn, UINT nInLen, CByteArrayEx& aOut);
+	static	bool	RLEDecode(const CByteArrayEx& aIn, BYTE *aOut, UINT& nOutLen);
 
 // Templates for default section
 	template<class T>
-	inline void Get(LPCTSTR lpszKey, T& value)
+	inline void Get(LPCTSTR lpszKey, T& value) const
 	{
 		DWORD	nSize = sizeof(T);
 		GetBinary(REG_SETTINGS, lpszKey, &value, &nSize);
@@ -54,7 +59,7 @@ public:
 		WriteBinary(REG_SETTINGS, lpszKey, &value, sizeof(T));
 	}
 	#define	WINAPPCK_REG_TYPE_DEF(T, prefix) \
-		inline void Get(LPCTSTR lpszKey, T& value)	\
+		inline void Get(LPCTSTR lpszKey, T& value) const	\
 		{	\
 			value = static_cast<T>(prefix GetInt(REG_SETTINGS, lpszKey, value));	\
 		}
@@ -65,7 +70,7 @@ public:
 			WriteInt(REG_SETTINGS, lpszKey, value);	\
 		}
 	#include "RegTemplTypes.h"	// specialize Put for numeric types
-	inline void Get(LPCTSTR lpszKey, CString& sValue)
+	inline void Get(LPCTSTR lpszKey, CString& sValue) const
 	{
 		sValue = GetString(REG_SETTINGS, lpszKey, sValue);
 	}
@@ -76,7 +81,7 @@ public:
 
 // Templates for specified section
 	template<class T>
-	inline void Get(LPCTSTR lpszSection, LPCTSTR lpszKey, T& value)
+	inline void Get(LPCTSTR lpszSection, LPCTSTR lpszKey, T& value) const
 	{
 		UINT	nSize = sizeof(T);
 		GetBinary(lpszSection, lpszKey, &value, nSize);
@@ -88,7 +93,7 @@ public:
 		WriteBinary(lpszSection, lpszKey, &value, sizeof(T));
 	}
 	#define	WINAPPCK_REG_TYPE_DEF(T, prefix) \
-		inline void Get(LPCTSTR lpszSection, LPCTSTR lpszKey, T& value)	\
+		inline void Get(LPCTSTR lpszSection, LPCTSTR lpszKey, T& value) const	\
 		{	\
 			value = static_cast<T>(prefix GetInt(lpszSection, lpszKey, value));	\
 		}
@@ -99,7 +104,7 @@ public:
 			WriteInt(lpszSection, lpszKey, value);	\
 		}
 	#include "RegTemplTypes.h"	// specialize Put for numeric types
-	inline void Get(LPCTSTR lpszSection, LPCTSTR lpszKey, CString& sValue)
+	inline void Get(LPCTSTR lpszSection, LPCTSTR lpszKey, CString& sValue) const
 	{
 		sValue = GetString(lpszSection, lpszKey, sValue);
 	}
@@ -110,7 +115,7 @@ public:
 
 // Array templates
 	template<class TYPE, class ARG_TYPE>
-	bool GetArray(CArrayEx<TYPE, ARG_TYPE>& arr, LPCTSTR lpszSection, LPCTSTR lpszEntry)
+	bool GetArray(CArrayEx<TYPE, ARG_TYPE>& arr, LPCTSTR lpszSection, LPCTSTR lpszEntry) const
 	{
 		CString	str;
 		if (!GetStringEx(lpszSection, lpszEntry, str))	// if value not found
@@ -118,7 +123,7 @@ public:
 		int	nElems = str.GetLength() / (sizeof(TYPE) * 2);	// size in elements
 		ASSERT(str.GetLength() % (sizeof(TYPE) * 2) == 0);	// check for partial element
 		arr.SetSize(nElems);	// allocate array
-		UnencodeBinary(str, arr.GetData(), nElems * sizeof(TYPE));	// size in bytes
+		DecodeBinary(str, str.GetLength(), arr.GetData(), nElems * sizeof(TYPE));	// size in bytes
 		return true;	// success
 	}
 	template<class TYPE, class ARG_TYPE>
@@ -154,9 +159,11 @@ protected:
 	CSectionArray	m_arrSection;	// array of sections
 	CStringIdxMap	m_mapSection;	// hash map of sections
 	CFastStdioFile	m_fIni;			// file instance
+	CByteArrayEx	m_aRLE;			// run-length encoding buffer; avoids excessive reallocation
 
 // Helpers
-	void	UnencodeBinary(CString str, void *pData, UINT nBytes);
+	static	UINT	DecodeBinary(LPCTSTR pStr, UINT nStrLen, void *pData, UINT nBytes);
+	static	void	EncodeBinary(const void *pData, UINT nBytes, LPTSTR pStr, UINT nStrLen);
 	static	UINT	GetOpenFlags(bool bWrite);
 };
 

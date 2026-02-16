@@ -273,6 +273,7 @@
 {IDS_DOC_CONVERGENCE_OUT_OF_RANGE,		IDH_Reference_Errors_Convergence_Out_of_Range},
 {IDS_DOC_GROUP_OVERLAP,					IDH_Reference_Errors_Group_Overlap},
 {IDS_DOC_NEWER_VERSION,					IDH_Reference_Errors_Newer_Version},
+{IDS_DOC_RLE_DECODE_ERRORS,				IDH_Reference_Errors_RLE_Decode_Errors},
 {IDS_DOC_SEARCH_TEXT_NOT_FOUND,			IDH_Reference_Errors_Search_Text_Not_Found},
 {IDS_DOC_TRACK_TOO_LONG,				IDH_Reference_Errors_Track_Too_Long},
 {IDS_DOC_VALUE_NOT_FOUND,				IDH_Reference_Errors_Value_Not_Found},
