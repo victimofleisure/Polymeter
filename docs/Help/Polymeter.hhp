@@ -609,6 +609,7 @@ IDH_Reference_Errors_Clip_Warning = Reference/Errors.htm#Clip_Warning
 IDH_Reference_Errors_Convergence_Out_of_Range = Reference/Errors.htm#Convergence_Out_of_Range
 IDH_Reference_Errors_Group_Overlap = Reference/Errors.htm#Group_Overlap
 IDH_Reference_Errors_Newer_Version = Reference/Errors.htm#Newer_Version
+IDH_Reference_Errors_RLE_Decode_Errors = Reference/Errors.htm#RLE_Decode_Errors
 IDH_Reference_Errors_Search_Text_Not_Found = Reference/Errors.htm#Search_Text_Not_Found
 IDH_Reference_Errors_Track_Length_Cursor = Reference/Errors.htm#Track_Length_Cursor
 IDH_Reference_Errors_Track_Too_Long = Reference/Errors.htm#Track_Too_Long

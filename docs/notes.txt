@@ -5215,3 +5215,51 @@ void CSequencer::AddAllTrackEvents(int nCBStart)
 		AddTrackEvents(GetAt(iTrack), nCBStart);	// get track's events for this chunk
 	}
 }
+
+2/15/26 RLE passes round trip test
+
+bool bUseRLE;
+if (bUseRLE) //@@@@
+		fIni.WriteRLEBinary(sTrkID, RK_TRACK_STEP, trk.m_arrStep.GetData(), trk.GetUsedStepCount());
+else fIni.WriteBinary(sTrkID, RK_TRACK_STEP, trk.m_arrStep.GetData(), trk.GetUsedStepCount());
+
+//	LPCTSTR	pszInFolder = _T("C:\\Chris\\MyProjects\\Polymeter\\docs\\test");
+//	LPCTSTR	pszInFolder = _T("C:\\Chris\\MyProjects\\Polymeter\\docs\\debug");
+	LPCTSTR	pszInFolder = _T("C:\\Chris\\MyProjects\\Polymeter\\ancestry\\fleshdance");
+	LPCTSTR	pszOutPreRLEFolder = _T("E:\\temp\\Polymeter\\test\\PreRLE");
+	LPCTSTR	pszOutRLEFolder = _T("E:\\temp\\Polymeter\\test\\RLE");
+	LPCTSTR	pszOutRTFolder = _T("E:\\temp\\Polymeter\\test\\RT");
+	CFileFind	ff;
+	BOOL bWorking = ff.FindFile(CString(pszInFolder) + _T("\\*.plm"));
+	while (bWorking) {
+		bWorking = ff.FindNextFile();
+		CString	sFileName(ff.GetFileName());
+		if (sFileName == _T("unicode test UTF-16 good.plm"))
+			continue;
+		_tprintf(_T("%s\n"), sFileName);
+		CPathStr	sOutPreRLEPath(pszOutPreRLEFolder);
+		sOutPreRLEPath.Append(ff.GetFileName());
+		CPathStr	sOutRLEPath(pszOutRLEFolder);
+		sOutRLEPath.Append(ff.GetFileName());
+		CPathStr	sOutRTPath(pszOutRTFolder);
+		sOutRTPath.Append(ff.GetFileName());
+		bUseRLE = false;
+		{
+			CPolymeterDoc	doc;
+			doc.ReadProperties(ff.GetFilePath());
+			doc.WriteProperties(sOutPreRLEPath);
+		}
+		bUseRLE = true;
+		{
+			CPolymeterDoc	doc;
+			doc.ReadProperties(sOutPreRLEPath);
+			doc.WriteProperties(sOutRLEPath);
+		}
+		bUseRLE = false;
+		{
+			CPolymeterDoc	doc;
+			doc.ReadProperties(sOutRLEPath);
+			doc.WriteProperties(sOutRTPath);
+		}
+	}
+
