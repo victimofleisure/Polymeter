@@ -70,6 +70,7 @@
 		60		31jan26	in SetPosition, reset stats timer to avoid error
 		61		07feb26	fix offset handling for note overlap internal control
 		62		07feb26	fix sustain being applied to delayed control event
+		63		13may26	in ChaseNextSteps, chase dubs in song mode only
 
 */
 
@@ -370,8 +371,8 @@ bool CSequencer::Play(bool bEnable, bool bRecord)
 		m_arrNoteOff.SetSize(DEF_BUFFER_SIZE);	// preallocate note off array
 		m_arrNoteOff.FastRemoveAll();
 		ChaseNextSteps(m_nStartPos);
-		if (m_bIsSongMode)
-			ChaseDubs(m_nStartPos, true);
+		if (m_bIsSongMode)	// if song playback
+			ChaseDubs(m_nStartPos, true);	// reset dub indices and update mutes
 		UINT	uDevice = m_iOutputDevice;
 		CHECK(midiStreamOpen(&m_hStrm, &uDevice, 1, reinterpret_cast<W64UINT>(MidiOutProc), 
 			reinterpret_cast<W64UINT>(this), CALLBACK_FUNCTION));
@@ -1636,7 +1637,7 @@ void CSequencer::ChaseDubs(int nTime, bool bUpdateMutes)
 
 void CSequencer::ChaseDubsFromCurPos()
 {
-	if (m_bIsSongMode) {
+	if (m_bIsSongMode) {	// if song playback
 		WCritSec::Lock	lock(m_csTrack);	// serialize access to callback time
 		ChaseDubs(m_nCBTime, true);	// chase to current callback time; set mutes
 	}
@@ -1644,7 +1645,7 @@ void CSequencer::ChaseDubsFromCurPos()
 
 void CSequencer::SetSongMode(bool bEnable, bool bChaseDubs)
 {
-	if (bChaseDubs && bEnable) {
+	if (bChaseDubs && bEnable) {	// if chasing dubs and enabling song mode
 		WCritSec::Lock	lock(m_csTrack);	// serialize access to song mode and callback time
 		m_bIsSongMode = true;	// enable song mode
 		ChaseDubs(m_nCBTime, true);	// chase to current callback time; set mutes
@@ -1739,7 +1740,8 @@ void CSequencer::ChaseNextSteps(int nStartTime)
 	if (nStartTime <= m_nSongStartPos)	// if starting at or before song start position
 		return;	// don't chase
 	CSequencerBase	seqBasePrev = *this;	// save base class members
-	ChaseDubs(m_nSongStartPos, true);
+	if (m_bIsSongMode)	// if song playback
+		ChaseDubs(m_nSongStartPos, true);	// reset dub indices and update mutes
 	int	nChunkDuration = m_nLatency;	// same latency as playback to ensure identical dubbing
 	int	nChunkLen = GetCallbackLength(nChunkDuration);	// convert chunk duration to ticks
 	int	nCBTime = m_nSongStartPos;
