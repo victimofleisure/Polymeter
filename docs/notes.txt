@@ -5275,3 +5275,38 @@ This same behavior occurs if you switch from Song to Live view.
 The bug is in Sequencer.cpp, in ChaseNextSteps, which calls ChaseDubs
 unconditionally, instead of only in song mode.
 
+6/1/26 correct offset modulation for non-modulator tracks
+
+In previous versions offset modulation was signed for modulators and unsigned 
+for non-modulators, because the latter case was implemented via delaying, 
+which doesn't support negative values. This was confusing to say the least.
+
+Offset modulation is now a true offset in all cases, regardless of the target
+track's type. Delaying now has its own independent modulation type. Offset
+modulation is now consistently signed, and delay modulation is always unsigned.
+
+In addition, offset modulation now supports integer scaling via the modulator
+track's duration value. This works around the step value's very limited range.
+Large offsets suitable for resynchronizing song sections can now be specified,
+and in convenient units such as beats or measures.
+
+Delay is still superior to offset for implementing groove, because with delay,
+all events are played, whereas offsetting can cause events to be skipped.
+Delay modulation also has more precise timing than offset modulation.
+
+For non-modulator tracks, offset modulation is only accurate to the nearest
+callback time, even though the offset is specified in ticks. This isn't ideal,
+but it's good enough for most applications, as a callback is only a few ticks
+at common timebase and tempo settings.
+
+AddTrackEvents now sums the track's offset modulations once per callback, in
+the preamble before the main event loop, and applies the resulting offset to
+the initial event time calculation. The performance impact is around one 
+microsecond for typical documents. It seems to work.
+
+To vary a pattern, use position modulation.
+To synchronize sections, use offset modulation.
+To add groove or feel, use delay modulation.
+
+Offset modulation may affect swing, whereas position modulation never does.
+To avoid corrupting the swing, always offset by a multiple of two steps.

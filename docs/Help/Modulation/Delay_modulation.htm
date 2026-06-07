@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Delay modulation</title>
+<meta name="author" content="Chris Korda">
+<link rel=stylesheet href="../content.css" type="text/css">
+</head>
+
+<body>
+
+<!--  content goes HERE  -->
+
+<h3>Delay modulation</h3>
+
+<p>Delay modulation postpones the target track's output events by a specified amount. The target track can be any <a href="../Concepts/Tracks.htm#Track_types">type</a> except <a href="../Tracks/Tempo_tracks.htm">tempo</a> or <a href="../Tracks/Modulator_tracks.htm">modulator</a>. Each step value is interpreted as an <a href="../Concepts/Steps.htm#Unsigned_versus_signed_steps">unsigned</a> delay in MIDI <a href="../Concepts/Steps.htm#Ticks">ticks</a>. Note that the step value is <em>unsigned</em> because negative delay isn't supported; see below. If a target has multiple delay modulators, they're summed.
+
+<p>Delay modulation lets you emulate the rhythmic feel of a live performer, by making a track periodically fall behind and then catch up relative to the beat. For best results, change delay gradually using a smooth function such as a triangle or sine wave. Sharp delay changes may alter the order in which events are played. Unlike <a href="../Modulation/Offset_modulation.htm">offset modulation</a>, delay modulation never skips events, which makes it ideal for adding groove.
+
+<p>Delay modulation can only make events later, not earlier, but you can work around this limitation by setting the target track's <a href="../Views/Track_View/Track_Grid.htm#Track_Offset">offset</a> to a negative value. For example if the target track's offset is &minus;64, that gives its delay modulator an effective range of &minus;64 to +63, in other words from 64 ticks early to 63 ticks late. To obtain longer delays that exceed the range of a step value, apply multiple delay modulators to the target track.
+
+<p>Unlike offset modulation which is an <em>input</em> to event generation, delay modulation is a <em>post-process</em> applied after an event is generated. Whereas offset shifts the clock that's used to decide if and when an event should occur, delay is added after that decision, while the event is being queued for output. Because delay is a post-process, any other modulation types that affect a delayed event are based on the event's <em>original</em> time, rather than its delayed time.
+
+<!--  content stops HERE  -->
+			
+</body>
+</html>

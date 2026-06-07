@@ -99,7 +99,7 @@
 <a name="Track_Duration"><p><b>Duration</b></a>
 <p>This is the track's duration offset, in <a href="../../Concepts/Steps.htm#Ticks">ticks</a>. For note tracks, it's a signed value that's added to the durations of all notes played by the track. Positive values make the note longer (more legato), and negative values make it shorter (more staccato). Positive values may cause notes to overlap, in which case collisions may occur; see <a href="../../Properties/Note_Overlap.htm">note overlap</a>. The duration is clamped to prevent it from being less than one. The duration can also be altered via <a href="../../Modulation/Duration_modulation.htm">duration modulation</a>.
 
-<p>For tempo tracks and tempo modulators, Duration is repurposed to be the range of the tempo change, as a percentage; see <a href="../../Tracks/Tempo_tracks.htm">tempo tracks</a>.
+<p>For <a href="../../Tracks/Tempo_tracks.htm">tempo tracks</a> and tempo modulators, Duration is repurposed to be the range of the tempo change, as a percentage. For <a href="../../Modulation/Offset_modulation.htm">offset modulators</a>, Duration is repurposed as a scaling factor.
 
 <a name="Track_Range_Type"><p><b>Range Type</b></a>
 <p>This is the type of range to be applied to the track. Range only affects <a href="../../Tracks/Note_tracks.htm">note tracks</a>. The types are listed below.

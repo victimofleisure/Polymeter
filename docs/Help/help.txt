@@ -199,7 +199,8 @@ Besides juxtaposition, another important method of combining @[tracks] is <em>mo
 <tr><td>@[chord modulation\Chord]</td><td>Note tracks only</td><td>Adds scale tone to current chord</td><td>Signed zero-based scale tone index</td></tr>
 <tr><td>@[index modulation\Index]</td><td>Note tracks only</td><td>Picks a scale or chord tone</td><td>Signed zero-based scale or chord tone index</td></tr>
 <tr><td>@[voicing modulation\Voicing]</td><td>Note tracks only</td><td>Drops or raises a scale or chord tone</td><td>Signed one-based voice index</td></tr>
-<tr><td>@[offset modulation\Offset]</td><td>All track types except Tempo</td><td>Offsets playback timing</td><td>Offset in ticks; unsigned for Note or Controller, signed for Modulator</td></tr>
+<tr><td>@[offset modulation\Offset]</td><td>All track types except Tempo</td><td>Offsets timing</td><td>Signed offset in ticks</td></tr>
+<tr><td>@[delay modulation\Delay]</td><td>All track types except Tempo and Modulator</td><td>Delays playback</td><td>Unsigned delay in ticks</td></tr>
 <tr><td>@[queue modulation\Queue]</td><td>Note tracks only</td><td>Assigns a sequence of pitches to notes</td><td>Signed offset in semitones, or in scale or chord tones if indexing</td></tr>
 </table>
 
@@ -230,7 +231,7 @@ The table below summarizes the supported modulation behavior. For each track typ
 <p><table border=1 cellpadding=2 cellspacing=0>
 <tr><th>Target track type</th><th>Supported modulation types</th></tr>
 <tr><td>Note</td><td>All except Tempo</td></tr>
-<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel, Internal</td><td>Mute, Velocity, Position, Offset</td></tr>
+<tr><td>Key Aftertouch, Control, Patch, Channel Aftertouch, Wheel, Internal</td><td>Mute, Velocity, Position, Offset, Delay</td></tr>
 <tr><td>Tempo</td><td>Mute, Position, Tempo</td></tr>
 <tr><td>Modulator</td><td>Mute, Position, Offset; also Note but only if target is a Scale or Chord modulator</td></tr>
 </table>
@@ -577,11 +578,17 @@ Because the transposition is by octaves only, the notes remain in the same scale
 
 @topic Position modulation
 
-In position @[modulations\modulation], a track's step array is temporarily @[rotate\rotated] left or right by one or more steps. Rotation is similar to shifting, except that it's lossless, because any shifted elements that "fall off" one side wrap around to the other side. For example, rotating 1234 right by one step yields 4123, because the 4 wraps around to the left.
+In position @[modulations\modulation], a track's step array is temporarily @[rotate\rotated] left or right by one or more @[steps]. Rotation is similar to shifting, except that it's lossless, because any shifted elements that "fall off" one side wrap around to the other side. For example, rotating 1234 right by one step yields 4123, because the 4 wraps around to the left.
 
 A position modulator track is interpreted as an array of @[unsigned versus signed steps\signed] offsets (in steps), which determine the amount of rotation. A positive value rotates to the right (later in time), a negative value rotates to the left (earlier in time), and a rotation of zero has no effect. If a target track has multiple position modulators, they're summed.
 
 Position modulation is a powerful technique for generating variations. It has a downside however, which is that it can easily cause multiple overlapping instances of the same note on the same channel. On some instruments this may produce undesired artifacts, such as notes being cut off prematurely. For this reason, you may want to prevent @[note overlap\note overlaps].
+
+<ul>
+<li>To vary a pattern by rotating it, use position modulation, because it's in steps and doesn't affect swing.
+<li>To synchronize sections, use @[offset modulation], because it's in ticks and has extended range.
+<li>To add groove or feel, use @[delay modulation], because it never skips events.
+</ul>
 
 @topic Tempo modulation
 
@@ -681,11 +688,23 @@ After the voicing is applied, the tones are sorted again, and only then is a ton
 
 @topic Offset modulation
 
-Offset @[modulations\modulation] changes the time offset of a target track. The supported target types are @[note tracks], @[controller tracks] and modulator tracks. For note and controller tracks, an offset modulator's steps are interpreted as @[unsigned versus signed steps\unsigned] delays in MIDI @[ticks]. By default, events can only be made later, not earlier, but you can work around this by setting the target track's @[track offset\offset] to a negative value. For example if the target track's offset is &minus;64, that gives its offset modulation an effective range of &minus;64 to +63, in other words from 64 ticks early to 63 ticks late.
+Offset @[modulations\modulation] changes the target track's time offset. The target track can be any @[track types\type] except @[tempo tracks\tempo]. Each step value is interpreted as a @[unsigned versus signed steps\signed] timing offset in MIDI @[ticks]. Positive values delay the target; negative values hasten it. The offset modulation is added to the @[track offset]. If a target has multiple offset modulations, they're summed.
 
-Offset modulation changes the rhythmic feel of the target track, periodically speeding it up and slowing it down relative to the beat. It can be used to create rolls on drums, or to emulate the feel changes of a live performer. For best results, use a smooth function such as a triangle or sine wave. Sharp changes in offset modulation may alter the order of events. Offset modulation can cause @[note overlap\notes to overlap].
+To work around the limited range of a step value, offset modulation supports <em>scaling</em>. If the modulator's @[track duration\duration] is non-zero, the step value is multiplied by the duration to produce an extended offset. Large offsets suitable for resynchronizing song sections can be created in this way. Scaling also allows offset to be applied in convenient units such as beats or measures, by setting the modulator's duration to the desired unit length in ticks.
 
-Modulator tracks can also be offset modulated, but in this case the offset modulator's steps are interpreted as signed values, allowing offsets in the range of &minus;64 to +63. Positive values delay the target; negative values hasten it. Offset modulation is useful for time-shifting a group of modulators that have different @[track quant\quants]. Offset modulation is similar to @[position modulation], except that the shift is specified in ticks instead of steps.
+Offset modulation is similar to @[position modulation], except that the shift is specified in ticks instead of steps. This makes offset modulation ideal for time-shifting a group of tracks that have different @[track quant\quants]. Another difference is that offset modulation can affect @[track swing\swing], whereas position modulation never does. Offset modulation can cause events to be skipped, and if this is a problem, use @[delay modulation] instead.
+
+Offset modulation can cause multiple overlapping instances of the same note on the same channel. On some instruments this may produce undesired artifacts, such as notes being cut off prematurely. For this reason, you may want to prevent @[note overlap\note overlaps].
+
+@topic Delay modulation
+
+Delay modulation postpones the target track's output events by a specified amount. The target track can be any @[track types\type] except @[tempo tracks\tempo] or @[modulator tracks\modulator]. Each step value is interpreted as an @[unsigned versus signed steps\unsigned] delay in MIDI @[ticks]. Note that the step value is <em>unsigned</em> because negative delay isn't supported; see below. If a target has multiple delay modulators, they're summed.
+
+Delay modulation lets you emulate the rhythmic feel of a live performer, by making a track periodically fall behind and then catch up relative to the beat. For best results, change delay gradually using a smooth function such as a triangle or sine wave. Sharp delay changes may alter the order in which events are played. Unlike @[offset modulation], delay modulation never skips events, which makes it ideal for adding groove.
+
+Delay modulation can only make events later, not earlier, but you can work around this limitation by setting the target track's @[track offset\offset] to a negative value. For example if the target track's offset is &minus;64, that gives its delay modulator an effective range of &minus;64 to +63, in other words from 64 ticks early to 63 ticks late. To obtain longer delays that exceed the range of a step value, apply multiple delay modulators to the target track.
+
+Unlike offset modulation which is an <em>input</em> to event generation, delay modulation is a <em>post-process</em> applied after an event is generated. Whereas offset shifts the clock that's used to decide if and when an event should occur, delay is added after that decision, while the event is being queued for output. Because delay is a post-process, any other modulation types that affect a delayed event are based on the event's <em>original</em> time, rather than its delayed time.
 
 @topic Queue modulation
 
@@ -860,7 +879,7 @@ This is the track's velocity offset. It's a signed value that's added to the vel
 
 This is the track's duration offset, in @[ticks]. For note tracks, it's a signed value that's added to the durations of all notes played by the track. Positive values make the note longer (more legato), and negative values make it shorter (more staccato). Positive values may cause notes to overlap, in which case collisions may occur; see @[note overlap]. The duration is clamped to prevent it from being less than one. The duration can also be altered via @[duration modulation].
 
-For tempo tracks and tempo modulators, Duration is repurposed to be the range of the tempo change, as a percentage; see @[tempo tracks].
+For @[tempo tracks] and tempo modulators, Duration is repurposed to be the range of the tempo change, as a percentage. For @[offset modulation\offset modulators], Duration is repurposed as a scaling factor.
 
 @item Track Range Type\Range Type
 
@@ -2290,7 +2309,7 @@ This command shifts tracks by any amount. A dialog is displayed, prompting you f
 
 @topic Rotate
 
-These commands rotate tracks left or right by some number of steps. Rotation is similar to shifting, except that steps wrap around instead of falling off one end. For example, rotating 1234 right by one step yields 4123, because the 4 wraps around to the left. Rotation is a lossless, non-destructive operation. Shifting is also supported, via the @[shift] commands.
+These commands rotate tracks left or right by some number of @[steps]. Rotation is similar to shifting, except that steps wrap around instead of falling off one end. For example, rotating 1234 right by one step yields 4123, because the 4 wraps around to the left. Rotation is a lossless, non-destructive operation. Shifting is also supported, via the @[shift] commands.
 
 If a @[step selection] exists, it takes priority. In this case only the selected steps are rotated. Otherwise the command operates on the @[track selection\selected tracks] in their entirety.
 

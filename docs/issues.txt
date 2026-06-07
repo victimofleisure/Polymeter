@@ -505,6 +505,8 @@ id	open	close	type	description	rev	user
 619	02/06/26	02/07/26	done	control events delayed past end of callback via offset modulation are mishandled if channel's sustain is active	1.0.18.003	
 620	02/12/26	02/16/26	done	run-length encode step array if doing so saves space	1.0.19.000	
 621	05/13/26	05/13/26	done	track mutes are set incorrectly if document uses queue modulation and has dubs; chase dubs in song mode only	1.0.19.001	
+555	01/21/23	05/31/26	done	to support large offset modulations, use source track's duration as a scaling factor that step values are multiplied by	1.0.20.000	
+623	05/14/26	05/31/26	done	add delay modulation and fix offset modulation of non-modulator tracks	1.0.20.000	
 18	03/22/18		hold	optional linear interpolation for controller tracks, with adjustable output density		
 19	03/22/18		hold	radio groups; member tracks or parts automatically mute each other so that only one member sounds at a time		
 20	03/22/18		hold	instrument groups; member tracks are grouped together in live view and combined into one track in MIDI export		
@@ -579,7 +581,6 @@ id	open	close	type	description	rev	user
 525	06/21/22		hold	Step view and Step Values bar should mirror each other's selection if possible		
 533	09/05/22		hold	overlay preset; save mute states of selected tracks only, and affect only those tracks when preset is applied		
 554	01/20/23		hold	phase bar lacks command to export still image; workaround is export one-second video with frame rate of 1		
-555	01/21/23		hold	to support large offset modulations, add a scaling factor that source step values are multiplied by		
 559	02/19/23		hold	view timer is extremely inaccurate; add option to use multimedia timer, possibly with drift compensation		
 561	02/20/23		hold	graph should optionally indicate muted tracks, but how?		
 564	02/28/23		hold	graph font should be configurable; what about font size? Helvetica has special meaning in Graphviz		
@@ -589,6 +590,8 @@ id	open	close	type	description	rev	user
 593	04/04/24		hold	Step Values bar should scroll to current position if possible; could be distracting, make it optional?		
 596	08/28/24		hold	phase bar should optionally show period labels above ellipses; labels would be blocked by convergences		
 597	08/31/24		hold	controlling tempo range via integer percentage is too coarse for accurate rests; need at least 1000ths of a percent		
+607	01/11/26		hold	add notes view showing output note sequence in piano roll format; major project		
+613	01/23/26		hold	pitch bend should support LSB somehow; wheel modulation?		
 21	03/22/18		punt	swing modulation; achievable with offset modulation so no need		
 83	05/17/18		punt	in velocity pane, left-click on tooltip causes app to flash; all tooltips do this, derived tooltip doesn't help		
 100	05/21/18		punt	scroll positions should persist in document; more trouble than it's worth		
@@ -609,5 +612,4 @@ id	open	close	type	description	rev	user
 577	12/29/23		punt	add option to ignore sequencer errors during playback; no need now that callback overrun is only a warning		
 579	01/15/24		punt	Check Modulations should report unused modulators; dubious as they're not actually an error		
 592	04/04/24		punt	Create Modulation dialog should have types on the left and tracks on the right, to match modulations bar column order		
-607	01/11/26		todo	add notes view showing output note sequence in piano roll format		
-613	01/23/26		todo	pitch bend should support LSB somehow; wheel modulation?		
+622	05/17/26		todo	in live view, Tab key should switch between preset and track lists		
