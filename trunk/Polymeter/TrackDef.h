@@ -19,6 +19,7 @@
 		09		19feb22	add conditional to exclude track name
 		10		19dec23	add internal track type
 		11		22jan26	add queue modulation type
+		12		31may26	add delay modulation type
 
 */
 
@@ -86,6 +87,7 @@ MODTYPEDEF(Chord)
 MODTYPEDEF(Index)
 MODTYPEDEF(Voicing)
 MODTYPEDEF(Offset)
+MODTYPEDEF(Delay)
 MODTYPEDEF(Queue)
 
 #undef MODTYPEDEF

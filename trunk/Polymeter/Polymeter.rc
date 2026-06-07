@@ -507,7 +507,6 @@ BEGIN
     BEGIN
         POPUP "&Channel Filter"
         BEGIN
-            MENUITEM SEPARATOR
             MENUITEM "Select Channels...",          ID_PIANO_SELECT_CHANNELS
         END
         POPUP "&Output Channel"
@@ -543,12 +542,10 @@ BEGIN
         END
         POPUP "&Filter"
         BEGIN
-            MENUITEM SEPARATOR
             MENUITEM "Modulation Types...",         ID_GRAPH_SELECT_MODULATION_TYPES
         END
         POPUP "&Channel"
         BEGIN
-            MENUITEM SEPARATOR
             MENUITEM "Select Channels...",          ID_GRAPH_SELECT_CHANNELS
         END
         POPUP "&Zoom"
@@ -1713,6 +1710,7 @@ BEGIN
     IDS_WINDOW_RESET_LAYOUT_WARN 
                             "Reset all windows to their default layout? This action can't be undone, and the application will restart."
     IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
+    IDS_TRK_Delay           "Delay"
 END
 
 STRINGTABLE

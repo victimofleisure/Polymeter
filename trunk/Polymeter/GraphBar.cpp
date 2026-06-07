@@ -42,6 +42,8 @@
 		32		18dec24	allow all unchecked in modulation type dialog
 		33		18dec24	make filter and channels available to customize
 		34		22jan26	add queue modulation type
+		35		31may26	add delay modulation type
+		36		06jun26	remove extra placeholder in filter and channel submenus
 
 */
 
@@ -70,17 +72,18 @@ IMPLEMENT_DYNAMIC(CGraphBar, CMyDockablePane)
 // X11 color name for each modulation type; see Graphviz documentation
 #define MOD_TYPE_COLOR_Mute		"black"
 #define MOD_TYPE_COLOR_Note		"red"
-#define MOD_TYPE_COLOR_Velocity	"green"
+#define MOD_TYPE_COLOR_Velocity	"green"	// aliases webgreen
 #define MOD_TYPE_COLOR_Duration	"blue"
 #define MOD_TYPE_COLOR_Range	"darkcyan"
 #define MOD_TYPE_COLOR_Position	"magenta"
 #define MOD_TYPE_COLOR_Tempo	"brown"
-#define MOD_TYPE_COLOR_Scale	"purple"
-#define MOD_TYPE_COLOR_Chord	"darkgreen"
+#define MOD_TYPE_COLOR_Scale	"purple"	// aliases webpurple
+#define MOD_TYPE_COLOR_Chord	"limegreen"
 #define MOD_TYPE_COLOR_Index	"olive"
 #define MOD_TYPE_COLOR_Voicing	"orange"
 #define MOD_TYPE_COLOR_Offset	"turquoise"
 #define MOD_TYPE_COLOR_Queue	"peru"
+#define MOD_TYPE_COLOR_Delay	"dodgerblue"
 
 // adding a new modulation type requires adding a new color name above
 const LPCTSTR CGraphBar::m_arrModTypeColor[CTrack::MODULATION_TYPES] = {
@@ -794,7 +797,6 @@ void CGraphBar::DoContextMenu(CWnd* pWnd, CPoint point)
 	// create graph filter submenu
 	pSubMenu = pPopup->GetSubMenu(SM_GRAPH_FILTER);
 	ASSERT(pSubMenu != NULL);
-	pSubMenu->RemoveMenu(MF_BYCOMMAND, ID_GRAPH_SELECT_MODULATION_TYPES);	// exists only for customizing UI
 	arrItemStr.SetSize(GRAPH_FILTERS);
 	arrItemStr[0] = LDS(IDS_FILTER_ALL);	// wildcard comes first
 	for (int iItem = 0; iItem < CTrack::MODULATION_TYPES; iItem++) {	// for each modulation type
@@ -805,7 +807,6 @@ void CGraphBar::DoContextMenu(CWnd* pWnd, CPoint point)
 	// create graph channel submenu
 	pSubMenu = pPopup->GetSubMenu(SM_GRAPH_CHANNEL);
 	ASSERT(pSubMenu != NULL);
-	pSubMenu->RemoveMenu(MF_BYCOMMAND, ID_GRAPH_SELECT_CHANNELS);	// exists only for customizing UI
 	arrItemStr.SetSize(MIDI_CHANNELS + 2);	// two extra items, one for wildcard, one for multi
 	arrItemStr[0] = LDS(IDS_FILTER_ALL);	// wildcard comes first
 	CString	s;

@@ -47,6 +47,7 @@
 		37		01sep24	add per-channel duplicate note methods
 		38		04nov24	fix incorrect MIDI event relational operators
 		39		22jan26	add next step index for queue modulation type
+		40		31may26	reorder track members so arrays are together
 
 */
 
@@ -728,9 +729,9 @@ public:
 	int		m_iNextStep;		// index of next step for queue modulation, or -1 if unused
 	CStepArray	m_arrStep;		// array of steps
 	CDubArray	m_arrDub;		// array of dubs
+	CModulationArray	m_arrModulator;	// array of track indices of modulators
 	UINT	m_nUID;				// unique ID
 	int		m_iDub;				// index of current dub
-	CModulationArray	m_arrModulator;	// array of track indices of modulators
 	COLORREF	m_clrCustom;	// custom track color or -1 if none
 
 // Attributes

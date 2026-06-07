@@ -100,6 +100,7 @@
 		90		18jan26	get quantization fraction from options
 		91		22jan26	add queue modulation type; bump file version to 23
 		92		14feb26	add run-length encoding; bump file version to 24
+		93		31may26 add delay modulation; bump file version to 25
 
 */
 
@@ -142,7 +143,7 @@ IMPLEMENT_DYNCREATE(CPolymeterDoc, CDocument)
 
 // file versioning
 #define FILE_ID				_T("Polymeter")
-#define	FILE_VERSION		24
+#define	FILE_VERSION		25
 
 // file format keys
 #define RK_FILE_ID			_T("FileID")
@@ -557,6 +558,15 @@ __forceinline void CPolymeterDoc::ReadTrackModulations(CIniFile& fIni, CString s
 						trk.m_arrModulator.Add(mod);	// add modulation to track
 					}
 				}
+			}
+		}
+		// in older versions, for non-modulator target tracks, offset modulation was implemented via delay
+		if (m_nFileVersion < 25 && !trk.IsModulator()) {	// if older version and track isn't a modulator
+			int	nMods = trk.m_arrModulator.GetSize();
+			for (int iMod = 0; iMod < nMods; iMod++) {	// for each modulator
+				CModulation&	mod = trk.m_arrModulator[iMod];
+				if (mod.m_iType == MT_Offset)	// if offset modulation
+					mod.m_iType = MT_Delay;	// change to delay modulation
 			}
 		}
 	}

@@ -1210,7 +1210,7 @@ bool CTrackArray::CheckModulations(CModulationErrorArray& arrError) const
 					nModTypeMask = MTB_Mute | MTB_Position | MTB_Tempo;	// only these modulation types
 					break;
 				default:	// controller track
-					nModTypeMask = MTB_Mute | MTB_Position | MTB_Velocity | MTB_Offset; 	// only these modulation types
+					nModTypeMask = MTB_Mute | MTB_Velocity | MTB_Position | MTB_Offset | MTB_Delay; 	// only these modulation types
 				}
 				int	nModTypeBit = 1 << mod.m_iType;
 				if (!(nModTypeBit & nModTypeMask))	// if modulation type's bit is zero in mask

@@ -27,6 +27,7 @@
 		17		23feb23	make prompting for channel selection public
 		18		25sep23	fix warning in SetChannelFilter
 		19		18dec24	make select channels command available to customize
+		20		06jun26	remove extra placeholder in channel submenu
 
 */
 
@@ -702,7 +703,6 @@ void CPianoBar::OnContextMenu(CWnd* pWnd, CPoint point)
 	// create channel submenu
 	pSubMenu = pPopup->GetSubMenu(SM_CHANNEL);
 	ASSERT(pSubMenu != NULL);
-	pSubMenu->RemoveMenu(MF_BYCOMMAND, ID_PIANO_SELECT_CHANNELS);	// exists only for customizing UI
 	CStringArrayEx	arrItemStr;	// menu item strings
 	arrItemStr.SetSize(MIDI_CHANNELS + 2);	// two extra items, one for wildcard, one for multi
 	arrItemStr[0] = LDS(IDS_FILTER_ALL);	// wildcard comes first

@@ -71,6 +71,7 @@
 		61		07feb26	fix offset handling for note overlap internal control
 		62		07feb26	fix sustain being applied to delayed control event
 		63		13may26	in ChaseNextSteps, chase dubs in song mode only
+		64		31may26 add delay modulation; fix offset modulation
 
 */
 
@@ -578,6 +579,7 @@ bool CSequencer::RecurseModulations(const CTrack& trk, int& nAbsEvtTime, int& nP
 {
 	int	nTracks = GetTrackCount();
 	int	nMods = trk.m_arrModulator.GetSize();
+	int	nOutAbsEvtTime = nAbsEvtTime;	// preserve input event time during iteration, for stability
 	for (int iMod = 0; iMod < nMods; iMod++) {	// for each of track's modulators
 		const CModulation&	mod = trk.m_arrModulator[iMod];
 		int	iModSource = mod.m_iSource;
@@ -586,7 +588,7 @@ bool CSequencer::RecurseModulations(const CTrack& trk, int& nAbsEvtTime, int& nP
 		if (iModSource >= 0 && iModSource < nTracks && !GetMute(iModSource)) {
 			if (mod.IsRecursiveType()) {	// if modulation type supports recursion
 				const CTrack&	trkModSource = GetTrack(iModSource);
-				int	nAbsEvtTime2 = nAbsEvtTime;	// copy event time; offset modulation may change it
+				int	nAbsEvtTime2 = nAbsEvtTime;	// copy event time; offset sub-modulation may change it
 				int	nPosMod2 = 0;
 				if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
 					if (m_nRecursions >= MOD_MAX_RECURSIONS) {	// if maximum recursion depth reached
@@ -608,14 +610,19 @@ bool CSequencer::RecurseModulations(const CTrack& trk, int& nAbsEvtTime, int& nP
 						return true;	// abandon this branch and return mute
 				} else {	// not mute modulation
 					nStepVal -= MIDI_NOTES / 2;	// convert step value to signed offset
-					if (iModType == MT_Position)	// if position modulation
+					if (iModType == MT_Position) {	// if position modulation
 						nPosMod += nStepVal;	// add step value to caller's position
-					else	// assume offset modulation
-						nAbsEvtTime -= nStepVal;	// subtract step value from caller's event time
+					} else {	// assume offset modulation
+						// if modulator has non-zero duration, interpret duration as scaling factor
+						if (trkModSource.m_nDuration)
+							nStepVal *= trkModSource.m_nDuration;	// apply scaling factor to step value
+						nOutAbsEvtTime -= nStepVal;	// substract step value from output event time
+					}
 				}
 			}
 		}
 	}
+	nAbsEvtTime = nOutAbsEvtTime;	// pass possibly offset event time back to caller
 	return false;	// return unmute
 }
 
@@ -629,17 +636,21 @@ int CSequencer::SumModulations(const CTrack& trk, int iModType, int nAbsEvtTime)
 			int	iModSource = mod.m_iSource;
 			if (iModSource >= 0 && iModSource < GetTrackCount() && !GetMute(iModSource)) {	// if modulator is valid and unmuted
 				const CTrack&	trkModSource = GetTrack(iModSource);
+				int	nAbsEvtTime2 = nAbsEvtTime;	// copy event time; offset modulation may change it
 				int	nPosMod = 0;
 				if (trkModSource.IsModulated() && trkModSource.IsModulator()) {	// if modulator could be modulated
 					m_nRecursions = 0;
-					if (RecurseModulations(trkModSource, nAbsEvtTime, nPosMod))	// recurse into modulator's modulations
+					if (RecurseModulations(trkModSource, nAbsEvtTime2, nPosMod))	// recurse into modulator's modulations
 						continue;	// recursion returned mute, so skip this modulator
 				}
-				int	iModStep = trkModSource.GetStepIndex(nAbsEvtTime);
+				int	iModStep = trkModSource.GetStepIndex(nAbsEvtTime2);
 				if (nPosMod)	// if recursion returned a non-zero position modulation
 					iModStep = ModWrap(iModStep - nPosMod, trkModSource.GetLength());	// modulate position
 				int	nStepVal = STEP_VEL(trkModSource.m_arrStep[iModStep]);
 				nStepVal -= MIDI_NOTES / 2;	// convert step value to signed offset
+				// if offset modulation and modulator has non-zero duration, treat duration as scaling factor
+				if (iModType == MT_Offset && trkModSource.m_nDuration)
+					nStepVal *= trkModSource.m_nDuration;	// apply scaling factor to step value
 				nSum += nStepVal;
 			}
 		}
@@ -663,7 +674,10 @@ __forceinline int CSequencer::GetQueueModulation(int iModSource, int nAbsEvtTime
 
 __forceinline void CSequencer::AddTrackEvents(CTrack& trk, int nCBStart)
 {
-	int	nOffset = trk.m_nOffset;	// cache these values for thread safety
+	int	nOffset = trk.m_nOffset;	// cache track attributes for thread safety
+	if (!trk.IsModulator() && !trk.m_bMute) {	// if track isn't a modulator and isn't muted
+		nOffset += SumModulations(trk, MT_Offset, nCBStart);	// apply offset modulation, once per callback
+	}
 	int	nLength = trk.GetLength();
 	int	nQuant = trk.m_nQuant;
 	int	nSwing = trk.m_nSwing;
@@ -750,7 +764,9 @@ __forceinline void CSequencer::AddTrackEvents(CTrack& trk, int nCBStart)
 							m_arrVoicing.Add(nStepVal - MIDI_NOTES / 2);	// add step to voicing array
 							break;
 						case MT_Offset:
-							arrMod[MT_Offset] += nStepVal;	// offset modulation is unsigned (delay only)
+							break;	// preamble handles offset modulation so don't bother accumulating it
+						case MT_Delay:
+							arrMod[MT_Delay] += nStepVal;	// delay modulation is unsigned
 							break;
 						case MT_Queue:
 							// zero is reserved for no queue modulation, so track index must be offset
@@ -839,9 +855,9 @@ __forceinline void CSequencer::AddTrackEvents(CTrack& trk, int nCBStart)
 							CMidiEvent	evt;
 							evt.m_nTime = nEvtTime;
 							evt.m_dwEvent = MakeMidiMsg(NOTE_ON, trk.m_nChannel, nNote, nVel);
-							if (arrMod[MT_Offset] > 0) {	// if offset modulation is active, delay note
-								evt.m_nTime += arrMod[MT_Offset];	// add offset modulation to event time
-								nAbsEvtTime += arrMod[MT_Offset];	// add offset modulation to absolute time
+							if (arrMod[MT_Delay] > 0) {	// if delay modulation is active, delay note
+								evt.m_nTime += arrMod[MT_Delay];	// add delay modulation to event time
+								nAbsEvtTime += arrMod[MT_Delay];	// add delay modulation to absolute time
 								if (evt.m_nTime >= m_nCBLen) {	// if delayed note starts after this callback
 									evt.m_nTime = nAbsEvtTime;	// make event time absolute instead of callback-relative
 									m_arrNoteOff.FastInsertSorted(evt);	// schedule delayed note via note off array
@@ -886,7 +902,7 @@ lblNoteScheduled:;
 						case ICTL_ALL_NOTES_OFF:
 							{
 								CMidiEvent	evt;
-								evt.m_nTime = nEvtTime + arrMod[MT_Offset] + nCBStart;
+								evt.m_nTime = nEvtTime + nCBStart + arrMod[MT_Delay];	// absolute time; add delay modulation
 								evt.m_dwEvent = MakeMidiMsg(CONTROL, trk.m_nChannel, trk.m_nNote, nVal);
 								evt.m_dwEvent |= SEVT_INTERNAL;	// set bit to indicate event is internal
 								m_arrNoteOff.FastInsertSorted(evt);	// controller is handled by AddNoteOffs
@@ -898,7 +914,7 @@ lblNoteScheduled:;
 						case ICTL_NOTE_OVERLAP:
 							if (m_bPreventNoteOverlap) {	// if preventing note overlap
 								CMidiEvent	evt;
-								evt.m_nTime = nEvtTime + arrMod[MT_Offset];	// add offset modulation (delay) if any
+								evt.m_nTime = nEvtTime + arrMod[MT_Delay];	// relative time; add delay modulation
 								evt.m_dwEvent = MakeMidiMsg(CONTROL, trk.m_nChannel, trk.m_nNote, nVal);
 								evt.m_dwEvent |= SEVT_INTERNAL;	// set bit to indicate event is internal
 								if (evt.m_nTime >= m_nCBLen) {	// if event occurs after this callback
@@ -920,8 +936,8 @@ lblNoteScheduled:;
 					nVal = CLAMP(nVal, 0, MIDI_NOTE_MAX);
 					CMidiEvent	evt;
 					if (MakeControlEvent(trk, nEvtTime, nVal, evt)) {	// if event state changed
-						if (arrMod[MT_Offset] > 0) {	// if offset modulation is active, delay event
-							evt.m_nTime += arrMod[MT_Offset];	// add offset modulation to event time
+						if (arrMod[MT_Delay] > 0) {	// if delay modulation is active, delay event
+							evt.m_nTime += arrMod[MT_Delay];	// add offset modulation to event time
 							if (evt.m_nTime >= m_nCBLen) {	// if delayed event starts after this callback
 								evt.m_nTime += nCBStart;	// make event time absolute instead of callback-relative
 								m_arrNoteOff.FastInsertSorted(evt);	// schedule delayed event via note off array
